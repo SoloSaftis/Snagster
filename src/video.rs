@@ -911,8 +911,6 @@ mod win {
         let fps = opts.fps.clamp(1, 120);
         let mut clock = Clock::new(fps);
         let mut pointer = Pointer::new();
-        let _started = Instant::now();
-        let mut paused_total = Duration::ZERO;
         let mut first = true;
         // The first picture comes at once.
         if let Source::Gpu(d) = &mut source
@@ -925,11 +923,9 @@ mod win {
                 break;
             }
             if !first && clock.hold(pause) {
-                let t = Instant::now();
                 while pause.load(Ordering::Relaxed) && !stop.load(Ordering::Relaxed) {
                     std::thread::sleep(Duration::from_millis(30));
                 }
-                paused_total += t.elapsed();
                 continue;
             }
             let deadline = clock.deadline();
@@ -1134,8 +1130,6 @@ mod soft {
         let file = std::fs::File::create(&opts.path).map_err(|e| e.to_string())?;
         let mut mux = Mux::new(std::io::BufWriter::new(file), w, h, fps)?;
         let mut clock = Clock::new(fps);
-        let _started = Instant::now();
-        let mut paused = Duration::ZERO;
         let mut first = true;
         let mut rgb = vec![0u8; (w * h * 3) as usize];
         loop {
@@ -1143,11 +1137,9 @@ mod soft {
                 break;
             }
             if !first && clock.hold(pause) {
-                let t = Instant::now();
                 while pause.load(Ordering::Relaxed) && !stop.load(Ordering::Relaxed) {
                     std::thread::sleep(Duration::from_millis(30));
                 }
-                paused += t.elapsed();
                 continue;
             }
             let now = Instant::now();
@@ -1181,7 +1173,7 @@ mod soft {
             clock.advance();
         }
         mux.finish()?;
-        done.seconds = started.elapsed().saturating_sub(paused).as_secs_f32();
+        done.seconds = clock.recorded.as_secs_f32();
         Ok(())
     }
 
