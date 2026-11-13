@@ -1,6 +1,6 @@
 Capture your screen, mark it up, record it. Everything runs on your own computer.
 
-**New: video recording.** MP4 (H.264 or HEVC) and WMV at 1-120 frames per second, encoded by your graphics chip (Intel, AMD or NVIDIA) on Windows.
+**New in this version:** a Word-style ribbon with icons and tooltips, 86 languages (picked from your computer), videos with sound (computer sound and microphone), Studio mode for live scene recording, automatic updates, Videos/Snagster and Pictures/Snagster folders, and an MCP server any AI app can use, including local AI over HTTP.
 
 ## Download
 

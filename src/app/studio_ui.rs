@@ -526,7 +526,8 @@ impl SnagApp {
                             });
                         }
                         SourceKind::Image { path } => {
-                            ui.label(RichText::new(path.as_str()).small().color(TEXT_DIM));
+                            let shown = std::path::Path::new(path.as_str()).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                            ui.label(RichText::new(shown).small().color(TEXT_DIM)).on_hover_text(path.as_str());
                             if ui.button(t("Choose another picture...")).clicked()
                                 && let Some(p) = rfd::FileDialog::new().add_filter(t("Pictures"), &["png", "jpg", "jpeg", "bmp", "gif", "webp"]).pick_file()
                             {
@@ -753,5 +754,11 @@ impl StudioUi {
     /// Seconds since recording started (for the button test).
     pub fn started_secs(&self) -> f32 {
         self.rec.as_ref().map(|r| r.started.elapsed().as_secs_f32()).unwrap_or(0.0)
+    }
+}
+
+impl StudioUi {
+    pub fn select(&mut self, i: usize) {
+        self.selected = Some(i);
     }
 }

@@ -137,6 +137,11 @@ fn main() -> eframe::Result {
         }
         if a == "--screenshot" {
             screenshot = args.next().map(PathBuf::from);
+        } else if a == "--view" {
+            // What --screenshot shows: studio, settings-ai, language, record, or lang:<code>.
+            if let (Some(v), Ok(mut slot)) = (args.next(), app::SCREENSHOT_VIEW.lock()) {
+                *slot = v;
+            }
         } else if a == "--record-test" {
             // Record 640 x 360 of the screen for 5 s at 10 fps; report cost; delete the file.
             let path = std::env::temp_dir().join("snag-record-test.gif");

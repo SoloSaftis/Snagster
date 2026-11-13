@@ -24,7 +24,7 @@ fn combo_editor(ui: &mut egui::Ui, id: String, c: &mut Combo) -> bool {
         .selected_text(if c.key.is_empty() { "Not set".to_string() } else { c.key.clone() })
         .show_ui(ui, |ui| {
             egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
-                ui.selectable_value(&mut c.key, String::new(), "Not set");
+                ui.selectable_value(&mut c.key, String::new(), crate::i18n::t("Not set"));
                 for (name, _, _) in hotkeys::KEYS {
                     ui.selectable_value(&mut c.key, name.to_string(), *name);
                 }
@@ -809,7 +809,7 @@ impl SnagApp {
                 egui::ComboBox::from_id_salt("libapp")
                     .selected_text(if self.lib_app.is_empty() { "All programs".to_string() } else { self.lib_app.clone() })
                     .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut self.lib_app, String::new(), "All programs");
+                        ui.selectable_value(&mut self.lib_app, String::new(), crate::i18n::t("All programs"));
                         for a in apps {
                             ui.selectable_value(&mut self.lib_app, a.clone(), a);
                         }

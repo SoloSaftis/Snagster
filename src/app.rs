@@ -34,6 +34,8 @@ pub const POINTER_KEY: char = '\u{E000}';
 pub static START_PANEL: AtomicBool = AtomicBool::new(false);
 /// Run the button test (the `--ui-test` option).
 pub static UI_TEST: AtomicBool = AtomicBool::new(false);
+/// What `--screenshot` shows (`--view`).
+pub static SCREENSHOT_VIEW: Mutex<String> = Mutex::new(String::new());
 
 mod uitest;
 pub(crate) mod ribbon;
@@ -2622,13 +2624,11 @@ impl SnagApp {
                 let fg = if selected { Color32::WHITE } else { Color32::from_rgb(210, 214, 225) };
                 let icon = Rect::from_center_size(rect.center() - vec2(0.0, 7.0), vec2(20.0, 20.0));
                 tool_icon(ui.painter(), icon, t, fg, self.color());
-                ui.painter().text(
-                    pos2(rect.center().x, rect.bottom() - 8.0),
-                    Align2::CENTER_CENTER,
-                    crate::i18n::t(t.label()),
-                    FontId::proportional(10.0),
-                    fg,
-                );
+                // Long names in some languages get a smaller font so they stay inside the button.
+                let name = crate::i18n::t(t.label());
+                let w = ui.painter().layout_no_wrap(name.to_string(), FontId::proportional(10.0), fg).size().x;
+                let size = if w > 52.0 { (10.0 * 52.0 / w).max(7.0) } else { 10.0 };
+                ui.painter().text(pos2(rect.center().x, rect.bottom() - 8.0), Align2::CENTER_CENTER, name, FontId::proportional(size), fg);
                 let resp = resp.on_hover_text(format!("{} ({})\n{}", crate::i18n::t(t.label()), t.key(), crate::i18n::t(t.hint())));
                 if resp.clicked() {
                     self.commit_text();
@@ -2785,7 +2785,7 @@ impl SnagApp {
             section(ui, crate::i18n::t("View"));
             let ctx = ui.ctx().clone();
             ui.horizontal(|ui| {
-                if ui.selectable_label(self.zoom.is_none(), "Fit").clicked() {
+                if ui.selectable_label(self.zoom.is_none(), crate::i18n::t("Fit")).clicked() {
                     self.set_zoom(&ctx, None);
                 }
                 if ui.button("100%").clicked() {
@@ -2805,8 +2805,8 @@ impl SnagApp {
                 ui.label(RichText::new(format!("{} x {} pixels, {} marks", d.image.width(), d.image.height(), d.shapes.len())).color(TEXT_DIM));
             }
             ui.add_space(10.0);
-            ui.label(RichText::new(self.tool.label()).strong().color(Color32::WHITE));
-            ui.add(egui::Label::new(RichText::new(self.tool.hint()).color(TEXT_DIM).size(12.5)).wrap());
+            ui.label(RichText::new(crate::i18n::t(self.tool.label())).strong().color(Color32::WHITE));
+            ui.add(egui::Label::new(RichText::new(crate::i18n::t(self.tool.hint())).color(TEXT_DIM).size(12.5)).wrap());
         });
     }
 
@@ -2817,7 +2817,7 @@ impl SnagApp {
         let mut chosen: Option<String> = None;
         egui::ComboBox::from_id_salt("font").width(180.0).selected_text(shown).show_ui(ui, |ui| {
             ui.add(egui::TextEdit::singleline(&mut self.font_query).hint_text("Search fonts"));
-            if ui.selectable_label(self.settings.font.is_empty(), "Default").clicked() {
+            if ui.selectable_label(self.settings.font.is_empty(), crate::i18n::t("Default")).clicked() {
                 chosen = Some(String::new());
             }
             match &families {
@@ -2880,7 +2880,7 @@ impl SnagApp {
             }
         });
         let ctx = ui.ctx().clone();
-        if ui.selectable_label(self.stamp == POINTER_KEY.to_string(), "Mouse pointer").clicked() {
+        if ui.selectable_label(self.stamp == POINTER_KEY.to_string(), crate::i18n::t("Mouse pointer")).clicked() {
             self.stamp = POINTER_KEY.to_string();
         }
         let list = ef.groups.get(gi).map(|g| g.1.clone()).unwrap_or_default();
@@ -2928,7 +2928,7 @@ impl SnagApp {
                 ui.set_width(250.0);
                 ui.add_space(8.0);
                 ui.label(RichText::new(crate::i18n::t("Recent")).strong().color(Color32::WHITE));
-                ui.add(egui::Label::new(RichText::new(&self.status).color(TEXT_DIM).size(12.5)).wrap());
+                ui.add(egui::Label::new(RichText::new(crate::i18n::tr(&self.status)).color(TEXT_DIM).size(12.5)).wrap());
             });
             ui.separator();
             let mut switch = None;
@@ -3051,7 +3051,7 @@ impl SnagApp {
         let link = Rect::from_center_size(pos2(area.center().x, top + 300.0), vec2(260.0, 26.0));
         let resp = ui.interact(link, ui.scope_id().with("sample"), Sense::click());
         let col = if resp.hovered() { Color32::WHITE } else { ACCENT };
-        ui.painter().text(link.center(), Align2::CENTER_CENTER, "Try the tools on a sample picture", FontId::proportional(14.0), col);
+        ui.painter().text(link.center(), Align2::CENTER_CENTER, crate::i18n::t("Try the tools on a sample picture"), FontId::proportional(14.0), col);
         if resp.clicked() {
             let name = self.next_name("Sample");
             self.add_entry(name, sample::sample_doc());
@@ -3539,6 +3539,11 @@ impl SnagApp {
     fn screenshot_tick(&mut self, ctx: &egui::Context) {
         let Some(job) = &mut self.screenshot else { return };
         job.frames += 1;
+        if job.frames == 2 {
+            let view = SCREENSHOT_VIEW.lock().map(|v| v.clone()).unwrap_or_default();
+            self.show_view(ctx, &view);
+        }
+        let Some(job) = &mut self.screenshot else { return };
         ctx.request_repaint();
         ctx.send_viewport_cmd(egui::ViewportCommand::RequestPaintWhileHidden);
         if job.frames >= SCREENSHOT_FRAMES && !job.requested {
@@ -4599,7 +4604,7 @@ impl SnagApp {
         use crate::settings::{BlurMode, CalloutShape};
         let t = self.tool;
         if t == Tool::Arrow {
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 ui.label(RichText::new(crate::i18n::t("Heads")).color(TEXT_DIM));
                 ui.selectable_value(&mut self.settings.arrow_heads, 0, crate::i18n::t("none"));
                 ui.selectable_value(&mut self.settings.arrow_heads, 1, crate::i18n::t("end"));
@@ -4607,7 +4612,7 @@ impl SnagApp {
             });
         }
         if matches!(t, Tool::Text | Tool::Callout) {
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 ui.label(RichText::new(crate::i18n::t("Align")).color(TEXT_DIM));
                 ui.selectable_value(&mut self.settings.text_align, 0, crate::i18n::t("left"));
                 ui.selectable_value(&mut self.settings.text_align, 1, crate::i18n::t("center"));
@@ -4618,7 +4623,7 @@ impl SnagApp {
             ui.checkbox(&mut self.settings.text_outline, crate::i18n::t("Outline around letters"));
         }
         if t == Tool::Callout {
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 ui.label(RichText::new(crate::i18n::t("Shape")).color(TEXT_DIM));
                 for (s, l) in [(CalloutShape::Rounded, "rounded"), (CalloutShape::Rectangle, "box"), (CalloutShape::Oval, "oval")] {
                     ui.selectable_value(&mut self.settings.callout_shape, s, l);
@@ -4627,7 +4632,7 @@ impl SnagApp {
             ui.checkbox(&mut self.settings.callout_outline, crate::i18n::t("Darker outline"));
         }
         if t == Tool::Blur {
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 ui.label(RichText::new(crate::i18n::t("Type")).color(TEXT_DIM));
                 for m in BlurMode::ALL {
                     ui.selectable_value(&mut self.settings.blur_mode, m, m.label());
@@ -4716,5 +4721,56 @@ impl SnagApp {
         self.overlay = None;
         self.text_edit = None;
         self.drag = Drag::None;
+    }
+}
+
+impl SnagApp {
+    /// Set up a view for `--screenshot --view ...` (README pictures).
+    fn show_view(&mut self, ctx: &egui::Context, view: &str) {
+        if let Some(code) = view.strip_prefix("lang:") {
+            self.settings.language = code.to_string();
+            self.x.tab = ribbon::RibbonTab::Home;
+            return;
+        }
+        match view {
+            "studio" => {
+                let (w, h) = (self.settings.studio.width as f32, self.settings.studio.height as f32);
+                if let Some(scene) = self.settings.studio.scenes.first_mut() {
+                    scene.items.insert(0, crate::studio::Item { name: "Background".into(), kind: crate::studio::SourceKind::Color { color: [28, 34, 52, 255] }, x: 0.0, y: 0.0, w, h, visible: true });
+                    if let Some(screen) = scene.items.iter_mut().find(|i| matches!(i.kind, crate::studio::SourceKind::Display { .. })) {
+                        (screen.x, screen.y, screen.w, screen.h) = (w * 0.04, h * 0.06, w * 0.72, h * 0.72);
+                        // The README picture shows the sample, not the real desktop.
+                        let p = std::env::temp_dir().join("snagster-sample.png");
+                        if export::save_image(&render::compose(&sample::sample_doc()), &p, 90).is_ok() {
+                            screen.name = "Screen 1".into();
+                            screen.kind = crate::studio::SourceKind::Image { path: p.to_string_lossy().to_string() };
+                        }
+                    }
+                    scene.items.push(crate::studio::Item {
+                        name: "Title".into(),
+                        kind: crate::studio::SourceKind::Text { text: "Live demo".into(), size: 72.0, color: [255, 255, 255, 255] },
+                        x: w * 0.04,
+                        y: h * 0.82,
+                        w: w * 0.6,
+                        h: 110.0,
+                        visible: true,
+                    });
+                }
+                self.settings.studio.scenes.push(crate::studio::Scene { name: "Webcam corner".into(), items: Vec::new() });
+                self.switch_tab(ctx, ribbon::RibbonTab::Studio);
+                if let Some(s) = &mut self.x.studio {
+                    s.select(1);
+                }
+            }
+            "record" => self.x.tab = ribbon::RibbonTab::Record,
+            "settings-ai" => {
+                self.settings_open = true;
+                self.settings_tab = SettingsTab::Ai;
+            }
+            "language" => {
+                self.x.lang_open = true;
+            }
+            _ => {}
+        }
     }
 }
