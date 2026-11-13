@@ -9,6 +9,7 @@ ab_glyph = "0.2.32"
 arboard = "3.7.0"
 base64 = "0.22"
 chrono = "0.4.45"
+dirs = "6"
 eframe = { version = "0.37.0", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }
 egui = { version = "0.37.0", features = ["serde"] }
 epaint_default_fonts = { version = "0.37.0", features = ["monochrome_emoji_fonts"] }
@@ -19,6 +20,8 @@ regex = "1"
 rfd = "0.18.0"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
+sys-locale = "0.3"
+ureq = { version = "3", features = ["json"] }
 tiny-skia = "0.12.0"
 trash = "5.3.0"
 # Tray icon; on Linux the pure-Rust D-Bus backend (ksni) instead of GTK.
@@ -43,7 +46,7 @@ strip = true
 
 [target."cfg(windows)".dependencies]
 windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Dwm", "Win32_Graphics_Gdi", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_Threading", "Win32_System_Console", "Win32_UI_HiDpi"] }
-windows = { version = "0.62", features = ["Foundation", "Foundation_Collections", "Globalization", "Graphics_Imaging", "Media_Ocr", "Storage_Streams", "Win32_Foundation", "Win32_Graphics_Direct3D", "Win32_Graphics_Direct3D11", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Graphics_Gdi", "Win32_Media_MediaFoundation", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Variant"] }
+windows = { version = "0.62", features = ["Foundation", "Foundation_Collections", "Globalization", "Graphics_Imaging", "Media_Ocr", "Storage_Streams", "Win32_Foundation", "Win32_Graphics_Direct3D", "Win32_Graphics_Direct3D11", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Graphics_Gdi", "Win32_Media_MediaFoundation", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Variant", "Win32_Media_Audio", "Win32_Devices_FunctionDiscovery", "Win32_Devices_Properties", "Win32_UI_Shell_PropertiesSystem"] }
 
 # Video on Linux and macOS: OpenH264 (built from its source) and an MP4 writer.
 [target."cfg(not(windows))".dependencies]
@@ -52,3 +55,16 @@ mp4 = "0.14"
 
 [target."cfg(target_os = \"macos\")".dependencies]
 winit = "0.30"
+
+# egui 0.37 with right-to-left text (Arabic, Hebrew, Persian, Urdu), fallback-font alignment for
+# CJK and Indian scripts, and shortcuts on non-Latin keyboards: the same patched egui CVBuilder uses.
+[patch.crates-io]
+ecolor = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+emath = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+epaint = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+epaint_default_fonts = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui-winit = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui_glow = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+eframe = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+winit = { git = "https://github.com/storytold/winit.git", rev = "a517b3846ee8457d84ee4975110bfda6797c44dc" }

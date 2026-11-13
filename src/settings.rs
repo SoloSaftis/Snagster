@@ -470,6 +470,29 @@ pub struct Settings {
     pub video_quality: u8,
     pub video_hardware: bool,
     pub video_max_s: u32,
+    /// Where videos and GIF recordings go (Videos/Snagster).
+    pub video_folder: String,
+    /// Sound recorded with videos.
+    pub audio_source: crate::audio::AudioSource,
+    /// The microphone (its id; empty: the computer's default).
+    pub audio_mic: String,
+    /// Interface language code; empty follows the computer.
+    pub language: String,
+    /// Look for a new Snagster on GitHub when it starts (at most once a day).
+    pub update_check: bool,
+    /// When it last looked (Unix seconds).
+    pub update_checked_at: i64,
+    /// A version the person chose to skip.
+    pub update_skip: String,
+    /// Studio mode's scenes.
+    pub studio: crate::studio::StudioSettings,
+    /// The ribbon is folded away.
+    pub ribbon_folded: bool,
+    /// Let AI apps on this computer connect over HTTP while Snagster runs.
+    pub mcp_http: bool,
+    pub mcp_port: u16,
+    /// Optional password AI apps must send (Authorization: Bearer ...).
+    pub mcp_token: String,
     // Editor defaults
     pub color: [u8; 3],
     pub palette: [[u8; 3]; 8],
@@ -568,6 +591,18 @@ impl Default for Settings {
             video_quality: 2,
             video_hardware: true,
             video_max_s: 0,
+            video_folder: videos().join("Snagster").to_string_lossy().to_string(),
+            audio_source: crate::audio::AudioSource::System,
+            audio_mic: String::new(),
+            language: String::new(),
+            update_check: true,
+            update_checked_at: 0,
+            update_skip: String::new(),
+            studio: Default::default(),
+            ribbon_folded: false,
+            mcp_http: false,
+            mcp_port: 45831,
+            mcp_token: String::new(),
             color: DEFAULT_PALETTE[0],
             palette: DEFAULT_PALETTE,
             font: String::new(),
@@ -628,8 +663,13 @@ fn home() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("."))
 }
 
-fn pictures() -> PathBuf {
-    home().join("Pictures")
+pub fn pictures() -> PathBuf {
+    dirs::picture_dir().unwrap_or_else(|| home().join("Pictures"))
+}
+
+/// The person's Videos folder (Movies on macOS).
+pub fn videos() -> PathBuf {
+    dirs::video_dir().unwrap_or_else(|| home().join(if cfg!(target_os = "macos") { "Movies" } else { "Videos" }))
 }
 
 /// Folders that sync to the cloud, when the person has them.
@@ -658,7 +698,7 @@ pub fn cloud_folders() -> Vec<(String, PathBuf)> {
     out
 }
 
-fn settings_path() -> Option<PathBuf> {
+pub fn settings_path() -> Option<PathBuf> {
     let base = std::env::var_os("APPDATA")
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))?;
@@ -684,7 +724,35 @@ impl Settings {
                 s.bindings.push(d);
             }
         }
+        s.move_old_folder();
         s
+    }
+
+    /// Pictures saved before the rename went to Pictures/Snag: move that folder to
+    /// Pictures/Snagster (library included) and point the settings there.
+    fn move_old_folder(&mut self) {
+        let pics = pictures();
+        let old = pics.join("Snag");
+        let new = pics.join("Snagster");
+        let old_s = old.to_string_lossy().to_string();
+        let uses_old = |p: &str| p == old_s || p.starts_with(&format!("{old_s}{}", std::path::MAIN_SEPARATOR));
+        if !uses_old(&self.save_folder) && !uses_old(&self.library_folder) {
+            return;
+        }
+        if old.is_dir() && !new.exists() && std::fs::rename(&old, &new).is_err() {
+            return;
+        }
+        if old.is_dir() && new.exists() {
+            // Both exist: leave the old one where it is, so nothing goes missing.
+            return;
+        }
+        let new_s = new.to_string_lossy().to_string();
+        for f in [&mut self.save_folder, &mut self.library_folder] {
+            if uses_old(f) {
+                *f = format!("{new_s}{}", &f[old_s.len()..]);
+            }
+        }
+        self.save();
     }
 
     pub fn save(&self) {

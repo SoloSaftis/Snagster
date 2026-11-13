@@ -21,6 +21,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo build --release --locked
+      - name: Unit tests
+        run: cargo test --release --locked
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: MCP smoke test (stdio and HTTP, no screen needed)
+        run: node tests/mcp-smoke.js target/release/snagster.exe
       - name: Package (portable zip)
         shell: pwsh
         run: |
@@ -51,6 +58,13 @@ jobs:
             libdbus-1-dev libfuse2
       - name: Build
         run: cargo build --release --locked
+      - name: Unit tests
+        run: cargo test --release --locked
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: MCP smoke test (stdio and HTTP, no screen needed)
+        run: node tests/mcp-smoke.js target/release/snagster
       - name: Package (AppImage and portable tar.gz)
         run: |
           set -euo pipefail
@@ -97,6 +111,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo build --release --locked
+      - name: Unit tests
+        run: cargo test --release --locked
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: MCP smoke test (stdio and HTTP, no screen needed)
+        run: node tests/mcp-smoke.js target/release/snagster
       - name: Package (app in a zip)
         run: |
           set -euo pipefail

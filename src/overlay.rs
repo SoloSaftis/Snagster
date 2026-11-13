@@ -212,7 +212,7 @@ impl Overlay {
                                 );
                                 let b = |ui: &mut egui::Ui, t: &str, tip: &str| ui.button(t).on_hover_text(tip).clicked();
                                 if ui
-                                    .add(egui::Button::new(egui::RichText::new("Capture").strong().color(Color32::WHITE)).fill(ACCENT))
+                                    .add(egui::Button::new(egui::RichText::new(crate::i18n::t("Capture")).strong().color(Color32::WHITE)).fill(ACCENT))
                                     .on_hover_text("Open it in Snagster (Enter)")
                                     .clicked()
                                 {
@@ -543,7 +543,7 @@ impl Overlay {
             OverlayMode::ColorPicker => "Click to pick a color. It is copied as #RRGGBB. Esc cancels.".into(),
             OverlayMode::Ruler => "Drag to measure. Esc or right-click closes the ruler.".into(),
         };
-        pill(&p, pos2(area.center().x, area.min.y + 24.0), Align2::CENTER_TOP, &help, 15.0);
+        pill(&p, pos2(area.center().x, area.min.y + 24.0), Align2::CENTER_TOP, &crate::i18n::tr(&help), 15.0);
         // No constant redrawing: egui redraws when the mouse moves or a key is pressed.
         outcome
     }

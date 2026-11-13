@@ -309,6 +309,7 @@ impl UiTest {
             (SettingsTab::Hotkeys, "Hotkeys"),
             (SettingsTab::Presets, "Presets"),
             (SettingsTab::Ai, "AI apps"),
+            (SettingsTab::Language, "Language & updates"),
         ];
         for (tab, name) in tabs {
             s.push(once(format!("Settings tab: {name}"), move |a, _| {
@@ -317,6 +318,96 @@ impl UiTest {
             }));
         }
         s.push(once("close Settings", |a, _| a.settings_open = false));
+        // The ribbon: every tab shows its band.
+        for tab in super::ribbon::RibbonTab::ALL {
+            if tab == super::ribbon::RibbonTab::Studio {
+                continue;
+            }
+            s.push(once(format!("ribbon tab: {tab:?}"), move |a, c| {
+                a.switch_tab(c, tab);
+                assert_eq!(a.x.tab, tab);
+            }));
+        }
+        s.push(once("ribbon: fold and unfold", |a, _| {
+            a.settings.ribbon_folded = true;
+            a.settings.ribbon_folded = false;
+        }));
+        // Studio mode.
+        s.push(once("Studio: open", |a, c| {
+            a.settings.video_folder = test_dir().to_string_lossy().to_string();
+            a.settings.audio_source = crate::audio::AudioSource::None;
+            a.switch_tab(c, super::ribbon::RibbonTab::Studio);
+            assert!(a.x.studio.is_some(), "the Studio engine didn't start");
+        }));
+        s.push((
+            "Studio: the preview draws".to_string(),
+            Box::new(|a: &mut SnagApp, _: &egui::Context| a.x.studio.as_ref().is_some_and(|s| s.preview_ready())),
+        ));
+        s.push(once("Studio: add a text and a color source, a second scene", |a, _| {
+            let (w, h) = (a.settings.studio.width as f32, a.settings.studio.height as f32);
+            let scene = &mut a.settings.studio.scenes[0];
+            scene.items.insert(0, crate::studio::Item { name: "Back".into(), kind: crate::studio::SourceKind::Color { color: [30, 60, 90, 255] }, x: 0.0, y: 0.0, w, h, visible: true });
+            scene.items.push(crate::studio::Item {
+                name: "Title".into(),
+                kind: crate::studio::SourceKind::Text { text: "Snagster Studio".into(), size: 64.0, color: [255, 255, 255, 255] },
+                x: 40.0,
+                y: 40.0,
+                w: 800.0,
+                h: 120.0,
+                visible: true,
+            });
+            let copy = a.settings.studio.scenes[0].clone();
+            a.settings.studio.scenes.push(copy);
+            a.settings.studio.current = 1;
+            a.settings.studio.current = 0;
+        }));
+        s.push(once("Studio: start recording", |a, c| {
+            a.settings.studio.fps = 30;
+            super::studio_ui::start(a, c);
+            assert!(a.x.studio.as_ref().is_some_and(|s| s.recording()));
+        }));
+        s.push((
+            "Studio: record for a second".to_string(),
+            Box::new(|a: &mut SnagApp, _: &egui::Context| {
+                let t = a.x.studio.as_ref().map(|s| s.started_secs()).unwrap_or(0.0);
+                if t < 1.2 {
+                    return false;
+                }
+                super::studio_ui::stop(a);
+                true
+            }),
+        ));
+        s.push((
+            "Studio: the video is saved".to_string(),
+            Box::new(|a: &mut SnagApp, _: &egui::Context| {
+                let Some(st) = &a.x.studio else { return false };
+                let Some(d) = &st.last else { return false };
+                assert!(d.result.is_ok(), "{:?}", d.result);
+                let p = crate::video::probe(&d.path).expect("the Studio video can't be read back");
+                assert!(p.frames >= 20, "only {} frames", p.frames);
+                assert_eq!((p.width, p.height), (a.settings.studio.width & !1, a.settings.studio.height & !1));
+                true
+            }),
+        ));
+        s.push(once("Studio: leave", |a, c| {
+            a.switch_tab(c, super::ribbon::RibbonTab::Home);
+            assert!(a.x.studio.is_none(), "Studio kept running after leaving it");
+        }));
+        // Languages: German, Arabic (right to left), Japanese (the computer's CJK fonts), then automatic.
+        for code in ["de", "ar", "ja", "zh-Hant", ""] {
+            s.push(once(format!("language: {}", if code.is_empty() { "automatic" } else { code }), move |a, c| {
+                a.settings.language = code.to_string();
+                a.apply_language(c);
+                let want = crate::i18n::resolve(code);
+                assert_eq!(crate::i18n::current(), want);
+                assert_eq!(c.global_style().right_to_left, crate::i18n::is_rtl(want));
+            }));
+        }
+        s.push(once("language list window", |a, c| {
+            a.x.lang_open = true;
+            a.language_window(c);
+            a.x.lang_open = false;
+        }));
         for (name, which) in [("Library", 0), ("GIF recordings", 1), ("Timer", 2), ("Keyboard shortcuts", 3), ("About", 4), ("Grabbed text", 5)] {
             s.push(once(format!("window: {name}"), move |a, _| match which {
                 0 => a.library_open = true,

@@ -68,8 +68,11 @@ impl VideoFormat {
     }
 }
 
+/// Fills one frame: top-down BGRA rows of the recording's size. Returns false to stop.
+pub type FrameFeed = Arc<dyn Fn(&mut [u8]) -> bool + Send + Sync>;
+
 /// Everything one video recording needs.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct VideoOpts {
     /// Desktop area in physical pixels: left, top, width, height.
     pub rect: (i32, i32, u32, u32),
@@ -85,6 +88,20 @@ pub struct VideoOpts {
     /// Stop by itself after this many seconds (0: only when told).
     pub max_s: u32,
     pub path: PathBuf,
+    /// Sound to record with it (MP4 only).
+    pub audio: crate::audio::AudioSource,
+    /// The microphone's id (empty: the default one).
+    pub mic: String,
+    /// Frames made by the caller (Studio mode) instead of the screen; `rect` then gives only
+    /// the size.
+    pub frames: Option<FrameFeed>,
+}
+
+impl VideoOpts {
+    /// Plain options for a screen area: no sound, no custom frames.
+    pub fn screen(rect: (i32, i32, u32, u32), fps: u32, format: VideoFormat, path: PathBuf) -> VideoOpts {
+        VideoOpts { rect, fps, format, quality: 2, hardware: true, cursor: true, max_s: 0, path, audio: crate::audio::AudioSource::None, mic: String::new(), frames: None }
+    }
 }
 
 /// How a recording went.
@@ -121,6 +138,8 @@ pub struct Probe {
     pub frames: u64,
     pub seconds: f64,
     pub first: Option<image::RgbaImage>,
+    /// Whether the file has a sound track.
+    pub audio: bool,
 }
 
 /// Bits per second for an area, frame rate, codec and quality step.
@@ -507,9 +526,60 @@ mod win {
     struct Writer {
         sw: IMFSinkWriter,
         stream: u32,
+        /// The sound stream, when there is sound.
+        audio: Option<u32>,
     }
 
-    fn make_writer(opts: &VideoOpts, w: u32, h: u32, gpu: Option<&ID3D11Device>, hardware: bool) -> R<Writer> {
+    /// Add an AAC sound stream (48 kHz stereo, 192 kbit/s) fed 16-bit samples.
+    fn add_audio(sw: &IMFSinkWriter) -> R<u32> {
+        use crate::audio::{CHANNELS, RATE};
+        unsafe {
+            let out = MFCreateMediaType()?;
+            out.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Audio)?;
+            out.SetGUID(&MF_MT_SUBTYPE, &MFAudioFormat_AAC)?;
+            out.SetUINT32(&MF_MT_AUDIO_BITS_PER_SAMPLE, 16)?;
+            out.SetUINT32(&MF_MT_AUDIO_SAMPLES_PER_SECOND, RATE)?;
+            out.SetUINT32(&MF_MT_AUDIO_NUM_CHANNELS, CHANNELS)?;
+            out.SetUINT32(&MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 24_000)?;
+            let stream = sw.AddStream(&out)?;
+            let inp = MFCreateMediaType()?;
+            inp.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Audio)?;
+            inp.SetGUID(&MF_MT_SUBTYPE, &MFAudioFormat_PCM)?;
+            inp.SetUINT32(&MF_MT_AUDIO_BITS_PER_SAMPLE, 16)?;
+            inp.SetUINT32(&MF_MT_AUDIO_SAMPLES_PER_SECOND, RATE)?;
+            inp.SetUINT32(&MF_MT_AUDIO_NUM_CHANNELS, CHANNELS)?;
+            inp.SetUINT32(&MF_MT_AUDIO_BLOCK_ALIGNMENT, CHANNELS * 2)?;
+            inp.SetUINT32(&MF_MT_AUDIO_AVG_BYTES_PER_SECOND, RATE * CHANNELS * 2)?;
+            sw.SetInputMediaType(stream, &inp, None)?;
+            Ok(stream)
+        }
+    }
+
+    /// Write `samples` (interleaved stereo) starting at sample frame `at`.
+    fn write_audio(wr: &Writer, samples: &[i16], at: u64) -> R<()> {
+        let Some(stream) = wr.audio else { return Ok(()) };
+        if samples.is_empty() {
+            return Ok(());
+        }
+        unsafe {
+            let bytes = (samples.len() * 2) as u32;
+            let buf = MFCreateMemoryBuffer(bytes)?;
+            let mut dst = std::ptr::null_mut();
+            buf.Lock(&mut dst, None, None)?;
+            std::ptr::copy_nonoverlapping(samples.as_ptr() as *const u8, dst, bytes as usize);
+            buf.Unlock()?;
+            buf.SetCurrentLength(bytes)?;
+            let s = MFCreateSample()?;
+            s.AddBuffer(&buf)?;
+            let frames = (samples.len() / crate::audio::CHANNELS as usize) as i64;
+            let rate = crate::audio::RATE as i64;
+            s.SetSampleTime(at as i64 * 10_000_000 / rate)?;
+            s.SetSampleDuration(frames * 10_000_000 / rate)?;
+            wr.sw.WriteSample(stream, &s)
+        }
+    }
+
+    fn make_writer(opts: &VideoOpts, w: u32, h: u32, gpu: Option<&ID3D11Device>, hardware: bool, sound: bool) -> R<Writer> {
         unsafe {
             let mut attrs = None;
             MFCreateAttributes(&mut attrs, 4)?;
@@ -550,8 +620,9 @@ mod win {
             inp.SetUINT64(&MF_MT_PIXEL_ASPECT_RATIO, pack(1, 1))?;
             inp.SetUINT32(&MF_MT_DEFAULT_STRIDE, w * 4)?;
             sw.SetInputMediaType(stream, &inp, None)?;
+            let audio = if sound { Some(add_audio(&sw)?) } else { None };
             sw.BeginWriting()?;
-            Ok(Writer { sw, stream })
+            Ok(Writer { sw, stream, audio })
         }
     }
 
@@ -778,6 +849,26 @@ mod win {
     enum Source {
         Gpu(Dup),
         Gdi(Gdi),
+        /// Frames made by the caller (Studio mode).
+        Custom(FrameFeed, u32, u32),
+    }
+
+    fn custom_sample(feed: &FrameFeed, w: u32, h: u32) -> R<Option<IMFSample>> {
+        unsafe {
+            let len = w * h * 4;
+            let buf = MFCreateMemoryBuffer(len)?;
+            let mut dst = std::ptr::null_mut();
+            buf.Lock(&mut dst, None, None)?;
+            let more = feed(std::slice::from_raw_parts_mut(dst, len as usize));
+            buf.Unlock()?;
+            if !more {
+                return Ok(None);
+            }
+            buf.SetCurrentLength(len)?;
+            let s = MFCreateSample()?;
+            s.AddBuffer(&buf)?;
+            Ok(Some(s))
+        }
     }
 
     /// Try the ways to record from best to plainest; the first that writes a frame is kept.
@@ -791,6 +882,61 @@ mod win {
             }
         };
         let (x, y, w0, h0) = opts.rect;
+        // Sound starts first so the devices are ready; what it hears before the first frame
+        // is dropped.
+        let sound = if opts.audio != crate::audio::AudioSource::None && opts.format != VideoFormat::Wmv {
+            match crate::audio::Capture::start(opts.audio, &opts.mic) {
+                Ok(c) if !c.is_silent() => Some(c),
+                Ok(_) => None,
+                Err(e) => {
+                    done.result = Err(format!("Couldn't record sound: {e}"));
+                    return;
+                }
+            }
+        } else {
+            None
+        };
+        if let Some(feed) = &opts.frames {
+            let (w, h) = match even_size(w0, h0) {
+                Ok(s) => s,
+                Err(e) => {
+                    done.result = Err(e);
+                    return;
+                }
+            };
+            done.width = w;
+            done.height = h;
+            let mut last_err = String::new();
+            let tries: &[bool] = if opts.hardware { &[true, false] } else { &[false] };
+            for &hw in tries {
+                let _ = std::fs::remove_file(&opts.path);
+                let wr = match make_writer(opts, w, h, None, hw, sound.is_some()) {
+                    Ok(wr) => wr,
+                    Err(e) => {
+                        last_err = format!("{e}");
+                        continue;
+                    }
+                };
+                match run(opts, Source::Custom(feed.clone(), w, h), &wr, (0, 0), sound.as_ref(), stop, pause, done) {
+                    Ok(()) => {
+                        done.capture = "Studio";
+                        done.result = unsafe { wr.sw.Finalize() }.map_err(|e| format!("couldn't finish the file: {e}"));
+                        return;
+                    }
+                    Err((started, e)) => {
+                        last_err = e;
+                        if started {
+                            let _ = unsafe { wr.sw.Finalize() };
+                            done.result = Err(last_err);
+                            return;
+                        }
+                    }
+                }
+            }
+            let _ = std::fs::remove_file(&opts.path);
+            done.result = Err(format!("Couldn't record: {last_err}"));
+            return;
+        }
         // Keep the area on one display (the one holding most of it).
         let screen = find_screen(x, y, w0, h0).ok().flatten();
         let (gx, gy, gw, gh) = match &screen {
@@ -855,9 +1001,9 @@ mod win {
             };
             let dev = match &source {
                 Source::Gpu(d) => Some(d.dev.clone()),
-                Source::Gdi(_) => None,
+                Source::Gdi(_) | Source::Custom(..) => None,
             };
-            let wr = match make_writer(opts, w, h, dev.as_ref(), hw) {
+            let wr = match make_writer(opts, w, h, dev.as_ref(), hw, sound.is_some()) {
                 Ok(wr) => wr,
                 Err(e) => {
                     last_err = e.message().to_string();
@@ -867,7 +1013,10 @@ mod win {
                     continue;
                 }
             };
-            match run(opts, source, &wr, (gx, gy), stop, pause, done) {
+            if let Some(s) = &sound {
+                s.discard();
+            }
+            match run(opts, source, &wr, (gx, gy), sound.as_ref(), stop, pause, done) {
                 Ok(()) => {
                     done.capture = if gpu { "graphics chip" } else { "GDI" };
                     if done.encoder.is_empty() {
@@ -904,10 +1053,13 @@ mod win {
         mut source: Source,
         wr: &Writer,
         origin: (i32, i32),
+        sound: Option<&crate::audio::Capture>,
         stop: &AtomicBool,
         pause: &AtomicBool,
         done: &mut VideoDone,
     ) -> Result<(), (bool, String)> {
+        let rate = crate::audio::RATE as u64;
+        let mut audio_at: u64 = 0;
         let fps = opts.fps.clamp(1, 120);
         let mut clock = Clock::new(fps);
         let mut pointer = Pointer::new();
@@ -926,10 +1078,24 @@ mod win {
                 while pause.load(Ordering::Relaxed) && !stop.load(Ordering::Relaxed) {
                     std::thread::sleep(Duration::from_millis(30));
                 }
+                if let Some(s) = sound {
+                    s.discard();
+                }
                 continue;
             }
             let deadline = clock.deadline();
             let sample = match &mut source {
+                Source::Custom(feed, w, h) => {
+                    let now = Instant::now();
+                    if !first && deadline > now {
+                        std::thread::sleep(deadline - now);
+                    }
+                    match custom_sample(feed, *w, *h) {
+                        Ok(Some(s)) => Ok(s),
+                        Ok(None) => break,
+                        Err(e) => Err(e),
+                    }
+                }
                 Source::Gpu(d) => {
                     if !first && !d.pump(deadline) {
                         return Err((true, "the screen copy stopped".into()));
@@ -947,6 +1113,20 @@ mod win {
             let r = sample.and_then(|s| write(wr, &s, &clock, fps));
             if let Err(e) = r {
                 return Err((!first, format!("{e}")));
+            }
+            // Sound up to the end of this frame.
+            if let Some(s) = sound {
+                if first {
+                    s.discard();
+                }
+                let due = (clock.n + 1) * rate / fps as u64;
+                if due > audio_at {
+                    let pcm = s.take((due - audio_at) as usize);
+                    if let Err(e) = write_audio(wr, &pcm, audio_at) {
+                        return Err((true, format!("sound: {e}")));
+                    }
+                    audio_at = due;
+                }
             }
             if first {
                 let (n, h) = chosen_encoder(&wr.sw, wr.stream, opts.format);
@@ -1022,6 +1202,9 @@ mod win {
             let p = wide(path);
             let rd = MFCreateSourceReaderFromURL(PCWSTR(p.as_ptr()), &attrs).map_err(e)?;
             let vs = MF_SOURCE_READER_FIRST_VIDEO_STREAM.0 as u32;
+            let audio = rd.GetNativeMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM.0 as u32, 0).is_ok();
+            let _ = rd.SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS.0 as u32, false);
+            let _ = rd.SetStreamSelection(vs, true);
             let t = MFCreateMediaType().map_err(e)?;
             t.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Video).map_err(e)?;
             t.SetGUID(&MF_MT_SUBTYPE, &MFVideoFormat_RGB32).map_err(e)?;
@@ -1088,7 +1271,7 @@ mod win {
                     }
                 }
             }
-            Ok(Probe { width: w, height: h, frames, seconds: last_t as f64 / 1e7, first })
+            Ok(Probe { width: w, height: h, frames, seconds: last_t as f64 / 1e7, first, audio })
         }
     }
 }
@@ -1147,15 +1330,28 @@ mod soft {
             if !first && deadline > now {
                 std::thread::sleep(deadline - now);
             }
-            let mut img = crate::capture::grab_rect(x, y, w, h)?;
-            if opts.cursor
-                && let Some(c) = crate::capture::cursor_pos()
-            {
-                crate::capture::stamp_pointer(&mut img, ((c.0 - x) as f32, (c.1 - y) as f32));
-            }
-            let img = if img.dimensions() != (w, h) { image::imageops::resize(&img, w, h, image::imageops::FilterType::Nearest) } else { img };
-            for (d, s) in rgb.chunks_exact_mut(3).zip(img.as_raw().chunks_exact(4)) {
-                d.copy_from_slice(&s[..3]);
+            if let Some(feed) = &opts.frames {
+                // Studio frames come as BGRA.
+                let mut bgra = vec![0u8; (w * h * 4) as usize];
+                if !feed(&mut bgra) {
+                    break;
+                }
+                for (d, s) in rgb.chunks_exact_mut(3).zip(bgra.chunks_exact(4)) {
+                    d[0] = s[2];
+                    d[1] = s[1];
+                    d[2] = s[0];
+                }
+            } else {
+                let mut img = crate::capture::grab_rect(x, y, w, h)?;
+                if opts.cursor
+                    && let Some(c) = crate::capture::cursor_pos()
+                {
+                    crate::capture::stamp_pointer(&mut img, ((c.0 - x) as f32, (c.1 - y) as f32));
+                }
+                let img = if img.dimensions() != (w, h) { image::imageops::resize(&img, w, h, image::imageops::FilterType::Nearest) } else { img };
+                for (d, s) in rgb.chunks_exact_mut(3).zip(img.as_raw().chunks_exact(4)) {
+                    d.copy_from_slice(&s[..3]);
+                }
             }
             let yuv = YUVBuffer::from_rgb_source(RgbSliceU8::new(&rgb, (w as usize, h as usize)));
             let bits = enc.encode(&yuv).map_err(|e| e.to_string())?;
@@ -1288,6 +1484,7 @@ mod soft {
             frames: t.sample_count() as u64,
             seconds: t.duration().as_secs_f64(),
             first: None,
+            audio: r.tracks().len() > 1,
         })
     }
 }

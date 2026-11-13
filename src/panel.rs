@@ -97,11 +97,11 @@ impl SnagApp {
         let mid = Rect::from_min_size(full.min + vec2(108.0, 18.0), vec2(330.0, 150.0));
         ui.scope_builder(egui::UiBuilder::new().max_rect(mid), |ui| {
             egui::Grid::new("panel-grid").num_columns(2).spacing(vec2(14.0, 14.0)).show(ui, |ui| {
-                ui.label(RichText::new("Selection:").color(Color32::WHITE));
+                ui.label(RichText::new(crate::i18n::t("Selection:")).color(Color32::WHITE));
                 ui.horizontal(|ui| {
                     let p = &mut self.settings.panel;
                     if tab == 0 {
-                        ui.add_enabled(false, egui::Button::new("Area, window, menu or full screen").min_size(vec2(220.0, 24.0)));
+                        ui.add_enabled(false, egui::Button::new(crate::i18n::t("Area, window, menu or full screen")).min_size(vec2(220.0, 24.0)));
                     } else {
                         let list: &[PanelSelection] = if tab == 1 { &PanelSelection::IMAGE } else { &PanelSelection::VIDEO };
                         let cur = if tab == 1 { &mut p.selection } else { &mut p.video_selection };
@@ -116,14 +116,14 @@ impl SnagApp {
                     }
                     let fixed = tab == 1 && p.selection == PanelSelection::FixedSize;
                     ui.menu_button("...", |ui| {
-                        ui.label(RichText::new("Picking on the screen").strong());
-                        ui.checkbox(&mut self.settings.detect_objects, "Snap to buttons and menus");
-                        ui.checkbox(&mut self.settings.show_magnifier, "Magnifier");
-                        ui.checkbox(&mut self.settings.show_crosshair, "Crosshair");
+                        ui.label(RichText::new(crate::i18n::t("Picking on the screen")).strong());
+                        ui.checkbox(&mut self.settings.detect_objects, crate::i18n::t("Snap to buttons and menus"));
+                        ui.checkbox(&mut self.settings.show_magnifier, crate::i18n::t("Magnifier"));
+                        ui.checkbox(&mut self.settings.show_crosshair, crate::i18n::t("Crosshair"));
                         if fixed {
                             ui.separator();
                             ui.horizontal(|ui| {
-                                ui.label("Size");
+                                ui.label(crate::i18n::t("Size"));
                                 ui.add(egui::DragValue::new(&mut self.settings.panel.fixed_w).range(16..=8000));
                                 ui.label("x");
                                 ui.add(egui::DragValue::new(&mut self.settings.panel.fixed_h).range(16..=8000));
@@ -136,7 +136,7 @@ impl SnagApp {
                                 ui.add(egui::Slider::new(&mut self.settings.gif_max_s, 5..=300).suffix(" s").text("longest"));
                             } else {
                                 ui.add(egui::Slider::new(&mut self.settings.video_fps, 1..=120).text("frames per second"));
-                                ui.checkbox(&mut self.settings.video_hardware, "Use the graphics chip to encode");
+                                ui.checkbox(&mut self.settings.video_hardware, crate::i18n::t("Use the graphics chip to encode"));
                             }
                         }
                     })
@@ -146,7 +146,7 @@ impl SnagApp {
                 ui.end_row();
 
                 if tab == 2 {
-                    ui.label(RichText::new("Format:").color(Color32::WHITE));
+                    ui.label(RichText::new(crate::i18n::t("Format:")).color(Color32::WHITE));
                     let f = &mut self.settings.rec_format;
                     egui::ComboBox::from_id_salt("p-format").width(230.0).selected_text(f.label()).show_ui(ui, |ui| {
                         for v in crate::video::VideoFormat::ALL {
@@ -157,12 +157,12 @@ impl SnagApp {
                     });
                     ui.end_row();
                 }
-                ui.label(RichText::new("Effects:").color(Color32::WHITE));
+                ui.label(RichText::new(crate::i18n::t("Effects:")).color(Color32::WHITE));
                 let p = &mut self.settings.panel;
                 let shown = p.effect.map(|e| e.label()).unwrap_or("None");
                 ui.add_enabled_ui(tab != 2, |ui| {
                     egui::ComboBox::from_id_salt("p-fx").width(230.0).selected_text(shown).show_ui(ui, |ui| {
-                        ui.selectable_value(&mut p.effect, None, "None");
+                        ui.selectable_value(&mut p.effect, None, crate::i18n::t("None"));
                         for e in Effect::ALL {
                             ui.selectable_value(&mut p.effect, Some(e), e.label());
                         }
@@ -170,7 +170,7 @@ impl SnagApp {
                 });
                 ui.end_row();
 
-                ui.label(RichText::new("Share:").color(Color32::WHITE));
+                ui.label(RichText::new(crate::i18n::t("Share:")).color(Color32::WHITE));
                 ui.add_enabled_ui(tab != 2, |ui| {
                     egui::ComboBox::from_id_salt("p-share").width(230.0).selected_text(p.share.label()).show_ui(ui, |ui| {
                         for s in PanelShare::ALL {
@@ -208,7 +208,7 @@ impl SnagApp {
                 ui.horizontal(|ui| {
                     ui.add_space(70.0);
                     ui.add(egui::DragValue::new(&mut self.settings.panel.delay_s).range(1..=120));
-                    ui.label(RichText::new("seconds").color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("seconds")).color(TEXT_DIM));
                 });
             }
         });
@@ -260,9 +260,9 @@ impl SnagApp {
         ui.scope_builder(egui::UiBuilder::new().max_rect(bottom.shrink2(vec2(14.0, 8.0))), |ui| {
             ui.horizontal_centered(|ui| {
                 let mut run = None;
-                ui.menu_button("Presets", |ui| {
+                ui.menu_button(crate::i18n::t("Presets"), |ui| {
                     if self.settings.presets.is_empty() {
-                        ui.label(RichText::new("No presets yet").color(TEXT_DIM));
+                        ui.label(RichText::new(crate::i18n::t("No presets yet")).color(TEXT_DIM));
                     }
                     for (i, p) in self.settings.presets.iter().enumerate() {
                         let keys = if p.combo.is_set() { p.combo.label() } else { String::new() };
@@ -272,7 +272,7 @@ impl SnagApp {
                         }
                     }
                     ui.separator();
-                    if ui.button("Edit presets...").clicked() {
+                    if ui.button(crate::i18n::t("Edit presets...")).clicked() {
                         self.settings_open = true;
                         self.settings_tab = crate::app::SettingsTab::Presets;
                         ui.close();
@@ -288,11 +288,11 @@ impl SnagApp {
                     self.run_preset(&ctx, i);
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button("Settings").clicked() {
+                    if ui.button(crate::i18n::t("Settings")).clicked() {
                         self.settings_open = true;
                         open_editor = true;
                     }
-                    if ui.button("Open Editor").clicked() {
+                    if ui.button(crate::i18n::t("Open Editor")).clicked() {
                         open_editor = true;
                     }
                     ui.label(RichText::new(&self.status).color(TEXT_DIM).size(11.5));

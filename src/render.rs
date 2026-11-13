@@ -587,3 +587,14 @@ pub fn callout_body(bubble: Rect, shape: crate::settings::CalloutShape, size: f3
         }
     }
 }
+
+/// Text alone on a transparent picture (Studio's text sources).
+pub fn text_image(text: &str, size: f32, color: [u8; 4]) -> RgbaImage {
+    let size = size.clamp(6.0, 400.0);
+    let m = measure(text, size, "", false, false);
+    let (w, h) = ((m.x.ceil() as u32 + 8).max(8), (m.y.ceil() as u32 + 8).max(8));
+    let Some(mut pm) = ts::Pixmap::new(w, h) else { return RgbaImage::new(1, 1) };
+    let c = Color32::from_rgba_unmultiplied(color[0], color[1], color[2], color[3]);
+    draw_text(&mut pm, text, Pos2::new(4.0, 4.0), size, c, Some(Color32::from_black_alpha(160)), false);
+    from_pixmap(pm)
+}

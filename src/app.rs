@@ -36,6 +36,9 @@ pub static START_PANEL: AtomicBool = AtomicBool::new(false);
 pub static UI_TEST: AtomicBool = AtomicBool::new(false);
 
 mod uitest;
+pub(crate) mod ribbon;
+pub(crate) mod studio_ui;
+pub(crate) mod updates_ui;
 /// The editor window's smallest size (lifted while it is the panel or the recording bar).
 pub const MIN_SIZE: Vec2 = Vec2::new(900.0, 560.0);
 
@@ -134,6 +137,7 @@ pub(crate) enum SettingsTab {
     Hotkeys,
     Presets,
     Ai,
+    Language,
 }
 
 /// The small always-on-top bar shown while something runs in the background.
@@ -181,6 +185,8 @@ pub(crate) struct GifEditor {
 }
 
 pub struct SnagApp {
+    /// The ribbon, Studio, languages, updates and the HTTP server for AI apps.
+    pub(crate) x: ribbon::Extra,
     pub(crate) settings: Settings,
     saved_settings: Settings,
     pub(crate) persist: bool,
@@ -298,6 +304,7 @@ impl SnagApp {
         let (tray_tx, tray_rx) = channel();
         fonts::start_scan(cc.egui_ctx.clone());
         let mut app = Self {
+            x: ribbon::Extra::default(),
             saved_settings: settings.clone(),
             settings,
             persist: !check_run,
@@ -888,7 +895,7 @@ impl SnagApp {
     /// The options a video recording of `rect` gets from the settings.
     pub(crate) fn video_opts(&self, rect: (i32, i32, u32, u32)) -> crate::video::VideoOpts {
         let s = &self.settings;
-        let folder = PathBuf::from(&s.library_folder).join("Recordings");
+        let folder = PathBuf::from(&s.video_folder);
         let name = chrono::Local::now().format("Recording_%Y-%m-%d_%H-%M-%S").to_string();
         crate::video::VideoOpts {
             rect,
@@ -899,6 +906,9 @@ impl SnagApp {
             cursor: s.gif_cursor,
             max_s: s.video_max_s,
             path: crate::settings::unique_path(&folder, &name, s.rec_format.ext()),
+            audio: s.audio_source,
+            mic: s.audio_mic.clone(),
+            frames: None,
         }
     }
 
@@ -981,7 +991,7 @@ impl SnagApp {
     pub(crate) fn start_gif(&mut self, ctx: &egui::Context, rect: (i32, i32, u32, u32)) {
         let stop = Arc::new(AtomicBool::new(false));
         self.job_stop = Some(stop.clone());
-        let folder = PathBuf::from(&self.settings.library_folder).join("Recordings");
+        let folder = PathBuf::from(&self.settings.video_folder);
         let name = chrono::Local::now().format("Recording_%Y-%m-%d_%H-%M-%S").to_string();
         let path = crate::settings::unique_path(&folder, &name, "gif");
         self.enter_mini(ctx, Mini::Gif);
@@ -1900,15 +1910,15 @@ impl SnagApp {
     fn menu_bar(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         egui::MenuBar::new().ui(ui, |ui| {
-            ui.menu_button("File", |ui| self.file_menu(ui));
-            ui.menu_button("Capture", |ui| self.capture_menu(ui, &ctx));
-            ui.menu_button("Record", |ui| self.record_menu(ui, &ctx));
-            ui.menu_button("Edit", |ui| self.edit_menu(ui));
-            ui.menu_button("Image", |ui| self.image_menu(ui));
-            ui.menu_button("Tools", |ui| self.tools_menu(ui, &ctx));
-            ui.menu_button("Share", |ui| self.share_menu(ui));
-            ui.menu_button("View", |ui| self.view_menu(ui, &ctx));
-            ui.menu_button("Help", |ui| {
+            ui.menu_button(crate::i18n::t("File"), |ui| self.file_menu(ui));
+            ui.menu_button(crate::i18n::t("Capture"), |ui| self.capture_menu(ui, &ctx));
+            ui.menu_button(crate::i18n::t("Record"), |ui| self.record_menu(ui, &ctx));
+            ui.menu_button(crate::i18n::t("Edit"), |ui| self.edit_menu(ui));
+            ui.menu_button(crate::i18n::t("Image"), |ui| self.image_menu(ui));
+            ui.menu_button(crate::i18n::t("Tools"), |ui| self.tools_menu(ui, &ctx));
+            ui.menu_button(crate::i18n::t("Share"), |ui| self.share_menu(ui));
+            ui.menu_button(crate::i18n::t("View"), |ui| self.view_menu(ui, &ctx));
+            ui.menu_button(crate::i18n::t("Help"), |ui| {
                 if item(ui, "Getting started", "") {
                     self.dialog = Some(crate::windows::Dialog::GettingStarted);
                 }
@@ -1937,13 +1947,13 @@ impl SnagApp {
         if item(ui, "New image...", "Ctrl+N") {
             self.dialog = Some(crate::windows::Dialog::new_image());
         }
-        ui.menu_button("New from template", |ui| self.template_menu(ui));
+        ui.menu_button(crate::i18n::t("New from template"), |ui| self.template_menu(ui));
         if item(ui, "Open picture or project...", "Ctrl+O") {
             self.open_dialog();
         }
-        ui.menu_button("Open recent", |ui| {
+        ui.menu_button(crate::i18n::t("Open recent"), |ui| {
             if self.settings.recent_files.is_empty() {
-                ui.label(RichText::new("Nothing opened or saved yet").color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Nothing opened or saved yet")).color(TEXT_DIM));
             }
             let mut open = None;
             for f in &self.settings.recent_files {
@@ -1994,10 +2004,10 @@ impl SnagApp {
         if item_on(ui, has, "Quick save to folder", "Ctrl+Shift+S") {
             self.quick_save();
         }
-        ui.menu_button("Export guide", |ui| {
-            ui.label(RichText::new("From recorded steps, or all of Recent").color(TEXT_DIM));
+        ui.menu_button(crate::i18n::t("Export guide"), |ui| {
+            ui.label(RichText::new(crate::i18n::t("From recorded steps, or all of Recent")).color(TEXT_DIM));
             ui.horizontal(|ui| {
-                ui.label("Title");
+                ui.label(crate::i18n::t("Title"));
                 ui.text_edit_singleline(&mut self.guide_title);
             });
             if item(ui, "PDF document...", "") {
@@ -2047,7 +2057,7 @@ impl SnagApp {
         if item_on(ui, self.last_region.is_some(), Action::LastArea.label(), &hk(&self.settings, Action::LastArea)) {
             act = Some(Action::LastArea);
         }
-        ui.menu_button("Fun shapes", |ui| {
+        ui.menu_button(crate::i18n::t("Fun shapes"), |ui| {
             for s in CutShape::ALL {
                 if item(ui, s.label(), "") {
                     pick = Some(CaptureKind::Pick(s, PickPurpose::Capture));
@@ -2071,7 +2081,7 @@ impl SnagApp {
         if item(ui, "Capture from a file...", "") {
             self.open_dialog();
         }
-        ui.menu_button("Fixed size", |ui| {
+        ui.menu_button(crate::i18n::t("Fixed size"), |ui| {
             for (w, h) in [(640, 480), (800, 600), (1024, 768), (1280, 720), (1920, 1080), (500, 500)] {
                 if item(ui, &format!("{w} x {h}"), "") {
                     pick = Some(CaptureKind::Fixed(w, h));
@@ -2079,7 +2089,7 @@ impl SnagApp {
             }
         });
         ui.separator();
-        ui.menu_button("Screens", |ui| {
+        ui.menu_button(crate::i18n::t("Screens"), |ui| {
             if self.monitors_at.is_none_or(|t| t.elapsed().as_secs_f32() > 2.0) {
                 self.monitors = capture::monitors();
                 self.monitors_at = Some(Instant::now());
@@ -2092,13 +2102,13 @@ impl SnagApp {
                 }
             }
         });
-        ui.menu_button("Window list", |ui| {
+        ui.menu_button(crate::i18n::t("Window list"), |ui| {
             if self.windows_at.is_none_or(|t| t.elapsed().as_secs_f32() > 2.0) {
                 self.windows = capture::list_windows();
                 self.windows_at = Some(Instant::now());
             }
             if self.windows.is_empty() {
-                ui.label(RichText::new("No windows found").color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("No windows found")).color(TEXT_DIM));
             }
             egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
                 for w in &self.windows {
@@ -2109,7 +2119,7 @@ impl SnagApp {
                 }
             });
         });
-        ui.menu_button("Presets", |ui| {
+        ui.menu_button(crate::i18n::t("Presets"), |ui| {
             let mut run = None;
             for (i, p) in self.settings.presets.iter().enumerate() {
                 let keys = if p.combo.is_set() { p.combo.label() } else { String::new() };
@@ -2133,7 +2143,7 @@ impl SnagApp {
             }
         });
         ui.separator();
-        ui.menu_button("Delay", |ui| {
+        ui.menu_button(crate::i18n::t("Delay"), |ui| {
             for d in [0u64, 1, 2, 3, 5, 10, 15, 30] {
                 let label = if d == 0 { "No delay".to_string() } else { format!("{d} seconds") };
                 if ui.radio(self.settings.delay_s == d, label).clicked() {
@@ -2145,15 +2155,15 @@ impl SnagApp {
         if item(ui, "Timer: scheduled and repeated captures...", "") {
             self.timer_open = true;
         }
-        ui.menu_button("After capture", |ui| {
-            ui.checkbox(&mut self.settings.after_show_editor, "Show Snagster with the picture");
-            ui.checkbox(&mut self.settings.after_library, "Add to the library");
-            ui.checkbox(&mut self.settings.after_copy, "Copy to clipboard");
-            ui.checkbox(&mut self.settings.after_save, "Save to the save folder");
-            ui.checkbox(&mut self.settings.after_pin, "Pin to screen");
+        ui.menu_button(crate::i18n::t("After capture"), |ui| {
+            ui.checkbox(&mut self.settings.after_show_editor, crate::i18n::t("Show Snagster with the picture"));
+            ui.checkbox(&mut self.settings.after_library, crate::i18n::t("Add to the library"));
+            ui.checkbox(&mut self.settings.after_copy, crate::i18n::t("Copy to clipboard"));
+            ui.checkbox(&mut self.settings.after_save, crate::i18n::t("Save to the save folder"));
+            ui.checkbox(&mut self.settings.after_pin, crate::i18n::t("Pin to screen"));
         });
-        ui.checkbox(&mut self.settings.include_cursor, "Include the mouse pointer (movable)");
-        ui.checkbox(&mut self.settings.hide_window, "Hide Snagster while capturing");
+        ui.checkbox(&mut self.settings.include_cursor, crate::i18n::t("Include the mouse pointer (movable)"));
+        ui.checkbox(&mut self.settings.hide_window, crate::i18n::t("Hide Snagster while capturing"));
         if let Some(a) = act {
             ui.close();
             self.do_action(ctx, a);
@@ -2186,14 +2196,14 @@ impl SnagApp {
         if self.mini == Some(Mini::Video) && item(ui, if self.paused() { "Resume recording" } else { "Pause recording" }, "") {
             self.toggle_pause();
         }
-        ui.menu_button("Record as", |ui| {
+        ui.menu_button(crate::i18n::t("Record as"), |ui| {
             for f in crate::video::VideoFormat::ALL {
                 if f.available() && ui.radio(self.settings.rec_format == f, f.label()).clicked() {
                     self.settings.rec_format = f;
                 }
             }
         });
-        ui.menu_button("Frames per second", |ui| {
+        ui.menu_button(crate::i18n::t("Frames per second"), |ui| {
             for fps in [1, 5, 10, 15, 24, 30, 50, 60, 90, 120] {
                 if ui.radio(self.settings.video_fps == fps, format!("{fps} fps")).clicked() {
                     self.settings.video_fps = fps;
@@ -2237,7 +2247,7 @@ impl SnagApp {
         let imgs: Vec<RgbaImage> = self.entries.iter().map(|e| render::compose(&e.doc)).collect();
         let frames = export::letterbox(&imgs, self.settings.gif_max_width);
         let ms = (self.settings.slideshow_s.clamp(0.2, 30.0) * 1000.0) as u32;
-        let folder = PathBuf::from(&self.settings.library_folder).join("Recordings");
+        let folder = PathBuf::from(&self.settings.video_folder);
         let name = chrono::Local::now().format("Slideshow_%Y-%m-%d_%H-%M-%S").to_string();
         let path = crate::settings::unique_path(&folder, &name, "gif");
         let list: Vec<(RgbaImage, u32)> = frames.into_iter().map(|f| (f, ms)).collect();
@@ -2312,7 +2322,7 @@ impl SnagApp {
             self.remove_current();
         }
         ui.separator();
-        ui.menu_button("Tool", |ui| {
+        ui.menu_button(crate::i18n::t("Tool"), |ui| {
             for t in Tool::ALL {
                 if ui
                     .add(egui::Button::new(t.label()).selected(self.tool == t).shortcut_text(t.key()))
@@ -2457,10 +2467,10 @@ impl SnagApp {
             self.open_folder(&p);
         }
         ui.separator();
-        ui.label(RichText::new("Cloud folders (point the library or save folder here to sync):").color(TEXT_DIM));
+        ui.label(RichText::new(crate::i18n::t("Cloud folders (point the library or save folder here to sync):")).color(TEXT_DIM));
         let clouds = crate::settings::cloud_folders();
         if clouds.is_empty() {
-            ui.label(RichText::new("No OneDrive, Dropbox, Google Drive or iCloud folder found.").color(TEXT_DIM));
+            ui.label(RichText::new(crate::i18n::t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(TEXT_DIM));
         }
         for (name, p) in clouds {
             if item_on(ui, has, &format!("Save to {name}"), "")
@@ -2488,7 +2498,7 @@ impl SnagApp {
             self.set_zoom(ctx, Some(0.8));
         }
         ui.separator();
-        ui.menu_button("Customize toolbar", |ui| {
+        ui.menu_button(crate::i18n::t("Customize toolbar"), |ui| {
             for t in Tool::ALL {
                 let mut on = !self.settings.hidden_tools.iter().any(|h| h == t.label());
                 if ui.checkbox(&mut on, t.label()).changed() {
@@ -2499,12 +2509,12 @@ impl SnagApp {
                     }
                 }
             }
-            if ui.button("Show all").clicked() {
+            if ui.button(crate::i18n::t("Show all")).clicked() {
                 self.settings.hidden_tools.clear();
             }
         });
-        ui.checkbox(&mut self.settings.show_side_panel, "Show options panel");
-        ui.checkbox(&mut self.settings.show_tray, "Show Recent pictures");
+        ui.checkbox(&mut self.settings.show_side_panel, crate::i18n::t("Show options panel"));
+        ui.checkbox(&mut self.settings.show_tray, crate::i18n::t("Show Recent pictures"));
         if item(ui, "Capture panel", "") {
             self.enter_panel(ctx);
         }
@@ -2516,11 +2526,11 @@ impl SnagApp {
         ui.horizontal_centered(|ui| {
             ui.add_space(6.0);
             logo(ui, 26.0);
-            ui.label(RichText::new("Snagster").size(20.0).strong().color(Color32::WHITE));
+            ui.label(RichText::new(crate::i18n::t("Snagster")).size(20.0).strong().color(Color32::WHITE));
             ui.add_space(12.0);
             let busy = self.capturing.is_some();
             let ctx = ui.ctx().clone();
-            let primary = egui::Button::new(RichText::new("Capture").color(Color32::WHITE).strong())
+            let primary = egui::Button::new(RichText::new(crate::i18n::t("Capture")).color(Color32::WHITE).strong())
                 .fill(ACCENT)
                 .min_size(vec2(0.0, 30.0));
             if ui
@@ -2530,20 +2540,20 @@ impl SnagApp {
             {
                 self.do_action(&ctx, Action::AllInOne);
             }
-            if ui.add_enabled(!busy, egui::Button::new("Window").min_size(vec2(0.0, 30.0))).clicked() {
+            if ui.add_enabled(!busy, egui::Button::new(crate::i18n::t("Window")).min_size(vec2(0.0, 30.0))).clicked() {
                 self.do_action(&ctx, Action::Window);
             }
-            if ui.add_enabled(!busy, egui::Button::new("Screen").min_size(vec2(0.0, 30.0))).clicked() {
+            if ui.add_enabled(!busy, egui::Button::new(crate::i18n::t("Screen")).min_size(vec2(0.0, 30.0))).clicked() {
                 self.do_action(&ctx, Action::Screen);
             }
-            if ui.add_enabled(!busy, egui::Button::new("Scrolling").min_size(vec2(0.0, 30.0))).clicked() {
+            if ui.add_enabled(!busy, egui::Button::new(crate::i18n::t("Scrolling")).min_size(vec2(0.0, 30.0))).clicked() {
                 self.do_action(&ctx, Action::Scrolling);
             }
             let rec = if self.is_recording() { "Stop recording" } else { "Record" };
             if ui.add(egui::Button::new(rec).min_size(vec2(0.0, 30.0))).clicked() {
                 self.do_action(&ctx, Action::RecordGif);
             }
-            ui.label(RichText::new("Delay").color(TEXT_DIM));
+            ui.label(RichText::new(crate::i18n::t("Delay")).color(TEXT_DIM));
             egui::ComboBox::from_id_salt("delay")
                 .width(56.0)
                 .selected_text(if self.settings.delay_s == 0 { "None".to_string() } else { format!("{} s", self.settings.delay_s) })
@@ -2556,16 +2566,16 @@ impl SnagApp {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(8.0);
                 let has = self.current.is_some();
-                let save = egui::Button::new(RichText::new("Save").color(Color32::WHITE).strong())
+                let save = egui::Button::new(RichText::new(crate::i18n::t("Save")).color(Color32::WHITE).strong())
                     .fill(Color32::from_rgb(48, 164, 108))
                     .min_size(vec2(60.0, 30.0));
                 if ui.add_enabled(has, save).on_hover_text("Save as a picture or project (Ctrl+S)").clicked() {
                     self.save_as();
                 }
-                if ui.add_enabled(has, egui::Button::new("Copy").min_size(vec2(52.0, 30.0))).clicked() {
+                if ui.add_enabled(has, egui::Button::new(crate::i18n::t("Copy")).min_size(vec2(52.0, 30.0))).clicked() {
                     self.copy();
                 }
-                if ui.add_enabled(has, egui::Button::new("Pin").min_size(vec2(40.0, 30.0))).clicked() {
+                if ui.add_enabled(has, egui::Button::new(crate::i18n::t("Pin")).min_size(vec2(40.0, 30.0))).clicked() {
                     self.pin_current();
                 }
                 ui.separator();
@@ -2573,21 +2583,21 @@ impl SnagApp {
                     .current
                     .map(|i| (!self.entries[i].redo.is_empty(), !self.entries[i].undo.is_empty()))
                     .unwrap_or((false, false));
-                if ui.add_enabled(can_redo, egui::Button::new("Redo")).on_hover_text("Ctrl+Y").clicked() {
+                if ui.add_enabled(can_redo, egui::Button::new(crate::i18n::t("Redo"))).on_hover_text("Ctrl+Y").clicked() {
                     self.redo();
                 }
-                if ui.add_enabled(can_undo, egui::Button::new("Undo")).on_hover_text("Ctrl+Z").clicked() {
+                if ui.add_enabled(can_undo, egui::Button::new(crate::i18n::t("Undo"))).on_hover_text("Ctrl+Z").clicked() {
                     self.undo();
                 }
                 ui.separator();
-                if ui.button("Panel").on_hover_text("The compact capture panel (also from the icon in the taskbar corner)").clicked() {
+                if ui.button(crate::i18n::t("Panel")).on_hover_text("The compact capture panel (also from the icon in the taskbar corner)").clicked() {
                     let c = ui.ctx().clone();
                     self.enter_panel(&c);
                 }
-                if ui.button("Library").on_hover_text("Every capture, searchable (Ctrl+L)").clicked() {
+                if ui.button(crate::i18n::t("Library")).on_hover_text("Every capture, searchable (Ctrl+L)").clicked() {
                     self.library_open = true;
                 }
-                if ui.button("Settings").on_hover_text("Ctrl+,").clicked() {
+                if ui.button(crate::i18n::t("Settings")).on_hover_text("Ctrl+,").clicked() {
                     self.settings_open = true;
                 }
             });
@@ -2615,11 +2625,11 @@ impl SnagApp {
                 ui.painter().text(
                     pos2(rect.center().x, rect.bottom() - 8.0),
                     Align2::CENTER_CENTER,
-                    t.label(),
+                    crate::i18n::t(t.label()),
                     FontId::proportional(10.0),
                     fg,
                 );
-                let resp = resp.on_hover_text(format!("{} ({})\n{}", t.label(), t.key(), t.hint()));
+                let resp = resp.on_hover_text(format!("{} ({})\n{}", crate::i18n::t(t.label()), t.key(), crate::i18n::t(t.hint())));
                 if resp.clicked() {
                     self.commit_text();
                     self.tool = t;
@@ -2637,7 +2647,7 @@ impl SnagApp {
     fn side_panel(&mut self, ui: &mut egui::Ui) {
         egui::ScrollArea::vertical().show(ui, |ui| {
             ui.add_space(10.0);
-            section(ui, "Color");
+            section(ui, crate::i18n::t("Color"));
             let mut chosen = None;
             let cur = self.color();
             let palette = self.settings.palette;
@@ -2656,7 +2666,7 @@ impl SnagApp {
                         chosen = Some(c);
                     }
                     resp.on_hover_text("Click to use. Right-click puts the current color here.").context_menu(|ui| {
-                        if ui.button("Put the current color here").clicked() {
+                        if ui.button(crate::i18n::t("Put the current color here")).clicked() {
                             edit_slot = Some((i, cur));
                             ui.close();
                         }
@@ -2681,7 +2691,7 @@ impl SnagApp {
                 self.set_color(c);
             }
             ui.horizontal(|ui| {
-                ui.label(RichText::new("Theme").color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Theme")).color(TEXT_DIM));
                 let mut apply = None;
                 egui::ComboBox::from_id_salt("theme").width(120.0).selected_text("Choose...").show_ui(ui, |ui| {
                     for (i, t) in self.settings.themes.iter().enumerate() {
@@ -2701,39 +2711,39 @@ impl SnagApp {
                 }
             });
             ui.add_space(10.0);
-            section(ui, "Size");
+            section(ui, crate::i18n::t("Size"));
             ui.add(egui::Slider::new(&mut self.settings.width, 1.0..=24.0).step_by(1.0).suffix(" px"));
 
             let t = self.tool;
             ui.add_space(6.0);
             if matches!(t, Tool::Arrow | Tool::Line | Tool::Rect | Tool::Ellipse | Tool::Pen | Tool::Text | Tool::Callout | Tool::Step) {
-                ui.checkbox(&mut self.settings.shadow, "Drop shadow");
+                ui.checkbox(&mut self.settings.shadow, crate::i18n::t("Drop shadow"));
             }
             if matches!(t, Tool::Rect | Tool::Ellipse) {
-                ui.checkbox(&mut self.settings.fill, "Fill boxes and ovals");
+                ui.checkbox(&mut self.settings.fill, crate::i18n::t("Fill boxes and ovals"));
             }
             if t == Tool::Rect {
-                ui.label(RichText::new("Rounded corners").color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Rounded corners")).color(TEXT_DIM));
                 ui.add(egui::Slider::new(&mut self.settings.corner_radius, 0.0..=60.0).step_by(1.0).suffix(" px"));
             }
             if matches!(t, Tool::Text | Tool::Callout | Tool::Select) {
                 self.font_picker(ui);
                 if t == Tool::Text {
-                    ui.checkbox(&mut self.settings.text_background, "Text on a colored box");
+                    ui.checkbox(&mut self.settings.text_background, crate::i18n::t("Text on a colored box"));
                 }
                 ui.label(RichText::new(format!("Text size {:.0} px", doc::text_size(self.settings.width))).color(TEXT_DIM));
             }
             if t == Tool::Blur {
-                ui.label(RichText::new("Pixel block size").color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Pixel block size")).color(TEXT_DIM));
                 ui.add(egui::Slider::new(&mut self.settings.blur_block, 4..=48).suffix(" px"));
             }
             if t == Tool::Magnify {
-                ui.label(RichText::new("Magnification").color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Magnification")).color(TEXT_DIM));
                 ui.add(egui::Slider::new(&mut self.settings.magnify_zoom, 1.5..=6.0).suffix(" x"));
             }
             if t == Tool::Step {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("Style").color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("Style")).color(TEXT_DIM));
                     egui::ComboBox::from_id_salt("stepstyle").selected_text(self.settings.step_style.label()).show_ui(ui, |ui| {
                         for s in crate::settings::StepStyle::ALL {
                             ui.selectable_value(&mut self.settings.step_style, s, s.label());
@@ -2741,7 +2751,7 @@ impl SnagApp {
                     });
                 });
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("First").color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("First")).color(TEXT_DIM));
                     ui.add(egui::DragValue::new(&mut self.settings.step_start).range(1..=999));
                 });
                 if let Some(i) = self.current {
@@ -2756,23 +2766,23 @@ impl SnagApp {
 
             if self.selected.is_some() {
                 ui.add_space(10.0);
-                section(ui, "Selected mark");
-                ui.label(RichText::new("Pick a color to recolor it. [ and ] change its size.").color(TEXT_DIM));
+                section(ui, crate::i18n::t("Selected mark"));
+                ui.label(RichText::new(crate::i18n::t("Pick a color to recolor it. [ and ] change its size.")).color(TEXT_DIM));
                 ui.horizontal(|ui| {
-                    if ui.button("Smaller").clicked() {
+                    if ui.button(crate::i18n::t("Smaller")).clicked() {
                         self.scale_selected(1.0 / 1.15);
                     }
-                    if ui.button("Bigger").clicked() {
+                    if ui.button(crate::i18n::t("Bigger")).clicked() {
                         self.scale_selected(1.15);
                     }
-                    if ui.button("Delete").clicked() {
+                    if ui.button(crate::i18n::t("Delete")).clicked() {
                         self.delete_selected();
                     }
                 });
             }
 
             ui.add_space(10.0);
-            section(ui, "View");
+            section(ui, crate::i18n::t("View"));
             let ctx = ui.ctx().clone();
             ui.horizontal(|ui| {
                 if ui.selectable_label(self.zoom.is_none(), "Fit").clicked() {
@@ -2801,7 +2811,7 @@ impl SnagApp {
     }
 
     fn font_picker(&mut self, ui: &mut egui::Ui) {
-        ui.label(RichText::new("Font").color(TEXT_DIM));
+        ui.label(RichText::new(crate::i18n::t("Font")).color(TEXT_DIM));
         let shown = if self.settings.font.is_empty() { "Default".to_string() } else { self.settings.font.clone() };
         let families = fonts::families();
         let mut chosen: Option<String> = None;
@@ -2812,7 +2822,7 @@ impl SnagApp {
             }
             match &families {
                 None => {
-                    ui.label(RichText::new("Reading the installed fonts...").color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("Reading the installed fonts...")).color(TEXT_DIM));
                 }
                 Some(list) => {
                     let q = self.font_query.to_lowercase();
@@ -2917,7 +2927,7 @@ impl SnagApp {
             ui.vertical(|ui| {
                 ui.set_width(250.0);
                 ui.add_space(8.0);
-                ui.label(RichText::new("Recent").strong().color(Color32::WHITE));
+                ui.label(RichText::new(crate::i18n::t("Recent")).strong().color(Color32::WHITE));
                 ui.add(egui::Label::new(RichText::new(&self.status).color(TEXT_DIM).size(12.5)).wrap());
             });
             ui.separator();
@@ -2928,7 +2938,7 @@ impl SnagApp {
             egui::ScrollArea::horizontal().show(ui, |ui| {
                 ui.horizontal(|ui| {
                     if self.entries.is_empty() {
-                        ui.label(RichText::new("Your captures show up here.").color(TEXT_DIM));
+                        ui.label(RichText::new(crate::i18n::t("Your captures show up here.")).color(TEXT_DIM));
                     }
                     for i in (0..self.entries.len()).rev() {
                         let (rect, resp) = ui.allocate_exact_size(vec2(124.0, 84.0), Sense::click());
@@ -2959,11 +2969,11 @@ impl SnagApp {
                             switch = Some(i);
                         }
                         resp.context_menu(|ui| {
-                            if ui.button("Pin to screen").clicked() {
+                            if ui.button(crate::i18n::t("Pin to screen")).clicked() {
                                 pin = Some(i);
                                 ui.close();
                             }
-                            if ui.button("Remove from Recent").clicked() {
+                            if ui.button(crate::i18n::t("Remove from Recent")).clicked() {
                                 remove = Some(i);
                                 ui.close();
                             }
@@ -3253,19 +3263,19 @@ impl SnagApp {
             }
         }
         resp.context_menu(|ui| {
-            if ui.button("Copy picture").clicked() {
+            if ui.button(crate::i18n::t("Copy picture")).clicked() {
                 self.copy();
                 ui.close();
             }
-            if ui.button("Pin to screen").clicked() {
+            if ui.button(crate::i18n::t("Pin to screen")).clicked() {
                 self.pin_current();
                 ui.close();
             }
-            if self.selected.is_some() && ui.button("Delete mark").clicked() {
+            if self.selected.is_some() && ui.button(crate::i18n::t("Delete mark")).clicked() {
                 self.delete_selected();
                 ui.close();
             }
-            if ui.button("Clear all marks").clicked() {
+            if ui.button(crate::i18n::t("Clear all marks")).clicked() {
                 self.clear_marks();
                 ui.close();
             }
@@ -3508,7 +3518,7 @@ impl SnagApp {
             ui.label(RichText::new(text).color(Color32::WHITE).strong());
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(10.0);
-                let stop = egui::Button::new(RichText::new("Stop").color(Color32::WHITE).strong()).fill(Color32::from_rgb(229, 72, 77));
+                let stop = egui::Button::new(RichText::new(crate::i18n::t("Stop")).color(Color32::WHITE).strong()).fill(Color32::from_rgb(229, 72, 77));
                 if ui.add(stop).clicked() {
                     match self.mini {
                         Some(Mini::Steps) => self.stop_steps(&ctx),
@@ -3563,8 +3573,23 @@ impl SnagApp {
     }
 }
 
-impl eframe::App for SnagApp {
-    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+impl SnagApp {
+    fn logic_body(&mut self, ctx: &egui::Context) {
+        self.apply_language(ctx);
+        self.poll_updates(ctx);
+        // The HTTP server for AI apps runs while it's switched on in Settings.
+        let want = self.settings.mcp_http.then(|| (self.settings.mcp_port, self.settings.mcp_token.clone()));
+        if want != self.x.mcp_wanted && !UI_TEST.load(Ordering::Relaxed) {
+            self.x.mcp_server = None;
+            self.x.mcp_error = None;
+            if let Some((port, token)) = &want {
+                match crate::mcp_http::start(*port, token) {
+                    Ok(s) => self.x.mcp_server = Some(s),
+                    Err(e) => self.x.mcp_error = Some(e),
+                }
+            }
+            self.x.mcp_wanted = want;
+        }
         if !self.startup_done {
             self.startup_done = true;
             if self.persist {
@@ -3613,7 +3638,7 @@ impl eframe::App for SnagApp {
         }
     }
 
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+    fn ui_body(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         if self.overlay.is_some() {
             egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.handle_overlay(ui));
@@ -3637,13 +3662,19 @@ impl eframe::App for SnagApp {
         }
         self.shortcuts(&ctx);
 
-        egui::Panel::top("menubar")
-            .frame(egui::Frame::new().fill(BG_DARK).inner_margin(egui::Margin::symmetric(8, 3)))
-            .show(ui, |ui| self.menu_bar(ui));
-        egui::Panel::top("top")
-            .exact_size(52.0)
-            .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(6, 0)))
-            .show(ui, |ui| self.top_bar(ui));
+        egui::Panel::top("ribbon")
+            .frame(egui::Frame::new().fill(crate::look::BAND))
+            .show(ui, |ui| self.ribbon(ui));
+        self.language_window(&ctx);
+        self.update_window(&ctx);
+        if self.x.tab == ribbon::RibbonTab::Studio {
+            self.studio_view(ui);
+            self.dialog_window(&ctx);
+            self.settings_window(&ctx);
+            self.help_windows(&ctx);
+            self.library_window(&ctx);
+            return;
+        }
         if self.settings.show_tray {
             egui::Panel::bottom("tray")
                 .exact_size(112.0)
@@ -3692,7 +3723,7 @@ pub(crate) fn item(ui: &mut egui::Ui, label: &str, keys: &str) -> bool {
 }
 
 pub(crate) fn item_on(ui: &mut egui::Ui, enabled: bool, label: &str, keys: &str) -> bool {
-    let b = egui::Button::new(label).shortcut_text(keys);
+    let b = egui::Button::new(crate::i18n::tr(label)).shortcut_text(keys);
     let clicked = ui.add_enabled(enabled, b).clicked();
     if clicked {
         ui.close();
@@ -4569,40 +4600,40 @@ impl SnagApp {
         let t = self.tool;
         if t == Tool::Arrow {
             ui.horizontal(|ui| {
-                ui.label(RichText::new("Heads").color(TEXT_DIM));
-                ui.selectable_value(&mut self.settings.arrow_heads, 0, "none");
-                ui.selectable_value(&mut self.settings.arrow_heads, 1, "end");
-                ui.selectable_value(&mut self.settings.arrow_heads, 2, "both");
+                ui.label(RichText::new(crate::i18n::t("Heads")).color(TEXT_DIM));
+                ui.selectable_value(&mut self.settings.arrow_heads, 0, crate::i18n::t("none"));
+                ui.selectable_value(&mut self.settings.arrow_heads, 1, crate::i18n::t("end"));
+                ui.selectable_value(&mut self.settings.arrow_heads, 2, crate::i18n::t("both"));
             });
         }
         if matches!(t, Tool::Text | Tool::Callout) {
             ui.horizontal(|ui| {
-                ui.label(RichText::new("Align").color(TEXT_DIM));
-                ui.selectable_value(&mut self.settings.text_align, 0, "left");
-                ui.selectable_value(&mut self.settings.text_align, 1, "center");
-                ui.selectable_value(&mut self.settings.text_align, 2, "right");
+                ui.label(RichText::new(crate::i18n::t("Align")).color(TEXT_DIM));
+                ui.selectable_value(&mut self.settings.text_align, 0, crate::i18n::t("left"));
+                ui.selectable_value(&mut self.settings.text_align, 1, crate::i18n::t("center"));
+                ui.selectable_value(&mut self.settings.text_align, 2, crate::i18n::t("right"));
             });
         }
         if t == Tool::Text {
-            ui.checkbox(&mut self.settings.text_outline, "Outline around letters");
+            ui.checkbox(&mut self.settings.text_outline, crate::i18n::t("Outline around letters"));
         }
         if t == Tool::Callout {
             ui.horizontal(|ui| {
-                ui.label(RichText::new("Shape").color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Shape")).color(TEXT_DIM));
                 for (s, l) in [(CalloutShape::Rounded, "rounded"), (CalloutShape::Rectangle, "box"), (CalloutShape::Oval, "oval")] {
                     ui.selectable_value(&mut self.settings.callout_shape, s, l);
                 }
             });
-            ui.checkbox(&mut self.settings.callout_outline, "Darker outline");
+            ui.checkbox(&mut self.settings.callout_outline, crate::i18n::t("Darker outline"));
         }
         if t == Tool::Blur {
             ui.horizontal(|ui| {
-                ui.label(RichText::new("Type").color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Type")).color(TEXT_DIM));
                 for m in BlurMode::ALL {
                     ui.selectable_value(&mut self.settings.blur_mode, m, m.label());
                 }
             });
-            if ui.button("Smart redact this picture").clicked()
+            if ui.button(crate::i18n::t("Smart redact this picture")).clicked()
                 && let Some(i) = self.current
             {
                 let img = render::compose(&self.entries[i].doc);
@@ -4614,7 +4645,7 @@ impl SnagApp {
         }
         // Quick Styles: saved looks, one click away.
         ui.add_space(8.0);
-        section(ui, "Quick styles");
+        section(ui, crate::i18n::t("Quick styles"));
         let mut apply = None;
         let mut remove = None;
         ui.horizontal_wrapped(|ui| {
@@ -4634,7 +4665,7 @@ impl SnagApp {
                     apply = Some(i);
                 }
                 resp.on_hover_text("Click to use. Right-click to remove.").context_menu(|ui| {
-                    if ui.button("Remove this style").clicked() {
+                    if ui.button(crate::i18n::t("Remove this style")).clicked() {
                         remove = Some(i);
                         ui.close();
                     }
@@ -4657,5 +4688,33 @@ impl SnagApp {
         if let Some(i) = remove {
             self.settings.quick_styles.remove(i);
         }
+    }
+}
+
+impl eframe::App for SnagApp {
+    // A mistake in one frame must not close the window and lose the person's pictures: it is
+    // written to crash.log (by the panic hook) and shown in the status line, and the next frame
+    // carries on.
+    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if let Err(e) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.logic_body(ctx))) {
+            self.recovered(e);
+        }
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        if let Err(e) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.ui_body(ui))) {
+            self.recovered(e);
+        }
+    }
+}
+
+impl SnagApp {
+    fn recovered(&mut self, e: Box<dyn std::any::Any + Send>) {
+        let msg = e.downcast_ref::<String>().cloned().or_else(|| e.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
+        self.status = format!("Something went wrong and was skipped ({msg}). Details are in crash.log (Help > Problem reports).");
+        // Whatever was half-done is dropped, so it can't fail again every frame.
+        self.overlay = None;
+        self.text_edit = None;
+        self.drag = Drag::None;
     }
 }

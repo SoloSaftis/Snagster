@@ -60,7 +60,7 @@ fn parse(id: &str) -> Option<TrayCmd> {
 /// them even while its window is hidden.
 pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync + Clone + 'static) -> Result<Tray, String> {
     let menu = Menu::new();
-    let add = |m: &Menu, id: &str, text: &str| m.append(&MenuItem::with_id(id, text, true, None)).map_err(|e| e.to_string());
+    let add = |m: &Menu, id: &str, text: &str| m.append(&MenuItem::with_id(id, crate::i18n::tr(text), true, None)).map_err(|e| e.to_string());
     add(&menu, "panel", "Capture panel...")?;
     menu.append(&PredefinedMenuItem::separator()).map_err(|e| e.to_string())?;
     for a in ACTIONS {

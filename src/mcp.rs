@@ -26,10 +26,16 @@ pub struct Workspace {
     doc: Option<Doc>,
     name: String,
     undo: Vec<Doc>,
+    redo: Vec<Doc>,
+    /// Set to stop a running recording (an AI app cancelled the call).
+    pub stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
 }
 
 /// A tool's answer: MCP content items, or an error message.
 pub type Outcome = Result<Vec<Value>, String>;
+
+#[path = "mcp_more.rs"]
+mod more;
 
 struct Tool {
     name: &'static str,
@@ -47,6 +53,12 @@ fn effect_names() -> Vec<String> {
 }
 
 fn tools() -> Vec<Tool> {
+    let mut all = base_tools();
+    all.extend(more::tools());
+    all
+}
+
+fn base_tools() -> Vec<Tool> {
     let n = |d: &str| json!({"type": "number", "description": d});
     let s = |d: &str| json!({"type": "string", "description": d});
     let rect = || json!({"x": {"type": "number"}, "y": {"type": "number"}, "width": {"type": "number"}, "height": {"type": "number"}});
@@ -157,16 +169,35 @@ fn tools() -> Vec<Tool> {
     ]
 }
 
-/// The `tools/list` result.
+/// The `tools/list` result, with a title and safety hints for every tool.
 pub fn tool_list() -> Value {
+    // Tools that change something outside the current picture (files, clipboard, settings, screen).
+    const SIDE: [&str; 17] = [
+        "save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "set_setting", "set_language",
+        "open_in_snagster", "studio_add_source", "studio_remove_source", "studio_record", "capture_scrolling", "paste_from_clipboard",
+        "capture_screen", "capture_region", "capture_window",
+    ];
+    const DESTRUCTIVE: [&str; 3] = ["remove_mark", "clear_marks", "studio_remove_source"];
     let tools: Vec<Value> = tools()
         .into_iter()
         .map(|t| {
+            let read_only = !t.edits && !SIDE.contains(&t.name);
+            let mut title: String = t.name.replace('_', " ");
+            if let Some(c) = title.get(0..1) {
+                title = c.to_uppercase() + &title[1..];
+            }
             json!({
                 "name": t.name,
+                "title": title,
                 "description": t.description,
                 "inputSchema": t.schema,
-                "annotations": {"readOnlyHint": !t.edits, "destructiveHint": t.name == "remove_mark", "openWorldHint": false},
+                "annotations": {
+                    "title": title,
+                    "readOnlyHint": read_only,
+                    "destructiveHint": DESTRUCTIVE.contains(&t.name),
+                    "idempotentHint": read_only,
+                    "openWorldHint": t.name == "check_for_update",
+                },
             })
         })
         .collect();
@@ -248,6 +279,7 @@ impl Workspace {
         if self.undo.len() > 50 {
             self.undo.remove(0);
         }
+        self.redo.clear();
         self.doc = Some(next);
         Ok(())
     }
@@ -434,7 +466,9 @@ impl Workspace {
             }
             "undo" => {
                 let prev = self.undo.pop().ok_or("nothing to undo")?;
-                self.doc = Some(prev);
+                if let Some(cur) = self.doc.replace(prev) {
+                    self.redo.push(cur);
+                }
                 Ok(vec![text("Undone.")])
             }
             "save" => {
@@ -486,9 +520,9 @@ impl Workspace {
                 let path = match a.get("path").and_then(Value::as_str) {
                     Some(p) => std::path::PathBuf::from(p),
                     None => {
-                        let lib = crate::settings::Settings::load(false).library_folder;
+                        let dir = crate::settings::Settings::load(false).video_folder;
                         let name = chrono::Local::now().format("Recording_%Y-%m-%d_%H-%M-%S").to_string();
-                        crate::settings::unique_path(&std::path::PathBuf::from(lib).join("Recordings"), &name, format.ext())
+                        crate::settings::unique_path(&std::path::PathBuf::from(dir), &name, format.ext())
                     }
                 };
                 let opts = crate::video::VideoOpts {
@@ -500,10 +534,16 @@ impl Workspace {
                     cursor: a.get("cursor").and_then(Value::as_bool).unwrap_or(true),
                     max_s: secs,
                     path,
+                    audio: match a.get("audio").and_then(Value::as_str) {
+                        Some(s) => crate::audio::AudioSource::parse(s).ok_or("audio is none, system, microphone or both")?,
+                        None => crate::audio::AudioSource::None,
+                    },
+                    mic: a.get("microphone").and_then(Value::as_str).unwrap_or_default().to_string(),
+                    frames: None,
                 };
-                let stop = std::sync::atomic::AtomicBool::new(false);
+                self.stop.store(false, std::sync::atomic::Ordering::Relaxed);
                 let pause = std::sync::atomic::AtomicBool::new(false);
-                let d = crate::video::record(&opts, &stop, &pause);
+                let d = crate::video::record(&opts, &self.stop, &pause);
                 d.result.clone()?;
                 let size = std::fs::metadata(&d.path).map(|m| m.len()).unwrap_or(0);
                 Ok(vec![text(format!(
@@ -525,7 +565,8 @@ impl Workspace {
                 let secs = num(a, "seconds").unwrap_or(5.0).clamp(1.0, 120.0) as u32;
                 let fps = num(a, "fps").unwrap_or(10.0).clamp(1.0, 30.0) as u32;
                 let path = std::path::PathBuf::from(a.get("path").and_then(Value::as_str).ok_or("missing path")?);
-                let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+                self.stop.store(false, std::sync::atomic::Ordering::Relaxed);
+                let stop = self.stop.clone();
                 let (tx, rx) = std::sync::mpsc::channel();
                 capture::spawn_gif_recorder(
                     (r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32),
@@ -554,7 +595,7 @@ impl Workspace {
                     .collect();
                 Ok(vec![text(serde_json::to_string_pretty(&items).unwrap_or_default())])
             }
-            other => Err(format!("unknown tool {other}")),
+            other => self.call_more(other, a),
         }
     }
 }
@@ -659,63 +700,242 @@ fn error(id: &Value, code: i64, message: &str) -> Option<String> {
     Some(json!({"jsonrpc": "2.0", "id": id, "error": {"code": code, "message": message}}).to_string())
 }
 
-/// Handles one JSON-RPC message; the reply line, or None for a notification.
-pub fn handle(ws: &mut Workspace, line: &str) -> Option<String> {
-    let message: Value = match serde_json::from_str(line) {
-        Ok(v) => v,
-        Err(_) => return error(&Value::Null, -32700, "Parse error"),
-    };
-    let method = message.get("method").and_then(Value::as_str).unwrap_or_default();
-    let id = match message.get("id") {
-        Some(id) if !method.is_empty() => id.clone(),
-        Some(id) if message.get("result").is_none() && message.get("error").is_none() => return error(id, -32600, "Invalid request"),
-        _ => return None,
-    };
-    let params = message.get("params").cloned().unwrap_or(Value::Null);
-    match method {
-        "initialize" => {
-            let asked = params.get("protocolVersion").and_then(Value::as_str).unwrap_or_default();
-            let version = PROTOCOL_VERSIONS.iter().find(|v| **v == asked).copied().unwrap_or(PROTOCOL_VERSIONS[1]);
-            result(
-                &id,
-                json!({
-                    "protocolVersion": version,
-                    "capabilities": {"tools": {"listChanged": false}},
-                    "serverInfo": {"name": "snagster", "title": "Snagster", "version": env!("CARGO_PKG_VERSION")},
-                    "instructions": INSTRUCTIONS,
-                }),
-            )
-        }
-        "ping" => result(&id, json!({})),
-        "tools/list" => result(&id, tool_list()),
-        "tools/call" => {
-            let name = params.get("name").and_then(Value::as_str).unwrap_or_default();
-            let args = params.get("arguments").cloned().unwrap_or(json!({}));
-            let out = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| ws.call(name, &args)))
-                .unwrap_or_else(|_| Err("the tool stopped unexpectedly".into()));
-            match out {
-                Ok(content) => result(&id, json!({"content": content, "isError": false})),
-                Err(e) => result(&id, json!({"content": [text(e)], "isError": true})),
-            }
-        }
-        _ => error(&id, -32601, "Method not found"),
+/// One AI app's connection: its current picture, and a flag that stops a running recording when
+/// the app cancels the call (reachable without waiting for the running tool).
+pub struct Session {
+    ws: std::sync::Mutex<Workspace>,
+    stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
+}
+
+impl Default for Session {
+    fn default() -> Self {
+        let ws = Workspace::default();
+        let stop = ws.stop.clone();
+        Session { ws: std::sync::Mutex::new(ws), stop }
     }
 }
 
-/// Serve MCP over stdin/stdout until stdin closes.
+const PROMPTS: [(&str, &str, &str, &str); 4] = [
+    (
+        "annotate_screenshot",
+        "Capture the screen and point out something on it with arrows, boxes and text.",
+        "what",
+        "Capture my screen with capture_screen, find {what} on it, and mark it clearly with add_mark (an arrow or a box and a short text label). Then show me the result with view_picture.",
+    ),
+    (
+        "redact_screenshot",
+        "Capture a window and hide private details before sharing.",
+        "window",
+        "Capture the window titled {window} with capture_window, run smart_redact, then look at it with view_picture and blur_area anything private that is still visible. Finally copy_to_clipboard.",
+    ),
+    (
+        "record_demo",
+        "Record a short screen video with sound.",
+        "seconds",
+        "Record my screen with record_video for {seconds} seconds at 30 fps with audio set to system, then tell me where the file was saved.",
+    ),
+    (
+        "step_guide",
+        "Make a step-by-step guide from pictures.",
+        "topic",
+        "Help me make a step-by-step guide about {topic}: capture each step as I go, then use make_guide to save a PDF with a caption for every step.",
+    ),
+];
+
+fn prompts_list() -> Value {
+    let list: Vec<Value> = PROMPTS
+        .iter()
+        .map(|(name, desc, arg, _)| json!({"name": name, "description": desc, "arguments": [{"name": arg, "required": false}]}))
+        .collect();
+    json!({ "prompts": list })
+}
+
+fn prompts_get(params: &Value) -> Result<Value, (i64, String)> {
+    let name = params.get("name").and_then(Value::as_str).unwrap_or_default();
+    let (_, desc, arg, body) = PROMPTS.iter().find(|p| p.0 == name).ok_or((-32602, format!("no prompt {name}")))?;
+    let value = params.pointer(&format!("/arguments/{arg}")).and_then(Value::as_str).unwrap_or(match *arg {
+        "seconds" => "10",
+        "what" => "the most important button",
+        "window" => "the window in front",
+        _ => "this task",
+    });
+    Ok(json!({"description": desc, "messages": [{"role": "user", "content": {"type": "text", "text": body.replace(&format!("{{{arg}}}"), value)}}]}))
+}
+
+impl Session {
+    /// Handle one JSON-RPC message; the reply line, or None for notifications and replies.
+    pub fn handle(&self, line: &str) -> Option<String> {
+        let message: Value = match serde_json::from_str(line) {
+            Ok(v) => v,
+            Err(_) => return error(&Value::Null, -32700, "Parse error"),
+        };
+        if message.is_array() {
+            return error(&Value::Null, -32600, "Batches aren't supported; send one message at a time");
+        }
+        let method = message.get("method").and_then(Value::as_str).unwrap_or_default().to_string();
+        let params = message.get("params").cloned().unwrap_or(Value::Null);
+        let id = match message.get("id") {
+            Some(id) if !method.is_empty() => id.clone(),
+            Some(id) if message.get("result").is_none() && message.get("error").is_none() => return error(id, -32600, "Invalid request"),
+            _ => {
+                // A notification. Cancelling stops a running recording or scroll.
+                if method == "notifications/cancelled" {
+                    self.stop.store(true, std::sync::atomic::Ordering::Relaxed);
+                }
+                return None;
+            }
+        };
+        match method.as_str() {
+            "initialize" => {
+                let asked = params.get("protocolVersion").and_then(Value::as_str).unwrap_or_default();
+                let version = PROTOCOL_VERSIONS.iter().find(|v| **v == asked).copied().unwrap_or(PROTOCOL_VERSIONS[0]);
+                result(
+                    &id,
+                    json!({
+                        "protocolVersion": version,
+                        "capabilities": {
+                            "tools": {"listChanged": false},
+                            "resources": {"subscribe": false, "listChanged": false},
+                            "prompts": {"listChanged": false},
+                            "completions": {},
+                            "logging": {},
+                        },
+                        "serverInfo": {"name": "snagster", "title": "Snagster", "version": env!("CARGO_PKG_VERSION")},
+                        "instructions": INSTRUCTIONS,
+                    }),
+                )
+            }
+            "ping" => result(&id, json!({})),
+            "tools/list" => result(&id, tool_list()),
+            "prompts/list" => result(&id, prompts_list()),
+            "prompts/get" => match prompts_get(&params) {
+                Ok(v) => result(&id, v),
+                Err((c, m)) => error(&id, c, &m),
+            },
+            "resources/list" => {
+                let mut list = vec![
+                    json!({"uri": "snagster://settings", "name": "settings", "title": "Snagster's settings", "mimeType": "application/json"}),
+                    json!({"uri": "snagster://library", "name": "library", "title": "The newest captures in the library", "mimeType": "application/json"}),
+                ];
+                if let Ok(ws) = self.ws.try_lock()
+                    && let Some((name, _)) = ws.current_png()
+                {
+                    list.insert(0, json!({"uri": "snagster://picture/current", "name": "current-picture", "title": name, "mimeType": "image/png"}));
+                }
+                result(&id, json!({ "resources": list }))
+            }
+            "resources/templates/list" => result(&id, json!({"resourceTemplates": []})),
+            "resources/read" => {
+                let uri = params.get("uri").and_then(Value::as_str).unwrap_or_default();
+                match uri {
+                    "snagster://settings" => {
+                        let s = serde_json::to_string_pretty(&crate::settings::Settings::load(false)).unwrap_or_default();
+                        result(&id, json!({"contents": [{"uri": uri, "mimeType": "application/json", "text": s}]}))
+                    }
+                    "snagster://library" => {
+                        let s = crate::settings::Settings::load(false);
+                        let items: Vec<Value> = library::scan(std::path::Path::new(&s.library_folder))
+                            .into_iter()
+                            .take(50)
+                            .map(|i| json!({"path": i.path, "title": i.meta.title, "program": i.meta.app, "created": i.meta.created, "tags": i.meta.tags}))
+                            .collect();
+                        result(&id, json!({"contents": [{"uri": uri, "mimeType": "application/json", "text": serde_json::to_string_pretty(&items).unwrap_or_default()}]}))
+                    }
+                    "snagster://picture/current" => {
+                        let png = self.ws.lock().ok().and_then(|ws| ws.current_png());
+                        match png {
+                            Some((_, img)) => result(&id, json!({"contents": [{"uri": uri, "mimeType": "image/png", "blob": img.get("data").cloned().unwrap_or_default()}]})),
+                            None => error(&id, -32002, "There is no current picture yet"),
+                        }
+                    }
+                    _ => error(&id, -32002, &format!("Resource not found: {uri}")),
+                }
+            }
+            "completion/complete" => result(&id, json!({"completion": {"values": [], "total": 0, "hasMore": false}})),
+            "logging/setLevel" => result(&id, json!({})),
+            "tools/call" => {
+                let name = params.get("name").and_then(Value::as_str).unwrap_or_default().to_string();
+                let args = params.get("arguments").cloned().unwrap_or(json!({}));
+                let mut ws = match self.ws.lock() {
+                    Ok(ws) => ws,
+                    Err(p) => p.into_inner(),
+                };
+                let out = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| ws.call(&name, &args)))
+                    .unwrap_or_else(|_| Err("the tool stopped unexpectedly (Snagster kept running)".into()));
+                match out {
+                    Ok(content) => {
+                        // A JSON answer also goes out as structured content.
+                        let structured = content
+                            .first()
+                            .filter(|_| content.len() == 1)
+                            .and_then(|c| c.get("text"))
+                            .and_then(Value::as_str)
+                            .and_then(|t| serde_json::from_str::<Value>(t).ok())
+                            .filter(Value::is_object);
+                        match structured {
+                            Some(s) => result(&id, json!({"content": content, "structuredContent": s, "isError": false})),
+                            None => result(&id, json!({"content": content, "isError": false})),
+                        }
+                    }
+                    Err(e) => result(&id, json!({"content": [text(e)], "isError": true})),
+                }
+            }
+            _ => error(&id, -32601, &format!("Method not found: {method}")),
+        }
+    }
+}
+
+/// Handle one message with a one-off session (tests and simple callers).
+pub fn handle(ws: &mut Workspace, line: &str) -> Option<String> {
+    let s = Session::default();
+    if let Ok(mut inner) = s.ws.lock() {
+        std::mem::swap(&mut *inner, ws);
+    }
+    let r = s.handle(line);
+    if let Ok(mut inner) = s.ws.lock() {
+        std::mem::swap(&mut *inner, ws);
+    }
+    r
+}
+
+/// Serve MCP over stdin/stdout until stdin closes. Tool calls run on their own thread, so a
+/// cancel (or a ping) is answered while a long recording runs.
 pub fn serve_stdio() {
-    let mut ws = Workspace::default();
+    let session = std::sync::Arc::new(Session::default());
+    let out = std::sync::Arc::new(std::sync::Mutex::new(std::io::stdout()));
+    fn send(out: &std::sync::Mutex<std::io::Stdout>, line: &str) {
+        if let Ok(mut o) = out.lock() {
+            let _ = writeln!(o, "{line}");
+            let _ = o.flush();
+        }
+    }
     let stdin = std::io::stdin();
-    let mut out = std::io::stdout().lock();
+    let mut workers: Vec<std::thread::JoinHandle<()>> = Vec::new();
     for line in stdin.lock().lines() {
         let Ok(line) = line else { break };
         if line.trim().is_empty() {
             continue;
         }
-        if let Some(reply) = handle(&mut ws, &line) {
-            let _ = writeln!(out, "{reply}");
-            let _ = out.flush();
+        workers.retain(|w| !w.is_finished());
+        if line.contains("\"tools/call\"") {
+            let (s, o) = (session.clone(), out.clone());
+            let spawned = std::thread::Builder::new().name("snagster-mcp-call".into()).spawn(move || {
+                if let Some(reply) = s.handle(&line) {
+                    send(&o, &reply);
+                }
+            });
+            if let Ok(h) = spawned {
+                workers.push(h);
+            }
+            continue;
         }
+        if let Some(reply) = session.handle(&line) {
+            send(&out, &reply);
+        }
+    }
+    // Finish what's running before going away.
+    for w in workers {
+        let _ = w.join();
     }
 }
 

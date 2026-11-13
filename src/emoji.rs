@@ -67,11 +67,12 @@ fn find_color_font() -> Option<Vec<u8>> {
 pub fn font() -> &'static EmojiFont {
     static F: OnceLock<EmojiFont> = OnceLock::new();
     F.get_or_init(|| {
-        let (data, color): (&'static [u8], bool) = match find_color_font() {
+        // The system's colour emoji font, unless it is missing or can't be read.
+        let (data, color): (&'static [u8], bool) = match find_color_font().filter(|d| ttf_parser::Face::parse(d, 0).is_ok()) {
             Some(d) => (Box::leak(d.into_boxed_slice()), true),
             None => (epaint_default_fonts::NOTO_EMOJI_REGULAR, false),
         };
-        let face = ttf_parser::Face::parse(data, 0).expect("emoji font");
+        let face = ttf_parser::Face::parse(data, 0).expect("the built-in emoji font is always readable");
         let mut groups = vec![("Stamps & badges", STAMPS.iter().copied().filter(|c| face.glyph_index(*c).is_some()).collect())];
         for (name, ranges) in BLOCKS {
             let mut v = Vec::new();

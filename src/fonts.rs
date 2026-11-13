@@ -211,15 +211,41 @@ pub struct UiFonts {
     defs: eframe::egui::FontDefinitions,
     loaded: HashSet<String>,
     failed: HashSet<String>,
+    /// The fonts loaded for text marks, kept so the base fonts can be rebuilt.
+    user: Vec<(String, Arc<eframe::egui::FontData>)>,
+    /// Whether the base includes the computer's Chinese, Japanese and Korean fonts, and for which language.
+    pub base: Option<(bool, String)>,
 }
 
 impl Default for UiFonts {
     fn default() -> Self {
-        Self { defs: eframe::egui::FontDefinitions::default(), loaded: HashSet::new(), failed: HashSet::new() }
+        Self { defs: crate::look::base_fonts(false, "en"), loaded: HashSet::new(), failed: HashSet::new(), user: Vec::new(), base: None }
     }
 }
 
 impl UiFonts {
+    /// Make sure the interface fonts suit `lang` (and include CJK fonts when `cjk`), keeping
+    /// the fonts loaded for text marks. Cheap when nothing changes.
+    pub fn ensure_base(&mut self, ctx: &eframe::egui::Context, lang: &str, cjk: bool) {
+        use eframe::egui::FontFamily;
+        let want = (cjk, lang.to_string());
+        if self.base.as_ref() == Some(&want) {
+            return;
+        }
+        let mut defs = crate::look::base_fonts(cjk, lang);
+        let base = defs.families.get(&FontFamily::Proportional).cloned().unwrap_or_default();
+        for (k, data) in &self.user {
+            defs.font_data.insert(k.clone(), data.clone());
+            let mut list = vec![k.clone()];
+            list.extend(base.iter().cloned());
+            defs.families.insert(FontFamily::Name(k.clone().into()), list);
+        }
+        self.defs = defs;
+        self.base = Some(want);
+        ctx.set_fonts(self.defs.clone());
+        ctx.request_repaint();
+    }
+
     /// The egui font family for this choice, loading it if needed (it shows from the next frame).
     pub fn family(&mut self, ctx: &eframe::egui::Context, family: &str, bold: bool, italic: bool) -> eframe::egui::FontFamily {
         use eframe::egui::{FontData, FontFamily};
@@ -241,7 +267,9 @@ impl UiFonts {
         };
         match std::fs::read(&path) {
             Ok(bytes) if ttf_parser::Face::parse(&bytes, 0).is_ok() => {
-                self.defs.font_data.insert(k.clone(), Arc::new(FontData::from_owned(bytes)));
+                let data = Arc::new(FontData::from_owned(bytes));
+                self.defs.font_data.insert(k.clone(), data.clone());
+                self.user.push((k.clone(), data));
                 let mut list = vec![k.clone()];
                 if let Some(base) = self.defs.families.get(&FontFamily::Proportional) {
                     list.extend(base.iter().cloned());

@@ -19,6 +19,12 @@ mod panel;
 mod tray;
 mod settings;
 mod video;
+mod i18n;
+mod look;
+mod audio;
+mod studio;
+mod update;
+mod mcp_http;
 mod render;
 mod sample;
 
@@ -80,10 +86,26 @@ pub fn icon_sized(n: u32) -> egui::IconData {
 fn main() -> eframe::Result {
     let all: Vec<String> = std::env::args().skip(1).collect();
     // AI apps: `snagster --mcp` talks MCP over stdin/stdout.
+    install_crash_log();
+    let s0 = settings::Settings::load(false);
+    i18n::set(i18n::resolve(&s0.language));
     if matches!(all.first().map(|s| s.as_str()), Some("--mcp" | "mcp")) {
         mcp::serve_stdio();
         return Ok(());
     }
+    // AI apps that connect over HTTP: `snagster mcp-http [--port N] [--token T]`.
+    if matches!(all.first().map(|s| s.as_str()), Some("--mcp-http" | "mcp-http")) {
+        attach_console();
+        let flag = |name: &str| all.windows(2).find(|w| w[0] == name).map(|w| w[1].clone());
+        let port = flag("--port").and_then(|p| p.parse().ok()).unwrap_or(s0.mcp_port);
+        let token = flag("--token").unwrap_or_else(|| s0.mcp_token.clone());
+        if let Err(e) = mcp_http::serve_forever(port, &token) {
+            eprintln!("Snagster: {e}");
+            std::process::exit(1);
+        }
+        return Ok(());
+    }
+    update::clean_up();
     // Anything else on the command line gets the console it was started from, so it can print.
     if !all.is_empty() {
         attach_console();
@@ -391,18 +413,33 @@ fn video_test(quick: bool) {
     }
     let (mx, my, sw, sh) = capture::monitors().first().map(|m| (m.x, m.y, m.width, m.height)).unwrap_or((0, 0, 1280, 720));
     let rect = (mx, my, sw.min(1920), sh.min(1080));
-    let mut cases = vec![(VideoFormat::Mp4, 30, true), (VideoFormat::Mp4, 60, true), (VideoFormat::Mp4, 120, true)];
+    use audio::AudioSource as A;
+    let mut cases = vec![(VideoFormat::Mp4, 30, true, A::None), (VideoFormat::Mp4, 60, true, A::System), (VideoFormat::Mp4, 120, true, A::None)];
     if !quick {
-        cases.extend([(VideoFormat::Mp4, 1, true), (VideoFormat::Hevc, 60, true), (VideoFormat::Wmv, 30, true), (VideoFormat::Mp4, 30, false)]);
+        cases.extend([
+            (VideoFormat::Mp4, 1, true, A::None),
+            (VideoFormat::Hevc, 60, true, A::System),
+            (VideoFormat::Wmv, 30, true, A::None),
+            (VideoFormat::Mp4, 30, false, A::None),
+        ]);
+        if !audio::microphones().is_empty() {
+            cases.push((VideoFormat::Mp4, 30, true, A::Both));
+        }
     }
     let mut failed = 0;
-    for (format, fps, hardware) in cases {
+    for (format, fps, hardware, sound) in cases {
+        if sound != A::None && !A::supported() {
+            continue;
+        }
         if !format.available() {
             continue;
         }
         let secs = if fps == 1 { 5 } else { 3 };
         let path = std::env::temp_dir().join(format!("snagster-video-test-{fps}-{}-{}.{}", format.ext(), if hardware { "hw" } else { "sw" }, format.ext()));
-        let opts = VideoOpts { rect, fps, format, quality: 2, hardware, cursor: true, max_s: secs, path: path.clone() };
+        let mut opts = VideoOpts::screen(rect, fps, format, path.clone());
+        opts.hardware = hardware;
+        opts.max_s = secs;
+        opts.audio = sound;
         let stop = std::sync::atomic::AtomicBool::new(false);
         let pause = std::sync::atomic::AtomicBool::new(false);
         let before = capture::grab_rect(rect.0, rect.1, rect.2 & !1, rect.3 & !1).ok();
@@ -411,7 +448,7 @@ fn video_test(quick: bool) {
         let d = video::record(&opts, &stop, &pause);
         let wall = t0.elapsed().as_secs_f64();
         let cpu = cpu_seconds() - cpu0;
-        let label = format!("{} {}x{} {fps} fps{}", format.label(), d.width, d.height, if hardware { "" } else { " (software asked)" });
+        let label = format!("{} {}x{} {fps} fps{}{}", format.label(), d.width, d.height, if hardware { "" } else { " (software asked)" }, if sound == A::None { String::new() } else { format!(", sound: {}", sound.label()) });
         if let Err(e) = &d.result {
             println!("FAIL {label}: {e}");
             failed += 1;
@@ -435,12 +472,12 @@ fn video_test(quick: bool) {
                     }
                     Some(diff(f, &now) <= diff(f, &flipped))
                 });
-                let ok = ok_count && orient != Some(false) && p.width == d.width && p.height == d.height;
+                let ok = ok_count && orient != Some(false) && p.width == d.width && p.height == d.height && (sound == A::None) != p.audio;
                 if !ok {
                     failed += 1;
                 }
                 println!(
-                    "{} {label}: {} frames written, {} in the file (want ~{expect}), {:.2} s long, {} KB, {} via {}, CPU {:.1}% of one core, picture {}",
+                    "{} {label}: {} frames written, {} in the file (want ~{expect}), {:.2} s long, {} KB, {} via {}, CPU {:.1}% of one core, picture {}{}",
                     if ok { "ok  " } else { "FAIL" },
                     d.frames,
                     p.frames,
@@ -453,7 +490,8 @@ fn video_test(quick: bool) {
                         Some(true) => "upright",
                         Some(false) => "UPSIDE DOWN",
                         None => "not checked",
-                    }
+                    },
+                    if p.audio { ", with a sound track" } else { "" }
                 );
             }
             Err(e) => {
@@ -466,6 +504,43 @@ fn video_test(quick: bool) {
         }
     }
     println!("{}", if failed == 0 { "video test: all passed".to_string() } else { format!("video test: {failed} failed") });
+}
+
+/// Where crash reports go: Snagster's settings folder (crash.log, newest last, kept small).
+pub fn crash_log_path() -> Option<PathBuf> {
+    settings::settings_path().and_then(|p| p.parent().map(|d| d.join("crash.log")))
+}
+
+/// A panic anywhere writes what happened and where to crash.log before the usual message, so a
+/// problem can be found again. Background threads that panic don't take the window down.
+fn install_crash_log() {
+    let default = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        if let Some(p) = crash_log_path() {
+            if let Some(dir) = p.parent() {
+                let _ = std::fs::create_dir_all(dir);
+            }
+            // Keep the file under about 256 KB.
+            if std::fs::metadata(&p).map(|m| m.len() > 256 * 1024).unwrap_or(false) {
+                let _ = std::fs::remove_file(&p);
+            }
+            let thread = std::thread::current().name().unwrap_or("unnamed").to_string();
+            let line = format!(
+                "{} Snagster {} ({} {}) thread '{}': {}\n",
+                chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+                env!("CARGO_PKG_VERSION"),
+                std::env::consts::OS,
+                std::env::consts::ARCH,
+                thread,
+                info
+            );
+            if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&p) {
+                use std::io::Write;
+                let _ = f.write_all(line.as_bytes());
+            }
+        }
+        default(info);
+    }));
 }
 
 fn cpu_seconds() -> f64 {
