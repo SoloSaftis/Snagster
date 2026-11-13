@@ -1,54 +1,76 @@
+<div align="center">
+
+<img src="assets/snagster-256.png" alt="" width="96">
+
 # Snagster
 
-Capture your screen, mark it up, share it. Written in Rust (egui).
+**Capture your screen, mark it up, share it.**
 
-## Features
+Windows · Mac · Linux · works offline · written in Rust · free and open source
 
-- **Capture**: all-in-one picker (drag an area, click a window, button or menu), full screen,
-  all screens, window list, window in front, repeat last area, fixed size, fun shapes (circle,
-  freehand lasso, polygon, star, heart, triangle), several areas at once, menus with sub-menus,
-  scrolling and panoramic capture (automatic or while you scroll), delay, schedule, interval.
-- **Global hotkeys** you can change, per-preset hotkeys, and taking over keys another program
-  already holds (Windows).
-- **Capture panel** and a **tray icon** with a quick menu.
-- **Editor**: arrow, line, box, oval, pen, marker, text (any installed font), callout, step
-  numbers or letters, color emoji stamps, magnify, spotlight, blur / pixelate / smart redact,
-  cut out, crop, selection (move part of the picture), fill, eraser, movable mouse pointer,
-  shadows, quick styles, themes, undo and redo.
-- **Image effects**: border, drop shadow, rounded corners, torn edge, perspective, color
-  adjustment, sharpen, soften, grayscale, invert, sepia, watermark, capture info, resize, trim,
-  canvas size, rotate, flip.
-- **Text recognition** (Windows): grab text, smart redact, simplify.
-- **GIF recording** that skips unchanged frames and stores only what changed, plus trimming,
-  frame grabbing, combining and slideshows.
-- **Library** with search, tags, program and month grouping; works from a OneDrive / Dropbox
-  folder.
-- **Saving**: PNG, JPEG, BMP, GIF, WebP, TIFF, PDF, SVG, Word guides, web page guides and
-  `.snag` projects that keep marks editable.
+[**⬇️ Windows**](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-windows-x64-portable.zip) &nbsp;·&nbsp;
+[**⬇️ Mac**](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-macos-arm64.zip) &nbsp;·&nbsp;
+[**⬇️ Linux**](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-linux-x86_64.AppImage)
+
+<img src="assets/screenshots/snagster.png" alt="Snagster: the tools on the left, the picture with arrows, steps and a callout in the middle, and the options on the right" width="900">
+
+</div>
+
+## What it does
+
+- **Capture anything** – press Print Screen, then drag an area or click a window, button or menu. Or the whole screen, all screens, a fixed size, or fun shapes: circle, lasso, star, heart.
+- **Long pages** – scrolling and sideways capture stitch a whole web page or document into one picture.
+- **Mark it up** – arrows, boxes, text in any of your fonts, speech bubbles, numbered steps, 1,300+ color emojis, highlighter, spotlight, magnifier, blur and smart redact for private details.
+- **Tidy it up** – crop, cut out, move parts of the picture, borders, shadows, torn edges and more.
+- **Grab text** – copy the text out of any picture or part of the screen (Windows).
+- **Record GIFs** that stay small and light on the battery, and step-by-step guides as PDF, Word or web pages.
+- **Library** – every capture is kept, searchable by date, program and tags; works from your OneDrive or Dropbox folder.
+- **Your own hotkeys**, presets and themes, a capture panel and a quick menu in the corner of the taskbar.
+- **For AI apps** – Snagster is also an MCP server, so Claude, Cursor and other AI apps can capture and mark up pictures too.
+
+**Your pictures stay on your computer.** No account, no ads, no tracking. Nothing is sent anywhere.
+
+<div align="center">
+<img src="assets/screenshots/capture-panel.png" alt="The capture panel: All-in-One, Image and Video, with selection, effects and share choices and a big Capture button" width="780">
+</div>
 
 ## Download
 
-Builds for Windows, Linux and macOS are made by GitHub Actions on every push (see the
-*Actions* tab) and attached to each release.
+| Your computer | Download | Then |
+|---|---|---|
+| **Windows** 10 or 11 | [⬇️ Download for Windows](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-windows-x64-portable.zip) | Open the folder and double-click **Snagster** |
+| **Mac** with Apple chip (M1 or newer) | [⬇️ Download for Mac](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-macos-arm64.zip) | Open it and drag **Snagster** to Applications. Then allow it under System Settings → Privacy & Security → **Screen Recording** |
+| **Linux** | [⬇️ Download for Linux](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-linux-x86_64.AppImage) | Right-click → Properties → allow running as a program, then double-click it ([folder version](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-linux-x86_64-portable.tar.gz)) |
 
-On macOS, allow Snagster under *System Settings > Privacy & Security > Screen Recording*. The
-macOS build is not signed, so the first start needs right-click > Open.
+<details>
+<summary><b>Your computer warns you the first time?</b></summary>
 
-## Build it yourself
+The app is not signed yet, so you may see a warning once:
+
+- **Windows** says "Windows protected your PC": click **More info**, then **Run anyway**.
+- **Mac** says Apple "could not verify" Snagster: click **Done**, open System Settings → Privacy & Security, scroll down and click **Open Anyway** next to Snagster.
+
+</details>
+
+All versions and what changed: [Releases](https://github.com/SoloSaftis/Snagster/releases).
+
+## For AI apps
+
+Snagster is an MCP server: start it with `snagster --mcp`. In Snagster, **Settings → AI apps** shows
+the exact line to copy. For Claude Code:
 
 ```sh
-cargo build --release
+claude mcp add snagster -- "path/to/snagster" --mcp
 ```
 
-Linux needs the development packages for PipeWire, Wayland, XCB, GBM, EGL and clang
-(see `.github/workflows/build.yml`).
+The same tools work from a terminal: `snagster help` lists commands such as
+`snagster capture region 0 0 800 600 -o shot.png` and `snagster ocr picture.png`.
 
-## Test options
+## For developers
 
-| Option | What it does |
-|---|---|
-| `--ui-test` | runs every button's action in the real window and reports |
-| `--self-test` | capture, fonts, emojis, text recognition and every file format |
-| `--hotkey-test` | presses each hotkey for real (Windows) |
-| `--record-test` / `--record-bench` | cost of GIF recording |
-| `--screenshot <file.png>` | starts, draws, saves a picture of the window and quits |
+Building, tests and how the code is laid out: [DEVELOPING.md](DEVELOPING.md).
+
+## Licence
+
+[MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option. A contribution you submit is
+licensed the same way.

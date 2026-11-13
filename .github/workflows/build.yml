@@ -1,3 +1,5 @@
+# Builds Windows, Linux and macOS on every push. Pushing a tag like v0.7.0 also publishes a
+# GitHub release with the fixed file names the README's download links point to.
 name: Build
 
 on:
@@ -11,30 +13,34 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            name: snagster-windows-x64
-            bin: snagster.exe
-          - os: ubuntu-latest
-            name: snagster-linux-x64
-            bin: snagster
-          - os: macos-latest
-            name: snagster-macos-arm64
-            bin: snagster
-    runs-on: ${{ matrix.os }}
+  windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: dtolnay/rust-toolchain@stable
-
       - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release --locked
+      - name: Package (portable zip)
+        shell: pwsh
+        run: |
+          $dir = "dist/Snagster"
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          Copy-Item target/release/snagster.exe "$dir/Snagster.exe"
+          Copy-Item README.md, LICENSE-MIT, LICENSE-APACHE $dir
+          Compress-Archive -Path "$dir/*" -DestinationPath dist/Snagster-windows-x64-portable.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/Snagster-windows-x64-portable.zip
 
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - name: Linux system libraries
-        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -42,59 +48,107 @@ jobs:
             libpipewire-0.3-dev libspa-0.2-dev \
             libwayland-dev libxkbcommon-dev libgbm-dev libegl1-mesa-dev libgl1-mesa-dev libdrm-dev \
             libxcb1-dev libxcb-randr0-dev libxcb-shm0-dev libxcb-xfixes0-dev libxcb-shape0-dev \
-            libdbus-1-dev
-
+            libdbus-1-dev libfuse2
       - name: Build
         run: cargo build --release --locked
-
-      - name: Package (Windows, Linux)
-        if: runner.os != 'macOS'
-        shell: bash
+      - name: Package (AppImage and portable tar.gz)
         run: |
-          mkdir -p dist
-          cp target/release/${{ matrix.bin }} dist/
-          cp README.md dist/
+          set -euo pipefail
+          stage=dist/Snagster
+          mkdir -p "$stage"
+          cp target/release/snagster "$stage/Snagster"
+          cp assets/snagster-256.png "$stage/snagster.png"
+          cp README.md LICENSE-MIT LICENSE-APACHE "$stage/"
+          cat > "$stage/snagster.desktop" <<'DESKTOP'
+          [Desktop Entry]
+          Type=Application
+          Name=Snagster
+          Comment=Capture your screen, mark it up, share it
+          Exec=Snagster
+          Icon=snagster
+          Categories=Graphics;Utility;
+          DESKTOP
+          tar -C dist -czf dist/Snagster-linux-x86_64-portable.tar.gz Snagster
+          appdir=dist/Snagster.AppDir
+          mkdir -p "$appdir/usr/bin"
+          cp target/release/snagster "$appdir/usr/bin/Snagster"
+          cp assets/snagster-256.png "$appdir/snagster.png"
+          cp "$stage/snagster.desktop" "$appdir/snagster.desktop"
+          printf '#!/bin/sh\nhere="$(dirname "$(readlink -f "$0")")"\nexec "$here/usr/bin/Snagster" "$@"\n' > "$appdir/AppRun"
+          chmod +x "$appdir/AppRun"
+          # appimagetool, pinned to a release and checked against its published checksum.
+          tool=dist/appimagetool
+          curl -fsSL -o "$tool" https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  $tool" | sha256sum -c -
+          chmod +x "$tool"
+          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 "$tool" --no-appstream "$appdir" dist/Snagster-linux-x86_64.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            dist/Snagster-linux-x86_64.AppImage
+            dist/Snagster-linux-x86_64-portable.tar.gz
 
-      - name: Package (macOS app)
-        if: runner.os == 'macOS'
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release --locked
+      - name: Package (app in a zip)
         run: |
-          APP=dist/Snagster.app/Contents
-          mkdir -p "$APP/MacOS"
-          cp target/release/snagster "$APP/MacOS/snagster"
-          VERSION=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
-          cat > "$APP/Info.plist" <<EOF
+          set -euo pipefail
+          app=dist/Snagster.app/Contents
+          mkdir -p "$app/MacOS" "$app/Resources"
+          cp target/release/snagster "$app/MacOS/snagster"
+          iconset=dist/snagster.iconset
+          mkdir -p "$iconset"
+          for s in 16 32 64 128 256; do sips -z $s $s assets/snagster-256.png --out "$iconset/icon_${s}x${s}.png" >/dev/null; done
+          cp "$iconset/icon_32x32.png" "$iconset/icon_16x16@2x.png"
+          cp "$iconset/icon_64x64.png" "$iconset/icon_32x32@2x.png"
+          cp "$iconset/icon_256x256.png" "$iconset/icon_128x128@2x.png"
+          rm "$iconset/icon_64x64.png"
+          iconutil -c icns "$iconset" -o "$app/Resources/Snagster.icns"
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          cat > "$app/Info.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0"><dict>
             <key>CFBundleName</key><string>Snagster</string>
+            <key>CFBundleDisplayName</key><string>Snagster</string>
             <key>CFBundleIdentifier</key><string>app.snagster</string>
             <key>CFBundleExecutable</key><string>snagster</string>
+            <key>CFBundleIconFile</key><string>Snagster</string>
             <key>CFBundlePackageType</key><string>APPL</string>
-            <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+            <key>CFBundleShortVersionString</key><string>${version}</string>
+            <key>CFBundleVersion</key><string>${version}</string>
             <key>LSMinimumSystemVersion</key><string>12.0</string>
             <key>NSHighResolutionCapable</key><true/>
             <key>NSScreenCaptureUsageDescription</key><string>Snagster takes screenshots of what you choose.</string>
           </dict></plist>
-          EOF
-          cp README.md dist/
-
+          PLIST
+          codesign --force --deep --sign - dist/Snagster.app
+          (cd dist && ditto -c -k --keepParent Snagster.app Snagster-macos-arm64.zip)
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
-          path: dist/
+          name: macos
+          path: dist/Snagster-macos-arm64.zip
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: [windows, linux, macos]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - name: Zip and publish
+          merge-multiple: true
+      - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cd artifacts
-          for d in */; do (cd "$d" && zip -qry "../${d%/}.zip" .); done
-          gh release create "${GITHUB_REF_NAME}" *.zip --repo "${GITHUB_REPOSITORY}" --title "Snagster ${GITHUB_REF_NAME}" --generate-notes
+          sed "s/__TAG__/${GITHUB_REF_NAME}/g" .github/release-notes.md > notes.md
+          gh release create "${GITHUB_REF_NAME}" artifacts/* --title "Snagster ${GITHUB_REF_NAME#v}" --notes-file notes.md --generate-notes --latest

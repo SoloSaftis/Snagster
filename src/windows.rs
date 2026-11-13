@@ -63,6 +63,7 @@ impl SnagApp {
                         (SettingsTab::Redact, "Smart redact"),
                         (SettingsTab::Hotkeys, "Hotkeys"),
                         (SettingsTab::Presets, "Presets"),
+                        (SettingsTab::Ai, "AI apps"),
                     ] {
                         ui.selectable_value(&mut self.settings_tab, tab, label);
                     }
@@ -174,6 +175,7 @@ impl SnagApp {
                     SettingsTab::Presets => {
                         run_preset = self.presets_tab(ui);
                     }
+                    SettingsTab::Ai => self.ai_tab(ui),
                 });
                 ui.add_space(8.0);
                 ui.separator();
@@ -1401,5 +1403,41 @@ pub fn runs_at_startup() -> bool {
     #[cfg(not(windows))]
     {
         autostart_file().is_some_and(|f| f.exists())
+    }
+}
+
+impl SnagApp {
+    /// How to let AI apps (Claude Code, Claude Desktop, Cursor...) use Snagster over MCP.
+    fn ai_tab(&mut self, ui: &mut egui::Ui) {
+        let exe = std::env::current_exe().map(|p| p.display().to_string()).unwrap_or_else(|_| "snagster".into());
+        ui.label("Snagster is also an MCP server: AI apps can capture the screen, mark up pictures, read their text and save them.");
+        ui.add_space(6.0);
+        let copy_row = |ui: &mut egui::Ui, label: &str, text: String| {
+            ui.label(RichText::new(label).strong());
+            ui.horizontal(|ui| {
+                let mut t = text.clone();
+                let rows = t.lines().count().max(1);
+                ui.add(egui::TextEdit::multiline(&mut t).code_editor().desired_rows(rows).desired_width(470.0));
+                if ui.button("Copy").clicked() {
+                    let _ = arboard::Clipboard::new().and_then(|mut c| c.set_text(text.clone()));
+                }
+            });
+            ui.add_space(6.0);
+        };
+        copy_row(ui, "Claude Code (run in a terminal)", format!("claude mcp add snagster -- \"{exe}\" --mcp"));
+        let json = serde_json::to_string_pretty(&serde_json::json!({
+            "mcpServers": {"snagster": {"command": exe, "args": ["--mcp"]}}
+        }))
+        .unwrap_or_default();
+        copy_row(ui, "Claude Desktop, Cursor and other apps (their MCP settings file)", json);
+        copy_row(ui, "Or from a terminal", format!("\"{exe}\" help"));
+        ui.label(RichText::new("Tools an AI can use").strong());
+        egui::Grid::new("mcp-tools").striped(true).spacing(vec2(12.0, 3.0)).show(ui, |ui| {
+            for (n, d) in crate::mcp::tool_names() {
+                ui.label(RichText::new(n).monospace());
+                ui.add(egui::Label::new(RichText::new(d).color(TEXT_DIM).size(12.0)).wrap());
+                ui.end_row();
+            }
+        });
     }
 }

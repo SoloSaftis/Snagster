@@ -273,6 +273,7 @@ impl UiTest {
             (SettingsTab::Redact, "Smart redact"),
             (SettingsTab::Hotkeys, "Hotkeys"),
             (SettingsTab::Presets, "Presets"),
+            (SettingsTab::Ai, "AI apps"),
         ];
         for (tab, name) in tabs {
             s.push(once(format!("Settings tab: {name}"), move |a, _| {

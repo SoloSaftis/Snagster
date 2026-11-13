@@ -8,6 +8,7 @@ mod doc;
 mod effects;
 mod export;
 mod library;
+mod mcp;
 mod ocr;
 mod windows;
 mod emoji;
@@ -25,9 +26,14 @@ use std::path::PathBuf;
 
 /// The window icon: a blue tile with white viewfinder corners and a dot.
 pub fn icon() -> egui::IconData {
-    let n = 64u32;
+    icon_sized(64)
+}
+
+/// The icon drawn at any size (designed on a 64-pixel grid).
+pub fn icon_sized(n: u32) -> egui::IconData {
+    let k = n as f32 / 64.0;
     let mut rgba = vec![0u8; (n * n * 4) as usize];
-    let radius = 14.0f32;
+    let radius = 14.0 * k;
     for y in 0..n {
         for x in 0..n {
             let (fx, fy) = (x as f32 + 0.5, y as f32 + 0.5);
@@ -41,7 +47,7 @@ pub fn icon() -> egui::IconData {
             }
             let mut c = [79u8, 124, 255];
             // Corner brackets.
-            let (lo, hi, len, th) = (13.0, 51.0, 13.0, 4.0);
+            let (lo, hi, len, th) = (13.0 * k, 51.0 * k, 13.0 * k, 4.0 * k);
             let near = |v: f32, edge: f32| (v - edge).abs() <= th / 2.0;
             let within = |v: f32| v >= lo - th / 2.0 && v <= hi + th / 2.0;
             let mut white = false;
@@ -56,7 +62,7 @@ pub fn icon() -> egui::IconData {
                     }
                 }
             }
-            if ((fx - 32.0).powi(2) + (fy - 32.0).powi(2)).sqrt() <= 6.5 {
+            if ((fx - 32.0 * k).powi(2) + (fy - 32.0 * k).powi(2)).sqrt() <= 6.5 * k {
                 white = true;
             }
             if white && within(fx) && within(fy) {
@@ -71,13 +77,36 @@ pub fn icon() -> egui::IconData {
 }
 
 fn main() -> eframe::Result {
-    let mut args = std::env::args().skip(1);
+    let all: Vec<String> = std::env::args().skip(1).collect();
+    // AI apps: `snagster --mcp` talks MCP over stdin/stdout.
+    if matches!(all.first().map(|s| s.as_str()), Some("--mcp" | "mcp")) {
+        mcp::serve_stdio();
+        return Ok(());
+    }
+    // Anything else on the command line gets the console it was started from, so it can print.
+    if !all.is_empty() {
+        attach_console();
+    }
+    if let Some(code) = mcp::run_cli(&all) {
+        std::process::exit(code);
+    }
+    let mut args = all.into_iter();
     let mut screenshot: Option<PathBuf> = None;
     let mut open: Option<PathBuf> = None;
     while let Some(a) = args.next() {
         if a == "--ui-test" {
             app::UI_TEST.store(true, std::sync::atomic::Ordering::Relaxed);
             continue;
+        }
+        if a == "--icon-png" {
+            // Write the app icon (256 px) for packaging.
+            if let Some(out) = args.next() {
+                let ic = icon_sized(256);
+                if let Some(img) = image::RgbaImage::from_raw(ic.width, ic.height, ic.rgba) {
+                    let _ = img.save(out);
+                }
+            }
+            return Ok(());
         }
         if a == "--panel" {
             app::START_PANEL.store(true, std::sync::atomic::Ordering::Relaxed);
@@ -360,4 +389,13 @@ fn cpu_seconds() -> f64 {
         }
     }
     0.0
+}
+
+/// The window build has no console of its own; borrow the one it was started from.
+fn attach_console() {
+    #[cfg(windows)]
+    unsafe {
+        use windows_sys::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole};
+        AttachConsole(ATTACH_PARENT_PROCESS);
+    }
 }

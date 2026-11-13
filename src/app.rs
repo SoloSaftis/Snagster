@@ -133,6 +133,7 @@ pub(crate) enum SettingsTab {
     Redact,
     Hotkeys,
     Presets,
+    Ai,
 }
 
 /// The small always-on-top bar shown while something runs in the background.
