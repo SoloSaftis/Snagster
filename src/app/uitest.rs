@@ -181,6 +181,41 @@ impl UiTest {
             a.slideshow(c);
             assert!(a.gif_editor.is_some(), "no GIF opened");
         }));
+        s.push(once("Record: every video format and frame rate can be chosen", |a, _| {
+            for f in crate::video::VideoFormat::ALL {
+                a.settings.rec_format = f;
+                assert_eq!(a.settings.rec_format.ext(), f.ext());
+            }
+            for fps in [1, 30, 60, 120] {
+                a.settings.video_fps = fps;
+            }
+            a.settings.rec_format = crate::video::VideoFormat::Mp4;
+        }));
+        s.push(once("Record: start a 120 fps MP4 video", |a, c| {
+            a.settings.video_fps = 120;
+            a.settings.video_max_s = 1;
+            a.start_video_to(c, (0, 0, 320, 240), Some(test_dir().join("ui-test.mp4")));
+            assert!(a.mini == Some(Mini::Video), "the recording bar didn't open");
+        }));
+        s.push(once("Record: pause and resume", |a, _| {
+            a.toggle_pause();
+            assert!(a.paused());
+            a.toggle_pause();
+            assert!(!a.paused());
+        }));
+        s.push((
+            "Record: the video is saved and plays back".to_string(),
+            Box::new(|a: &mut SnagApp, _: &egui::Context| {
+                let Some(v) = a.videos.first() else { return false };
+                assert!(v.result.is_ok(), "{:?}", v.result);
+                let p = crate::video::probe(&v.path).expect("can't read the video back");
+                assert!(p.frames >= 60, "only {} frames", p.frames);
+                assert_eq!((p.width, p.height), (320, 240));
+                assert!(a.mini.is_none(), "the recording bar stayed open");
+                a.settings.video_max_s = 0;
+                true
+            }),
+        ));
         s.push(once("Record: GIF editor trim settings", |a, _| {
             if let Some(g) = &mut a.gif_editor {
                 g.trim = (0, g.frames.len().saturating_sub(1));
@@ -360,7 +395,8 @@ impl UiTest {
         "Open, Import, Save as, Export guide, Word (they open file dialogs; the same saving code is tested here)",
         "Print, Email, Open in another program, Show in folder, Open folder (they start other programs)",
         "Move to Recycle Bin (it deletes a file)",
-        "Record GIF, Record steps, scrolling (they record the real screen; recording is tested by --record-test)",
+        "Record GIF, Record steps, scrolling (they record the real screen; GIFs are tested by --record-test, videos by --video-test and the video steps above)",
+        "Play last video, Show last video in its folder (they start other programs)",
         "Start with Windows (changes the registry)",
     ];
 }

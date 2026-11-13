@@ -18,6 +18,7 @@ mod overlay;
 mod panel;
 mod tray;
 mod settings;
+mod video;
 mod render;
 mod sample;
 
@@ -142,6 +143,10 @@ fn main() -> eframe::Result {
                 }
                 Err(e) => println!("recording failed: {e}"),
             }
+            return Ok(());
+        } else if a == "--video-test" {
+            // Record short videos in every format and rate, read each back and report.
+            video_test(args.next().as_deref() == Some("quick"));
             return Ok(());
         } else if a == "--record-bench" {
             // 50 frames of 1280 x 720: a typing-sized change in each, then full-screen changes.
@@ -376,6 +381,93 @@ fn circle_free(img: &image::RgbaImage) -> image::RgbaImage {
 }
 
 /// CPU time this process has used so far, in seconds.
+/// `--video-test`: encoders on this computer, then 3-second recordings in each format and rate,
+/// each decoded again to count frames and check the picture is the right way up.
+fn video_test(quick: bool) {
+    use video::{VideoFormat, VideoOpts};
+    println!("Video encoders on this computer:");
+    for e in video::encoders() {
+        println!("  {:5} {:9} {}{}", e.codec, if e.hardware { "hardware" } else { "software" }, e.name, if e.vendor.is_empty() { String::new() } else { format!(" ({})", e.vendor) });
+    }
+    let (mx, my, sw, sh) = capture::monitors().first().map(|m| (m.x, m.y, m.width, m.height)).unwrap_or((0, 0, 1280, 720));
+    let rect = (mx, my, sw.min(1920), sh.min(1080));
+    let mut cases = vec![(VideoFormat::Mp4, 30, true), (VideoFormat::Mp4, 60, true), (VideoFormat::Mp4, 120, true)];
+    if !quick {
+        cases.extend([(VideoFormat::Mp4, 1, true), (VideoFormat::Hevc, 60, true), (VideoFormat::Wmv, 30, true), (VideoFormat::Mp4, 30, false)]);
+    }
+    let mut failed = 0;
+    for (format, fps, hardware) in cases {
+        if !format.available() {
+            continue;
+        }
+        let secs = if fps == 1 { 5 } else { 3 };
+        let path = std::env::temp_dir().join(format!("snagster-video-test-{fps}-{}-{}.{}", format.ext(), if hardware { "hw" } else { "sw" }, format.ext()));
+        let opts = VideoOpts { rect, fps, format, quality: 2, hardware, cursor: true, max_s: secs, path: path.clone() };
+        let stop = std::sync::atomic::AtomicBool::new(false);
+        let pause = std::sync::atomic::AtomicBool::new(false);
+        let before = capture::grab_rect(rect.0, rect.1, rect.2 & !1, rect.3 & !1).ok();
+        let cpu0 = cpu_seconds();
+        let t0 = std::time::Instant::now();
+        let d = video::record(&opts, &stop, &pause);
+        let wall = t0.elapsed().as_secs_f64();
+        let cpu = cpu_seconds() - cpu0;
+        let label = format!("{} {}x{} {fps} fps{}", format.label(), d.width, d.height, if hardware { "" } else { " (software asked)" });
+        if let Err(e) = &d.result {
+            println!("FAIL {label}: {e}");
+            failed += 1;
+            continue;
+        }
+        let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+        match video::probe(&path) {
+            Ok(p) => {
+                let expect = fps as u64 * secs as u64;
+                let ok_count = p.frames + 2 >= expect * 9 / 10 && p.frames <= expect + 2;
+                // Compare the first frame with the screen now, and with the screen upside down.
+                let orient = p.first.as_ref().and_then(|f| {
+                    let now = before.clone().filter(|b| b.dimensions() == (p.width, p.height))?;
+                    let diff = |a: &image::RgbaImage, b: &image::RgbaImage| {
+                        a.pixels().zip(b.pixels()).step_by(13).map(|(x, y)| (0..3).map(|c| (x.0[c] as i32 - y.0[c] as i32).unsigned_abs() as u64).sum::<u64>()).sum::<u64>()
+                    };
+                    let flipped = image::imageops::flip_vertical(&now);
+                    if std::env::var_os("SNAGSTER_VIDEO_DUMP").is_some() {
+                        let _ = f.save(std::env::temp_dir().join("snagster-video-first.png"));
+                        let _ = now.save(std::env::temp_dir().join("snagster-video-before.png"));
+                    }
+                    Some(diff(f, &now) <= diff(f, &flipped))
+                });
+                let ok = ok_count && orient != Some(false) && p.width == d.width && p.height == d.height;
+                if !ok {
+                    failed += 1;
+                }
+                println!(
+                    "{} {label}: {} frames written, {} in the file (want ~{expect}), {:.2} s long, {} KB, {} via {}, CPU {:.1}% of one core, picture {}",
+                    if ok { "ok  " } else { "FAIL" },
+                    d.frames,
+                    p.frames,
+                    p.seconds,
+                    size / 1024,
+                    d.encoder,
+                    d.capture,
+                    100.0 * cpu / wall,
+                    match orient {
+                        Some(true) => "upright",
+                        Some(false) => "UPSIDE DOWN",
+                        None => "not checked",
+                    }
+                );
+            }
+            Err(e) => {
+                failed += 1;
+                println!("FAIL {label}: couldn't read it back: {e}");
+            }
+        }
+        if std::env::var_os("SNAGSTER_VIDEO_KEEP").is_none() {
+            let _ = std::fs::remove_file(&path);
+        }
+    }
+    println!("{}", if failed == 0 { "video test: all passed".to_string() } else { format!("video test: {failed} failed") });
+}
+
 fn cpu_seconds() -> f64 {
     #[cfg(windows)]
     unsafe {

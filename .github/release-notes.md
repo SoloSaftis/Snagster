@@ -1,4 +1,6 @@
-Capture your screen, mark it up, share it. Everything runs on your own computer.
+Capture your screen, mark it up, record it. Everything runs on your own computer.
+
+**New: video recording.** MP4 (H.264 or HEVC) and WMV at 1-120 frames per second, encoded by your graphics chip (Intel, AMD or NVIDIA) on Windows.
 
 ## Download
 

@@ -23,7 +23,8 @@ Windows · Mac · Linux · works offline · written in Rust · free and open sou
 - **Mark it up** – arrows, boxes, text in any of your fonts, speech bubbles, numbered steps, 1,300+ color emojis, highlighter, spotlight, magnifier, blur and smart redact for private details.
 - **Tidy it up** – crop, cut out, move parts of the picture, borders, shadows, torn edges and more.
 - **Grab text** – copy the text out of any picture or part of the screen (Windows).
-- **Record GIFs** that stay small and light on the battery, and step-by-step guides as PDF, Word or web pages.
+- **Record videos** of your screen as MP4 (H.264 or HEVC) or WMV, at anything from 1 to 120 frames per second. On Windows the graphics chip does the work (Intel Quick Sync, AMD or NVIDIA encoders), so recording barely touches the processor or the battery.
+- **Record GIFs** that stay small, and step-by-step guides as PDF, Word or web pages.
 - **Library** – every capture is kept, searchable by date, program and tags; works from your OneDrive or Dropbox folder.
 - **Your own hotkeys**, presets and themes, a capture panel and a quick menu in the corner of the taskbar.
 - **For AI apps** – Snagster is also an MCP server, so Claude, Cursor and other AI apps can capture and mark up pictures too.
@@ -64,7 +65,8 @@ claude mcp add snagster -- "path/to/snagster" --mcp
 ```
 
 The same tools work from a terminal: `snagster help` lists commands such as
-`snagster capture region 0 0 800 600 -o shot.png` and `snagster ocr picture.png`.
+`snagster capture region 0 0 800 600 -o shot.png`, `snagster record 10 --fps 60 -o clip.mp4` and
+`snagster ocr picture.png`.
 
 ## For developers
 

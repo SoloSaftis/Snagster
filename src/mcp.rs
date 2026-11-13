@@ -16,7 +16,7 @@ pub const PROTOCOL_VERSIONS: [&str; 4] = ["2025-11-25", "2025-06-18", "2025-03-2
 
 pub const INSTRUCTIONS: &str = "Snagster captures the screen and marks up pictures. Typical use: capture_screen \
 (or capture_region / capture_window / open_image) to get a current picture, then add_mark, blur_area, crop, \
-apply_effect or read_text, then view_picture to look at it and save or copy_to_clipboard. Coordinates are \
+apply_effect or read_text, then view_picture to look at it and save or copy_to_clipboard. record_video records the screen to an MP4 file at 1-120 frames per second. Coordinates are \
 picture pixels from the top-left corner. Colours are #RRGGBB or a name (red, orange, yellow, green, blue, \
 purple, black, white).";
 
@@ -133,6 +133,26 @@ fn tools() -> Vec<Tool> {
             schema: obj(with(rect(), json!({"seconds": n("1-120, default 5."), "fps": n("1-30, default 10."), "path": s("Where to save the .gif.")})), &["x", "y", "width", "height", "path"]),
             edits: false,
         },
+        Tool {
+            name: "record_video",
+            description: "Record the screen (or a desktop rectangle, or one monitor) to a video file for some seconds, at 1-120 frames per second. Uses the graphics chip's encoder (Intel, AMD or NVIDIA) when there is one. Returns the file, its length, frames and the encoder used.",
+            schema: obj(
+                json!({
+                    "seconds": n("1-600."),
+                    "fps": n("Frames per second, 1-120, default 30."),
+                    "format": {"type": "string", "enum": ["mp4", "hevc", "wmv"], "description": "mp4 (H.264, default), hevc (MP4 with H.265) or wmv."},
+                    "quality": n("1 small file, 2 good (default), 3 high, 4 best."),
+                    "hardware": {"type": "boolean", "description": "Use the graphics chip's encoder (default true)."},
+                    "cursor": {"type": "boolean", "description": "Draw the mouse pointer (default true)."},
+                    "monitor_id": n("Record this monitor (from list_monitors)."),
+                    "x": {"type": "number"}, "y": {"type": "number"}, "width": {"type": "number"}, "height": {"type": "number"},
+                    "path": s("Where to save it; default the Recordings folder in Snagster's library.")
+                }),
+                &["seconds"],
+            ),
+            edits: false,
+        },
+        Tool { name: "list_video_encoders", description: "The video encoders this computer has (graphics-chip and software) for H.264, HEVC and WMV.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "library_search", description: "Search Snagster's capture library by title, program, tag or date.", schema: obj(json!({"query": s("Words to find; empty lists everything."), "limit": n("Default 20.")}), &[]), edits: false },
     ]
 }
@@ -436,6 +456,70 @@ impl Workspace {
                 arboard::Clipboard::new().and_then(|mut c| c.set_image(data)).map_err(|e| e.to_string())?;
                 Ok(vec![text(format!("Copied the {w} x {h} picture."))])
             }
+            "list_video_encoders" => {
+                let list = crate::video::encoders();
+                Ok(vec![text(serde_json::to_string_pretty(&list).unwrap_or_default())])
+            }
+            "record_video" => {
+                let secs = num(a, "seconds").ok_or("missing seconds")?.clamp(1.0, 600.0) as u32;
+                let format = match a.get("format").and_then(Value::as_str) {
+                    Some(f) => crate::video::VideoFormat::parse(f).filter(|f| *f != crate::video::VideoFormat::Gif).ok_or("format is mp4, hevc or wmv (use record_gif for GIFs)")?,
+                    None => crate::video::VideoFormat::Mp4,
+                };
+                let rect = if a.get("width").is_some() {
+                    let r = rect_arg(a)?;
+                    (r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32)
+                } else {
+                    let mons = capture::monitors();
+                    let m = match num(a, "monitor_id") {
+                        Some(id) => mons.iter().find(|m| m.id == id as u32).ok_or("no such monitor (see list_monitors)")?,
+                        None => {
+                            let at = capture::cursor_pos().unwrap_or((0, 0));
+                            mons.iter()
+                                .find(|m| at.0 >= m.x && at.1 >= m.y && at.0 < m.x + m.width as i32 && at.1 < m.y + m.height as i32)
+                                .or(mons.first())
+                                .ok_or("no screen found")?
+                        }
+                    };
+                    (m.x, m.y, m.width, m.height)
+                };
+                let path = match a.get("path").and_then(Value::as_str) {
+                    Some(p) => std::path::PathBuf::from(p),
+                    None => {
+                        let lib = crate::settings::Settings::load(false).library_folder;
+                        let name = chrono::Local::now().format("Recording_%Y-%m-%d_%H-%M-%S").to_string();
+                        crate::settings::unique_path(&std::path::PathBuf::from(lib).join("Recordings"), &name, format.ext())
+                    }
+                };
+                let opts = crate::video::VideoOpts {
+                    rect,
+                    fps: num(a, "fps").unwrap_or(30.0).clamp(1.0, 120.0) as u32,
+                    format,
+                    quality: num(a, "quality").unwrap_or(2.0).clamp(1.0, 4.0) as u8,
+                    hardware: a.get("hardware").and_then(Value::as_bool).unwrap_or(true),
+                    cursor: a.get("cursor").and_then(Value::as_bool).unwrap_or(true),
+                    max_s: secs,
+                    path,
+                };
+                let stop = std::sync::atomic::AtomicBool::new(false);
+                let pause = std::sync::atomic::AtomicBool::new(false);
+                let d = crate::video::record(&opts, &stop, &pause);
+                d.result.clone()?;
+                let size = std::fs::metadata(&d.path).map(|m| m.len()).unwrap_or(0);
+                Ok(vec![text(format!(
+                    "Saved {}: {:.1} s, {} frames at {} fps, {} x {}, {} KB. Encoder: {} ({}); screen copied by {}.",
+                    d.path.display(),
+                    d.seconds,
+                    d.frames,
+                    opts.fps,
+                    d.width,
+                    d.height,
+                    size / 1024,
+                    d.encoder,
+                    if d.hardware { "graphics chip" } else { "processor" },
+                    d.capture
+                ))])
+            }
             "record_gif" => {
                 let r = rect_arg(a)?;
                 let secs = num(a, "seconds").unwrap_or(5.0).clamp(1.0, 120.0) as u32;
@@ -666,7 +750,7 @@ pub fn run_cli(args: &[String]) -> Option<i32> {
     let code = match cmd {
         "help" | "--help" | "-h" => {
             println!(
-                "Snagster {}\n\nUse: snagster [command]\n\n  (no command)                          open the window\n  --mcp                                 MCP server for AI apps (stdin/stdout)\n  capture screen [-o out.png]           the screen under the mouse\n  capture all [-o out.png]              all screens\n  capture region X Y W H [-o out.png]   a desktop rectangle\n  capture window TITLE [-o out.png]     a window whose title contains TITLE\n  ocr IMAGE                             print the text in a picture\n  redact IMAGE -o OUT                   blur emails, phone numbers... and save\n  effect IMAGE EFFECT -o OUT            apply an effect ({})\n  convert IMAGE -o OUT                  save in another format (by extension)\n  windows | monitors                    list windows or screens\n  tools                                 list the AI tools\n  call TOOL [JSON]                      run one AI tool, e.g. call list_windows\n",
+                "Snagster {}\n\nUse: snagster [command]\n\n  (no command)                          open the window\n  --mcp                                 MCP server for AI apps (stdin/stdout)\n  capture screen [-o out.png]           the screen under the mouse\n  capture all [-o out.png]              all screens\n  capture region X Y W H [-o out.png]   a desktop rectangle\n  capture window TITLE [-o out.png]     a window whose title contains TITLE\n  ocr IMAGE                             print the text in a picture\n  redact IMAGE -o OUT                   blur emails, phone numbers... and save\n  effect IMAGE EFFECT -o OUT            apply an effect ({})\n  convert IMAGE -o OUT                  save in another format (by extension)\n  record [SECONDS] [-o out.mp4]         record the screen to a video (default 10 s)\n      [--fps 1-120] [--format mp4|hevc|wmv] [--quality 1-4]\n      [--region X Y W H] [--software] [--no-cursor]\n  encoders                              list the video encoders\n  windows | monitors                    list windows or screens\n  tools                                 list the AI tools\n  call TOOL [JSON]                      run one AI tool, e.g. call list_windows\n",
                 env!("CARGO_PKG_VERSION"),
                 effect_names().join(", ")
             );
@@ -679,6 +763,40 @@ pub fn run_cli(args: &[String]) -> Option<i32> {
             0
         }
         "windows" => show(ws.call("list_windows", &json!({}))),
+        "encoders" => show(ws.call("list_video_encoders", &json!({}))),
+        "record" => {
+            // snagster record [SECONDS] [--fps N] [--format mp4|hevc|wmv] [--quality 1-4] [--software] [--region X Y W H] [-o FILE]
+            let flag = |name: &str| args.windows(2).find(|w| w[0] == name).map(|w| w[1].clone());
+            let mut a = json!({"seconds": args.get(1).and_then(|s| s.parse::<f64>().ok()).unwrap_or(10.0)});
+            if let Some(v) = flag("--fps").and_then(|s| s.parse::<f64>().ok()) {
+                a["fps"] = json!(v);
+            }
+            if let Some(v) = flag("--format") {
+                a["format"] = json!(v);
+            }
+            if let Some(v) = flag("--quality").and_then(|s| s.parse::<f64>().ok()) {
+                a["quality"] = json!(v);
+            }
+            if args.iter().any(|s| s == "--software") {
+                a["hardware"] = json!(false);
+            }
+            if args.iter().any(|s| s == "--no-cursor") {
+                a["cursor"] = json!(false);
+            }
+            if let Some(i) = args.iter().position(|s| s == "--region") {
+                let v: Vec<f64> = args.iter().skip(i + 1).take(4).filter_map(|s| s.parse().ok()).collect();
+                if v.len() == 4 {
+                    a["x"] = json!(v[0]);
+                    a["y"] = json!(v[1]);
+                    a["width"] = json!(v[2]);
+                    a["height"] = json!(v[3]);
+                }
+            }
+            if let Some(p) = out_path(args) {
+                a["path"] = json!(p);
+            }
+            show(ws.call("record_video", &a))
+        }
         "monitors" => show(ws.call("list_monitors", &json!({}))),
         "call" => {
             let tool = args.get(1).map(|s| s.as_str()).unwrap_or("");

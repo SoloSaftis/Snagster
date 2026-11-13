@@ -131,8 +131,13 @@ impl SnagApp {
                         }
                         if tab == 2 {
                             ui.separator();
-                            ui.add(egui::Slider::new(&mut self.settings.gif_fps, 2..=30).text("frames per second"));
-                            ui.add(egui::Slider::new(&mut self.settings.gif_max_s, 5..=300).suffix(" s").text("longest"));
+                            if self.settings.rec_format == crate::video::VideoFormat::Gif {
+                                ui.add(egui::Slider::new(&mut self.settings.gif_fps, 2..=30).text("frames per second"));
+                                ui.add(egui::Slider::new(&mut self.settings.gif_max_s, 5..=300).suffix(" s").text("longest"));
+                            } else {
+                                ui.add(egui::Slider::new(&mut self.settings.video_fps, 1..=120).text("frames per second"));
+                                ui.checkbox(&mut self.settings.video_hardware, "Use the graphics chip to encode");
+                            }
                         }
                     })
                     .response
@@ -140,6 +145,18 @@ impl SnagApp {
                 });
                 ui.end_row();
 
+                if tab == 2 {
+                    ui.label(RichText::new("Format:").color(Color32::WHITE));
+                    let f = &mut self.settings.rec_format;
+                    egui::ComboBox::from_id_salt("p-format").width(230.0).selected_text(f.label()).show_ui(ui, |ui| {
+                        for v in crate::video::VideoFormat::ALL {
+                            if v.available() {
+                                ui.selectable_value(f, v, v.label());
+                            }
+                        }
+                    });
+                    ui.end_row();
+                }
                 ui.label(RichText::new("Effects:").color(Color32::WHITE));
                 let p = &mut self.settings.panel;
                 let shown = p.effect.map(|e| e.label()).unwrap_or("None");
@@ -231,7 +248,7 @@ impl SnagApp {
         };
         ui.painter().circle_filled(big.center() + vec2(0.0, 3.0), 50.0, Color32::from_black_alpha(70));
         ui.painter().circle_filled(big.center(), 50.0, fill);
-        let label = if tab == 2 { if self.mini == Some(crate::app::Mini::Gif) { "Stop" } else { "Record" } } else { "Capture" };
+        let label = if tab == 2 { if self.is_recording() { "Stop" } else { "Record" } } else { "Capture" };
         ui.painter().text(big.center(), Align2::CENTER_CENTER, label, FontId::proportional(17.0), Color32::WHITE);
         if br.on_hover_text("Print Screen does the same").clicked() {
             capture_now = true;
@@ -338,7 +355,7 @@ impl SnagApp {
         self.settings.delay_s = if p.delay_on { p.delay_s } else { 0 };
         self.leave_panel(ctx);
         if p.tab == 2 {
-            if self.mini == Some(crate::app::Mini::Gif) {
+            if self.is_recording() {
                 self.stop_job();
                 return;
             }
@@ -352,7 +369,7 @@ impl SnagApp {
                         .or(mons.first())
                     {
                         let r = (m.x, m.y, m.width, m.height);
-                        self.start_gif(ctx, r);
+                        self.start_record(ctx, r);
                     }
                 }
                 _ => self.start_capture(ctx, CaptureKind::Pick(CutShape::Rect, PickPurpose::RecordGif)),

@@ -128,16 +128,66 @@ impl SnagApp {
                         ui.add(egui::Slider::new(&mut s.scroll_wait_ms, 100..=1500).text("Wait after each scroll (ms)"));
                     }
                     SettingsTab::Recording => {
+                        if self.encoders.is_none() {
+                            self.encoders = Some(crate::video::encoders());
+                        }
+                        let s = &mut self.settings;
+                        ui.label(RichText::new("Record as").strong());
+                        egui::ComboBox::from_id_salt("rec-format").width(240.0).selected_text(s.rec_format.label()).show_ui(ui, |ui| {
+                            for f in crate::video::VideoFormat::ALL {
+                                if f.available() {
+                                    ui.selectable_value(&mut s.rec_format, f, f.label());
+                                }
+                            }
+                        });
+                        ui.add_space(6.0);
+                        ui.label(RichText::new("Video (MP4, HEVC, WMV)").strong());
+                        ui.horizontal(|ui| {
+                            ui.add(egui::Slider::new(&mut s.video_fps, 1..=120).text("Frames per second"));
+                        });
+                        ui.horizontal(|ui| {
+                            for fps in [15, 30, 60, 120] {
+                                if ui.selectable_label(s.video_fps == fps, format!("{fps}")).clicked() {
+                                    s.video_fps = fps;
+                                }
+                            }
+                        });
+                        egui::ComboBox::from_label("Picture quality")
+                            .selected_text(["", "Small file", "Good", "High", "Best"][s.video_quality.clamp(1, 4) as usize])
+                            .show_ui(ui, |ui| {
+                                for (q, name) in [(1u8, "Small file"), (2, "Good"), (3, "High"), (4, "Best")] {
+                                    ui.selectable_value(&mut s.video_quality, q, name);
+                                }
+                            });
+                        ui.checkbox(&mut s.video_hardware, "Use the graphics chip to encode (Intel, AMD or NVIDIA)");
+                        ui.add(egui::Slider::new(&mut s.video_max_s, 0..=7200).suffix(" s").text("Stop by itself after (0: never)"));
+                        let (w, h) = (1920, 1080);
+                        ui.label(
+                            RichText::new(format!(
+                                "A full-HD screen at these choices takes about {:.0} MB a minute. Frames above your screen's refresh rate repeat the last picture.",
+                                crate::video::bitrate(w, h, s.video_fps, s.rec_format, s.video_quality) as f64 * 60.0 / 8.0 / 1_000_000.0
+                            ))
+                            .color(TEXT_DIM),
+                        );
+                        if let Some(list) = &self.encoders {
+                            let hw: Vec<String> = list.iter().filter(|e| e.hardware).map(|e| format!("{} ({})", e.name, e.codec)).collect();
+                            let text = if hw.is_empty() {
+                                "No graphics-chip encoder was found, so videos use the processor.".to_string()
+                            } else {
+                                format!("Graphics-chip encoders here: {}", hw.join(", "))
+                            };
+                            ui.label(RichText::new(text).color(TEXT_DIM));
+                        }
+                        ui.add_space(6.0);
+                        ui.label(RichText::new("Animated GIF").strong());
                         let s = &mut self.settings;
                         ui.add(egui::Slider::new(&mut s.gif_fps, 2..=30).text("Frames per second"));
                         ui.add(egui::Slider::new(&mut s.gif_max_s, 5..=300).suffix(" s").text("Longest recording"));
                         ui.add(egui::Slider::new(&mut s.gif_max_width, 320..=1920).suffix(" px").text("Widest frame"));
+                        ui.add_space(6.0);
                         ui.checkbox(&mut s.gif_cursor, "Show the mouse pointer in recordings");
                         ui.add(egui::Slider::new(&mut s.slideshow_s, 0.2..=10.0).suffix(" s").text("Slideshow: time per picture"));
-                        ui.label(
-                            RichText::new("Recordings are animated GIFs. Video files with sound (MP4) aren't made yet.")
-                                .color(TEXT_DIM),
-                        );
+                        ui.label(RichText::new("Videos are recorded without sound.").color(TEXT_DIM));
                     }
                     SettingsTab::Editor => self.editor_tab(ui),
                     SettingsTab::Effects => {

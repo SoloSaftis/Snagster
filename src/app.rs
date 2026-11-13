@@ -140,6 +140,7 @@ pub(crate) enum SettingsTab {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Mini {
     Gif,
+    Video,
     Steps,
     Scroll,
 }
@@ -222,10 +223,16 @@ pub struct SnagApp {
     gif_tx: Sender<GifDone>,
     gif_rx: Receiver<GifDone>,
     pub(crate) recordings: Vec<Recording>,
+    video_tx: Sender<crate::video::VideoDone>,
+    video_rx: Receiver<crate::video::VideoDone>,
+    pub(crate) job_pause: Option<Arc<AtomicBool>>,
+    pub(crate) videos: Vec<crate::video::VideoDone>,
+    pub(crate) encoders: Option<Vec<crate::video::EncoderInfo>>,
     pub(crate) gif_editor: Option<GifEditor>,
     pub(crate) gif_open: bool,
     pub(crate) mini: Option<Mini>,
     mini_since: Instant,
+    mini_paused: Option<Instant>,
     mini_restore: Option<(Pos2, Vec2)>,
     pub(crate) interval: Option<IntervalJob>,
     pub(crate) schedule: Option<(chrono::NaiveTime, CaptureKind)>,
@@ -287,6 +294,7 @@ impl SnagApp {
         let (hk_tx, hk_rx) = channel();
         let (ocr_tx, ocr_rx) = channel();
         let (gif_tx, gif_rx) = channel();
+        let (video_tx, video_rx) = channel();
         let (tray_tx, tray_rx) = channel();
         fonts::start_scan(cc.egui_ctx.clone());
         let mut app = Self {
@@ -330,10 +338,16 @@ impl SnagApp {
             gif_tx,
             gif_rx,
             recordings: Vec::new(),
+            video_tx,
+            video_rx,
+            job_pause: None,
+            videos: Vec::new(),
+            encoders: None,
             gif_editor: None,
             gif_open: false,
             mini: None,
             mini_since: Instant::now(),
+            mini_paused: None,
             mini_restore: None,
             interval: None,
             schedule: None,
@@ -501,7 +515,7 @@ impl SnagApp {
             Action::ColorPicker => self.start_capture(ctx, CaptureKind::ColorPicker),
             Action::Ruler => self.start_capture(ctx, CaptureKind::Ruler),
             Action::RecordGif => {
-                if self.mini == Some(Mini::Gif) {
+                if self.is_recording() {
                     self.stop_job();
                 } else {
                     self.start_capture(ctx, pick(CutShape::Rect, PickPurpose::RecordGif));
@@ -783,7 +797,7 @@ impl SnagApp {
                     }
                     AreaAction::RecordGif => {
                         self.leave_overlay(&ctx, true);
-                        self.start_gif(&ctx, desktop);
+                        self.start_record(&ctx, desktop);
                     }
                 }
             }
@@ -857,6 +871,113 @@ impl SnagApp {
         self.status = if manual { "Scroll the page yourself; press Stop at the end.".into() } else { "Scrolling and stitching... keep the mouse still.".into() };
     }
 
+    /// Whether a GIF or video recording is running.
+    pub(crate) fn is_recording(&self) -> bool {
+        matches!(self.mini, Some(Mini::Gif) | Some(Mini::Video))
+    }
+
+    /// Record an area in the chosen format (a video file, or a GIF).
+    pub(crate) fn start_record(&mut self, ctx: &egui::Context, rect: (i32, i32, u32, u32)) {
+        if self.settings.rec_format == crate::video::VideoFormat::Gif {
+            self.start_gif(ctx, rect);
+        } else {
+            self.start_video(ctx, rect);
+        }
+    }
+
+    /// The options a video recording of `rect` gets from the settings.
+    pub(crate) fn video_opts(&self, rect: (i32, i32, u32, u32)) -> crate::video::VideoOpts {
+        let s = &self.settings;
+        let folder = PathBuf::from(&s.library_folder).join("Recordings");
+        let name = chrono::Local::now().format("Recording_%Y-%m-%d_%H-%M-%S").to_string();
+        crate::video::VideoOpts {
+            rect,
+            fps: s.video_fps.clamp(1, 120),
+            format: s.rec_format,
+            quality: s.video_quality,
+            hardware: s.video_hardware,
+            cursor: s.gif_cursor,
+            max_s: s.video_max_s,
+            path: crate::settings::unique_path(&folder, &name, s.rec_format.ext()),
+        }
+    }
+
+    pub(crate) fn start_video(&mut self, ctx: &egui::Context, rect: (i32, i32, u32, u32)) {
+        self.start_video_to(ctx, rect, None);
+    }
+
+    /// Start a video recording; `path` replaces the usual file in the Recordings folder.
+    pub(crate) fn start_video_to(&mut self, ctx: &egui::Context, rect: (i32, i32, u32, u32), path: Option<PathBuf>) {
+        if let Err(e) = crate::video::even_size(rect.2, rect.3) {
+            self.status = e;
+            return;
+        }
+        let stop = Arc::new(AtomicBool::new(false));
+        let pause = Arc::new(AtomicBool::new(false));
+        self.job_stop = Some(stop.clone());
+        self.job_pause = Some(pause.clone());
+        let mut opts = self.video_opts(rect);
+        if let Some(p) = path {
+            opts.path = p;
+        }
+        self.enter_mini(ctx, Mini::Video);
+        crate::video::spawn(opts, stop, pause, Some(ctx.clone()), self.video_tx.clone());
+        self.status = format!("Recording video at {} frames per second...", self.settings.video_fps);
+    }
+
+    /// The display under the mouse pointer (or the first one), as a desktop area.
+    pub(crate) fn screen_under_pointer(&self) -> Option<(i32, i32, u32, u32)> {
+        let at = capture::cursor_pos().unwrap_or((0, 0));
+        let mons = capture::monitors();
+        mons.iter()
+            .find(|m| at.0 >= m.x && at.1 >= m.y && at.0 < m.x + m.width as i32 && at.1 < m.y + m.height as i32)
+            .or(mons.first())
+            .map(|m| (m.x, m.y, m.width, m.height))
+    }
+
+    /// Pause or carry on with a video recording.
+    pub(crate) fn toggle_pause(&mut self) {
+        if let Some(p) = &self.job_pause {
+            let now = !p.load(Ordering::Relaxed);
+            p.store(now, Ordering::Relaxed);
+            if now {
+                self.mini_paused = Some(Instant::now());
+            } else if let Some(t) = self.mini_paused.take() {
+                self.mini_since += t.elapsed();
+            }
+        }
+    }
+
+    pub(crate) fn paused(&self) -> bool {
+        self.job_pause.as_ref().is_some_and(|p| p.load(Ordering::Relaxed))
+    }
+
+    /// Open a file with the program the computer uses for it.
+    pub(crate) fn open_file(&mut self, path: &std::path::Path) {
+        #[cfg(windows)]
+        let r = std::process::Command::new("cmd").args(["/C", "start", ""]).arg(path).spawn();
+        #[cfg(target_os = "macos")]
+        let r = std::process::Command::new("open").arg(path).spawn();
+        #[cfg(all(unix, not(target_os = "macos")))]
+        let r = std::process::Command::new("xdg-open").arg(path).spawn();
+        if let Err(e) = r {
+            self.status = format!("Couldn't open it: {e}");
+        }
+    }
+
+    /// Show a file selected in the file manager.
+    pub(crate) fn reveal(&mut self, path: &std::path::Path) {
+        #[cfg(windows)]
+        let r = std::process::Command::new("explorer").arg(format!("/select,{}", path.display())).spawn();
+        #[cfg(target_os = "macos")]
+        let r = std::process::Command::new("open").arg("-R").arg(path).spawn();
+        #[cfg(all(unix, not(target_os = "macos")))]
+        let r = std::process::Command::new("xdg-open").arg(path.parent().unwrap_or(path)).spawn();
+        if let Err(e) = r {
+            self.status = format!("Couldn't open the folder: {e}");
+        }
+    }
+
     pub(crate) fn start_gif(&mut self, ctx: &egui::Context, rect: (i32, i32, u32, u32)) {
         let stop = Arc::new(AtomicBool::new(false));
         self.job_stop = Some(stop.clone());
@@ -923,6 +1044,28 @@ impl SnagApp {
                     self.open_gif(ctx, done.path);
                 }
                 Err(e) => self.status = format!("Recording failed: {e}"),
+            }
+        }
+        while let Ok(done) = self.video_rx.try_recv() {
+            self.job_stop = None;
+            self.job_pause = None;
+            self.mini_paused = None;
+            if self.mini == Some(Mini::Video) {
+                self.leave_mini(ctx);
+            }
+            match &done.result {
+                Ok(()) => {
+                    let name = done.path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                    let how = if done.hardware { format!("graphics chip: {}", done.encoder) } else { done.encoder.clone() };
+                    self.status = format!("Saved {name}: {:.1} s, {} frames, {}x{} ({how}). Record > Play last video.", done.seconds, done.frames, done.width, done.height);
+                    self.videos.insert(0, done);
+                }
+                Err(e) => {
+                    self.status = format!("Video recording failed: {e}");
+                    if done.frames > 0 {
+                        self.videos.insert(0, done);
+                    }
+                }
             }
         }
         let mut steps = Vec::new();
@@ -2026,10 +2169,57 @@ impl SnagApp {
             let c = s.binding(a);
             if c.is_set() { c.label() } else { String::new() }
         };
-        let gif_label = if self.mini == Some(Mini::Gif) { "Stop GIF recording" } else { "Record an area as GIF..." };
-        if item(ui, gif_label, &hk(&self.settings, Action::RecordGif)) {
+        let rec_label = if self.is_recording() {
+            "Stop recording".to_string()
+        } else {
+            format!("Record an area ({}, {} fps)...", self.settings.rec_format.ext().to_uppercase(), if self.settings.rec_format == crate::video::VideoFormat::Gif { self.settings.gif_fps } else { self.settings.video_fps })
+        };
+        if item(ui, &rec_label, &hk(&self.settings, Action::RecordGif)) {
             self.do_action(ctx, Action::RecordGif);
         }
+        if item_on(ui, !self.is_recording(), "Record the whole screen", "") {
+            ui.close();
+            if let Some(r) = self.screen_under_pointer() {
+                self.start_record(ctx, r);
+            }
+        }
+        if self.mini == Some(Mini::Video) && item(ui, if self.paused() { "Resume recording" } else { "Pause recording" }, "") {
+            self.toggle_pause();
+        }
+        ui.menu_button("Record as", |ui| {
+            for f in crate::video::VideoFormat::ALL {
+                if f.available() && ui.radio(self.settings.rec_format == f, f.label()).clicked() {
+                    self.settings.rec_format = f;
+                }
+            }
+        });
+        ui.menu_button("Frames per second", |ui| {
+            for fps in [1, 5, 10, 15, 24, 30, 50, 60, 90, 120] {
+                if ui.radio(self.settings.video_fps == fps, format!("{fps} fps")).clicked() {
+                    self.settings.video_fps = fps;
+                }
+            }
+            ui.add(egui::Slider::new(&mut self.settings.video_fps, 1..=120).text("fps"));
+        });
+        let last = self.videos.first().map(|v| v.path.clone());
+        if item_on(ui, last.is_some(), "Play last video", "") {
+            ui.close();
+            if let Some(p) = &last {
+                self.open_file(p);
+            }
+        }
+        if item_on(ui, last.is_some(), "Show last video in its folder", "") {
+            ui.close();
+            if let Some(p) = &last {
+                self.reveal(p);
+            }
+        }
+        if item(ui, "Video settings...", "") {
+            ui.close();
+            self.settings_open = true;
+            self.settings_tab = SettingsTab::Recording;
+        }
+        ui.separator();
         let step_label = if self.mini == Some(Mini::Steps) { "Stop step recording" } else { "Record steps (a picture per click)" };
         if item(ui, step_label, &hk(&self.settings, Action::RecordSteps)) {
             self.do_action(ctx, Action::RecordSteps);
@@ -2349,7 +2539,7 @@ impl SnagApp {
             if ui.add_enabled(!busy, egui::Button::new("Scrolling").min_size(vec2(0.0, 30.0))).clicked() {
                 self.do_action(&ctx, Action::Scrolling);
             }
-            let rec = if self.mini == Some(Mini::Gif) { "Stop GIF" } else { "Record GIF" };
+            let rec = if self.is_recording() { "Stop recording" } else { "Record" };
             if ui.add(egui::Button::new(rec).min_size(vec2(0.0, 30.0))).clicked() {
                 self.do_action(&ctx, Action::RecordGif);
             }
@@ -2813,7 +3003,7 @@ impl SnagApp {
             let (title, sub) = [
                 ("Capture", "Print Screen"),
                 ("Scrolling page", "Long pages and documents"),
-                ("Record a GIF", "Show what happens"),
+                ("Record video", "MP4, up to 120 fps"),
                 ("Open a picture", "Or a .snag project"),
             ][k];
             let x = area.center().x - total / 2.0 + k as f32 * (card_w + 20.0);
@@ -3308,6 +3498,8 @@ impl SnagApp {
             ui.painter().circle_filled(r.center(), 6.0, if blink { Color32::from_rgb(229, 72, 77) } else { Color32::from_rgb(120, 40, 44) });
             let text = match self.mini {
                 Some(Mini::Gif) => format!("Recording GIF  {}:{:02}", secs / 60, secs % 60),
+                Some(Mini::Video) if self.paused() => "Paused".to_string(),
+                Some(Mini::Video) => format!("Recording {} at {} fps  {}:{:02}", self.settings.rec_format.ext().to_uppercase(), self.settings.video_fps, secs / 60, secs % 60),
                 Some(Mini::Steps) => format!("Recording steps: {} so far", self.guide.len()),
                 Some(Mini::Scroll) if self.scroll_manual => "Scroll it yourself, then press Stop".to_string(),
                 Some(Mini::Scroll) => "Scrolling and stitching...".to_string(),
@@ -3321,6 +3513,12 @@ impl SnagApp {
                     match self.mini {
                         Some(Mini::Steps) => self.stop_steps(&ctx),
                         _ => self.stop_job(),
+                    }
+                }
+                if self.mini == Some(Mini::Video) {
+                    let label = if self.paused() { "Resume" } else { "Pause" };
+                    if ui.button(RichText::new(label).strong()).clicked() {
+                        self.toggle_pause();
                     }
                 }
             });

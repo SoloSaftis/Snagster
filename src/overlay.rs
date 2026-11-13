@@ -533,7 +533,7 @@ impl Overlay {
                 self.shape.label()
             ),
             OverlayMode::Pick(PickPurpose::Scrolling { .. }) => "Choose the scrolling part of the window, then wait while Snagster scrolls it.".into(),
-            OverlayMode::Pick(PickPurpose::RecordGif) => "Choose the area to record as a GIF.".into(),
+            OverlayMode::Pick(PickPurpose::RecordGif) => "Choose the area to record.".into(),
             OverlayMode::Pick(PickPurpose::GrabText) => "Choose the text to read.".into(),
             OverlayMode::Pick(PickPurpose::Multi) => format!("{} areas chosen. Drag more areas, Backspace removes the last, Enter puts them together. Esc cancels.", self.multi.len()),
             OverlayMode::Pick(PickPurpose::ManualScroll) => "Choose the part that scrolls. Then scroll it yourself and press Stop when you reach the end.".into(),

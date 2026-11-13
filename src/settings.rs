@@ -163,7 +163,7 @@ impl Action {
             Action::GrabText => "Grab text from the screen",
             Action::ColorPicker => "Screen color picker",
             Action::Ruler => "Screen ruler",
-            Action::RecordGif => "Start / stop GIF recording",
+            Action::RecordGif => "Start / stop recording (video or GIF)",
             Action::RecordSteps => "Start / stop step recording",
             Action::ShowSnag => "Show Snagster",
         }
@@ -464,6 +464,12 @@ pub struct Settings {
     pub gif_max_width: u32,
     pub gif_cursor: bool,
     pub slideshow_s: f32,
+    // Video
+    pub rec_format: crate::video::VideoFormat,
+    pub video_fps: u32,
+    pub video_quality: u8,
+    pub video_hardware: bool,
+    pub video_max_s: u32,
     // Editor defaults
     pub color: [u8; 3],
     pub palette: [[u8; 3]; 8],
@@ -557,6 +563,11 @@ impl Default for Settings {
             gif_max_width: 1280,
             gif_cursor: true,
             slideshow_s: 2.0,
+            rec_format: crate::video::VideoFormat::Mp4,
+            video_fps: 30,
+            video_quality: 2,
+            video_hardware: true,
+            video_max_s: 0,
             color: DEFAULT_PALETTE[0],
             palette: DEFAULT_PALETTE,
             font: String::new(),
