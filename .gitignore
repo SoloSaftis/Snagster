@@ -1,0 +1,26 @@
+# Build output
+/target/
+/shots/
+
+# Not part of Snagster: the installer it was studied from, and reference material
+*.exe
+/Snagit_Menu_Reference_Pack/
+
+# Craft Anything's own project records
+/craft.json
+/feed.json
+/questions.json
+/usage.json
+/assets.json
+/transcript.json
+/extract-transcript.json
+/agent-session.jsonl
+/build-activity.log
+/build-activity.old.log
+/inbox/
+/checks/
+/capture/
+/reference/
+/attachments/
+/pinned/
+/investigation.cany/

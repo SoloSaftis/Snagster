@@ -1,0 +1,49 @@
+[package]
+name = "snagster"
+version = "0.6.0"
+edition = "2024"
+description = "Snagster - capture your screen, mark it up, share it"
+
+[dependencies]
+ab_glyph = "0.2.32"
+arboard = "3.7.0"
+base64 = "0.22"
+chrono = "0.4.45"
+eframe = { version = "0.37.0", default-features = false, features = ["default_fonts", "glow"] }
+egui = { version = "0.37.0", features = ["serde"] }
+epaint_default_fonts = { version = "0.37.0", features = ["monochrome_emoji_fonts"] }
+gif = "0.14"
+global-hotkey = "0.10.0"
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "bmp", "gif", "webp", "tiff", "ico"] }
+regex = "1"
+rfd = "0.18.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+tiny-skia = "0.12.0"
+trash = "5.3.0"
+# Tray icon; on Linux the pure-Rust D-Bus backend (ksni) instead of GTK.
+tray-icon = { version = "0.26.1", default-features = false, features = ["ksni"] }
+ttf-parser = "0.25"
+xcap = "0.9.10"
+zip = { version = "9.5.1", default-features = false, features = ["deflate"] }
+
+[profile.dev]
+# Snag's own code is optimised too, so everyday builds run fast.
+opt-level = 2
+
+[profile.dev.package."*"]
+opt-level = 3
+
+# The build to hand out: whole-program optimisation, one code unit, no debug symbols.
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+
+[target."cfg(windows)".dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Dwm", "Win32_Graphics_Gdi", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_Threading"] }
+windows = { version = "0.62", features = ["Foundation", "Foundation_Collections", "Globalization", "Graphics_Imaging", "Media_Ocr", "Storage_Streams"] }
+
+[target."cfg(target_os = \"macos\")".dependencies]
+winit = "0.30"

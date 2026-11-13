@@ -1,0 +1,363 @@
+//! Snagster: capture your screen, mark it up, copy or save it.
+
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+mod app;
+mod capture;
+mod doc;
+mod effects;
+mod export;
+mod library;
+mod ocr;
+mod windows;
+mod emoji;
+mod fonts;
+mod hotkeys;
+mod overlay;
+mod panel;
+mod tray;
+mod settings;
+mod render;
+mod sample;
+
+use eframe::egui;
+use std::path::PathBuf;
+
+/// The window icon: a blue tile with white viewfinder corners and a dot.
+pub fn icon() -> egui::IconData {
+    let n = 64u32;
+    let mut rgba = vec![0u8; (n * n * 4) as usize];
+    let radius = 14.0f32;
+    for y in 0..n {
+        for x in 0..n {
+            let (fx, fy) = (x as f32 + 0.5, y as f32 + 0.5);
+            // Rounded square mask.
+            let cx = fx.clamp(radius, n as f32 - radius);
+            let cy = fy.clamp(radius, n as f32 - radius);
+            let d = ((fx - cx).powi(2) + (fy - cy).powi(2)).sqrt();
+            let inside = (radius - d + 0.5).clamp(0.0, 1.0);
+            if inside <= 0.0 {
+                continue;
+            }
+            let mut c = [79u8, 124, 255];
+            // Corner brackets.
+            let (lo, hi, len, th) = (13.0, 51.0, 13.0, 4.0);
+            let near = |v: f32, edge: f32| (v - edge).abs() <= th / 2.0;
+            let within = |v: f32| v >= lo - th / 2.0 && v <= hi + th / 2.0;
+            let mut white = false;
+            for &ex in &[lo, hi] {
+                for &ey in &[lo, hi] {
+                    let sx = if ex == lo { 1.0 } else { -1.0 };
+                    let sy = if ey == lo { 1.0 } else { -1.0 };
+                    let along_x = (fx - ex) * sx >= -th / 2.0 && (fx - ex) * sx <= len;
+                    let along_y = (fy - ey) * sy >= -th / 2.0 && (fy - ey) * sy <= len;
+                    if (near(fy, ey) && along_x) || (near(fx, ex) && along_y) {
+                        white = true;
+                    }
+                }
+            }
+            if ((fx - 32.0).powi(2) + (fy - 32.0).powi(2)).sqrt() <= 6.5 {
+                white = true;
+            }
+            if white && within(fx) && within(fy) {
+                c = [255, 255, 255];
+            }
+            let i = ((y * n + x) * 4) as usize;
+            rgba[i..i + 3].copy_from_slice(&c);
+            rgba[i + 3] = (inside * 255.0) as u8;
+        }
+    }
+    egui::IconData { rgba, width: n, height: n }
+}
+
+fn main() -> eframe::Result {
+    let mut args = std::env::args().skip(1);
+    let mut screenshot: Option<PathBuf> = None;
+    let mut open: Option<PathBuf> = None;
+    while let Some(a) = args.next() {
+        if a == "--ui-test" {
+            app::UI_TEST.store(true, std::sync::atomic::Ordering::Relaxed);
+            continue;
+        }
+        if a == "--panel" {
+            app::START_PANEL.store(true, std::sync::atomic::Ordering::Relaxed);
+            continue;
+        }
+        if a == "--screenshot" {
+            screenshot = args.next().map(PathBuf::from);
+        } else if a == "--record-test" {
+            // Record 640 x 360 of the screen for 5 s at 10 fps; report cost; delete the file.
+            let path = std::env::temp_dir().join("snag-record-test.gif");
+            let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+            let (tx, rx) = std::sync::mpsc::channel();
+            let cpu0 = cpu_seconds();
+            let t0 = std::time::Instant::now();
+            capture::spawn_gif_recorder((0, 0, 640, 360), 10, 5, 1280, true, path.clone(), stop, egui::Context::default(), tx);
+            match rx.recv() {
+                Ok(d) => {
+                    let wall = t0.elapsed().as_secs_f64();
+                    let cpu = cpu_seconds() - cpu0;
+                    let size = std::fs::metadata(&d.path).map(|m| m.len()).unwrap_or(0);
+                    let stored = export::gif_frames(&d.path, 0).map(|f| f.len()).unwrap_or(0);
+                    println!(
+                        "recorded {:.1} s: {} frames captured, {} stored (unchanged ones merged), {} KB, CPU {:.1}% of one core ({:.2} s CPU), {:?}",
+                        d.seconds,
+                        d.frames,
+                        stored,
+                        size / 1024,
+                        100.0 * cpu / wall,
+                        cpu,
+                        d.result.err()
+                    );
+                    let _ = std::fs::remove_file(&d.path);
+                }
+                Err(e) => println!("recording failed: {e}"),
+            }
+            return Ok(());
+        } else if a == "--record-bench" {
+            // 50 frames of 1280 x 720: a typing-sized change in each, then full-screen changes.
+            let base = render::compose(&sample::sample_doc());
+            let base = image::imageops::resize(&base, 1280, 720, image::imageops::FilterType::Triangle);
+            let frames: Vec<image::RgbaImage> = (0..50)
+                .map(|i| {
+                    let mut f = base.clone();
+                    for y in 300..330 {
+                        for x in 200 + i * 8..208 + i * 8 {
+                            f.put_pixel(x, y, image::Rgba([20, 20, 20, 255]));
+                        }
+                    }
+                    f
+                })
+                .collect();
+            for (label, frames) in [("small changes (typing)", frames.clone()), ("whole screen changing", frames.iter().enumerate().map(|(i, f)| image::imageops::huerotate(f, i as i32 * 7)).collect())] {
+                let t = std::time::Instant::now();
+                let mut old = Vec::new();
+                {
+                    let mut enc = image::codecs::gif::GifEncoder::new_with_speed(&mut old, 20);
+                    for f in &frames {
+                        let _ = enc.encode_frame(image::Frame::from_parts(f.clone(), 0, 0, image::Delay::from_numer_denom_ms(100, 1)));
+                    }
+                }
+                let old_t = t.elapsed().as_secs_f64();
+                let t = std::time::Instant::now();
+                let mut new = Vec::new();
+                {
+                    let mut enc = gif::Encoder::new(&mut new, 1280, 720, &[]).unwrap();
+                    let mut prev: Option<&image::RgbaImage> = None;
+                    for f in &frames {
+                        let r = match prev { None => Some((0, 0, 1280, 720)), Some(p) => capture::changed_rect(p, f) };
+                        if let Some((l, tp, w, h)) = r {
+                            let mut raw = image::imageops::crop_imm(f, l, tp, w, h).to_image().into_raw();
+                            let mut fr = gif::Frame::from_rgba_speed(w as u16, h as u16, &mut raw, 30);
+                            fr.left = l as u16;
+                            fr.top = tp as u16;
+                            fr.dispose = gif::DisposalMethod::Keep;
+                            let _ = enc.write_frame(&fr);
+                        }
+                        prev = Some(f);
+                    }
+                }
+                let new_t = t.elapsed().as_secs_f64();
+                println!(
+                    "{label}: before {:.2} s / {} KB, now {:.2} s / {} KB ({:.0}x less work)",
+                    old_t,
+                    old.len() / 1024,
+                    new_t,
+                    new.len() / 1024,
+                    old_t / new_t.max(0.0001)
+                );
+            }
+            return Ok(());
+        } else if a == "--hotkey-test" {
+            // Register the standard hotkeys, press each one for real, and report.
+            hotkeys::self_test(&settings::Settings::default());
+            return Ok(());
+        } else if a == "--self-test" {
+            // Check capture, objects, fonts, emojis and text recognition; prints results only.
+            let bright = |img: &image::RgbaImage| {
+                let n = (img.width() * img.height()).max(1) as f64;
+                img.pixels().map(|p| p.0[0] as f64 + p.0[1] as f64 + p.0[2] as f64).sum::<f64>() / (3.0 * n)
+            };
+            for m in capture::monitors() {
+                println!("monitor {} '{}' {}x{} at {},{} primary={}", m.id, m.name, m.width, m.height, m.x, m.y, m.primary);
+            }
+            match capture::grab_all_screens() {
+                Ok(all) => {
+                    println!("all screens: {}x{} brightness {:.1}, app in front: '{}'", all.image.width(), all.image.height(), bright(&all.image), all.app);
+                    let wins = capture::list_windows();
+                    println!("titled windows: {}", wins.len());
+                    for w in wins.iter().take(3) {
+                        let crop = capture::crop_desktop(&all.image, all.origin, w.x, w.y, w.width, w.height);
+                        println!("  window {}x{} -> crop {}", w.width, w.height, crop.map(|c| format!("{}x{} brightness {:.1}", c.width(), c.height(), bright(&c))).unwrap_or("none".into()));
+                    }
+                }
+                Err(e) => println!("all screens failed: {e}"),
+            }
+            let objs = capture::objects();
+            println!(
+                "snap targets: {} windows/menus, {} controls inside them",
+                objs.len(),
+                objs.iter().map(|o| o.children.len()).sum::<usize>()
+            );
+            match capture::grab_rect(0, 0, 300, 200) {
+                Ok(r) => println!("area grab: {}x{}", r.width(), r.height()),
+                Err(e) => println!("area grab failed: {e}"),
+            }
+            fonts::scan_now();
+            let fams = fonts::families().unwrap_or_default();
+            println!("installed font families: {}", fams.len());
+            for f in ["Arial", "Segoe UI", "Times New Roman", "Consolas", "Comic Sans MS"] {
+                println!("  {f}: {}", if fonts::path_of(f, false, false).is_some() { "found" } else { "missing" });
+            }
+            if let Some(f) = fams.iter().find(|f| f.as_str() == "Arial").or(fams.first()) {
+                let w = render::measure("Hello", 32.0, f, false, false);
+                println!("  text in '{f}' measures {:.0} x {:.0}", w.x, w.y);
+            }
+            let ef = emoji::font();
+            println!("emojis: {} ({}), in {} groups", ef.count(), if ef.color { "color" } else { "black and white" }, ef.groups.len());
+            for ch in ['\u{1F600}', '\u{1F44D}', '\u{2705}', '\u{1F680}'] {
+                match emoji::render(ch, 64, [0, 0, 0, 255]) {
+                    Some(img) => {
+                        let painted = img.pixels().filter(|p| p.0[3] > 0).count();
+                        let colors: std::collections::HashSet<[u8; 3]> =
+                            img.pixels().filter(|p| p.0[3] > 200).map(|p| [p.0[0] >> 4, p.0[1] >> 4, p.0[2] >> 4]).collect();
+                        println!("  U+{:X}: {} painted pixels, {} distinct colors", ch as u32, painted, colors.len());
+                    }
+                    None => println!("  U+{:X}: not drawn", ch as u32),
+                }
+            }
+            let page = effects::guide_page(
+                "Snagster self test",
+                &[("Email me at test.person@example.com".into(), image::RgbaImage::from_pixel(400, 60, image::Rgba([255, 255, 255, 255])))],
+                900,
+            )
+            .unwrap();
+            {
+                let (tx, _rx) = std::sync::mpsc::channel();
+                match tray::create(&settings::Settings::default(), tx, || {}) {
+                    Ok(_t) => println!("taskbar-corner icon with quick menu: created"),
+                    Err(e) => println!("taskbar-corner icon failed: {e}"),
+                }
+            }
+            let dir = std::env::temp_dir().join("snag-self-test");
+            let _ = std::fs::create_dir_all(&dir);
+            let doc = sample::sample_doc();
+            let flat = render::compose(&doc);
+            for ext in ["png", "jpg", "bmp", "gif", "webp", "tiff", "pdf", "svg"] {
+                let p = dir.join(format!("sample.{ext}"));
+                let r = export::save_image(&flat, &p, 90);
+                let size = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(0);
+                let back = if matches!(ext, "pdf" | "svg") { "n/a".to_string() } else { image::open(&p).map(|i| format!("{}x{}", i.width(), i.height())).unwrap_or_else(|e| e.to_string()) };
+                println!("  save {ext}: {:?}, {size} bytes, reopens as {back}", r.err());
+            }
+            let pp = dir.join("sample.snag");
+            let rt = export::save_project(&doc, "Sample", &pp).and_then(|_| export::load_project(&pp));
+            println!("  project round trip: {}", rt.map(|(_, d)| format!("{} marks kept", d.shapes.len())).unwrap_or_else(|e| e));
+            {
+                use eframe::egui::{Color32, Rect, pos2};
+                let lifted = doc.lift(Rect::from_min_max(pos2(870.0, 610.0), pos2(1100.0, 674.0)));
+                println!("  selection lift: {}", lifted.as_ref().map(|d| format!("{} marks (piece added)", d.shapes.len())).unwrap_or("failed".into()));
+                let filled = doc.flood_fill(pos2(20.0, 20.0), Color32::from_rgb(255, 0, 0), 32);
+                println!("  fill: {}", filled.map(|d| format!("corner is now {:?}", d.image.get_pixel(5, 5).0)).unwrap_or("nothing".into()));
+                let erased = doc.erase(&[pos2(100.0, 100.0), pos2(300.0, 100.0)], 20.0);
+                println!("  eraser: alpha on the stroke {}", erased.map(|d| d.image.get_pixel(200, 100).0[3]).unwrap_or(255));
+                for m in settings::BlurMode::ALL {
+                    let r = doc.redact(Rect::from_min_max(pos2(380.0, 440.0), pos2(800.0, 480.0)), m, 12, Color32::BLACK);
+                    println!("  blur {}: {}", m.label(), if r.is_some() { "ok" } else { "failed" });
+                }
+                let trimmed = effects::trim(&effects::canvas(&flat, 1500, 1000, [255, 255, 255, 255]));
+                println!("  canvas 1500x1000 then trim: {}x{}", trimmed.width(), trimmed.height());
+                let info = effects::apply(effects::Effect::CaptureInfo, &flat, &effects::EffectOptions {
+                    resize_percent: 50, border_width: 8, border_color: [0, 0, 0], shadow_size: 20, rounded_radius: 10,
+                    watermark_text: String::new(), tilt_percent: 20, brightness: 0, contrast: 0, saturation: 0,
+                    info_text: "2026-11-13  Test  Sample".into(),
+                });
+                println!("  capture info strip: {}x{}", info.width(), info.height());
+                let dp = dir.join("guide.docx");
+                let r = export::docx("Self test", &[("First".into(), flat.clone()), ("Second".into(), circle_free(&flat))], &dp);
+                println!("  word document: {:?}, {} bytes", r.err(), std::fs::metadata(&dp).map(|m| m.len()).unwrap_or(0));
+                let pp2 = dir.join("piece.snag");
+                let rt2 = lifted.ok_or("no lift".to_string()).and_then(|d| export::save_project(&d, "Piece", &pp2)).and_then(|_| export::load_project(&pp2));
+                println!("  project with a picture piece: {}", rt2.map(|(_, d)| format!("{} marks kept", d.shapes.len())).unwrap_or_else(|e| e));
+            }
+            let circle = render::cut_to_shape(&flat, capture::CutShape::Ellipse, &[]);
+            println!("  circle cut: corner alpha {}, center alpha {}", circle.get_pixel(0, 0).0[3], circle.get_pixel(640, 400).0[3]);
+            let gp = dir.join("anim.gif");
+            let frames: Vec<_> = (0..3).map(|i| (image::imageops::resize(&flat, 320 + i, 200, image::imageops::FilterType::Triangle), 200)).collect();
+            let frames = export::letterbox(&frames.into_iter().map(|f| f.0).collect::<Vec<_>>(), 320).into_iter().map(|f| (f, 200)).collect::<Vec<_>>();
+            let g = export::write_gif(&gp, &frames).and_then(|_| export::gif_frames(&gp, 0));
+            println!("  gif round trip: {}", g.map(|f| format!("{} frames", f.len())).unwrap_or_else(|e| e));
+            match ocr::recognize(&page) {
+                Ok(lines) => {
+                    println!("text recognition read {} lines: {:?}", lines.len(), ocr::plain_text(&lines));
+                    let found = ocr::find_sensitive(&lines, ocr::RedactKinds { emails: true, phones: true, cards: true, addresses: true, ips: true, urls: true });
+                    println!("smart redact found: {:?}", found.iter().map(|f| f.1).collect::<Vec<_>>());
+                }
+                Err(e) => println!("text recognition failed: {e}"),
+            }
+            return Ok(());
+        } else if a == "--export-sample" {
+            // Save the marked-up sample picture exactly as Save would, then quit.
+            let Some(out) = args.next() else { return Ok(()) };
+            if let Err(e) = render::compose(&sample::sample_doc()).save(&out) {
+                eprintln!("couldn't save {out}: {e}");
+            }
+            return Ok(());
+        } else if !a.starts_with("--") {
+            open = Some(PathBuf::from(a));
+        }
+    }
+
+    let mut viewport = egui::ViewportBuilder::default()
+        .with_title("Snagster")
+        .with_inner_size([1280.0, 800.0])
+        .with_min_inner_size([900.0, 560.0])
+        .with_icon(icon());
+    if app::START_PANEL.load(std::sync::atomic::Ordering::Relaxed) {
+        viewport = viewport.with_min_inner_size(panel::PANEL_SIZE).with_inner_size(panel::PANEL_SIZE).with_decorations(false);
+    }
+    let quiet = screenshot.is_some() || app::UI_TEST.load(std::sync::atomic::Ordering::Relaxed);
+    if quiet {
+        viewport = viewport.with_active(false);
+        #[cfg(target_os = "windows")]
+        {
+            viewport = viewport.with_window_level(egui::WindowLevel::AlwaysOnBottom);
+        }
+    }
+
+    #[allow(unused_mut)]
+    let mut options = eframe::NativeOptions { viewport, ..Default::default() };
+    #[cfg(target_os = "macos")]
+    if screenshot.is_some() {
+        options.event_loop_builder = Some(Box::new(|b| {
+            use winit::platform::macos::EventLoopBuilderExtMacOS;
+            b.with_activate_ignoring_other_apps(false);
+        }));
+    }
+
+    eframe::run_native(
+        "Snagster",
+        options,
+        Box::new(move |cc| Ok(Box::new(app::SnagApp::new(cc, screenshot, open)))),
+    )
+}
+
+fn circle_free(img: &image::RgbaImage) -> image::RgbaImage {
+    effects::trim(img)
+}
+
+/// CPU time this process has used so far, in seconds.
+fn cpu_seconds() -> f64 {
+    #[cfg(windows)]
+    unsafe {
+        use windows_sys::Win32::Foundation::FILETIME;
+        use windows_sys::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
+        let z = FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 };
+        let (mut c, mut e, mut k, mut u) = (z, z, z, z);
+        if GetProcessTimes(GetCurrentProcess(), &mut c, &mut e, &mut k, &mut u) != 0 {
+            let t = |f: FILETIME| ((f.dwHighDateTime as u64) << 32 | f.dwLowDateTime as u64) as f64 / 1e7;
+            return t(k) + t(u);
+        }
+    }
+    0.0
+}
