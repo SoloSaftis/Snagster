@@ -64,9 +64,14 @@ jobs:
           7z x $mesa -omesa -y | Out-Null
           New-Item -ItemType Directory -Force uitest | Out-Null
           Copy-Item target/release/snagster.exe uitest/
-          Copy-Item mesa/x64/*.dll uitest/
+          $gl = Get-ChildItem mesa -Recurse -Filter opengl32.dll | Where-Object { $_.DirectoryName -notmatch 'x86' } | Select-Object -First 1
+          if (-not $gl) {
+            Get-ChildItem mesa -Recurse -Filter *.dll | ForEach-Object { $_.FullName }
+            throw "Mesa's opengl32.dll is missing"
+          }
+          Write-Host "OpenGL from $($gl.DirectoryName)"
+          Copy-Item "$($gl.DirectoryName)/*.dll" uitest/
           Get-ChildItem uitest | Format-Table Name, Length
-          if (-not (Test-Path uitest/opengl32.dll)) { throw "Mesa's opengl32.dll is missing" }
           $env:GALLIUM_DRIVER = "llvmpipe"
           # The release build is a windowed program: wait for it and collect what it prints.
           Start-Process uitest/snagster.exe -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test.txt
