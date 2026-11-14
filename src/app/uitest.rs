@@ -179,9 +179,22 @@ impl UiTest {
             }
         }));
         s.push(once("Record: slideshow GIF from Recent", |a, c| {
+            a.gif_editor = None;
             a.slideshow(c);
-            assert!(a.gif_editor.is_some(), "no GIF opened");
         }));
+        // The GIF is written on the job queue and read back on a worker, frame by frame.
+        s.push((
+            "Record: the slideshow opens in the GIF editor".to_string(),
+            Box::new(|a: &mut SnagApp, _: &egui::Context| {
+                let Some(g) = &a.gif_editor else { return false };
+                if g.loading.is_some() {
+                    return false;
+                }
+                assert!(!g.frames.is_empty(), "no frames");
+                assert_eq!(g.trim, (0, g.frames.len() - 1), "the kept range is every frame");
+                true
+            }),
+        ));
         s.push(once("Record: every video format and frame rate can be chosen", |a, _| {
             for f in crate::video::VideoFormat::ALL {
                 a.settings.rec_format = f;
@@ -248,6 +261,41 @@ impl UiTest {
             a.open_path(&p);
             assert_eq!(a.entries.len(), n + 1);
         }));
+        // After-capture work runs on the job queue and comes back to the window.
+        s.push(once("File: quick save on the job queue (start)", |a, _| {
+            if let Some(e) = a.entry() {
+                e.path = None;
+            }
+            a.quick_save();
+            assert!(!a.saving.is_empty() || a.entry().is_some_and(|e| e.path.is_some()), "nothing was queued");
+        }));
+        s.push((
+            "File: quick save on the job queue (saved)".to_string(),
+            Box::new(|a: &mut SnagApp, _: &egui::Context| {
+                if !a.saving.is_empty() {
+                    return false;
+                }
+                let p = a.entry().and_then(|e| e.path.clone()).expect("the picture doesn't know its file");
+                assert!(p.exists(), "{} not written: {}", p.display(), a.status);
+                true
+            }),
+        ));
+        s.push(once("Library: a capture is added without reading the folder again (start)", |a, _| {
+            a.lib_loaded = true;
+            a.lib_items.clear();
+            let meta = crate::library::Meta { title: "Button test".into(), kind: "Area".into(), ..Default::default() };
+            a.add_to_library(|| image::RgbaImage::from_pixel(64, 48, image::Rgba([200, 30, 30, 255])), meta);
+        }));
+        s.push((
+            "Library: a capture is added without reading the folder again (added)".to_string(),
+            Box::new(|a: &mut SnagApp, _: &egui::Context| {
+                let Some(it) = a.lib_items.first() else { return false };
+                assert_eq!(it.meta.title, "Button test");
+                assert!(it.path.exists());
+                assert!(a.lib_thumbs.contains_key(&it.path), "no thumbnail");
+                true
+            }),
+        ));
         s.push(once("File: Word document", |a, _| {
             let p = test_dir().join("guide.docx");
             let items = a.guide_items();

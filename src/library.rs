@@ -18,6 +18,7 @@ pub struct Meta {
     pub height: u32,
 }
 
+#[derive(Clone, Debug)]
 pub struct Item {
     pub path: PathBuf,
     pub meta: Meta,
@@ -51,7 +52,12 @@ impl Item {
 }
 
 /// Add a capture to the library.
-pub fn add(folder: &Path, img: &RgbaImage, mut meta: Meta) -> Result<PathBuf, String> {
+pub fn add(folder: &Path, img: &RgbaImage, meta: Meta) -> Result<PathBuf, String> {
+    add_item(folder, img, meta).map(|it| it.path)
+}
+
+/// Add a capture to the library and give back its entry (for the open library window).
+pub fn add_item(folder: &Path, img: &RgbaImage, mut meta: Meta) -> Result<Item, String> {
     let now = chrono::Local::now();
     let day = folder.join(now.format("%Y-%m").to_string());
     std::fs::create_dir_all(&day).map_err(|e| e.to_string())?;
@@ -61,9 +67,26 @@ pub fn add(folder: &Path, img: &RgbaImage, mut meta: Meta) -> Result<PathBuf, St
     meta.created = now.to_rfc3339();
     meta.width = img.width();
     meta.height = img.height();
-    let item = Item { path: path.clone(), meta };
+    let item = Item { path, meta };
     item.save_meta()?;
-    Ok(path)
+    Ok(item)
+}
+
+/// Put `item` where it belongs in a newest-first list (a new capture goes at the top).
+pub fn insert_newest(items: &mut Vec<Item>, item: Item) {
+    if items.iter().any(|i| i.path == item.path) {
+        return;
+    }
+    let at = items.iter().position(|i| i.meta.created < item.meta.created).unwrap_or(items.len());
+    items.insert(at, item);
+}
+
+/// A finished scan with the captures added while it ran (that it may have missed).
+pub fn merge_scan(mut scanned: Vec<Item>, added: Vec<Item>) -> Vec<Item> {
+    for it in added {
+        insert_newest(&mut scanned, it);
+    }
+    scanned
 }
 
 /// Everything in the library, newest first.
@@ -111,6 +134,19 @@ pub fn thumbnail(path: &Path, size: u32) -> Option<RgbaImage> {
     let _ = std::fs::create_dir_all(&dir);
     let _ = img.save(&thumb);
     Some(img)
+}
+
+/// The preview of a capture that is still in memory (no need to read the file back),
+/// cached the same way as `thumbnail`.
+pub fn thumbnail_of(path: &Path, img: &RgbaImage, size: u32) -> Option<RgbaImage> {
+    let dir = path.parent()?.join(".thumbs");
+    // Fit inside size x size, keeping the shape (never larger than the picture).
+    let s = (size as f32 / img.width().max(1) as f32).min(size as f32 / img.height().max(1) as f32).min(1.0);
+    let (w, h) = (((img.width() as f32 * s).round() as u32).max(1), ((img.height() as f32 * s).round() as u32).max(1));
+    let thumb = image::imageops::thumbnail(img, w, h);
+    let _ = std::fs::create_dir_all(&dir);
+    let _ = thumb.save(dir.join(path.file_name()?));
+    Some(thumb)
 }
 
 pub fn delete(item: &Item) -> Result<(), String> {
@@ -286,6 +322,63 @@ mod tests {
         // The cached one is used, even when a different size is asked for.
         assert_eq!(thumbnail(&p, 20).unwrap().dimensions(), t.dimensions());
         assert!(thumbnail(&dir.join("missing.png"), 50).is_none());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    fn dated(path: &str, created: &str) -> Item {
+        Item { path: PathBuf::from(path), meta: Meta { created: created.into(), ..Default::default() } }
+    }
+
+    fn paths(items: &[Item]) -> Vec<String> {
+        items.iter().map(|i| i.path.display().to_string()).collect()
+    }
+
+    #[test]
+    fn add_item_gives_the_entry_a_scan_would_find() {
+        let dir = temp_folder("additem");
+        let meta = Meta { title: "New".into(), app: "Paint".into(), ..Default::default() };
+        let it = add_item(&dir, &picture(6, 4), meta).unwrap();
+        assert!(it.path.exists() && it.meta_path().exists());
+        assert_eq!((it.meta.width, it.meta.height), (6, 4));
+        let found = scan(&dir);
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].path, it.path);
+        assert_eq!(found[0].meta.created, it.meta.created);
+        assert_eq!(found[0].meta.title, "New");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_new_capture_goes_on_top_once() {
+        let mut items = vec![dated("b.png", "2026-02-01T00:00:00+00:00"), dated("a.png", "2026-01-01T00:00:00+00:00")];
+        insert_newest(&mut items, dated("c.png", "2026-03-01T00:00:00+00:00"));
+        assert_eq!(paths(&items), ["c.png", "b.png", "a.png"]);
+        insert_newest(&mut items, dated("c.png", "2026-03-01T00:00:00+00:00"));
+        assert_eq!(items.len(), 3, "the same file isn't listed twice");
+        insert_newest(&mut items, dated("old.png", "2025-01-01T00:00:00+00:00"));
+        assert_eq!(paths(&items).last().unwrap(), "old.png");
+        let mut empty = Vec::new();
+        insert_newest(&mut empty, dated("x.png", "2026-01-01T00:00:00+00:00"));
+        assert_eq!(empty.len(), 1);
+    }
+
+    #[test]
+    fn captures_added_during_a_scan_are_kept() {
+        let scanned = vec![dated("b.png", "2026-02-01T00:00:00+00:00"), dated("a.png", "2026-01-01T00:00:00+00:00")];
+        // One the scan already found, one it missed.
+        let added = vec![dated("b.png", "2026-02-01T00:00:00+00:00"), dated("new.png", "2026-04-01T00:00:00+00:00")];
+        assert_eq!(paths(&merge_scan(scanned, added)), ["new.png", "b.png", "a.png"]);
+    }
+
+    #[test]
+    fn thumbnail_of_a_picture_in_memory_keeps_its_shape_and_is_cached() {
+        let dir = temp_folder("thumbof");
+        let p = dir.join("wide.png");
+        let t = thumbnail_of(&p, &picture(400, 100), 192).unwrap();
+        assert_eq!(t.dimensions(), (192, 48));
+        assert!(dir.join(".thumbs").join("wide.png").exists());
+        // Small pictures aren't blown up.
+        assert_eq!(thumbnail_of(&p, &picture(20, 10), 192).unwrap().dimensions(), (20, 10));
         let _ = std::fs::remove_dir_all(&dir);
     }
 

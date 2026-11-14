@@ -109,6 +109,64 @@ impl StudioSettings {
     pub fn scene(&self) -> Option<&Scene> {
         self.scenes.get(self.current).or(self.scenes.first())
     }
+
+    /// The mixer as set in Studio: (volume, muted) for the system sound and the microphone.
+    pub fn mix(&self) -> ((f32, bool), (f32, bool)) {
+        ((self.system_volume, self.system_muted), (self.mic_volume, self.mic_muted))
+    }
+
+    /// Hand Studio's mixer to the sound recorder (as the Studio window does every frame).
+    pub fn apply_mix(&self) {
+        let (system, mic) = self.mix();
+        crate::audio::set_mix(system, mic);
+    }
+
+    /// Add an empty scene (named "Scene N" unless given a name); returns its number.
+    pub fn add_scene(&mut self, name: Option<&str>) -> usize {
+        let name = name.map(str::trim).filter(|n| !n.is_empty()).map(String::from).unwrap_or_else(|| format!("Scene {}", self.scenes.len() + 1));
+        self.scenes.push(Scene { name, items: Vec::new() });
+        self.scenes.len() - 1
+    }
+
+    /// Remove scene `i`; the last scene stays. The current scene keeps pointing at the same one
+    /// (or the one before when it was removed).
+    pub fn remove_scene(&mut self, i: usize) -> Result<Scene, String> {
+        if i >= self.scenes.len() {
+            return Err(format!("there is no scene {i}"));
+        }
+        if self.scenes.len() == 1 {
+            return Err("Studio needs at least one scene".into());
+        }
+        let gone = self.scenes.remove(i);
+        if self.current > i || (self.current == i && i > 0) {
+            self.current -= 1;
+        }
+        self.current = self.current.min(self.scenes.len() - 1);
+        Ok(gone)
+    }
+
+    /// Make scene `i` the current one.
+    pub fn set_current(&mut self, i: usize) -> Result<(), String> {
+        if i >= self.scenes.len() {
+            return Err(format!("there is no scene {i}"));
+        }
+        self.current = i;
+        Ok(())
+    }
+}
+
+/// The options a Studio recording gets from the settings (what the Studio window uses): the
+/// canvas size, Studio's frame rate, quality, encoder and sound, and a new file in the
+/// recordings folder. A GIF format setting records MP4, as the window does.
+pub fn video_opts(s: &crate::settings::Settings) -> crate::video::VideoOpts {
+    let format = s.rec_format.video_or_mp4();
+    let path = crate::video::recording_path(&s.video_folder, "Studio", format.ext());
+    let mut opts = crate::video::VideoOpts::screen((0, 0, s.studio.width, s.studio.height), s.studio.fps.clamp(1, 120), format, path);
+    opts.quality = s.video_quality.clamp(1, 4);
+    opts.hardware = s.video_hardware;
+    opts.audio = s.audio_source;
+    opts.mic = s.audio_mic.clone();
+    opts
 }
 
 /// Draws scenes into frames. Keeps pictures and window positions between frames.
@@ -385,11 +443,15 @@ impl Drop for Engine {
     }
 }
 
-/// Record a scene for `seconds` without a window (for AI apps and the command line).
-pub fn record_headless(settings: &StudioSettings, scene: Option<usize>, seconds: u32, mut opts: crate::video::VideoOpts) -> crate::video::VideoDone {
+/// Record a scene for `seconds` without a window (for AI apps and the command line), with
+/// Studio's mixer. Setting `stop` ends it early (the file is kept).
+pub fn record_headless(settings: &StudioSettings, scene: Option<usize>, seconds: u32, mut opts: crate::video::VideoOpts, stop: &AtomicBool) -> crate::video::VideoDone {
     let mut s = settings.clone();
     if let Some(i) = scene {
         s.current = i;
+    }
+    if opts.audio != crate::audio::AudioSource::None {
+        s.apply_mix();
     }
     let scene = s.scene().cloned().unwrap_or_else(|| StudioSettings::default().scenes[0].clone());
     let engine = Engine::start(scene, s.width, s.height, None);
@@ -404,9 +466,8 @@ pub fn record_headless(settings: &StudioSettings, scene: Option<usize>, seconds:
     opts.rect = (0, 0, s.width, s.height);
     opts.frames = Some(engine.feed());
     opts.max_s = seconds.max(1);
-    let stop = AtomicBool::new(false);
     let pause = AtomicBool::new(false);
-    crate::video::record(&opts, &stop, &pause)
+    crate::video::record(&opts, stop, &pause)
 }
 
 #[cfg(test)]
@@ -449,6 +510,74 @@ mod tests {
         let mut out = RgbaImage::new(32, 32);
         Compositor::default().draw(&scene, &mut out);
         assert_eq!(out.get_pixel(16, 16).0, [255, 0, 0, 255]);
+    }
+
+    #[test]
+    fn the_mixer_comes_from_the_studio_settings() {
+        let s = StudioSettings { system_volume: 0.5, system_muted: true, mic_volume: 1.5, mic_muted: false, ..Default::default() };
+        assert_eq!(s.mix(), ((0.5, true), (1.5, false)));
+    }
+
+    #[test]
+    fn scenes_are_added_removed_and_picked() {
+        let mut s = StudioSettings::default();
+        assert_eq!(s.add_scene(None), 1);
+        assert_eq!(s.scenes[1].name, "Scene 2");
+        assert!(s.scenes[1].items.is_empty());
+        assert_eq!(s.add_scene(Some("  Talk ")), 2);
+        assert_eq!(s.scenes[2].name, "Talk");
+        assert_eq!(s.add_scene(Some("   ")), 3, "a blank name gets the usual one");
+        assert_eq!(s.scenes[3].name, "Scene 4");
+        assert!(s.set_current(9).unwrap_err().contains("no scene 9"));
+        s.set_current(2).unwrap();
+        // Removing one before the current keeps the same scene current.
+        assert_eq!(s.remove_scene(0).unwrap().name, "Scene 1");
+        assert_eq!(s.scene().unwrap().name, "Talk");
+        // Removing the current one moves to the one before.
+        s.remove_scene(1).unwrap();
+        assert_eq!(s.current, 0);
+        assert_eq!(s.scenes.len(), 2);
+        // Removing the last one in the list while it is current.
+        s.set_current(1).unwrap();
+        s.remove_scene(1).unwrap();
+        assert_eq!(s.current, 0);
+        assert!(s.remove_scene(0).unwrap_err().contains("at least one"));
+        assert!(s.remove_scene(5).unwrap_err().contains("no scene 5"));
+    }
+
+    #[test]
+    fn studio_video_options_follow_the_settings() {
+        let mut s = crate::settings::Settings { rec_format: crate::video::VideoFormat::Gif, video_quality: 3, video_hardware: false, ..Default::default() };
+        s.studio.width = 800;
+        s.studio.height = 600;
+        s.studio.fps = 500;
+        s.audio_source = crate::audio::AudioSource::Microphone;
+        let o = video_opts(&s);
+        assert_eq!(o.format, crate::video::VideoFormat::Mp4, "GIF becomes MP4, as in the window");
+        assert_eq!(o.rect, (0, 0, 800, 600));
+        assert_eq!((o.fps, o.quality, o.hardware), (120, 3, false));
+        assert_eq!(o.audio, crate::audio::AudioSource::Microphone);
+        assert!(o.path.file_name().unwrap().to_string_lossy().starts_with("Studio_"));
+    }
+
+    /// Bug: the recording used its own stop flag, so an AI app couldn't cancel it.
+    #[test]
+    fn a_headless_recording_stops_when_told() {
+        let dir = std::env::temp_dir().join(format!("snagster-studio-stop-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let st = StudioSettings {
+            scenes: vec![Scene { name: "c".into(), items: vec![Item { name: "bg".into(), kind: SourceKind::Color { color: [0, 90, 200, 255] }, x: 0.0, y: 0.0, w: 64.0, h: 64.0, visible: true }] }],
+            width: 64,
+            height: 64,
+            fps: 10,
+            ..Default::default()
+        };
+        let opts = crate::video::VideoOpts::screen((0, 0, 64, 64), 10, crate::video::VideoFormat::Mp4, dir.join("s.mp4"));
+        let stop = AtomicBool::new(true);
+        let t = Instant::now();
+        let _ = record_headless(&st, Some(0), 60, opts, &stop);
+        assert!(t.elapsed() < Duration::from_secs(30), "stopped at once, not after 60 s: {:?}", t.elapsed());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

@@ -4,21 +4,45 @@
 //! The tools work on one "current picture" kept in memory: capture or open one, add marks,
 //! blur, crop, apply effects, read its text, then save or copy it.
 
-use crate::capture::{self, CaptureKind};
+use crate::capture::{self, CaptureKind, CutShape};
 use crate::doc::{self, Doc, Shape};
+use crate::settings::Settings;
 use crate::{effects, export, library, ocr, render};
 use base64::Engine as _;
-use eframe::egui::{Color32, Rect, pos2, vec2};
+use eframe::egui::{Color32, Pos2, Rect, pos2, vec2};
+use image::RgbaImage;
 use serde_json::{Value, json};
 use std::io::{BufRead, Write};
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex, MutexGuard};
+use std::time::{Duration, Instant};
 
 pub const PROTOCOL_VERSIONS: [&str; 4] = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 
-pub const INSTRUCTIONS: &str = "Snagster captures the screen and marks up pictures. Typical use: capture_screen \
-(or capture_region / capture_window / open_image) to get a current picture, then add_mark, blur_area, crop, \
-apply_effect or read_text, then view_picture to look at it and save or copy_to_clipboard. record_video records the screen to an MP4 file at 1-120 frames per second. Coordinates are \
-picture pixels from the top-left corner. Colours are #RRGGBB or a name (red, orange, yellow, green, blue, \
-purple, black, white).";
+/// The first protocol version with `resource_link` content.
+const LINKS_SINCE: &str = "2025-06-18";
+
+pub const INSTRUCTIONS: &str = "Snagster captures the screen, marks up pictures and records video. \
+Pictures: capture_screen, capture_region, capture_window, capture_active_window, capture_last_area, capture_scrolling, \
+run_preset, paste_from_clipboard, combine_images or open_image make the current picture (captures take delay_s and a \
+cut-out shape, and like the window they add the mouse pointer and keep a copy in the library when the settings say so). \
+Then add_mark / update_mark / remove_mark (arrows, boxes, text, callouts, steps, pen, pictures...), blur_area, crop, \
+resize, trim, set_canvas, apply_effect, undo and redo; view_picture shows it; save, quick_save, copy_to_clipboard, \
+library_add or open_in_snagster keep it. Text recognition (Windows only): read_text, read_screen_text, smart_redact, \
+simplify. Recording: record_video (MP4 with H.264 everywhere; HEVC and WMV on Windows; 1-120 frames per second; sound \
+on Windows), record_gif, and Studio scenes (studio_scenes, studio_add_scene, studio_add_source, studio_update_source, \
+studio_record). Guides: make_guide (PDF, web page, Word or one tall picture). Library: library_search, library_tag, \
+library_delete. Defaults come from Snagster's settings (get_settings, set_setting). Long calls send progress when the \
+request has a progressToken and stop early when cancelled. Coordinates are picture pixels from the top-left corner \
+(desktop pixels for captures and recordings). Colours are #RRGGBB or a name (red, orange, yellow, green, blue, purple, \
+black, white).";
+
+/// Reports how far a running call is: done so far, the total when known, and what it's doing.
+pub type Progress = Arc<dyn Fn(f64, Option<f64>, &str) + Send + Sync>;
+
+/// Sends one JSON-RPC message (a notification) to the AI app while a call runs.
+pub type Notify = Arc<dyn Fn(String) + Send + Sync>;
 
 /// The picture the tools work on.
 #[derive(Default)]
@@ -28,7 +52,15 @@ pub struct Workspace {
     undo: Vec<Doc>,
     redo: Vec<Doc>,
     /// Set to stop a running recording (an AI app cancelled the call).
-    pub stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    pub stop: Arc<AtomicBool>,
+    /// Where the running call reports progress (when the app asked for it).
+    progress: Option<Progress>,
+    /// The running call's answer as JSON, when it has one beyond its text.
+    structured: Option<Value>,
+    /// Settings used instead of the saved file (tests).
+    fixed: Option<Settings>,
+    /// The last desktop area captured in this session, for capture_last_area.
+    last_area: Option<(i32, i32, u32, u32)>,
 }
 
 /// A tool's answer: MCP content items, or an error message.
@@ -58,37 +90,55 @@ fn tools() -> Vec<Tool> {
     all
 }
 
+/// Add `extra`'s properties to the schema properties `base`.
+fn with(mut base: Value, extra: Value) -> Value {
+    if let (Some(b), Some(e)) = (base.as_object_mut(), extra.as_object()) {
+        for (k, v) in e {
+            b.insert(k.clone(), v.clone());
+        }
+    }
+    base
+}
+
+/// The options every capture takes.
+fn capture_props() -> Value {
+    json!({
+        "delay_s": {"type": "number", "description": "Wait this many seconds first (0-60), e.g. to open a menu."},
+        "shape": {"type": "string", "enum": SHAPE_NAMES, "description": "Cut the picture to this shape (polygon and freehand need points)."},
+        "points": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}, "description": "[[x, y], ...] in picture pixels, for the polygon and freehand shapes."},
+        "include_cursor": {"type": "boolean", "description": "Add the mouse pointer as a movable mark (default: the setting)."},
+        "library": {"type": "boolean", "description": "Also keep it in Snagster's library (default: the setting \"add to the library\")."}
+    })
+}
+
+const SHAPE_NAMES: [&str; 8] = ["rectangle", "ellipse", "rounded", "triangle", "star", "heart", "polygon", "freehand"];
+
 fn base_tools() -> Vec<Tool> {
     let n = |d: &str| json!({"type": "number", "description": d});
     let s = |d: &str| json!({"type": "string", "description": d});
+    let b = |d: &str| json!({"type": "boolean", "description": d});
     let rect = || json!({"x": {"type": "number"}, "y": {"type": "number"}, "width": {"type": "number"}, "height": {"type": "number"}});
-    let with = |mut base: Value, extra: Value| {
-        if let (Some(b), Some(e)) = (base.as_object_mut(), extra.as_object()) {
-            for (k, v) in e {
-                b.insert(k.clone(), v.clone());
-            }
-        }
-        base
-    };
+    let formats = crate::video::VideoFormat::video_names();
+    let format_help = if formats.len() > 1 { "mp4 (H.264), hevc (MP4 with H.265) or wmv; default: the setting." } else { "mp4 (H.264); default mp4." };
     vec![
         Tool { name: "list_monitors", description: "The screens: id, name, position and size in desktop pixels.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "list_windows", description: "Visible windows: id, title, program, position and size.", schema: obj(json!({}), &[]), edits: false },
         Tool {
             name: "capture_screen",
             description: "Capture a screen (the one under the mouse, a monitor by id, or all screens) as the current picture. Returns a preview.",
-            schema: obj(json!({"monitor_id": n("A monitor id from list_monitors."), "all_screens": {"type": "boolean"}}), &[]),
+            schema: obj(with(json!({"monitor_id": n("A monitor id from list_monitors."), "all_screens": b("Every screen in one picture.")}), capture_props()), &[]),
             edits: true,
         },
         Tool {
             name: "capture_region",
-            description: "Capture a desktop rectangle (desktop pixels) as the current picture.",
-            schema: obj(rect(), &["x", "y", "width", "height"]),
+            description: "Capture a desktop rectangle (desktop pixels) as the current picture. capture_last_area repeats it.",
+            schema: obj(with(rect(), capture_props()), &["x", "y", "width", "height"]),
             edits: true,
         },
         Tool {
             name: "capture_window",
             description: "Capture one window, by id or by part of its title, as the current picture.",
-            schema: obj(json!({"id": n("A window id from list_windows."), "title": s("Part of the window title.")}), &[]),
+            schema: obj(with(json!({"id": n("A window id from list_windows."), "title": s("Part of the window title.")}), capture_props()), &[]),
             edits: true,
         },
         Tool { name: "open_image", description: "Open a picture file (PNG, JPEG, BMP, GIF, WebP, TIFF) or a .snag project as the current picture.", schema: obj(json!({"path": s("Full path.")}), &["path"]), edits: true },
@@ -96,29 +146,64 @@ fn base_tools() -> Vec<Tool> {
         Tool { name: "view_picture", description: "The current picture with its marks, as an image (scaled to at most max_size pixels).", schema: obj(json!({"max_size": n("Longest side, default 1024.")}), &[]), edits: false },
         Tool {
             name: "add_mark",
-            description: "Add a mark. kind: arrow, line, box, oval, highlight, text, callout, step, stamp, pointer, spotlight, magnify. Arrows/lines go from (x, y) to (x2, y2); boxes, ovals, highlight and spotlight cover (x, y)-(x2, y2); text, callout, step, stamp, pointer and magnify are placed at (x, y) (a callout points at (x2, y2)).",
+            description: "Add a mark. kind: arrow, line, box, oval, highlight, pen, text, callout, step, stamp, pointer, spotlight, magnify, image. Arrows/lines go from (x, y) to (x2, y2); boxes, ovals, highlight and spotlight cover (x, y)-(x2, y2); a pen stroke follows points; text, callout, step, stamp, pointer and magnify are placed at (x, y) (a callout points at (x2, y2)); an image puts a picture file at (x, y), sized to (x2, y2) or its own size.",
             schema: obj(
                 json!({
-                    "kind": {"type": "string", "enum": ["arrow", "line", "box", "oval", "highlight", "text", "callout", "step", "stamp", "pointer", "spotlight", "magnify"]},
+                    "kind": {"type": "string", "enum": MARK_KINDS},
                     "x": {"type": "number"}, "y": {"type": "number"}, "x2": {"type": "number"}, "y2": {"type": "number"},
+                    "points": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}, "description": "[[x, y], ...] for a pen stroke (two or more)."},
                     "text": s("Text for text and callout; the emoji for stamp."),
+                    "path": s("Picture file for kind image."),
                     "color": s("#RRGGBB or a colour name. Default red."),
                     "width": n("Line width in pixels, default 6."),
-                    "size": n("Text size, stamp size or magnify radius."),
-                    "fill": {"type": "boolean", "description": "Fill boxes and ovals."},
-                    "shadow": {"type": "boolean"},
-                    "number": n("Number for a step; default the next one.")
+                    "size": n("Text size, stamp size, step radius, pointer size or magnify radius."),
+                    "fill": b("Fill boxes and ovals; a background behind text."),
+                    "shadow": b("A soft shadow."),
+                    "heads": n("Arrow heads: 0 none, 1 at the end (default), 2 at both ends."),
+                    "radius": n("Rounded corners of a box, in pixels."),
+                    "font": s("Font name for text and callouts (empty: Snagster's)."),
+                    "bold": b("Bold text."), "italic": b("Italic text."),
+                    "align": {"type": "string", "enum": ["left", "center", "right"], "description": "Text alignment."},
+                    "outline": b("An outline around text letters (text default on) or a callout bubble (default off)."),
+                    "callout_shape": {"type": "string", "enum": ["rounded", "rectangle", "oval"], "description": "The callout bubble."},
+                    "number": n("Number for a step; default the next one."),
+                    "style": {"type": "string", "enum": ["numbers", "upper", "lower", "roman"], "description": "How a step shows its number: 1, A, a or i."},
+                    "zoom": n("How much a magnifier enlarges, 1-8 (default 2).")
                 }),
-                &["kind", "x", "y"],
+                &["kind"],
             ),
             edits: true,
         },
-        Tool { name: "list_marks", description: "The marks on the current picture, numbered from 0.", schema: obj(json!({}), &[]), edits: false },
+        Tool {
+            name: "update_mark",
+            description: "Change a mark (by its number from list_marks): move it by dx/dy or to x/y (its top-left corner), scale it, or change its colour, width, fill, shadow, text, font, arrow heads, box corners, step number/style or magnifier zoom.",
+            schema: obj(
+                json!({
+                    "index": n("Mark number."),
+                    "dx": n("Move right by this many pixels."), "dy": n("Move down by this many pixels."),
+                    "x": n("Move so its left edge is here."), "y": n("Move so its top edge is here."),
+                    "scale": n("Make it this many times bigger (0.05-20)."),
+                    "color": s("#RRGGBB or a colour name."), "width": n("Line width."),
+                    "fill": b("Fill / text background."), "shadow": b("Shadow."),
+                    "text": s("New text (text, callout) or emoji (stamp)."),
+                    "font": s("Font name."), "bold": b("Bold."), "italic": b("Italic."),
+                    "align": {"type": "string", "enum": ["left", "center", "right"]},
+                    "outline": b("Outline."),
+                    "callout_shape": {"type": "string", "enum": ["rounded", "rectangle", "oval"]},
+                    "heads": n("Arrow heads 0, 1 or 2."), "radius": n("Box corner radius."),
+                    "number": n("Step number."), "style": {"type": "string", "enum": ["numbers", "upper", "lower", "roman"]},
+                    "zoom": n("Magnifier zoom 1-8.")
+                }),
+                &["index"],
+            ),
+            edits: true,
+        },
+        Tool { name: "list_marks", description: "The marks on the current picture, numbered from 0, with their boxes.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "remove_mark", description: "Remove a mark by its number from list_marks.", schema: obj(json!({"index": n("Mark number.")}), &["index"]), edits: true },
         Tool {
             name: "blur_area",
-            description: "Hide part of the picture: pixelate (default), blur or a solid box.",
-            schema: obj(with(rect(), json!({"mode": {"type": "string", "enum": ["pixelate", "blur", "solid"]}, "color": s("For solid.")})), &["x", "y", "width", "height"]),
+            description: "Hide part of the picture: pixelate, blur or a solid box (default: the blur setting), in the setting's block size.",
+            schema: obj(with(rect(), json!({"mode": {"type": "string", "enum": ["pixelate", "blur", "solid"]}, "color": s("For solid; default black.")})), &["x", "y", "width", "height"]),
             edits: true,
         },
         Tool { name: "crop", description: "Keep only a rectangle of the picture.", schema: obj(rect(), &["x", "y", "width", "height"]), edits: true },
@@ -129,36 +214,55 @@ fn base_tools() -> Vec<Tool> {
             schema: obj(json!({"effect": {"type": "string", "enum": effect_names()}}), &["effect"]),
             edits: true,
         },
-        Tool { name: "read_text", description: "Read the text in the current picture (Windows text recognition): every line with its box.", schema: obj(json!({}), &[]), edits: false },
-        Tool { name: "smart_redact", description: "Find emails, phone numbers, card numbers, addresses, IP and web addresses in the picture and blur them.", schema: obj(json!({}), &[]), edits: true },
+        Tool { name: "read_text", description: "Read the text in the current picture (Windows only: Windows text recognition): every line with its box.", schema: obj(json!({}), &[]), edits: false },
+        Tool {
+            name: "smart_redact",
+            description: "Find private details in the current picture and pixelate them (Windows only: uses Windows text recognition): emails, phone numbers, card numbers, street addresses, IP addresses and web addresses. Default: the kinds chosen in Snagster's settings (web addresses are off unless switched on).",
+            schema: obj(json!({"kinds": {"type": "array", "items": {"type": "string", "enum": ocr::RedactKinds::NAMES}, "description": "Only these kinds instead of the settings'."}}), &[]),
+            edits: true,
+        },
         Tool { name: "undo", description: "Undo the last change to the current picture.", schema: obj(json!({}), &[]), edits: true },
         Tool {
             name: "save",
-            description: "Save the current picture. The extension picks the format: png, jpg, bmp, gif, webp, tiff, pdf, svg, docx, or snag (keeps marks editable).",
+            description: "Save the current picture (an existing file is replaced). The extension picks the format: png, jpg (the setting's quality), bmp, gif, webp, tiff, pdf, svg, docx, or snag (keeps marks editable).",
             schema: obj(json!({"path": s("Full path with extension.")}), &["path"]),
             edits: false,
         },
         Tool { name: "copy_to_clipboard", description: "Copy the current picture (with marks) to the clipboard.", schema: obj(json!({}), &[]), edits: false },
         Tool {
             name: "record_gif",
-            description: "Record a desktop rectangle as an animated GIF for some seconds and save it.",
-            schema: obj(with(rect(), json!({"seconds": n("1-120, default 5."), "fps": n("1-30, default 10."), "path": s("Where to save the .gif.")})), &["x", "y", "width", "height", "path"]),
+            description: "Record the screen under the mouse (or a desktop rectangle) as an animated GIF for some seconds. Frame rate, largest width and the pointer come from the GIF settings.",
+            schema: obj(
+                with(
+                    rect(),
+                    json!({
+                        "seconds": n("1-120, default 5."),
+                        "fps": n("1-30, default: the GIF setting."),
+                        "max_width": n("Shrink wider recordings to this width (default: the setting)."),
+                        "cursor": b("Draw the mouse pointer (default: the setting)."),
+                        "path": s("Where to save the .gif; default a new file in the recordings folder.")
+                    }),
+                ),
+                &[],
+            ),
             edits: false,
         },
         Tool {
             name: "record_video",
-            description: "Record the screen (or a desktop rectangle, or one monitor) to a video file for some seconds, at 1-120 frames per second. Uses the graphics chip's encoder (Intel, AMD or NVIDIA) when there is one. Returns the file, its length, frames and the encoder used.",
+            description: "Record the screen under the mouse (or a desktop rectangle, or one monitor) to a video file for some seconds, at 1-120 frames per second, with sound on Windows. Uses the graphics chip's encoder (Intel, AMD or NVIDIA) when there is one. Everything not given comes from Snagster's video settings. Returns the file, its length, frames and the encoder used.",
             schema: obj(
                 json!({
                     "seconds": n("1-600."),
-                    "fps": n("Frames per second, 1-120, default 30."),
-                    "format": {"type": "string", "enum": ["mp4", "hevc", "wmv"], "description": "mp4 (H.264, default), hevc (MP4 with H.265) or wmv."},
-                    "quality": n("1 small file, 2 good (default), 3 high, 4 best."),
-                    "hardware": {"type": "boolean", "description": "Use the graphics chip's encoder (default true)."},
-                    "cursor": {"type": "boolean", "description": "Draw the mouse pointer (default true)."},
+                    "fps": n("Frames per second, 1-120; default: the setting."),
+                    "format": {"type": "string", "enum": formats, "description": format_help},
+                    "quality": n("1 small file, 2 good, 3 high, 4 best; default: the setting."),
+                    "hardware": b("Use the graphics chip's encoder (default: the setting)."),
+                    "cursor": b("Draw the mouse pointer (default: the setting)."),
+                    "audio": {"type": "string", "enum": ["none", "system", "microphone", "both"], "description": "Sound to record (Windows, MP4 only); default: the setting."},
+                    "microphone": s("Microphone id from list_audio_devices (default: the setting, or the computer's default)."),
                     "monitor_id": n("Record this monitor (from list_monitors)."),
                     "x": {"type": "number"}, "y": {"type": "number"}, "width": {"type": "number"}, "height": {"type": "number"},
-                    "path": s("Where to save it; default the Recordings folder in Snagster's library.")
+                    "path": s("Where to save it; default a new file in the recordings folder (the video_folder setting).")
                 }),
                 &["seconds"],
             ),
@@ -169,15 +273,61 @@ fn base_tools() -> Vec<Tool> {
     ]
 }
 
+const MARK_KINDS: [&str; 14] = ["arrow", "line", "box", "oval", "highlight", "pen", "text", "callout", "step", "stamp", "pointer", "spotlight", "magnify", "image"];
+
+/// Tools that change something outside the current picture (files, clipboard, settings, screen).
+const SIDE: [&str; 24] = [
+    "save", "quick_save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "library_delete", "library_tag",
+    "set_setting", "set_language", "open_in_snagster", "studio_add_source", "studio_remove_source", "studio_update_source",
+    "studio_add_scene", "studio_remove_scene", "studio_set_current", "studio_record", "capture_scrolling", "paste_from_clipboard",
+    "capture_screen", "capture_region", "capture_window",
+];
+
+/// Tools that may delete or replace something (a mark, a source or scene, a library picture,
+/// a setting, or a file at a given path).
+const DESTRUCTIVE: [&str; 11] =
+    ["remove_mark", "clear_marks", "studio_remove_source", "studio_remove_scene", "library_delete", "set_setting", "save", "make_guide", "record_video", "record_gif", "studio_record"];
+
+/// Tools that change something but leave the same result when called again with the same
+/// arguments.
+const IDEMPOTENT: [&str; 10] = ["save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
+
+/// What a tool's structured answer looks like, for the tools that always give one.
+fn output_schema(name: &str) -> Option<Value> {
+    let num = json!({"type": "number"});
+    let st = json!({"type": "string"});
+    let bo = json!({"type": "boolean"});
+    let strings = json!({"type": "array", "items": {"type": "string"}});
+    let props = |p: Value| json!({"type": "object", "properties": p});
+    let items = |item: Value| json!({"type": "object", "properties": {"items": {"type": "array", "items": item}}, "required": ["items"]});
+    let text_lines = || {
+        json!({
+            "type": "object",
+            "properties": {"text": st, "lines": {"type": "array", "items": props(json!({"text": st, "x": num, "y": num, "width": num, "height": num}))}},
+            "required": ["text", "lines"]
+        })
+    };
+    Some(match name {
+        "list_monitors" => items(props(json!({"id": num, "name": st, "x": num, "y": num, "width": num, "height": num, "primary": bo}))),
+        "list_windows" => items(props(json!({"id": num, "title": st, "program": st, "x": num, "y": num, "width": num, "height": num}))),
+        "library_search" => items(props(json!({"path": st, "title": st, "program": st, "kind": st, "created": st, "tags": strings}))),
+        "list_languages" => items(props(json!({"code": st, "name": st, "native": st}))),
+        "list_presets" => items(props(json!({"number": num, "name": st, "mode": st, "delay_s": num, "effects": strings, "hotkey": st}))),
+        "list_video_encoders" => items(props(json!({"name": st, "codec": st, "hardware": bo, "vendor": st}))),
+        "list_marks" => items(props(json!({"index": num, "kind": st, "description": st, "x": num, "y": num, "width": num, "height": num}))),
+        "read_text" | "read_screen_text" => text_lines(),
+        "list_recordings" => json!({"type": "object", "properties": {"folder": st, "recordings": {"type": "array", "items": props(json!({"path": st, "kb": num}))}}, "required": ["folder", "recordings"]}),
+        "video_info" => json!({"type": "object", "properties": {"frames": num, "seconds": num, "width": num, "height": num}, "required": ["frames", "seconds", "width", "height"]}),
+        "list_audio_devices" => json!({"type": "object", "properties": {"sound_recording": bo, "microphones": {"type": "array", "items": {"type": "object"}}}, "required": ["sound_recording", "microphones"]}),
+        "app_info" => json!({"type": "object", "properties": {"version": st, "system": st, "architecture": st, "features": {"type": "object"}, "folders": {"type": "object"}}, "required": ["version", "system"]}),
+        "studio_scenes" => json!({"type": "object", "properties": {"scenes": {"type": "array", "items": {"type": "object"}}, "current": num, "width": num, "height": num, "fps": num}, "required": ["scenes", "current"]}),
+        "library_tag" => json!({"type": "object", "properties": {"path": st, "title": st, "tags": strings}, "required": ["path", "title", "tags"]}),
+        _ => return None,
+    })
+}
+
 /// The `tools/list` result, with a title and safety hints for every tool.
 pub fn tool_list() -> Value {
-    // Tools that change something outside the current picture (files, clipboard, settings, screen).
-    const SIDE: [&str; 17] = [
-        "save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "set_setting", "set_language",
-        "open_in_snagster", "studio_add_source", "studio_remove_source", "studio_record", "capture_scrolling", "paste_from_clipboard",
-        "capture_screen", "capture_region", "capture_window",
-    ];
-    const DESTRUCTIVE: [&str; 3] = ["remove_mark", "clear_marks", "studio_remove_source"];
     let tools: Vec<Value> = tools()
         .into_iter()
         .map(|t| {
@@ -186,7 +336,7 @@ pub fn tool_list() -> Value {
             if let Some(c) = title.get(0..1) {
                 title = c.to_uppercase() + &title[1..];
             }
-            json!({
+            let mut v = json!({
                 "name": t.name,
                 "title": title,
                 "description": t.description,
@@ -195,10 +345,14 @@ pub fn tool_list() -> Value {
                     "title": title,
                     "readOnlyHint": read_only,
                     "destructiveHint": DESTRUCTIVE.contains(&t.name),
-                    "idempotentHint": read_only,
+                    "idempotentHint": read_only || IDEMPOTENT.contains(&t.name),
                     "openWorldHint": t.name == "check_for_update",
                 },
-            })
+            });
+            if let Some(o) = output_schema(t.name) {
+                v["outputSchema"] = o;
+            }
+            v
         })
         .collect();
     json!({ "tools": tools })
@@ -268,7 +422,304 @@ fn preview(d: &Doc, max: u32) -> Result<Value, String> {
     Ok(json!({"type": "image", "data": base64::engine::general_purpose::STANDARD.encode(png), "mimeType": "image/png"}))
 }
 
+fn bool_arg(a: &Value, k: &str) -> Option<bool> {
+    a.get(k).and_then(Value::as_bool)
+}
+
+fn str_of<'a>(a: &'a Value, k: &str) -> Option<&'a str> {
+    a.get(k).and_then(Value::as_str)
+}
+
+/// A `file://` address for a path (made absolute), for resource links.
+pub fn file_uri(p: &Path) -> String {
+    let abs = std::path::absolute(p).unwrap_or_else(|_| p.to_path_buf());
+    let s = abs.to_string_lossy().replace('\\', "/");
+    let s = s.strip_prefix("//?/").unwrap_or(&s);
+    let mut out = String::from("file://");
+    if !s.starts_with('/') {
+        out.push('/');
+    }
+    for b in s.bytes() {
+        if b.is_ascii_alphanumeric() || b"/-._~:".contains(&b) {
+            out.push(b as char);
+        } else {
+            out.push_str(&format!("%{b:02X}"));
+        }
+    }
+    out
+}
+
+/// A link to a file Snagster wrote, as MCP `resource_link` content.
+fn link(p: &Path) -> Value {
+    let mut v = json!({
+        "type": "resource_link",
+        "uri": file_uri(p),
+        "name": p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
+        "mimeType": export::mime_type(p),
+    });
+    if let Ok(m) = std::fs::metadata(p) {
+        v["size"] = json!(m.len());
+    }
+    v
+}
+
+/// The answer for a saved file: the message (for every app) and a link to it (newer apps).
+fn saved(p: &Path, message: String) -> Vec<Value> {
+    vec![text(message), link(p)]
+}
+
+/// A list of [x, y] pairs (or {"x", "y"} objects).
+fn points_arg(a: &Value, k: &str) -> Result<Option<Vec<Pos2>>, String> {
+    let Some(list) = a.get(k) else { return Ok(None) };
+    let list = list.as_array().ok_or_else(|| format!("\"{k}\" is a list of [x, y] pairs"))?;
+    let mut out = Vec::new();
+    for p in list {
+        let (x, y) = match p {
+            Value::Array(xy) if xy.len() == 2 => (xy[0].as_f64(), xy[1].as_f64()),
+            Value::Object(_) => (p.get("x").and_then(Value::as_f64), p.get("y").and_then(Value::as_f64)),
+            _ => (None, None),
+        };
+        match (x, y) {
+            (Some(x), Some(y)) => out.push(pos2(x as f32, y as f32)),
+            _ => return Err(format!("\"{k}\" is a list of [x, y] pairs")),
+        }
+    }
+    Ok(Some(out))
+}
+
+/// A cut-out shape by name.
+fn cut_shape(s: &str) -> Option<CutShape> {
+    Some(match s.trim().to_ascii_lowercase().as_str() {
+        "rectangle" | "rect" | "box" => CutShape::Rect,
+        "ellipse" | "oval" | "circle" => CutShape::Ellipse,
+        "rounded" | "rounded rectangle" => CutShape::Rounded,
+        "triangle" => CutShape::Triangle,
+        "star" => CutShape::Star,
+        "heart" => CutShape::Heart,
+        "polygon" => CutShape::Polygon,
+        "freehand" | "lasso" => CutShape::Freehand,
+        _ => return None,
+    })
+}
+
+/// How a capture is taken and what happens after: read from the arguments before grabbing.
+#[derive(Default, Debug)]
+struct CaptureArgs {
+    delay_s: f64,
+    shape: Option<CutShape>,
+    points: Vec<Pos2>,
+    cursor: Option<bool>,
+    library: Option<bool>,
+}
+
+impl CaptureArgs {
+    fn parse(a: &Value) -> Result<CaptureArgs, String> {
+        let delay_s = num(a, "delay_s").unwrap_or(0.0);
+        if !(0.0..=60.0).contains(&delay_s) {
+            return Err("delay_s is 0-60 seconds".into());
+        }
+        let shape = match str_of(a, "shape") {
+            Some(s) => Some(cut_shape(s).ok_or_else(|| format!("shape is one of {}", SHAPE_NAMES.join(", ")))?),
+            None => None,
+        };
+        let points = points_arg(a, "points")?.unwrap_or_default();
+        if matches!(shape, Some(CutShape::Polygon | CutShape::Freehand)) && points.len() < 3 {
+            return Err("the polygon and freehand shapes need three or more points".into());
+        }
+        Ok(CaptureArgs { delay_s, shape: shape.filter(|s| *s != CutShape::Rect), points, cursor: bool_arg(a, "include_cursor"), library: bool_arg(a, "library") })
+    }
+}
+
+/// A picture taken from the screen, before the after-capture steps.
+struct Grabbed {
+    image: RgbaImage,
+    /// Desktop position of its top-left pixel.
+    origin: (i32, i32),
+    /// Where the mouse pointer was, in desktop pixels.
+    cursor: Option<(i32, i32)>,
+    title: String,
+    app: String,
+}
+
+impl Grabbed {
+    fn from_shot(s: capture::Shot, title: Option<&str>) -> Grabbed {
+        Grabbed { title: title.map(String::from).unwrap_or(s.title), image: s.image, origin: s.origin, cursor: s.cursor, app: s.app }
+    }
+}
+
+/// The screen holding `at` (or the first one).
+fn monitor_at(mons: &[capture::MonitorInfo], at: (i32, i32)) -> Option<&capture::MonitorInfo> {
+    mons.iter().find(|m| at.0 >= m.x && at.1 >= m.y && at.0 < m.x + m.width as i32 && at.1 < m.y + m.height as i32).or(mons.first())
+}
+
+/// The desktop area of the screen under the mouse pointer (or the first screen).
+pub fn monitor_under_cursor() -> Result<(i32, i32, u32, u32), String> {
+    let mons = capture::monitors();
+    let at = capture::cursor_pos().unwrap_or((0, 0));
+    monitor_at(&mons, at).map(|m| (m.x, m.y, m.width, m.height)).ok_or_else(|| "no screen found".to_string())
+}
+
+/// A video format argument: one this system can make (GIFs come from record_gif).
+fn video_format_arg(f: &str) -> Result<crate::video::VideoFormat, String> {
+    use crate::video::VideoFormat;
+    match VideoFormat::parse(f) {
+        Some(VideoFormat::Gif) => Err("GIFs are made by record_gif".into()),
+        Some(v) if v.available() => Ok(v),
+        Some(v) => Err(format!("{} can't be made on this system; use mp4", v.label())),
+        None => Err(format!("format is one of {}", VideoFormat::video_names().join(", "))),
+    }
+}
+
+/// A `notifications/progress` message for `token`.
+fn progress_note(token: &Value, done: f64, total: Option<f64>, message: &str) -> String {
+    let mut p = json!({"progressToken": token, "progress": done, "message": message});
+    if let Some(t) = total {
+        p["total"] = json!(t);
+    }
+    json!({"jsonrpc": "2.0", "method": "notifications/progress", "params": p}).to_string()
+}
+
 impl Workspace {
+    /// A workspace that uses (and changes) these settings instead of the saved ones.
+    #[cfg(test)]
+    pub fn with_settings(s: Settings) -> Workspace {
+        Workspace { fixed: Some(s), ..Default::default() }
+    }
+
+    fn settings(&self) -> Settings {
+        self.fixed.clone().unwrap_or_else(|| Settings::load(false))
+    }
+
+    fn save_settings(&mut self, s: &Settings) {
+        match &mut self.fixed {
+            Some(f) => *f = s.clone(),
+            None => s.save(),
+        }
+    }
+
+    /// Tell the app how far the call is (when it asked).
+    fn report(&self, done: f64, total: Option<f64>, what: &str) {
+        if let Some(p) = &self.progress {
+            p(done, total, what);
+        }
+    }
+
+    /// Run `f` while reporting the seconds gone by (of `total`) about once a second.
+    fn ticking<T>(&self, total: Option<f64>, what: &str, f: impl FnOnce() -> T) -> T {
+        self.ticking_every(Duration::from_secs(1), total, what, f)
+    }
+
+    fn ticking_every<T>(&self, every: Duration, total: Option<f64>, what: &str, f: impl FnOnce() -> T) -> T {
+        let Some(p) = self.progress.clone() else { return f() };
+        let done = AtomicBool::new(false);
+        std::thread::scope(|sc| {
+            sc.spawn(|| {
+                let t0 = Instant::now();
+                let mut last = -1.0;
+                loop {
+                    let mut e = (t0.elapsed().as_secs_f64() * 10.0).round() / 10.0;
+                    if let Some(t) = total {
+                        e = e.min(t);
+                    }
+                    // Progress only ever goes up.
+                    if e > last {
+                        p(e, total, what);
+                        last = e;
+                    }
+                    let until = Instant::now() + every;
+                    while Instant::now() < until {
+                        if done.load(Ordering::Relaxed) {
+                            return;
+                        }
+                        std::thread::sleep(Duration::from_millis(20).min(every));
+                    }
+                }
+            });
+            let r = f();
+            done.store(true, Ordering::Relaxed);
+            r
+        })
+    }
+
+    /// Wait before a capture; a cancel ends the wait.
+    fn wait(&self, secs: f64) -> Result<(), String> {
+        if secs <= 0.0 {
+            return Ok(());
+        }
+        let t0 = Instant::now();
+        self.ticking(Some(secs), "Waiting before the capture", || {
+            while t0.elapsed().as_secs_f64() < secs {
+                if self.stop.load(Ordering::Relaxed) {
+                    return Err("cancelled".to_string());
+                }
+                std::thread::sleep(Duration::from_millis(20));
+            }
+            Ok(())
+        })
+    }
+
+    /// The after-capture steps the window runs too: cut to a shape, effects, the mouse pointer
+    /// as a mark, a copy in the library. Then it is the current picture.
+    fn finish_capture(&mut self, g: Grabbed, kind: &str, ca: &CaptureArgs, fx: &[effects::Effect]) -> Outcome {
+        let s = self.settings();
+        let mut img = g.image;
+        if let Some(shape) = ca.shape {
+            img = render::cut_to_shape(&img, shape, &ca.points);
+        }
+        if !fx.is_empty() {
+            let opts = s.effect_options(format!("{}   {}   {}", chrono::Local::now().format("%Y-%m-%d %H:%M"), g.app, g.title));
+            for e in fx {
+                img = effects::apply(*e, &img, &opts);
+            }
+        }
+        let (w, h) = img.dimensions();
+        let mut d = Doc::new(img.clone());
+        if ca.cursor.unwrap_or(s.include_cursor)
+            && let Some(c) = g.cursor
+        {
+            let p = pos2((c.0 - g.origin.0) as f32, (c.1 - g.origin.1) as f32);
+            if p.x >= 0.0 && p.y >= 0.0 && p.x < w as f32 && p.y < h as f32 {
+                d.shapes.push(Shape::Pointer { pos: p, size: doc::pointer_size(4.0) });
+            }
+        }
+        let mut note = String::new();
+        if ca.library.unwrap_or(s.after_library) {
+            let meta = library::Meta { title: g.title.clone(), app: g.app.clone(), kind: kind.into(), ..Default::default() };
+            note = match library::add(Path::new(&s.library_folder), &img, meta) {
+                Ok(p) => format!(" Kept in the library: {}", p.display()),
+                Err(e) => format!(" Not added to the library: {e}"),
+            };
+        }
+        let mut out = self.set(d, &g.title)?;
+        if !note.is_empty()
+            && let Some(t) = out[0].get("text").and_then(Value::as_str)
+        {
+            out[0] = text(format!("{t}{note}"));
+        }
+        Ok(out)
+    }
+
+    /// Copy the current picture to the clipboard.
+    fn copy_current(&mut self) -> Result<String, String> {
+        let flat = render::compose(self.doc()?);
+        let (w, h) = flat.dimensions();
+        let data = arboard::ImageData { width: w as usize, height: h as usize, bytes: flat.into_raw().into() };
+        arboard::Clipboard::new().and_then(|mut c| c.set_image(data)).map_err(|e| e.to_string())?;
+        Ok(format!("Copied the {w} x {h} picture."))
+    }
+
+    /// Save the current picture in the save folder, named by the file-name pattern.
+    fn quick_save(&mut self) -> Outcome {
+        let name = self.name.clone();
+        let d = self.doc()?.clone();
+        let mut s = self.settings();
+        let p = s.next_save_path(&name);
+        export::save_doc(&d, &name, &p, &s)?;
+        // The %n counter moved on.
+        self.save_settings(&s);
+        Ok(saved(&p, format!("Saved {}", p.display())))
+    }
+
     fn doc(&mut self) -> Result<&mut Doc, String> {
         self.doc.as_mut().ok_or_else(|| "There is no current picture yet: capture_screen or open_image first.".to_string())
     }
@@ -302,6 +753,11 @@ impl Workspace {
 
     /// Run one tool.
     pub fn call(&mut self, name: &str, a: &Value) -> Outcome {
+        self.structured = None;
+        self.run(name, a)
+    }
+
+    fn run(&mut self, name: &str, a: &Value) -> Outcome {
         match name {
             "list_monitors" => {
                 let list: Vec<Value> = capture::monitors()
@@ -318,23 +774,32 @@ impl Workspace {
                 Ok(vec![text(serde_json::to_string_pretty(&list).unwrap_or_default())])
             }
             "capture_screen" => {
-                let kind = if a.get("all_screens").and_then(Value::as_bool).unwrap_or(false) {
-                    CaptureKind::AllScreens
+                let ca = CaptureArgs::parse(a)?;
+                let (kind, label) = if bool_arg(a, "all_screens").unwrap_or(false) {
+                    (CaptureKind::AllScreens, "All screens")
                 } else if let Some(id) = num(a, "monitor_id") {
-                    CaptureKind::Monitor(id as u32)
+                    (CaptureKind::Monitor(id as u32), "Screen")
                 } else {
-                    CaptureKind::Screen
+                    (CaptureKind::Screen, "Screen")
                 };
+                self.wait(ca.delay_s)?;
                 let shot = capture::grab(&kind, (0, 0))?;
-                let title = shot.title.clone();
-                self.set(Doc::new(shot.image), &title)
+                let title = if kind == CaptureKind::AllScreens { Some("All screens") } else { None };
+                self.finish_capture(Grabbed::from_shot(shot, title), label, &ca, &[])
             }
             "capture_region" => {
                 let r = rect_arg(a)?;
-                let img = capture::grab_rect(r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32)?;
-                self.set(Doc::new(img), "Area")
+                let ca = CaptureArgs::parse(a)?;
+                let area = (r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32);
+                self.wait(ca.delay_s)?;
+                let cursor = capture::cursor_pos();
+                let img = capture::grab_rect(area.0, area.1, area.2, area.3)?;
+                self.last_area = Some(area);
+                let app = capture::foreground_info().1;
+                self.finish_capture(Grabbed { image: img, origin: (area.0, area.1), cursor, title: "Area".into(), app }, "Area", &ca, &[])
             }
             "capture_window" => {
+                let ca = CaptureArgs::parse(a)?;
                 let wins = capture::list_windows();
                 let found = if let Some(id) = num(a, "id") {
                     wins.into_iter().find(|w| w.id == id as u32)
@@ -345,8 +810,13 @@ impl Workspace {
                     return Err("give id or title".into());
                 };
                 let w = found.ok_or("no such window (see list_windows)")?;
+                self.wait(ca.delay_s)?;
                 let shot = capture::grab(&CaptureKind::Window(w.id, w.label.clone()), (0, 0))?;
-                self.set(Doc::new(shot.image), &w.label)
+                let mut g = Grabbed::from_shot(shot, Some(&w.label));
+                if g.app.is_empty() {
+                    g.app = w.app.clone();
+                }
+                self.finish_capture(g, "Window", &ca, &[])
             }
             "open_image" => {
                 let p = std::path::PathBuf::from(a.get("path").and_then(Value::as_str).ok_or("missing path")?);
@@ -380,9 +850,33 @@ impl Workspace {
                 let n = self.doc()?.shapes.len() - 1;
                 Ok(vec![text(format!("Added mark {n}: {label}."))])
             }
+            "update_mark" => {
+                let i = index_arg(a, "index")?;
+                let mut what = Vec::new();
+                self.change(|d| {
+                    if i >= d.shapes.len() {
+                        return Err("no mark with that number".into());
+                    }
+                    let mut d = d.clone();
+                    what = update_shape(&mut d.shapes[i], a)?;
+                    Ok(d)
+                })?;
+                let label = describe(&self.doc()?.shapes[i]);
+                Ok(vec![text(format!("Mark {i} ({}): {label}.", what.join(", ")))])
+            }
             "list_marks" => {
                 let d = self.doc()?;
                 let lines: Vec<String> = d.shapes.iter().enumerate().map(|(i, s)| format!("{i}: {}", describe(s))).collect();
+                let items: Vec<Value> = d
+                    .shapes
+                    .iter()
+                    .enumerate()
+                    .map(|(i, s)| {
+                        let b = s.bounds();
+                        json!({"index": i, "kind": kind_name(s), "description": describe(s), "x": b.min.x.round(), "y": b.min.y.round(), "width": b.width().round(), "height": b.height().round()})
+                    })
+                    .collect();
+                self.structured = Some(json!({ "items": items }));
                 Ok(vec![text(if lines.is_empty() { "No marks.".into() } else { lines.join("\n") })])
             }
             "remove_mark" => {
@@ -399,13 +893,15 @@ impl Workspace {
             }
             "blur_area" => {
                 let r = rect_arg(a)?;
-                let mode = match a.get("mode").and_then(Value::as_str).unwrap_or("pixelate") {
-                    "blur" => crate::settings::BlurMode::Blur,
-                    "solid" => crate::settings::BlurMode::Solid,
-                    _ => crate::settings::BlurMode::Pixelate,
+                let s = self.settings();
+                let mode = match a.get("mode").and_then(Value::as_str) {
+                    Some("pixelate") => crate::settings::BlurMode::Pixelate,
+                    Some("blur") => crate::settings::BlurMode::Blur,
+                    Some("solid") => crate::settings::BlurMode::Solid,
+                    _ => s.blur_mode,
                 };
                 let color = parse_color(a.get("color").and_then(Value::as_str).or(Some("black")));
-                self.change(|d| d.redact(r, mode, 12, color).ok_or("that area is outside the picture".into()))?;
+                self.change(|d| d.redact(r, mode, s.blur_block, color).ok_or("that area is outside the picture".into()))?;
                 Ok(vec![text("Hidden.")])
             }
             "crop" => {
@@ -425,56 +921,35 @@ impl Workspace {
                     .into_iter()
                     .find(|e| format!("{e:?}").eq_ignore_ascii_case(want) || e.label().eq_ignore_ascii_case(want))
                     .ok_or_else(|| format!("unknown effect; use one of {}", effect_names().join(", ")))?;
-                let s = crate::settings::Settings::load(false);
-                let opts = effects::EffectOptions {
-                    resize_percent: s.resize_percent,
-                    border_width: s.border_width,
-                    border_color: s.border_color,
-                    shadow_size: s.shadow_size,
-                    rounded_radius: s.rounded_radius,
-                    watermark_text: s.watermark_text.clone(),
-                    tilt_percent: s.tilt_percent,
-                    brightness: s.brightness,
-                    contrast: s.contrast,
-                    saturation: s.saturation,
-                    info_text: format!("{}   {}", chrono::Local::now().format("%Y-%m-%d %H:%M"), self.name),
-                };
+                let opts = self.settings().effect_options(format!("{}   {}", chrono::Local::now().format("%Y-%m-%d %H:%M"), self.name));
                 self.flatten_with(|i| effects::apply(e, i, &opts))?;
                 Ok(vec![text(format!("{} applied.", e.label()))])
             }
             "read_text" => {
                 let d = self.doc()?.clone();
                 let lines = ocr::recognize(&render::compose(&d))?;
-                let list: Vec<Value> = lines
-                    .iter()
-                    .map(|l| {
-                        let r = l.rect();
-                        json!({"text": l.text, "x": r.min.x.round(), "y": r.min.y.round(), "width": r.width().round(), "height": r.height().round()})
-                    })
-                    .collect();
-                Ok(vec![text(ocr::plain_text(&lines)), text(serde_json::to_string(&list).unwrap_or_default())])
+                let (plain, list) = text_lines(&lines);
+                self.structured = Some(json!({"text": plain, "lines": list}));
+                Ok(vec![text(plain), text(serde_json::to_string(&list).unwrap_or_default())])
             }
             "smart_redact" => {
                 let d = self.doc()?.clone();
-                let lines = ocr::recognize(&render::compose(&d))?;
-                let found = ocr::find_sensitive(
-                    &lines,
-                    ocr::RedactKinds { emails: true, phones: true, cards: true, addresses: true, ips: true, urls: false },
-                );
-                if found.is_empty() {
-                    return Ok(vec![text("Nothing sensitive was found.")]);
-                }
-                self.change(|d| {
-                    let mut d = d.clone();
-                    for (r, _) in &found {
-                        if let Some(n) = d.blur(*r, 12) {
-                            d = n;
-                        }
+                let s = self.settings();
+                let kinds = match a.get("kinds") {
+                    Some(v) => {
+                        let names: Vec<&str> = v.as_array().ok_or("kinds is a list of names")?.iter().filter_map(Value::as_str).collect();
+                        ocr::RedactKinds::from_names(&names)?
                     }
-                    Ok(d)
-                })?;
-                let kinds: Vec<&str> = found.iter().map(|f| f.1).collect();
-                Ok(vec![text(format!("Blurred {} items: {}.", found.len(), kinds.join(", ")))])
+                    None => ocr::RedactKinds::from_settings(&s),
+                };
+                let lines = ocr::recognize(&render::compose(&d))?;
+                let Some((hidden, mut kinds)) = ocr::redact(&d, &lines, kinds, s.blur_block) else {
+                    return Ok(vec![text("Nothing sensitive was found.")]);
+                };
+                let n = kinds.len();
+                self.change(|_| Ok(hidden))?;
+                kinds.dedup();
+                Ok(vec![text(format!("Blurred {n} items: {}.", kinds.join(", ")))])
             }
             "undo" => {
                 let prev = self.undo.pop().ok_or("nothing to undo")?;
@@ -487,78 +962,60 @@ impl Workspace {
                 let p = std::path::PathBuf::from(a.get("path").and_then(Value::as_str).ok_or("missing path")?);
                 let name = self.name.clone();
                 let d = self.doc()?.clone();
-                let ext = p.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
-                match ext.as_str() {
-                    "snag" => export::save_project(&d, &name, &p)?,
-                    "docx" => export::docx(&name, &[(name.clone(), render::compose(&d))], &p)?,
-                    _ => export::save_image(&render::compose(&d), &p, 90)?,
-                }
-                Ok(vec![text(format!("Saved {}", p.display()))])
+                export::save_doc(&d, &name, &p, &self.settings())?;
+                Ok(saved(&p, format!("Saved {}", p.display())))
             }
-            "copy_to_clipboard" => {
-                let flat = render::compose(self.doc()?);
-                let (w, h) = flat.dimensions();
-                let data = arboard::ImageData { width: w as usize, height: h as usize, bytes: flat.into_raw().into() };
-                arboard::Clipboard::new().and_then(|mut c| c.set_image(data)).map_err(|e| e.to_string())?;
-                Ok(vec![text(format!("Copied the {w} x {h} picture."))])
-            }
+            "copy_to_clipboard" => Ok(vec![text(self.copy_current()?)]),
             "list_video_encoders" => {
                 let list = crate::video::encoders();
                 Ok(vec![text(serde_json::to_string_pretty(&list).unwrap_or_default())])
             }
             "record_video" => {
                 let secs = num(a, "seconds").ok_or("missing seconds")?.clamp(1.0, 600.0) as u32;
-                let format = match a.get("format").and_then(Value::as_str) {
-                    Some(f) => crate::video::VideoFormat::parse(f).filter(|f| *f != crate::video::VideoFormat::Gif).ok_or("format is mp4, hevc or wmv (use record_gif for GIFs)")?,
-                    None => crate::video::VideoFormat::Mp4,
+                let s = self.settings();
+                let format = match str_of(a, "format") {
+                    Some(f) => video_format_arg(f)?,
+                    None => s.rec_format.video_or_mp4(),
                 };
                 let rect = if a.get("width").is_some() {
                     let r = rect_arg(a)?;
                     (r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32)
-                } else {
-                    let mons = capture::monitors();
-                    let m = match num(a, "monitor_id") {
-                        Some(id) => mons.iter().find(|m| m.id == id as u32).ok_or("no such monitor (see list_monitors)")?,
-                        None => {
-                            let at = capture::cursor_pos().unwrap_or((0, 0));
-                            mons.iter()
-                                .find(|m| at.0 >= m.x && at.1 >= m.y && at.0 < m.x + m.width as i32 && at.1 < m.y + m.height as i32)
-                                .or(mons.first())
-                                .ok_or("no screen found")?
-                        }
-                    };
+                } else if let Some(id) = num(a, "monitor_id") {
+                    let m = capture::monitors().into_iter().find(|m| m.id == id as u32).ok_or("no such monitor (see list_monitors)")?;
                     (m.x, m.y, m.width, m.height)
+                } else {
+                    monitor_under_cursor()?
                 };
-                let path = match a.get("path").and_then(Value::as_str) {
-                    Some(p) => std::path::PathBuf::from(p),
-                    None => {
-                        let dir = crate::settings::Settings::load(false).video_folder;
-                        let name = chrono::Local::now().format("Recording_%Y-%m-%d_%H-%M-%S").to_string();
-                        crate::settings::unique_path(&std::path::PathBuf::from(dir), &name, format.ext())
-                    }
+                let mut opts = crate::video::VideoOpts::from_settings(&s, rect);
+                opts.format = format;
+                opts.path = match str_of(a, "path") {
+                    Some(p) => PathBuf::from(p),
+                    None => crate::video::recording_path(&s.video_folder, "Recording", format.ext()),
                 };
-                let opts = crate::video::VideoOpts {
-                    rect,
-                    fps: num(a, "fps").unwrap_or(30.0).clamp(1.0, 120.0) as u32,
-                    format,
-                    quality: num(a, "quality").unwrap_or(2.0).clamp(1.0, 4.0) as u8,
-                    hardware: a.get("hardware").and_then(Value::as_bool).unwrap_or(true),
-                    cursor: a.get("cursor").and_then(Value::as_bool).unwrap_or(true),
-                    max_s: secs,
-                    path,
-                    audio: match a.get("audio").and_then(Value::as_str) {
-                        Some(s) => crate::audio::AudioSource::parse(s).ok_or("audio is none, system, microphone or both")?,
-                        None => crate::audio::AudioSource::None,
-                    },
-                    mic: a.get("microphone").and_then(Value::as_str).unwrap_or_default().to_string(),
-                    frames: None,
-                };
-                self.stop.store(false, std::sync::atomic::Ordering::Relaxed);
-                let pause = std::sync::atomic::AtomicBool::new(false);
-                let d = crate::video::record(&opts, &self.stop, &pause);
+                if let Some(f) = num(a, "fps") {
+                    opts.fps = f.clamp(1.0, 120.0) as u32;
+                }
+                if let Some(q) = num(a, "quality") {
+                    opts.quality = q.clamp(1.0, 4.0) as u8;
+                }
+                if let Some(h) = bool_arg(a, "hardware") {
+                    opts.hardware = h;
+                }
+                if let Some(c) = bool_arg(a, "cursor") {
+                    opts.cursor = c;
+                }
+                if let Some(x) = str_of(a, "audio") {
+                    opts.audio = crate::audio::AudioSource::parse(x).ok_or("audio is none, system, microphone or both")?;
+                }
+                if let Some(m) = str_of(a, "microphone") {
+                    opts.mic = m.to_string();
+                }
+                opts.max_s = secs;
+                let pause = AtomicBool::new(false);
+                let d = self.ticking(Some(secs as f64), "Recording the screen", || crate::video::record(&opts, &self.stop, &pause));
                 d.result.clone()?;
                 let size = std::fs::metadata(&d.path).map(|m| m.len()).unwrap_or(0);
-                Ok(vec![text(format!(
+                Ok(saved(&d.path, format!(
                     "Saved {}: {:.1} s, {} frames at {} fps, {} x {}, {} KB. Encoder: {} ({}); screen copied by {}.",
                     d.path.display(),
                     d.seconds,
@@ -570,45 +1027,59 @@ impl Workspace {
                     d.encoder,
                     if d.hardware { "graphics chip" } else { "processor" },
                     d.capture
-                ))])
+                )))
             }
             "record_gif" => {
-                let r = rect_arg(a)?;
+                let s = self.settings();
+                let rect = if ["x", "y", "width", "height"].iter().any(|k| a.get(*k).is_some()) {
+                    let r = rect_arg(a)?;
+                    (r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32)
+                } else {
+                    monitor_under_cursor()?
+                };
                 let secs = num(a, "seconds").unwrap_or(5.0).clamp(1.0, 120.0) as u32;
-                let fps = num(a, "fps").unwrap_or(10.0).clamp(1.0, 30.0) as u32;
-                let path = std::path::PathBuf::from(a.get("path").and_then(Value::as_str).ok_or("missing path")?);
-                self.stop.store(false, std::sync::atomic::Ordering::Relaxed);
-                let stop = self.stop.clone();
+                let fps = num(a, "fps").map(|f| f.clamp(1.0, 30.0) as u32).unwrap_or(s.gif_fps.clamp(1, 30));
+                let max_w = num(a, "max_width").map(|w| w.clamp(16.0, 8192.0) as u32).unwrap_or(s.gif_max_width);
+                let cursor = bool_arg(a, "cursor").unwrap_or(s.gif_cursor);
+                let path = match str_of(a, "path") {
+                    Some(p) => PathBuf::from(p),
+                    None => crate::video::recording_path(&s.video_folder, "Recording", "gif"),
+                };
                 let (tx, rx) = std::sync::mpsc::channel();
-                capture::spawn_gif_recorder(
-                    (r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32),
-                    fps,
-                    secs,
-                    1280,
-                    true,
-                    path,
-                    stop,
-                    eframe::egui::Context::default(),
-                    tx,
-                );
-                let done = rx.recv_timeout(std::time::Duration::from_secs(secs as u64 + 60)).map_err(|e| e.to_string())?;
+                capture::spawn_gif_recorder(rect, fps, secs, max_w, cursor, path, self.stop.clone(), eframe::egui::Context::default(), tx);
+                let done = self.ticking(Some(secs as f64), "Recording a GIF", || rx.recv_timeout(Duration::from_secs(secs as u64 + 60))).map_err(|e| e.to_string())?;
                 done.result?;
-                Ok(vec![text(format!("Recorded {:.1} s ({} frames) to {}", done.seconds, done.frames, done.path.display()))])
+                Ok(saved(&done.path, format!("Recorded {:.1} s ({} frames) to {}", done.seconds, done.frames, done.path.display())))
             }
             "library_search" => {
-                let s = crate::settings::Settings::load(false);
+                let s = self.settings();
                 let q = a.get("query").and_then(Value::as_str).unwrap_or("");
-                let limit = num(a, "limit").unwrap_or(20.0) as usize;
-                let items: Vec<Value> = library::scan(std::path::Path::new(&s.library_folder))
-                    .into_iter()
-                    .filter(|i| i.matches(q))
-                    .take(limit)
-                    .map(|i| json!({"path": i.path, "title": i.meta.title, "program": i.meta.app, "created": i.meta.created, "tags": i.meta.tags}))
-                    .collect();
+                let limit = num(a, "limit").unwrap_or(20.0).max(0.0) as usize;
+                let items: Vec<Value> = library::scan(Path::new(&s.library_folder)).into_iter().filter(|i| i.matches(q)).take(limit).map(|i| library_json(&i)).collect();
                 Ok(vec![text(serde_json::to_string_pretty(&items).unwrap_or_default())])
             }
             other => self.call_more(other, a),
         }
+    }
+}
+
+/// The add_mark kind of a mark.
+fn kind_name(s: &Shape) -> &'static str {
+    match s {
+        Shape::Arrow { .. } => "arrow",
+        Shape::Line { .. } => "line",
+        Shape::Rect { .. } => "box",
+        Shape::Ellipse { .. } => "oval",
+        Shape::Pen { .. } => "pen",
+        Shape::Highlight { .. } => "highlight",
+        Shape::Text { .. } => "text",
+        Shape::Callout { .. } => "callout",
+        Shape::Step { .. } => "step",
+        Shape::Stamp { .. } => "stamp",
+        Shape::Magnify { .. } => "magnify",
+        Shape::Pointer { .. } => "pointer",
+        Shape::Spotlight { .. } => "spotlight",
+        Shape::Image { .. } => "image",
     }
 }
 
@@ -623,7 +1094,7 @@ fn describe(s: &Shape) -> String {
         Shape::Highlight { .. } => "highlight",
         Shape::Text { text, .. } => return format!("text \"{text}\" at {:.0},{:.0}", b.min.x, b.min.y),
         Shape::Callout { text, .. } => return format!("callout \"{text}\" at {:.0},{:.0}", b.min.x, b.min.y),
-        Shape::Step { n, .. } => return format!("step {n} at {:.0},{:.0}", b.center().x, b.center().y),
+        Shape::Step { n, style, .. } => return format!("step {} at {:.0},{:.0}", style.format(*n), b.center().x, b.center().y),
         Shape::Stamp { emoji, .. } => return format!("stamp {emoji} at {:.0},{:.0}", b.center().x, b.center().y),
         Shape::Magnify { .. } => "magnifier",
         Shape::Pointer { .. } => "pointer",
@@ -633,24 +1104,218 @@ fn describe(s: &Shape) -> String {
     format!("{kind} at {:.0},{:.0} to {:.0},{:.0}", b.min.x, b.min.y, b.max.x, b.max.y)
 }
 
+/// Text lines as plain text and as a list with boxes.
+fn text_lines(lines: &[ocr::Line]) -> (String, Vec<Value>) {
+    let list = lines
+        .iter()
+        .map(|l| {
+            let r = l.rect();
+            json!({"text": l.text, "x": r.min.x.round(), "y": r.min.y.round(), "width": r.width().round(), "height": r.height().round()})
+        })
+        .collect();
+    (ocr::plain_text(lines), list)
+}
+
+/// A library picture as JSON.
+fn library_json(i: &library::Item) -> Value {
+    json!({"path": i.path, "title": i.meta.title, "program": i.meta.app, "kind": i.meta.kind, "created": i.meta.created, "tags": i.meta.tags})
+}
+
+/// Text alignment: left, center or right (or 0, 1, 2).
+fn align_arg(a: &Value) -> Result<Option<u8>, String> {
+    match a.get("align") {
+        None => Ok(None),
+        Some(v) => match (v.as_str().map(|s| s.trim().to_ascii_lowercase()), v.as_f64()) {
+            (Some(s), _) if s == "left" => Ok(Some(0)),
+            (Some(s), _) if s == "center" || s == "centre" || s == "middle" => Ok(Some(1)),
+            (Some(s), _) if s == "right" => Ok(Some(2)),
+            (_, Some(n)) if (0.0..=2.0).contains(&n) => Ok(Some(n as u8)),
+            _ => Err("align is left, center or right".into()),
+        },
+    }
+}
+
+fn callout_shape_arg(a: &Value) -> Result<Option<crate::settings::CalloutShape>, String> {
+    use crate::settings::CalloutShape;
+    match str_of(a, "callout_shape").map(|s| s.trim().to_ascii_lowercase()) {
+        None => Ok(None),
+        Some(s) => match s.as_str() {
+            "rounded" => Ok(Some(CalloutShape::Rounded)),
+            "rectangle" | "rect" | "box" => Ok(Some(CalloutShape::Rectangle)),
+            "oval" | "ellipse" => Ok(Some(CalloutShape::Oval)),
+            _ => Err("callout_shape is rounded, rectangle or oval".into()),
+        },
+    }
+}
+
+fn step_style_arg(a: &Value) -> Result<Option<crate::settings::StepStyle>, String> {
+    use crate::settings::StepStyle;
+    match str_of(a, "style").map(|s| s.trim().to_string()) {
+        None => Ok(None),
+        Some(s) => match s.as_str() {
+            "numbers" | "number" | "1" => Ok(Some(StepStyle::Numbers)),
+            "upper" | "A" => Ok(Some(StepStyle::Upper)),
+            "lower" | "a" => Ok(Some(StepStyle::Lower)),
+            "roman" | "i" => Ok(Some(StepStyle::Roman)),
+            _ => Err("style is numbers, upper, lower or roman".into()),
+        },
+    }
+}
+
+fn heads_arg(a: &Value) -> Result<Option<u8>, String> {
+    match num(a, "heads") {
+        None => Ok(None),
+        Some(h) if [0.0, 1.0, 2.0].contains(&h) => Ok(Some(h as u8)),
+        Some(_) => Err("heads is 0, 1 or 2".into()),
+    }
+}
+
+fn zoom_arg(a: &Value) -> Option<f32> {
+    num(a, "zoom").map(|z| z.clamp(1.0, 8.0) as f32)
+}
+
+/// Change a mark as update_mark asks; what changed, or why it can't.
+fn update_shape(s: &mut Shape, a: &Value) -> Result<Vec<&'static str>, String> {
+    let mut what = Vec::new();
+    let kind = kind_name(s);
+    let no = |prop: &str| format!("a {kind} mark has no {prop}");
+    if num(a, "dx").is_some() || num(a, "dy").is_some() {
+        s.translate(vec2(num(a, "dx").unwrap_or(0.0) as f32, num(a, "dy").unwrap_or(0.0) as f32));
+        what.push("moved");
+    }
+    if num(a, "x").is_some() || num(a, "y").is_some() {
+        let b = s.bounds();
+        let to = pos2(num(a, "x").map(|v| v as f32).unwrap_or(b.min.x), num(a, "y").map(|v| v as f32).unwrap_or(b.min.y));
+        s.translate(to - b.min);
+        what.push("moved");
+    }
+    if let Some(f) = num(a, "scale") {
+        if !(0.05..=20.0).contains(&f) {
+            return Err("scale is 0.05-20".into());
+        }
+        s.scale(f as f32);
+        what.push("scaled");
+    }
+    if let Some(c) = str_of(a, "color") {
+        s.set_color(parse_color(Some(c)));
+        what.push("colour");
+    }
+    if let Some(w) = num(a, "width") {
+        let e = no("width");
+        if !s.set_width(w as f32) {
+            return Err(e);
+        }
+        what.push("width");
+    }
+    if let Some(f) = bool_arg(a, "fill") {
+        let e = no("fill");
+        if !s.set_fill(f) {
+            return Err(e);
+        }
+        what.push("fill");
+    }
+    if let Some(sh) = bool_arg(a, "shadow") {
+        let e = no("shadow");
+        if !s.set_shadow(sh) {
+            return Err(e);
+        }
+        what.push("shadow");
+    }
+    if let Some(t) = str_of(a, "text") {
+        let e = no("text");
+        if !s.set_text(t) {
+            return Err(e);
+        }
+        what.push("text");
+    }
+    let style_keys = ["font", "bold", "italic", "align", "outline"];
+    if style_keys.iter().any(|k| a.get(*k).is_some()) {
+        let align = align_arg(a)?;
+        let e = no("text style");
+        match s {
+            Shape::Text { font, bold, italic, outline, align: al, .. } | Shape::Callout { font, bold, italic, outline, align: al, .. } => {
+                if let Some(f) = str_of(a, "font") {
+                    *font = f.to_string();
+                }
+                *bold = bool_arg(a, "bold").unwrap_or(*bold);
+                *italic = bool_arg(a, "italic").unwrap_or(*italic);
+                *outline = bool_arg(a, "outline").unwrap_or(*outline);
+                *al = align.unwrap_or(*al);
+            }
+            _ => return Err(e),
+        }
+        what.push("text style");
+    }
+    if let Some(cs) = callout_shape_arg(a)? {
+        let e = no("bubble shape");
+        let Shape::Callout { shape, .. } = s else { return Err(e) };
+        *shape = cs;
+        what.push("bubble");
+    }
+    if let Some(h) = heads_arg(a)? {
+        let e = no("arrow heads");
+        let Shape::Arrow { heads, .. } = s else { return Err(e) };
+        *heads = h;
+        what.push("heads");
+    }
+    if let Some(r) = num(a, "radius") {
+        let e = no("corner radius");
+        let Shape::Rect { radius, .. } = s else { return Err(e) };
+        *radius = r.clamp(0.0, 1000.0) as f32;
+        what.push("corners");
+    }
+    let st = step_style_arg(a)?;
+    if num(a, "number").is_some() || st.is_some() {
+        let e = no("step number");
+        let Shape::Step { n, style, .. } = s else { return Err(e) };
+        if let Some(v) = num(a, "number") {
+            *n = v.clamp(1.0, 9999.0) as u32;
+        }
+        *style = st.unwrap_or(*style);
+        what.push("step");
+    }
+    if let Some(z) = zoom_arg(a) {
+        let e = no("zoom");
+        let Shape::Magnify { zoom, .. } = s else { return Err(e) };
+        *zoom = z;
+        what.push("zoom");
+    }
+    what.dedup();
+    if what.is_empty() {
+        return Err("nothing to change: give dx/dy, x/y, scale, color, width, fill, shadow, text or a style".into());
+    }
+    Ok(what)
+}
+
 fn make_mark(a: &Value, d: &Doc) -> Result<Shape, String> {
     let kind = a.get("kind").and_then(Value::as_str).ok_or("missing kind")?;
+    let color = parse_color(a.get("color").and_then(Value::as_str));
+    let width = num(a, "width").unwrap_or(6.0).clamp(0.5, 200.0) as f32;
+    let shadow = a.get("shadow").and_then(Value::as_bool).unwrap_or(false);
+    if kind == "pen" {
+        let points = points_arg(a, "points")?.ok_or("pen needs points: [[x, y], ...]")?;
+        if points.len() < 2 {
+            return Err("pen needs two or more points".into());
+        }
+        return Ok(Shape::Pen { points, color, width, shadow });
+    }
     let p1 = pos2(need(a, "x")? as f32, need(a, "y")? as f32);
     let p2 = match (num(a, "x2"), num(a, "y2")) {
         (Some(x), Some(y)) => Some(pos2(x as f32, y as f32)),
         _ => None,
     };
     let need2 = || p2.ok_or_else(|| format!("{kind} needs x2 and y2"));
-    let color = parse_color(a.get("color").and_then(Value::as_str));
-    let width = num(a, "width").unwrap_or(6.0) as f32;
-    let size = num(a, "size").map(|s| s as f32);
+    let size = num(a, "size").map(|s| s.clamp(1.0, 2000.0) as f32);
     let fill = a.get("fill").and_then(Value::as_bool).unwrap_or(false);
-    let shadow = a.get("shadow").and_then(Value::as_bool).unwrap_or(false);
     let txt = a.get("text").and_then(Value::as_str).unwrap_or("").to_string();
+    let font = str_of(a, "font").unwrap_or("").to_string();
+    let bold = bool_arg(a, "bold").unwrap_or(false);
+    let italic = bool_arg(a, "italic").unwrap_or(false);
+    let align = align_arg(a)?.unwrap_or(0);
     Ok(match kind {
-        "arrow" => Shape::Arrow { a: p1, b: need2()?, color, width, shadow, heads: 1 },
+        "arrow" => Shape::Arrow { a: p1, b: need2()?, color, width, shadow, heads: heads_arg(a)?.unwrap_or(1) },
         "line" => Shape::Line { a: p1, b: need2()?, color, width, shadow },
-        "box" => Shape::Rect { rect: Rect::from_two_pos(p1, need2()?), color, width, fill, radius: 0.0, shadow },
+        "box" => Shape::Rect { rect: Rect::from_two_pos(p1, need2()?), color, width, fill, radius: num(a, "radius").unwrap_or(0.0).clamp(0.0, 1000.0) as f32, shadow },
         "oval" => Shape::Ellipse { rect: Rect::from_two_pos(p1, need2()?), color, width, fill, shadow },
         "highlight" => {
             let b = need2()?;
@@ -664,11 +1329,11 @@ fn make_mark(a: &Value, d: &Doc) -> Result<Shape, String> {
             size: size.unwrap_or(doc::text_size(width)),
             bg: fill,
             shadow,
-            font: String::new(),
-            bold: false,
-            italic: false,
-            outline: true,
-            align: 0,
+            font,
+            bold,
+            italic,
+            outline: bool_arg(a, "outline").unwrap_or(true),
+            align,
         },
         "callout" => Shape::Callout {
             pos: p1,
@@ -677,20 +1342,20 @@ fn make_mark(a: &Value, d: &Doc) -> Result<Shape, String> {
             color,
             size: size.unwrap_or(doc::text_size(width)),
             shadow,
-            font: String::new(),
-            bold: false,
-            italic: false,
-            shape: Default::default(),
-            outline: false,
-            align: 0,
+            font,
+            bold,
+            italic,
+            shape: callout_shape_arg(a)?.unwrap_or_default(),
+            outline: bool_arg(a, "outline").unwrap_or(false),
+            align,
         },
         "step" => Shape::Step {
             center: p1,
-            n: num(a, "number").map(|n| n as u32).unwrap_or_else(|| d.next_step(1)),
+            n: num(a, "number").map(|n| n.clamp(1.0, 9999.0) as u32).unwrap_or_else(|| d.next_step(1)),
             color,
             radius: size.unwrap_or(doc::step_radius(width)),
             shadow,
-            style: Default::default(),
+            style: step_style_arg(a)?.unwrap_or_default(),
         },
         "stamp" => Shape::Stamp {
             center: p1,
@@ -699,7 +1364,19 @@ fn make_mark(a: &Value, d: &Doc) -> Result<Shape, String> {
             color,
         },
         "pointer" => Shape::Pointer { pos: p1, size: size.unwrap_or(doc::pointer_size(width)) },
-        "magnify" => Shape::Magnify { center: p1, radius: size.unwrap_or(80.0), zoom: 2.0 },
+        "magnify" => Shape::Magnify { center: p1, radius: size.unwrap_or(80.0), zoom: zoom_arg(a).unwrap_or(2.0) },
+        "image" => {
+            let path = str_of(a, "path").ok_or("kind image needs a path")?;
+            let img = image::open(path).map_err(|e| format!("{path}: {e}"))?.to_rgba8();
+            let rect = match p2 {
+                Some(b) => Rect::from_two_pos(p1, b),
+                None => Rect::from_min_size(p1, vec2(img.width() as f32, img.height() as f32)),
+            };
+            if rect.width() < 1.0 || rect.height() < 1.0 {
+                return Err("the image needs some size".into());
+            }
+            Shape::Image { rect, image: doc::ImgData(Arc::new(img)) }
+        }
         other => return Err(format!("unknown kind {other}")),
     })
 }
@@ -712,22 +1389,36 @@ fn error(id: &Value, code: i64, message: &str) -> Option<String> {
     Some(json!({"jsonrpc": "2.0", "id": id, "error": {"code": code, "message": message}}).to_string())
 }
 
+/// Which tool calls are running or waiting, so a cancel stops only the call it names.
+#[derive(Default)]
+struct Calls {
+    /// The request id (as JSON text) of the call running now.
+    running: Option<String>,
+    /// Calls waiting for the running one to finish.
+    waiting: Vec<String>,
+    /// Waiting calls that were cancelled: they won't run.
+    cancelled: Vec<String>,
+}
+
 /// One AI app's connection: its current picture, and a flag that stops a running recording when
 /// the app cancels the call (reachable without waiting for the running tool).
 pub struct Session {
-    ws: std::sync::Mutex<Workspace>,
-    stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    ws: Mutex<Workspace>,
+    stop: Arc<AtomicBool>,
+    calls: Mutex<Calls>,
+    /// The protocol version agreed at initialize.
+    version: Mutex<String>,
+    /// Settings used instead of the saved file (tests).
+    fixed: Option<Settings>,
 }
 
 impl Default for Session {
     fn default() -> Self {
-        let ws = Workspace::default();
-        let stop = ws.stop.clone();
-        Session { ws: std::sync::Mutex::new(ws), stop }
+        Session::from_workspace(Workspace::default())
     }
 }
 
-const PROMPTS: [(&str, &str, &str, &str); 4] = [
+const PROMPTS: [(&str, &str, &str, &str); 5] = [
     (
         "annotate_screenshot",
         "Capture the screen and point out something on it with arrows, boxes and text.",
@@ -752,12 +1443,29 @@ const PROMPTS: [(&str, &str, &str, &str); 4] = [
         "topic",
         "Help me make a step-by-step guide about {topic}: capture each step as I go, then use make_guide to save a PDF with a caption for every step.",
     ),
+    (
+        "change_language",
+        "Switch Snagster's interface to another language.",
+        "code",
+        "Set Snagster's interface language to {code} with set_language (list_languages has the codes), then tell me the language's own name.",
+    ),
+];
+
+const PROMPT_ARG_HELP: [(&str, &str); 5] = [
+    ("what", "What to point out."),
+    ("window", "Part of the window's title."),
+    ("seconds", "How long to record."),
+    ("topic", "What the guide is about."),
+    ("code", "A language code such as de, ja or pt-BR (or auto)."),
 ];
 
 fn prompts_list() -> Value {
     let list: Vec<Value> = PROMPTS
         .iter()
-        .map(|(name, desc, arg, _)| json!({"name": name, "description": desc, "arguments": [{"name": arg, "required": false}]}))
+        .map(|(name, desc, arg, _)| {
+            let help = PROMPT_ARG_HELP.iter().find(|h| h.0 == *arg).map(|h| h.1).unwrap_or_default();
+            json!({"name": name, "description": desc, "arguments": [{"name": arg, "description": help, "required": false}]})
+        })
         .collect();
     json!({ "prompts": list })
 }
@@ -769,14 +1477,119 @@ fn prompts_get(params: &Value) -> Result<Value, (i64, String)> {
         "seconds" => "10",
         "what" => "the most important button",
         "window" => "the window in front",
+        "code" => "auto",
         _ => "this task",
     });
     Ok(json!({"description": desc, "messages": [{"role": "user", "content": {"type": "text", "text": body.replace(&format!("{{{arg}}}"), value)}}]}))
 }
 
+const TEMPLATES: [(&str, &str, &str, &str); 3] = [
+    ("snagster://library/{path}", "library-picture", "A picture in the library, by the path library_search gives", "image/png"),
+    ("snagster://settings/{key}", "setting", "One of Snagster's settings, by name", "application/json"),
+    ("snagster://languages/{code}", "language", "One of the interface languages, by code", "application/json"),
+];
+
+/// Completions for a prompt argument or a resource template's variable: what starts with
+/// `value` (case ignored), at most 100.
+fn completions(settings: &Settings, r: &Value, arg: &str, value: &str) -> Value {
+    let all: Vec<String> = match (r.get("type").and_then(Value::as_str), arg) {
+        (_, "code") => std::iter::once("auto").chain(crate::i18n::CODES.iter().copied()).map(String::from).collect(),
+        (Some("ref/prompt"), "seconds") => ["5", "10", "30", "60", "120"].map(String::from).to_vec(),
+        (Some("ref/prompt"), "what") => ["the most important button", "the menu", "the error message", "the search box"].map(String::from).to_vec(),
+        (Some("ref/prompt"), "window") => capture::list_windows().into_iter().map(|w| w.label).filter(|l| !l.is_empty()).collect(),
+        (Some("ref/resource"), "key") => serde_json::to_value(settings).ok().and_then(|v| v.as_object().map(|o| o.keys().cloned().collect())).unwrap_or_default(),
+        (Some("ref/resource"), "path") => library::scan(Path::new(&settings.library_folder)).into_iter().map(|i| i.path.to_string_lossy().to_string()).collect(),
+        _ => Vec::new(),
+    };
+    let low = value.to_lowercase();
+    let mut found: Vec<String> = all.into_iter().filter(|v| v.to_lowercase().starts_with(&low)).collect();
+    found.dedup();
+    let total = found.len();
+    found.truncate(100);
+    json!({"completion": {"values": found, "total": total, "hasMore": total > 100}})
+}
+
 impl Session {
+    fn from_workspace(ws: Workspace) -> Session {
+        let stop = ws.stop.clone();
+        let fixed = ws.fixed.clone();
+        Session { ws: Mutex::new(ws), stop, calls: Mutex::new(Calls::default()), version: Mutex::new(PROTOCOL_VERSIONS[0].to_string()), fixed }
+    }
+
+    /// A session that uses (and changes) these settings instead of the saved ones.
+    #[cfg(test)]
+    pub fn with_settings(s: Settings) -> Session {
+        Session::from_workspace(Workspace::with_settings(s))
+    }
+
+    fn settings(&self) -> Settings {
+        self.fixed.clone().unwrap_or_else(|| Settings::load(false))
+    }
+
+    fn calls(&self) -> MutexGuard<'_, Calls> {
+        self.calls.lock().unwrap_or_else(|p| p.into_inner())
+    }
+
+    /// `notifications/cancelled`: stop the named call if it runs, or drop it if it waits.
+    fn cancel(&self, params: &Value) {
+        let Some(id) = params.get("requestId") else { return };
+        let key = id.to_string();
+        let mut c = self.calls();
+        if c.running.as_deref() == Some(key.as_str()) {
+            self.stop.store(true, Ordering::Relaxed);
+        } else if c.waiting.contains(&key) && !c.cancelled.contains(&key) {
+            c.cancelled.push(key);
+        }
+    }
+
+    /// Read one resource (or a template's).
+    fn read_resource(&self, uri: &str) -> Result<Value, (i64, String)> {
+        let json_text = |v: &Value| json!({"contents": [{"uri": uri, "mimeType": "application/json", "text": serde_json::to_string_pretty(v).unwrap_or_default()}]});
+        let missing = || (-32002, format!("Resource not found: {uri}"));
+        match uri {
+            "snagster://settings" => return Ok(json_text(&serde_json::to_value(self.settings()).unwrap_or_default())),
+            "snagster://library" => {
+                let s = self.settings();
+                let items: Vec<Value> = library::scan(Path::new(&s.library_folder)).iter().take(50).map(library_json).collect();
+                return Ok(json_text(&json!(items)));
+            }
+            "snagster://picture/current" => {
+                let png = self.ws.lock().ok().and_then(|ws| ws.current_png());
+                return match png {
+                    Some((_, img)) => Ok(json!({"contents": [{"uri": uri, "mimeType": "image/png", "blob": img.get("data").cloned().unwrap_or_default()}]})),
+                    None => Err((-32002, "There is no current picture yet".into())),
+                };
+            }
+            _ => {}
+        }
+        if let Some(key) = uri.strip_prefix("snagster://settings/") {
+            let key = crate::mcp_http::percent_decode(key);
+            let v = serde_json::to_value(self.settings()).unwrap_or_default();
+            return v.get(&key).map(json_text).ok_or_else(missing);
+        }
+        if let Some(code) = uri.strip_prefix("snagster://languages/") {
+            let code = crate::mcp_http::percent_decode(code);
+            let c = crate::i18n::CODES.iter().find(|c| c.eq_ignore_ascii_case(&code)).ok_or_else(missing)?;
+            return Ok(json_text(&json!({"code": c, "name": crate::i18n::name_in(c, "en"), "native": crate::i18n::native_name(c)})));
+        }
+        if let Some(p) = uri.strip_prefix("snagster://library/") {
+            let want = PathBuf::from(crate::mcp_http::percent_decode(p));
+            let s = self.settings();
+            let item = library::scan(Path::new(&s.library_folder)).into_iter().find(|i| more::same_file(&i.path, &want)).ok_or_else(missing)?;
+            let bytes = std::fs::read(&item.path).map_err(|e| (-32603, e.to_string()))?;
+            return Ok(json!({"contents": [{"uri": uri, "mimeType": "image/png", "blob": base64::engine::general_purpose::STANDARD.encode(bytes)}]}));
+        }
+        Err(missing())
+    }
+
     /// Handle one JSON-RPC message; the reply line, or None for notifications and replies.
     pub fn handle(&self, line: &str) -> Option<String> {
+        self.handle_with(line, None)
+    }
+
+    /// Handle one message; `notify` carries progress notifications while a tool runs (when the
+    /// request asked for them with `_meta.progressToken`).
+    pub fn handle_with(&self, line: &str, notify: Option<Notify>) -> Option<String> {
         let message: Value = match serde_json::from_str(line) {
             Ok(v) => v,
             Err(_) => return error(&Value::Null, -32700, "Parse error"),
@@ -790,9 +1603,9 @@ impl Session {
             Some(id) if !method.is_empty() => id.clone(),
             Some(id) if message.get("result").is_none() && message.get("error").is_none() => return error(id, -32600, "Invalid request"),
             _ => {
-                // A notification. Cancelling stops a running recording or scroll.
+                // A notification. Cancelling stops the named recording or scroll.
                 if method == "notifications/cancelled" {
-                    self.stop.store(true, std::sync::atomic::Ordering::Relaxed);
+                    self.cancel(&params);
                 }
                 return None;
             }
@@ -801,6 +1614,9 @@ impl Session {
             "initialize" => {
                 let asked = params.get("protocolVersion").and_then(Value::as_str).unwrap_or_default();
                 let version = PROTOCOL_VERSIONS.iter().find(|v| **v == asked).copied().unwrap_or(PROTOCOL_VERSIONS[0]);
+                if let Ok(mut v) = self.version.lock() {
+                    *v = version.to_string();
+                }
                 result(
                     &id,
                     json!({
@@ -836,73 +1652,92 @@ impl Session {
                 }
                 result(&id, json!({ "resources": list }))
             }
-            "resources/templates/list" => result(&id, json!({"resourceTemplates": []})),
+            "resources/templates/list" => {
+                let list: Vec<Value> = TEMPLATES.iter().map(|(t, name, title, mime)| json!({"uriTemplate": t, "name": name, "title": title, "mimeType": mime})).collect();
+                result(&id, json!({ "resourceTemplates": list }))
+            }
             "resources/read" => {
                 let uri = params.get("uri").and_then(Value::as_str).unwrap_or_default();
-                match uri {
-                    "snagster://settings" => {
-                        let s = serde_json::to_string_pretty(&crate::settings::Settings::load(false)).unwrap_or_default();
-                        result(&id, json!({"contents": [{"uri": uri, "mimeType": "application/json", "text": s}]}))
-                    }
-                    "snagster://library" => {
-                        let s = crate::settings::Settings::load(false);
-                        let items: Vec<Value> = library::scan(std::path::Path::new(&s.library_folder))
-                            .into_iter()
-                            .take(50)
-                            .map(|i| json!({"path": i.path, "title": i.meta.title, "program": i.meta.app, "created": i.meta.created, "tags": i.meta.tags}))
-                            .collect();
-                        result(&id, json!({"contents": [{"uri": uri, "mimeType": "application/json", "text": serde_json::to_string_pretty(&items).unwrap_or_default()}]}))
-                    }
-                    "snagster://picture/current" => {
-                        let png = self.ws.lock().ok().and_then(|ws| ws.current_png());
-                        match png {
-                            Some((_, img)) => result(&id, json!({"contents": [{"uri": uri, "mimeType": "image/png", "blob": img.get("data").cloned().unwrap_or_default()}]})),
-                            None => error(&id, -32002, "There is no current picture yet"),
-                        }
-                    }
-                    _ => error(&id, -32002, &format!("Resource not found: {uri}")),
+                match self.read_resource(uri) {
+                    Ok(v) => result(&id, v),
+                    Err((c, m)) => error(&id, c, &m),
                 }
             }
-            "completion/complete" => result(&id, json!({"completion": {"values": [], "total": 0, "hasMore": false}})),
+            "completion/complete" => {
+                let r = params.get("ref").cloned().unwrap_or(Value::Null);
+                let arg = params.pointer("/argument/name").and_then(Value::as_str).unwrap_or_default();
+                let value = params.pointer("/argument/value").and_then(Value::as_str).unwrap_or_default();
+                result(&id, completions(&self.settings(), &r, arg, value))
+            }
             "logging/setLevel" => result(&id, json!({})),
-            "tools/call" => {
-                let name = params.get("name").and_then(Value::as_str).unwrap_or_default().to_string();
-                let args = params.get("arguments").cloned().unwrap_or(json!({}));
-                let mut ws = match self.ws.lock() {
-                    Ok(ws) => ws,
-                    Err(p) => p.into_inner(),
-                };
-                let out = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| ws.call(&name, &args)))
-                    .unwrap_or_else(|_| Err("the tool stopped unexpectedly (Snagster kept running)".into()));
-                match out {
-                    Ok(content) => {
-                        // A JSON answer also goes out as structured content.
-                        let structured = content
-                            .first()
-                            .filter(|_| content.len() == 1)
-                            .and_then(|c| c.get("text"))
-                            .and_then(Value::as_str)
-                            .and_then(|t| serde_json::from_str::<Value>(t).ok())
-                            .filter(Value::is_object);
-                        match structured {
-                            Some(s) => result(&id, json!({"content": content, "structuredContent": s, "isError": false})),
-                            None => result(&id, json!({"content": content, "isError": false})),
-                        }
+            "tools/call" => self.call_tool(&id, &params, notify),
+            _ => error(&id, -32601, &format!("Method not found: {method}")),
+        }
+    }
+
+    /// Run a `tools/call`: one at a time, cancellable by its id, with progress when asked.
+    fn call_tool(&self, id: &Value, params: &Value, notify: Option<Notify>) -> Option<String> {
+        let name = params.get("name").and_then(Value::as_str).unwrap_or_default().to_string();
+        let args = params.get("arguments").cloned().unwrap_or(json!({}));
+        let key = id.to_string();
+        self.calls().waiting.push(key.clone());
+        let mut ws = match self.ws.lock() {
+            Ok(ws) => ws,
+            Err(p) => p.into_inner(),
+        };
+        {
+            let mut c = self.calls();
+            if let Some(i) = c.waiting.iter().position(|k| *k == key) {
+                c.waiting.remove(i);
+            }
+            // Cancelled while it waited: it never runs, and gets no answer.
+            if let Some(i) = c.cancelled.iter().position(|k| *k == key) {
+                c.cancelled.remove(i);
+                return None;
+            }
+            self.stop.store(false, Ordering::Relaxed);
+            c.running = Some(key);
+        }
+        ws.progress = match (params.pointer("/_meta/progressToken").cloned(), notify) {
+            (Some(token), Some(n)) if !token.is_null() => Some(Arc::new(move |done: f64, total: Option<f64>, what: &str| n(progress_note(&token, done, total, what))) as Progress),
+            _ => None,
+        };
+        let out = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| ws.call(&name, &args))).unwrap_or_else(|_| Err("the tool stopped unexpectedly (Snagster kept running)".into()));
+        ws.progress = None;
+        let structured = ws.structured.take();
+        drop(ws);
+        self.calls().running = None;
+        let links = self.version.lock().map(|v| v.as_str() >= LINKS_SINCE).unwrap_or(true);
+        match out {
+            Ok(mut content) => {
+                // A JSON answer also goes out as structured content (lists inside {"items": ...}).
+                let structured = structured.or_else(|| {
+                    let only = content.first().filter(|_| content.len() == 1)?;
+                    match serde_json::from_str::<Value>(only.get("text")?.as_str()?).ok()? {
+                        v @ Value::Object(_) => Some(v),
+                        v @ Value::Array(_) => Some(json!({ "items": v })),
+                        _ => None,
                     }
-                    Err(e) => result(&id, json!({"content": [text(e)], "isError": true})),
+                });
+                if !links {
+                    content.retain(|c| c.get("type").and_then(Value::as_str) != Some("resource_link"));
+                }
+                match structured {
+                    Some(s) => result(id, json!({"content": content, "structuredContent": s, "isError": false})),
+                    None => result(id, json!({"content": content, "isError": false})),
                 }
             }
-            _ => error(&id, -32601, &format!("Method not found: {method}")),
+            Err(e) => result(id, json!({"content": [text(e)], "isError": true})),
         }
     }
 }
 
 /// Serve MCP over stdin/stdout until stdin closes. Tool calls run on their own thread, so a
-/// cancel (or a ping) is answered while a long recording runs.
+/// cancel (or a ping) is answered while a long recording runs; progress goes out as it comes.
 pub fn serve_stdio() {
-    let session = std::sync::Arc::new(Session::default());
-    let out = std::sync::Arc::new(std::sync::Mutex::new(std::io::stdout()));
-    fn send(out: &std::sync::Mutex<std::io::Stdout>, line: &str) {
+    let session = Arc::new(Session::default());
+    let out = Arc::new(Mutex::new(std::io::stdout()));
+    fn send(out: &Mutex<std::io::Stdout>, line: &str) {
         if let Ok(mut o) = out.lock() {
             let _ = writeln!(o, "{line}");
             let _ = o.flush();
@@ -919,7 +1754,9 @@ pub fn serve_stdio() {
         if line.contains("\"tools/call\"") {
             let (s, o) = (session.clone(), out.clone());
             let spawned = std::thread::Builder::new().name("snagster-mcp-call".into()).spawn(move || {
-                if let Some(reply) = s.handle(&line) {
+                let o2 = o.clone();
+                let notify: Notify = Arc::new(move |msg: String| send(&o2, &msg));
+                if let Some(reply) = s.handle_with(&line, Some(notify)) {
                     send(&o, &reply);
                 }
             });
@@ -1160,9 +1997,9 @@ mod tests {
         d
     }
 
-    /// A workspace holding a plain `w` x `h` picture (no file, no screen).
+    /// A workspace holding a plain `w` x `h` picture (no file, no screen), with default settings.
     fn ws_with(w: u32, h: u32) -> Workspace {
-        let mut ws = Workspace::default();
+        let mut ws = Workspace::with_settings(Settings::default());
         ws.set(Doc::new(image::RgbaImage::from_pixel(w, h, image::Rgba([200, 210, 220, 255]))), "test").unwrap();
         ws
     }
@@ -1232,26 +2069,262 @@ mod tests {
         assert_eq!(r["error"]["code"], -32600);
     }
 
+    /// Bug: any cancel stopped whatever ran, even when it named another (finished) request.
     #[test]
-    fn cancelling_sets_the_stop_flag_without_a_reply() {
+    fn a_cancel_stops_only_the_call_it_names() {
         let s = Session::default();
-        assert!(!s.stop.load(std::sync::atomic::Ordering::Relaxed));
+        let cancel = |id: Value| s.handle(&json!({"jsonrpc": "2.0", "method": "notifications/cancelled", "params": {"requestId": id}}).to_string());
         assert!(s.handle(r#"{"jsonrpc":"2.0","method":"notifications/progress","params":{}}"#).is_none());
-        assert!(!s.stop.load(std::sync::atomic::Ordering::Relaxed), "other notifications don't stop anything");
-        assert!(s.handle(r#"{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":1}}"#).is_none());
-        assert!(s.stop.load(std::sync::atomic::Ordering::Relaxed));
+        assert!(cancel(json!(1)).is_none(), "no reply to a notification");
+        assert!(!s.stop.load(Ordering::Relaxed), "nothing runs: nothing stops");
+        s.calls().running = Some(json!(5).to_string());
+        cancel(json!(4));
+        assert!(!s.stop.load(Ordering::Relaxed), "another request");
+        cancel(json!("5"));
+        assert!(!s.stop.load(Ordering::Relaxed), "the string \"5\" is not the number 5");
+        cancel(json!(5));
+        assert!(s.stop.load(Ordering::Relaxed));
         // The workspace sees the same flag.
-        assert!(s.ws.lock().unwrap().stop.load(std::sync::atomic::Ordering::Relaxed));
+        assert!(s.ws.lock().unwrap().stop.load(Ordering::Relaxed));
     }
 
     #[test]
-    fn small_methods_answer_with_empty_results() {
+    fn a_waiting_call_that_is_cancelled_never_runs() {
+        let s = Session::with_settings(Settings::default());
+        s.calls().waiting.push(json!(7).to_string());
+        s.handle(r#"{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":7}}"#);
+        assert_eq!(s.calls().cancelled, [json!(7).to_string()]);
+        let r = s.handle(&rpc(json!(7), "tools/call", json!({"name": "list_languages"})).to_string());
+        assert!(r.is_none(), "a cancelled request gets no answer");
+        assert!(s.calls().cancelled.is_empty() && s.calls().running.is_none());
+        // The next call with that id runs as usual.
+        assert_eq!(call(&s, 7, "list_languages", json!({}))["isError"], false);
+    }
+
+    #[test]
+    fn a_running_capture_delay_is_cancelled_by_its_id() {
+        let s = Arc::new(Session::with_settings(Settings::default()));
+        let s2 = s.clone();
+        let t0 = Instant::now();
+        let worker = std::thread::spawn(move || call(&s2, 9, "capture_screen", json!({"delay_s": 30})));
+        while s.calls().running.is_none() && t0.elapsed() < Duration::from_secs(10) {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        s.handle(r#"{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":8}}"#);
+        std::thread::sleep(Duration::from_millis(100));
+        assert!(!worker.is_finished(), "cancelling request 8 leaves request 9 running");
+        s.handle(r#"{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":9}}"#);
+        let r = worker.join().unwrap();
+        assert_eq!(r["isError"], true);
+        assert_eq!(r["content"][0]["text"], "cancelled");
+        assert!(t0.elapsed() < Duration::from_secs(20), "it stopped waiting");
+        // A new call starts with the stop flag down again.
+        assert_eq!(call(&s, 10, "list_languages", json!({}))["isError"], false);
+        assert!(!s.stop.load(Ordering::Relaxed));
+    }
+
+    #[test]
+    fn progress_notifications_follow_the_token() {
+        let dir = temp_dir("progress");
+        let a = dir.join("a.png");
+        image::RgbaImage::from_pixel(20, 10, image::Rgba([1, 2, 3, 255])).save(&a).unwrap();
+        let s = Session::with_settings(Settings::default());
+        let got = Arc::new(Mutex::new(Vec::<String>::new()));
+        let g = got.clone();
+        let notify: Notify = Arc::new(move |m: String| g.lock().unwrap().push(m));
+        let msg = |meta: Value| rpc(json!(1), "tools/call", json!({"name": "make_guide", "arguments": {"path": dir.join("g.html"), "steps": [{"path": a}, {"path": a}]}, "_meta": meta})).to_string();
+        // No token: no progress.
+        let r: Value = serde_json::from_str(&s.handle_with(&msg(json!({})), Some(notify.clone())).unwrap()).unwrap();
+        assert_eq!(r["result"]["isError"], false, "{r}");
+        assert!(got.lock().unwrap().is_empty());
+        s.handle_with(&msg(json!({"progressToken": "tok-1"})), Some(notify)).unwrap();
+        let notes: Vec<Value> = got.lock().unwrap().iter().map(|m| serde_json::from_str(m).unwrap()).collect();
+        assert_eq!(notes.len(), 3, "two steps read, then saved: {notes:?}");
+        let mut last = 0.0;
+        for n in &notes {
+            assert_eq!(n["jsonrpc"], "2.0");
+            assert!(n.get("id").is_none(), "a notification");
+            assert_eq!(n["method"], "notifications/progress");
+            assert_eq!(n["params"]["progressToken"], "tok-1");
+            assert_eq!(n["params"]["total"], 3.0);
+            let p = n["params"]["progress"].as_f64().unwrap();
+            assert!(p > last, "progress goes up");
+            last = p;
+            assert!(n["params"]["message"].is_string());
+        }
+        assert_eq!(last, 3.0);
+        assert!(s.ws.lock().unwrap().progress.is_none(), "the reporter goes away with the call");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn progress_note_format() {
+        let n: Value = serde_json::from_str(&progress_note(&json!(42), 1.5, Some(10.0), "Recording")).unwrap();
+        assert_eq!(n, json!({"jsonrpc": "2.0", "method": "notifications/progress", "params": {"progressToken": 42, "progress": 1.5, "total": 10.0, "message": "Recording"}}));
+        let n: Value = serde_json::from_str(&progress_note(&json!("t"), 2.0, None, "x")).unwrap();
+        assert!(n["params"].get("total").is_none(), "no total when it isn't known");
+    }
+
+    #[test]
+    fn ticking_reports_rising_seconds_up_to_the_total() {
+        let mut ws = Workspace::default();
+        let got = Arc::new(Mutex::new(Vec::<(f64, Option<f64>)>::new()));
+        let g = got.clone();
+        ws.progress = Some(Arc::new(move |d: f64, t: Option<f64>, _: &str| g.lock().unwrap().push((d, t))));
+        let r = ws.ticking_every(Duration::from_millis(30), Some(0.2), "x", || {
+            std::thread::sleep(Duration::from_millis(400));
+            7
+        });
+        assert_eq!(r, 7, "the work's answer comes back");
+        let got = got.lock().unwrap();
+        assert_eq!(got[0], (0.0, Some(0.2)), "a first report at once");
+        assert!(got.len() >= 2, "{got:?}");
+        assert!(got.windows(2).all(|w| w[1].0 > w[0].0), "always rising: {got:?}");
+        assert!(got.iter().all(|p| p.0 <= 0.2), "never past the total: {got:?}");
+        // Without a reporter the work just runs.
+        assert_eq!(Workspace::default().ticking(None, "x", || 3), 3);
+    }
+
+    #[test]
+    fn small_methods_answer() {
         let s = Session::default();
         assert_eq!(ask(&s, rpc(json!(1), "logging/setLevel", json!({"level": "info"})))["result"], json!({}));
-        assert_eq!(ask(&s, rpc(json!(2), "resources/templates/list", json!({})))["result"]["resourceTemplates"], json!([]));
+        let t = ask(&s, rpc(json!(2), "resources/templates/list", json!({})))["result"]["resourceTemplates"].clone();
+        let uris: Vec<&str> = t.as_array().unwrap().iter().map(|r| r["uriTemplate"].as_str().unwrap()).collect();
+        assert_eq!(uris, ["snagster://library/{path}", "snagster://settings/{key}", "snagster://languages/{code}"]);
+        assert!(t.as_array().unwrap().iter().all(|r| r["name"].is_string() && r["mimeType"].is_string()));
         let c = ask(&s, rpc(json!(3), "completion/complete", json!({})))["result"]["completion"].clone();
         assert_eq!(c["values"], json!([]));
         assert_eq!(c["hasMore"], false);
+    }
+
+    #[test]
+    fn completions_offer_language_codes_prompt_values_and_setting_names() {
+        let s = Session::with_settings(Settings::default());
+        let complete = |r: Value, name: &str, value: &str| ask(&s, rpc(json!(1), "completion/complete", json!({"ref": r, "argument": {"name": name, "value": value}})))["result"]["completion"].clone();
+        let prompt = json!({"type": "ref/prompt", "name": "change_language"});
+        let c = complete(prompt.clone(), "code", "pt");
+        let values: Vec<&str> = c["values"].as_array().unwrap().iter().map(|v| v.as_str().unwrap()).collect();
+        assert!(values.contains(&"pt-BR"), "{values:?}");
+        assert!(values.iter().all(|v| v.to_lowercase().starts_with("pt")));
+        assert_eq!(c["total"], values.len());
+        let all = complete(prompt, "code", "");
+        assert_eq!(all["total"], crate::i18n::CODES.len() + 1, "every code and auto");
+        assert_eq!(all["hasMore"], false, "86 + 1 fit in one answer");
+        let secs = complete(json!({"type": "ref/prompt", "name": "record_demo"}), "seconds", "1");
+        assert_eq!(secs["values"], json!(["10", "120"]));
+        let keys = complete(json!({"type": "ref/resource", "uri": "snagster://settings/{key}"}), "key", "VIDEO_F");
+        let keys: Vec<&str> = keys["values"].as_array().unwrap().iter().map(|v| v.as_str().unwrap()).collect();
+        assert!(keys.contains(&"video_fps") && keys.contains(&"video_folder"), "{keys:?}");
+        assert_eq!(complete(json!({"type": "ref/prompt", "name": "x"}), "unknown", "")["values"], json!([]));
+    }
+
+    #[test]
+    fn template_resources_read_settings_languages_and_library_pictures() {
+        let dir = temp_dir("templates");
+        let lib = dir.join("lib");
+        let s = Settings { library_folder: lib.to_string_lossy().to_string(), video_fps: 48, ..Default::default() };
+        let pic = library::add(&lib, &image::RgbaImage::from_pixel(6, 4, image::Rgba([9, 8, 7, 255])), library::Meta { title: "One".into(), ..Default::default() }).unwrap();
+        let session = Session::with_settings(s);
+        let read = |uri: String| ask(&session, rpc(json!(1), "resources/read", json!({ "uri": uri })));
+        let r = read("snagster://settings/video_fps".into());
+        assert_eq!(r["result"]["contents"][0]["text"], "48");
+        assert_eq!(read("snagster://settings/nope".into())["error"]["code"], -32002);
+        let r = read("snagster://languages/DE".into());
+        let v: Value = serde_json::from_str(r["result"]["contents"][0]["text"].as_str().unwrap()).unwrap();
+        assert_eq!(v["code"], "de");
+        assert_eq!(v["native"], crate::i18n::native_name("de"));
+        assert_eq!(read("snagster://languages/xx".into())["error"]["code"], -32002);
+        // A library picture, by its (encoded) path.
+        let enc: String = pic.to_string_lossy().bytes().map(|b| if b.is_ascii_alphanumeric() { (b as char).to_string() } else { format!("%{b:02X}") }).collect();
+        let r = read(format!("snagster://library/{enc}"));
+        assert_eq!(r["result"]["contents"][0]["mimeType"], "image/png", "{r}");
+        let png = base64::engine::general_purpose::STANDARD.decode(r["result"]["contents"][0]["blob"].as_str().unwrap()).unwrap();
+        assert_eq!(image::load_from_memory(&png).unwrap().width(), 6);
+        // Files outside the library are not served.
+        let outside = dir.join("secret.png");
+        image::RgbaImage::new(2, 2).save(&outside).unwrap();
+        assert_eq!(read(format!("snagster://library/{}", outside.display()))["error"]["code"], -32002);
+        let r = read("snagster://library".into());
+        assert!(r["result"]["contents"][0]["text"].as_str().unwrap().contains("One"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn lists_come_back_as_structured_items_matching_their_output_schema() {
+        let s = Session::with_settings(Settings { library_folder: temp_dir("lists").join("lib").to_string_lossy().to_string(), ..Default::default() });
+        let list = tool_list();
+        for name in ["list_languages", "list_presets", "list_video_encoders", "library_search"] {
+            let schema = list["tools"].as_array().unwrap().iter().find(|t| t["name"] == name).unwrap()["outputSchema"].clone();
+            assert_eq!(schema["type"], "object", "{name}");
+            assert_eq!(schema["required"], json!(["items"]), "{name}");
+            let r = call(&s, 1, name, json!({}));
+            assert_eq!(r["isError"], false, "{name}: {r}");
+            let items = &r["structuredContent"]["items"];
+            assert!(items.is_array(), "{name}: {r}");
+            // The text still holds the plain list for older apps.
+            let text_list: Value = serde_json::from_str(r["content"][0]["text"].as_str().unwrap()).unwrap();
+            assert_eq!(&text_list, items, "{name}");
+        }
+        let langs = call(&s, 2, "list_languages", json!({}));
+        assert_eq!(langs["structuredContent"]["items"].as_array().unwrap().len(), crate::i18n::CODES.len());
+        let presets = call(&s, 3, "list_presets", json!({}));
+        assert_eq!(presets["structuredContent"]["items"][0]["mode"], "Area");
+        // Every tool with an output schema is a known tool, and the schema is an object schema.
+        let names: Vec<&str> = list["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect();
+        for t in list["tools"].as_array().unwrap() {
+            if let Some(o) = t.get("outputSchema") {
+                assert_eq!(o["type"], "object", "{}", t["name"]);
+                assert!(o["properties"].is_object(), "{}", t["name"]);
+            }
+        }
+        assert!(names.contains(&"read_text") && output_schema("read_text").is_some());
+        assert!(output_schema("crop").is_none());
+    }
+
+    #[test]
+    fn marks_are_listed_as_structured_items() {
+        let s = Session::with_settings(Settings::default());
+        *s.ws.lock().unwrap() = ws_with(100, 100);
+        call(&s, 1, "add_mark", json!({"kind": "box", "x": 10, "y": 20, "x2": 30, "y2": 60, "width": 2}));
+        let r = call(&s, 2, "list_marks", json!({}));
+        let item = &r["structuredContent"]["items"][0];
+        assert_eq!(item["index"], 0);
+        assert_eq!(item["kind"], "box");
+        assert_eq!((item["x"].as_f64(), item["width"].as_f64()), (Some(9.0), Some(22.0)), "the box with its line");
+        assert!(r["content"][0]["text"].as_str().unwrap().starts_with("0: box"));
+    }
+
+    #[test]
+    fn saved_files_come_with_a_resource_link_for_newer_apps() {
+        let dir = temp_dir("links");
+        let s = Session::with_settings(Settings::default());
+        *s.ws.lock().unwrap() = ws_with(30, 20);
+        let out = dir.join("a b.png");
+        let r = call(&s, 1, "save", json!({"path": out}));
+        assert_eq!(r["content"][0]["type"], "text");
+        let l = &r["content"][1];
+        assert_eq!(l["type"], "resource_link");
+        assert_eq!(l["name"], "a b.png");
+        assert_eq!(l["mimeType"], "image/png");
+        assert!(l["uri"].as_str().unwrap().starts_with("file:///") && l["uri"].as_str().unwrap().ends_with("/a%20b.png"), "{l}");
+        assert!(l["size"].as_u64().unwrap() > 0);
+        // An app on an older protocol gets only the text.
+        ask(&s, rpc(json!(2), "initialize", json!({"protocolVersion": "2025-03-26"})));
+        let r = call(&s, 3, "save", json!({"path": out}));
+        assert_eq!(r["content"].as_array().unwrap().len(), 1);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn file_addresses_are_absolute_and_escaped() {
+        #[cfg(windows)]
+        assert_eq!(file_uri(Path::new(r"C:\Users\A B\pic #1.png")), "file:///C:/Users/A%20B/pic%20%231.png");
+        #[cfg(not(windows))]
+        assert_eq!(file_uri(Path::new("/tmp/A B/pic #1.png")), "file:///tmp/A%20B/pic%20%231.png");
+        let rel = file_uri(Path::new("x.png"));
+        assert!(rel.starts_with("file:///") && rel.ends_with("/x.png"), "made absolute: {rel}");
+        assert!(!rel.contains('\\'));
     }
 
     // ---- tools/list and schemas ----
@@ -1300,10 +2373,26 @@ mod tests {
         for side in ["save", "copy_to_clipboard", "record_video", "set_setting", "capture_screen", "studio_add_source", "add_mark", "crop"] {
             assert_eq!(find(side)["annotations"]["readOnlyHint"], false, "{side} changes something");
         }
-        for d in ["remove_mark", "clear_marks", "studio_remove_source"] {
+        for d in ["remove_mark", "clear_marks", "studio_remove_source", "studio_remove_scene", "library_delete", "set_setting", "save", "make_guide"] {
             assert_eq!(find(d)["annotations"]["destructiveHint"], true, "{d}");
         }
+        for side in ["quick_save", "library_tag", "library_delete", "studio_add_scene", "studio_set_current", "studio_update_source", "update_mark", "run_preset"] {
+            assert_eq!(find(side)["annotations"]["readOnlyHint"], false, "{side} changes something");
+        }
         assert_eq!(find("add_mark")["annotations"]["destructiveHint"], false);
+        assert_eq!(find("quick_save")["annotations"]["destructiveHint"], false, "it always makes a new file");
+        // Doing it twice is the same as once...
+        for i in ["save", "set_setting", "set_language", "studio_set_current", "library_tag", "list_marks"] {
+            assert_eq!(find(i)["annotations"]["idempotentHint"], true, "{i}");
+        }
+        // ...but not for these.
+        for i in ["add_mark", "capture_screen", "record_video", "quick_save", "undo", "studio_add_scene", "update_mark"] {
+            assert_eq!(find(i)["annotations"]["idempotentHint"], false, "{i}");
+        }
+        // Only tools that exist are named in the hint lists.
+        for n in SIDE.iter().chain(DESTRUCTIVE.iter()).chain(IDEMPOTENT.iter()) {
+            find(n);
+        }
         for t in tools {
             let open = t["name"] == "check_for_update";
             assert_eq!(t["annotations"]["openWorldHint"], open, "{}", t["name"]);
@@ -1425,6 +2514,10 @@ mod tests {
             ("open_in_snagster", json!({})),
             ("read_text", json!({})),
             ("smart_redact", json!({})),
+            ("update_mark", json!({"index": 0, "dx": 1})),
+            ("simplify", json!({})),
+            ("quick_save", json!({})),
+            ("library_add", json!({})),
         ] {
             let e = err_of(ws.call(tool, &args));
             assert!(e.contains("no current picture"), "{tool}: {e}");
@@ -1455,12 +2548,158 @@ mod tests {
         let mut ws = Workspace::default();
         assert_eq!(err_of(ws.call("record_video", &json!({}))), "missing seconds");
         assert!(err_of(ws.call("record_video", &json!({"seconds": 1, "format": "gif"}))).contains("record_gif"));
-        assert!(err_of(ws.call("record_video", &json!({"seconds": 1, "format": "avi"}))).contains("mp4, hevc or wmv"));
+        let e = err_of(ws.call("record_video", &json!({"seconds": 1, "format": "avi"})));
+        assert!(e.contains("format is one of mp4"), "{e}");
         let area = json!({"seconds": 1, "x": 0, "y": 0, "width": 64, "height": 64, "path": "unused.mp4", "audio": "loud"});
         assert!(err_of(ws.call("record_video", &area)).contains("audio is none"));
         let area = json!({"seconds": 1, "x": 0, "y": 0, "width": -1, "height": 64});
         assert!(err_of(ws.call("record_video", &area)).contains("above 0"));
-        assert_eq!(err_of(ws.call("record_gif", &json!({"x": 0, "y": 0, "width": 10, "height": 10}))), "missing path");
+        // A GIF area is checked before recording too.
+        assert!(err_of(ws.call("record_gif", &json!({"x": 0, "y": 0, "width": 10}))).contains("height"));
+    }
+
+    #[test]
+    fn video_formats_are_checked_against_this_system() {
+        use crate::video::VideoFormat;
+        assert_eq!(video_format_arg("MP4"), Ok(VideoFormat::Mp4));
+        assert!(video_format_arg("gif").unwrap_err().contains("record_gif"));
+        if cfg!(windows) {
+            assert_eq!(video_format_arg("hevc"), Ok(VideoFormat::Hevc));
+            assert_eq!(video_format_arg("wmv"), Ok(VideoFormat::Wmv));
+        } else {
+            assert!(video_format_arg("hevc").unwrap_err().contains("can't be made on this system"));
+        }
+        // The schema offers exactly what this system makes.
+        let list = tool_list();
+        let rv = list["tools"].as_array().unwrap().iter().find(|t| t["name"] == "record_video").unwrap().clone();
+        assert_eq!(rv["inputSchema"]["properties"]["format"]["enum"], json!(VideoFormat::video_names()));
+        for k in ["audio", "microphone"] {
+            assert!(rv["inputSchema"]["properties"][k].is_object(), "record_video takes {k}");
+        }
+        assert!(!rv["inputSchema"]["properties"]["path"]["description"].as_str().unwrap().contains("library"));
+    }
+
+    #[test]
+    fn capture_options_are_read_before_anything_is_grabbed() {
+        let ca = CaptureArgs::parse(&json!({})).unwrap();
+        assert_eq!((ca.delay_s, ca.shape, ca.cursor, ca.library), (0.0, None, None, None));
+        let ca = CaptureArgs::parse(&json!({"delay_s": 2.5, "shape": "Star", "include_cursor": true, "library": false})).unwrap();
+        assert_eq!((ca.delay_s, ca.shape, ca.cursor, ca.library), (2.5, Some(CutShape::Star), Some(true), Some(false)));
+        assert_eq!(CaptureArgs::parse(&json!({"shape": "rectangle"})).unwrap().shape, None, "a rectangle needs no cutting");
+        assert!(CaptureArgs::parse(&json!({"delay_s": 61})).unwrap_err().contains("0-60"));
+        assert!(CaptureArgs::parse(&json!({"delay_s": -1})).is_err());
+        assert!(CaptureArgs::parse(&json!({"shape": "blob"})).unwrap_err().contains("shape is one of"));
+        assert!(CaptureArgs::parse(&json!({"shape": "polygon", "points": [[0, 0], [5, 5]]})).unwrap_err().contains("three or more"));
+        let ca = CaptureArgs::parse(&json!({"shape": "freehand", "points": [[0, 0], [9, 0], {"x": 4, "y": 8}]})).unwrap();
+        assert_eq!(ca.points, vec![pos2(0.0, 0.0), pos2(9.0, 0.0), pos2(4.0, 8.0)]);
+        assert!(CaptureArgs::parse(&json!({"points": [[1]]})).is_err());
+        for n in SHAPE_NAMES {
+            assert!(cut_shape(n).is_some(), "{n}");
+        }
+        // A bad option fails before the screen is touched (no screen needed for this).
+        let mut ws = Workspace::default();
+        for tool in ["capture_screen", "capture_window", "capture_active_window", "capture_last_area"] {
+            assert!(err_of(ws.call(tool, &json!({"title": "x", "shape": "blob"}))).contains("shape"), "{tool}");
+        }
+        assert!(err_of(ws.call("capture_region", &json!({"x": 0, "y": 0, "width": 5, "height": 5, "delay_s": 99}))).contains("0-60"));
+        assert!(err_of(ws.call("capture_last_area", &json!({}))).contains("capture_region first"));
+    }
+
+    #[test]
+    fn the_screen_under_the_pointer_is_found() {
+        let m = |id, x, y| capture::MonitorInfo { id, name: String::new(), x, y, width: 100, height: 50, primary: id == 1 };
+        let mons = [m(1, 0, 0), m(2, 100, 0), m(3, -100, 0)];
+        assert_eq!(monitor_at(&mons, (150, 10)).unwrap().id, 2);
+        assert_eq!(monitor_at(&mons, (-1, 49)).unwrap().id, 3);
+        assert_eq!(monitor_at(&mons, (0, 0)).unwrap().id, 1);
+        assert_eq!(monitor_at(&mons, (5, 500)).unwrap().id, 1, "off every screen: the first");
+        assert!(monitor_at(&[], (0, 0)).is_none());
+    }
+
+    #[test]
+    fn captures_get_the_after_capture_steps_from_the_settings() {
+        let dir = temp_dir("after");
+        let lib = dir.join("lib");
+        let grabbed = || Grabbed { image: image::RgbaImage::from_pixel(80, 60, image::Rgba([200, 0, 0, 255])), origin: (100, 200), cursor: Some((110, 230)), title: "Win".into(), app: "app.exe".into() };
+        let mut ws = Workspace::with_settings(Settings { library_folder: lib.to_string_lossy().to_string(), include_cursor: true, after_library: true, ..Default::default() });
+        let out = ws.finish_capture(grabbed(), "Window", &CaptureArgs::default(), &[]).unwrap();
+        assert!(out[0]["text"].as_str().unwrap().contains("Kept in the library"), "{}", out[0]);
+        let d = ws.doc.as_ref().unwrap();
+        assert!(matches!(d.shapes[..], [Shape::Pointer { pos, .. }] if pos == pos2(10.0, 30.0)), "the pointer where the mouse was");
+        let items = library::scan(&lib);
+        assert_eq!(items.len(), 1);
+        assert_eq!((items[0].meta.title.as_str(), items[0].meta.app.as_str(), items[0].meta.kind.as_str()), ("Win", "app.exe", "Window"));
+        // The arguments win over the settings; a pointer off the picture is left out.
+        let ca = CaptureArgs { cursor: Some(false), library: Some(false), shape: Some(CutShape::Ellipse), ..Default::default() };
+        ws.finish_capture(grabbed(), "Area", &ca, &[]).unwrap();
+        assert!(ws.doc.as_ref().unwrap().shapes.is_empty());
+        assert_eq!(library::scan(&lib).len(), 1, "not added again");
+        assert_eq!(ws.doc.as_ref().unwrap().image.get_pixel(0, 0).0[3], 0, "the corner is cut away");
+        let mut far = grabbed();
+        far.cursor = Some((5000, 5000));
+        let ca = CaptureArgs { library: Some(false), ..Default::default() };
+        ws.finish_capture(far, "Area", &ca, &[]).unwrap();
+        assert!(ws.doc.as_ref().unwrap().shapes.is_empty());
+        // Effects (a preset's) are applied: a border makes it bigger.
+        ws.finish_capture(grabbed(), "Area", &ca, &[effects::Effect::Border]).unwrap();
+        assert!(ws.doc.as_ref().unwrap().image.width() > 80);
+        assert_eq!(ws.name, "Win");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn quick_save_uses_the_folder_pattern_and_counter() {
+        let dir = temp_dir("quick");
+        let s = Settings { save_folder: dir.to_string_lossy().to_string(), name_pattern: "shot_%n".into(), format: crate::settings::ImageFormat::Jpeg, save_counter: 7, ..Default::default() };
+        let mut ws = Workspace::with_settings(s);
+        ws.set(Doc::new(image::RgbaImage::from_pixel(20, 10, image::Rgba([5, 5, 5, 255]))), "x").unwrap();
+        let r = ws.call("quick_save", &json!({})).unwrap();
+        assert!(dir.join("shot_007.jpg").exists(), "{r:?}");
+        assert_eq!(r[1]["type"], "resource_link");
+        ws.call("quick_save", &json!({})).unwrap();
+        assert!(dir.join("shot_008.jpg").exists(), "the counter moved on and was kept");
+        assert_eq!(ws.settings().save_counter, 9);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn blur_area_uses_the_block_size_and_mode_from_the_settings() {
+        let check = image::RgbaImage::from_fn(40, 40, |x, y| image::Rgba([(x * 6) as u8, (y * 6) as u8, 0, 255]));
+        let blurred = |block: u32, mode: crate::settings::BlurMode| {
+            let mut ws = Workspace::with_settings(Settings { blur_block: block, blur_mode: mode, ..Default::default() });
+            ws.set(Doc::new(check.clone()), "c").unwrap();
+            ws.call("blur_area", &json!({"x": 0, "y": 0, "width": 40, "height": 40})).unwrap();
+            ws.doc.unwrap().image
+        };
+        let big = blurred(40, crate::settings::BlurMode::Pixelate);
+        assert!(big.pixels().all(|p| p == big.get_pixel(0, 0)), "one 40-pixel block");
+        let small = blurred(4, crate::settings::BlurMode::Pixelate);
+        assert_ne!(small.get_pixel(0, 0), small.get_pixel(4, 0), "4-pixel blocks: {:?} {:?}", small.get_pixel(0, 0), small.get_pixel(4, 0));
+        let solid = blurred(12, crate::settings::BlurMode::Solid);
+        assert_eq!(solid.get_pixel(20, 20).0, [28, 28, 32, 255], "the setting's mode: a solid box");
+    }
+
+    #[test]
+    fn smart_redact_checks_its_kinds() {
+        let mut ws = ws_with(50, 50);
+        assert!(err_of(ws.call("smart_redact", &json!({"kinds": ["emails", "names"]}))).contains("unknown kind names"));
+        assert!(err_of(ws.call("smart_redact", &json!({"kinds": "emails"}))).contains("list"));
+        let list = tool_list();
+        let t = list["tools"].as_array().unwrap().iter().find(|t| t["name"] == "smart_redact").unwrap().clone();
+        assert!(t["description"].as_str().unwrap().contains("Windows only"));
+        assert_eq!(t["inputSchema"]["properties"]["kinds"]["items"]["enum"], json!(ocr::RedactKinds::NAMES));
+    }
+
+    #[test]
+    fn text_recognition_tools_say_they_are_windows_only() {
+        let list = tool_list();
+        for name in ["read_text", "read_screen_text", "smart_redact", "simplify"] {
+            let t = list["tools"].as_array().unwrap().iter().find(|t| t["name"] == name).unwrap().clone();
+            assert!(t["description"].as_str().unwrap().contains("Windows only"), "{name}");
+        }
+        for word in ["HEVC", "WMV", "record_gif", "Studio", "make_guide", "library", "Windows only"] {
+            assert!(INSTRUCTIONS.contains(word), "the instructions mention {word}");
+        }
     }
 
     #[test]
@@ -1489,6 +2728,113 @@ mod tests {
         assert!(list.contains("text \"Hi\" at 50,60"), "{list}");
         assert!(list.contains("callout \"Hi\""), "{list}");
         assert!(list.contains("step 1 at 50,60"), "{list}");
+    }
+
+    #[test]
+    fn marks_take_their_new_options() {
+        let dir = temp_dir("mark-options");
+        let mut ws = ws_with(400, 300);
+        let mut add = |a: Value| -> Shape {
+            ws.call("add_mark", &a).unwrap_or_else(|e| panic!("{a}: {e}"));
+            ws.doc.as_ref().unwrap().shapes.last().unwrap().clone()
+        };
+        assert!(matches!(add(json!({"kind": "arrow", "x": 1, "y": 1, "x2": 50, "y2": 50, "heads": 2})), Shape::Arrow { heads: 2, .. }));
+        assert!(matches!(add(json!({"kind": "arrow", "x": 1, "y": 1, "x2": 50, "y2": 50})), Shape::Arrow { heads: 1, .. }));
+        assert!(matches!(add(json!({"kind": "box", "x": 1, "y": 1, "x2": 50, "y2": 50, "radius": 8})), Shape::Rect { radius: 8.0, .. }));
+        match add(json!({"kind": "pen", "points": [[1, 2], [10, 20], [30, 5]], "width": 3})) {
+            Shape::Pen { points, width, .. } => assert_eq!((points.len(), width), (3, 3.0)),
+            other => panic!("{other:?}"),
+        }
+        match add(json!({"kind": "text", "x": 5, "y": 5, "text": "Hi", "font": "Arial", "bold": true, "italic": true, "align": "center", "outline": false})) {
+            Shape::Text { font, bold, italic, align, outline, .. } => assert_eq!((font.as_str(), bold, italic, align, outline), ("Arial", true, true, 1, false)),
+            other => panic!("{other:?}"),
+        }
+        match add(json!({"kind": "callout", "x": 50, "y": 50, "text": "Look", "callout_shape": "oval", "outline": true, "align": "right"})) {
+            Shape::Callout { shape, outline, align, .. } => assert_eq!((shape, outline, align), (crate::settings::CalloutShape::Oval, true, 2)),
+            other => panic!("{other:?}"),
+        }
+        assert!(matches!(add(json!({"kind": "step", "x": 9, "y": 9, "style": "roman", "number": 4})), Shape::Step { n: 4, style: crate::settings::StepStyle::Roman, .. }));
+        assert!(matches!(add(json!({"kind": "magnify", "x": 9, "y": 9, "zoom": 3})), Shape::Magnify { zoom: 3.0, .. }));
+        assert!(matches!(add(json!({"kind": "magnify", "x": 9, "y": 9, "zoom": 99})), Shape::Magnify { zoom: 8.0, .. }), "zoom is kept to 1-8");
+        // A picture from a file, at its own size or stretched to (x2, y2).
+        let pic = dir.join("p.png");
+        image::RgbaImage::from_pixel(30, 20, image::Rgba([0, 200, 0, 255])).save(&pic).unwrap();
+        match add(json!({"kind": "image", "x": 100, "y": 50, "path": pic})) {
+            Shape::Image { rect, image } => {
+                assert_eq!((rect.min.x, rect.min.y, rect.width(), rect.height()), (100.0, 50.0, 30.0, 20.0));
+                assert_eq!(image.0.dimensions(), (30, 20));
+            }
+            other => panic!("{other:?}"),
+        }
+        assert!(matches!(add(json!({"kind": "image", "x": 0, "y": 0, "x2": 60, "y2": 10, "path": pic})), Shape::Image { rect, .. } if rect.width() == 60.0));
+        let flat = render::compose(ws.doc.as_ref().unwrap());
+        assert_eq!(flat.get_pixel(115, 60).0, [0, 200, 0, 255], "the picture is drawn");
+        // And the refusals.
+        for (a, want) in [
+            (json!({"kind": "pen", "points": [[1, 2]]}), "two or more"),
+            (json!({"kind": "pen"}), "pen needs points"),
+            (json!({"kind": "pen", "points": "no"}), "pairs"),
+            (json!({"kind": "arrow", "x": 1, "y": 1, "x2": 5, "y2": 5, "heads": 3}), "heads is 0, 1 or 2"),
+            (json!({"kind": "text", "x": 1, "y": 1, "align": "justify"}), "align is"),
+            (json!({"kind": "callout", "x": 1, "y": 1, "callout_shape": "star"}), "callout_shape is"),
+            (json!({"kind": "step", "x": 1, "y": 1, "style": "greek"}), "style is"),
+            (json!({"kind": "image", "x": 1, "y": 1}), "needs a path"),
+            (json!({"kind": "image", "x": 1, "y": 1, "path": dir.join("none.png")}), "none.png"),
+        ] {
+            let e = err_of(ws.call("add_mark", &a));
+            assert!(e.contains(want), "{a}: {e}");
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn marks_are_moved_scaled_and_restyled() {
+        let mut ws = ws_with(400, 300);
+        ws.call("add_mark", &json!({"kind": "box", "x": 10, "y": 10, "x2": 50, "y2": 30, "width": 2})).unwrap();
+        ws.call("add_mark", &json!({"kind": "text", "x": 100, "y": 100, "text": "old"})).unwrap();
+        ws.call("add_mark", &json!({"kind": "step", "x": 200, "y": 200})).unwrap();
+        let shape = |ws: &Workspace, i: usize| ws.doc.as_ref().unwrap().shapes[i].clone();
+        let t = text_of(ws.call("update_mark", &json!({"index": 0, "dx": 5, "dy": -5, "color": "blue", "fill": true, "radius": 4})));
+        assert!(t.starts_with("Mark 0 (moved, colour, fill, corners)"), "{t}");
+        match shape(&ws, 0) {
+            Shape::Rect { rect, color, fill, radius, .. } => {
+                assert_eq!((rect.min.x, rect.min.y), (15.0, 5.0));
+                assert_eq!((color, fill, radius), (Color32::from_rgb(0, 144, 255), true, 4.0));
+            }
+            other => panic!("{other:?}"),
+        }
+        // Moving to x, y puts the top-left corner of its box there.
+        ws.call("update_mark", &json!({"index": 0, "x": 0, "y": 0})).unwrap();
+        let b = shape(&ws, 0).bounds();
+        assert_eq!((b.min.x, b.min.y), (0.0, 0.0));
+        ws.call("update_mark", &json!({"index": 0, "scale": 2})).unwrap();
+        assert!((shape(&ws, 0).bounds().width() - b.width() * 2.0).abs() < 3.0);
+        ws.call("update_mark", &json!({"index": 1, "text": "new", "bold": true, "align": "right", "width": 4})).unwrap();
+        assert!(matches!(shape(&ws, 1), Shape::Text { text, bold: true, align: 2, size, .. } if text == "new" && size == doc::text_size(4.0)));
+        ws.call("update_mark", &json!({"index": 2, "number": 5, "style": "upper"})).unwrap();
+        assert!(text_of(ws.call("list_marks", &json!({}))).contains("step E at"));
+        // Undo puts it back as it was.
+        ws.call("undo", &json!({})).unwrap();
+        assert!(matches!(shape(&ws, 2), Shape::Step { n: 1, .. }));
+        for (a, want) in [
+            (json!({"index": 9, "dx": 1}), "no mark with that number"),
+            (json!({"index": -1, "dx": 1}), "0 or more"),
+            (json!({"index": 0}), "nothing to change"),
+            (json!({"index": 0, "text": "x"}), "a box mark has no text"),
+            (json!({"index": 1, "heads": 2}), "a text mark has no arrow heads"),
+            (json!({"index": 0, "bold": true}), "a box mark has no text style"),
+            (json!({"index": 0, "scale": 100}), "scale is"),
+            (json!({"index": 2, "zoom": 2}), "a step mark has no zoom"),
+        ] {
+            let before = ws.doc.as_ref().unwrap().shapes.len();
+            let e = err_of(ws.call("update_mark", &a));
+            assert!(e.contains(want), "{a}: {e}");
+            assert_eq!(ws.doc.as_ref().unwrap().shapes.len(), before);
+        }
+        // A refused change changes nothing, not even part of it.
+        let before = format!("{:?}", shape(&ws, 0));
+        assert!(ws.call("update_mark", &json!({"index": 0, "dx": 50, "text": "x"})).is_err());
+        assert_eq!(format!("{:?}", shape(&ws, 0)), before);
     }
 
     #[test]

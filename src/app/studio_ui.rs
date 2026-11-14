@@ -169,9 +169,15 @@ fn add_source_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<Item> {
     let (cw, ch) = (app.settings.studio.width as f32, app.settings.studio.height as f32);
     let full = |name: String, kind: SourceKind| Item { name, kind, x: 0.0, y: 0.0, w: cw, h: ch, visible: true };
     let mut out = None;
+    // The lists are made on a worker and kept a few seconds, not made again every frame
+    // while the menu is open.
     ui.menu_button(format!("{}  {}", ph::MONITOR, t("Screen")), |ui| {
-        let mons = capture::monitors();
-        for (i, m) in mons.iter().enumerate() {
+        let ctx = ui.ctx().clone();
+        app.mon_cache.get(Some(&ctx), capture::monitors);
+        if !app.mon_cache.loaded() {
+            ui.spinner();
+        }
+        for (i, m) in app.mon_cache.items().iter().enumerate() {
             if ui.button(format!("{}: {}  {} x {}", i + 1, m.name, m.width, m.height)).clicked() {
                 out = Some(full(tf("Screen {n}", &[("n", &(i + 1).to_string())]), SourceKind::Display { index: i }));
                 ui.close();
@@ -179,9 +185,13 @@ fn add_source_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<Item> {
         }
     });
     ui.menu_button(format!("{}  {}", ph::APP_WINDOW, t("Window")), |ui| {
-        let wins = capture::list_windows();
+        let ctx = ui.ctx().clone();
+        app.win_cache.get(Some(&ctx), capture::list_windows);
+        if !app.win_cache.loaded() {
+            ui.spinner();
+        }
         egui::ScrollArea::vertical().max_height(360.0).show(ui, |ui| {
-            for w in wins {
+            for w in app.win_cache.items() {
                 if ui.button(&w.label).clicked() {
                     let aspect = w.width as f32 / w.height.max(1) as f32;
                     let (iw, ih) = if aspect > cw / ch { (cw, cw / aspect) } else { (ch * aspect, ch) };
@@ -446,6 +456,8 @@ impl SnagApp {
             let (cw, ch) = (self.settings.studio.width as f32, self.settings.studio.height as f32);
             let monitors = self.x.studio.as_ref().map(|s| s.monitors.clone()).unwrap_or_default();
             let mut refresh_windows = false;
+            let mut picker_open = false;
+            let windows_loaded = self.win_cache.loaded();
             let windows = self.x.studio.as_ref().map(|s| s.windows.clone()).unwrap_or_default();
             match sel.and_then(|i| self.settings.studio.scenes.get_mut(c).and_then(|s| s.items.get_mut(i))) {
                 None => {
@@ -500,6 +512,10 @@ impl SnagApp {
                                 refresh_windows = true;
                             }
                             egui::Popup::menu(&r).show(|ui| {
+                                picker_open = true;
+                                if !windows_loaded {
+                                    ui.spinner();
+                                }
                                 egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
                                     for w in &windows {
                                         if ui.button(&w.label).clicked() {
@@ -551,8 +567,12 @@ impl SnagApp {
                     }
                 }
             }
-            if refresh_windows && let Some(st) = &mut self.x.studio {
-                st.windows = capture::list_windows();
+            if refresh_windows {
+                self.win_cache.expire();
+            }
+            // While the window picker is open its list is refreshed on a worker.
+            if (refresh_windows || picker_open) && let Some(st) = &mut self.x.studio {
+                st.windows = self.win_cache.get(Some(ui.ctx()), capture::list_windows).to_vec();
             }
             ui.add_space(10.0);
             ui.separator();

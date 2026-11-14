@@ -102,6 +102,54 @@ impl VideoOpts {
     pub fn screen(rect: (i32, i32, u32, u32), fps: u32, format: VideoFormat, path: PathBuf) -> VideoOpts {
         VideoOpts { rect, fps, format, quality: 2, hardware: true, cursor: true, max_s: 0, path, audio: crate::audio::AudioSource::None, mic: String::new(), frames: None }
     }
+
+    /// The options a screen recording of `rect` gets from the settings (what the window uses):
+    /// format, frame rate, quality, encoder, pointer, time limit, sound, and a new file in the
+    /// recordings folder. A GIF or a format this system can't make becomes MP4.
+    pub fn from_settings(s: &crate::settings::Settings, rect: (i32, i32, u32, u32)) -> VideoOpts {
+        let format = s.rec_format.video_or_mp4();
+        VideoOpts {
+            rect,
+            fps: s.video_fps.clamp(1, 120),
+            format,
+            quality: s.video_quality.clamp(1, 4),
+            hardware: s.video_hardware,
+            cursor: s.gif_cursor,
+            max_s: s.video_max_s,
+            path: recording_path(&s.video_folder, "Recording", format.ext()),
+            audio: s.audio_source,
+            mic: s.audio_mic.clone(),
+            frames: None,
+        }
+    }
+}
+
+impl VideoFormat {
+    /// This format when it's a video this system can make, otherwise MP4 (what Studio does
+    /// with a GIF setting).
+    pub fn video_or_mp4(self) -> VideoFormat {
+        if self != VideoFormat::Gif && self.available() { self } else { VideoFormat::Mp4 }
+    }
+
+    /// The video formats (not GIF) this system can make, by their short names.
+    pub fn video_names() -> Vec<&'static str> {
+        VideoFormat::ALL
+            .into_iter()
+            .filter(|f| *f != VideoFormat::Gif && f.available())
+            .map(|f| match f {
+                VideoFormat::Mp4 => "mp4",
+                VideoFormat::Hevc => "hevc",
+                VideoFormat::Wmv => "wmv",
+                VideoFormat::Gif => "gif",
+            })
+            .collect()
+    }
+}
+
+/// A new file in `folder` named `<prefix>_<date>_<time>.<ext>` (with a number if it exists).
+pub fn recording_path(folder: &str, prefix: &str, ext: &str) -> PathBuf {
+    let name = format!("{prefix}_{}", chrono::Local::now().format("%Y-%m-%d_%H-%M-%S"));
+    crate::settings::unique_path(std::path::Path::new(folder), &name, ext)
 }
 
 /// How a recording went.
@@ -1703,6 +1751,63 @@ mod tests {
         assert_eq!((o.fps, o.format, o.quality, o.max_s), (60, VideoFormat::Hevc, 2, 0));
         assert!(o.hardware && o.cursor && o.frames.is_none() && o.mic.is_empty());
         assert_eq!(o.audio, crate::audio::AudioSource::None);
+    }
+
+    #[test]
+    fn options_from_the_settings() {
+        let dir = std::env::temp_dir().join(format!("snagster-video-opts-{}", std::process::id()));
+        let mut s = crate::settings::Settings { video_folder: dir.to_string_lossy().to_string(), ..Default::default() };
+        s.video_fps = 500;
+        s.video_quality = 9;
+        s.video_hardware = false;
+        s.gif_cursor = false;
+        s.video_max_s = 12;
+        s.audio_source = crate::audio::AudioSource::Both;
+        s.audio_mic = "mic-1".into();
+        let o = VideoOpts::from_settings(&s, (5, 6, 640, 480));
+        assert_eq!(o.rect, (5, 6, 640, 480));
+        assert_eq!((o.fps, o.quality, o.max_s), (120, 4, 12), "kept in range");
+        assert!(!o.hardware && !o.cursor && o.frames.is_none());
+        assert_eq!((o.audio, o.mic.as_str()), (crate::audio::AudioSource::Both, "mic-1"));
+        assert_eq!(o.path.parent(), Some(dir.as_path()));
+        let name = o.path.file_name().unwrap().to_string_lossy().to_string();
+        assert!(name.starts_with("Recording_") && name.ends_with(".mp4"), "{name}");
+        // A GIF setting records MP4 here.
+        s.rec_format = VideoFormat::Gif;
+        assert_eq!(VideoOpts::from_settings(&s, (0, 0, 64, 64)).format, VideoFormat::Mp4);
+        s.rec_format = VideoFormat::Wmv;
+        let o = VideoOpts::from_settings(&s, (0, 0, 64, 64));
+        assert_eq!(o.format, if cfg!(windows) { VideoFormat::Wmv } else { VideoFormat::Mp4 });
+        assert_eq!(o.path.extension().unwrap(), o.format.ext());
+    }
+
+    #[test]
+    fn only_formats_this_system_makes_are_offered() {
+        let names = VideoFormat::video_names();
+        assert_eq!(names[0], "mp4");
+        assert!(!names.contains(&"gif"));
+        assert_eq!(names.len(), if cfg!(windows) { 3 } else { 1 });
+        for n in names {
+            let f = VideoFormat::parse(n).unwrap();
+            assert!(f.available());
+            assert_eq!(f.video_or_mp4(), f);
+        }
+        assert_eq!(VideoFormat::Gif.video_or_mp4(), VideoFormat::Mp4);
+    }
+
+    #[test]
+    fn recording_paths_are_new_files_in_the_folder() {
+        let dir = std::env::temp_dir().join(format!("snagster-video-path-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let a = recording_path(&dir.to_string_lossy(), "Studio", "wmv");
+        assert!(a.file_name().unwrap().to_string_lossy().starts_with("Studio_"));
+        assert_eq!(a.extension().unwrap(), "wmv");
+        std::fs::write(&a, b"x").unwrap();
+        let b = recording_path(&dir.to_string_lossy(), "Studio", "wmv");
+        // Same second: a number is added; a later second: a new name. Either way not the same file.
+        assert_ne!(a, b);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

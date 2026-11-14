@@ -809,6 +809,24 @@ impl Settings {
         if cleaned.trim().is_empty() { "Snagster".into() } else { cleaned }
     }
 
+    /// The effect settings (border, shadow, watermark...), with `info_text` for the capture-info
+    /// effect.
+    pub fn effect_options(&self, info_text: String) -> crate::effects::EffectOptions {
+        crate::effects::EffectOptions {
+            resize_percent: self.resize_percent,
+            border_width: self.border_width,
+            border_color: self.border_color,
+            shadow_size: self.shadow_size,
+            rounded_radius: self.rounded_radius,
+            watermark_text: self.watermark_text.clone(),
+            tilt_percent: self.tilt_percent,
+            brightness: self.brightness,
+            contrast: self.contrast,
+            saturation: self.saturation,
+            info_text,
+        }
+    }
+
     /// A path in the save folder that doesn't exist yet.
     pub fn next_save_path(&mut self, title: &str) -> PathBuf {
         let folder = PathBuf::from(&self.save_folder);
@@ -1317,6 +1335,15 @@ mod tests {
         std::fs::write(dir.join("cap_002.jpg"), b"x").unwrap();
         assert_eq!(s.next_save_path("t"), dir.join("cap_002 (2).jpg"));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn effect_options_carry_the_effect_settings() {
+        let s = Settings { border_width: 3, border_color: [1, 2, 3], shadow_size: 7, rounded_radius: 9, resize_percent: 25, watermark_text: "W".into(), tilt_percent: 4, brightness: -5, contrast: 6, saturation: -7, ..Default::default() };
+        let o = s.effect_options("info".into());
+        assert_eq!((o.border_width, o.border_color, o.shadow_size, o.rounded_radius, o.resize_percent), (3, [1, 2, 3], 7, 9, 25));
+        assert_eq!((o.watermark_text.as_str(), o.tilt_percent, o.brightness, o.contrast, o.saturation), ("W", 4, -5, 6, -7));
+        assert_eq!(o.info_text, "info");
     }
 
     #[test]

@@ -1,7 +1,10 @@
 // Checks a built Snagster's MCP server without a screen (runs on Windows, Linux and macOS CI):
-// stdio: initialize, tools/list, prompts, resources, and tools that need no display
-// (languages, app info, open a picture, add marks, crop, save, undo/redo);
-// HTTP: the same handshake over Streamable HTTP and a refused foreign host.
+// stdio: initialize, tools/list (new tools, output schemas, hints), prompts, resources and
+// templates, completions, and tools that need no display (languages, app info, open a picture,
+// add/update marks, crop, save with a resource link, undo/redo, a guide with progress
+// notifications, a cancelled capture delay);
+// HTTP: the same handshake over Streamable HTTP, progress on an event stream, and a refused
+// foreign host. It changes no settings and nothing in the library.
 // Usage: node tests/mcp-smoke.js path/to/snagster
 const { spawn } = require('child_process');
 const fs = require('fs');
@@ -27,6 +30,7 @@ function stdio() {
     const child = spawn(exe, ['--mcp'], { stdio: ['pipe', 'pipe', 'inherit'] });
     let buf = '';
     const waiting = new Map();
+    const progress = [];
     child.stdout.on('data', (d) => {
       buf += d.toString();
       let i;
@@ -35,6 +39,10 @@ function stdio() {
         buf = buf.slice(i + 1);
         if (!line) continue;
         const msg = JSON.parse(line);
+        if (msg.method === 'notifications/progress') {
+          progress.push(msg);
+          continue;
+        }
         const w = waiting.get(msg.id);
         if (w) {
           waiting.delete(msg.id);
@@ -53,8 +61,10 @@ function stdio() {
         });
         child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: my, method, params }) + '\n');
       });
-    const tool = async (name, args) => {
-      const m = await call('tools/call', { name, arguments: args || {} });
+    const tool = async (name, args, meta) => {
+      const params = { name, arguments: args || {} };
+      if (meta) params._meta = meta;
+      const m = await call('tools/call', params);
       return m.result || { isError: true, content: [{ text: JSON.stringify(m.error) }] };
     };
     (async () => {
@@ -66,22 +76,48 @@ function stdio() {
         const tools = (list.result && list.result.tools) || [];
         check(tools.length >= 45, `tools/list (${tools.length} tools)`);
         check(tools.every((t) => t.annotations && typeof t.annotations.readOnlyHint === 'boolean' && t.inputSchema), 'every tool has a schema and hints');
+        const names = new Set(tools.map((t) => t.name));
+        const added = ['update_mark', 'run_preset', 'simplify', 'quick_save', 'capture_last_area', 'studio_add_scene', 'studio_remove_scene', 'studio_set_current', 'studio_update_source', 'library_delete', 'library_tag'];
+        const missing = added.filter((n) => !names.has(n));
+        check(missing.length === 0, 'tools/list has the newer tools', missing.join(', '));
+        const byName = (n) => tools.find((t) => t.name === n) || {};
+        check(byName('list_languages').outputSchema && byName('list_languages').outputSchema.type === 'object', 'list tools have an output schema');
+        check(byName('save').annotations.destructiveHint === true && byName('set_setting').annotations.destructiveHint === true, 'save and set_setting are marked destructive');
+        const rv = byName('record_video').inputSchema.properties;
+        check(rv.audio && rv.microphone && rv.format.enum[0] === 'mp4', 'record_video takes audio and microphone');
+        check(byName('read_text').description.includes('Windows only'), 'text recognition says Windows only');
         const prompts = await call('prompts/list', {});
-        check(prompts.result && prompts.result.prompts.length >= 4, 'prompts/list');
+        check(prompts.result && prompts.result.prompts.length >= 5, 'prompts/list');
         const res = await call('resources/list', {});
         check(res.result && res.result.resources.length >= 2, 'resources/list');
+        const templates = await call('resources/templates/list', {});
+        check(templates.result && templates.result.resourceTemplates.length === 3, 'resources/templates/list');
+        const fps = await call('resources/read', { uri: 'snagster://settings/video_fps' });
+        check(fps.result && /^\d+$/.test(fps.result.contents[0].text), 'resources/read a setting by template');
+        const codes = await call('completion/complete', { ref: { type: 'ref/prompt', name: 'change_language' }, argument: { name: 'code', value: 'pt' } });
+        check(codes.result && codes.result.completion.values.includes('pt-BR'), 'completion of language codes');
         const ping = await call('ping', {});
         check(ping.result !== undefined, 'ping');
         const langs = await tool('list_languages');
         check(!langs.isError && JSON.parse(langs.content[0].text).length === 86, 'list_languages has 86');
+        check(langs.structuredContent && langs.structuredContent.items.length === 86, 'list_languages structured as {items}');
         const info = await tool('app_info');
-        check(!info.isError && info.structuredContent && info.structuredContent.version, 'app_info');
+        check(!info.isError && info.structuredContent && info.structuredContent.version && info.structuredContent.features, 'app_info');
         const open = await tool('open_image', { path: picture });
         check(!open.isError && open.content.some((c) => c.type === 'image'), 'open_image', open.content && open.content[0].text);
-        const mark = await tool('add_mark', { kind: 'arrow', x: 10, y: 10, x2: 120, y2: 120, color: 'red' });
+        const mark = await tool('add_mark', { kind: 'arrow', x: 10, y: 10, x2: 120, y2: 120, color: 'red', heads: 2 });
         check(!mark.isError, 'add_mark');
-        const text = await tool('add_mark', { kind: 'text', x: 20, y: 200, text: 'Hello' });
+        const text = await tool('add_mark', { kind: 'text', x: 20, y: 200, text: 'Hello', bold: true, align: 'center' });
         check(!text.isError, 'add_mark text');
+        const pen = await tool('add_mark', { kind: 'pen', points: [[5, 5], [40, 60], [80, 20]] });
+        check(!pen.isError, 'add_mark pen', pen.content && pen.content[0].text);
+        const upd = await tool('update_mark', { index: 1, dx: 10, text: 'Hello again', color: 'blue' });
+        check(!upd.isError && upd.content[0].text.startsWith('Mark 1'), 'update_mark', upd.content && upd.content[0].text);
+        const badUpd = await tool('update_mark', { index: 0, text: 'x' });
+        check(badUpd.isError === true, 'update_mark refuses text on an arrow');
+        const marks = await tool('list_marks');
+        const items = marks.structuredContent && marks.structuredContent.items;
+        check(items && items.length === 3 && items[1].kind === 'text' && items[2].kind === 'pen', 'list_marks structured');
         const crop = await tool('crop', { x: 0, y: 0, width: 200, height: 220 });
         check(!crop.isError, 'crop');
         const undo = await tool('undo');
@@ -92,9 +128,24 @@ function stdio() {
         const out = path.join(tmp, 'smoke.png');
         const save = await tool('save', { path: out });
         check(!save.isError && fs.existsSync(out) && fs.statSync(out).size > 1000, 'save PNG', save.content && save.content[0].text);
+        const saveLink = save.content && save.content.find((c) => c.type === 'resource_link');
+        check(saveLink && saveLink.uri.startsWith('file:///') && saveLink.mimeType === 'image/png', 'save gives a resource link');
         const pdf = path.join(tmp, 'guide.pdf');
-        const guide = await tool('make_guide', { title: 'Smoke', steps: [{ path: out, caption: 'One' }], path: pdf });
+        const before = progress.length;
+        const guide = await tool('make_guide', { title: 'Smoke', steps: [{ path: out, caption: 'One' }, { path: out }], path: pdf }, { progressToken: 'smoke-guide' });
         check(!guide.isError && fs.existsSync(pdf), 'make_guide PDF', guide.content && guide.content[0].text);
+        const notes = progress.slice(before).filter((p) => p.params.progressToken === 'smoke-guide');
+        check(notes.length === 3 && notes.every((n, i) => i === 0 || n.params.progress > notes[i - 1].params.progress) && notes[2].params.total === 3, 'make_guide sends progress notifications', JSON.stringify(notes));
+        // A capture waiting out its delay stops when its own request is cancelled.
+        const waitId = id + 1000;
+        const waited = new Promise((res) => waiting.set(waitId, res));
+        child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: waitId, method: 'tools/call', params: { name: 'capture_screen', arguments: { delay_s: 30, library: false } } }) + '\n');
+        await new Promise((r) => setTimeout(r, 300));
+        child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/cancelled', params: { requestId: waitId + 1 } }) + '\n');
+        child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/cancelled', params: { requestId: waitId } }) + '\n');
+        const t0 = Date.now();
+        const cancelled = await Promise.race([waited, new Promise((r) => setTimeout(() => r(null), 20000))]);
+        check(cancelled && cancelled.result && cancelled.result.isError && cancelled.result.content[0].text === 'cancelled' && Date.now() - t0 < 15000, 'a cancelled capture delay stops', JSON.stringify(cancelled));
         const bad = await tool('no_such_tool');
         check(bad.isError === true, 'unknown tool is an error, not a crash');
         const read = await call('resources/read', { uri: 'snagster://picture/current' });
@@ -145,6 +196,15 @@ async function httpTest() {
     check(list.status === 200 && JSON.parse(list.body).result.tools.length >= 45, 'HTTP tools/list');
     const note = await post(port, { jsonrpc: '2.0', method: 'notifications/initialized' }, { 'Mcp-Session-Id': sid });
     check(note.status === 202, 'HTTP notification is accepted');
+    const html = path.join(tmp, 'http-guide.html');
+    const guide = await post(port, { jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'make_guide', arguments: { path: html, steps: [{ path: picture }, { path: picture }] }, _meta: { progressToken: 'http-tok' } } }, { 'Mcp-Session-Id': sid });
+    const events = guide.body.split('\n').filter((l) => l.startsWith('data: ')).map((l) => JSON.parse(l.slice(6)));
+    const last = events[events.length - 1] || {};
+    check(
+      guide.status === 200 && String(guide.headers['content-type']).startsWith('text/event-stream') && events.length >= 3 && last.id === 4 && !last.result.isError && events.slice(0, -1).every((e) => e.method === 'notifications/progress' && e.params.progressToken === 'http-tok'),
+      'HTTP progress arrives on an event stream before the answer',
+      guide.body.slice(0, 300)
+    );
     const evil = await post(port, { jsonrpc: '2.0', id: 3, method: 'ping' }, { Host: 'evil.example' });
     check(evil.status === 403, 'HTTP refuses a foreign host name');
   } catch (e) {

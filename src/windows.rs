@@ -275,6 +275,7 @@ impl SnagApp {
     }
 
     fn saving_tab(&mut self, ui: &mut egui::Ui) {
+        let library_before = self.settings.library_folder.clone();
         let s = &mut self.settings;
         ui.label(crate::i18n::t("Save folder"));
         ui.horizontal(|ui| {
@@ -325,7 +326,10 @@ impl SnagApp {
                 }
             }
         });
-        self.lib_loaded = false;
+        // Read the library again only when its folder changed (not every frame this tab shows).
+        if self.settings.library_folder != library_before {
+            self.lib_loaded = false;
+        }
     }
 
     fn editor_tab(&mut self, ui: &mut egui::Ui) {
@@ -761,9 +765,53 @@ impl SnagApp {
         if !self.library_open {
             return;
         }
-        if !self.lib_loaded {
-            self.lib_items = library::scan(std::path::Path::new(&self.settings.library_folder));
+        // Reading the library folder (maybe a cloud folder with thousands of files) is done on
+        // a worker; the last list stays shown meanwhile.
+        if !self.lib_loaded && self.lib_scan_rx.is_none() {
             self.lib_loaded = true;
+            self.lib_added.clear();
+            let folder = self.settings.library_folder.clone();
+            let (tx, rx) = std::sync::mpsc::channel();
+            self.lib_scan_rx = Some((folder.clone(), rx));
+            let ctx2 = ctx.clone();
+            std::thread::spawn(move || {
+                let _ = tx.send(library::scan(std::path::Path::new(&folder)));
+                ctx2.request_repaint();
+            });
+        }
+        let mut scanned = None;
+        if let Some((folder, rx)) = &self.lib_scan_rx {
+            match rx.try_recv() {
+                Ok(items) => scanned = Some((folder.clone(), Some(items))),
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => scanned = Some((folder.clone(), None)),
+                Err(std::sync::mpsc::TryRecvError::Empty) => {}
+            }
+        }
+        if let Some((folder, items)) = scanned {
+            self.lib_scan_rx = None;
+            let added = std::mem::take(&mut self.lib_added);
+            match items {
+                Some(items) if folder == self.settings.library_folder => {
+                    self.lib_items = library::merge_scan(items, added);
+                    self.start_thumbnails(ctx);
+                }
+                // The folder changed while it was read: read the new one.
+                _ => self.lib_loaded = false,
+            }
+        }
+        if let Some(rx) = &self.lib_thumb_rx {
+            for _ in 0..24 {
+                let Ok((p, img)) = rx.try_recv() else { break };
+                let ci = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
+                self.lib_thumbs.insert(p, ctx.load_texture("lib-thumb", ci, TextureOptions::LINEAR));
+            }
+        }
+        self.library_ui(ctx);
+    }
+
+    /// Make the missing thumbnails on a worker; they're turned into textures a few a frame.
+    fn start_thumbnails(&mut self, ctx: &egui::Context) {
+        {
             let paths: Vec<PathBuf> =
                 self.lib_items.iter().map(|i| i.path.clone()).filter(|p| !self.lib_thumbs.contains_key(p)).collect();
             let (tx, rx) = std::sync::mpsc::channel();
@@ -780,13 +828,9 @@ impl SnagApp {
                 }
             });
         }
-        if let Some(rx) = &self.lib_thumb_rx {
-            for _ in 0..24 {
-                let Ok((p, img)) = rx.try_recv() else { break };
-                let ci = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
-                self.lib_thumbs.insert(p, ctx.load_texture("lib-thumb", ci, TextureOptions::LINEAR));
-            }
-        }
+    }
+
+    fn library_ui(&mut self, ctx: &egui::Context) {
         let mut open = true;
         let mut open_item = None;
         let mut delete_item = None;
@@ -822,7 +866,12 @@ impl SnagApp {
                     self.open_folder(&f);
                 }
             });
-            ui.label(RichText::new(format!("{}  ({} captures)", self.settings.library_folder, self.lib_items.len())).color(TEXT_DIM).size(12.0));
+            ui.horizontal(|ui| {
+                ui.label(RichText::new(format!("{}  ({} captures)", self.settings.library_folder, self.lib_items.len())).color(TEXT_DIM).size(12.0));
+                if self.lib_scan_rx.is_some() {
+                    ui.spinner();
+                }
+            });
             ui.separator();
             let mut order: Vec<usize> = (0..self.lib_items.len()).filter(|i| self.lib_items[*i].matches(&self.lib_query)).collect();
             match self.lib_sort {
@@ -987,6 +1036,13 @@ impl SnagApp {
                 return;
             };
             let n = ed.frames.len();
+            if ed.loading.is_some() {
+                // The frames are still being read: show what's here, and that more come.
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.label(RichText::new(format!("{n}")).color(TEXT_DIM));
+                });
+            }
             if ed.playing && !ed.frames.is_empty() {
                 let ms = ed.frames[ed.index].1.max(20) as u128;
                 if ed.shown_at.elapsed().as_millis() >= ms {
@@ -1049,61 +1105,79 @@ impl SnagApp {
             self.open_gif(ctx, p);
         }
         let Some(path) = self.gif_editor.as_ref().map(|e| e.path.clone()) else { return };
+        // Reading a whole GIF at full size and writing one take seconds: they run on the job
+        // queue and report in the status line.
         if let Some(i) = grab {
-            match export::gif_frames(&path, 0) {
-                Ok(frames) => {
-                    if let Some((img, _)) = frames.into_iter().nth(i) {
-                        let name = self.next_name("Frame");
-                        self.add_entry(name, Doc::new(img));
-                        self.status = format!("Frame {} is now a picture you can mark up.", i + 1);
+            let path = path.clone();
+            self.jobs.queue(move || {
+                let r = export::gif_frames(&path, 0);
+                Box::new(move |app: &mut SnagApp, _: &egui::Context| match r {
+                    Ok(frames) => {
+                        if let Some((img, _)) = frames.into_iter().nth(i) {
+                            let name = app.next_name("Frame");
+                            app.add_entry(name, Doc::new(img));
+                            app.status = format!("Frame {} is now a picture you can mark up.", i + 1);
+                        }
                     }
-                }
-                Err(e) => self.status = format!("Couldn't read the frame: {e}"),
-            }
+                    Err(e) => app.status = format!("Couldn't read the frame: {e}"),
+                })
+            });
         }
         if save_trim {
             let (a, b) = self.gif_editor.as_ref().map(|e| e.trim).unwrap_or((0, 0));
             if let Some(out) = rfd::FileDialog::new().add_filter("GIF", &["gif"]).set_file_name("trimmed.gif").save_file() {
-                let r = export::gif_frames(&path, 0).and_then(|f| {
-                    let kept: Vec<_> = f.into_iter().skip(a).take(b - a + 1).collect();
-                    export::write_gif(&out, &kept)
+                let path = path.clone();
+                self.jobs.queue(move || {
+                    let r = export::gif_frames(&path, 0).and_then(|f| {
+                        let kept: Vec<_> = f.into_iter().skip(a).take(b - a + 1).collect();
+                        export::write_gif(&out, &kept)
+                    });
+                    Box::new(move |app: &mut SnagApp, _: &egui::Context| {
+                        app.status = match r {
+                            Ok(()) => format!("Saved frames {}-{} to {}", a + 1, b + 1, out.display()),
+                            Err(e) => format!("Couldn't save: {e}"),
+                        };
+                    })
                 });
-                self.status = match r {
-                    Ok(()) => format!("Saved frames {}-{} to {}", a + 1, b + 1, out.display()),
-                    Err(e) => format!("Couldn't save: {e}"),
-                };
             }
         }
         if append && let Some(other) = rfd::FileDialog::new().add_filter("GIF", &["gif"]).pick_file() {
-            let r = (|| -> Result<PathBuf, String> {
-                let mut first = export::gif_frames(&path, 0)?;
-                let second = export::gif_frames(&other, 0)?;
-                let w = first.first().map(|f| f.0.width()).unwrap_or(640);
-                let imgs: Vec<_> = second.iter().map(|f| f.0.clone()).collect();
-                let boxed = export::letterbox(&imgs, w);
-                let target_h = first.first().map(|f| f.0.height()).unwrap_or(480);
-                for (img, (_, ms)) in boxed.into_iter().zip(second) {
-                    let img = if img.height() != target_h || img.width() != w {
-                        image::imageops::resize(&img, w, target_h, image::imageops::FilterType::Triangle)
-                    } else {
-                        img
-                    };
-                    first.push((img, ms));
-                }
-                let out = path.with_file_name(format!("{}_combined.gif", path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default()));
-                export::write_gif(&out, &first)?;
-                Ok(out)
-            })();
-            match r {
-                Ok(out) => {
-                    self.status = format!("Combined into {}", out.display());
-                    self.open_gif(ctx, out);
-                }
-                Err(e) => self.status = format!("Couldn't combine: {e}"),
-            }
+            self.jobs.queue(move || {
+                let r = combine_gifs(&path, &other);
+                Box::new(move |app: &mut SnagApp, ctx: &egui::Context| match r {
+                    Ok(out) => {
+                        app.status = format!("Combined into {}", out.display());
+                        app.open_gif(ctx, out);
+                    }
+                    Err(e) => app.status = format!("Couldn't combine: {e}"),
+                })
+            });
         }
     }
+}
 
+/// `path` with `other`'s frames added at the end (sized to fit), written next to `path`.
+fn combine_gifs(path: &std::path::Path, other: &std::path::Path) -> Result<PathBuf, String> {
+    let mut first = export::gif_frames(path, 0)?;
+    let second = export::gif_frames(other, 0)?;
+    let w = first.first().map(|f| f.0.width()).unwrap_or(640);
+    let imgs: Vec<_> = second.iter().map(|f| f.0.clone()).collect();
+    let boxed = export::letterbox(&imgs, w);
+    let target_h = first.first().map(|f| f.0.height()).unwrap_or(480);
+    for (img, (_, ms)) in boxed.into_iter().zip(second) {
+        let img = if img.height() != target_h || img.width() != w {
+            image::imageops::resize(&img, w, target_h, image::imageops::FilterType::Triangle)
+        } else {
+            img
+        };
+        first.push((img, ms));
+    }
+    let out = path.with_file_name(format!("{}_combined.gif", path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default()));
+    export::write_gif(&out, &first)?;
+    Ok(out)
+}
+
+impl SnagApp {
     pub(crate) fn show_pins(&mut self, ctx: &egui::Context) {
         let ppp = ctx.pixels_per_point();
         for pin in &mut self.pins {

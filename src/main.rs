@@ -531,31 +531,41 @@ pub fn crash_log_path() -> Option<PathBuf> {
 fn install_crash_log() {
     let default = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
-        if let Some(p) = crash_log_path() {
-            if let Some(dir) = p.parent() {
-                let _ = std::fs::create_dir_all(dir);
-            }
-            // Keep the file under about 256 KB.
-            if std::fs::metadata(&p).map(|m| m.len() > 256 * 1024).unwrap_or(false) {
-                let _ = std::fs::remove_file(&p);
-            }
-            let thread = std::thread::current().name().unwrap_or("unnamed").to_string();
-            let line = format!(
-                "{} Snagster {} ({} {}) thread '{}': {}\n",
-                chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
-                env!("CARGO_PKG_VERSION"),
-                std::env::consts::OS,
-                std::env::consts::ARCH,
-                thread,
-                info
-            );
-            if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&p) {
-                use std::io::Write;
-                let _ = f.write_all(line.as_bytes());
-            }
-        }
+        let thread = std::thread::current().name().unwrap_or("unnamed").to_string();
+        let line = format!(
+            "{} Snagster {} ({} {}) thread '{}': {}\n",
+            chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+            env!("CARGO_PKG_VERSION"),
+            std::env::consts::OS,
+            std::env::consts::ARCH,
+            thread,
+            info
+        );
+        append_crash_log(&line);
         default(info);
     }));
+}
+
+/// Add a line to crash.log (panics, and frames so slow that Windows calls the window
+/// "Not responding").
+pub fn append_crash_log(line: &str) {
+    if let Some(p) = crash_log_path() {
+        append_log_line(&p, line, 256 * 1024);
+    }
+}
+
+/// Append `line` to the file at `p`, starting it again when it is bigger than `limit` bytes.
+fn append_log_line(p: &std::path::Path, line: &str, limit: u64) {
+    if let Some(dir) = p.parent() {
+        let _ = std::fs::create_dir_all(dir);
+    }
+    if std::fs::metadata(p).map(|m| m.len() > limit).unwrap_or(false) {
+        let _ = std::fs::remove_file(p);
+    }
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(p) {
+        use std::io::Write;
+        let _ = f.write_all(line.as_bytes());
+    }
 }
 
 fn cpu_seconds() -> f64 {
@@ -659,5 +669,19 @@ mod main_tests {
             assert_eq!(log.file_name().unwrap(), "crash.log");
             assert_eq!(log.parent(), settings.parent());
         }
+    }
+
+    #[test]
+    fn log_lines_are_appended_and_the_file_stays_small() {
+        let dir = std::env::temp_dir().join(format!("snagster-log-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let p = dir.join("sub").join("crash.log");
+        append_log_line(&p, "one\n", 1000);
+        append_log_line(&p, "two\n", 1000);
+        assert_eq!(std::fs::read_to_string(&p).unwrap(), "one\ntwo\n", "the folder is made and lines are added");
+        append_log_line(&p, &"x".repeat(50), 10);
+        append_log_line(&p, "fresh\n", 10);
+        assert_eq!(std::fs::read_to_string(&p).unwrap(), "fresh\n", "a full log starts again");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

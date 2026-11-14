@@ -155,7 +155,7 @@ fn read_request(stream: &mut TcpStream) -> Result<Option<Request>, String> {
     Ok(Some(Request { method, path: path.to_string(), query, headers, body }))
 }
 
-fn percent_decode(s: &str) -> String {
+pub(crate) fn percent_decode(s: &str) -> String {
     let b = s.as_bytes();
     let mut out = Vec::with_capacity(b.len());
     let mut i = 0;
@@ -196,6 +196,30 @@ fn respond(stream: &mut TcpStream, status: &str, headers: &[(&str, String)], bod
     head.push_str("\r\n");
     stream.write_all(head.as_bytes())?;
     stream.write_all(body)?;
+    stream.flush()
+}
+
+/// A tool call that asks for progress (`_meta.progressToken`): its answer goes out as an event
+/// stream so progress notifications can come first.
+fn wants_progress(body: &str) -> bool {
+    serde_json::from_str::<serde_json::Value>(body)
+        .ok()
+        .is_some_and(|v| v.get("method").and_then(|m| m.as_str()) == Some("tools/call") && v.pointer("/params/_meta/progressToken").is_some_and(|t| !t.is_null()))
+}
+
+/// One server-sent event carrying a JSON-RPC message.
+fn sse_event(msg: &str) -> String {
+    format!("event: message\ndata: {msg}\n\n")
+}
+
+/// Start a response whose body runs until the connection closes (an event stream).
+fn respond_open(stream: &mut TcpStream, status: &str, headers: &[(&str, String)]) -> std::io::Result<()> {
+    let mut head = format!("HTTP/1.1 {status}\r\nConnection: close\r\nCache-Control: no-store\r\n");
+    for (k, v) in headers {
+        head.push_str(&format!("{k}: {v}\r\n"));
+    }
+    head.push_str("\r\n");
+    stream.write_all(head.as_bytes())?;
     stream.flush()
 }
 
@@ -294,12 +318,35 @@ fn serve(mut stream: TcpStream, st: &State) -> Result<(), String> {
                 None => st.create(),
             };
             extra.push(("Mcp-Session-Id", sid));
+            let accepts_sse = req.headers.get("accept").is_some_and(|a| a.contains("text/event-stream"));
+            if accepts_sse && wants_progress(&text) {
+                // Progress notifications, then the answer, on one event stream.
+                extra.push(("Content-Type", "text/event-stream".into()));
+                if respond_open(&mut stream, "200 OK", &extra).is_err() {
+                    return Ok(());
+                }
+                let out = Arc::new(Mutex::new(stream.try_clone().map_err(|e| e.to_string())?));
+                let o = out.clone();
+                let notify: crate::mcp::Notify = Arc::new(move |msg: String| {
+                    if let Ok(mut s) = o.lock() {
+                        let _ = s.write_all(sse_event(&msg).as_bytes());
+                        let _ = s.flush();
+                    }
+                });
+                if let Some(reply) = session.handle_with(&text, Some(notify))
+                    && let Ok(mut s) = out.lock()
+                {
+                    let _ = s.write_all(sse_event(&reply).as_bytes());
+                    let _ = s.flush();
+                }
+                return Ok(());
+            }
             match session.handle(&text) {
                 Some(reply) => {
-                    let wants_sse = req.headers.get("accept").is_some_and(|a| a.contains("text/event-stream") && !a.contains("application/json") && !a.contains("*/*"));
+                    let wants_sse = accepts_sse && req.headers.get("accept").is_some_and(|a| !a.contains("application/json") && !a.contains("*/*"));
                     if wants_sse {
                         extra.push(("Content-Type", "text/event-stream".into()));
-                        let body = format!("event: message\ndata: {reply}\n\n");
+                        let body = sse_event(&reply);
                         let _ = respond(&mut stream, "200 OK", &extra, body.as_bytes());
                     } else {
                         extra.push(json);
@@ -371,7 +418,11 @@ fn serve(mut stream: TcpStream, st: &State) -> Result<(), String> {
             // Answer at once; the reply travels on the event stream when the tool is done.
             let _ = respond(&mut stream, "202 Accepted", &extra, b"Accepted");
             let text = String::from_utf8_lossy(&req.body).to_string();
-            if let Some(reply) = session.handle(&text) {
+            let progress = tx.clone();
+            let notify: crate::mcp::Notify = Arc::new(move |msg: String| {
+                let _ = progress.send(msg);
+            });
+            if let Some(reply) = session.handle_with(&text, Some(notify)) {
                 let _ = tx.send(reply);
             }
         }
@@ -688,6 +739,61 @@ mod tests {
     }
 
     #[test]
+    fn only_tool_calls_with_a_progress_token_stream() {
+        assert!(wants_progress(r#"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"x","_meta":{"progressToken":"t"}}}"#));
+        assert!(wants_progress(r#"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"_meta":{"progressToken":0}}}"#));
+        assert!(!wants_progress(r#"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"_meta":{"progressToken":null}}}"#));
+        assert!(!wants_progress(r#"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"x"}}"#));
+        assert!(!wants_progress(r#"{"jsonrpc":"2.0","id":1,"method":"ping","params":{"_meta":{"progressToken":"t"}}}"#));
+        assert!(!wants_progress("not json"));
+        assert_eq!(sse_event("{}"), "event: message\ndata: {}\n\n");
+    }
+
+    /// A small guide to make: two steps from a picture file, saved as a web page.
+    fn guide_call(dir: &std::path::Path, id: u64, token: Option<&str>) -> String {
+        std::fs::create_dir_all(dir).unwrap();
+        let pic = dir.join("p.png");
+        image::RgbaImage::from_pixel(8, 8, image::Rgba([1, 2, 3, 255])).save(&pic).unwrap();
+        let mut params = serde_json::json!({"name": "make_guide", "arguments": {"path": dir.join(format!("g{id}.html")), "steps": [{"path": pic}, {"path": pic}]}});
+        if let Some(t) = token {
+            params["_meta"] = serde_json::json!({ "progressToken": t });
+        }
+        serde_json::json!({"jsonrpc": "2.0", "id": id, "method": "tools/call", "params": params}).to_string()
+    }
+
+    /// The data lines of an event stream, as JSON.
+    fn events(body: &str) -> Vec<serde_json::Value> {
+        body.lines().filter_map(|l| l.strip_prefix("data: ")).map(|d| serde_json::from_str(d).unwrap()).collect()
+    }
+
+    #[test]
+    fn streamable_http_sends_progress_before_the_answer() {
+        let srv = start(0, "").unwrap();
+        let p = srv.port;
+        let dir = std::env::temp_dir().join(format!("snagster-http-progress-{}", std::process::id()));
+        let both = ("Accept", "application/json, text/event-stream");
+        let sid = http(p, "POST", "/mcp", &[], INIT).header("mcp-session-id").unwrap().to_string();
+        let r = http(p, "POST", "/mcp", &[("Mcp-Session-Id", &sid), both], &guide_call(&dir, 5, Some("tok")));
+        assert_eq!(r.status, 200);
+        assert_eq!(r.header("content-type"), Some("text/event-stream"));
+        assert!(r.header("content-length").is_none(), "the stream runs until the answer");
+        let ev = events(&r.body);
+        assert!(ev.len() >= 3, "{:?}", r.body);
+        let (last, notes) = ev.split_last().unwrap();
+        assert_eq!(last["id"], 5);
+        assert_eq!(last["result"]["isError"], false, "{last}");
+        assert!(notes.iter().all(|n| n["method"] == "notifications/progress" && n["params"]["progressToken"] == "tok"));
+        // Without a token (or without accepting a stream) it's plain JSON as before.
+        let r = http(p, "POST", "/mcp", &[("Mcp-Session-Id", &sid), both], &guide_call(&dir, 6, None));
+        assert_eq!(r.header("content-type"), Some("application/json"));
+        let r = http(p, "POST", "/mcp", &[("Mcp-Session-Id", &sid), ("Accept", "application/json")], &guide_call(&dir, 7, Some("tok")));
+        assert_eq!(r.header("content-type"), Some("application/json"));
+        let v: serde_json::Value = serde_json::from_str(&r.body).unwrap();
+        assert_eq!(v["id"], 7);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn the_older_sse_transport_answers_on_the_stream() {
         let srv = start(0, "").unwrap();
         let p = srv.port;
@@ -722,6 +828,22 @@ mod tests {
         let v: serde_json::Value = serde_json::from_str(&event).unwrap();
         assert_eq!(v["id"], 2);
         assert_eq!(v["result"], serde_json::json!({}));
+
+        // Progress travels on the stream too, before the answer.
+        let dir = std::env::temp_dir().join(format!("snagster-sse-progress-{}", std::process::id()));
+        assert_eq!(http(p, "POST", &endpoint, &[], &guide_call(&dir, 3, Some("sse-tok"))).status, 202);
+        let mut seen = Vec::new();
+        loop {
+            let v: serde_json::Value = serde_json::from_str(&next_data(&mut saw_type)).unwrap();
+            let done = v["id"] == 3;
+            seen.push(v);
+            if done {
+                break;
+            }
+        }
+        assert!(seen.len() >= 3, "{seen:?}");
+        assert!(seen[..seen.len() - 1].iter().all(|n| n["method"] == "notifications/progress" && n["params"]["progressToken"] == "sse-tok"));
+        let _ = std::fs::remove_dir_all(&dir);
 
         assert_eq!(http(p, "POST", "/messages?sessionId=nope", &[], PING).status, 404);
         let id = endpoint.split('=').nth(1).unwrap().to_string();

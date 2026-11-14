@@ -186,6 +186,74 @@ pub fn save_project(d: &Doc, name: &str, path: &Path) -> Result<(), String> {
     std::fs::write(path, json).map_err(|e| e.to_string())
 }
 
+/// Save a picture with its marks the way the extension asks: `.snag` keeps the marks editable,
+/// `.docx` makes a Word document, anything else is a flattened picture (JPEG at the settings'
+/// quality).
+pub fn save_doc(d: &Doc, name: &str, path: &Path, s: &crate::settings::Settings) -> Result<(), String> {
+    if let Some(dir) = path.parent()
+        && !dir.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+    }
+    let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    match ext.as_str() {
+        "snag" => save_project(d, name, path),
+        "docx" => docx(name, &[(name.to_string(), crate::render::compose(d))], path),
+        _ => save_image(&crate::render::compose(d), path, s.jpeg_quality),
+    }
+}
+
+/// Save a step-by-step guide; the extension picks the format: .pdf, .html, .docx, or one tall
+/// picture (.png, .jpg).
+pub fn save_guide(title: &str, steps: &[(String, RgbaImage)], path: &Path, jpeg_quality: u8) -> Result<(), String> {
+    if steps.is_empty() {
+        return Err("a guide needs at least one step".into());
+    }
+    let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    if !["pdf", "html", "htm", "docx", "png", "jpg", "jpeg"].contains(&ext.as_str()) {
+        return Err("the path must end in .pdf, .html, .docx or .png".into());
+    }
+    if let Some(dir) = path.parent()
+        && !dir.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+    }
+    match ext.as_str() {
+        "pdf" => {
+            let pages: Vec<(Option<String>, RgbaImage)> = steps.iter().map(|(c, i)| (Some(c.clone()), i.clone())).collect();
+            std::fs::write(path, pdf(&pages, true, jpeg_quality)?).map_err(|e| e.to_string())
+        }
+        "html" | "htm" => std::fs::write(path, html_guide(title, steps)?).map_err(|e| e.to_string()),
+        "docx" => docx(title, steps, path),
+        _ => {
+            let page = crate::effects::guide_page(title, steps, 1200).ok_or("couldn't lay out the page")?;
+            save_image(&page, path, jpeg_quality)
+        }
+    }
+}
+
+/// The media type of a file Snagster writes, by its extension.
+pub fn mime_type(path: &Path) -> &'static str {
+    let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    match ext.as_str() {
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "bmp" => "image/bmp",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "tif" | "tiff" => "image/tiff",
+        "ico" => "image/x-icon",
+        "svg" => "image/svg+xml",
+        "pdf" => "application/pdf",
+        "html" | "htm" => "text/html",
+        "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "mp4" => "video/mp4",
+        "wmv" => "video/x-ms-wmv",
+        "snag" => "application/json",
+        _ => "application/octet-stream",
+    }
+}
+
 pub fn load_project(path: &Path) -> Result<(String, Doc), String> {
     let s = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
     let p: Project = serde_json::from_str(&s).map_err(|e| format!("not a Snagster project: {e}"))?;
@@ -417,6 +485,51 @@ mod tests {
         assert!(nested.exists());
         // An unknown extension is an error, not a panic.
         assert!(save_image(&img, &dir.file("nope.xyz"), 85).is_err());
+    }
+
+    #[test]
+    fn save_doc_picks_by_extension_and_uses_the_jpeg_quality() {
+        let dir = TempDir::new("save-doc");
+        let mut d = Doc::new(gradient(40, 30));
+        d.shapes.push(Shape::Pointer { pos: eframe::egui::pos2(5.0, 5.0), size: 24.0 });
+        let mut s = crate::settings::Settings { jpeg_quality: 95, ..Default::default() };
+        let snag = dir.file("p.snag");
+        save_doc(&d, "pic", &snag, &s).unwrap();
+        let (name, back) = load_project(&snag).unwrap();
+        assert_eq!((name.as_str(), back.shapes.len()), ("pic", 1), "marks stay marks");
+        let hi = dir.file("sub").join("hi.jpg");
+        save_doc(&d, "pic", &hi, &s).unwrap();
+        s.jpeg_quality = 5;
+        let lo = dir.file("lo.jpg");
+        save_doc(&d, "pic", &lo, &s).unwrap();
+        assert!(std::fs::metadata(&lo).unwrap().len() < std::fs::metadata(&hi).unwrap().len(), "lower quality, smaller file");
+        let docx_path = dir.file("p.docx");
+        save_doc(&d, "pic", &docx_path, &s).unwrap();
+        assert!(std::fs::read(&docx_path).unwrap().starts_with(b"PK"));
+        assert!(save_doc(&d, "pic", &dir.file("p.nope"), &s).is_err());
+    }
+
+    #[test]
+    fn guides_are_saved_in_each_format() {
+        let dir = TempDir::new("save-guide");
+        let steps = vec![("One".to_string(), gradient(30, 20)), ("Two".to_string(), gradient(20, 30))];
+        assert!(save_guide("T", &[], &dir.file("g.pdf"), 90).unwrap_err().contains("at least one"));
+        assert!(save_guide("T", &steps, &dir.file("g.txt"), 90).unwrap_err().contains(".pdf, .html"));
+        assert!(!dir.file("g.txt").exists());
+        save_guide("T", &steps, &dir.file("a").join("g.pdf"), 90).unwrap();
+        assert!(std::fs::read(dir.file("a").join("g.pdf")).unwrap().starts_with(b"%PDF"));
+        save_guide("T", &steps, &dir.file("g.html"), 90).unwrap();
+        assert!(std::fs::read_to_string(dir.file("g.html")).unwrap().contains("Two"));
+        save_guide("T", &steps, &dir.file("g.docx"), 90).unwrap();
+        save_guide("T", &steps, &dir.file("g.png"), 90).unwrap();
+        assert!(image::open(dir.file("g.png")).unwrap().height() > 50, "one tall page");
+    }
+
+    #[test]
+    fn mime_types_by_extension() {
+        for (f, m) in [("a.PNG", "image/png"), ("a.jpeg", "image/jpeg"), ("a.pdf", "application/pdf"), ("a.mp4", "video/mp4"), ("a.gif", "image/gif"), ("a.wmv", "video/x-ms-wmv"), ("a", "application/octet-stream")] {
+            assert_eq!(mime_type(Path::new(f)), m, "{f}");
+        }
     }
 
     #[test]

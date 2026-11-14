@@ -38,6 +38,7 @@ pub static UI_TEST: AtomicBool = AtomicBool::new(false);
 pub static SCREENSHOT_VIEW: Mutex<String> = Mutex::new(String::new());
 
 mod uitest;
+pub(crate) mod work;
 pub(crate) mod ribbon;
 pub(crate) mod studio_ui;
 pub(crate) mod updates_ui;
@@ -48,18 +49,39 @@ pub fn rgb(c: [u8; 3]) -> Color32 {
     Color32::from_rgb(c[0], c[1], c[2])
 }
 
+/// What a background job hands back to the window's thread to finish there.
+pub(crate) type Apply = Box<dyn FnOnce(&mut SnagApp, &egui::Context) + Send>;
+
+/// A picture's texture that hasn't been drawn for this long is let go (and made again when
+/// it is shown), so a long Recent list doesn't keep every full-size picture on the graphics chip.
+const TEXTURE_KEEP: Duration = Duration::from_secs(90);
+
 pub(crate) struct Entry {
+    /// Stays the same while the entry lives, so background jobs find it again.
+    pub id: u64,
     pub name: String,
     pub doc: Doc,
     pub undo: Vec<Doc>,
     pub redo: Vec<Doc>,
     tex: Option<(Arc<RgbaImage>, TextureHandle)>,
+    drawn: Instant,
     pub path: Option<PathBuf>,
 }
 
 impl Entry {
     pub fn new(name: String, doc: Doc) -> Self {
-        Self { name, doc, undo: Vec::new(), redo: Vec::new(), tex: None, path: None }
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+        let id = NEXT.fetch_add(1, Ordering::Relaxed);
+        Self { id, name, doc, undo: Vec::new(), redo: Vec::new(), tex: None, drawn: Instant::now(), path: None }
+    }
+
+    /// Let go of the texture when it hasn't been drawn for `keep`.
+    pub fn drop_stale_texture(&mut self, now: Instant, keep: Duration) -> bool {
+        if self.tex.is_some() && work::texture_stale(self.drawn, now, keep) {
+            self.tex = None;
+            return true;
+        }
+        false
     }
 
     pub fn push_undo(&mut self) {
@@ -71,6 +93,7 @@ impl Entry {
     }
 
     pub fn texture(&mut self, ctx: &egui::Context) -> TextureId {
+        self.drawn = Instant::now();
         let fresh = match &self.tex {
             Some((img, _)) => !Arc::ptr_eq(img, &self.doc.image),
             None => true,
@@ -184,6 +207,107 @@ pub(crate) struct GifEditor {
     pub playing: bool,
     pub shown_at: Instant,
     pub trim: (usize, usize),
+    /// The frames still coming from the thread that reads the GIF.
+    pub loading: Option<Receiver<GifMsg>>,
+}
+
+/// What the thread reading a GIF sends.
+pub(crate) enum GifMsg {
+    Frame(RgbaImage, u32),
+    Done(Result<(), String>),
+}
+
+/// How many GIF frames become textures per frame of the window (the rest wait).
+const GIF_FRAMES_PER_PAINT: usize = 8;
+
+/// What happened when the arrived GIF frames were taken.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum GifLoad {
+    /// More frames are coming.
+    Loading,
+    /// Every frame is here.
+    Done,
+    /// It couldn't be read, or had no frames.
+    Failed(String),
+}
+
+impl GifEditor {
+    /// An editor for `path` whose frames are read on a worker thread.
+    pub fn start(path: PathBuf, ctx: Option<egui::Context>) -> Self {
+        let (tx, rx) = channel();
+        let p = path.clone();
+        std::thread::spawn(move || {
+            let r = export::gif_frames(&p, 480);
+            let wake = |c: &Option<egui::Context>| {
+                if let Some(c) = c {
+                    c.request_repaint();
+                }
+            };
+            match r {
+                Ok(frames) => {
+                    for (img, ms) in frames {
+                        if tx.send(GifMsg::Frame(img, ms)).is_err() {
+                            return;
+                        }
+                    }
+                    let _ = tx.send(GifMsg::Done(Ok(())));
+                }
+                Err(e) => {
+                    let _ = tx.send(GifMsg::Done(Err(e)));
+                }
+            }
+            wake(&ctx);
+        });
+        Self::loading_from(path, rx)
+    }
+
+    fn loading_from(path: PathBuf, rx: Receiver<GifMsg>) -> Self {
+        GifEditor { path, frames: Vec::new(), size: vec2(320.0, 240.0), index: 0, playing: true, shown_at: Instant::now(), trim: (0, 0), loading: Some(rx) }
+    }
+
+    /// Turn at most `max` arrived frames into textures. The kept range follows the frames
+    /// while they arrive, unless it was changed.
+    pub fn take_frames(&mut self, ctx: &egui::Context, max: usize) -> GifLoad {
+        let Some(rx) = &self.loading else { return GifLoad::Done };
+        let mut ended = None;
+        for _ in 0..max {
+            match rx.try_recv() {
+                Ok(GifMsg::Frame(img, ms)) => {
+                    // Still "every frame" (not changed by the person): take this one in too.
+                    let follow = self.frames.is_empty() || self.trim == (0, self.frames.len() - 1);
+                    if self.frames.is_empty() {
+                        self.size = vec2(img.width() as f32, img.height() as f32);
+                    }
+                    let ci = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
+                    let i = self.frames.len();
+                    self.frames.push((ctx.load_texture(format!("gif-{i}"), ci, TextureOptions::LINEAR), ms));
+                    if follow {
+                        self.trim.1 = self.frames.len() - 1;
+                    }
+                }
+                Ok(GifMsg::Done(r)) => {
+                    ended = Some(r);
+                    break;
+                }
+                Err(std::sync::mpsc::TryRecvError::Empty) => return GifLoad::Loading,
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                    ended = Some(Err("reading stopped".into()));
+                    break;
+                }
+            }
+        }
+        match ended {
+            None => GifLoad::Loading,
+            Some(r) => {
+                self.loading = None;
+                match r {
+                    Err(e) => GifLoad::Failed(e),
+                    Ok(()) if self.frames.is_empty() => GifLoad::Failed(String::new()),
+                    Ok(()) => GifLoad::Done,
+                }
+            }
+        }
+    }
 }
 
 pub struct SnagApp {
@@ -211,10 +335,15 @@ pub struct SnagApp {
     quiet_capture: bool,
     cap_tx: Sender<CaptureResult>,
     cap_rx: Receiver<CaptureResult>,
-    windows: Vec<WindowInfo>,
-    windows_at: Option<Instant>,
-    monitors: Vec<MonitorInfo>,
-    monitors_at: Option<Instant>,
+    /// The windows and screens for the menus, made on a worker thread.
+    pub(crate) win_cache: work::ListCache<WindowInfo>,
+    pub(crate) mon_cache: work::ListCache<MonitorInfo>,
+    /// Library adds, saves and copies after a capture (and other slow work), in order.
+    pub(crate) jobs: work::Jobs<Apply>,
+    /// Files that a background save is still writing.
+    saving: std::collections::HashSet<PathBuf>,
+    mcp_debounce: work::Debounce<Option<(u16, String)>>,
+    textures_swept: Instant,
     overlay: Option<Overlay>,
     restore_pos: Option<Pos2>,
     pub(crate) last_region: Option<(i32, i32, u32, u32)>,
@@ -249,6 +378,10 @@ pub struct SnagApp {
     pub(crate) library_open: bool,
     pub(crate) lib_items: Vec<library::Item>,
     pub(crate) lib_loaded: bool,
+    /// A library scan under way: the folder it reads and its result.
+    pub(crate) lib_scan_rx: Option<(String, Receiver<Vec<library::Item>>)>,
+    /// Captures added to the library while a scan was under way (merged into its result).
+    pub(crate) lib_added: Vec<library::Item>,
     pub(crate) lib_query: String,
     pub(crate) lib_sort: usize,
     pub(crate) lib_app: String,
@@ -258,7 +391,8 @@ pub struct SnagApp {
     pub(crate) lib_tag_edit: Option<(usize, String)>,
     // ui helpers
     ui_fonts: fonts::UiFonts,
-    stamp_tex: HashMap<(char, u32), TextureHandle>,
+    /// Stamp pictures by emoji and size (`None`: the font can't draw it).
+    stamp_tex: HashMap<(char, u32), Option<TextureHandle>>,
     image_tex: HashMap<usize, (Arc<RgbaImage>, TextureHandle)>,
     pub(crate) pins: Vec<Pin>,
     pub(crate) next_pin: u64,
@@ -368,10 +502,12 @@ impl SnagApp {
             quiet_capture: false,
             cap_tx,
             cap_rx,
-            windows: Vec::new(),
-            windows_at: None,
-            monitors: Vec::new(),
-            monitors_at: None,
+            win_cache: work::ListCache::new(Duration::from_secs(3)),
+            mon_cache: work::ListCache::new(Duration::from_secs(3)),
+            jobs: work::Jobs::new(),
+            saving: std::collections::HashSet::new(),
+            mcp_debounce: work::Debounce::new(),
+            textures_swept: Instant::now(),
             overlay: None,
             restore_pos: None,
             last_region: None,
@@ -404,6 +540,8 @@ impl SnagApp {
             library_open: false,
             lib_items: Vec::new(),
             lib_loaded: false,
+            lib_scan_rx: None,
+            lib_added: Vec::new(),
             lib_query: String::new(),
             lib_sort: 0,
             lib_app: String::new(),
@@ -700,19 +838,18 @@ impl SnagApp {
         }
         self.add_entry(name, d);
         let mut notes = vec![format!("Captured {w} x {h}.")];
+        // Only Recent is filled here; the library, the clipboard and the save folder are
+        // written by the job queue in this order (an error shows in the status line).
         if self.settings.after_library {
             let meta = library::Meta { title: title.to_string(), app: app.to_string(), kind: kind.into(), ..Default::default() };
-            match library::add(std::path::Path::new(&self.settings.library_folder), &img, meta) {
-                Ok(_) => self.lib_loaded = false,
-                Err(e) => notes.push(format!("Not added to the library: {e}")),
-            }
+            self.add_to_library(move || img, meta);
         }
         let (copy, save, pin) = match &preset {
             Some(p) => (p.copy, p.save, p.pin),
             None => (self.settings.after_copy, self.settings.after_save, self.settings.after_pin),
         };
         if copy {
-            self.copy();
+            self.copy_quietly(true);
             notes.push("Copied.".into());
         }
         if save {
@@ -1108,21 +1245,69 @@ impl SnagApp {
             });
             let title = if ev.title.is_empty() { "Click".to_string() } else { ev.title.clone() };
             let caption: String = format!("Step {n}: {title}").chars().take(60).collect();
+            let for_library = self.settings.after_library.then(|| d.clone());
             self.entries.push(Entry::new(caption, d));
             self.guide.push(self.entries.len() - 1);
-            if self.settings.after_library {
-                let _ = library::add(
-                    std::path::Path::new(&self.settings.library_folder),
-                    &self.entries.last().map(|e| render::compose(&e.doc)).unwrap_or_default(),
-                    library::Meta { title, app: ev.app, kind: "Step".into(), ..Default::default() },
-                );
-                self.lib_loaded = false;
+            if let Some(doc) = for_library {
+                self.add_to_library(move || render::compose(&doc), library::Meta { title, app: ev.app, kind: "Step".into(), ..Default::default() });
             }
         }
         while let Ok(r) = self.ocr_rx.try_recv() {
             self.ocr_busy = false;
             self.ocr_done(r);
         }
+        self.poll_gif_load(ctx);
+        for apply in self.jobs.finished(32) {
+            apply(self, ctx);
+        }
+    }
+
+    /// Turn the frames of a GIF being opened into textures, a few per frame.
+    fn poll_gif_load(&mut self, ctx: &egui::Context) {
+        let Some(ed) = &mut self.gif_editor else { return };
+        match ed.take_frames(ctx, GIF_FRAMES_PER_PAINT) {
+            GifLoad::Loading => ctx.request_repaint(),
+            GifLoad::Done => {}
+            GifLoad::Failed(e) => {
+                self.gif_editor = None;
+                self.status = if e.is_empty() { "That GIF has no frames.".into() } else { format!("Couldn't open the GIF: {e}") };
+            }
+        }
+    }
+
+    /// Add a picture (made by `make`, on the worker) to the library. The open library gets
+    /// the new item without reading the whole folder again.
+    pub(crate) fn add_to_library(&mut self, make: impl FnOnce() -> RgbaImage + Send + 'static, meta: library::Meta) {
+        let folder = self.settings.library_folder.clone();
+        self.jobs.queue(move || {
+            let img = make();
+            let r = library::add_item(std::path::Path::new(&folder), &img, meta);
+            let thumb = r.as_ref().ok().and_then(|it| library::thumbnail_of(&it.path, &img, 192));
+            Box::new(move |app: &mut SnagApp, ctx: &egui::Context| app.library_added(ctx, &folder, r, thumb))
+        });
+    }
+
+    fn library_added(&mut self, ctx: &egui::Context, folder: &str, r: Result<library::Item, String>, thumb: Option<RgbaImage>) {
+        let item = match r {
+            Ok(item) => item,
+            Err(e) => {
+                self.status = format!("Not added to the library: {e}");
+                return;
+            }
+        };
+        if folder != self.settings.library_folder {
+            return;
+        }
+        if let Some(t) = thumb {
+            let ci = egui::ColorImage::from_rgba_unmultiplied([t.width() as usize, t.height() as usize], t.as_raw());
+            self.lib_thumbs.insert(item.path.clone(), ctx.load_texture("lib-thumb", ci, TextureOptions::LINEAR));
+        }
+        if self.lib_scan_rx.is_some() {
+            self.lib_added.push(item);
+        } else if self.lib_loaded {
+            library::insert_newest(&mut self.lib_items, item);
+        }
+        // Otherwise the library hasn't been read yet and will find it then.
     }
 
     pub(crate) fn run_ocr(&mut self, purpose: OcrPurpose, image: RgbaImage) {
@@ -1195,33 +1380,12 @@ impl SnagApp {
         }
     }
 
+    /// Open a GIF in the GIF editor. Its frames are read on a worker thread and shown as
+    /// they arrive (reading a long recording takes seconds).
     pub(crate) fn open_gif(&mut self, ctx: &egui::Context, path: PathBuf) {
-        match export::gif_frames(&path, 480) {
-            Ok(frames) if !frames.is_empty() => {
-                let size = vec2(frames[0].0.width() as f32, frames[0].0.height() as f32);
-                let n = frames.len();
-                let texs = frames
-                    .into_iter()
-                    .enumerate()
-                    .map(|(i, (img, ms))| {
-                        let ci = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
-                        (ctx.load_texture(format!("gif-{i}"), ci, TextureOptions::LINEAR), ms)
-                    })
-                    .collect();
-                self.gif_editor = Some(GifEditor {
-                    path,
-                    frames: texs,
-                    size,
-                    index: 0,
-                    playing: true,
-                    shown_at: Instant::now(),
-                    trim: (0, n.saturating_sub(1)),
-                });
-                self.gif_open = true;
-            }
-            Ok(_) => self.status = "That GIF has no frames.".into(),
-            Err(e) => self.status = format!("Couldn't open the GIF: {e}"),
-        }
+        self.gif_editor = Some(GifEditor::start(path, Some(ctx.clone())));
+        self.gif_open = true;
+        ctx.request_repaint();
     }
 
     // ---------- timers ----------
@@ -1300,41 +1464,52 @@ impl SnagApp {
         }
     }
 
+    /// Read the clipboard's picture on a thread of its own (the program that put it there
+    /// is asked for it, and may be slow or hung), then hand it to `then`.
+    fn with_clipboard_picture(&mut self, then: impl FnOnce(&mut SnagApp, Option<RgbaImage>) + Send + 'static) {
+        self.jobs.spawn(move || {
+            let got = clipboard_picture();
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| then(app, got))
+        });
+    }
+
     pub(crate) fn paste(&mut self) {
-        let got = arboard::Clipboard::new().and_then(|mut c| c.get_image());
-        match got {
-            Ok(img) => {
-                let w = img.width as u32;
-                let h = img.height as u32;
-                if let Some(rgba) = RgbaImage::from_raw(w, h, img.bytes.into_owned()) {
-                    let name = self.next_name("Pasted");
-                    self.add_entry(name, Doc::new(rgba));
-                    self.status = format!("Pasted a {w} x {h} picture.");
-                }
+        self.with_clipboard_picture(|app, got| match got {
+            Some(rgba) => {
+                let (w, h) = rgba.dimensions();
+                let name = app.next_name("Pasted");
+                app.add_entry(name, Doc::new(rgba));
+                app.status = format!("Pasted a {w} x {h} picture.");
             }
-            Err(_) => self.status = "There's no picture on the clipboard.".into(),
-        }
+            None => app.status = "There's no picture on the clipboard.".into(),
+        });
     }
 
     pub(crate) fn copy(&mut self) {
+        self.copy_quietly(false);
+    }
+
+    /// Copy the current picture with its marks. The picture is put together and handed to
+    /// the clipboard on the job queue; `quiet` leaves the status line alone unless it fails.
+    pub(crate) fn copy_quietly(&mut self, quiet: bool) {
         self.commit_text();
         let Some(e) = self.entry() else { return };
-        let out = render::compose(&e.doc);
-        let (w, h) = out.dimensions();
-        let data = arboard::ImageData { width: w as usize, height: h as usize, bytes: out.into_raw().into() };
-        self.status = match arboard::Clipboard::new().and_then(|mut c| c.set_image(data)) {
-            Ok(()) => format!("Copied the {w} x {h} picture. Paste it anywhere."),
-            Err(e) => format!("Couldn't copy: {e}"),
-        };
+        let doc = e.doc.clone();
+        self.jobs.queue(move || {
+            let out = render::compose(&doc);
+            let (w, h) = out.dimensions();
+            let data = arboard::ImageData { width: w as usize, height: h as usize, bytes: out.into_raw().into() };
+            let r = arboard::Clipboard::new().and_then(|mut c| c.set_image(data)).map_err(|e| e.to_string());
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| match r {
+                Ok(()) if !quiet => app.status = format!("Copied the {w} x {h} picture. Paste it anywhere."),
+                Ok(()) => {}
+                Err(e) => app.status = format!("Couldn't copy: {e}"),
+            })
+        });
     }
 
     pub(crate) fn save_to(&mut self, i: usize, path: PathBuf) {
-        let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
-        let result = if ext == "snag" {
-            export::save_project(&self.entries[i].doc, &self.entries[i].name, &path)
-        } else {
-            export::save_image(&render::compose(&self.entries[i].doc), &path, self.settings.jpeg_quality)
-        };
+        let result = write_doc(&self.entries[i].doc, &self.entries[i].name, &path, self.settings.jpeg_quality);
         self.status = match result {
             Ok(()) => {
                 self.entries[i].path = Some(path.clone());
@@ -1365,7 +1540,7 @@ impl SnagApp {
             dialog = dialog.set_directory(&folder);
         }
         if let Some(path) = dialog.set_file_name(format!("{name}.{ext}")).save_file() {
-            self.save_to(i, path);
+            self.save_in_background(i, path);
         }
     }
 
@@ -1379,17 +1554,43 @@ impl SnagApp {
             .set_file_name(format!("{name}.snag"))
             .save_file()
         {
-            self.save_to(i, path);
+            self.save_in_background(i, path);
         }
     }
 
-    /// Save straight into the save folder with the file-name pattern.
+    /// Save straight into the save folder with the file-name pattern. The file is written on
+    /// the job queue; the status line says where, or why it couldn't be.
     pub(crate) fn quick_save(&mut self) {
         self.commit_text();
         let Some(i) = self.current else { return };
         let title = self.entries[i].name.clone();
-        let path = self.settings.next_save_path(&title);
-        self.save_to(i, path);
+        let path = work::free_path(self.settings.next_save_path(&title), &self.saving);
+        self.save_in_background(i, path);
+    }
+
+    /// `save_to`, on the job queue.
+    pub(crate) fn save_in_background(&mut self, i: usize, path: PathBuf) {
+        let Some(e) = self.entries.get(i) else { return };
+        let (id, doc, name, quality) = (e.id, e.doc.clone(), e.name.clone(), self.settings.jpeg_quality);
+        self.saving.insert(path.clone());
+        self.status = format!("Saved {}", path.display());
+        self.jobs.queue(move || {
+            let r = write_doc(&doc, &name, &path, quality);
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| app.saved(id, path, r))
+        });
+    }
+
+    fn saved(&mut self, id: u64, path: PathBuf, r: Result<(), String>) {
+        self.saving.remove(&path);
+        match r {
+            Ok(()) => {
+                if let Some(e) = self.entries.iter_mut().find(|e| e.id == id) {
+                    e.path = Some(path.clone());
+                }
+                self.remember_file(&path);
+            }
+            Err(e) => self.status = format!("Couldn't save: {e}"),
+        }
     }
 
     pub(crate) fn open_folder(&mut self, target: &std::path::Path) {
@@ -2071,11 +2272,12 @@ impl SnagApp {
         });
         ui.separator();
         ui.menu_button(crate::i18n::t("Screens"), |ui| {
-            if self.monitors_at.is_none_or(|t| t.elapsed().as_secs_f32() > 2.0) {
-                self.monitors = capture::monitors();
-                self.monitors_at = Some(Instant::now());
+            let ctx = ui.ctx().clone();
+            self.mon_cache.get(Some(&ctx), capture::monitors);
+            if !self.mon_cache.loaded() {
+                ui.spinner();
             }
-            for (n, m) in self.monitors.iter().enumerate() {
+            for (n, m) in self.mon_cache.items().iter().enumerate() {
                 let label = format!("{}: {}  {} x {}{}", n + 1, m.name, m.width, m.height, if m.primary { "  (main)" } else { "" });
                 if ui.button(label).clicked() {
                     pick = Some(CaptureKind::Monitor(m.id));
@@ -2084,15 +2286,15 @@ impl SnagApp {
             }
         });
         ui.menu_button(crate::i18n::t("Window list"), |ui| {
-            if self.windows_at.is_none_or(|t| t.elapsed().as_secs_f32() > 2.0) {
-                self.windows = capture::list_windows();
-                self.windows_at = Some(Instant::now());
-            }
-            if self.windows.is_empty() {
+            let ctx = ui.ctx().clone();
+            self.win_cache.get(Some(&ctx), capture::list_windows);
+            if !self.win_cache.loaded() {
+                ui.spinner();
+            } else if self.win_cache.items().is_empty() {
                 ui.label(RichText::new(crate::i18n::t("No windows found")).color(TEXT_DIM));
             }
             egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
-                for w in &self.windows {
+                for w in self.win_cache.items() {
                     if ui.button(&w.label).clicked() {
                         pick = Some(CaptureKind::Window(w.id, w.label.clone()));
                         ui.close();
@@ -2224,22 +2426,32 @@ impl SnagApp {
         }
     }
 
-    pub(crate) fn slideshow(&mut self, ctx: &egui::Context) {
-        let imgs: Vec<RgbaImage> = self.entries.iter().map(|e| render::compose(&e.doc)).collect();
-        let frames = export::letterbox(&imgs, self.settings.gif_max_width);
+    /// A GIF of the pictures in Recent, made on the job queue (it opens when it's written).
+    pub(crate) fn slideshow(&mut self, _ctx: &egui::Context) {
+        let docs: Vec<Doc> = self.entries.iter().map(|e| e.doc.clone()).collect();
+        let max_w = self.settings.gif_max_width;
         let ms = (self.settings.slideshow_s.clamp(0.2, 30.0) * 1000.0) as u32;
         let folder = PathBuf::from(&self.settings.video_folder);
         let name = chrono::Local::now().format("Slideshow_%Y-%m-%d_%H-%M-%S").to_string();
-        let path = crate::settings::unique_path(&folder, &name, "gif");
-        let list: Vec<(RgbaImage, u32)> = frames.into_iter().map(|f| (f, ms)).collect();
-        match export::write_gif(&path, &list) {
-            Ok(()) => {
-                self.recordings.insert(0, Recording { path: path.clone(), frames: list.len() as u32, seconds: list.len() as f32 * ms as f32 / 1000.0 });
-                self.status = format!("Made a {}-picture slideshow GIF.", list.len());
-                self.open_gif(ctx, path);
-            }
-            Err(e) => self.status = format!("Couldn't make the slideshow: {e}"),
-        }
+        let path = work::free_path(crate::settings::unique_path(&folder, &name, "gif"), &self.saving);
+        self.saving.insert(path.clone());
+        self.jobs.queue(move || {
+            let imgs: Vec<RgbaImage> = docs.iter().map(render::compose).collect();
+            let list: Vec<(RgbaImage, u32)> = export::letterbox(&imgs, max_w).into_iter().map(|f| (f, ms)).collect();
+            let n = list.len();
+            let r = export::write_gif(&path, &list);
+            Box::new(move |app: &mut SnagApp, ctx: &egui::Context| {
+                app.saving.remove(&path);
+                match r {
+                    Ok(()) => {
+                        app.recordings.insert(0, Recording { path: path.clone(), frames: n as u32, seconds: n as f32 * ms as f32 / 1000.0 });
+                        app.status = format!("Made a {n}-picture slideshow GIF.");
+                        app.open_gif(ctx, path);
+                    }
+                    Err(e) => app.status = format!("Couldn't make the slideshow: {e}"),
+                }
+            })
+        });
     }
 
     fn edit_menu(&mut self, ui: &mut egui::Ui) {
@@ -2460,7 +2672,7 @@ impl SnagApp {
                 let title = self.entries[i].name.clone();
                 let base = self.settings.file_name(&title);
                 let path = crate::settings::unique_path(&p.join("Snagster"), &base, self.settings.format.ext());
-                self.save_to(i, path);
+                self.save_in_background(i, path);
             }
         }
     }
@@ -2781,11 +2993,22 @@ impl SnagApp {
             self.stamp = POINTER_KEY.to_string();
         }
         let list = ef.groups.get(gi).map(|g| g.1.clone()).unwrap_or_default();
+        // Drawing an emoji takes a moment; a big group would freeze the window if all were
+        // drawn in one frame. A few are drawn per frame (only those in view), the rest wait
+        // as empty squares.
+        let mut budget = work::Budget::new(Duration::from_millis(12), 4);
         egui::ScrollArea::vertical().max_height(300.0).id_salt("stamps").show(ui, |ui| {
             egui::Grid::new("stampgrid").spacing(vec2(2.0, 2.0)).show(ui, |ui| {
                 for (n, ch) in list.iter().enumerate() {
-                    let tex = self.stamp_texture(&ctx, *ch, 32, [40, 40, 40, 255]);
                     let (rect, resp) = ui.allocate_exact_size(vec2(32.0, 32.0), Sense::click());
+                    let tex = if !ui.is_rect_visible(rect) {
+                        None
+                    } else if self.stamp_ready(*ch, 32) || budget.allow() {
+                        self.stamp_texture(&ctx, *ch, 32, [40, 40, 40, 255])
+                    } else {
+                        ui.painter().rect_filled(rect.shrink(6.0), CornerRadius::same(4), PANEL_HI);
+                        None
+                    };
                     if self.stamp.starts_with(*ch) {
                         ui.painter().rect_filled(rect, CornerRadius::same(4), ACCENT);
                     } else if resp.hovered() {
@@ -2803,19 +3026,34 @@ impl SnagApp {
                 }
             });
         });
+        if budget.left_some() {
+            ctx.request_repaint();
+        }
+    }
+
+    fn stamp_size(px: u32) -> u32 {
+        px.next_power_of_two().clamp(16, 512)
+    }
+
+    /// Whether the stamp picture was made already (drawing it again costs nothing).
+    fn stamp_ready(&self, ch: char, px: u32) -> bool {
+        self.stamp_tex.contains_key(&(ch, Self::stamp_size(px)))
     }
 
     fn stamp_texture(&mut self, ctx: &egui::Context, ch: char, px: u32, tint: [u8; 4]) -> Option<TextureId> {
-        let px = px.next_power_of_two().clamp(16, 512);
+        let px = Self::stamp_size(px);
         if let Some(t) = self.stamp_tex.get(&(ch, px)) {
-            return Some(t.id());
+            return t.as_ref().map(|t| t.id());
         }
-        let img = if ch == POINTER_KEY { Arc::new(pointer_image(px)) } else { crate::emoji::render(ch, px, tint)? };
-        let ci = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
-        let h = ctx.load_texture(format!("stamp-{}-{px}", ch as u32), ci, TextureOptions::LINEAR);
-        let id = h.id();
+        let img = if ch == POINTER_KEY { Some(Arc::new(pointer_image(px))) } else { crate::emoji::render(ch, px, tint) };
+        // Remember emojis the font can't draw too, so they aren't tried again every frame.
+        let h = img.map(|img| {
+            let ci = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
+            ctx.load_texture(format!("stamp-{}-{px}", ch as u32), ci, TextureOptions::LINEAR)
+        });
+        let id = h.as_ref().map(|h| h.id());
         self.stamp_tex.insert((ch, px), h);
-        Some(id)
+        id
     }
 
     fn tray(&mut self, ui: &mut egui::Ui) {
@@ -2839,6 +3077,10 @@ impl SnagApp {
                     }
                     for i in (0..self.entries.len()).rev() {
                         let (rect, resp) = ui.allocate_exact_size(vec2(124.0, 84.0), Sense::click());
+                        // Pictures scrolled out of view aren't drawn (their textures can go).
+                        if !ui.is_rect_visible(rect) {
+                            continue;
+                        }
                         let tex = self.entries[i].texture(&ctx);
                         let is_cur = self.current == Some(i);
                         let thumb_area = Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(116.0, 58.0));
@@ -3477,11 +3719,22 @@ impl SnagApp {
 
 impl SnagApp {
     fn logic_body(&mut self, ctx: &egui::Context) {
+        self.jobs.wake(ctx);
         self.apply_language(ctx);
         self.poll_updates(ctx);
         // The HTTP server for AI apps runs while it's switched on in Settings.
+        // A new port or password is used once it has stopped changing (typing into the field
+        // doesn't restart the server on every key); switching it on or off is at once.
         let want = self.settings.mcp_http.then(|| (self.settings.mcp_port, self.settings.mcp_token.clone()));
-        if want != self.x.mcp_wanted && !UI_TEST.load(Ordering::Relaxed) {
+        let switched = want.is_some() != self.x.mcp_wanted.is_some();
+        let editing = ctx.egui_wants_keyboard_input() || ctx.input(|i| i.pointer.any_down());
+        let apply = self.mcp_debounce.check(&self.x.mcp_wanted, &want, Instant::now(), Duration::from_secs(1), switched || !editing);
+        if self.mcp_debounce.waiting() {
+            ctx.request_repaint_after(Duration::from_millis(250));
+        }
+        if let Some(want) = apply
+            && !UI_TEST.load(Ordering::Relaxed)
+        {
             self.x.mcp_server = None;
             self.x.mcp_error = None;
             if let Some((port, token)) = &want {
@@ -3688,6 +3941,19 @@ fn image_to_screen(p: Pos2, origin: Pos2, scale: f32) -> Pos2 {
 fn clean_file_name(name: &str) -> String {
     let bad = ['\\', '/', ':', '*', '?', '"', '<', '>', '|'];
     name.chars().map(|c| if bad.contains(&c) { '_' } else { c }).collect()
+}
+
+/// Write a picture to `path`: a Snagster project for `.snag`, otherwise the picture with its
+/// marks in the format the extension names.
+fn write_doc(doc: &Doc, name: &str, path: &std::path::Path, jpeg_quality: u8) -> Result<(), String> {
+    let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    if ext == "snag" { export::save_project(doc, name, path) } else { export::save_image(&render::compose(doc), path, jpeg_quality) }
+}
+
+/// The picture on the clipboard, if there is one.
+fn clipboard_picture() -> Option<RgbaImage> {
+    let img = arboard::Clipboard::new().and_then(|mut c| c.get_image()).ok()?;
+    RgbaImage::from_raw(img.width as u32, img.height as u32, img.bytes.into_owned())
 }
 
 /// The start of a temporary file's name: letters and digits only.
@@ -4292,7 +4558,7 @@ impl SnagApp {
                     let title = self.entries[i].name.clone();
                     let base = self.settings.file_name(&title);
                     let path = crate::settings::unique_path(&folder.join("Snagster"), &base, self.settings.format.ext());
-                    self.save_to(i, path);
+                    self.save_in_background(i, path);
                 } else {
                     self.status = "No cloud folder (OneDrive, Dropbox, Google Drive...) was found.".into();
                 }
@@ -4343,12 +4609,13 @@ impl SnagApp {
 
     /// Put the clipboard's picture on the current picture as a movable piece.
     pub(crate) fn paste_as_piece(&mut self) {
-        let got = arboard::Clipboard::new().and_then(|mut c| c.get_image());
-        let Ok(img) = got else {
-            self.status = "There's no picture on the clipboard.".into();
-            return;
-        };
-        let Some(rgba) = RgbaImage::from_raw(img.width as u32, img.height as u32, img.bytes.into_owned()) else { return };
+        self.with_clipboard_picture(|app, got| match got {
+            Some(rgba) => app.add_piece(rgba),
+            None => app.status = "There's no picture on the clipboard.".into(),
+        });
+    }
+
+    fn add_piece(&mut self, rgba: RgbaImage) {
         let Some(e) = self.entry() else { return };
         let size = e.doc.size();
         let s = (size.x * 0.6 / rgba.width() as f32).min(size.y * 0.6 / rgba.height() as f32).min(1.0);
@@ -4366,7 +4633,7 @@ impl SnagApp {
         self.commit_text();
         let Some(i) = self.current else { return };
         match self.entries[i].path.clone() {
-            Some(p) if p.parent().is_some_and(|d| d.is_dir()) => self.save_to(i, p),
+            Some(p) if p.parent().is_some_and(|d| d.is_dir()) => self.save_in_background(i, p),
             _ => self.save_as(),
         }
     }
@@ -4633,19 +4900,80 @@ impl eframe::App for SnagApp {
     // written to crash.log (by the panic hook) and shown in the status line, and the next frame
     // carries on.
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let started = Instant::now();
         if let Err(e) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.logic_body(ctx))) {
             self.recovered(e);
         }
+        self.sweep_textures(started);
+        self.watchdog("logic", started.elapsed());
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        let started = Instant::now();
         if let Err(e) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.ui_body(ui))) {
             self.recovered(e);
         }
+        self.watchdog("ui", started.elapsed());
     }
 }
 
 impl SnagApp {
+    /// What is open, for the slow-frame line in crash.log.
+    fn open_parts(&self) -> Vec<&'static str> {
+        let mut v = Vec::new();
+        let parts = [
+            (self.overlay.is_some(), "capture overlay"),
+            (self.panel_open, "capture panel"),
+            (self.mini.is_some(), "recording bar"),
+            (self.x.studio.is_some(), "Studio"),
+            (self.library_open, "Library"),
+            (self.lib_scan_rx.is_some(), "library scan"),
+            (self.gif_open, "GIF recordings"),
+            (self.gif_editor.as_ref().is_some_and(|g| g.loading.is_some()), "GIF loading"),
+            (self.settings_open, "Settings"),
+            (self.timer_open, "Timer"),
+            (self.dialog.is_some(), "a dialog"),
+            (self.tool == Tool::Stamp, "stamp picker"),
+            (!self.pins.is_empty(), "pins"),
+            (self.ocr_busy, "text recognition"),
+            (self.jobs.busy() > 0, "background jobs"),
+        ];
+        for (on, name) in parts {
+            if on {
+                v.push(name);
+            }
+        }
+        v
+    }
+
+    /// A frame that took more than a second (Windows soon calls the window "Not responding")
+    /// gets one line in crash.log saying what was open, so the cause can be found.
+    fn watchdog(&self, part: &str, took: Duration) {
+        if took < work::SLOW_FRAME {
+            return;
+        }
+        let parts = self.open_parts();
+        let Some(line) = work::slow_frame_line(part, took, &parts) else { return };
+        if self.persist {
+            crate::append_crash_log(&line);
+        } else {
+            eprint!("{line}");
+        }
+    }
+
+    /// Every few seconds, let go of the textures of pictures in Recent that weren't drawn lately.
+    fn sweep_textures(&mut self, now: Instant) {
+        if now.saturating_duration_since(self.textures_swept) < Duration::from_secs(5) {
+            return;
+        }
+        self.textures_swept = now;
+        let current = self.current;
+        for (i, e) in self.entries.iter_mut().enumerate() {
+            if Some(i) != current {
+                e.drop_stale_texture(now, TEXTURE_KEEP);
+            }
+        }
+    }
     fn recovered(&mut self, e: Box<dyn std::any::Any + Send>) {
         let msg = e.downcast_ref::<String>().cloned().or_else(|| e.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
         self.status = format!("Something went wrong and was skipped ({msg}). Details are in crash.log (Help > Problem reports).");
@@ -5158,5 +5486,272 @@ mod tests {
         let o = a.effect_options();
         assert_eq!(o.border_width, 7);
         assert!(o.info_text.ends_with("Test"));
+    }
+
+    // ---------- work kept off the window's thread ----------
+
+    fn temp(tag: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("snagster-app-test-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    /// Wait for the job queue and hand its results to the app, as a frame does.
+    fn settle(a: &mut SnagApp) {
+        let ctx = egui::Context::default();
+        assert!(a.jobs.wait_idle(Duration::from_secs(20)), "the jobs never finished");
+        for apply in a.jobs.finished(usize::MAX) {
+            apply(a, &ctx);
+        }
+    }
+
+    fn quiet_after_capture(a: &mut SnagApp, folder: &std::path::Path) {
+        a.settings.library_folder = folder.join("Library").display().to_string();
+        a.settings.save_folder = folder.display().to_string();
+        a.settings.after_copy = false;
+        a.settings.after_save = false;
+        a.settings.after_pin = false;
+        a.settings.after_library = true;
+        a.pending_panel = None;
+        a.pending_preset = None;
+    }
+
+    #[test]
+    fn a_capture_is_in_recent_at_once_and_in_the_library_soon_after() {
+        let dir = temp("capture");
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        quiet_after_capture(&mut a, &dir);
+        a.lib_loaded = true;
+        let t = Instant::now();
+        a.finish_capture(RgbaImage::from_pixel(1200, 800, image::Rgba([1, 2, 3, 255])), "Editor", "Notes", "Window", None);
+        assert_eq!(a.entries.len(), 1, "Recent has it straight away");
+        assert!(a.status.starts_with("Captured 1200 x 800."), "{}", a.status);
+        assert!(t.elapsed() < Duration::from_secs(2));
+        settle(&mut a);
+        assert_eq!(a.lib_items.len(), 1, "the open library got it without a rescan");
+        assert_eq!(a.lib_items[0].meta.title, "Editor");
+        assert_eq!(a.lib_items[0].meta.app, "Notes");
+        assert!(a.lib_items[0].path.exists());
+        assert!(a.lib_thumbs.contains_key(&a.lib_items[0].path), "its thumbnail is ready");
+        assert!(a.lib_loaded, "no rescan was asked for");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_capture_during_a_library_scan_is_merged_into_it() {
+        let dir = temp("scanmerge");
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        quiet_after_capture(&mut a, &dir);
+        let (_tx, rx) = channel();
+        a.lib_scan_rx = Some((a.settings.library_folder.clone(), rx));
+        a.finish_capture(RgbaImage::from_pixel(20, 10, image::Rgba([1, 2, 3, 255])), "During", "", "Area", None);
+        settle(&mut a);
+        assert_eq!(a.lib_added.len(), 1, "kept for the scan's result");
+        assert!(a.lib_items.is_empty());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_library_error_shows_in_the_status_line() {
+        let dir = temp("liberr");
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        quiet_after_capture(&mut a, &dir);
+        // A file where the library folder should be.
+        let blocked = dir.join("not a folder");
+        std::fs::write(&blocked, b"x").unwrap();
+        a.settings.library_folder = blocked.display().to_string();
+        a.finish_capture(RgbaImage::from_pixel(20, 10, image::Rgba([1, 2, 3, 255])), "x", "", "Area", None);
+        settle(&mut a);
+        assert!(a.status.starts_with("Not added to the library"), "{}", a.status);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn quick_saves_are_written_in_the_background_to_different_files() {
+        let dir = temp("quicksave");
+        let mut a = app();
+        a.settings.save_folder = dir.display().to_string();
+        a.settings.name_pattern = "same name".into();
+        a.settings.format = crate::settings::ImageFormat::Png;
+        a.quick_save();
+        a.quick_save();
+        assert_eq!(a.saving.len(), 2, "two saves under way, two names");
+        settle(&mut a);
+        assert!(a.saving.is_empty());
+        let p = a.entries[0].path.clone().expect("the picture knows its file");
+        assert!(p.exists());
+        let files = std::fs::read_dir(&dir).unwrap().count();
+        assert_eq!(files, 2, "the second save didn't overwrite the first");
+        assert!(a.settings.recent_files.first().is_some_and(|f| *f == p.display().to_string()));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_failed_background_save_says_so() {
+        let dir = temp("savefail");
+        let mut a = app();
+        let blocked = dir.join("file");
+        std::fs::write(&blocked, b"x").unwrap();
+        a.save_in_background(0, blocked.join("inside.png"));
+        settle(&mut a);
+        assert!(a.status.starts_with("Couldn't save"), "{}", a.status);
+        assert!(a.entries[0].path.is_none());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_save_finds_its_picture_after_recent_changed() {
+        let dir = temp("saveid");
+        let mut a = app();
+        let p = dir.join("one.png");
+        a.save_in_background(0, p.clone());
+        // Another picture comes first in the list before the save finishes.
+        a.entries.insert(0, Entry::new("Other".into(), Doc::new(RgbaImage::new(4, 4))));
+        settle(&mut a);
+        assert!(a.entries[0].path.is_none());
+        assert_eq!(a.entries[1].path.as_deref(), Some(p.as_path()));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    fn gif_editor_with(msgs: Vec<GifMsg>) -> GifEditor {
+        let (tx, rx) = channel();
+        for m in msgs {
+            tx.send(m).unwrap();
+        }
+        GifEditor::loading_from(PathBuf::from("t.gif"), rx)
+    }
+
+    fn frame(w: u32) -> GifMsg {
+        GifMsg::Frame(RgbaImage::new(w, 10), 100)
+    }
+
+    #[test]
+    fn gif_frames_arrive_a_few_per_paint() {
+        let ctx = egui::Context::default();
+        let mut msgs: Vec<GifMsg> = (0..20).map(|_| frame(30)).collect();
+        msgs.push(GifMsg::Done(Ok(())));
+        let mut g = gif_editor_with(msgs);
+        assert_eq!(g.take_frames(&ctx, 8), GifLoad::Loading);
+        assert_eq!(g.frames.len(), 8);
+        assert_eq!(g.size, vec2(30.0, 10.0), "sized by the first frame");
+        assert_eq!(g.trim, (0, 7), "the kept range follows the frames");
+        assert_eq!(g.take_frames(&ctx, 8), GifLoad::Loading);
+        assert_eq!(g.take_frames(&ctx, 8), GifLoad::Done);
+        assert_eq!(g.frames.len(), 20);
+        assert_eq!(g.trim, (0, 19));
+        assert!(g.loading.is_none());
+        assert_eq!(g.take_frames(&ctx, 8), GifLoad::Done);
+    }
+
+    #[test]
+    fn a_kept_range_set_while_loading_stays() {
+        let ctx = egui::Context::default();
+        let mut g = gif_editor_with((0..6).map(|_| frame(5)).collect());
+        g.take_frames(&ctx, 3);
+        g.trim = (1, 2);
+        g.take_frames(&ctx, 3);
+        assert_eq!(g.frames.len(), 6);
+        assert_eq!(g.trim, (1, 2));
+    }
+
+    #[test]
+    fn gif_that_cant_be_read_or_is_empty_fails() {
+        let ctx = egui::Context::default();
+        let mut bad = gif_editor_with(vec![GifMsg::Done(Err("broken".into()))]);
+        assert_eq!(bad.take_frames(&ctx, 8), GifLoad::Failed("broken".into()));
+        let mut empty = gif_editor_with(vec![GifMsg::Done(Ok(()))]);
+        assert_eq!(empty.take_frames(&ctx, 8), GifLoad::Failed(String::new()));
+        // The reading thread stopped without saying it was done.
+        let (tx, rx) = channel::<GifMsg>();
+        drop(tx);
+        let mut gone = GifEditor::loading_from(PathBuf::from("t.gif"), rx);
+        assert!(matches!(gone.take_frames(&ctx, 8), GifLoad::Failed(_)));
+    }
+
+    #[test]
+    fn waiting_gif_frames_dont_end_loading() {
+        let ctx = egui::Context::default();
+        let (_tx, rx) = channel::<GifMsg>();
+        let mut g = GifEditor::loading_from(PathBuf::from("t.gif"), rx);
+        assert_eq!(g.take_frames(&ctx, 8), GifLoad::Loading);
+        assert!(g.loading.is_some());
+    }
+
+    #[test]
+    fn open_gif_returns_at_once_and_a_missing_file_says_so() {
+        let ctx = egui::Context::default();
+        let mut a = app();
+        let t = Instant::now();
+        a.open_gif(&ctx, std::env::temp_dir().join("snagster-no-such-file-xyz.gif"));
+        assert!(t.elapsed() < Duration::from_millis(500));
+        assert!(a.gif_open && a.gif_editor.is_some());
+        let until = Instant::now() + Duration::from_secs(10);
+        while a.gif_editor.is_some() && Instant::now() < until {
+            a.poll_gif_load(&ctx);
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        assert!(a.gif_editor.is_none());
+        assert!(a.status.starts_with("Couldn't open the GIF"), "{}", a.status);
+    }
+
+    #[test]
+    fn unseen_textures_are_let_go_and_made_again() {
+        let ctx = egui::Context::default();
+        let mut a = app();
+        a.entries[0].texture(&ctx);
+        let now = Instant::now();
+        assert!(!a.entries[0].drop_stale_texture(now, TEXTURE_KEEP), "just drawn");
+        assert!(a.entries[0].drop_stale_texture(now + TEXTURE_KEEP, TEXTURE_KEEP));
+        assert!(a.entries[0].tex.is_none());
+        a.entries[0].texture(&ctx);
+        assert!(a.entries[0].tex.is_some(), "made again when shown");
+    }
+
+    #[test]
+    fn the_shown_picture_keeps_its_texture() {
+        let ctx = egui::Context::default();
+        let mut a = app();
+        a.entries[0].texture(&ctx);
+        let later = Instant::now() + TEXTURE_KEEP * 2;
+        a.sweep_textures(later);
+        assert!(a.entries[0].tex.is_some(), "the current picture's texture stays");
+        a.add_entry("Second".into(), Doc::new(RgbaImage::new(4, 4)));
+        a.sweep_textures(later + Duration::from_secs(1));
+        assert!(a.entries[0].tex.is_some(), "sweeps are a few seconds apart");
+        a.sweep_textures(later + Duration::from_secs(10));
+        assert!(a.entries[0].tex.is_none(), "the one not shown for long goes");
+    }
+
+    #[test]
+    fn entries_have_their_own_ids() {
+        let a = Entry::new("a".into(), Doc::new(RgbaImage::new(1, 1)));
+        let b = Entry::new("a".into(), Doc::new(RgbaImage::new(1, 1)));
+        assert_ne!(a.id, b.id);
+    }
+
+    #[test]
+    fn stamps_the_font_cant_draw_are_remembered() {
+        let ctx = egui::Context::default();
+        let mut a = app();
+        // A private-use character no emoji font has.
+        assert!(!a.stamp_ready('\u{F8FF}', 32));
+        let first = a.stamp_texture(&ctx, '\u{F8FF}', 32, [0, 0, 0, 255]);
+        assert!(a.stamp_ready('\u{F8FF}', 32), "tried once, not every frame");
+        assert_eq!(a.stamp_texture(&ctx, '\u{F8FF}', 32, [0, 0, 0, 255]), first);
+        assert!(a.stamp_texture(&ctx, POINTER_KEY, 32, [0, 0, 0, 255]).is_some());
+        assert!(a.stamp_ready(POINTER_KEY, 30), "sizes are rounded the same way");
+    }
+
+    #[test]
+    fn the_slow_frame_line_names_what_is_open() {
+        let mut a = app();
+        assert!(a.open_parts().is_empty());
+        a.library_open = true;
+        a.tool = Tool::Stamp;
+        let parts = a.open_parts();
+        assert!(parts.contains(&"Library") && parts.contains(&"stamp picker"), "{parts:?}");
+        // Not persisting (tests): nothing is written to the real crash.log.
+        a.watchdog("ui", Duration::from_secs(3));
     }
 }

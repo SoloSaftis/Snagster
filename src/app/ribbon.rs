@@ -681,7 +681,7 @@ impl SnagApp {
                         let title = self.entries[i].name.clone();
                         let base = self.settings.file_name(&title);
                         let path = crate::settings::unique_path(&p.join("Snagster"), &base, self.settings.format.ext());
-                        self.save_to(i, path);
+                        self.save_in_background(i, path);
                         ui.close();
                     }
                 }

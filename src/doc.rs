@@ -392,6 +392,61 @@ impl Shape {
         }
     }
 
+    /// Set the line width (text, steps, stamps and pointers grow with it, as when drawing).
+    /// False when the mark has no width (magnifier, spotlight, picture piece).
+    pub fn set_width(&mut self, w: f32) -> bool {
+        let w = w.clamp(0.5, 200.0);
+        match self {
+            Shape::Arrow { width, .. } | Shape::Line { width, .. } | Shape::Rect { width, .. } | Shape::Ellipse { width, .. } | Shape::Pen { width, .. } | Shape::Highlight { width, .. } => *width = w,
+            Shape::Text { size, .. } | Shape::Callout { size, .. } => *size = text_size(w),
+            Shape::Step { radius, .. } => *radius = step_radius(w),
+            Shape::Stamp { size, .. } => *size = text_size(w) * STAMP_FACTOR,
+            Shape::Pointer { size, .. } => *size = pointer_size(w),
+            Shape::Magnify { .. } | Shape::Spotlight { .. } | Shape::Image { .. } => return false,
+        }
+        true
+    }
+
+    /// Turn the shadow on or off; false when the mark has none.
+    pub fn set_shadow(&mut self, on: bool) -> bool {
+        match self {
+            Shape::Arrow { shadow, .. }
+            | Shape::Line { shadow, .. }
+            | Shape::Rect { shadow, .. }
+            | Shape::Ellipse { shadow, .. }
+            | Shape::Pen { shadow, .. }
+            | Shape::Text { shadow, .. }
+            | Shape::Callout { shadow, .. }
+            | Shape::Step { shadow, .. } => {
+                *shadow = on;
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// Fill a box or oval, or give text a background; false for other marks.
+    pub fn set_fill(&mut self, on: bool) -> bool {
+        match self {
+            Shape::Rect { fill, .. } | Shape::Ellipse { fill, .. } | Shape::Text { bg: fill, .. } => {
+                *fill = on;
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// Change the words of a text or callout (or a stamp's emoji); false for other marks.
+    pub fn set_text(&mut self, t: &str) -> bool {
+        match self {
+            Shape::Text { text, .. } | Shape::Callout { text, .. } | Shape::Stamp { emoji: text, .. } => {
+                *text = t.to_string();
+                true
+            }
+            _ => false,
+        }
+    }
+
     pub fn bounds(&self) -> Rect {
         match self {
             Shape::Arrow { a, b, width, .. } | Shape::Line { a, b, width, .. } => {
@@ -815,6 +870,27 @@ mod tests {
 
     fn close(a: Pos2, b: Pos2) -> bool {
         a.distance(b) < 1e-3
+    }
+
+    #[test]
+    fn marks_are_restyled_where_it_makes_sense() {
+        let mut r = rect_shape(Rect::from_min_size(pos2(0.0, 0.0), vec2(10.0, 10.0)), false);
+        assert!(r.set_width(5.0) && r.width() == 5.0);
+        assert!(r.set_width(9999.0) && r.width() == 200.0, "kept in range");
+        assert!(r.set_fill(true) && matches!(r, Shape::Rect { fill: true, .. }));
+        assert!(r.set_shadow(false) && !r.shadow());
+        assert!(!r.set_text("x"), "a box has no text");
+        let mut s = step(pos2(5.0, 5.0), 1);
+        assert!(s.set_width(4.0));
+        assert!(matches!(s, Shape::Step { radius, .. } if radius == step_radius(4.0)));
+        assert!(!s.set_fill(true));
+        let mut t = Shape::Text { pos: Pos2::ZERO, text: "a".into(), color: Color32::RED, size: 20.0, bg: false, shadow: false, font: String::new(), bold: false, italic: false, outline: true, align: 0 };
+        assert!(t.set_text("hello") && t.set_fill(true) && t.set_width(3.0));
+        assert!(matches!(&t, Shape::Text { text, bg: true, size, .. } if text == "hello" && *size == text_size(3.0)));
+        let mut stamp = Shape::Stamp { center: Pos2::ZERO, emoji: "x".into(), size: 30.0, color: Color32::RED };
+        assert!(stamp.set_text("\u{2b50}") && !stamp.set_shadow(true));
+        let mut m = Shape::Magnify { center: Pos2::ZERO, radius: 40.0, zoom: 2.0 };
+        assert!(!m.set_width(3.0) && !m.set_shadow(true) && !m.set_fill(true) && !m.set_text("x"));
     }
 
     #[test]

@@ -87,7 +87,7 @@ pub fn plain_text(lines: &[Line]) -> String {
     lines.iter().map(|l| l.text.as_str()).collect::<Vec<_>>().join("\n")
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RedactKinds {
     pub emails: bool,
     pub phones: bool,
@@ -95,6 +95,50 @@ pub struct RedactKinds {
     pub addresses: bool,
     pub ips: bool,
     pub urls: bool,
+}
+
+impl RedactKinds {
+    /// The names `from_names` understands, in order.
+    pub const NAMES: [&'static str; 6] = ["emails", "phones", "cards", "addresses", "ips", "urls"];
+
+    /// What the person chose to hide (Settings > Redact).
+    pub fn from_settings(s: &crate::settings::Settings) -> RedactKinds {
+        RedactKinds { emails: s.redact_emails, phones: s.redact_phones, cards: s.redact_cards, addresses: s.redact_addresses, ips: s.redact_ips, urls: s.redact_urls }
+    }
+
+    /// Only the named kinds (see `NAMES`; singular names work too).
+    pub fn from_names<S: AsRef<str>>(names: &[S]) -> Result<RedactKinds, String> {
+        let mut k = RedactKinds { emails: false, phones: false, cards: false, addresses: false, ips: false, urls: false };
+        for n in names {
+            let n = n.as_ref().trim().to_ascii_lowercase();
+            match n.as_str() {
+                "emails" | "email" => k.emails = true,
+                "phones" | "phone" => k.phones = true,
+                "cards" | "card" => k.cards = true,
+                "addresses" | "address" => k.addresses = true,
+                "ips" | "ip" => k.ips = true,
+                "urls" | "url" | "web" => k.urls = true,
+                _ => return Err(format!("unknown kind {n}; use {}", Self::NAMES.join(", "))),
+            }
+        }
+        Ok(k)
+    }
+}
+
+/// Smart redact: pixelate everything `find_sensitive` finds (in `block`-pixel squares). The
+/// new picture and what was hidden, or None when nothing was found.
+pub fn redact(doc: &crate::doc::Doc, lines: &[Line], kinds: RedactKinds, block: u32) -> Option<(crate::doc::Doc, Vec<&'static str>)> {
+    let found = find_sensitive(lines, kinds);
+    if found.is_empty() {
+        return None;
+    }
+    let mut d = doc.clone();
+    for (r, _) in &found {
+        if let Some(n) = d.blur(*r, block) {
+            d = n;
+        }
+    }
+    Some((d, found.into_iter().map(|f| f.1).collect()))
 }
 
 /// What looks sensitive: areas to blur, and a short note of what they were.
@@ -327,6 +371,35 @@ mod tests {
     fn each_line_is_searched() {
         let lines = [line("first a@b.no", 0.0), line("nothing here", 30.0), line("10.1.2.3", 60.0)];
         assert_eq!(kinds(&lines, ALL), vec!["email", "IP address"]);
+    }
+
+    #[test]
+    fn kinds_come_from_the_settings_or_by_name() {
+        let s = crate::settings::Settings { redact_urls: true, redact_phones: false, ..Default::default() };
+        let k = RedactKinds::from_settings(&s);
+        assert!(k.urls && !k.phones && k.emails && k.cards && k.addresses && k.ips);
+        assert_eq!(RedactKinds::from_names(&RedactKinds::NAMES).unwrap(), ALL);
+        assert_eq!(RedactKinds::from_names::<&str>(&[]).unwrap(), NONE);
+        assert_eq!(RedactKinds::from_names(&["Email", " url ", "address"]).unwrap(), RedactKinds { emails: true, urls: true, addresses: true, ..NONE });
+        assert_eq!(RedactKinds::from_names(&["ip", "phone", "card"]).unwrap(), RedactKinds { ips: true, phones: true, cards: true, ..NONE });
+        assert!(RedactKinds::from_names(&["names"]).unwrap_err().contains("unknown kind names"));
+    }
+
+    #[test]
+    fn redact_pixelates_what_it_finds_in_blocks() {
+        // A picture with a fine checkerboard; the "email" word sits over part of it.
+        let img = RgbaImage::from_fn(300, 40, |x, y| if (x + y) % 2 == 0 { Rgba([0, 0, 0, 255]) } else { Rgba([255, 255, 255, 255]) });
+        let d = crate::doc::Doc::new(img.clone());
+        let lines = [line("mail a@b.no", 10.0)];
+        assert!(redact(&d, &lines, NONE, 12).is_none(), "nothing asked for, nothing found");
+        assert!(redact(&d, &[line("nothing here", 0.0)], ALL, 12).is_none());
+        let (out, kinds) = redact(&d, &lines, ALL, 8).unwrap();
+        assert_eq!(kinds, ["email"]);
+        // The word box (x 50..120) is now flat in 8-pixel squares; outside it is unchanged.
+        let p = |x, y| out.image.get_pixel(x, y).0;
+        assert_eq!(p(56, 16), p(57, 17), "one block, one colour");
+        assert_eq!(out.image.get_pixel(5, 5), img.get_pixel(5, 5));
+        assert_eq!(out.image.get_pixel(250, 20), img.get_pixel(250, 20));
     }
 
     #[test]

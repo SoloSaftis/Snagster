@@ -185,12 +185,18 @@ pub fn monitors() -> Vec<MonitorInfo> {
 }
 
 /// The visible, titled windows (not Snagster, not minimised), front to back.
+///
+/// `xcap::Window::all` already lists windows front to back on Windows, macOS and Linux, so
+/// the order is kept as it comes (asking each window for its `z()` enumerates every window
+/// again, which made this O(n²)). The program name is looked up once per process.
 pub fn list_windows() -> Vec<WindowInfo> {
     let me = std::process::id();
     let Ok(all) = xcap::Window::all() else { return Vec::new() };
-    let mut out: Vec<(i32, WindowInfo)> = Vec::new();
+    let mut apps = AppNames::default();
+    let mut out: Vec<WindowInfo> = Vec::new();
     for w in all {
-        if w.pid().ok() == Some(me) || w.is_minimized().unwrap_or(true) {
+        let pid = w.pid().ok();
+        if pid == Some(me) || w.is_minimized().unwrap_or(true) {
             continue;
         }
         let title = w.title().unwrap_or_default();
@@ -200,13 +206,24 @@ pub fn list_windows() -> Vec<WindowInfo> {
         if !listable(&title, width, height) {
             continue;
         }
-        let app = w.app_name().unwrap_or_default();
+        let app = apps.get(pid, || w.app_name().unwrap_or_default());
         let label = window_label(title, &app);
-        let z = w.z().unwrap_or(0);
-        out.push((z, WindowInfo { id, label, app, x, y, width, height }));
+        out.push(WindowInfo { id, label, app, x, y, width, height });
     }
-    out.sort_by(|a, b| b.0.cmp(&a.0));
-    out.into_iter().map(|(_, w)| w).collect()
+    out
+}
+
+/// Program names by process id, so a program with many windows is looked up once.
+#[derive(Default)]
+struct AppNames(std::collections::HashMap<u32, String>);
+
+impl AppNames {
+    fn get(&mut self, pid: Option<u32>, look_up: impl FnOnce() -> String) -> String {
+        match pid {
+            Some(p) => self.0.entry(p).or_insert_with(look_up).clone(),
+            None => look_up(),
+        }
+    }
 }
 
 /// Whether a window is worth listing: it has a title and isn't tiny.
@@ -1114,6 +1131,32 @@ mod tests {
         assert!(!listable("   ", 800, 600));
         assert!(!listable("Tiny", 59, 600));
         assert!(!listable("Tiny", 800, 39));
+    }
+
+    #[test]
+    fn program_names_are_looked_up_once_per_process() {
+        let mut names = AppNames::default();
+        let mut calls = 0;
+        for _ in 0..5 {
+            assert_eq!(
+                names.get(Some(7), || {
+                    calls += 1;
+                    "Editor".into()
+                }),
+                "Editor"
+            );
+        }
+        assert_eq!(calls, 1, "one look-up for five windows of the same program");
+        assert_eq!(names.get(Some(8), || "Browser".into()), "Browser");
+        // Without a process id there is nothing to remember it by.
+        let mut unknown = 0;
+        for _ in 0..2 {
+            names.get(None, || {
+                unknown += 1;
+                String::new()
+            });
+        }
+        assert_eq!(unknown, 2);
     }
 
     #[test]
