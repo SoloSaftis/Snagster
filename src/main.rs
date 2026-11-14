@@ -302,9 +302,12 @@ fn main() -> eframe::Result {
             let _ = std::fs::create_dir_all(&dir);
             let doc = sample::sample_doc();
             let flat = render::compose(&doc);
+            // The default settings (JPEG quality 90), so the results don't depend on this
+            // computer's settings.
+            let defaults = settings::Settings::default();
             for ext in ["png", "jpg", "bmp", "gif", "webp", "tiff", "pdf", "svg"] {
                 let p = dir.join(format!("sample.{ext}"));
-                let r = export::save_image(&flat, &p, 90);
+                let r = export::save_doc(&doc, "Sample", &p, &defaults);
                 let size = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(0);
                 let back = if matches!(ext, "pdf" | "svg") { "n/a".to_string() } else { image::open(&p).map(|i| format!("{}x{}", i.width(), i.height())).unwrap_or_else(|e| e.to_string()) };
                 println!("  save {ext}: {:?}, {size} bytes, reopens as {back}", r.err());
@@ -326,11 +329,7 @@ fn main() -> eframe::Result {
                 }
                 let trimmed = effects::trim(&effects::canvas(&flat, 1500, 1000, [255, 255, 255, 255]));
                 println!("  canvas 1500x1000 then trim: {}x{}", trimmed.width(), trimmed.height());
-                let info = effects::apply(effects::Effect::CaptureInfo, &flat, &effects::EffectOptions {
-                    resize_percent: 50, border_width: 8, border_color: [0, 0, 0], shadow_size: 20, rounded_radius: 10,
-                    watermark_text: String::new(), tilt_percent: 20, brightness: 0, contrast: 0, saturation: 0,
-                    info_text: "2026-11-13  Test  Sample".into(),
-                });
+                let info = effects::apply(effects::Effect::CaptureInfo, &flat, &defaults.effect_options(effects::info_line(&["Test", "Sample"])));
                 println!("  capture info strip: {}x{}", info.width(), info.height());
                 let dp = dir.join("guide.docx");
                 let r = export::docx("Self test", &[("First".into(), flat.clone()), ("Second".into(), circle_free(&flat))], &dp);
@@ -349,8 +348,10 @@ fn main() -> eframe::Result {
             match ocr::recognize(&page) {
                 Ok(lines) => {
                     println!("text recognition read {} lines: {:?}", lines.len(), ocr::plain_text(&lines));
-                    let found = ocr::find_sensitive(&lines, ocr::RedactKinds { emails: true, phones: true, cards: true, addresses: true, ips: true, urls: true });
-                    println!("smart redact found: {:?}", found.iter().map(|f| f.1).collect::<Vec<_>>());
+                    // Every kind on purpose (web addresses too), whatever the settings say.
+                    let all = ocr::RedactKinds::from_names(&ocr::RedactKinds::NAMES).expect("the kinds' own names");
+                    let found = ocr::redact(&doc::Doc::new(page.clone()), &lines, all, defaults.blur_block).map(|(_, f)| f).unwrap_or_default();
+                    println!("smart redact found: {found:?}");
                 }
                 Err(e) => println!("text recognition failed: {e}"),
             }

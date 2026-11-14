@@ -184,6 +184,18 @@ pub fn monitors() -> Vec<MonitorInfo> {
         .collect()
 }
 
+/// The screen holding `at` (or the first one).
+pub fn monitor_at(mons: &[MonitorInfo], at: (i32, i32)) -> Option<&MonitorInfo> {
+    mons.iter().find(|m| at.0 >= m.x && at.1 >= m.y && at.0 < m.x + m.width as i32 && at.1 < m.y + m.height as i32).or(mons.first())
+}
+
+/// The desktop area of the screen under the mouse pointer (or the first screen).
+pub fn monitor_under_cursor() -> Result<(i32, i32, u32, u32), String> {
+    let mons = monitors();
+    let at = cursor_pos().unwrap_or((0, 0));
+    monitor_at(&mons, at).map(|m| (m.x, m.y, m.width, m.height)).ok_or_else(|| "no screen found".to_string())
+}
+
 /// The visible, titled windows (not Snagster, not minimised), front to back.
 ///
 /// `xcap::Window::all` already lists windows front to back on Windows, macOS and Linux, so
@@ -453,7 +465,7 @@ fn opaque(mut img: RgbaImage) -> RgbaImage {
     img
 }
 
-fn monitor_at(x: i32, y: i32) -> Result<xcap::Monitor, String> {
+fn xcap_monitor_at(x: i32, y: i32) -> Result<xcap::Monitor, String> {
     xcap::Monitor::from_point(x, y).or_else(|_| {
         let all = xcap::Monitor::all().map_err(|e| e.to_string())?;
         let primary = all.iter().position(|m| m.is_primary().unwrap_or(false)).unwrap_or(0);
@@ -519,7 +531,7 @@ pub fn crop_desktop(img: &RgbaImage, origin: (i32, i32), x: i32, y: i32, w: u32,
 
 /// A desktop rectangle, grabbed from the monitor it sits on.
 pub fn grab_rect(x: i32, y: i32, w: u32, h: u32) -> Result<RgbaImage, String> {
-    let m = monitor_at(x + w as i32 / 2, y + h as i32 / 2)?;
+    let m = xcap_monitor_at(x + w as i32 / 2, y + h as i32 / 2)?;
     let (mx, my) = (m.x().unwrap_or(0), m.y().unwrap_or(0));
     let (mw, mh) = (m.width().unwrap_or(0), m.height().unwrap_or(0));
     let lx = (x - mx).clamp(0, mw as i32) as u32;
@@ -561,7 +573,7 @@ fn grab_window(id: u32, title: String, raise: bool) -> Result<Shot, String> {
 pub fn grab(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String> {
     let at = cursor_pos().unwrap_or(fallback_at);
     match kind {
-        CaptureKind::Screen => grab_monitor(&monitor_at(at.0, at.1)?),
+        CaptureKind::Screen => grab_monitor(&xcap_monitor_at(at.0, at.1)?),
         CaptureKind::AllScreens => grab_all_screens(),
         CaptureKind::Monitor(id) => {
             let all = xcap::Monitor::all().map_err(|e| e.to_string())?;
@@ -570,7 +582,7 @@ pub fn grab(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String>
         }
         CaptureKind::Pick(..) | CaptureKind::WindowPick | CaptureKind::Fixed(..) | CaptureKind::ColorPicker | CaptureKind::Ruler => {
             let objs = objects();
-            let mut s = grab_monitor(&monitor_at(at.0, at.1)?)?;
+            let mut s = grab_monitor(&xcap_monitor_at(at.0, at.1)?)?;
             s.objects = objs;
             Ok(s)
         }
@@ -787,7 +799,7 @@ pub fn spawn_step_recorder(stop: Arc<AtomicBool>, tx: Sender<StepEvent>, ctx: ef
                 {
                     let ours = win::window_at(p.0, p.1).map(|h| win::pid_of(h) == me).unwrap_or(false);
                     if !ours
-                        && let Ok(m) = monitor_at(p.0, p.1)
+                        && let Ok(m) = xcap_monitor_at(p.0, p.1)
                         && let Ok(img) = m.capture_image()
                     {
                         let (mx, my) = (m.x().unwrap_or(0), m.y().unwrap_or(0));
@@ -1047,6 +1059,17 @@ mod tests {
     /// A tall "page" whose every row has its own colour, so rows can be told apart.
     fn page(w: u32, h: u32) -> RgbaImage {
         RgbaImage::from_fn(w, h, |x, y| Rgba([((y % 32) * 8) as u8, ((y / 32) * 8) as u8, if x % 2 == 0 { 40 } else { 200 }, 255]))
+    }
+
+    #[test]
+    fn the_screen_under_the_pointer_is_found() {
+        let m = |id, x, y| MonitorInfo { id, name: String::new(), x, y, width: 100, height: 50, primary: id == 1 };
+        let mons = [m(1, 0, 0), m(2, 100, 0), m(3, -100, 0)];
+        assert_eq!(monitor_at(&mons, (150, 10)).unwrap().id, 2);
+        assert_eq!(monitor_at(&mons, (-1, 49)).unwrap().id, 3);
+        assert_eq!(monitor_at(&mons, (0, 0)).unwrap().id, 1);
+        assert_eq!(monitor_at(&mons, (5, 500)).unwrap().id, 1, "off every screen: the first");
+        assert!(monitor_at(&[], (0, 0)).is_none());
     }
 
     fn rows(img: &RgbaImage, top: u32, h: u32) -> RgbaImage {

@@ -5,7 +5,7 @@
 use super::*;
 use crate::i18n::{t, tf};
 use crate::look::{self, ph};
-use crate::studio::{Item, Scene, SourceKind};
+use crate::studio::{Item, SourceKind};
 
 struct Rec {
     stop: Arc<AtomicBool>,
@@ -85,23 +85,14 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
     look::group(ui, t("Scenes"), |ui| {
         look::column(ui, |ui| {
             if look::small_tool(ui, ph::PLUS, t("New scene"), t("An empty scene to fill with sources"), true).clicked() {
-                let n = app.settings.studio.scenes.len() + 1;
-                app.settings.studio.scenes.push(Scene { name: tf("Scene {n}", &[("n", &n.to_string())]), items: Vec::new() });
-                app.settings.studio.current = app.settings.studio.scenes.len() - 1;
+                new_scene(&mut app.settings.studio);
             }
-            if look::small_tool(ui, ph::CARDS, t("Copy scene"), t("A copy of this scene"), true).clicked()
-                && let Some(s) = app.settings.studio.scene().cloned()
-            {
-                let mut s = s;
-                s.name = tf("{name} copy", &[("name", &s.name)]);
-                app.settings.studio.scenes.push(s);
-                app.settings.studio.current = app.settings.studio.scenes.len() - 1;
+            if look::small_tool(ui, ph::CARDS, t("Copy scene"), t("A copy of this scene"), true).clicked() {
+                copy_scene(&mut app.settings.studio);
             }
             let many = app.settings.studio.scenes.len() > 1;
             if look::small_tool(ui, ph::TRASH, t("Delete scene"), t("Remove this scene"), many).clicked() {
-                let c = app.settings.studio.current.min(app.settings.studio.scenes.len() - 1);
-                app.settings.studio.scenes.remove(c);
-                app.settings.studio.current = c.saturating_sub(1);
+                delete_scene(&mut app.settings.studio);
             }
         });
     });
@@ -232,6 +223,27 @@ fn add_source_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<Item> {
     out
 }
 
+/// New scene: an empty "Scene N" (translated), made the current one.
+fn new_scene(st: &mut crate::studio::StudioSettings) {
+    let n = st.scenes.len() + 1;
+    let i = st.add_scene(Some(&tf("Scene {n}", &[("n", &n.to_string())])));
+    let _ = st.set_current(i);
+}
+
+/// Copy scene: "<name> copy" with the same sources, made the current one.
+fn copy_scene(st: &mut crate::studio::StudioSettings) {
+    let Some(s) = st.scene().cloned() else { return };
+    let i = st.add_scene(Some(&tf("{name} copy", &[("name", &s.name)])));
+    st.scenes[i].items = s.items;
+    let _ = st.set_current(i);
+}
+
+/// Delete scene: removes the current one (never the last); the one before becomes current.
+fn delete_scene(st: &mut crate::studio::StudioSettings) {
+    let c = st.current.min(st.scenes.len().saturating_sub(1));
+    let _ = st.remove_scene(c);
+}
+
 fn add_item(app: &mut SnagApp, item: Item) {
     let c = app.settings.studio.current.min(app.settings.studio.scenes.len().saturating_sub(1));
     if let Some(scene) = app.settings.studio.scenes.get_mut(c) {
@@ -245,16 +257,9 @@ fn add_item(app: &mut SnagApp, item: Item) {
 
 pub(crate) fn start(app: &mut SnagApp, ctx: &egui::Context) {
     let Some(st) = &mut app.x.studio else { return };
-    let s = &app.settings;
-    let format = if s.rec_format == crate::video::VideoFormat::Gif { crate::video::VideoFormat::Mp4 } else { s.rec_format };
-    let name = chrono::Local::now().format("Studio_%Y-%m-%d_%H-%M-%S").to_string();
-    let path = crate::settings::unique_path(&PathBuf::from(&s.video_folder), &name, format.ext());
-    let fps = s.studio.fps.clamp(1, 120);
-    let mut opts = crate::video::VideoOpts::screen((0, 0, s.studio.width, s.studio.height), fps, format, path.clone());
-    opts.quality = s.video_quality;
-    opts.hardware = s.video_hardware;
-    opts.audio = s.audio_source;
-    opts.mic = s.audio_mic.clone();
+    // The same options the MCP server's studio_record uses.
+    let mut opts = crate::studio::video_opts(&app.settings);
+    let (fps, path) = (opts.fps, opts.path.clone());
     opts.frames = Some(st.engine.feed());
     if let Ok(mut f) = st.engine.shared.recording_fps.lock() {
         *f = Some(fps);
@@ -324,8 +329,7 @@ impl SnagApp {
             }
         }
         // Keep the engine drawing the scene as it is now, and the mixer as set.
-        let s = &self.settings.studio;
-        crate::audio::set_mix((s.system_volume, s.system_muted), (s.mic_volume, s.mic_muted));
+        self.settings.studio.apply_mix();
         if let Some(st) = &mut self.x.studio {
             if let Some(scene) = self.settings.studio.scene()
                 && let Ok(mut sh) = st.engine.shared.scene.lock()
@@ -371,8 +375,9 @@ impl SnagApp {
                 });
             }
         });
-        if let Some(i) = switch {
-            self.settings.studio.current = i;
+        if let Some(i) = switch
+            && self.settings.studio.set_current(i).is_ok()
+        {
             if let Some(s) = &mut self.x.studio {
                 s.selected = None;
             }
@@ -802,6 +807,39 @@ impl StudioUi {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::studio::Scene;
+
+    #[test]
+    fn scene_buttons_use_the_shared_scene_rules() {
+        let mut st = crate::studio::StudioSettings { scenes: vec![Scene { name: "A".into(), items: Vec::new() }], current: 0, ..Default::default() };
+        new_scene(&mut st);
+        assert_eq!((st.scenes.len(), st.current, st.scenes[1].name.as_str()), (2, 1, "Scene 2"));
+        st.scenes[1].items.push(Item { name: "x".into(), kind: SourceKind::Color { color: [0, 0, 0, 255] }, x: 0.0, y: 0.0, w: 1.0, h: 1.0, visible: true });
+        copy_scene(&mut st);
+        assert_eq!((st.scenes.len(), st.current, st.scenes[2].name.as_str(), st.scenes[2].items.len()), (3, 2, "Scene 2 copy", 1));
+        // Deleting moves to the scene before, as the button always did.
+        delete_scene(&mut st);
+        assert_eq!((st.scenes.len(), st.current), (2, 1));
+        st.current = 0;
+        delete_scene(&mut st);
+        assert_eq!((st.scenes.len(), st.current, st.scenes[0].name.as_str()), (1, 0, "Scene 2"));
+        // The last scene stays.
+        delete_scene(&mut st);
+        assert_eq!(st.scenes.len(), 1);
+    }
+
+    #[test]
+    fn studio_recording_uses_the_same_options_as_the_mcp_server() {
+        let mut s = Settings::default();
+        s.rec_format = crate::video::VideoFormat::Gif;
+        s.studio.fps = 500;
+        s.video_quality = 9;
+        let o = crate::studio::video_opts(&s);
+        assert_eq!(o.format, crate::video::VideoFormat::Mp4, "a GIF setting records MP4, as before");
+        assert_eq!((o.fps, o.quality), (120, 4));
+        assert_eq!(o.rect, (0, 0, s.studio.width, s.studio.height));
+        assert!(o.path.file_name().unwrap().to_string_lossy().starts_with("Studio_"));
+    }
 
     #[test]
     fn dragged_sources_snap_to_the_video_edges() {

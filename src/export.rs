@@ -39,9 +39,25 @@ pub fn save_image(img: &RgbaImage, path: &Path, jpeg_quality: u8) -> Result<(), 
         "bmp" => image::DynamicImage::ImageRgba8(img.clone()).to_rgb8().save(path).map_err(|e| e.to_string()),
         "pdf" => std::fs::write(path, pdf(&[(None, img.clone())], false, jpeg_quality)?).map_err(|e| e.to_string()),
         "svg" => std::fs::write(path, svg(img)?).map_err(|e| e.to_string()),
-        "gif" | "webp" | "tiff" | "tif" | "png" | "ico" => img.save(path).map_err(|e| e.to_string()),
+        "gif" => std::fs::write(path, gif_bytes(img)?).map_err(|e| e.to_string()),
+        "webp" | "tiff" | "tif" | "png" | "ico" => img.save(path).map_err(|e| e.to_string()),
         _ => img.save(path).map_err(|e| e.to_string()),
     }
+}
+
+/// How hard the GIF colour finder (NeuQuant) works on a still picture: it learns the palette
+/// from every `GIF_SPEED`th pixel. `image`'s plain save uses 1 (every pixel), which took 23 s on
+/// a 26-megapixel picture; 10 is NeuQuant's own recommended setting and looks the same.
+const GIF_SPEED: i32 = 10;
+
+/// A still picture as a GIF (exact colours when it has 256 or fewer, else a 256-colour palette).
+fn gif_bytes(img: &RgbaImage) -> Result<Vec<u8>, String> {
+    let mut out = Vec::new();
+    {
+        let mut enc = image::codecs::gif::GifEncoder::new_with_speed(&mut out, GIF_SPEED);
+        enc.encode(img.as_raw(), img.width(), img.height(), image::ExtendedColorType::Rgba8).map_err(|e| e.to_string())?;
+    }
+    Ok(out)
 }
 
 fn svg(img: &RgbaImage) -> Result<String, String> {
@@ -488,6 +504,22 @@ mod tests {
     }
 
     #[test]
+    fn still_gifs_keep_few_colours_exactly_and_quantise_many_quickly() {
+        // The palette is learnt from a sample, not every pixel (speed 1 took 23 s on a
+        // 26-megapixel picture in the button test).
+        const { assert!(GIF_SPEED >= 10 && GIF_SPEED <= 30) };
+        let few = RgbaImage::from_fn(20, 10, |x, _| if x < 10 { image::Rgba([200, 10, 10, 255]) } else { image::Rgba([10, 10, 200, 255]) });
+        let bytes = gif_bytes(&few).unwrap();
+        assert_eq!(&bytes[..6], b"GIF89a");
+        assert_eq!(image::load_from_memory(&bytes).unwrap().to_rgba8(), few, "two colours stay exact");
+        let many = RgbaImage::from_fn(300, 200, |x, y| image::Rgba([(x * 7 ^ y * 3) as u8, (x * y) as u8, (x + y * 5) as u8, 255]));
+        let back = image::load_from_memory(&gif_bytes(&many).unwrap()).unwrap().to_rgba8();
+        assert_eq!(back.dimensions(), (300, 200));
+        let err: u64 = many.pixels().zip(back.pixels()).map(|(a, b)| (0..3).map(|c| (a.0[c] as i32 - b.0[c] as i32).unsigned_abs() as u64).sum::<u64>()).sum();
+        assert!(err / (300 * 200 * 3) < 40, "the 256-colour palette is far off: {}", err / (300 * 200 * 3));
+    }
+
+    #[test]
     fn save_doc_picks_by_extension_and_uses_the_jpeg_quality() {
         let dir = TempDir::new("save-doc");
         let mut d = Doc::new(gradient(40, 30));
@@ -742,3 +774,4 @@ mod tests {
         assert_eq!(image::load_from_memory(&png).unwrap().to_rgba8(), gradient(100, 50));
     }
 }
+

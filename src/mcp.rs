@@ -547,18 +547,6 @@ impl Grabbed {
     }
 }
 
-/// The screen holding `at` (or the first one).
-fn monitor_at(mons: &[capture::MonitorInfo], at: (i32, i32)) -> Option<&capture::MonitorInfo> {
-    mons.iter().find(|m| at.0 >= m.x && at.1 >= m.y && at.0 < m.x + m.width as i32 && at.1 < m.y + m.height as i32).or(mons.first())
-}
-
-/// The desktop area of the screen under the mouse pointer (or the first screen).
-pub fn monitor_under_cursor() -> Result<(i32, i32, u32, u32), String> {
-    let mons = capture::monitors();
-    let at = capture::cursor_pos().unwrap_or((0, 0));
-    monitor_at(&mons, at).map(|m| (m.x, m.y, m.width, m.height)).ok_or_else(|| "no screen found".to_string())
-}
-
 /// A video format argument: one this system can make (GIFs come from record_gif).
 fn video_format_arg(f: &str) -> Result<crate::video::VideoFormat, String> {
     use crate::video::VideoFormat;
@@ -667,7 +655,7 @@ impl Workspace {
             img = render::cut_to_shape(&img, shape, &ca.points);
         }
         if !fx.is_empty() {
-            let opts = s.effect_options(format!("{}   {}   {}", chrono::Local::now().format("%Y-%m-%d %H:%M"), g.app, g.title));
+            let opts = s.effect_options(effects::info_line(&[&g.app, &g.title]));
             for e in fx {
                 img = effects::apply(*e, &img, &opts);
             }
@@ -921,7 +909,7 @@ impl Workspace {
                     .into_iter()
                     .find(|e| format!("{e:?}").eq_ignore_ascii_case(want) || e.label().eq_ignore_ascii_case(want))
                     .ok_or_else(|| format!("unknown effect; use one of {}", effect_names().join(", ")))?;
-                let opts = self.settings().effect_options(format!("{}   {}", chrono::Local::now().format("%Y-%m-%d %H:%M"), self.name));
+                let opts = self.settings().effect_options(effects::info_line(&[&self.name]));
                 self.flatten_with(|i| effects::apply(e, i, &opts))?;
                 Ok(vec![text(format!("{} applied.", e.label()))])
             }
@@ -984,7 +972,7 @@ impl Workspace {
                     let m = capture::monitors().into_iter().find(|m| m.id == id as u32).ok_or("no such monitor (see list_monitors)")?;
                     (m.x, m.y, m.width, m.height)
                 } else {
-                    monitor_under_cursor()?
+                    capture::monitor_under_cursor()?
                 };
                 let mut opts = crate::video::VideoOpts::from_settings(&s, rect);
                 opts.format = format;
@@ -1035,7 +1023,7 @@ impl Workspace {
                     let r = rect_arg(a)?;
                     (r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32)
                 } else {
-                    monitor_under_cursor()?
+                    capture::monitor_under_cursor()?
                 };
                 let secs = num(a, "seconds").unwrap_or(5.0).clamp(1.0, 120.0) as u32;
                 let fps = num(a, "fps").map(|f| f.clamp(1.0, 30.0) as u32).unwrap_or(s.gif_fps.clamp(1, 30));
@@ -2603,17 +2591,6 @@ mod tests {
         }
         assert!(err_of(ws.call("capture_region", &json!({"x": 0, "y": 0, "width": 5, "height": 5, "delay_s": 99}))).contains("0-60"));
         assert!(err_of(ws.call("capture_last_area", &json!({}))).contains("capture_region first"));
-    }
-
-    #[test]
-    fn the_screen_under_the_pointer_is_found() {
-        let m = |id, x, y| capture::MonitorInfo { id, name: String::new(), x, y, width: 100, height: 50, primary: id == 1 };
-        let mons = [m(1, 0, 0), m(2, 100, 0), m(3, -100, 0)];
-        assert_eq!(monitor_at(&mons, (150, 10)).unwrap().id, 2);
-        assert_eq!(monitor_at(&mons, (-1, 49)).unwrap().id, 3);
-        assert_eq!(monitor_at(&mons, (0, 0)).unwrap().id, 1);
-        assert_eq!(monitor_at(&mons, (5, 500)).unwrap().id, 1, "off every screen: the first");
-        assert!(monitor_at(&[], (0, 0)).is_none());
     }
 
     #[test]

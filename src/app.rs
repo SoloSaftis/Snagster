@@ -813,8 +813,7 @@ impl SnagApp {
     pub(crate) fn finish_capture(&mut self, mut img: RgbaImage, title: &str, app: &str, kind: &str, cursor: Option<Pos2>) {
         let preset = self.pending_preset.take().and_then(|i| self.settings.presets.get(i).cloned());
         let panel_job = self.pending_panel.take();
-        let mut opts = self.effect_options();
-        opts.info_text = format!("{}   {}   {}", chrono::Local::now().format("%Y-%m-%d %H:%M"), app, title);
+        let opts = self.settings.effect_options(effects::info_line(&[app, title]));
         if let Some((Some(e), _)) = &panel_job {
             img = effects::apply(*e, &img, &opts);
         }
@@ -966,15 +965,9 @@ impl SnagApp {
             self.mini_restore = Some((pos2(o.min.x * ppp, o.min.y * ppp), i.size()));
         }
         let (bw, bh) = (420.0, 56.0);
-        let at = capture::cursor_pos().unwrap_or((0, 0));
-        let mons = capture::monitors();
-        let m = mons
-            .iter()
-            .find(|m| at.0 >= m.x && at.1 >= m.y && at.0 < m.x + m.width as i32 && at.1 < m.y + m.height as i32)
-            .or(mons.first());
-        if let Some(m) = m {
-            let x = (m.x + m.width as i32) as f32 - (bw + 24.0) * ppp;
-            let y = (m.y + m.height as i32) as f32 - (bh + 72.0) * ppp;
+        if let Ok((mx, my, mw, mh)) = capture::monitor_under_cursor() {
+            let x = (mx + mw as i32) as f32 - (bw + 24.0) * ppp;
+            let y = (my + mh as i32) as f32 - (bh + 72.0) * ppp;
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
             ctx.send_viewport_cmd(egui::ViewportCommand::MinInnerSize(vec2(200.0, 40.0)));
             ctx.send_viewport_cmd(egui::ViewportCommand::Decorations(false));
@@ -1038,24 +1031,11 @@ impl SnagApp {
         }
     }
 
-    /// The options a video recording of `rect` gets from the settings.
+    /// The options a video recording of `rect` gets from the settings (the same ones the MCP
+    /// server's record_video uses). GIFs don't come here: `start_record` sends them to
+    /// `start_gif`.
     pub(crate) fn video_opts(&self, rect: (i32, i32, u32, u32)) -> crate::video::VideoOpts {
-        let s = &self.settings;
-        let folder = PathBuf::from(&s.video_folder);
-        let name = chrono::Local::now().format("Recording_%Y-%m-%d_%H-%M-%S").to_string();
-        crate::video::VideoOpts {
-            rect,
-            fps: s.video_fps.clamp(1, 120),
-            format: s.rec_format,
-            quality: s.video_quality,
-            hardware: s.video_hardware,
-            cursor: s.gif_cursor,
-            max_s: s.video_max_s,
-            path: crate::settings::unique_path(&folder, &name, s.rec_format.ext()),
-            audio: s.audio_source,
-            mic: s.audio_mic.clone(),
-            frames: None,
-        }
+        crate::video::VideoOpts::from_settings(&self.settings, rect)
     }
 
     pub(crate) fn start_video(&mut self, ctx: &egui::Context, rect: (i32, i32, u32, u32)) {
@@ -1083,12 +1063,7 @@ impl SnagApp {
 
     /// The display under the mouse pointer (or the first one), as a desktop area.
     pub(crate) fn screen_under_pointer(&self) -> Option<(i32, i32, u32, u32)> {
-        let at = capture::cursor_pos().unwrap_or((0, 0));
-        let mons = capture::monitors();
-        mons.iter()
-            .find(|m| at.0 >= m.x && at.1 >= m.y && at.0 < m.x + m.width as i32 && at.1 < m.y + m.height as i32)
-            .or(mons.first())
-            .map(|m| (m.x, m.y, m.width, m.height))
+        capture::monitor_under_cursor().ok()
     }
 
     /// Pause or carry on with a video recording.
@@ -1137,9 +1112,7 @@ impl SnagApp {
     pub(crate) fn start_gif(&mut self, ctx: &egui::Context, rect: (i32, i32, u32, u32)) {
         let stop = Arc::new(AtomicBool::new(false));
         self.job_stop = Some(stop.clone());
-        let folder = PathBuf::from(&self.settings.video_folder);
-        let name = chrono::Local::now().format("Recording_%Y-%m-%d_%H-%M-%S").to_string();
-        let path = crate::settings::unique_path(&folder, &name, "gif");
+        let path = crate::video::recording_path(&self.settings.video_folder, "Recording", "gif");
         self.enter_mini(ctx, Mini::Gif);
         capture::spawn_gif_recorder(
             rect,
@@ -1340,32 +1313,16 @@ impl SnagApp {
                 }
             }
             OcrPurpose::Redact(i) => {
-                let s = &self.settings;
-                let kinds = ocr::RedactKinds {
-                    emails: s.redact_emails,
-                    phones: s.redact_phones,
-                    cards: s.redact_cards,
-                    addresses: s.redact_addresses,
-                    ips: s.redact_ips,
-                    urls: s.redact_urls,
-                };
-                let found = ocr::find_sensitive(&lines, kinds);
+                let kinds = ocr::RedactKinds::from_settings(&self.settings);
                 let block = self.settings.blur_block;
                 if let Some(e) = self.entries.get_mut(i) {
-                    if found.is_empty() {
-                        self.status = "Nothing sensitive was found.".into();
-                    } else {
-                        e.push_undo();
-                        let mut d = e.doc.clone();
-                        for (r, _) in &found {
-                            if let Some(nd) = d.blur(*r, block) {
-                                d = nd;
-                            }
+                    match ocr::redact(&e.doc, &lines, kinds, block) {
+                        None => self.status = "Nothing sensitive was found.".into(),
+                        Some((d, found)) => {
+                            e.push_undo();
+                            e.doc = d;
+                            self.status = redact_status(&found);
                         }
-                        e.doc = d;
-                        let mut kinds: Vec<&str> = found.iter().map(|f| f.1).collect();
-                        kinds.dedup();
-                        self.status = format!("Blurred {} items ({}). Undo brings them back.", found.len(), kinds.join(", "));
                     }
                 }
             }
@@ -1509,7 +1466,7 @@ impl SnagApp {
     }
 
     pub(crate) fn save_to(&mut self, i: usize, path: PathBuf) {
-        let result = write_doc(&self.entries[i].doc, &self.entries[i].name, &path, self.settings.jpeg_quality);
+        let result = export::save_doc(&self.entries[i].doc, &self.entries[i].name, &path, &self.settings);
         self.status = match result {
             Ok(()) => {
                 self.entries[i].path = Some(path.clone());
@@ -1571,11 +1528,11 @@ impl SnagApp {
     /// `save_to`, on the job queue.
     pub(crate) fn save_in_background(&mut self, i: usize, path: PathBuf) {
         let Some(e) = self.entries.get(i) else { return };
-        let (id, doc, name, quality) = (e.id, e.doc.clone(), e.name.clone(), self.settings.jpeg_quality);
+        let (id, doc, name, settings) = (e.id, e.doc.clone(), e.name.clone(), self.settings.clone());
         self.saving.insert(path.clone());
         self.status = format!("Saved {}", path.display());
         self.jobs.queue(move || {
-            let r = write_doc(&doc, &name, &path, quality);
+            let r = export::save_doc(&doc, &name, &path, &settings);
             Box::new(move |app: &mut SnagApp, _: &egui::Context| app.saved(id, path, r))
         });
     }
@@ -1617,7 +1574,7 @@ impl SnagApp {
         self.commit_text();
         let Some(i) = self.current else { return };
         let path = std::env::temp_dir().join(format!("snag-share-{}.png", chrono::Local::now().format("%H%M%S")));
-        if let Err(e) = export::save_image(&render::compose(&self.entries[i].doc), &path, 90) {
+        if let Err(e) = export::save_doc(&self.entries[i].doc, &self.entries[i].name, &path, &self.settings) {
             self.status = format!("Couldn't prepare the file: {e}");
             return;
         }
@@ -1750,23 +1707,11 @@ impl SnagApp {
         }
     }
 
+    /// The effect settings with the current picture's name as capture info (what the MCP
+    /// server's apply_effect uses for the same settings and name).
     pub(crate) fn effect_options(&self) -> EffectOptions {
-        EffectOptions {
-            resize_percent: self.settings.resize_percent,
-            border_width: self.settings.border_width,
-            border_color: self.settings.border_color,
-            shadow_size: self.settings.shadow_size,
-            rounded_radius: self.settings.rounded_radius,
-            watermark_text: self.settings.watermark_text.clone(),
-            tilt_percent: self.settings.tilt_percent,
-            brightness: self.settings.brightness,
-            contrast: self.settings.contrast,
-            saturation: self.settings.saturation,
-            info_text: {
-                let name = self.current.map(|i| self.entries[i].name.clone()).unwrap_or_default();
-                format!("{}   {}", chrono::Local::now().format("%Y-%m-%d %H:%M"), name)
-            },
-        }
+        let name = self.current.and_then(|i| self.entries.get(i)).map(|e| e.name.as_str()).unwrap_or_default();
+        self.settings.effect_options(effects::info_line(&[name]))
     }
 
     fn apply_effect(&mut self, eff: Effect) {
@@ -2431,9 +2376,7 @@ impl SnagApp {
         let docs: Vec<Doc> = self.entries.iter().map(|e| e.doc.clone()).collect();
         let max_w = self.settings.gif_max_width;
         let ms = (self.settings.slideshow_s.clamp(0.2, 30.0) * 1000.0) as u32;
-        let folder = PathBuf::from(&self.settings.video_folder);
-        let name = chrono::Local::now().format("Slideshow_%Y-%m-%d_%H-%M-%S").to_string();
-        let path = work::free_path(crate::settings::unique_path(&folder, &name, "gif"), &self.saving);
+        let path = work::free_path(crate::video::recording_path(&self.settings.video_folder, "Slideshow", "gif"), &self.saving);
         self.saving.insert(path.clone());
         self.jobs.queue(move || {
             let imgs: Vec<RgbaImage> = docs.iter().map(render::compose).collect();
@@ -3943,11 +3886,11 @@ fn clean_file_name(name: &str) -> String {
     name.chars().map(|c| if bad.contains(&c) { '_' } else { c }).collect()
 }
 
-/// Write a picture to `path`: a Snagster project for `.snag`, otherwise the picture with its
-/// marks in the format the extension names.
-fn write_doc(doc: &Doc, name: &str, path: &std::path::Path, jpeg_quality: u8) -> Result<(), String> {
-    let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
-    if ext == "snag" { export::save_project(doc, name, path) } else { export::save_image(&render::compose(doc), path, jpeg_quality) }
+/// The status line after Smart Redact hid `found` (one name per item, as `ocr::redact` gives).
+fn redact_status(found: &[&str]) -> String {
+    let mut kinds = found.to_vec();
+    kinds.dedup();
+    format!("Blurred {} items ({}). Undo brings them back.", found.len(), kinds.join(", "))
 }
 
 /// The picture on the clipboard, if there is one.
@@ -4684,7 +4627,7 @@ impl SnagApp {
         let i = self.current?;
         let base = temp_base(&self.entries[i].name);
         let path = std::env::temp_dir().join(format!("{base}_{}.png", chrono::Local::now().format("%H%M%S")));
-        export::save_image(&render::compose(&self.entries[i].doc), &path, 92).ok()?;
+        export::save_doc(&self.entries[i].doc, &self.entries[i].name, &path, &self.settings).ok()?;
         Some(path)
     }
 
@@ -5486,6 +5429,67 @@ mod tests {
         let o = a.effect_options();
         assert_eq!(o.border_width, 7);
         assert!(o.info_text.ends_with("Test"));
+    }
+
+    #[test]
+    fn the_window_and_the_mcp_server_make_the_same_effect_options() {
+        let mut a = app();
+        a.settings.border_width = 9;
+        a.settings.watermark_text = "Mine".into();
+        a.settings.tilt_percent = 33;
+        let ui = a.effect_options();
+        // What the MCP server's apply_effect builds for a picture of the same name.
+        let mcp = a.settings.effect_options(effects::info_line(&["Test"]));
+        // (The clock can tick over a minute between the two.)
+        assert_eq!(EffectOptions { info_text: String::new(), ..ui.clone() }, EffectOptions { info_text: String::new(), ..mcp });
+        assert!(ui.info_text.ends_with("   Test"));
+        // No picture open: no name, and no panic on a stale index.
+        a.current = Some(99);
+        assert!(a.effect_options().info_text.ends_with("   "));
+    }
+
+    #[test]
+    fn video_recordings_use_the_same_options_as_the_mcp_server() {
+        use crate::video::{VideoFormat, VideoOpts};
+        let mut a = app();
+        a.settings.video_fps = 500;
+        a.settings.video_quality = 3;
+        a.settings.video_max_s = 7;
+        a.settings.gif_cursor = false;
+        a.settings.video_folder = std::env::temp_dir().join("snagster-vopts").to_string_lossy().into();
+        let rect = (10, 20, 320, 240);
+        let (ui, mcp) = (a.video_opts(rect), VideoOpts::from_settings(&a.settings, rect));
+        assert_eq!((ui.rect, ui.fps, ui.format, ui.quality, ui.hardware, ui.cursor, ui.max_s, ui.audio), (mcp.rect, mcp.fps, mcp.format, mcp.quality, mcp.hardware, mcp.cursor, mcp.max_s, mcp.audio));
+        assert_eq!((ui.fps, ui.max_s, ui.cursor, ui.rect), (120, 7, false, rect));
+        assert_eq!(ui.path.parent(), mcp.path.parent());
+        assert!(ui.path.file_name().unwrap().to_string_lossy().starts_with("Recording_"));
+        // GIF still records a GIF from the window: start_record sends it to start_gif before
+        // video options are made.
+        a.settings.rec_format = VideoFormat::Gif;
+        assert_eq!(a.video_opts(rect).format, VideoFormat::Mp4);
+    }
+
+    #[test]
+    fn redact_reports_what_it_hid() {
+        assert_eq!(redact_status(&["email", "email", "phone number"]), "Blurred 3 items (email, phone number). Undo brings them back.");
+    }
+
+    #[test]
+    fn saving_uses_the_jpeg_quality_setting_and_writes_word_documents() {
+        let d = temp("save-quality");
+        let mut a = app();
+        a.settings.jpeg_quality = 100;
+        a.save_to(0, d.join("hi.jpg"));
+        a.settings.jpeg_quality = 5;
+        a.save_to(0, d.join("lo.jpg"));
+        let size = |n: &str| std::fs::metadata(d.join(n)).unwrap().len();
+        assert!(size("lo.jpg") < size("hi.jpg"), "the quality setting is used");
+        a.save_to(0, d.join("pic.docx"));
+        assert!(std::fs::read(d.join("pic.docx")).unwrap().starts_with(b"PK"), "{}", a.status);
+        a.save_in_background(0, d.join("bg.jpg"));
+        settle(&mut a);
+        assert!(d.join("bg.jpg").exists());
+        let _ = std::fs::remove_dir_all(&d);
     }
 
     // ---------- work kept off the window's thread ----------

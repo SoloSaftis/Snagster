@@ -30,7 +30,7 @@ Windows · Mac · Linux · 86 languages · works offline · written in Rust · f
 - **Your language** – 86 languages, picked automatically from your computer and changeable at any time; right-to-left languages read right to left.
 - **A ribbon like Word's** – tabs for Home, Capture, Record, Studio, Edit, Image, Share, View and Help, every tool with an icon and an explanation when you point at it.
 - **Keeps itself up to date** – Snagster checks for a new version once a day (you can turn it off) and installs it with one click.
-- **For AI apps** – Snagster is an MCP server with 51 tools: Claude, ChatGPT, Cursor, VS Code and local AI (Ollama, LM Studio, llama.cpp through apps such as Open WebUI) can capture, mark up, read text, record videos and run Studio.
+- **For AI apps** – Snagster is an MCP server with 62 tools: Claude, ChatGPT, Cursor, VS Code and local AI (Ollama, LM Studio, llama.cpp through apps such as Open WebUI) can capture, mark up, read text, record videos and run Studio.
 
 **Your pictures stay on your computer.** No account, no ads, no tracking. Nothing is sent anywhere
 (the only time Snagster goes online is the daily look for a new version, which you can switch off).
@@ -100,7 +100,7 @@ snagster mcp-http --port 45831
 The server only listens on this computer, refuses web pages from other sites, and can require a
 password (`Authorization: Bearer ...`).
 
-**What an AI can do** (51 tools): capture the screen, a window, an area or a scrolling page; read text;
+**What an AI can do** (62 tools): capture the screen, a window, an area or a scrolling page; read text;
 add arrows, boxes, text, steps and blur; crop, resize and apply effects; undo and redo; save in every
 format; make PDF, Word and web-page guides; search and add to the library; record videos with sound at
 1–120 fps; set up and record Studio scenes; read and change settings; switch language; check for

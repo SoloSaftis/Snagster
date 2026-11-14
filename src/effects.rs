@@ -78,6 +78,7 @@ impl Effect {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct EffectOptions {
     pub resize_percent: u32,
     pub border_width: u32,
@@ -404,6 +405,17 @@ pub fn guide_page(title: &str, items: &[(String, RgbaImage)], width: u32) -> Opt
     Some(out)
 }
 
+/// The capture-info text: the date and time now, then each part (app, title or picture name),
+/// three spaces apart. The window and the MCP server both use this.
+pub fn info_line(parts: &[&str]) -> String {
+    let mut s = chrono::Local::now().format("%Y-%m-%d %H:%M").to_string();
+    for p in parts {
+        s.push_str("   ");
+        s.push_str(p);
+    }
+    s
+}
+
 /// Add a strip under the picture with when and where it was captured.
 fn capture_info(img: &RgbaImage, info: &str) -> RgbaImage {
     let size = (img.width() as f32 * 0.018).clamp(13.0, 28.0);
@@ -493,6 +505,16 @@ pub fn grid(images: &[RgbaImage], cols: u32, gap: u32, labels: &[&str]) -> Optio
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_info_line_is_the_time_then_each_part() {
+        let s = info_line(&["app.exe", "Title"]);
+        let (when, rest) = s.split_at(16);
+        assert!(chrono::NaiveDateTime::parse_from_str(when, "%Y-%m-%d %H:%M").is_ok(), "{s}");
+        assert_eq!(rest, "   app.exe   Title");
+        assert_eq!(info_line(&[]).len(), 16);
+        assert!(info_line(&[""]).ends_with("   "), "an empty name keeps the gap, as before");
+    }
 
     fn opts() -> EffectOptions {
         EffectOptions {

@@ -791,7 +791,7 @@ impl Workspace {
                 let (mx, my) = match (num(a, "x"), num(a, "y")) {
                     (Some(x), Some(y)) => (x as i32, y as i32),
                     _ => {
-                        let m = super::monitor_under_cursor()?;
+                        let m = crate::capture::monitor_under_cursor()?;
                         (m.0, m.1)
                     }
                 };

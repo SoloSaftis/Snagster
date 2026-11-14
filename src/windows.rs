@@ -1452,7 +1452,7 @@ impl SnagApp {
             let title = self.entries[i].name.clone();
             let base = self.settings.file_name(&title);
             let path = crate::settings::unique_path(folder, &base, format.ext());
-            match export::save_image(&crate::render::compose(&self.entries[i].doc), &path, self.settings.jpeg_quality) {
+            match export::save_doc(&self.entries[i].doc, &title, &path, &self.settings) {
                 Ok(()) => ok += 1,
                 Err(e) => last_err = Some(e),
             }
