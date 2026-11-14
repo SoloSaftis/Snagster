@@ -512,12 +512,14 @@ fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEnco
     let mut buf = vec![0u8; w as usize * h as usize * 4];
     let frame_us = 1_000_000.0 / fps as f64;
     let mut n: u64 = 0;
+    // Sleeps that overrun (a virtual machine's) must not slow the frame rate.
+    let mut pacer = crate::video::Pacer::default();
     while !sh.stop.load(Ordering::Relaxed) {
         // The frame's place on the timeline; frames we fell behind on are skipped, not queued.
         let due = started + Duration::from_micros((n as f64 * frame_us) as u64);
         let now = Instant::now();
         if due > now {
-            std::thread::sleep(due - now);
+            pacer.wait_until(due);
         } else if now - due > Duration::from_micros(frame_us as u64) {
             let caught_up = (now.duration_since(started).as_micros() as f64 / frame_us) as u64;
             sh.timing.late.fetch_add(caught_up.saturating_sub(n), Ordering::Relaxed);

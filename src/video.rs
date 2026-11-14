@@ -663,11 +663,70 @@ fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, 
 /// the copy on its own (a sleep that overruns isn't the copy's fault).
 #[cfg(not(windows))]
 fn sleep_until(until: Instant) {
-    let now = Instant::now();
-    if until > now {
-        std::thread::sleep(until - now);
-    }
+    PACER.with(|p| p.borrow_mut().wait_until(until));
     WOKE.with(|w| w.set(Some(Instant::now())));
+}
+
+/// What `Pacer` does next with `left` to wait when sleeps overrun by about `overshoot`.
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Wait {
+    Done,
+    /// Sleep this long (the rest, less what the sleep will overrun by).
+    Sleep(Duration),
+    /// Too close for a sleep to end in time: give the processor away briefly and look again.
+    Yield,
+}
+
+fn next_wait(left: Duration, overshoot: Duration) -> Wait {
+    // A little margin on top of the usual overrun; sleeps shorter than 0.2 ms aren't worth it.
+    let margin = overshoot + Duration::from_micros(200);
+    if left.is_zero() {
+        Wait::Done
+    } else if left > margin + Duration::from_micros(200) {
+        Wait::Sleep(left - margin)
+    } else {
+        Wait::Yield
+    }
+}
+
+/// Waits until a moment on time even where sleeps run long. It learns how much this system's
+/// sleeps overrun and sleeps that much less, finishing the last part by yielding. On a normal
+/// computer sleeps overrun by a fraction of a millisecond, so it nearly only sleeps; the CI
+/// Mac (a virtual machine) overran a 5 ms sleep by 25 ms, which held a 30 fps stream to 17.
+#[derive(Debug, Default)]
+pub struct Pacer {
+    overshoot: Duration,
+}
+
+impl Pacer {
+    /// Fold one sleep's overrun into the estimate: rises quickly (being late is what hurts),
+    /// falls slowly (one quick wake-up proves little). Capped at 30 ms so a 30 fps frame still
+    /// starts with a sleep, which keeps the estimate learning after a one-off stall.
+    fn learn(&mut self, over: Duration) {
+        let over = over.min(Self::MOST);
+        self.overshoot = if over > self.overshoot { (self.overshoot + over * 3) / 4 } else { (self.overshoot * 15 + over) / 16 };
+    }
+
+    const MOST: Duration = Duration::from_millis(30);
+
+    pub fn wait_until(&mut self, until: Instant) {
+        loop {
+            let now = Instant::now();
+            match next_wait(until.saturating_duration_since(now), self.overshoot) {
+                Wait::Done => return,
+                Wait::Sleep(d) => {
+                    std::thread::sleep(d);
+                    self.learn(now.elapsed().saturating_sub(d));
+                }
+                Wait::Yield => std::thread::yield_now(),
+            }
+        }
+    }
+}
+
+thread_local! {
+    /// The feed thread's pacer (see `sleep_until`).
+    static PACER: std::cell::RefCell<Pacer> = std::cell::RefCell::new(Pacer::default());
 }
 
 thread_local! {
@@ -677,7 +736,8 @@ thread_local! {
 
 /// A thread that has to keep time to the frame (the stream's picture thread, the screen
 /// feed). macOS: user-interactive quality of service, so its sleeps end on time rather than
-/// being gathered up with other timers (that made a 30 fps stream run at 20). Elsewhere the
+/// being gathered up with other timers. (It doesn't cure a virtual machine whose every sleep
+/// overruns by tens of milliseconds; `Pacer` copes with that.) Elsewhere the
 /// default is already on time.
 pub fn timely_thread() {
     #[cfg(target_os = "macos")]
@@ -2724,6 +2784,51 @@ mod tests {
         assert!(out.rgba.chunks(4).all(|p| p == [30, 20, 10, 255]), "{:?}", &out.rgba[..8]);
         fit_into(&Pixels { data: &src, width: 4, height: 2, stride: 16, bgra: false }, &mut out, (4, 2));
         assert!(out.rgba.chunks(4).all(|p| p == [10, 20, 30, 255]));
+    }
+
+    #[test]
+    fn the_pacer_sleeps_less_by_what_sleeps_overrun_and_yields_the_rest() {
+        let ms = Duration::from_millis;
+        // Sleeps on time: sleep nearly all of it.
+        assert_eq!(next_wait(ms(33), Duration::ZERO), Wait::Sleep(ms(33) - Duration::from_micros(200)));
+        // Sleeps overrun by 25 ms (the CI Mac): sleep 8 ms less the margin, then yield.
+        assert_eq!(next_wait(ms(33), ms(25)), Wait::Sleep(ms(8) - Duration::from_micros(200)));
+        assert_eq!(next_wait(ms(20), ms(25)), Wait::Yield);
+        assert_eq!(next_wait(Duration::from_micros(300), Duration::ZERO), Wait::Yield);
+        assert_eq!(next_wait(Duration::ZERO, ms(5)), Wait::Done);
+    }
+
+    #[test]
+    fn the_pacer_learns_overruns_quickly_and_forgets_them_slowly() {
+        let ms = Duration::from_millis;
+        let mut p = Pacer::default();
+        for _ in 0..10 {
+            p.learn(ms(25));
+        }
+        assert!(p.overshoot > ms(24) && p.overshoot <= ms(25), "{:?}", p.overshoot);
+        p.learn(Duration::ZERO);
+        assert!(p.overshoot > ms(23), "one quick wake-up changes little: {:?}", p.overshoot);
+        // A stall of seconds counts as the most, so a 30 fps frame still starts with a sleep.
+        let mut q = Pacer::default();
+        for _ in 0..20 {
+            q.learn(Duration::from_secs(2));
+        }
+        assert!(q.overshoot <= Pacer::MOST);
+        assert!(matches!(next_wait(ms(33), q.overshoot), Wait::Sleep(_)));
+    }
+
+    #[test]
+    fn the_pacer_never_wakes_early() {
+        let mut p = Pacer::default();
+        for _ in 0..5 {
+            let until = Instant::now() + Duration::from_millis(3);
+            p.wait_until(until);
+            assert!(Instant::now() >= until);
+        }
+        // A moment already gone: back at once.
+        let t = Instant::now();
+        p.wait_until(t - Duration::from_millis(1));
+        assert!(t.elapsed() < Duration::from_millis(50));
     }
 
     #[test]

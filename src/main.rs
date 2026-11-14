@@ -555,21 +555,32 @@ fn stream_test(quick: bool) -> bool {
     // A system whose sleeps run long can't keep a frame rate: how long a 5 ms sleep takes on a
     // plain thread, and on a timely one while the stream's activity is held (what streaming uses).
     let plain = video::measured_sleep_ms(5, 20);
-    let timely = std::thread::spawn(|| {
+    let (timely, paced) = std::thread::spawn(|| {
         let _a = video::TimelyActivity::begin("Stream test");
         video::timely_thread();
-        video::measured_sleep_ms(5, 20)
+        let slept = video::measured_sleep_ms(5, 20);
+        // What the stream's threads really do: `Pacer` learns the overrun and allows for it.
+        let mut p = video::Pacer::default();
+        let t = std::time::Instant::now();
+        for _ in 0..20 {
+            p.wait_until(std::time::Instant::now() + std::time::Duration::from_millis(5));
+        }
+        (slept, t.elapsed().as_secs_f64() * 1000.0 / 20.0)
     })
     .join()
-    .unwrap_or(0.0);
-    println!("A 5 ms sleep takes {plain:.1} ms ({timely:.1} ms on a streaming thread)");
+    .unwrap_or((0.0, 0.0));
+    println!("A 5 ms sleep takes {plain:.1} ms ({timely:.1} ms on a streaming thread); a paced 5 ms wait takes {paced:.1} ms");
     // (height, frame rate, seconds, copy every frame even when the screen doesn't change: the cost
     // of a screen that changes all the time)
     let cases: &[(u32, u32, u64, bool)] = if quick { &[(720, 30, 3, true)] } else { &[(1080, 30, 6, false), (1080, 30, 6, true), (1440, 60, 6, false), (1440, 60, 6, true)] };
     let mut failed = 0;
     // OpenH264's speed shows whether its assembly was built (nasm installed where it was compiled).
+    let mut openh264_fps = 0.0;
     match encode::speed(encode::Backend::OpenH264, 1920, 1080, if quick { 60 } else { 150 }) {
-        Ok((_, f)) => println!("OpenH264 1920x1080 encode speed: {f:.0} fps"),
+        Ok((_, f)) => {
+            println!("OpenH264 1920x1080 encode speed: {f:.0} fps");
+            openh264_fps = f;
+        }
         Err(e) => {
             println!("FAIL OpenH264: {e}");
             failed += 1;
@@ -637,18 +648,17 @@ fn stream_test(quick: bool) -> bool {
         drop(grabber);
         let got = (v1 - v0) as f64 / wall;
         let cpu = 100.0 * (c1 - c0) / wall;
-        // Hardware encoders keep up; a software encoder on a small CI machine may not.
         let hardware = stats.video_encoder.as_ref().is_some_and(|e| e.hardware);
-        let want = if hardware { 0.9 } else { 0.5 } * fps as f64;
-        // Copying every frame must keep up at least a quarter of the way (a broken copy makes
-        // none); a still screen is only copied when it changes.
-        let copy_ok = !every_frame || !grabber_used || copied >= fps as f64 / 4.0;
-        let ok = got >= want && copy_ok && stats.error.is_none() && stats.state != State::Failed;
+        // OpenH264's measured 1080p speed, scaled to this size.
+        let software_fps = openh264_fps * (1920.0 * 1080.0) / (w as f64 * h as f64);
+        let want = wanted_fps(fps, hardware, software_fps);
+        let want_copies = wanted_copies(fps, every_frame && grabber_used);
+        let ok = got >= want && copied >= want_copies && stats.error.is_none() && stats.state != State::Failed;
         if !ok {
             failed += 1;
         }
         println!(
-            "{} {w}x{h} {fps} fps of the {what}: {copied:.1} new pictures a second, {got:.1} fps reached the server (want {want:.0}+), {} dropped, CPU {cpu:.1}% of one core, encoder {}{}",
+            "{} {w}x{h} {fps} fps of the {what}: {copied:.1} new pictures a second (want {want_copies:.0}+), {got:.1} fps reached the server (want {want:.0}+), {} dropped, CPU {cpu:.1}% of one core, encoder {}{}",
             if ok { "ok  " } else { "FAIL" },
             stats.frames_dropped,
             stats.video_encoder.map(|e| e.name).unwrap_or_default(),
@@ -662,6 +672,25 @@ fn stream_test(quick: bool) -> bool {
     }
     println!("{}", if failed == 0 { "stream test: all passed".to_string() } else { format!("stream test: {failed} failed") });
     failed == 0
+}
+
+/// The frame rate that must reach the server. 90 % of the stream's wherever the encoder can
+/// do it: always for a graphics-chip encoder, and for the software one (OpenH264) when it
+/// encodes this size at least 1.5 times as fast as needed (`software_fps`, measured on this
+/// machine just before). Only a machine too slow for OpenH264 at this size gets 50 %, so
+/// the test still catches a stream that stalls without failing for a small CPU.
+fn wanted_fps(fps: u32, hardware: bool, software_fps: f64) -> f64 {
+    let fps = fps as f64;
+    if hardware || software_fps >= 1.5 * fps { 0.9 * fps } else { 0.5 * fps }
+}
+
+/// New pictures a second the screen copy must make when it copies every frame: 80 % of the
+/// stream's. Every system's copy manages far more on the CI machines (Windows Desktop
+/// Duplication, Linux X11 shared memory 4.5 ms a grab, the Mac display copy about 22 ms), so
+/// this catches a copy that has become slow (xcap's X11 path made 3 a second) while leaving
+/// room for a virtual machine's hiccups. A screen copied only when it changes: no minimum.
+fn wanted_copies(fps: u32, every_frame: bool) -> f64 {
+    if every_frame { 0.8 * fps as f64 } else { 0.0 }
 }
 
 /// `grabs` screen copies that took `us` microseconds in all over `secs` seconds, for a person.
@@ -838,6 +867,16 @@ mod main_tests {
         // The centre dot and a bracket corner are white.
         assert_eq!(px(32, 32), [255, 255, 255, 255]);
         assert_eq!(px(13, 13), [255, 255, 255, 255]);
+    }
+
+    #[test]
+    fn stream_test_wants_the_full_rate_wherever_the_encoder_can_do_it() {
+        assert_eq!(wanted_fps(30, true, 0.0), 27.0, "graphics chip");
+        assert_eq!(wanted_fps(30, false, 342.0), 27.0, "OpenH264 with room to spare");
+        assert_eq!(wanted_fps(30, false, 45.0), 27.0, "exactly 1.5 times");
+        assert_eq!(wanted_fps(60, false, 80.0), 30.0, "a machine too slow for OpenH264 at this size");
+        assert_eq!(wanted_copies(30, true), 24.0);
+        assert_eq!(wanted_copies(30, false), 0.0, "copied only when the screen changes");
     }
 
     #[test]
