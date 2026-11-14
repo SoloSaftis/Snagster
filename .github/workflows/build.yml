@@ -61,10 +61,13 @@ jobs:
           $mesa = "mesa3d-26.2.6-release-msvc.7z"
           Invoke-WebRequest -Uri "https://github.com/pal1000/mesa-dist-win/releases/download/26.2.6/$mesa" -OutFile $mesa
           if ((Get-FileHash $mesa -Algorithm SHA256).Hash -ne "B2E00615FEABA45942343C265CC8C5F576142CA682C1AC6661922D4B72492877") { throw "Mesa checksum differs" }
-          7z x $mesa -omesa x64 -y | Out-Null
+          7z x $mesa -omesa -y | Out-Null
           New-Item -ItemType Directory -Force uitest | Out-Null
           Copy-Item target/release/snagster.exe uitest/
           Copy-Item mesa/x64/*.dll uitest/
+          Get-ChildItem uitest | Format-Table Name, Length
+          if (-not (Test-Path uitest/opengl32.dll)) { throw "Mesa's opengl32.dll is missing" }
+          $env:GALLIUM_DRIVER = "llvmpipe"
           # The release build is a windowed program: wait for it and collect what it prints.
           Start-Process uitest/snagster.exe -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test.txt
           Get-Content ui-test.txt
