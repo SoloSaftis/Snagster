@@ -65,6 +65,13 @@ jobs:
           node-version: 22
       - name: MCP smoke test (stdio and HTTP, no screen needed)
         run: node tests/mcp-smoke.js target/release/snagster
+      - name: Button test on a virtual screen (experimental, Linux)
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          sudo apt-get install -y --no-install-recommends xvfb libgl1-mesa-dri
+          xvfb-run -a -s "-screen 0 1920x1080x24" ./target/release/snagster --ui-test | tee ui-test.txt
+          grep -q "button actions worked" ui-test.txt
       - name: Package (AppImage and portable tar.gz)
         run: |
           set -euo pipefail

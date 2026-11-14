@@ -208,15 +208,6 @@ impl Capture {
         (l(&self.system), l(&self.mic))
     }
 
-    /// Set volume (0..2) and mute for (system, microphone).
-    pub fn set_mix(&self, system: (f32, bool), mic: (f32, bool)) {
-        for (f, (g, m)) in [(&self.system, system), (&self.mic, mic)] {
-            if let Some(f) = f {
-                f.gain.store(g.clamp(0.0, 2.0).to_bits(), Ordering::Relaxed);
-                f.muted.store(m, Ordering::Relaxed);
-            }
-        }
-    }
 
     pub fn has_system(&self) -> bool {
         self.system.is_some()
@@ -373,5 +364,27 @@ mod win {
             let _ = client.Stop();
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sources_parse_and_say_what_they_record() {
+        assert_eq!(AudioSource::parse("both"), Some(AudioSource::Both));
+        assert_eq!(AudioSource::parse("Mic"), Some(AudioSource::Microphone));
+        assert_eq!(AudioSource::parse("loud"), None);
+        assert!(AudioSource::Both.system() && AudioSource::Both.mic());
+        assert!(!AudioSource::None.system() && !AudioSource::None.mic());
+    }
+
+    #[test]
+    fn no_sound_needs_no_device() {
+        let c = Capture::start(AudioSource::None, "").unwrap();
+        assert!(c.is_silent());
+        assert_eq!(c.take(480).len(), 960);
+        assert!(c.take(10).iter().all(|s| *s == 0));
     }
 }

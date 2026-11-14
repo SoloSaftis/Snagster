@@ -2,7 +2,7 @@
 //! Phosphor icon font, and the ribbon's building blocks (tabs, tool buttons with an icon over
 //! their name, named groups). Every tool has a tooltip.
 
-use eframe::egui::{self, Align2, Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId, Rect, Response, Sense, Stroke, Ui, pos2, vec2};
+use eframe::egui::{self, Align2, Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId, Response, Sense, Stroke, Ui, pos2, vec2};
 use std::sync::Arc;
 
 pub const ACCENT: Color32 = Color32::from_rgb(91, 127, 245);
@@ -21,6 +21,7 @@ pub fn icons() -> FontFamily {
 }
 
 /// Phosphor's icons by name (https://phosphoricons.com); private-use code points.
+#[allow(dead_code)]
 pub mod ph {
     pub const CAMERA: &str = "\u{e10e}";
     pub const MONITOR: &str = "\u{e32e}";
@@ -363,7 +364,3 @@ pub fn icon_button(ui: &mut Ui, icon: &str, tip: &str) -> Response {
     resp
 }
 
-/// Paint an icon centred in a rectangle.
-pub fn paint_icon(ui: &Ui, rect: Rect, icon: &str, size: f32, color: Color32) {
-    ui.painter().text(rect.center(), Align2::CENTER_CENTER, icon, FontId::new(size, icons()), color);
-}

@@ -78,7 +78,7 @@ pub fn to_hotkey(c: &Combo) -> Option<HotKey> {
         m |= Modifiers::SHIFT;
     }
     if c.win {
-        m |= Modifiers::SUPER;
+        m |= Modifiers::META;
     }
     Some(HotKey::new(if m.is_empty() { None } else { Some(m) }, code))
 }
@@ -118,9 +118,6 @@ impl Hotkeys {
         self.list.iter().find(|r| r.target == t).map(|r| r.ok || r.hooked)
     }
 
-    pub fn overridden(&self, t: Target) -> bool {
-        self.list.iter().any(|r| r.target == t && r.hooked)
-    }
 }
 
 /// Every combination the settings ask for, presets included.

@@ -14,6 +14,7 @@ pub(crate) struct UiTest {
     frames: u32,
     passed: usize,
     failed: Vec<String>,
+    #[allow(dead_code)]
     dir: PathBuf,
 }
 

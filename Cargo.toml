@@ -2,6 +2,8 @@
 name = "snagster"
 version = "0.9.0"
 edition = "2024"
+# let-chains and other newer Rust: older compilers stop with a clear message.
+rust-version = "1.88"
 description = "Snagster - capture your screen, mark it up, share it"
 
 [dependencies]

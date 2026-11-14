@@ -885,19 +885,6 @@ impl Session {
     }
 }
 
-/// Handle one message with a one-off session (tests and simple callers).
-pub fn handle(ws: &mut Workspace, line: &str) -> Option<String> {
-    let s = Session::default();
-    if let Ok(mut inner) = s.ws.lock() {
-        std::mem::swap(&mut *inner, ws);
-    }
-    let r = s.handle(line);
-    if let Ok(mut inner) = s.ws.lock() {
-        std::mem::swap(&mut *inner, ws);
-    }
-    r
-}
-
 /// Serve MCP over stdin/stdout until stdin closes. Tool calls run on their own thread, so a
 /// cancel (or a ping) is answered while a long recording runs.
 pub fn serve_stdio() {
@@ -1071,4 +1058,83 @@ pub fn run_cli(args: &[String]) -> Option<i32> {
         _ => return None,
     };
     Some(code)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn ask(s: &Session, v: Value) -> Value {
+        serde_json::from_str(&s.handle(&v.to_string()).expect("a reply")).expect("JSON")
+    }
+
+    fn call(s: &Session, id: u64, name: &str, args: Value) -> Value {
+        ask(s, json!({"jsonrpc": "2.0", "id": id, "method": "tools/call", "params": {"name": name, "arguments": args}}))["result"].clone()
+    }
+
+    #[test]
+    fn tools_are_unique_and_described() {
+        let list = tool_list();
+        let tools = list["tools"].as_array().unwrap();
+        assert!(tools.len() >= 50);
+        let mut names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
+        let n = names.len();
+        names.sort();
+        names.dedup();
+        assert_eq!(names.len(), n, "two tools share a name");
+        for t in tools {
+            assert_eq!(t["inputSchema"]["type"], "object", "{}", t["name"]);
+            assert!(!t["description"].as_str().unwrap().is_empty());
+            assert!(t["annotations"]["readOnlyHint"].is_boolean());
+        }
+    }
+
+    #[test]
+    fn the_protocol_answers_and_refuses_politely() {
+        let s = Session::default();
+        let init = ask(&s, json!({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26"}}));
+        assert_eq!(init["result"]["protocolVersion"], "2025-03-26");
+        let init = ask(&s, json!({"jsonrpc": "2.0", "id": 2, "method": "initialize", "params": {"protocolVersion": "1999-01-01"}}));
+        assert_eq!(init["result"]["protocolVersion"], PROTOCOL_VERSIONS[0]);
+        assert_eq!(ask(&s, json!({"jsonrpc": "2.0", "id": 3, "method": "ping"}))["result"], json!({}));
+        assert_eq!(ask(&s, json!({"jsonrpc": "2.0", "id": 4, "method": "nope"}))["error"]["code"], -32601);
+        assert!(s.handle("{not json").unwrap().contains("-32700"));
+        assert!(s.handle(r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#).is_none());
+        assert!(s.handle(r#"[{"jsonrpc":"2.0","id":1,"method":"ping"}]"#).unwrap().contains("-32600"));
+        let p = ask(&s, json!({"jsonrpc": "2.0", "id": 5, "method": "prompts/get", "params": {"name": "record_demo", "arguments": {"seconds": "7"}}}));
+        assert!(p["result"]["messages"][0]["content"]["text"].as_str().unwrap().contains("7 seconds"));
+    }
+
+    #[test]
+    fn a_picture_can_be_opened_marked_cropped_and_saved() {
+        let dir = std::env::temp_dir().join(format!("snagster-mcp-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let src = dir.join("in.png");
+        image::RgbaImage::from_pixel(300, 200, image::Rgba([240, 240, 250, 255])).save(&src).unwrap();
+        let s = Session::default();
+        let r = call(&s, 1, "open_image", json!({"path": src}));
+        assert_eq!(r["isError"], false, "{r}");
+        assert_eq!(call(&s, 2, "add_mark", json!({"kind": "box", "x": 10, "y": 10, "x2": 100, "y2": 80}))["isError"], false);
+        assert_eq!(call(&s, 3, "add_mark", json!({"kind": "step", "x": 150, "y": 50}))["isError"], false);
+        let marks = call(&s, 4, "list_marks", json!({}));
+        assert!(marks["content"][0]["text"].as_str().unwrap().contains('1'));
+        assert_eq!(call(&s, 5, "crop", json!({"x": 0, "y": 0, "width": 200, "height": 150}))["isError"], false);
+        assert_eq!(call(&s, 6, "undo", json!({}))["isError"], false);
+        assert_eq!(call(&s, 7, "redo", json!({}))["isError"], false);
+        assert_eq!(call(&s, 8, "clear_marks", json!({}))["isError"], false);
+        let out = dir.join("out.jpg");
+        assert_eq!(call(&s, 9, "save", json!({"path": out}))["isError"], false);
+        let img = image::open(&out).unwrap();
+        assert_eq!((img.width(), img.height()), (200, 150));
+        let bad = call(&s, 10, "crop", json!({"x": 0, "y": 0, "width": -5, "height": 10}));
+        assert_eq!(bad["isError"], true);
+        assert_eq!(call(&s, 11, "no_such_tool", json!({}))["isError"], true);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn colours_parse() {
+        assert_eq!(parse_color(Some("#00FF00")), Color32::from_rgb(0, 255, 0));
+        assert_eq!(parse_color(Some("blue")), Color32::from_rgb(0, 144, 255));
+    }
 }

@@ -168,10 +168,6 @@ pub fn tf(en: &'static str, args: &[(&str, &str)]) -> String {
     s
 }
 
-/// How many entries the language's pack has (0 for English), for the settings list.
-pub fn coverage(code: &str) -> usize {
-    known(code).and_then(table_for).map(|t| t.len()).unwrap_or(0)
-}
 
 #[cfg(test)]
 mod tests {
@@ -208,6 +204,29 @@ mod tests {
         for (code, text) in packs::PACKS {
             let p: Result<serde_json::Value, _> = serde_json::from_str(text);
             assert!(p.is_ok(), "{code} pack isn't valid JSON");
+        }
+    }
+}
+
+#[cfg(test)]
+mod more_tests {
+    use super::*;
+
+    #[test]
+    fn placeholders_are_filled_and_unknown_text_stays() {
+        assert_eq!(tf("Saved {file}", &[("file", "a.png")]), "Saved a.png");
+        assert_eq!(tr("no such text anywhere"), "no such text anywhere");
+        assert!(is_rtl("ar") && is_rtl("he") && !is_rtl("de"));
+        assert!(is_cjk("zh-Hant") && !is_cjk("hi"));
+    }
+
+    #[test]
+    fn every_pack_translates_every_text() {
+        let keys: Vec<String> = serde_json::from_str(include_str!("../assets/i18n/strings.json")).unwrap();
+        for (code, text) in packs::PACKS {
+            let pack: Pack = serde_json::from_str(text).unwrap();
+            let missing = keys.iter().filter(|k| pack.strings.get(*k).is_none_or(|v| v.trim().is_empty())).count();
+            assert_eq!(missing, 0, "{code} misses {missing} texts");
         }
     }
 }

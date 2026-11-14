@@ -106,7 +106,7 @@ impl SnagApp {
         };
         let mut open = true;
         egui::Window::new(t("A new Snagster"))
-            .id(egui::Id::new("update-window"))
+            .id(egui::Id::unique("update-window"))
             .open(&mut open)
             .collapsible(false)
             .resizable(false)

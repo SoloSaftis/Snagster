@@ -408,3 +408,54 @@ pub fn record_headless(settings: &StudioSettings, scene: Option<usize>, seconds:
     let pause = AtomicBool::new(false);
     crate::video::record(&opts, &stop, &pause)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn same_size_blit_copies_exactly() {
+        let mut src = RgbaImage::new(4, 3);
+        for (i, p) in src.pixels_mut().enumerate() {
+            *p = image::Rgba([i as u8 * 10, 50, 200, 255]);
+        }
+        let mut out = RgbaImage::new(10, 10);
+        blit_scaled(&mut out, &src, 2, 3, 4, 3, false);
+        assert_eq!(out.get_pixel(2, 3), src.get_pixel(0, 0));
+        assert_eq!(out.get_pixel(5, 5), src.get_pixel(3, 2));
+        assert_eq!(out.get_pixel(0, 0).0, [0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn scaled_blit_fills_its_box_and_clips_at_the_edges() {
+        let src = RgbaImage::from_pixel(8, 8, image::Rgba([10, 200, 30, 255]));
+        let mut out = RgbaImage::new(20, 20);
+        blit_scaled(&mut out, &src, -5, 14, 16, 16, false);
+        assert_eq!(out.get_pixel(0, 19).0, [10, 200, 30, 255]);
+        assert_eq!(out.get_pixel(10, 19).0, [10, 200, 30, 255]);
+        assert_eq!(out.get_pixel(11, 19).0, [0, 0, 0, 0]);
+        assert_eq!(out.get_pixel(0, 13).0, [0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn a_colour_scene_draws_without_a_screen() {
+        let scene = Scene {
+            name: "t".into(),
+            items: vec![
+                Item { name: "bg".into(), kind: SourceKind::Color { color: [255, 0, 0, 255] }, x: 0.0, y: 0.0, w: 32.0, h: 32.0, visible: true },
+                Item { name: "hidden".into(), kind: SourceKind::Color { color: [0, 0, 255, 255] }, x: 0.0, y: 0.0, w: 32.0, h: 32.0, visible: false },
+            ],
+        };
+        let mut out = RgbaImage::new(32, 32);
+        Compositor::default().draw(&scene, &mut out);
+        assert_eq!(out.get_pixel(16, 16).0, [255, 0, 0, 255]);
+    }
+
+    #[test]
+    fn settings_round_trip_through_json() {
+        let s = StudioSettings::default();
+        let back: StudioSettings = serde_json::from_str(&serde_json::to_string(&s).unwrap()).unwrap();
+        assert_eq!(s, back);
+        assert!(s.scene().is_some());
+    }
+}

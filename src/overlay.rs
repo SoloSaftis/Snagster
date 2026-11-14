@@ -194,7 +194,7 @@ impl Overlay {
             let align = if below { Align2::CENTER_TOP } else { Align2::CENTER_BOTTOM };
             let mut picked: Option<AreaAction> = None;
             let mut cancel = false;
-            egui::Area::new(egui::Id::new("aio-bar"))
+            egui::Area::new(egui::Id::unique("aio-bar"))
                 .order(egui::Order::Foreground)
                 .pivot(align)
                 .fixed_pos(anchor)

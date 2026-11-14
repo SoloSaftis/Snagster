@@ -1488,3 +1488,53 @@ mod soft {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn formats_parse_and_name_their_files() {
+        assert_eq!(VideoFormat::parse("MP4"), Some(VideoFormat::Mp4));
+        assert_eq!(VideoFormat::parse("h265"), Some(VideoFormat::Hevc));
+        assert_eq!(VideoFormat::parse("wmv"), Some(VideoFormat::Wmv));
+        assert_eq!(VideoFormat::parse("gif"), Some(VideoFormat::Gif));
+        assert_eq!(VideoFormat::parse("avi"), None);
+        assert_eq!(VideoFormat::Hevc.ext(), "mp4");
+        assert!(VideoFormat::Mp4.available() && VideoFormat::Gif.available());
+    }
+
+    #[test]
+    fn sizes_are_even_and_not_tiny() {
+        assert_eq!(even_size(1921, 1081), Ok((1920, 1080)));
+        assert!(even_size(63, 400).is_err());
+        assert_eq!(even_size(20000, 20000), Ok((8192, 8192)));
+    }
+
+    #[test]
+    fn bitrate_grows_with_quality_size_and_rate_and_stays_in_bounds() {
+        let b = |w, h, fps, q| bitrate(w, h, fps, VideoFormat::Mp4, q);
+        assert!(b(1920, 1080, 30, 3) > b(1920, 1080, 30, 1));
+        assert!(b(3840, 2160, 30, 2) > b(1920, 1080, 30, 2));
+        assert!(b(1920, 1080, 120, 2) > b(1920, 1080, 30, 2));
+        assert!(bitrate(1920, 1080, 30, VideoFormat::Hevc, 2) < b(1920, 1080, 30, 2));
+        assert!(b(64, 64, 1, 1) >= 250_000);
+        assert!(b(8192, 8192, 120, 4) <= 160_000_000);
+    }
+
+    #[test]
+    fn the_clock_stamps_frames_at_the_frame_rate() {
+        let mut c = Clock::new(30);
+        assert_eq!(c.stamp(30), (0, 333_333));
+        c.n = 30;
+        assert_eq!(c.stamp(30).0, 10_000_000);
+        assert!(!c.over(0));
+    }
+
+    #[test]
+    fn vendors_are_named() {
+        assert_eq!(vendor_name("VEN_8086"), "Intel");
+        assert_eq!(vendor_name("VEN_10DE"), "NVIDIA");
+        assert_eq!(vendor_name("VEN_1002"), "AMD");
+    }
+}

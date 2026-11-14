@@ -274,6 +274,7 @@ pub struct SnagApp {
     pub(crate) settings_tab: SettingsTab,
     pub(crate) shortcuts_open: bool,
     pub(crate) about_open: bool,
+    #[allow(dead_code)]
     pub(crate) redact_open: bool,
     pub(crate) guide_title: String,
     pub(crate) new_theme_name: String,
@@ -1909,38 +1910,6 @@ impl SnagApp {
 
     // ---------- menus ----------
 
-    fn menu_bar(&mut self, ui: &mut egui::Ui) {
-        let ctx = ui.ctx().clone();
-        egui::MenuBar::new().ui(ui, |ui| {
-            ui.menu_button(crate::i18n::t("File"), |ui| self.file_menu(ui));
-            ui.menu_button(crate::i18n::t("Capture"), |ui| self.capture_menu(ui, &ctx));
-            ui.menu_button(crate::i18n::t("Record"), |ui| self.record_menu(ui, &ctx));
-            ui.menu_button(crate::i18n::t("Edit"), |ui| self.edit_menu(ui));
-            ui.menu_button(crate::i18n::t("Image"), |ui| self.image_menu(ui));
-            ui.menu_button(crate::i18n::t("Tools"), |ui| self.tools_menu(ui, &ctx));
-            ui.menu_button(crate::i18n::t("Share"), |ui| self.share_menu(ui));
-            ui.menu_button(crate::i18n::t("View"), |ui| self.view_menu(ui, &ctx));
-            ui.menu_button(crate::i18n::t("Help"), |ui| {
-                if item(ui, "Getting started", "") {
-                    self.dialog = Some(crate::windows::Dialog::GettingStarted);
-                }
-                if item(ui, "What's new", "") {
-                    self.dialog = Some(crate::windows::Dialog::WhatsNew);
-                }
-                if item(ui, "Keyboard shortcuts", "F1") {
-                    self.shortcuts_open = true;
-                }
-                if item(ui, "Hotkey settings...", "") {
-                    self.settings_open = true;
-                    self.settings_tab = SettingsTab::Hotkeys;
-                }
-                if item(ui, "About Snagster", "") {
-                    self.about_open = true;
-                }
-            });
-        });
-    }
-
     fn file_menu(&mut self, ui: &mut egui::Ui) {
         let has = self.current.is_some();
         if item(ui, "New from clipboard", "Ctrl+V") {
@@ -2523,88 +2492,6 @@ impl SnagApp {
     }
 
     // ---------- panels ----------
-
-    fn top_bar(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal_centered(|ui| {
-            ui.add_space(6.0);
-            logo(ui, 26.0);
-            ui.label(RichText::new(crate::i18n::t("Snagster")).size(20.0).strong().color(Color32::WHITE));
-            ui.add_space(12.0);
-            let busy = self.capturing.is_some();
-            let ctx = ui.ctx().clone();
-            let primary = egui::Button::new(RichText::new(crate::i18n::t("Capture")).color(Color32::WHITE).strong())
-                .fill(ACCENT)
-                .min_size(vec2(0.0, 30.0));
-            if ui
-                .add_enabled(!busy, primary)
-                .on_hover_text("All-in-one: drag an area, click a window, button or menu, then capture, scroll, record or grab text (Print Screen)")
-                .clicked()
-            {
-                self.do_action(&ctx, Action::AllInOne);
-            }
-            if ui.add_enabled(!busy, egui::Button::new(crate::i18n::t("Window")).min_size(vec2(0.0, 30.0))).clicked() {
-                self.do_action(&ctx, Action::Window);
-            }
-            if ui.add_enabled(!busy, egui::Button::new(crate::i18n::t("Screen")).min_size(vec2(0.0, 30.0))).clicked() {
-                self.do_action(&ctx, Action::Screen);
-            }
-            if ui.add_enabled(!busy, egui::Button::new(crate::i18n::t("Scrolling")).min_size(vec2(0.0, 30.0))).clicked() {
-                self.do_action(&ctx, Action::Scrolling);
-            }
-            let rec = if self.is_recording() { "Stop recording" } else { "Record" };
-            if ui.add(egui::Button::new(rec).min_size(vec2(0.0, 30.0))).clicked() {
-                self.do_action(&ctx, Action::RecordGif);
-            }
-            ui.label(RichText::new(crate::i18n::t("Delay")).color(TEXT_DIM));
-            egui::ComboBox::from_id_salt("delay")
-                .width(56.0)
-                .selected_text(if self.settings.delay_s == 0 { "None".to_string() } else { format!("{} s", self.settings.delay_s) })
-                .show_ui(ui, |ui| {
-                    for d in [0u64, 1, 2, 3, 5, 10, 15, 30] {
-                        let label = if d == 0 { "None".to_string() } else { format!("{d} s") };
-                        ui.selectable_value(&mut self.settings.delay_s, d, label);
-                    }
-                });
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.add_space(8.0);
-                let has = self.current.is_some();
-                let save = egui::Button::new(RichText::new(crate::i18n::t("Save")).color(Color32::WHITE).strong())
-                    .fill(Color32::from_rgb(48, 164, 108))
-                    .min_size(vec2(60.0, 30.0));
-                if ui.add_enabled(has, save).on_hover_text("Save as a picture or project (Ctrl+S)").clicked() {
-                    self.save_as();
-                }
-                if ui.add_enabled(has, egui::Button::new(crate::i18n::t("Copy")).min_size(vec2(52.0, 30.0))).clicked() {
-                    self.copy();
-                }
-                if ui.add_enabled(has, egui::Button::new(crate::i18n::t("Pin")).min_size(vec2(40.0, 30.0))).clicked() {
-                    self.pin_current();
-                }
-                ui.separator();
-                let (can_redo, can_undo) = self
-                    .current
-                    .map(|i| (!self.entries[i].redo.is_empty(), !self.entries[i].undo.is_empty()))
-                    .unwrap_or((false, false));
-                if ui.add_enabled(can_redo, egui::Button::new(crate::i18n::t("Redo"))).on_hover_text("Ctrl+Y").clicked() {
-                    self.redo();
-                }
-                if ui.add_enabled(can_undo, egui::Button::new(crate::i18n::t("Undo"))).on_hover_text("Ctrl+Z").clicked() {
-                    self.undo();
-                }
-                ui.separator();
-                if ui.button(crate::i18n::t("Panel")).on_hover_text("The compact capture panel (also from the icon in the taskbar corner)").clicked() {
-                    let c = ui.ctx().clone();
-                    self.enter_panel(&c);
-                }
-                if ui.button(crate::i18n::t("Library")).on_hover_text("Every capture, searchable (Ctrl+L)").clicked() {
-                    self.library_open = true;
-                }
-                if ui.button(crate::i18n::t("Settings")).on_hover_text("Ctrl+,").clicked() {
-                    self.settings_open = true;
-                }
-            });
-        });
-    }
 
     fn tool_bar(&mut self, ui: &mut egui::Ui) {
         ui.add_space(6.0);
@@ -3463,7 +3350,7 @@ impl SnagApp {
         let font = FontId::new((t.size * scale).max(6.0), family);
         let color = if t.bg { render::halo_color(t.color) } else { t.color };
         let fill = if t.bg { t.color } else { Color32::from_black_alpha(40) };
-        let resp = egui::Area::new(egui::Id::new("text-edit"))
+        let resp = egui::Area::new(egui::Id::unique("text-edit"))
             .fixed_pos(at - vec2(4.0, 4.0))
             .order(egui::Order::Foreground)
             .show(&ctx, |ui| {

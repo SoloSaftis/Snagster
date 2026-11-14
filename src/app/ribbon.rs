@@ -128,7 +128,8 @@ impl SnagApp {
         egui::Frame::new().fill(look::BAND).inner_margin(egui::Margin { left: 8, right: 8, top: 4, bottom: 2 }).show(ui, |ui| {
             ui.set_width(ui.available_width());
             egui::ScrollArea::horizontal().id_salt("ribbon-band").scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden).show(ui, |ui| {
-                ui.horizontal_top(|ui| match self.x.tab {
+                ui.horizontal_top(|ui| {
+                    match self.x.tab {
                     RibbonTab::Home => self.band_home(ui, &ctx),
                     RibbonTab::Capture => self.band_capture(ui, &ctx),
                     RibbonTab::Record => self.band_record(ui, &ctx),
@@ -138,6 +139,8 @@ impl SnagApp {
                     RibbonTab::Share => self.band_share(ui),
                     RibbonTab::View => self.band_view(ui, &ctx),
                     RibbonTab::Help => self.band_help(ui),
+                    }
+                    self.more_group(ui, &ctx);
                 });
             });
         });
@@ -762,6 +765,31 @@ impl SnagApp {
         });
     }
 
+    /// The last group of every tab: the tab's full menu, so every command stays one click away
+    /// (window and screen lists, presets, templates, recent files...).
+    fn more_group(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        let tip = t("Every command of this tab in one menu");
+        match self.x.tab {
+            RibbonTab::Studio | RibbonTab::Help => {}
+            tab => look::group(ui, t("More"), |ui| {
+                look::column(ui, |ui| {
+                    look::small_menu(ui, ph::LIST, t("All commands"), tip, |ui| match tab {
+                        RibbonTab::Home => self.file_menu(ui),
+                        RibbonTab::Capture => self.capture_menu(ui, ctx),
+                        RibbonTab::Record => self.record_menu(ui, ctx),
+                        RibbonTab::Edit => self.edit_menu(ui),
+                        RibbonTab::Image => self.image_menu(ui),
+                        RibbonTab::Share => self.share_menu(ui),
+                        _ => self.view_menu(ui, ctx),
+                    });
+                    if matches!(tab, RibbonTab::Image | RibbonTab::Capture | RibbonTab::Edit) {
+                        look::small_menu(ui, ph::SLIDERS, t("Tools"), t("Grab text, colour picker, ruler, pins, combining pictures"), |ui| self.tools_menu(ui, ctx));
+                    }
+                });
+            }),
+        }
+    }
+
     fn band_studio(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         crate::app::studio_ui::band(self, ui, ctx);
     }
@@ -775,7 +803,7 @@ impl SnagApp {
         let mut open = true;
         let current = crate::i18n::current();
         egui::Window::new(t("Language"))
-            .id(egui::Id::new("language-window"))
+            .id(egui::Id::unique("language-window"))
             .open(&mut open)
             .collapsible(false)
             .default_size(vec2(420.0, 560.0))
