@@ -182,10 +182,13 @@ impl Reader<'_> {
             }
             0x0A => {
                 let n = self.u32()?;
-                if n > self.b.len() {
+                // Every item takes at least one byte.
+                if n > self.b.len() - self.at {
                     return Err("AMF array longer than the message".into());
                 }
-                let mut items = Vec::with_capacity(n);
+                // Room for what the count says only as items actually arrive: a count of a
+                // million in front of junk mustn't reserve a million values (40 bytes each).
+                let mut items = Vec::with_capacity(n.min(64));
                 for _ in 0..n {
                     items.push(self.value(depth + 1)?);
                 }
@@ -254,6 +257,62 @@ mod tests {
         assert!(decode_all(&[0x42]).is_err());
         let deep: Vec<u8> = std::iter::repeat_n([0x0A, 0, 0, 0, 1], 100).flatten().collect();
         assert!(decode_all(&deep).is_err());
+    }
+
+    /// A command like the ones servers send, with every kind of value.
+    fn sample() -> Vec<u8> {
+        encode(&[
+            Amf::str("_result"),
+            Amf::Number(2.0),
+            Amf::Object(vec![("fmsVer".into(), Amf::str("FMS/3,0,1,123")), ("caps".into(), Amf::Number(31.0))]),
+            Amf::EcmaArray(vec![("level".into(), Amf::str("status")), ("deep".into(), Amf::Object(vec![("x".into(), Amf::Null)]))]),
+            Amf::StrictArray(vec![Amf::Bool(true), Amf::Undefined, Amf::Date(1.0)]),
+            Amf::Str("long ".repeat(20)),
+        ])
+    }
+
+    #[test]
+    fn random_and_broken_messages_never_panic_or_reserve_much() {
+        let good = sample();
+        let mut g = crate::testalloc::Bytes::new(1);
+        for i in 0..20_000 {
+            let input = match i % 3 {
+                0 => g.mutate(&good),
+                1 => g.noise(200),
+                // Valid type bytes with random lengths after them.
+                _ => {
+                    let mut v = vec![[0x02, 0x03, 0x08, 0x0A, 0x0C][g.below(5)]];
+                    v.extend(g.noise(12));
+                    v
+                }
+            };
+            let (r, largest, _) = crate::testalloc::measure(|| decode_all(&input));
+            // Re-encoding what was read gives something that reads back the same.
+            // (Compared as bytes: a random number may be NaN, which never equals itself.)
+            if let Ok(vals) = r {
+                let again = encode(&vals);
+                assert_eq!(encode(&decode_all(&again).unwrap()), again, "seed 1, input {i}");
+            }
+            assert!(largest <= 64 * 1024 + 64 * input.len(), "input {i} ({} bytes) reserved {largest} bytes", input.len());
+        }
+    }
+
+    /// Bug: the item count of a strict array reserved room for that many values before any had
+    /// been read, so a few bytes claiming a big array cost 40 bytes per claimed item.
+    #[test]
+    fn an_array_count_reserves_only_what_arrives() {
+        let mut b = vec![0x0A];
+        b.extend_from_slice(&1_000_000u32.to_be_bytes());
+        b.extend(std::iter::repeat_n(0x42u8, 1_000_000)); // unsupported type: fails at the first item
+        let (r, largest, _) = crate::testalloc::measure(|| decode_all(&b));
+        assert!(r.is_err());
+        assert!(largest < 64 * 1024, "reserved {largest} bytes");
+        // A real array of that size still reads.
+        let n = 100_000;
+        let big = encode(&[Amf::StrictArray(vec![Amf::Null; n])]);
+        assert!(matches!(&decode_all(&big).unwrap()[0], Amf::StrictArray(v) if v.len() == n));
+        // A count past the end of the message is refused at once.
+        assert!(decode_all(&[0x02, 0, 0, 0x0A, 0, 0, 0, 2, 5]).is_err());
     }
 
     #[test]

@@ -476,6 +476,366 @@ pub fn vendor_name(id: &str) -> String {
 }
 
 // ---------------------------------------------------------------------------------------------
+// A screen feed: the newest picture of a screen area, copied by a thread of its own (live
+// streaming). Windows copies with Desktop Duplication (falling back to GDI, as recording does);
+// Linux and macOS grab with xcap.
+// ---------------------------------------------------------------------------------------------
+
+/// One picture from a `ScreenFeed`: RGBA, rows packed, top row first.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Frame {
+    pub width: u32,
+    pub height: u32,
+    pub rgba: Vec<u8>,
+    /// Counts up from 1 with every new picture (0: none yet).
+    pub number: u64,
+}
+
+/// How a `ScreenFeed` copies.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct FeedOptions {
+    pub fps: u32,
+    /// Draw the mouse pointer in.
+    pub cursor: bool,
+    /// Bring every picture to this size, in proportion and centred with black around it (the
+    /// stream's size); None keeps the area's own size.
+    pub fit: Option<(u32, u32)>,
+    /// A new picture every frame even when nothing on the screen changed. Normally an unchanged
+    /// screen isn't copied again (the last picture stays the newest); this is for measuring.
+    pub every_frame: bool,
+}
+
+/// Pixels in memory, 4 bytes each, `stride` bytes from one row to the next.
+pub struct Pixels<'a> {
+    pub data: &'a [u8],
+    pub width: u32,
+    pub height: u32,
+    pub stride: usize,
+    /// Blue, green, red order (Windows' screen copies) rather than red, green, blue.
+    pub bgra: bool,
+}
+
+/// Where a picture of `w` × `h` goes in a frame of `fw` × `fh`, in proportion and centred:
+/// left, top, width, height.
+pub fn fit_rect(w: u32, h: u32, fw: u32, fh: u32) -> (u32, u32, u32, u32) {
+    if w == 0 || h == 0 || fw == 0 || fh == 0 {
+        return (0, 0, fw, fh);
+    }
+    let s = (fw as f64 / w as f64).min(fh as f64 / h as f64);
+    let (dw, dh) = (((w as f64 * s).round() as u32).clamp(1, fw), ((h as f64 * s).round() as u32).clamp(1, fh));
+    ((fw - dw) / 2, (fh - dh) / 2, dw, dh)
+}
+
+const BLACK: [u8; 4] = [0, 0, 0, 255];
+
+/// A pixel as RGBA (opaque: GDI copies leave alpha at 0) packed in a little-endian u32.
+#[inline(always)]
+fn opaque_rgba(p: u32, bgra: bool) -> u32 {
+    let p = if bgra { (p & 0x0000_FF00) | ((p & 0xFF) << 16) | ((p >> 16) & 0xFF) } else { p };
+    p | 0xFF00_0000
+}
+
+/// `a` towards `b` by `w`/256, all four bytes at once (two at a time in 16-bit lanes).
+#[inline(always)]
+fn lerp_px(a: u32, b: u32, w: u32) -> u32 {
+    let iw = 256 - w;
+    let lo = (((a & 0x00FF_00FF) * iw + (b & 0x00FF_00FF) * w) >> 8) & 0x00FF_00FF;
+    let hi = ((((a >> 8) & 0x00FF_00FF) * iw + ((b >> 8) & 0x00FF_00FF) * w) >> 8) & 0x00FF_00FF;
+    lo | (hi << 8)
+}
+
+#[inline(always)]
+fn px_at(row: &[u8], i: usize) -> u32 {
+    u32::from_le_bytes([row[i * 4], row[i * 4 + 1], row[i * 4 + 2], row[i * 4 + 3]])
+}
+
+/// Source column (and the next one) and weight for each output column, in 16.16 fixed point
+/// with pixel centres lined up (the same sampling as `studio::blit_scaled`).
+fn sample_points(src: u32, dst: u32) -> Vec<(u32, u32, u32)> {
+    let f = ((src as u64) << 16) / dst.max(1) as u64;
+    (0..dst)
+        .map(|o| {
+            let s = (o as u64 * f + f / 2).saturating_sub(1 << 15);
+            let i = ((s >> 16) as u32).min(src - 1);
+            (i, (i + 1).min(src - 1), ((s & 0xffff) >> 8) as u32)
+        })
+        .collect()
+}
+
+/// Draw `src` into `out` at `size`, in proportion and centred with black around it (bilinear
+/// when the sizes differ, a straight copy when they match), as RGBA. Rows are done in bands on
+/// several threads for big pictures; `out`'s buffer is reused.
+pub fn fit_into(src: &Pixels, out: &mut Frame, size: (u32, u32)) {
+    let (ow, oh) = size;
+    out.width = ow;
+    out.height = oh;
+    out.rgba.resize(ow as usize * oh as usize * 4, 0);
+    if ow == 0 || oh == 0 {
+        return;
+    }
+    let (sw, sh) = (src.width, src.height);
+    let (x, y, dw, dh) = fit_rect(sw, sh, ow, oh);
+    let same = (dw, dh) == (sw, sh);
+    let cols = if same || sw == 0 { Vec::new() } else { sample_points(sw, dw) };
+    let rows = if same || sh == 0 { Vec::new() } else { sample_points(sh, dh) };
+    let row_bytes = ow as usize * 4;
+    let bands = crate::encode::bands_for(ow as usize, oh as usize).max(1);
+    let per = (oh as usize).div_ceil(bands);
+    let src_row = |r: u32| {
+        let at = r as usize * src.stride;
+        &src.data[at.min(src.data.len())..(at + sw as usize * 4).min(src.data.len())]
+    };
+    let band = |first: usize, part: &mut [u8]| {
+        for (i, row) in part.chunks_exact_mut(row_bytes).enumerate() {
+            let oy = (first + i) as u32;
+            if sw == 0 || sh == 0 || oy < y || oy >= y + dh {
+                row.chunks_exact_mut(4).for_each(|p| p.copy_from_slice(&BLACK));
+                continue;
+            }
+            let (left, rest) = row.split_at_mut(x as usize * 4);
+            let (mid, right) = rest.split_at_mut(dw as usize * 4);
+            left.chunks_exact_mut(4).chain(right.chunks_exact_mut(4)).for_each(|p| p.copy_from_slice(&BLACK));
+            let ry = oy - y;
+            if same {
+                let s = src_row(ry);
+                for (d, p) in mid.chunks_exact_mut(4).zip(s.chunks_exact(4)) {
+                    d.copy_from_slice(&opaque_rgba(u32::from_le_bytes([p[0], p[1], p[2], p[3]]), src.bgra).to_le_bytes());
+                }
+                continue;
+            }
+            let (r0, r1, wy) = rows[ry as usize];
+            let (a, b) = (src_row(r0), src_row(r1));
+            if a.len() < sw as usize * 4 || b.len() < sw as usize * 4 {
+                mid.chunks_exact_mut(4).for_each(|p| p.copy_from_slice(&BLACK));
+                continue;
+            }
+            for (d, &(c0, c1, wx)) in mid.chunks_exact_mut(4).zip(&cols) {
+                let top = lerp_px(px_at(a, c0 as usize), px_at(a, c1 as usize), wx);
+                let bottom = lerp_px(px_at(b, c0 as usize), px_at(b, c1 as usize), wx);
+                d.copy_from_slice(&opaque_rgba(lerp_px(top, bottom, wy), src.bgra).to_le_bytes());
+            }
+        }
+    };
+    if bands == 1 {
+        band(0, &mut out.rgba);
+        return;
+    }
+    std::thread::scope(|s| {
+        let band = &band;
+        for (k, part) in out.rgba.chunks_mut(per * row_bytes).enumerate() {
+            s.spawn(move || band(k * per, part));
+        }
+    });
+}
+
+/// Where pictures come from: Desktop Duplication or GDI on Windows, xcap elsewhere.
+trait Grab {
+    /// Wait until `until` (gathering screen changes where the system reports them), then put
+    /// the area into `out` (at `fit`, or its own size) when something changed or `force`.
+    /// Ok(false): nothing changed, `out` is untouched.
+    fn grab(&mut self, until: Instant, force: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String>;
+    /// Follow the area to `rect`; false when the grabber has to be made again for it.
+    fn retarget(&mut self, rect: (i32, i32, u32, u32)) -> bool;
+    fn name(&self) -> &'static str;
+}
+
+/// The best way to copy `rect` on this system.
+fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, String> {
+    #[cfg(windows)]
+    return win::open_grab(rect, cursor);
+    #[cfg(not(windows))]
+    return Ok(Box::new(XcapGrab { rect, cursor }));
+}
+
+/// Linux and macOS: xcap, one grab per frame.
+#[cfg(not(windows))]
+struct XcapGrab {
+    rect: (i32, i32, u32, u32),
+    cursor: bool,
+}
+
+#[cfg(not(windows))]
+impl Grab for XcapGrab {
+    fn grab(&mut self, until: Instant, _force: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String> {
+        let now = Instant::now();
+        if until > now {
+            std::thread::sleep(until - now);
+        }
+        let (x, y, w, h) = self.rect;
+        let mut img = crate::capture::grab_rect(x, y, w, h)?;
+        if self.cursor
+            && let Some(c) = crate::capture::cursor_pos()
+        {
+            crate::capture::stamp_pointer(&mut img, ((c.0 - x) as f32, (c.1 - y) as f32));
+        }
+        let (iw, ih) = img.dimensions();
+        fit_into(&Pixels { data: img.as_raw(), width: iw, height: ih, stride: iw as usize * 4, bgra: false }, out, fit.unwrap_or((iw, ih)));
+        Ok(true)
+    }
+
+    fn retarget(&mut self, rect: (i32, i32, u32, u32)) -> bool {
+        self.rect = rect;
+        true
+    }
+
+    fn name(&self) -> &'static str {
+        "screen grab"
+    }
+}
+
+#[derive(Default)]
+struct FeedShared {
+    front: std::sync::Mutex<Frame>,
+    stop: AtomicBool,
+    /// Where the area has moved to (a window being followed).
+    moved: std::sync::Mutex<Option<(i32, i32, u32, u32)>>,
+    method: std::sync::Mutex<&'static str>,
+    error: std::sync::Mutex<Option<String>>,
+    /// The number of the newest picture (the same as `front`'s, without taking the lock).
+    count: std::sync::atomic::AtomicU64,
+}
+
+/// The newest picture of a screen area, copied `fps` times a second by a thread of its own
+/// into buffers that are reused. Stops when dropped.
+pub struct ScreenFeed {
+    sh: Arc<FeedShared>,
+    thread: Option<std::thread::JoinHandle<()>>,
+}
+
+/// A feed of `rect` (desktop pixels, physical): see `ScreenFeed::start`.
+pub fn screen_feed(rect: (i32, i32, u32, u32), o: FeedOptions) -> Result<ScreenFeed, String> {
+    ScreenFeed::start(rect, o)
+}
+
+impl ScreenFeed {
+    /// Start copying; waits (up to 2 s) for the first picture. Fails when the area can't be
+    /// copied at all; a copy that is merely slow to start gives black until it does.
+    pub fn start(rect: (i32, i32, u32, u32), o: FeedOptions) -> Result<ScreenFeed, String> {
+        ScreenFeed::start_with(rect, o, open_grab)
+    }
+
+    /// `start` with another way of copying (the tests' fake screen).
+    fn start_with(rect: (i32, i32, u32, u32), o: FeedOptions, open: Opener) -> Result<ScreenFeed, String> {
+        if rect.2 < 2 || rect.3 < 2 {
+            return Err("The area to copy is too small.".into());
+        }
+        let sh = Arc::new(FeedShared::default());
+        let s = sh.clone();
+        let thread = std::thread::Builder::new().name("snagster-screen-feed".into()).spawn(move || feed_loop(&s, rect, o, open)).map_err(|e| e.to_string())?;
+        let feed = ScreenFeed { sh, thread: Some(thread) };
+        let t = Instant::now();
+        while feed.frames() == 0 && t.elapsed() < Duration::from_secs(2) {
+            if let Some(e) = feed.error()
+                && feed.thread.as_ref().is_some_and(|t| t.is_finished())
+            {
+                return Err(e);
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        Ok(feed)
+    }
+
+    /// How many pictures have been made (the newest one's number).
+    pub fn frames(&self) -> u64 {
+        self.sh.count.load(Ordering::Relaxed)
+    }
+
+    /// Look at the newest picture (briefly: the capture thread waits for it to swap in the next).
+    pub fn with_latest<R>(&self, f: impl FnOnce(&Frame) -> R) -> R {
+        let g = self.sh.front.lock().unwrap_or_else(|p| p.into_inner());
+        f(&g)
+    }
+
+    /// Copy from here on (a window that moved).
+    pub fn move_to(&self, rect: (i32, i32, u32, u32)) {
+        if rect.2 >= 2 && rect.3 >= 2 {
+            *self.sh.moved.lock().unwrap_or_else(|p| p.into_inner()) = Some(rect);
+        }
+    }
+
+    /// How it copies ("graphics chip", "GDI", "screen grab"), once started.
+    pub fn method(&self) -> &'static str {
+        *self.sh.method.lock().unwrap_or_else(|p| p.into_inner())
+    }
+
+    /// The last thing that went wrong copying, if anything.
+    pub fn error(&self) -> Option<String> {
+        self.sh.error.lock().ok().and_then(|e| e.clone())
+    }
+}
+
+impl Drop for ScreenFeed {
+    fn drop(&mut self) {
+        self.sh.stop.store(true, Ordering::Relaxed);
+        if let Some(t) = self.thread.take() {
+            let _ = t.join();
+        }
+    }
+}
+
+/// Makes the grabber for an area (`open_grab`, or a fake in the tests).
+type Opener = fn((i32, i32, u32, u32), bool) -> Result<Box<dyn Grab>, String>;
+
+fn feed_loop(sh: &FeedShared, mut rect: (i32, i32, u32, u32), o: FeedOptions, open: Opener) {
+    crate::capture::background_thread(false);
+    let every = Duration::from_nanos(1_000_000_000 / o.fps.clamp(1, 240) as u64);
+    let mut back = Frame::default();
+    let mut grab: Option<Box<dyn Grab>> = None;
+    let mut force = true;
+    let mut next = Instant::now();
+    while !sh.stop.load(Ordering::Relaxed) {
+        if let Some(r) = sh.moved.lock().ok().and_then(|mut m| m.take())
+            && r != rect
+        {
+            rect = r;
+            if grab.as_mut().is_some_and(|g| !g.retarget(r)) {
+                grab = None;
+            }
+            force = true;
+        }
+        if grab.is_none() {
+            match open(rect, o.cursor) {
+                Ok(g) => {
+                    *sh.method.lock().unwrap_or_else(|p| p.into_inner()) = g.name();
+                    force = true;
+                    grab = Some(g);
+                }
+                Err(e) => {
+                    *sh.error.lock().unwrap_or_else(|p| p.into_inner()) = Some(e);
+                    if sh.count.load(Ordering::Relaxed) == 0 {
+                        return;
+                    }
+                    std::thread::sleep(Duration::from_millis(250));
+                    continue;
+                }
+            }
+        }
+        let Some(g) = grab.as_mut() else { continue };
+        next += every;
+        let now = Instant::now();
+        if next < now {
+            // Fell behind: carry on from now rather than rushing to catch up.
+            next = now;
+        }
+        match g.grab(next, force || o.every_frame, &mut back, o.fit) {
+            Ok(true) => {
+                force = false;
+                back.number = sh.count.load(Ordering::Relaxed) + 1;
+                let mut f = sh.front.lock().unwrap_or_else(|p| p.into_inner());
+                std::mem::swap(&mut *f, &mut back);
+                sh.count.store(f.number, Ordering::Relaxed);
+            }
+            Ok(false) => {}
+            Err(e) => {
+                *sh.error.lock().unwrap_or_else(|p| p.into_inner()) = Some(e);
+                grab = None;
+                std::thread::sleep(Duration::from_millis(50));
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
 // Windows: DXGI Desktop Duplication + Media Foundation (hardware encoders of every vendor)
 // ---------------------------------------------------------------------------------------------
 
@@ -846,6 +1206,11 @@ mod win {
         local: (u32, u32),
         w: u32,
         h: u32,
+        /// The screen changed since this was last cleared (the screen feed skips copies of an
+        /// unchanged screen).
+        fresh: bool,
+        /// The pointer moved or changed shape since this was last cleared.
+        mouse: bool,
     }
 
     impl Dup {
@@ -853,7 +1218,7 @@ mod win {
             let (dev, ctx) = device(&screen.adapter)?;
             let dup = unsafe { screen.output.DuplicateOutput(&dev)? };
             let latest = texture(&dev, w, h, false)?;
-            Ok(Dup { dev, ctx, dup, output: screen.output.clone(), latest, local: screen.local, w, h })
+            Ok(Dup { dev, ctx, dup, output: screen.output.clone(), latest, local: screen.local, w, h, fresh: true, mouse: false })
         }
 
         /// Take screen updates until `until`; returns false when the duplication was lost and
@@ -872,6 +1237,10 @@ mod win {
                             let (lx, ly) = self.local;
                             let bx = D3D11_BOX { left: lx, top: ly, front: 0, right: lx + self.w, bottom: ly + self.h, back: 1 };
                             unsafe { self.ctx.CopySubresourceRegion(&self.latest, 0, 0, 0, 0, &r, 0, Some(&bx)) };
+                            self.fresh = true;
+                        }
+                        if info.LastMouseUpdateTime != 0 {
+                            self.mouse = true;
                         }
                         unsafe {
                             let _ = self.dup.ReleaseFrame();
@@ -885,7 +1254,10 @@ mod win {
                         // A full-screen game, a mode change or the lock screen: start again.
                         std::thread::sleep(Duration::from_millis(50));
                         match unsafe { self.output.DuplicateOutput(&self.dev) } {
-                            Ok(d) => self.dup = d,
+                            Ok(d) => {
+                                self.dup = d;
+                                self.fresh = true;
+                            }
                             Err(_) => {
                                 if Instant::now() >= until {
                                     return true;
@@ -995,6 +1367,190 @@ mod win {
                 DeleteDC(self.mem);
                 ReleaseDC(std::ptr::null_mut(), self.screen);
             }
+        }
+    }
+
+    // ---- the screen feed (live streaming): Desktop Duplication → staging texture → memory ----
+
+    /// `rect` clipped to the display `s` shows: left, top, width, height.
+    fn clip_to(s: &Screen, rect: (i32, i32, u32, u32)) -> Option<(RECT, (i32, i32, u32, u32))> {
+        let r = unsafe { s.output.GetDesc() }.ok()?.DesktopCoordinates;
+        clip_rect(r, rect).map(|c| (r, c))
+    }
+
+    fn clip_rect(r: RECT, (x, y, w, h): (i32, i32, u32, u32)) -> Option<(i32, i32, u32, u32)> {
+        let (gx, gy) = (x.max(r.left), y.max(r.top));
+        let (gr, gb) = ((x + w as i32).min(r.right), (y + h as i32).min(r.bottom));
+        (gr - gx >= 2 && gb - gy >= 2).then(|| (gx, gy, (gr - gx) as u32, (gb - gy) as u32))
+    }
+
+    fn staging(dev: &ID3D11Device, w: u32, h: u32) -> R<ID3D11Texture2D> {
+        let desc = D3D11_TEXTURE2D_DESC {
+            Width: w,
+            Height: h,
+            MipLevels: 1,
+            ArraySize: 1,
+            Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+            SampleDesc: DXGI_SAMPLE_DESC { Count: 1, Quality: 0 },
+            Usage: D3D11_USAGE_STAGING,
+            BindFlags: 0,
+            CPUAccessFlags: D3D11_CPU_ACCESS_READ.0 as u32,
+            MiscFlags: 0,
+        };
+        let mut t = None;
+        unsafe { dev.CreateTexture2D(&desc, None, Some(&mut t))? };
+        t.ok_or_else(|| windows::core::Error::from(windows::Win32::Foundation::E_FAIL))
+    }
+
+    /// Desktop Duplication first (the graphics chip keeps the screen; only changed pictures are
+    /// read back), GDI when it can't start.
+    pub(super) fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, String> {
+        per_monitor_dpi();
+        let dup = find_screen(rect.0, rect.1, rect.2, rect.3)
+            .map_err(|e| e.to_string())
+            .and_then(|s| s.ok_or_else(|| "the area isn't on a screen".to_string()))
+            .and_then(|s| DupGrab::new(s, rect, cursor).map_err(|e| e.to_string()));
+        match dup {
+            Ok(g) => Ok(Box::new(g)),
+            Err(e) => GdiGrab::new(rect, cursor).map(|g| Box::new(g) as Box<dyn Grab>).map_err(|g| format!("screen copy: {e}; GDI: {g}")),
+        }
+    }
+
+    struct DupGrab {
+        d: Dup,
+        /// The picture with the pointer drawn in (GDI-compatible), when the pointer is wanted.
+        composed: Option<ID3D11Texture2D>,
+        staging: ID3D11Texture2D,
+        pointer: Pointer,
+        /// The display's desktop rectangle and where the copied area starts on the desktop.
+        display: RECT,
+        origin: (i32, i32),
+    }
+
+    impl DupGrab {
+        fn new(screen: Screen, rect: (i32, i32, u32, u32), cursor: bool) -> R<DupGrab> {
+            let Some((display, (gx, gy, w, h))) = clip_to(&screen, rect) else { return Err(windows::core::Error::from(windows::Win32::Foundation::E_INVALIDARG)) };
+            let d = Dup::new(&screen, w, h)?;
+            let composed = if cursor { Some(texture(&d.dev, w, h, true)?) } else { None };
+            let staging = staging(&d.dev, w, h)?;
+            Ok(DupGrab { d, composed, staging, pointer: Pointer::new(), display, origin: (gx, gy) })
+        }
+
+        /// Map the staging texture, waiting idly for the graphics chip's copy to finish.
+        fn map(&self) -> R<D3D11_MAPPED_SUBRESOURCE> {
+            let mut m = D3D11_MAPPED_SUBRESOURCE::default();
+            let t0 = Instant::now();
+            loop {
+                match unsafe { self.d.ctx.Map(&self.staging, 0, D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT.0 as u32, Some(&mut m)) } {
+                    Ok(()) => return Ok(m),
+                    Err(e) if e.code() == DXGI_ERROR_WAS_STILL_DRAWING && t0.elapsed() < Duration::from_millis(100) => std::thread::sleep(Duration::from_micros(250)),
+                    Err(e) if e.code() == DXGI_ERROR_WAS_STILL_DRAWING => {
+                        unsafe { self.d.ctx.Map(&self.staging, 0, D3D11_MAP_READ, 0, Some(&mut m))? };
+                        return Ok(m);
+                    }
+                    Err(e) => return Err(e),
+                }
+            }
+        }
+    }
+
+    impl Grab for DupGrab {
+        fn grab(&mut self, until: Instant, force: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String> {
+            if !self.d.pump(until) {
+                return Err("the screen copy stopped".into());
+            }
+            let changed = force || self.d.fresh || (self.composed.is_some() && self.d.mouse);
+            self.d.fresh = false;
+            self.d.mouse = false;
+            if !changed {
+                return Ok(false);
+            }
+            let (w, h) = (self.d.w, self.d.h);
+            let e = |e: windows::core::Error| format!("screen copy: {e}");
+            unsafe {
+                let ctx = &self.d.ctx;
+                match &self.composed {
+                    Some(c) => {
+                        ctx.CopyResource(c, &self.d.latest);
+                        let surf: IDXGISurface1 = c.cast().map_err(e)?;
+                        if let Ok(hdc) = surf.GetDC(false) {
+                            self.pointer.draw(hdc.0, self.origin.0, self.origin.1);
+                            let _ = surf.ReleaseDC(None);
+                        }
+                        ctx.CopyResource(&self.staging, c);
+                    }
+                    None => ctx.CopyResource(&self.staging, &self.d.latest),
+                }
+                ctx.Flush();
+                let m = self.map().map_err(e)?;
+                let pitch = m.RowPitch as usize;
+                let data = std::slice::from_raw_parts(m.pData as *const u8, pitch * (h as usize - 1) + w as usize * 4);
+                fit_into(&Pixels { data, width: w, height: h, stride: pitch, bgra: true }, out, fit.unwrap_or((w, h)));
+                ctx.Unmap(&self.staging, 0);
+            }
+            Ok(true)
+        }
+
+        fn retarget(&mut self, rect: (i32, i32, u32, u32)) -> bool {
+            // Same display, same size: only the corner the copy starts from changes.
+            match clip_rect(self.display, rect) {
+                Some((gx, gy, w, h)) if (w, h) == (self.d.w, self.d.h) => {
+                    self.d.local = ((gx - self.display.left) as u32, (gy - self.display.top) as u32);
+                    self.origin = (gx, gy);
+                    self.d.fresh = true;
+                    true
+                }
+                _ => false,
+            }
+        }
+
+        fn name(&self) -> &'static str {
+            "graphics chip"
+        }
+    }
+
+    struct GdiGrab {
+        g: Gdi,
+        pointer: Option<Pointer>,
+    }
+
+    impl GdiGrab {
+        fn new((x, y, w, h): (i32, i32, u32, u32), cursor: bool) -> Result<GdiGrab, String> {
+            Ok(GdiGrab { g: Gdi::new(x, y, w, h)?, pointer: cursor.then(Pointer::new) })
+        }
+    }
+
+    impl Grab for GdiGrab {
+        fn grab(&mut self, until: Instant, _force: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String> {
+            use windows_sys::Win32::Graphics::Gdi::{BitBlt, GdiFlush, SRCCOPY};
+            let now = Instant::now();
+            if until > now {
+                std::thread::sleep(until - now);
+            }
+            let g = &self.g;
+            unsafe {
+                BitBlt(g.mem, 0, 0, g.w as i32, g.h as i32, g.screen, g.x, g.y, SRCCOPY);
+                if let Some(p) = &mut self.pointer {
+                    p.draw(g.mem, g.x, g.y);
+                }
+                GdiFlush();
+                let data = std::slice::from_raw_parts(g.bits, g.w as usize * g.h as usize * 4);
+                fit_into(&Pixels { data, width: g.w, height: g.h, stride: g.w as usize * 4, bgra: true }, out, fit.unwrap_or((g.w, g.h)));
+            }
+            Ok(true)
+        }
+
+        fn retarget(&mut self, (x, y, w, h): (i32, i32, u32, u32)) -> bool {
+            if (w, h) != (self.g.w, self.g.h) {
+                return false;
+            }
+            self.g.x = x;
+            self.g.y = y;
+            true
+        }
+
+        fn name(&self) -> &'static str {
+            "GDI"
         }
     }
 
@@ -1625,6 +2181,178 @@ mod soft {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn solid_px(w: u32, h: u32, p: [u8; 4]) -> Vec<u8> {
+        (0..w * h).flat_map(|_| p).collect()
+    }
+
+    #[test]
+    fn same_size_copies_turn_bgra_into_opaque_rgba() {
+        // Blue, green, red, alpha 0 (what GDI leaves) → red, green, blue, opaque.
+        let src = solid_px(4, 2, [10, 20, 30, 0]);
+        let mut out = Frame::default();
+        fit_into(&Pixels { data: &src, width: 4, height: 2, stride: 16, bgra: true }, &mut out, (4, 2));
+        assert_eq!((out.width, out.height, out.rgba.len()), (4, 2, 32));
+        assert!(out.rgba.chunks(4).all(|p| p == [30, 20, 10, 255]), "{:?}", &out.rgba[..8]);
+        fit_into(&Pixels { data: &src, width: 4, height: 2, stride: 16, bgra: false }, &mut out, (4, 2));
+        assert!(out.rgba.chunks(4).all(|p| p == [10, 20, 30, 255]));
+    }
+
+    #[test]
+    fn fitting_keeps_proportions_with_black_bars_and_reads_padded_rows() {
+        // 4 × 2, left half red, right half blue, rows padded to 24 bytes.
+        let mut src = vec![99u8; 24 * 2];
+        for y in 0..2 {
+            for x in 0..4 {
+                let c = if x < 2 { [255, 0, 0, 255] } else { [0, 0, 255, 255] };
+                src[y * 24 + x * 4..][..4].copy_from_slice(&c);
+            }
+        }
+        let mut out = Frame::default();
+        fit_into(&Pixels { data: &src, width: 4, height: 2, stride: 24, bgra: false }, &mut out, (16, 16));
+        let px = |x: usize, y: usize| out.rgba[(y * 16 + x) * 4..][..4].to_vec();
+        // 4 × 2 into 16 × 16: 16 × 8 in the middle, bars above and below.
+        assert_eq!(fit_rect(4, 2, 16, 16), (0, 4, 16, 8));
+        assert_eq!(px(8, 0), BLACK);
+        assert_eq!(px(8, 15), BLACK);
+        assert_eq!(px(1, 8), vec![255, 0, 0, 255]);
+        assert_eq!(px(14, 8), vec![0, 0, 255, 255]);
+        assert!(out.rgba.chunks(4).all(|p| p[3] == 255), "the padding never shows");
+        // Old pictures are reused at the new size.
+        let cap = out.rgba.capacity();
+        fit_into(&Pixels { data: &src, width: 4, height: 2, stride: 24, bgra: false }, &mut out, (8, 8));
+        assert_eq!(out.rgba.len(), 8 * 8 * 4);
+        assert_eq!(out.rgba.capacity(), cap);
+    }
+
+    #[test]
+    fn scaling_matches_studios_scaler_on_big_pictures() {
+        // Big enough to be done in bands on several threads.
+        let (sw, sh, ow, oh) = (1300u32, 812u32, 960u32, 600u32);
+        let mut src = vec![0u8; (sw * sh * 4) as usize];
+        crate::encode::test_picture(&mut src, sw, sh, 5);
+        let mut out = Frame::default();
+        fit_into(&Pixels { data: &src, width: sw, height: sh, stride: sw as usize * 4, bgra: false }, &mut out, (ow, oh));
+        let img = image::RgbaImage::from_raw(sw, sh, src).unwrap();
+        let mut want = image::RgbaImage::from_pixel(ow, oh, image::Rgba(BLACK));
+        let (x, y, w, h) = fit_rect(sw, sh, ow, oh);
+        crate::studio::blit_scaled(&mut want, &img, x as i64, y as i64, w, h, false);
+        let worst = out.rgba.iter().zip(want.as_raw()).enumerate().filter(|(i, _)| i % 4 != 3).map(|(_, (a, b))| (*a as i32 - *b as i32).abs()).max().unwrap();
+        assert!(worst <= 2, "off by {worst}");
+    }
+
+    #[test]
+    fn pixels_blend_four_bytes_at_once() {
+        assert_eq!(lerp_px(0x1020_3040, 0xFFFF_FFFF, 0), 0x1020_3040);
+        assert_eq!(lerp_px(0, 0xFFFF_FFFF, 256), 0xFFFF_FFFF);
+        assert_eq!(lerp_px(0, 0xFFFF_FFFF, 128), 0x7F7F_7F7F);
+        assert_eq!(lerp_px(0x0000_00FF, 0x00FF_0000, 64), 0x003F_00BF);
+        assert_eq!(opaque_rgba(0x0011_2233, true), 0xFF33_2211);
+        assert_eq!(sample_points(4, 4), vec![(0, 1, 0), (1, 2, 0), (2, 3, 0), (3, 3, 0)]);
+        assert!(sample_points(1000, 7).iter().all(|&(a, b, _)| a < 1000 && b < 1000));
+    }
+
+    /// A screen that changes on every second look and paints its look count in.
+    struct FakeGrab {
+        looks: u8,
+    }
+
+    static FAKE_OPENS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    static FAKE_RETARGETS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+    impl Grab for FakeGrab {
+        fn grab(&mut self, until: Instant, force: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String> {
+            std::thread::sleep(until.saturating_duration_since(Instant::now()));
+            self.looks = self.looks.wrapping_add(1);
+            if !force && self.looks % 2 == 0 {
+                return Ok(false);
+            }
+            let src = solid_px(8, 4, [self.looks, 0, 0, 255]);
+            fit_into(&Pixels { data: &src, width: 8, height: 4, stride: 32, bgra: false }, out, fit.unwrap_or((8, 4)));
+            Ok(true)
+        }
+        fn retarget(&mut self, r: (i32, i32, u32, u32)) -> bool {
+            FAKE_RETARGETS.fetch_add(1, Ordering::Relaxed);
+            r.2 == 8
+        }
+        fn name(&self) -> &'static str {
+            "fake"
+        }
+    }
+
+    fn fake_open(_: (i32, i32, u32, u32), _: bool) -> Result<Box<dyn Grab>, String> {
+        FAKE_OPENS.fetch_add(1, Ordering::Relaxed);
+        Ok(Box::new(FakeGrab { looks: 0 }))
+    }
+
+    fn broken_open(_: (i32, i32, u32, u32), _: bool) -> Result<Box<dyn Grab>, String> {
+        Err("no screen here".into())
+    }
+
+    #[test]
+    fn the_feed_keeps_the_newest_picture_and_follows_a_moving_area() {
+        let o = FeedOptions { fps: 200, cursor: false, fit: Some((16, 8)), every_frame: false };
+        let f = ScreenFeed::start_with((0, 0, 8, 4), o, fake_open).unwrap();
+        assert!(f.frames() >= 1, "start waits for the first picture");
+        assert_eq!(f.method(), "fake");
+        let t = Instant::now();
+        while f.frames() < 5 && t.elapsed() < Duration::from_secs(5) {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        f.with_latest(|p| {
+            assert_eq!((p.width, p.height, p.number), (16, 8, p.number.max(5)));
+            // The fake paints its look count; only changed looks (odd ones) become pictures.
+            assert_eq!(p.rgba[0] % 2, 1, "an unchanged screen isn't copied again");
+            assert_eq!(&p.rgba[1..4], &[0, 0, 255]);
+        });
+        // Same size: moved in place. Another size: made again.
+        let opens = FAKE_OPENS.load(Ordering::Relaxed);
+        f.move_to((5, 5, 8, 4));
+        f.move_to((5, 5, 1, 1));
+        let t = Instant::now();
+        while FAKE_RETARGETS.load(Ordering::Relaxed) == 0 && t.elapsed() < Duration::from_secs(5) {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        assert_eq!(FAKE_OPENS.load(Ordering::Relaxed), opens, "too small a move is ignored; the same size moves in place");
+        f.move_to((0, 0, 20, 10));
+        let t = Instant::now();
+        while FAKE_OPENS.load(Ordering::Relaxed) == opens && t.elapsed() < Duration::from_secs(5) {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        assert_eq!(FAKE_OPENS.load(Ordering::Relaxed), opens + 1);
+        drop(f);
+        // Copying every frame makes a picture every time.
+        let f = ScreenFeed::start_with((0, 0, 8, 4), FeedOptions { every_frame: true, ..o }, fake_open).unwrap();
+        let t = Instant::now();
+        while f.frames() < 6 && t.elapsed() < Duration::from_secs(5) {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        f.with_latest(|p| assert_eq!(p.rgba[0] as u64 % 256, p.number % 256, "every look became a picture"));
+        assert!(ScreenFeed::start_with((0, 0, 1, 1), o, fake_open).is_err(), "too small");
+        let e = ScreenFeed::start_with((0, 0, 8, 4), o, broken_open).err().unwrap();
+        assert_eq!(e, "no screen here");
+    }
+
+    /// How long bringing a 2560 × 1600 BGRA screen to a 1080p and a 1440p stream takes:
+    /// `cargo test --release -- --ignored fit_speed --nocapture`.
+    #[test]
+    #[ignore]
+    fn fit_speed() {
+        let (sw, sh) = (2560u32, 1600u32);
+        let mut src = vec![0u8; (sw * sh * 4) as usize];
+        crate::encode::test_picture(&mut src, sw, sh, 1);
+        let px = Pixels { data: &src, width: sw, height: sh, stride: sw as usize * 4, bgra: true };
+        for size in [(1728, 1080), (2304, 1440), (2560, 1600)] {
+            let mut out = Frame::default();
+            fit_into(&px, &mut out, size);
+            let runs = 100;
+            let t = Instant::now();
+            for _ in 0..runs {
+                fit_into(std::hint::black_box(&px), &mut out, size);
+            }
+            println!("2560x1600 into {}x{}: {:.2} ms", size.0, size.1, t.elapsed().as_secs_f64() * 1000.0 / runs as f64);
+        }
+    }
 
     #[test]
     fn sound_that_cant_start_leaves_a_note_instead_of_stopping_the_recording() {

@@ -96,14 +96,24 @@ pub fn encode_chunks(m: &Message, chunk_size: u32) -> Vec<u8> {
     out
 }
 
-#[derive(Clone, Default)]
-struct InStream {
+/// Unfinished messages on all chunk streams together may hold at most this much (a server
+/// could otherwise start a big message on each of 65,000 chunk streams).
+const MAX_IN_PENDING: usize = 2 * MAX_IN_MESSAGE;
+
+/// A chunk stream's header fields (what later chunks leave out is taken from here).
+#[derive(Clone, Copy, Default)]
+struct Header {
     timestamp: u32,
     delta: u32,
     length: usize,
     type_id: u8,
     stream_id: u32,
     ext: bool,
+}
+
+#[derive(Default)]
+struct InStream {
+    h: Header,
     partial: Vec<u8>,
 }
 
@@ -114,11 +124,13 @@ pub struct ChunkReader {
     pos: usize,
     chunk_size: usize,
     streams: std::collections::HashMap<u32, InStream>,
+    /// Bytes held in unfinished messages.
+    pending: usize,
 }
 
 impl Default for ChunkReader {
     fn default() -> Self {
-        ChunkReader { buf: Vec::new(), pos: 0, chunk_size: 128, streams: Default::default() }
+        ChunkReader { buf: Vec::new(), pos: 0, chunk_size: 128, streams: Default::default(), pending: 0 }
     }
 }
 
@@ -150,7 +162,8 @@ impl ChunkReader {
                     if m.type_id == MSG_ABORT && m.payload.len() >= 4 {
                         let c = u32::from_be_bytes([m.payload[0], m.payload[1], m.payload[2], m.payload[3]]);
                         if let Some(s) = self.streams.get_mut(&c) {
-                            s.partial.clear();
+                            self.pending -= s.partial.len();
+                            s.partial = Vec::new();
                         }
                     }
                     return Ok(Some(m));
@@ -190,31 +203,34 @@ impl ChunkReader {
             return Ok(None);
         }
         let u24 = |s: &[u8]| ((s[0] as u32) << 16) | ((s[1] as u32) << 8) | s[2] as u32;
-        let mut st = self.streams.get(&csid).cloned().unwrap_or_default();
-        if fmt < 3 && !st.partial.is_empty() {
+        // The header fields are worked on in a copy and the partial payload stays where it is:
+        // copying the stream state with its payload for every chunk made a big message cost
+        // its size squared.
+        let (mut h, have) = self.streams.get(&csid).map(|s| (s.h, s.partial.len())).unwrap_or_default();
+        if fmt < 3 && have > 0 {
             return Err("the server started a new message before finishing the last one".into());
         }
-        let starting = st.partial.is_empty();
+        let starting = have == 0;
         let mut ts_field = 0u32;
         if fmt <= 2 {
             ts_field = u24(&b[at..]);
         }
         if fmt <= 1 {
-            st.length = u24(&b[at + 3..]) as usize;
-            st.type_id = b[at + 6];
-            if st.length > MAX_IN_MESSAGE {
+            h.length = u24(&b[at + 3..]) as usize;
+            h.type_id = b[at + 6];
+            if h.length > MAX_IN_MESSAGE {
                 return Err("the server sent a message that is far too big".into());
             }
         }
         if fmt == 0 {
-            st.stream_id = u32::from_le_bytes([b[at + 7], b[at + 8], b[at + 9], b[at + 10]]);
+            h.stream_id = u32::from_le_bytes([b[at + 7], b[at + 8], b[at + 9], b[at + 10]]);
         }
         at += hlen;
         if fmt <= 2 {
-            st.ext = ts_field == 0xFF_FFFF;
+            h.ext = ts_field == 0xFF_FFFF;
         }
         let mut ext_val = None;
-        if st.ext {
+        if h.ext {
             if !need(4, at) {
                 return Ok(None);
             }
@@ -222,35 +238,40 @@ impl ChunkReader {
             at += 4;
         }
         let field = ext_val.unwrap_or(ts_field);
-        let take = (st.length - st.partial.len()).min(self.chunk_size);
+        let take = (h.length - have).min(self.chunk_size);
         if !need(take, at) {
             return Ok(None);
+        }
+        if self.pending + take > MAX_IN_PENDING {
+            return Err("the server sent too many unfinished messages".into());
         }
         // Only now, with the whole chunk here, does the state change.
         if starting {
             match fmt {
                 0 => {
-                    st.timestamp = field;
-                    st.delta = 0;
+                    h.timestamp = field;
+                    h.delta = 0;
                 }
                 1 | 2 => {
-                    st.delta = field;
-                    st.timestamp = st.timestamp.wrapping_add(field);
+                    h.delta = field;
+                    h.timestamp = h.timestamp.wrapping_add(field);
                 }
-                _ => st.timestamp = st.timestamp.wrapping_add(st.delta),
+                _ => h.timestamp = h.timestamp.wrapping_add(h.delta),
             }
         }
+        let st = self.streams.entry(csid).or_default();
+        st.h = h;
         st.partial.extend_from_slice(&b[at..at + take]);
+        self.pending += take;
         at += take;
         self.pos += at;
-        let done = st.partial.len() >= st.length;
-        let msg = if done {
+        let msg = if st.partial.len() >= h.length {
             let payload = std::mem::take(&mut st.partial);
-            Some(Message { csid, type_id: st.type_id, stream_id: st.stream_id, timestamp: st.timestamp, payload })
+            self.pending -= payload.len();
+            Some(Message { csid, type_id: h.type_id, stream_id: h.stream_id, timestamp: h.timestamp, payload })
         } else {
             None
         };
-        self.streams.insert(csid, st);
         Ok(Some(msg))
     }
 }
@@ -777,5 +798,122 @@ mod tests {
         assert!(e.contains("Secure connection"), "{e}");
         assert!(!e.contains("secret_k"));
         srv.join().unwrap();
+    }
+
+    /// What a server says at the start, as chunks: the bytes the fuzz tests break.
+    fn server_talk() -> Vec<u8> {
+        let mut b = encode_chunks(&Message::control(MSG_WINDOW_ACK_SIZE, 2_500_000u32.to_be_bytes().to_vec()), 128);
+        b.extend(encode_chunks(&Message::control(MSG_SET_CHUNK_SIZE, 300u32.to_be_bytes().to_vec()), 128));
+        let ok = Amf::Object(vec![("fmsVer".into(), Amf::str("FMS/3,0,1,123"))]);
+        b.extend(encode_chunks(&Message::command(3, 0, &[Amf::str("_result"), Amf::Number(1.0), ok, Amf::Null]), 300));
+        b.extend(encode_chunks(&Message::new(6, MSG_VIDEO, 1, 0x0100_0000, vec![7; 700]), 300));
+        b.extend(encode_chunks(&Message::control(MSG_USER_CONTROL, vec![0, 6, 0, 0, 4, 0xD2]), 300));
+        b
+    }
+
+    #[test]
+    fn random_and_broken_chunks_never_panic_or_reserve_much() {
+        let good = server_talk();
+        assert_eq!(read_all(&good, 128, 5).len(), 5);
+        let mut g = crate::testalloc::Bytes::new(2);
+        for i in 0..5_000 {
+            let input = if i % 2 == 0 { g.mutate(&good) } else { g.noise(400) };
+            let piece = 1 + g.below(64);
+            let (count, largest, _) = crate::testalloc::measure(|| {
+                let mut r = ChunkReader::default();
+                let mut n = 0;
+                'feed: for p in input.chunks(piece) {
+                    r.feed(p);
+                    loop {
+                        match r.next() {
+                            Ok(Some(m)) => {
+                                assert!(m.payload.len() <= MAX_IN_MESSAGE);
+                                // What the client does with commands must cope too.
+                                if m.type_id == MSG_COMMAND_AMF0 {
+                                    let _ = amf::decode_all(&m.payload);
+                                }
+                                n += 1;
+                            }
+                            Ok(None) => break,
+                            Err(_) => break 'feed,
+                        }
+                    }
+                }
+                n
+            });
+            assert!(count <= input.len(), "every message takes at least a byte");
+            // The length fields say up to 16 MB; only bytes that arrived are held.
+            assert!(largest <= 64 * 1024 + 4 * input.len(), "input {i} ({} bytes) reserved {largest} bytes", input.len());
+        }
+    }
+
+    /// Bug: the chunk stream's state, payload so far included, was copied for every chunk, so
+    /// a 1 MB message in 128-byte chunks copied about 4 GB.
+    #[test]
+    fn a_big_message_in_small_chunks_is_not_copied_over_and_over() {
+        let m = Message::new(6, MSG_VIDEO, 1, 5, (0..1 << 20).map(|i: u32| i as u8).collect());
+        let b = encode_chunks(&m, 128);
+        let (got, _, total) = crate::testalloc::measure(|| read_all(&b, 128, 64 * 1024));
+        assert_eq!(got, vec![m]);
+        assert!(total < 32 << 20, "{} MB allocated to read 1 MB", total >> 20);
+    }
+
+    #[test]
+    fn unfinished_messages_on_many_chunk_streams_are_limited() {
+        let mut r = ChunkReader::default();
+        r.set_chunk_size(1 << 20);
+        let mut err = None;
+        for csid in 10..40u32 {
+            // The first megabyte of a 4 MB message, on a chunk stream of its own.
+            let mut b = encode_chunks(&Message::new(csid, MSG_VIDEO, 1, 0, vec![0; MAX_IN_MESSAGE]), 1 << 20);
+            b.truncate(12 + (1 << 20));
+            r.feed(&b);
+            match r.next() {
+                Ok(m) => assert!(m.is_none()),
+                Err(e) => {
+                    err = Some((csid, e));
+                    break;
+                }
+            }
+        }
+        let (csid, e) = err.expect("never refused");
+        assert!(e.contains("unfinished"), "{e}");
+        assert_eq!(csid - 10, (MAX_IN_PENDING >> 20) as u32, "refused once the limit was reached");
+        // An abort message gives the room back.
+        let mut r = ChunkReader::default();
+        let mut b = encode_chunks(&Message::new(9, MSG_VIDEO, 1, 0, vec![0; 1000]), 128);
+        b.truncate(12 + 128);
+        r.feed(&b);
+        assert!(r.next().unwrap().is_none());
+        assert_eq!(r.pending, 128);
+        r.feed(&encode_chunks(&Message::control(MSG_ABORT, 9u32.to_be_bytes().to_vec()), 128));
+        assert_eq!(r.next().unwrap().map(|m| m.type_id), Some(MSG_ABORT));
+        assert_eq!(r.pending, 0);
+    }
+
+    /// A server that keeps sending messages but never the answer can't keep the connect
+    /// waiting past its time limit.
+    #[test]
+    fn a_chatty_server_that_never_answers_times_out() {
+        let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = l.local_addr().unwrap().port();
+        std::thread::spawn(move || {
+            let Ok((mut s, _)) = l.accept() else { return };
+            if server_handshake(&mut s).is_err() {
+                return;
+            }
+            // Answers to a question nobody asked, until the client hangs up.
+            let wrong = encode_chunks(&Message::command(3, 0, &[Amf::str("_result"), Amf::Number(999.0), Amf::Null]), 128);
+            while s.write_all(&wrong).is_ok() {
+                std::thread::sleep(Duration::from_millis(1));
+            }
+        });
+        let ep = Endpoint { tls: false, host: "127.0.0.1".into(), port, app: "live".into(), tc_url: String::new(), stream: "k".into() };
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let _ = tx.send(Client::connect(&ep, Duration::from_millis(500)).err());
+        });
+        let e = rx.recv_timeout(Duration::from_secs(20)).expect("connect never gave up").expect("an error");
+        assert!(e.contains("in time"), "{e}");
     }
 }

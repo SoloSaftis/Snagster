@@ -358,15 +358,17 @@ mod tests {
 
     #[test]
     fn queueing_doesnt_wait_for_the_job() {
+        // The job can't finish before this test lets it (no sleeps: a slow machine can't
+        // turn the order around), so if queue() waited for it, it would never return.
+        let (go, gate) = channel::<()>();
         let mut jobs = Jobs::new();
-        let t = Instant::now();
-        jobs.queue(|| {
-            std::thread::sleep(Duration::from_millis(300));
+        jobs.queue(move || {
+            let _ = gate.recv_timeout(Duration::from_secs(30));
             1
         });
-        assert!(t.elapsed() < Duration::from_millis(200), "queue() waited for the work");
         assert_eq!(jobs.busy(), 1);
         assert!(jobs.finished(10).is_empty());
+        go.send(()).unwrap();
         assert_eq!(collect(&jobs, 1), vec![1]);
     }
 
@@ -381,13 +383,18 @@ mod tests {
 
     #[test]
     fn spawned_jobs_dont_wait_behind_the_queue() {
+        // The queued job waits until the spawned one has finished (or 30 s, so a broken
+        // spawn fails the test instead of hanging it).
+        let (go, gate) = channel::<()>();
         let mut jobs = Jobs::new();
-        jobs.queue(|| {
-            std::thread::sleep(Duration::from_millis(400));
+        jobs.queue(move || {
+            let _ = gate.recv_timeout(Duration::from_secs(30));
             "slow"
         });
         jobs.spawn(|| "quick");
-        let got = collect(&jobs, 2);
+        let mut got = collect(&jobs, 1);
+        go.send(()).unwrap();
+        got.extend(collect(&jobs, 1));
         assert_eq!(got, vec!["quick", "slow"]);
     }
 
@@ -430,20 +437,26 @@ mod tests {
     }
 
     static FETCHES: AtomicUsize = AtomicUsize::new(0);
+    /// `slow_list` doesn't finish until the test opens this (no timing to race against).
+    static GATE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
     fn slow_list() -> Vec<u32> {
         FETCHES.fetch_add(1, Ordering::SeqCst);
-        std::thread::sleep(Duration::from_millis(50));
+        let until = Instant::now() + Duration::from_secs(30);
+        while !GATE.load(Ordering::SeqCst) && Instant::now() < until {
+            std::thread::sleep(Duration::from_millis(2));
+        }
         vec![1, 2, 3]
     }
 
     #[test]
     fn list_cache_fetches_in_the_background_once() {
         let mut c = ListCache::new(Duration::from_secs(60));
-        let t = Instant::now();
+        // The list can't be made before the gate opens, so getting here proves get() didn't wait.
         assert!(c.get(None, slow_list).is_empty(), "the first call doesn't wait for the list");
-        assert!(t.elapsed() < Duration::from_millis(40));
+        assert!(c.get(None, slow_list).is_empty());
         assert!(!c.loaded());
+        GATE.store(true, Ordering::SeqCst);
         let until = Instant::now() + Duration::from_secs(10);
         while !c.loaded() && Instant::now() < until {
             c.get(None, slow_list);

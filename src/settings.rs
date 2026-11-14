@@ -1477,4 +1477,31 @@ mod tests {
         assert!(presets.iter().all(|p| !p.name.is_empty() && !p.combo.is_set()));
         assert_eq!(Preset::default().mode, PresetMode::Area);
     }
+
+    /// A settings file that was cut short, edited by hand or overwritten with junk opens as
+    /// something (the defaults at worst), never a crash, and saves again.
+    #[test]
+    fn broken_settings_files_load_as_something() {
+        let mut s = Settings::default();
+        s.studio.current = 7;
+        s.jpeg_quality = 40;
+        let good = serde_json::to_string_pretty(&s).unwrap();
+        let mut g = crate::testalloc::Bytes::new(7);
+        for i in 0..1_500 {
+            let input = match i % 4 {
+                3 => g.noise(300),
+                // Hand edits: a number where something else belongs.
+                2 => good.replacen("40", &format!("{}", g.next() as i64), 1).into_bytes(),
+                _ => g.mutate(good.as_bytes()),
+            };
+            let text = String::from_utf8_lossy(&input);
+            let (loaded, largest, _) = crate::testalloc::measure(|| Settings::from_saved(Some(&text)));
+            assert!(largest <= (1 << 20) + 64 * input.len(), "input {i}: {largest} bytes");
+            // What it opened as can be used and saved.
+            let _ = loaded.studio.scene();
+            let _ = loaded.binding(Action::Area);
+            let again = serde_json::to_string(&loaded).unwrap();
+            let _ = Settings::from_saved(Some(&again));
+        }
+    }
 }

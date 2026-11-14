@@ -400,4 +400,22 @@ mod tests {
         let v = super::super::amf::decode_all(&metadata(&silent)).unwrap();
         assert!(v[2].get("audiocodecid").is_none());
     }
+
+    /// Whatever an encoder hands over (cut short, start codes in odd places), the tags are
+    /// made without a panic.
+    #[test]
+    fn odd_access_units_never_panic() {
+        let good = [&[0u8, 0, 0, 1, 0x67, 0x42, 0xC0, 0x1F, 0xDA][..], &[0, 0, 1, 0x68, 0xCE, 0x3C, 0x80], &[0, 0, 0, 1, 0x65, 1, 2, 3], &[0, 0, 1, 0x40, 1, 0x0C, 0, 0, 0, 1, 0x42, 1, 1, 1, 0x60, 0, 0, 3, 0, 0, 1, 0x44]].concat();
+        let mut g = crate::testalloc::Bytes::new(9);
+        for i in 0..5_000 {
+            let au = if i % 2 == 0 { g.mutate(&good) } else { g.noise(64) };
+            for codec in [Codec::H264, Codec::Hevc] {
+                let nals = split_annexb(&au);
+                assert!(nals.iter().map(|n| n.len()).sum::<usize>() <= au.len());
+                let p = ParamSets::find(codec, &au);
+                let _ = video_sequence_header(codec, &p);
+                assert!(video_frame(codec, &au, i % 3 == 0, (i as i32) - 2500).len() <= 9 + au.len() + 4 * nals.len());
+            }
+        }
+    }
 }

@@ -1,4 +1,4 @@
-//! Video and sound encoders that hand                 assert_eq!(p.iter().any(|b| b.hardware()), hw && os != Os::Other, "{os:?} hardware {hw}");ack the compressed data itself (not a finished file), for
+//! Video and sound encoders that hand back the compressed data itself (not a finished file), for
 //! live streaming and, later, recording on every system. Each platform offers its graphics-chip
 //! encoder first and falls back to software:
 //!
@@ -100,12 +100,10 @@ mod mac;
 mod linux;
 
 /// Sound sample rate and channels the AAC encoders take (the same as `audio::Capture` gives).
-#[cfg(any(windows, target_os = "macos", test))]
 pub const AUDIO_RATE: u32 = 48_000;
 #[cfg(any(windows, target_os = "macos", test))]
 pub const AUDIO_CHANNELS: u32 = 2;
 /// Sample frames in one AAC-LC packet.
-#[cfg(any(windows, target_os = "macos", test))]
 pub const AAC_FRAME: u32 = 1024;
 
 impl Codec {
@@ -380,14 +378,19 @@ pub fn speed(b: Backend, w: u32, h: u32, frames: u32) -> Result<(EncoderName, f6
     let cfg = VideoConfig { width: w, height: h, fps: 60, bitrate_bps: 8_000_000, keyframe_every_s: 2, codec: Codec::H264, prefer_hardware: b.hardware(), low_latency: true };
     let mut e = open_backend(b, &cfg)?;
     let mut rgba = vec![0u8; cfg.rgba_len()];
-    let t0 = std::time::Instant::now();
+    // Only the encoder's time counts (drawing the test picture is not its work).
+    let mut busy = std::time::Duration::ZERO;
     let mut out = Vec::new();
     for i in 0..frames {
         test_picture(&mut rgba, w, h, i);
+        let t = std::time::Instant::now();
         out.extend(e.encode(&rgba, i as i64 * cfg.frame_us(), false)?);
+        busy += t.elapsed();
     }
+    let t = std::time::Instant::now();
     out.extend(e.finish()?);
-    let secs = t0.elapsed().as_secs_f64().max(1e-6);
+    busy += t.elapsed();
+    let secs = busy.as_secs_f64().max(1e-6);
     match out.first() {
         None => return Err("no frames came out".into()),
         Some(p) if !p.keyframe || sps_pps(&p.data).is_none() => return Err("the first frame isn't a keyframe with its SPS and PPS".into()),
@@ -544,51 +547,130 @@ fn chroma(r: i32, g: i32, b: i32) -> (u8, u8) {
     (u.clamp(16, 240) as u8, v.clamp(16, 240) as u8)
 }
 
-/// Converts RGBA (`w` × `h`, both even, top row first) to 4:2:0 YUV, handing each 2 × 2 block's
-/// chroma to `put_uv(column, row, u, v)` in half-size coordinates.
-fn rgba_to_420(rgba: &[u8], w: usize, h: usize, y: &mut [u8], y_stride: usize, mut put_uv: impl FnMut(usize, usize, u8, u8)) {
-    debug_assert!(w % 2 == 0 && h % 2 == 0 && rgba.len() >= w * h * 4);
-    for row in 0..h / 2 {
-        let top = &rgba[row * 2 * w * 4..(row * 2 + 1) * w * 4];
-        let bottom = &rgba[(row * 2 + 1) * w * 4..(row * 2 + 2) * w * 4];
-        let (y0, y1) = y[row * 2 * y_stride..].split_at_mut(y_stride);
-        for col in 0..w / 2 {
-            let mut sum = [0i32; 3];
-            for (line, out) in [(top, &mut *y0), (bottom, &mut *y1)] {
-                for k in 0..2 {
-                    let p = &line[(col * 2 + k) * 4..];
-                    let (r, g, b) = (p[0] as i32, p[1] as i32, p[2] as i32);
-                    out[col * 2 + k] = luma(r, g, b);
-                    sum[0] += r;
-                    sum[1] += g;
-                    sum[2] += b;
-                }
+/// One 2 × 2 block: two RGBA pixels from the upper row (`t`, 8 bytes) and two from the lower
+/// (`b`): the four lumas (upper pair, lower pair) and the block's average chroma.
+#[inline(always)]
+fn block(t: &[u8], b: &[u8]) -> ([u8; 2], [u8; 2], u8, u8) {
+    let px = |s: &[u8], i: usize| (s[i] as i32, s[i + 1] as i32, s[i + 2] as i32);
+    let (p0, p1, p2, p3) = (px(t, 0), px(t, 4), px(b, 0), px(b, 4));
+    let (u, v) = chroma((p0.0 + p1.0 + p2.0 + p3.0 + 2) >> 2, (p0.1 + p1.1 + p2.1 + p3.1 + 2) >> 2, (p0.2 + p1.2 + p2.2 + p3.2 + 2) >> 2);
+    ([luma(p0.0, p0.1, p0.2), luma(p1.0, p1.1, p1.2)], [luma(p2.0, p2.1, p2.2), luma(p3.0, p3.1, p3.2)], u, v)
+}
+
+/// Where one pair of rows' chroma goes.
+enum ChromaRow<'a> {
+    /// NV12: U and V interleaved.
+    Nv12(&'a mut [u8]),
+    /// I420: separate U and V rows.
+    I420(&'a mut [u8], &'a mut [u8]),
+}
+
+/// Two rows of RGBA (`w` pixels each) to two rows of Y and one of chroma. Iterators instead of
+/// indices, so there are no bounds checks inside the loop.
+#[inline(always)]
+fn row_pair(top: &[u8], bottom: &[u8], y0: &mut [u8], y1: &mut [u8], c: ChromaRow) {
+    let blocks = top.chunks_exact(8).zip(bottom.chunks_exact(8)).zip(y0.chunks_exact_mut(2).zip(y1.chunks_exact_mut(2)));
+    match c {
+        ChromaRow::Nv12(uv) => {
+            for (((t, b), (ya, yb)), uv) in blocks.zip(uv.chunks_exact_mut(2)) {
+                let (a, l, u, v) = block(t, b);
+                ya.copy_from_slice(&a);
+                yb.copy_from_slice(&l);
+                uv[0] = u;
+                uv[1] = v;
             }
-            let (u, v) = chroma((sum[0] + 2) >> 2, (sum[1] + 2) >> 2, (sum[2] + 2) >> 2);
-            put_uv(col, row, u, v);
+        }
+        ChromaRow::I420(us, vs) => {
+            for (((t, b), (ya, yb)), (u, v)) in blocks.zip(us.iter_mut().zip(vs.iter_mut())) {
+                let (a, l, cu, cv) = block(t, b);
+                ya.copy_from_slice(&a);
+                yb.copy_from_slice(&l);
+                *u = cu;
+                *v = cv;
+            }
         }
     }
 }
 
+/// Bands of rows converted side by side for a picture of `w` × `h`: one for small pictures (a
+/// thread costs more than it saves), else one per core up to 8.
+pub(crate) fn bands_for(w: usize, h: usize) -> usize {
+    if w * h < 640 * 360 {
+        return 1;
+    }
+    std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1).clamp(1, 8).min(h / 2)
+}
+
+/// Run `f(rgba rows, [plane rows...])` over bands of row pairs on several
+/// threads. Each band gets its own slices of every plane: `planes` are (buffer, bytes per row
+/// pair) and are cut at the same row pairs.
+fn in_bands<const N: usize>(w: usize, h: usize, rgba: &[u8], mut planes: [(&mut [u8], usize); N], f: impl Fn(&[u8], [&mut [u8]; N]) + Sync) {
+    let pairs = h / 2;
+    let bands = bands_for(w, h);
+    let per = pairs.div_ceil(bands.max(1));
+    std::thread::scope(|s| {
+        let mut rest = rgba;
+        let mut start = 0;
+        while start < pairs {
+            let n = per.min(pairs - start);
+            let (src, r) = rest.split_at((n * 2 * w * 4).min(rest.len()));
+            rest = r;
+            let outs: [&mut [u8]; N] = std::array::from_fn(|k| {
+                let (buf, step) = &mut planes[k];
+                let cut = (n * *step).min(buf.len());
+                let (mine, others) = std::mem::take(buf).split_at_mut(cut);
+                *buf = others;
+                mine
+            });
+            let f = &f;
+            if start + n >= pairs {
+                f(src, outs);
+            } else {
+                s.spawn(move || f(src, outs));
+            }
+            start += n;
+        }
+    });
+}
+
+/// Row `i` (`w` bytes) of a plane with rows `stride` apart, or nothing when it isn't there.
+fn plane_row(p: &mut [u8], i: usize, stride: usize, w: usize) -> &mut [u8] {
+    let at = (i * stride).min(p.len());
+    let end = (at + w).min(p.len());
+    &mut p[at..end]
+}
+
 /// RGBA to NV12: a full-size Y plane, then one half-size plane of interleaved U, V.
 pub fn rgba_to_nv12(rgba: &[u8], w: u32, h: u32, y: &mut [u8], y_stride: usize, uv: &mut [u8], uv_stride: usize) {
-    rgba_to_420(rgba, w as usize, h as usize, y, y_stride, |c, r, u, v| {
-        uv[r * uv_stride + c * 2] = u;
-        uv[r * uv_stride + c * 2 + 1] = v;
+    let (w, h) = (w as usize, h as usize);
+    debug_assert!(w % 2 == 0 && h % 2 == 0 && rgba.len() >= w * h * 4);
+    in_bands(w, h, rgba, [(y, 2 * y_stride), (uv, uv_stride)], |src, [y, uv]| {
+        for (j, rows) in src.chunks_exact(w * 8).enumerate() {
+            let (top, bottom) = rows.split_at(w * 4);
+            let (upper, lower) = y.split_at_mut(((2 * j + 1) * y_stride).min(y.len()));
+            let y0 = plane_row(upper, 2 * j, y_stride, w);
+            let y1 = plane_row(lower, 0, y_stride, w);
+            row_pair(top, bottom, y0, y1, ChromaRow::Nv12(plane_row(uv, j, uv_stride, w)));
+        }
     });
 }
 
 /// RGBA to I420 (three planes: Y, then U, then V; strides `w`, `w/2`, `w/2`).
 pub fn rgba_to_i420(rgba: &[u8], w: u32, h: u32, y: &mut [u8], u: &mut [u8], v: &mut [u8]) {
-    let half = w as usize / 2;
-    rgba_to_420(rgba, w as usize, h as usize, y, w as usize, |c, r, cu, cv| {
-        u[r * half + c] = cu;
-        v[r * half + c] = cv;
+    let (w, h) = (w as usize, h as usize);
+    debug_assert!(w % 2 == 0 && h % 2 == 0 && rgba.len() >= w * h * 4);
+    let half = w / 2;
+    in_bands(w, h, rgba, [(y, 2 * w), (u, half), (v, half)], |src, [y, u, v]| {
+        for (((rows, ys), us), vs) in src.chunks_exact(w * 8).zip(y.chunks_exact_mut(2 * w)).zip(u.chunks_exact_mut(half)).zip(v.chunks_exact_mut(half)) {
+            let (top, bottom) = rows.split_at(w * 4);
+            let (y0, y1) = ys.split_at_mut(w);
+            row_pair(top, bottom, y0, y1, ChromaRow::I420(us, vs));
+        }
     });
 }
 
-/// A contiguous NV12 picture of `w` × `h` (what Media Foundation takes).
-#[cfg(any(windows, test))]
+/// A contiguous NV12 picture of `w` × `h` (for the tests).
+#[cfg(test)]
 pub fn nv12(rgba: &[u8], w: u32, h: u32, out: &mut Vec<u8>) {
     let ys = (w * h) as usize;
     out.resize(ys + ys / 2, 0);
@@ -691,7 +773,6 @@ pub fn is_keyframe(codec: Codec, data: &[u8]) -> bool {
 // ---------------------------------------------------------------------------------------------
 
 /// The AudioSpecificConfig for AAC-LC (object type 2) at `rate` with `channels`.
-#[cfg(any(windows, target_os = "macos", test))]
 pub fn aac_lc_config(rate: u32, channels: u32) -> Vec<u8> {
     const RATES: [u32; 13] = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350];
     let idx = RATES.iter().position(|&r| r == rate).unwrap_or(3) as u16;
@@ -849,6 +930,98 @@ mod tests {
         rgba_to_i420(&img, 2, 2, &mut y, &mut u, &mut v);
         assert_eq!(y, vec![235, 16, 16, 16]);
         assert_eq!((u[0], v[0]), (128, 128), "grey has no colour");
+    }
+
+    /// The plain way, one pixel at a time: what the banded, iterator-based conversion must match.
+    fn reference_420(rgba: &[u8], w: usize, h: usize) -> (Vec<u8>, Vec<u8>, Vec<u8>) {
+        let (mut y, mut u, mut v) = (vec![0; w * h], vec![0; w * h / 4], vec![0; w * h / 4]);
+        let at = |x: usize, r: usize, c: usize| rgba[(r * w + x) * 4 + c] as i32;
+        for r in 0..h {
+            for x in 0..w {
+                y[r * w + x] = luma(at(x, r, 0), at(x, r, 1), at(x, r, 2));
+            }
+        }
+        for r in 0..h / 2 {
+            for x in 0..w / 2 {
+                let avg = |c| (at(2 * x, 2 * r, c) + at(2 * x + 1, 2 * r, c) + at(2 * x, 2 * r + 1, c) + at(2 * x + 1, 2 * r + 1, c) + 2) >> 2;
+                let (cu, cv) = chroma(avg(0), avg(1), avg(2));
+                u[r * w / 2 + x] = cu;
+                v[r * w / 2 + x] = cv;
+            }
+        }
+        (y, u, v)
+    }
+
+    #[test]
+    fn the_fast_conversion_matches_the_plain_one_at_every_size() {
+        // Small (one band), odd numbers of row pairs per band, and big (several bands).
+        for (w, h) in [(2, 2), (6, 4), (64, 38), (642, 362), (1280, 722), (1920, 1080)] {
+            let mut img = vec![0u8; w * h * 4];
+            test_picture(&mut img, w as u32, h as u32, 7);
+            // Some noise so neighbouring pixels differ.
+            let mut s = 12345u32;
+            for p in img.iter_mut().step_by(3) {
+                s = s.wrapping_mul(1_103_515_245).wrapping_add(12345);
+                *p ^= (s >> 24) as u8;
+            }
+            let (ry, ru, rv) = reference_420(&img, w, h);
+            let (mut y, mut u, mut v) = (vec![0; w * h], vec![0; w * h / 4], vec![0; w * h / 4]);
+            rgba_to_i420(&img, w as u32, h as u32, &mut y, &mut u, &mut v);
+            assert!(y == ry && u == ru && v == rv, "I420 {w}x{h}");
+            let mut n = Vec::new();
+            nv12(&img, w as u32, h as u32, &mut n);
+            assert_eq!(&n[..w * h], &ry[..], "NV12 Y {w}x{h}");
+            let inter: Vec<u8> = ru.iter().zip(&rv).flat_map(|(a, b)| [*a, *b]).collect();
+            assert_eq!(&n[w * h..], &inter[..], "NV12 UV {w}x{h}");
+            // Padded rows (as graphics drivers lay out surfaces): the padding stays as it was,
+            // and the last row needs no padding after it.
+            let (ys, uvs) = (w + 32, w + 64);
+            let (mut yp, mut uvp) = (vec![7u8; ys * (h - 1) + w], vec![7u8; uvs * (h / 2 - 1) + w]);
+            rgba_to_nv12(&img, w as u32, h as u32, &mut yp, ys, &mut uvp, uvs);
+            for r in 0..h {
+                assert_eq!(&yp[r * ys..r * ys + w], &ry[r * w..(r + 1) * w], "padded Y row {r} of {w}x{h}");
+                if r + 1 < h {
+                    assert!(yp[r * ys + w..(r + 1) * ys].iter().all(|&b| b == 7), "Y padding row {r}");
+                }
+            }
+            for r in 0..h / 2 {
+                assert_eq!(&uvp[r * uvs..r * uvs + w], &inter[r * w..(r + 1) * w], "padded UV row {r} of {w}x{h}");
+            }
+        }
+    }
+
+    #[test]
+    fn small_pictures_convert_on_one_thread() {
+        assert_eq!(bands_for(320, 240), 1);
+        assert_eq!(bands_for(4, 2), 1);
+        let b = bands_for(1920, 1080);
+        assert!((1..=8).contains(&b));
+        assert!(bands_for(4096, 4) <= 2, "never more bands than row pairs");
+    }
+
+    /// How long one 1080p picture takes to become NV12 and I420:
+    /// `cargo test --release -- --ignored conversion_speed --nocapture`.
+    #[test]
+    #[ignore]
+    fn conversion_speed() {
+        let (w, h) = (1920u32, 1080u32);
+        let mut img = vec![0u8; (w * h * 4) as usize];
+        test_picture(&mut img, w, h, 3);
+        let mut n = Vec::new();
+        let (mut y, mut u, mut v) = (vec![0; (w * h) as usize], vec![0; (w * h / 4) as usize], vec![0; (w * h / 4) as usize]);
+        nv12(&img, w, h, &mut n);
+        let runs = 200;
+        let t = std::time::Instant::now();
+        for _ in 0..runs {
+            nv12(std::hint::black_box(&img), w, h, &mut n);
+        }
+        let nv = t.elapsed().as_secs_f64() * 1000.0 / runs as f64;
+        let t = std::time::Instant::now();
+        for _ in 0..runs {
+            rgba_to_i420(std::hint::black_box(&img), w, h, &mut y, &mut u, &mut v);
+        }
+        let i4 = t.elapsed().as_secs_f64() * 1000.0 / runs as f64;
+        println!("1920x1080 RGBA to NV12: {nv:.2} ms, to I420: {i4:.2} ms");
     }
 
     #[test]

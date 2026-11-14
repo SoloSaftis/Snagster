@@ -33,6 +33,8 @@ struct ServerOpts {
     expected_key: Option<String>,
     /// Close the first connection after this many audio/video messages.
     drop_first_after_media: Option<usize>,
+    /// Close every connection at its first audio/video message (takes the stream, then drops it).
+    drop_all_at_media: bool,
     /// Stop reading after publishing starts (a network that can't keep up).
     stall: bool,
 }
@@ -154,7 +156,7 @@ fn serve(mut s: TcpStream, idx: usize, first: bool, opts: &ServerOpts, conns: &M
                         c.audio.push((m.timestamp, m.payload));
                     }
                     media += 1;
-                    if first && opts.drop_first_after_media.is_some_and(|n| media >= n) {
+                    if opts.drop_all_at_media || (first && opts.drop_first_after_media.is_some_and(|n| media >= n)) {
                         let _ = s.shutdown(std::net::Shutdown::Both);
                         return Ok(());
                     }
@@ -356,6 +358,29 @@ fn reconnects_after_the_server_drops_the_connection() {
     assert_frame_spacing(&ts);
 }
 
+/// A server that takes the stream and drops it at the first packet, every time: the engine
+/// waits between tries and gives up after `max_reconnects`, instead of reconnecting at once
+/// forever (each connection used to reset the count).
+#[test]
+fn a_server_that_drops_every_stream_at_once_is_given_up_on() {
+    let srv = Server::start(ServerOpts { drop_all_at_media: true, ..Default::default() });
+    let (frames, _) = grey();
+    let mut cfg = config(srv.url(), KEY);
+    cfg.max_reconnects = 2;
+    let t = Instant::now();
+    let s = Streamer::start(cfg, frames, silence(), fakes(30, 0)).unwrap();
+    while s.stats().state != State::Failed && t.elapsed() < Duration::from_secs(20) {
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    let st = s.stats();
+    assert_eq!(st.state, State::Failed, "{st:?}");
+    // Waited 50 ms, then 100 ms, between the three connections.
+    assert!(t.elapsed() >= Duration::from_millis(150));
+    drop(s);
+    let n = srv.conns.lock().unwrap().len();
+    assert_eq!(n, 3, "the first connection and two more, no more");
+}
+
 #[test]
 fn a_wrong_key_fails_without_showing_the_key() {
     let srv = Server::start(ServerOpts { expected_key: Some("the_right_one".into()), ..Default::default() });
@@ -406,10 +431,15 @@ fn a_slow_network_drops_frames_and_never_holds_up_the_capture() {
 
 #[test]
 fn stopping_while_waiting_to_reconnect_is_quick() {
-    let port = {
-        let l = TcpListener::bind("127.0.0.1:0").unwrap();
-        l.local_addr().unwrap().port()
-    };
+    // A server that hangs up at once. (Not a closed port: the system may hand that port to
+    // another test's server meanwhile, and this stream would then go live there.)
+    let l = TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = l.local_addr().unwrap().port();
+    std::thread::spawn(move || {
+        for s in l.incoming() {
+            drop(s);
+        }
+    });
     let (frames, _) = grey();
     let mut cfg = config(format!("rtmp://127.0.0.1:{port}/live"), KEY);
     cfg.max_reconnects = 5;

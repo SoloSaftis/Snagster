@@ -21,17 +21,39 @@ pub const RATE: u32 = 48_000;
 #[cfg(any(windows, test))]
 pub const CHANNELS: u32 = 2;
 
-/// The mixer (Studio's volume sliders): volume 0..2 as f32 bits and mute, for the system sound
-/// and the microphone. Every recording uses it.
-static MIX_GAIN: [AtomicU32; 2] = [AtomicU32::new(0x3f80_0000), AtomicU32::new(0x3f80_0000)];
-static MIX_MUTE: [AtomicBool; 2] = [AtomicBool::new(false), AtomicBool::new(false)];
+/// A mixer (Studio's volume sliders): volume 0..2 as f32 bits and mute, for the system sound
+/// and the microphone.
+struct Mixer {
+    gain: [AtomicU32; 2],
+    mute: [AtomicBool; 2],
+}
+
+impl Mixer {
+    const fn new() -> Mixer {
+        Mixer { gain: [AtomicU32::new(0x3f80_0000), AtomicU32::new(0x3f80_0000)], mute: [AtomicBool::new(false), AtomicBool::new(false)] }
+    }
+
+    fn set(&self, system: (f32, bool), mic: (f32, bool)) {
+        for (i, (g, m)) in [system, mic].into_iter().enumerate() {
+            self.gain[i].store(g.clamp(0.0, 2.0).to_bits(), Ordering::Relaxed);
+            self.mute[i].store(m, Ordering::Relaxed);
+        }
+    }
+
+    /// (volume, muted) of source `i` (0 system, 1 microphone).
+    #[cfg(any(windows, test))]
+    fn get(&self, i: usize) -> (f32, bool) {
+        (f32::from_bits(self.gain[i].load(Ordering::Relaxed)), self.mute[i].load(Ordering::Relaxed))
+    }
+}
+
+/// The mixer every recording uses. Captures hold a reference to it (tests give theirs a
+/// private one, so tests that start Studio or a stream can't change another test's sums).
+static MIXER: Mixer = Mixer::new();
 
 /// Set the mixer: (volume, muted) for the system sound and the microphone.
 pub fn set_mix(system: (f32, bool), mic: (f32, bool)) {
-    for (i, (g, m)) in [system, mic].into_iter().enumerate() {
-        MIX_GAIN[i].store(g.clamp(0.0, 2.0).to_bits(), Ordering::Relaxed);
-        MIX_MUTE[i].store(m, Ordering::Relaxed);
-    }
+    MIXER.set(system, mic);
 }
 
 /// Which sound goes into a recording.
@@ -149,13 +171,22 @@ pub struct Capture {
     mic: Option<Arc<Feed>>,
     stop: Arc<AtomicBool>,
     threads: Vec<std::thread::JoinHandle<()>>,
+    #[cfg(any(windows, test))]
+    mixer: &'static Mixer,
 }
 
 impl Capture {
     /// Start capturing (`mic` is a device id, empty for the default microphone).
     pub fn start(source: AudioSource, mic: &str) -> Result<Capture, String> {
         let stop = Arc::new(AtomicBool::new(false));
-        let mut cap = Capture { system: None, mic: None, stop: stop.clone(), threads: Vec::new() };
+        let mut cap = Capture {
+            system: None,
+            mic: None,
+            stop: stop.clone(),
+            threads: Vec::new(),
+            #[cfg(any(windows, test))]
+            mixer: &MIXER,
+        };
         if source == AudioSource::None {
             return Ok(cap);
         }
@@ -195,8 +226,9 @@ impl Capture {
         let mut out = vec![0i32; n];
         for (i, f) in [&self.system, &self.mic].into_iter().enumerate() {
             let Some(f) = f else { continue };
-            let gain = f32::from_bits(f.gain.load(Ordering::Relaxed)) * f32::from_bits(MIX_GAIN[i].load(Ordering::Relaxed));
-            let muted = f.muted.load(Ordering::Relaxed) || MIX_MUTE[i].load(Ordering::Relaxed);
+            let (mix_gain, mix_muted) = self.mixer.get(i);
+            let gain = f32::from_bits(f.gain.load(Ordering::Relaxed)) * mix_gain;
+            let muted = f.muted.load(Ordering::Relaxed) || mix_muted;
             if let Ok(mut q) = f.queue.lock() {
                 let k = n.min(q.len());
                 for (o, s) in out.iter_mut().zip(q.drain(..k)) {
@@ -406,16 +438,34 @@ mod tests {
         assert!(c.take(10).iter().all(|s| *s == 0));
     }
 
-    /// `take` reads the global mixer, and some tests change it: they take turns.
-    static MIX_LOCK: Mutex<()> = Mutex::new(());
-
-    fn mix_lock() -> std::sync::MutexGuard<'static, ()> {
-        MIX_LOCK.lock().unwrap_or_else(|p| p.into_inner())
+    /// A mixer of this test's own: other tests (Studio, streaming) set the global one while
+    /// running, which made sums here flaky when it was shared.
+    fn own_mixer() -> &'static Mixer {
+        Box::leak(Box::new(Mixer::new()))
     }
 
-    /// A capture made of plain feeds (no devices, no threads).
+    /// A capture made of plain feeds (no devices, no threads), with a mixer of its own.
     fn capture(system: Option<Arc<Feed>>, mic: Option<Arc<Feed>>) -> Capture {
-        Capture { system, mic, stop: Arc::new(AtomicBool::new(false)), threads: Vec::new() }
+        capture_with(system, mic, own_mixer())
+    }
+
+    fn capture_with(system: Option<Arc<Feed>>, mic: Option<Arc<Feed>>, mixer: &'static Mixer) -> Capture {
+        Capture { system, mic, stop: Arc::new(AtomicBool::new(false)), threads: Vec::new(), mixer }
+    }
+
+    #[test]
+    fn a_capture_uses_its_own_mixer_not_whatever_another_test_set_globally() {
+        let a = Feed::new();
+        a.push(&[1000, 1000]);
+        let c = capture(Some(a), None);
+        // Another test starting Studio sets the global mixer meanwhile.
+        let before = (MIXER.get(0), MIXER.get(1));
+        set_mix((0.0, true), (0.0, true));
+        let got = c.take(1);
+        set_mix(before.0, before.1);
+        assert_eq!(got, [1000, 1000]);
+        // Real captures use the global one.
+        assert!(std::ptr::eq(Capture::start(AudioSource::None, "").unwrap().mixer, &MIXER));
     }
 
     fn queued(f: &Feed) -> usize {
@@ -499,8 +549,6 @@ mod tests {
 
     #[test]
     fn two_sources_are_added_together_and_clipped() {
-        let _g = mix_lock();
-        set_mix((1.0, false), (1.0, false));
         let (a, b) = (Feed::new(), Feed::new());
         a.push(&[1000, -1000, 30000, -30000]);
         b.push(&[234, 66, 10000, -10000]);
@@ -512,8 +560,6 @@ mod tests {
 
     #[test]
     fn a_short_source_is_padded_with_silence_and_order_is_kept() {
-        let _g = mix_lock();
-        set_mix((1.0, false), (1.0, false));
         let a = Feed::new();
         a.push(&[1, 2, 3, 4, 5, 6]);
         let c = capture(Some(a.clone()), None);
@@ -526,8 +572,6 @@ mod tests {
 
     #[test]
     fn volume_and_mute_apply_per_source() {
-        let _g = mix_lock();
-        set_mix((1.0, false), (1.0, false));
         let (a, b) = (Feed::new(), Feed::new());
         a.gain.store(0.5f32.to_bits(), Ordering::Relaxed);
         b.muted.store(true, Ordering::Relaxed);
@@ -540,29 +584,27 @@ mod tests {
 
     #[test]
     fn the_mixer_sliders_scale_mute_and_are_clamped() {
-        let _g = mix_lock();
+        let mix = own_mixer();
         let take_one = |sys: i16, mic: i16| {
             let (a, b) = (Feed::new(), Feed::new());
             a.push(&[sys, sys]);
             b.push(&[mic, mic]);
-            capture(Some(a), Some(b)).take(1)
+            capture_with(Some(a), Some(b), mix).take(1)
         };
-        set_mix((2.0, false), (0.25, false));
+        mix.set((2.0, false), (0.25, false));
         assert_eq!(take_one(1000, 1000), [2250, 2250]);
-        set_mix((5.0, false), (-3.0, false));
-        assert_eq!(f32::from_bits(MIX_GAIN[0].load(Ordering::Relaxed)), 2.0, "at most 2");
-        assert_eq!(f32::from_bits(MIX_GAIN[1].load(Ordering::Relaxed)), 0.0, "at least 0");
+        mix.set((5.0, false), (-3.0, false));
+        assert_eq!(mix.get(0), (2.0, false), "at most 2");
+        assert_eq!(mix.get(1), (0.0, false), "at least 0");
         assert_eq!(take_one(1000, 1000), [2000, 2000]);
-        set_mix((1.0, true), (1.0, false));
+        mix.set((1.0, true), (1.0, false));
         assert_eq!(take_one(1000, 7), [7, 7], "the system sound is muted");
-        set_mix((1.0, false), (1.0, false));
+        mix.set((1.0, false), (1.0, false));
         assert_eq!(take_one(1, 2), [3, 3]);
     }
 
     #[test]
     fn levels_and_discard() {
-        let _g = mix_lock();
-        set_mix((1.0, false), (1.0, false));
         let (a, b) = (Feed::new(), Feed::new());
         a.push(&[8192, 0]);
         b.push(&[0, -32768]);

@@ -3588,6 +3588,7 @@ dependencies = [
  "libloading",
  "mp4",
  "openh264",
+ "openh264-sys2",
  "regex",
  "rfd",
  "rustls",

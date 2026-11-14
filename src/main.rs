@@ -30,6 +30,8 @@ mod sample;
 mod aac;
 mod encode;
 mod stream;
+#[cfg(test)]
+mod testalloc;
 
 use eframe::egui;
 use std::path::PathBuf;
@@ -176,6 +178,10 @@ fn main() -> eframe::Result {
             // Record short videos in every format and rate, read each back and report.
             video_test(args.next().as_deref() == Some("quick"));
             return Ok(());
+        } else if a == "--stream-test" {
+            // Stream the screen into a local test server (127.0.0.1 only) and report the cost.
+            let ok = stream_test(args.next().as_deref() == Some("quick"));
+            std::process::exit(if ok { 0 } else { 1 });
         } else if a == "--record-bench" {
             // 50 frames of 1280 x 720: a typing-sized change in each, then full-screen changes.
             let base = render::compose(&sample::sample_doc());
@@ -530,6 +536,108 @@ fn video_test(quick: bool) {
     println!("{}", if failed == 0 { "video test: all passed".to_string() } else { format!("video test: {failed} failed") });
 }
 
+/// A stream size `height` pixels tall in the screen's proportions (even numbers).
+fn stream_size(sw: u32, sh: u32, height: u32) -> (u32, u32) {
+    let h = height.min(sh.max(2));
+    let w = (sw as u64 * h as u64 / sh.max(1) as u64) as u32;
+    (w.max(2) & !1, h.max(2) & !1)
+}
+
+/// `--stream-test [quick]`: stream the whole screen into Snagster's own test RTMP server on
+/// 127.0.0.1 (nothing leaves the computer) with the best encoder here, and report the frame
+/// rate that reached the server and the processor time used. Where the screen can't be copied
+/// (a Mac without the permission), a moving test picture goes out instead. True: all passed.
+fn stream_test(quick: bool) -> bool {
+    use stream::engine::{FrameSource, SoundSource, StreamConfig, Streamer};
+    use stream::{Encoders, Service, State, StreamTarget};
+    let (mx, my, sw, sh) = capture::monitor_under_cursor().unwrap_or((0, 0, 1280, 720));
+    println!("Screen {sw}x{sh} at {mx},{my}");
+    // (height, frame rate, seconds, copy every frame even when the screen doesn't change: the cost
+    // of a screen that changes all the time)
+    let cases: &[(u32, u32, u64, bool)] = if quick { &[(720, 30, 3, true)] } else { &[(1080, 30, 6, false), (1080, 30, 6, true), (1440, 60, 6, false), (1440, 60, 6, true)] };
+    let mut failed = 0;
+    // OpenH264's speed shows whether its assembly was built (nasm installed where it was compiled).
+    match encode::speed(encode::Backend::OpenH264, 1920, 1080, if quick { 60 } else { 150 }) {
+        Ok((_, f)) => println!("OpenH264 1920x1080 encode speed: {f:.0} fps"),
+        Err(e) => {
+            println!("FAIL OpenH264: {e}");
+            failed += 1;
+        }
+    }
+    for &(height, fps, secs, every_frame) in cases {
+        let srv = match stream::testserver::TestServer::start() {
+            Ok(s) => s,
+            Err(e) => {
+                println!("FAIL no local test server: {e}");
+                failed += 1;
+                continue;
+            }
+        };
+        let (w, h) = stream_size(sw, sh, height);
+        let target = StreamTarget { service: Service::Custom, url: srv.url(), key: "stream-test".into() };
+        let cfg = StreamConfig::for_target(target, w, h, fps, encode::Codec::H264);
+        let (w, h, fps) = (cfg.width, cfg.height, cfg.fps);
+        let opts = video::FeedOptions { fps, cursor: true, fit: Some((w, h)), every_frame };
+        let grabber = stream::source::Grabber::open((mx, my, sw, sh), None, opts);
+        let t = std::time::Instant::now();
+        while !grabber.ready() && t.elapsed() < std::time::Duration::from_secs(3) {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        let grabber_used = grabber.ready();
+        let (frames, what) = if grabber_used {
+            (grabber.frames(), format!("screen (copied by {}{})", grabber.method(), if every_frame { ", every frame" } else { ", when it changes" }))
+        } else {
+            let n = std::sync::atomic::AtomicU32::new(0);
+            let f: stream::engine::RgbaFeed = std::sync::Arc::new(move |buf: &mut [u8]| {
+                encode::test_picture(buf, w, h, n.fetch_add(1, std::sync::atomic::Ordering::Relaxed));
+                true
+            });
+            (FrameSource::Rgba(f), format!("test picture (the screen couldn't be copied: {})", grabber.error().unwrap_or_default()))
+        };
+        let s = match Streamer::start(cfg, frames, SoundSource::None, Encoders::system()) {
+            Ok(s) => s,
+            Err(e) => {
+                println!("FAIL {w}x{h} {fps} fps: {e}");
+                failed += 1;
+                continue;
+            }
+        };
+        // Wait until live, then count what arrives for `secs` seconds.
+        let t = std::time::Instant::now();
+        while s.stats().state != State::Live && t.elapsed() < std::time::Duration::from_secs(10) {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        let (v0, g0, c0, t0) = (srv.video_messages(), grabber.captured(), cpu_seconds(), std::time::Instant::now());
+        std::thread::sleep(std::time::Duration::from_secs(secs));
+        let (v1, g1, c1, wall) = (srv.video_messages(), grabber.captured(), cpu_seconds(), t0.elapsed().as_secs_f64());
+        let copied = (g1 - g0) as f64 / wall;
+        let stats = s.stop();
+        drop(grabber);
+        let got = (v1 - v0) as f64 / wall;
+        let cpu = 100.0 * (c1 - c0) / wall;
+        // Hardware encoders keep up; a software encoder on a small CI machine may not.
+        let hardware = stats.video_encoder.as_ref().is_some_and(|e| e.hardware);
+        let want = if hardware { 0.9 } else { 0.5 } * fps as f64;
+        // Copying every frame must keep up at least a quarter of the way (a broken copy makes
+        // none); a still screen is only copied when it changes.
+        let copy_ok = !every_frame || !grabber_used || copied >= fps as f64 / 4.0;
+        let ok = got >= want && copy_ok && stats.error.is_none() && stats.state != State::Failed;
+        if !ok {
+            failed += 1;
+        }
+        println!(
+            "{} {w}x{h} {fps} fps of the {what}: {copied:.1} new pictures a second, {got:.1} fps reached the server (want {want:.0}+), {} dropped, CPU {cpu:.1}% of one core, encoder {}{}",
+            if ok { "ok  " } else { "FAIL" },
+            stats.frames_dropped,
+            stats.video_encoder.map(|e| e.name).unwrap_or_default(),
+            stats.error.map(|e| format!(", error: {e}")).unwrap_or_default()
+        );
+    }
+    println!("{}", if failed == 0 { "stream test: all passed".to_string() } else { format!("stream test: {failed} failed") });
+    failed == 0
+}
+
 /// Where crash reports go: Snagster's settings folder (crash.log, newest last, kept small).
 pub fn crash_log_path() -> Option<PathBuf> {
     settings::settings_path().and_then(|p| p.parent().map(|d| d.join("crash.log")))
@@ -587,6 +695,20 @@ fn cpu_seconds() -> f64 {
         if GetProcessTimes(GetCurrentProcess(), &mut c, &mut e, &mut k, &mut u) != 0 {
             let t = |f: FILETIME| ((f.dwHighDateTime as u64) << 32 | f.dwLowDateTime as u64) as f64 / 1e7;
             return t(k) + t(u);
+        }
+    }
+    #[cfg(unix)]
+    {
+        // getrusage(RUSAGE_SELF): user then system time, each a timeval (seconds as a 64-bit
+        // number, then microseconds; on macOS those are 32-bit in an 8-byte slot, so only the
+        // low half is read, which works on both little-endian systems).
+        unsafe extern "C" {
+            fn getrusage(who: i32, usage: *mut [i64; 18]) -> i32;
+        }
+        let mut r = [0i64; 18];
+        if unsafe { getrusage(0, &mut r) } == 0 {
+            let tv = |s: i64, us: i64| s as f64 + (us as u32 as i32) as f64 / 1e6;
+            return tv(r[0], r[1]) + tv(r[2], r[3]);
         }
     }
     0.0

@@ -168,6 +168,28 @@ fn memory_sample(bytes: &[u8], time_100ns: i64, dur_100ns: i64) -> R<IMFSample> 
     }
 }
 
+/// A sample holding `rgba` as NV12, converted straight into Media Foundation's buffer (no
+/// picture-sized copy in between).
+fn nv12_sample(rgba: &[u8], w: u32, h: u32, time_100ns: i64, dur_100ns: i64) -> R<IMFSample> {
+    let ys = (w * h) as usize;
+    let len = ys + ys / 2;
+    unsafe {
+        let buf = MFCreateMemoryBuffer(len as u32)?;
+        let mut dst = std::ptr::null_mut();
+        buf.Lock(&mut dst, None, None)?;
+        let out = std::slice::from_raw_parts_mut(dst, len);
+        let (y, uv) = out.split_at_mut(ys);
+        rgba_to_nv12(rgba, w, h, y, w as usize, uv, w as usize);
+        buf.Unlock()?;
+        buf.SetCurrentLength(len as u32)?;
+        let s = MFCreateSample()?;
+        s.AddBuffer(&buf)?;
+        s.SetSampleTime(time_100ns)?;
+        s.SetSampleDuration(dur_100ns)?;
+        Ok(s)
+    }
+}
+
 fn sample_bytes(s: &IMFSample) -> R<Vec<u8>> {
     unsafe {
         let buf = s.ConvertToContiguousBuffer()?;
@@ -241,7 +263,6 @@ struct MfVideo {
     need_input: u32,
     alloc: Option<u32>,
     cfg: VideoConfig,
-    nv12: Vec<u8>,
     name: String,
     hardware: bool,
     _mf: Mf,
@@ -327,7 +348,7 @@ impl MfVideo {
             let events = if is_async { Some(t.cast::<IMFMediaEventGenerator>().map_err(err)?) } else { None };
             start_streaming(&t).map_err(err)?;
             let alloc = output_alloc(&t, w * h).map_err(err)?;
-            Ok(MfVideo { t, events, api, need_input: 0, alloc, cfg: cfg.clone(), nv12: Vec::new(), name: c.name, hardware: c.hardware, _mf: mf })
+            Ok(MfVideo { t, events, api, need_input: 0, alloc, cfg: cfg.clone(), name: c.name, hardware: c.hardware, _mf: mf })
         }
     }
 
@@ -403,7 +424,7 @@ impl MfVideo {
     }
 }
 
-/// BT.709 video range, which is what `encode::nv12` makes.
+/// BT.709 video range, which is what `encode::rgba_to_nv12` makes.
 fn colours(t: &IMFMediaType) {
     unsafe {
         let _ = t.SetUINT32(&MF_MT_YUV_MATRIX, MFVideoTransferMatrix_BT709.0 as u32);
@@ -416,8 +437,7 @@ fn colours(t: &IMFMediaType) {
 impl VideoEncoder for MfVideo {
     fn encode(&mut self, rgba: &[u8], pts_us: i64, force_keyframe: bool) -> Result<Vec<VideoPacket>, String> {
         com_here();
-        nv12(rgba, self.cfg.width, self.cfg.height, &mut self.nv12);
-        let sample = memory_sample(&self.nv12, pts_us * 10, self.cfg.frame_us() * 10).map_err(err)?;
+        let sample = nv12_sample(rgba, self.cfg.width, self.cfg.height, pts_us * 10, self.cfg.frame_us() * 10).map_err(err)?;
         if force_keyframe {
             set_codec(&self.api, &CODECAPI_AVEncVideoForceKeyFrame, VARIANT::from(1u32));
         }

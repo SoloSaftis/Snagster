@@ -3084,4 +3084,38 @@ mod stream_tests {
         w.call("stream_status", &json!({})).unwrap();
         assert_eq!(w.structured.clone().unwrap()["phase"], "idle");
     }
+
+    /// Whatever an AI app sends, the answer is a JSON-RPC reply (or nothing for a
+    /// notification), never a panic. Only messages that change nothing are broken here, so a
+    /// mutation can't make one that captures or saves.
+    #[test]
+    fn random_and_broken_messages_get_an_answer_not_a_panic() {
+        let safe = [
+            r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{}}}"#,
+            r#"{"jsonrpc":"2.0","id":"a","method":"ping"}"#,
+            r#"{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"cursor":null}}"#,
+            r#"{"jsonrpc":"2.0","id":3,"method":"prompts/get","params":{"name":"zz_nothing","arguments":{"x":[1,2,{"y":null}]}}}"#,
+            r#"{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"zz_no_such_tool","arguments":{"path":"q","n":1e308}}}"#,
+            r#"{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":99}}"#,
+            r#"[{"jsonrpc":"2.0","id":5,"method":"ping"}]"#,
+        ];
+        let s = Session::default();
+        let mut g = crate::testalloc::Bytes::new(4);
+        for i in 0..3_000 {
+            let input = if i % 4 == 3 {
+                // Deep nesting and odd bytes as well.
+                let mut v = "[".repeat(g.below(300)).into_bytes();
+                v.extend(g.noise(40));
+                v
+            } else {
+                g.mutate(safe[i % safe.len()].as_bytes())
+            };
+            let line = String::from_utf8_lossy(&input).into_owned();
+            if let Some(reply) = s.handle(&line) {
+                let v: Value = serde_json::from_str(&reply).unwrap_or_else(|e| panic!("input {i}: the reply isn't JSON ({e}): {reply}"));
+                assert_eq!(v["jsonrpc"], "2.0", "{reply}");
+                assert!(v.get("result").is_some() != v.get("error").is_some(), "{reply}");
+            }
+        }
+    }
 }

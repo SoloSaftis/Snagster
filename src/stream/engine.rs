@@ -573,6 +573,34 @@ impl Session {
     }
 }
 
+/// A connection counts as working (and the reconnect count starts again) once it has carried
+/// pictures for this long.
+const HEALTHY_AFTER: Duration = Duration::from_secs(5);
+
+fn connection_is_healthy(live_for: Duration, frames_sent: u64) -> bool {
+    live_for >= HEALTHY_AFTER && frames_sent > 0
+}
+
+/// The wait before reconnect try number `tries` (from 0): `backoff`, doubling, at most 30 s.
+fn backoff_wait(backoff: Duration, tries: u32) -> Duration {
+    backoff.saturating_mul(1u32 << tries.min(5)).min(Duration::from_secs(30))
+}
+
+/// After a connection failed (or broke): false when giving up (stopping, or out of tries: the
+/// state is then Failed); else waits the backoff and counts the try.
+fn retry_after_failure(sh: &Shared, cfg: &NetCfg, tries: &mut u32) -> bool {
+    if sh.stop.load(Ordering::Relaxed) {
+        return false;
+    }
+    if *tries >= cfg.max_reconnects {
+        sh.set_state(State::Failed);
+        return false;
+    }
+    sleep_unless_stopped(sh, backoff_wait(cfg.backoff, *tries));
+    *tries += 1;
+    !sh.stop.load(Ordering::Relaxed)
+}
+
 fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
     let mut tries: u32 = 0;
     let mut params = ParamSets::default();
@@ -587,17 +615,10 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
             Ok(c) => c,
             Err(e) => {
                 sh.set_error(e);
-                if sh.stop.load(Ordering::Relaxed) {
-                    break;
+                if retry_after_failure(&sh, &cfg, &mut tries) {
+                    continue;
                 }
-                if tries >= cfg.max_reconnects {
-                    sh.set_state(State::Failed);
-                    break;
-                }
-                let wait = cfg.backoff.saturating_mul(1u32 << tries.min(5)).min(Duration::from_secs(30));
-                tries += 1;
-                sleep_unless_stopped(&sh, wait);
-                continue;
+                break;
             }
         };
         if !first {
@@ -606,7 +627,8 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
         c.abort = Some(sh.abort.clone());
         c.stall = cfg.write_timeout;
         first = false;
-        tries = 0;
+        // `tries` is reset only once this connection has carried pictures for a while: a server
+        // that takes the connection and then drops it at once must not be retried forever.
         if let Ok(mut e) = sh.error.lock() {
             *e = None;
         }
@@ -620,13 +642,17 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
         }
         if let Err(e) = setup {
             sh.set_error(e);
-            continue;
+            if retry_after_failure(&sh, &cfg, &mut tries) {
+                continue;
+            }
+            break;
         }
 
         sh.set_state(if sh.stop.load(Ordering::Relaxed) { State::Stopping } else { State::Live });
         let _ = sh.live_since_ms.compare_exchange(0, started.elapsed().as_millis() as u64 + 1, Ordering::Relaxed, Ordering::Relaxed);
         let mut last_poll = Instant::now();
         let mut window = (Instant::now(), c.sent, 0u64);
+        let (connected, mut frames_here) = (Instant::now(), 0u64);
         loop {
             if sh.stop.load(Ordering::Relaxed) {
                 let d = *stop_deadline.get_or_insert_with(|| Instant::now() + Duration::from_secs(3));
@@ -646,8 +672,12 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
                     if m.frame {
                         sh.frames_sent.fetch_add(1, Ordering::Relaxed);
                         window.2 += 1;
+                        frames_here += 1;
                     }
                 }
+            }
+            if tries > 0 && connection_is_healthy(connected.elapsed(), frames_here) {
+                tries = 0;
             }
             if r.is_ok() && last_poll.elapsed() > Duration::from_millis(50) {
                 last_poll = Instant::now();
@@ -666,14 +696,10 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
                 sh.set_error(e);
                 params = s.params.clone();
                 sh.bitrate.store(0, Ordering::Relaxed);
-                if sh.stop.load(Ordering::Relaxed) {
-                    break 'connect;
+                if retry_after_failure(&sh, &cfg, &mut tries) {
+                    continue 'connect;
                 }
-                if cfg.max_reconnects == 0 {
-                    sh.set_state(State::Failed);
-                    break 'connect;
-                }
-                continue 'connect;
+                break 'connect;
             }
             if ended {
                 break;
@@ -775,6 +801,18 @@ mod tests {
         if let Ok(a) = (e.audio)(128_000) {
             assert_eq!(a.audio_specific_config().len(), 2);
         }
+    }
+
+    #[test]
+    fn reconnects_wait_longer_each_time_and_count_again_only_after_pictures_flowed() {
+        let b = Duration::from_millis(100);
+        assert_eq!(backoff_wait(b, 0), b);
+        assert_eq!(backoff_wait(b, 3), Duration::from_millis(800));
+        assert_eq!(backoff_wait(Duration::from_secs(5), 4), Duration::from_secs(30), "at most 30 s");
+        assert_eq!(backoff_wait(b, 40), Duration::from_millis(3200), "no overflow on many tries");
+        assert!(!connection_is_healthy(Duration::from_secs(60), 0), "no pictures, not working");
+        assert!(!connection_is_healthy(Duration::from_millis(200), 50), "dropped at once, not working");
+        assert!(connection_is_healthy(HEALTHY_AFTER, 1));
     }
 
     #[test]

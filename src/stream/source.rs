@@ -49,13 +49,10 @@ impl Source {
 
 /// The size a picture of `w` × `h` gets in a frame of `fw` × `fh`, kept in proportion, and where
 /// it goes (centred).
+#[cfg(test)]
 pub fn fit(w: u32, h: u32, fw: u32, fh: u32) -> (i64, i64, u32, u32) {
-    if w == 0 || h == 0 {
-        return (0, 0, fw, fh);
-    }
-    let s = (fw as f64 / w as f64).min(fh as f64 / h as f64);
-    let (dw, dh) = (((w as f64 * s).round() as u32).clamp(1, fw), ((h as f64 * s).round() as u32).clamp(1, fh));
-    (((fw - dw) / 2) as i64, ((fh - dh) / 2) as i64, dw, dh)
+    let (x, y, dw, dh) = crate::video::fit_rect(w, h, fw, fh);
+    (x as i64, y as i64, dw, dh)
 }
 
 /// Draw `src` into `out` in proportion (black around it). Same size: a plain copy.
@@ -64,106 +61,113 @@ pub fn draw_fitted(out: &mut RgbaImage, src: &RgbaImage) {
         out.copy_from_slice(src.as_raw());
         return;
     }
-    for p in out.pixels_mut() {
-        *p = image::Rgba([0, 0, 0, 255]);
-    }
-    let (x, y, w, h) = fit(src.width(), src.height(), out.width(), out.height());
-    crate::studio::blit_scaled(out, src, x, y, w, h, false);
+    let (w, h) = out.dimensions();
+    let mut f = crate::video::Frame { width: w, height: h, rgba: std::mem::take(out).into_raw(), number: 0 };
+    let px = crate::video::Pixels { data: src.as_raw(), width: src.width(), height: src.height(), stride: src.width() as usize * 4, bgra: false };
+    crate::video::fit_into(&px, &mut f, (w, h));
+    *out = RgbaImage::from_raw(w, h, f.rgba).unwrap_or_else(|| RgbaImage::new(w, h));
 }
 
-/// The newest picture, shared between a capture thread and the stream.
-#[derive(Default)]
-struct Latest {
-    frame: Mutex<Option<Arc<RgbaImage>>>,
-    stop: AtomicBool,
-}
+/// How often a followed window is looked for again (it may have moved).
+const FOLLOW_EVERY: Duration = Duration::from_millis(300);
 
-/// A capture thread for a screen, window or area. Stops when dropped.
-pub struct Grabber {
-    latest: Arc<Latest>,
-    thread: Option<std::thread::JoinHandle<()>>,
-}
-
-/// Where a window is now (found again every 0.7 s).
+/// Where a window is now.
 fn window_rect(title: &str) -> Option<(i32, i32, u32, u32)> {
     let low = title.to_lowercase();
     crate::capture::list_windows().into_iter().find(|w| w.label.to_lowercase().contains(&low)).map(|w| (w.x, w.y, w.width, w.height))
 }
 
+/// A screen, window or area copied by `video::ScreenFeed` (Desktop Duplication on Windows) at
+/// the stream's size, and for a window a thread that follows it when it moves. Stops when
+/// dropped.
+pub struct Grabber {
+    feed: Option<Arc<crate::video::ScreenFeed>>,
+    error: Option<String>,
+    stop: Arc<AtomicBool>,
+    follow: Option<std::thread::JoinHandle<()>>,
+}
+
 impl Grabber {
     /// Copy `rect` (or the window called `window`, following it) `fps` times a second into
-    /// frames of `w` × `h`, with the mouse pointer when `cursor`.
+    /// frames of `w` × `h`, with the mouse pointer when `cursor`. Black when it can't be copied.
     pub fn start(rect: (i32, i32, u32, u32), window: Option<String>, w: u32, h: u32, fps: u32, cursor: bool) -> Grabber {
-        let latest = Arc::new(Latest::default());
-        let l = latest.clone();
-        let thread = std::thread::Builder::new()
-            .name("snagster-stream-capture".into())
-            .spawn(move || {
-                crate::capture::background_thread(false);
-                let every = Duration::from_nanos(1_000_000_000 / fps.clamp(1, 120) as u64);
-                let mut rect = rect;
-                let mut found = Instant::now();
-                let mut next = Instant::now();
-                while !l.stop.load(Ordering::Relaxed) {
-                    if let Some(t) = &window
-                        && found.elapsed() > Duration::from_millis(700)
-                    {
-                        found = Instant::now();
-                        if let Some(r) = window_rect(t) {
-                            rect = r;
+        Grabber::open(rect, window, crate::video::FeedOptions { fps, cursor, fit: Some((w, h)), every_frame: false })
+    }
+
+    /// `start` with all the feed's options (`every_frame` for measuring).
+    pub fn open(rect: (i32, i32, u32, u32), window: Option<String>, o: crate::video::FeedOptions) -> Grabber {
+        let stop = Arc::new(AtomicBool::new(false));
+        let (feed, error) = match crate::video::screen_feed(rect, o) {
+            Ok(f) => (Some(Arc::new(f)), None),
+            Err(e) => (None, Some(e)),
+        };
+        let follow = match (&feed, window) {
+            (Some(f), Some(title)) => {
+                let (f, s) = (f.clone(), stop.clone());
+                std::thread::Builder::new()
+                    .name("snagster-stream-follow".into())
+                    .spawn(move || {
+                        let mut last = Instant::now();
+                        while !s.load(Ordering::Relaxed) {
+                            std::thread::sleep(Duration::from_millis(30));
+                            if last.elapsed() >= FOLLOW_EVERY {
+                                last = Instant::now();
+                                if let Some(r) = window_rect(&title) {
+                                    f.move_to(r);
+                                }
+                            }
                         }
-                    }
-                    if rect.2 > 0
-                        && rect.3 > 0
-                        && let Ok(mut img) = crate::capture::grab_rect(rect.0, rect.1, rect.2, rect.3)
-                    {
-                        if cursor && let Some(c) = crate::capture::cursor_pos() {
-                            crate::capture::stamp_pointer(&mut img, ((c.0 - rect.0) as f32, (c.1 - rect.1) as f32));
-                        }
-                        let mut out = RgbaImage::new(w, h);
-                        draw_fitted(&mut out, &img);
-                        if let Ok(mut f) = l.frame.lock() {
-                            *f = Some(Arc::new(out));
-                        }
-                    }
-                    next += every;
-                    let now = Instant::now();
-                    if next > now {
-                        std::thread::sleep(next - now);
-                    } else {
-                        next = now;
-                    }
-                }
-            })
-            .ok();
-        Grabber { latest, thread }
+                    })
+                    .ok()
+            }
+            _ => None,
+        };
+        Grabber { feed, error, stop, follow }
     }
 
     /// The stream's picture source: the newest copy (black until the first one).
     pub fn frames(&self) -> FrameSource {
-        let l = self.latest.clone();
+        let (feed, stop) = (self.feed.clone(), self.stop.clone());
         FrameSource::Rgba(Arc::new(move |buf: &mut [u8]| {
-            if l.stop.load(Ordering::Relaxed) {
+            if stop.load(Ordering::Relaxed) {
                 return false;
             }
-            if let Some(f) = l.frame.lock().ok().and_then(|f| f.clone()) {
-                let n = buf.len().min(f.as_raw().len());
-                buf[..n].copy_from_slice(&f.as_raw()[..n]);
+            if let Some(f) = &feed {
+                f.with_latest(|p| {
+                    if p.number > 0 && p.rgba.len() == buf.len() {
+                        buf.copy_from_slice(&p.rgba);
+                    }
+                });
             }
             true
         }))
     }
 
+    /// Pictures copied so far.
+    pub fn captured(&self) -> u64 {
+        self.feed.as_ref().map_or(0, |f| f.frames())
+    }
+
     /// A picture has been copied (for waiting at the start).
     pub fn ready(&self) -> bool {
-        self.latest.frame.lock().map(|f| f.is_some()).unwrap_or(false)
+        self.captured() > 0
+    }
+
+    /// How the screen is copied ("graphics chip", "GDI", "screen grab").
+    pub fn method(&self) -> &'static str {
+        self.feed.as_ref().map_or("", |f| f.method())
+    }
+
+    /// Why nothing could be copied, or what went wrong last.
+    pub fn error(&self) -> Option<String> {
+        self.error.clone().or_else(|| self.feed.as_ref().and_then(|f| f.error()))
     }
 }
 
 impl Drop for Grabber {
     fn drop(&mut self) {
-        self.latest.stop.store(true, Ordering::Relaxed);
-        if let Some(t) = self.thread.take() {
+        self.stop.store(true, Ordering::Relaxed);
+        if let Some(t) = self.follow.take() {
             let _ = t.join();
         }
     }

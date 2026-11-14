@@ -272,24 +272,51 @@ pub fn mime_type(path: &Path) -> &'static str {
 
 pub fn load_project(path: &Path) -> Result<(String, Doc), String> {
     let s = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
-    let p: Project = serde_json::from_str(&s).map_err(|e| format!("not a Snagster project: {e}"))?;
+    project_from_json(&s)
+}
+
+fn project_from_json(s: &str) -> Result<(String, Doc), String> {
+    let p: Project = serde_json::from_str(s).map_err(|e| format!("not a Snagster project: {e}"))?;
     if p.format != "snag-project" {
         return Err("not a Snagster project".into());
     }
     let bytes = base64::engine::general_purpose::STANDARD.decode(p.image_png).map_err(|e| e.to_string())?;
-    let img = image::load_from_memory(&bytes).map_err(|e| e.to_string())?.to_rgba8();
+    let img = decode_image(&bytes)?.to_rgba8();
     let mut d = Doc::new(img);
     d.shapes = p.shapes;
     Ok((p.name, d))
+}
+
+/// The most memory a picture of `len` bytes may decode into. Compressed pictures shrink a
+/// plain screenshot at most about a thousand times, so this never refuses a real picture, but
+/// a few bytes whose header claims 11000 x 11000 pixels no longer reserve half a gigabyte.
+fn decode_limit(len: usize) -> u64 {
+    ((64u64 << 20) + len as u64 * 4096).min(512 << 20)
+}
+
+/// Decode a picture from bytes that came from a file (project files, pictures inside marks),
+/// with the memory it may take bounded by its size.
+pub fn decode_image(bytes: &[u8]) -> Result<image::DynamicImage, String> {
+    let mut r = image::ImageReader::new(std::io::Cursor::new(bytes)).with_guessed_format().map_err(|e| e.to_string())?;
+    let mut limits = image::Limits::default();
+    limits.max_alloc = Some(decode_limit(bytes.len()));
+    r.limits(limits);
+    r.decode().map_err(|e| e.to_string())
 }
 
 // ---------- animated GIFs ----------
 
 /// Read the frames of an animated GIF, shrunk to at most `max_w` wide (0 keeps full size).
 pub fn gif_frames(path: &Path, max_w: u32) -> Result<Vec<(RgbaImage, u32)>, String> {
-    use image::AnimationDecoder;
-    let file = std::io::BufReader::new(std::fs::File::open(path).map_err(|e| e.to_string())?);
-    let dec = image::codecs::gif::GifDecoder::new(file).map_err(|e| e.to_string())?;
+    use image::{AnimationDecoder, ImageDecoder};
+    let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
+    let len = file.metadata().map(|m| m.len() as usize).unwrap_or(0);
+    let mut dec = image::codecs::gif::GifDecoder::new(std::io::BufReader::new(file)).map_err(|e| e.to_string())?;
+    // The GIF decoder has no limit of its own: a header claiming a 65535 x 65535 screen made
+    // it reserve 17 GB for the first frame.
+    let mut limits = image::Limits::default();
+    limits.max_alloc = Some(decode_limit(len));
+    dec.set_limits(limits).map_err(|e| e.to_string())?;
     let mut out = Vec::new();
     for f in dec.into_frames() {
         let f = f.map_err(|e| e.to_string())?;
@@ -694,6 +721,101 @@ mod tests {
         std::fs::write(&bad_png, r#"{"format":"snag-project","version":1,"name":"x","image_png":"aGVsbG8=","shapes":[]}"#).unwrap();
         assert!(load_project(&bad_png).is_err());
         assert!(load_project(&dir.file("missing.snag")).is_err());
+    }
+
+    fn crc32(b: &[u8]) -> u32 {
+        let mut c = !0u32;
+        for &x in b {
+            c ^= x as u32;
+            for _ in 0..8 {
+                c = if c & 1 != 0 { (c >> 1) ^ 0xEDB8_8320 } else { c >> 1 };
+            }
+        }
+        !c
+    }
+
+    /// A real 1 x 1 PNG whose header (with a correct checksum) claims `w` x `h` pixels.
+    fn png_claiming(w: u32, h: u32) -> Vec<u8> {
+        let mut p = png_bytes(&solid(1, 1, [1, 2, 3, 255])).unwrap();
+        assert_eq!(&p[12..16], b"IHDR");
+        p[16..20].copy_from_slice(&w.to_be_bytes());
+        p[20..24].copy_from_slice(&h.to_be_bytes());
+        let crc = crc32(&p[12..29]);
+        p[29..33].copy_from_slice(&crc.to_be_bytes());
+        p
+    }
+
+    /// Bug: pictures in project files were decoded with the image library's general limit, so
+    /// 70 bytes claiming 11000 x 11000 pixels reserved 484 MB before failing.
+    #[test]
+    fn a_picture_header_claiming_huge_sizes_reserves_little() {
+        let p = png_claiming(11_000, 11_000);
+        let (r, largest, _) = crate::testalloc::measure(|| decode_image(&p));
+        assert!(r.is_err());
+        assert!(largest < 128 << 20, "reserved {} MB for a {}-byte file", largest >> 20, p.len());
+        // A real picture, and a big plain one that compresses very well, still decode.
+        assert_eq!(decode_image(&png_bytes(&gradient(30, 20)).unwrap()).unwrap().to_rgba8(), gradient(30, 20));
+        let plain = solid(4000, 3000, [9, 9, 9, 255]);
+        let png = png_bytes(&plain).unwrap();
+        assert_eq!(decode_image(&png).unwrap().to_rgba8(), plain);
+        assert!(decode_limit(10) >= 64 << 20 && decode_limit(usize::MAX / 8192) == 512 << 20);
+    }
+
+    #[test]
+    fn broken_pictures_are_errors_not_panics() {
+        let mut good = vec![png_bytes(&gradient(12, 9)).unwrap(), gif_bytes(&gradient(12, 9)).unwrap(), png_claiming(40_000, 2)];
+        let mut jpg = Vec::new();
+        image::DynamicImage::ImageRgba8(gradient(16, 16)).to_rgb8().write_to(&mut std::io::Cursor::new(&mut jpg), image::ImageFormat::Jpeg).unwrap();
+        good.push(jpg);
+        let mut bmp = Vec::new();
+        image::DynamicImage::ImageRgba8(gradient(5, 5)).write_to(&mut std::io::Cursor::new(&mut bmp), image::ImageFormat::Bmp).unwrap();
+        good.push(bmp);
+        let mut g = crate::testalloc::Bytes::new(5);
+        for i in 0..3_000 {
+            let input = if i % 5 == 4 { g.noise(200) } else { g.mutate(&good[i % good.len()]) };
+            let (_, largest, _) = crate::testalloc::measure(|| decode_image(&input).map(|i| i.to_rgba8()));
+            assert!(largest as u64 <= 2 * decode_limit(input.len()), "input {i}: {largest} bytes");
+        }
+    }
+
+    #[test]
+    fn broken_gifs_are_errors_not_panics() {
+        let dir = TempDir::new("fuzzgif");
+        let path = dir.file("a.gif");
+        write_gif(&path, &[(gradient(10, 8), 100), (solid(10, 8, [0, 0, 255, 255]), 50)]).unwrap();
+        let good = std::fs::read(&path).unwrap();
+        // The screen size claimed in the header (bytes 6..10) as big as it goes.
+        let mut huge = good.clone();
+        huge[6..10].fill(0xFF);
+        let mut g = crate::testalloc::Bytes::new(8);
+        let p = dir.file("b.gif");
+        for i in 0..600 {
+            let input = if i == 0 { huge.clone() } else { g.mutate(&good) };
+            std::fs::write(&p, &input).unwrap();
+            let (_, largest, _) = crate::testalloc::measure(|| gif_frames(&p, 0));
+            assert!(largest <= (64 << 20) + 4096 * input.len(), "input {i}: {} MB", largest >> 20);
+        }
+    }
+
+    #[test]
+    fn broken_project_files_are_errors_not_panics() {
+        let mut d = Doc::new(gradient(6, 4));
+        d.shapes.push(Shape::Rect { rect: Rect::from_min_max(pos2(1.0, 1.0), pos2(5.0, 3.0)), color: Color32::RED, width: 3.0, fill: false, radius: 2.0, shadow: true });
+        d.shapes.push(Shape::Image { rect: Rect::from_min_max(pos2(0.0, 0.0), pos2(2.0, 2.0)), image: crate::doc::ImgData(Arc::new(solid(2, 2, [1, 2, 3, 4]))) });
+        let dir = TempDir::new("fuzzproject");
+        let path = dir.file("p.snag");
+        save_project(&d, "Shot", &path).unwrap();
+        let good = std::fs::read(&path).unwrap();
+        assert!(project_from_json(std::str::from_utf8(&good).unwrap()).is_ok());
+        // A project whose picture claims to be huge.
+        let huge = serde_json::json!({"format": "snag-project", "version": 1, "name": "x", "image_png": b64(&png_claiming(11_000, 11_000)), "shapes": []});
+        assert!(project_from_json(&huge.to_string()).is_err());
+        let mut g = crate::testalloc::Bytes::new(6);
+        for i in 0..2_000 {
+            let input = g.mutate(&good);
+            let (_, largest, _) = crate::testalloc::measure(|| project_from_json(&String::from_utf8_lossy(&input)));
+            assert!(largest <= (64 << 20) + 64 * input.len(), "input {i}: {largest} bytes");
+        }
     }
 
     #[test]

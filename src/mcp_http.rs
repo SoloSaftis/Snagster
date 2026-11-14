@@ -37,6 +37,24 @@ struct State {
     active: AtomicUsize,
 }
 
+/// One of the `MAX_CONNECTIONS` places, given back when dropped: also when the connection's
+/// thread panics or can't be started, so a few broken requests can't use up every place and
+/// leave the server answering 503 for ever.
+struct Slot(Arc<State>);
+
+impl Slot {
+    fn take(st: Arc<State>) -> Slot {
+        st.active.fetch_add(1, Ordering::SeqCst);
+        Slot(st)
+    }
+}
+
+impl Drop for Slot {
+    fn drop(&mut self) {
+        self.0.active.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
 /// A running server; stops when dropped.
 pub struct Server {
     pub port: u16,
@@ -80,11 +98,11 @@ pub fn start(port: u16, token: &str) -> Result<Server, String> {
                     let _ = s.write_all(b"HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
                     continue;
                 }
-                st.active.fetch_add(1, Ordering::SeqCst);
                 let st2 = st.clone();
+                let slot = Slot::take(st.clone());
                 let _ = std::thread::Builder::new().name("snagster-mcp-conn".into()).spawn(move || {
+                    let _slot = slot;
                     let _ = serve(stream, &st2);
-                    st2.active.fetch_sub(1, Ordering::SeqCst);
                 });
             }
         })
@@ -116,9 +134,34 @@ struct Request {
 
 fn read_request(stream: &mut TcpStream) -> Result<Option<Request>, String> {
     stream.set_read_timeout(Some(Duration::from_secs(30))).ok();
-    let mut reader = BufReader::new(stream.try_clone().map_err(|e| e.to_string())?);
-    let mut line = String::new();
-    if reader.read_line(&mut line).map_err(|e| e.to_string())? == 0 {
+    parse_request(BufReader::new(stream.try_clone().map_err(|e| e.to_string())?))
+}
+
+/// One line of at most `room` bytes (more is an error: a line that never ends mustn't fill
+/// the memory). Empty at the end of the input.
+fn read_line_within(reader: &mut impl BufRead, room: usize) -> Result<String, String> {
+    let mut raw = Vec::new();
+    reader.by_ref().take(room as u64 + 1).read_until(b'\n', &mut raw).map_err(|e| e.to_string())?;
+    if raw.len() > room {
+        return Err("headers too large".into());
+    }
+    Ok(String::from_utf8_lossy(&raw).into_owned())
+}
+
+/// The body: `len` bytes, kept only as they arrive (a Content-Length of 32 MB in front of a
+/// few bytes doesn't reserve 32 MB).
+fn read_body(reader: &mut impl Read, len: usize) -> Result<Vec<u8>, String> {
+    let mut body = Vec::with_capacity(len.min(64 * 1024));
+    reader.take(len as u64).read_to_end(&mut body).map_err(|e| e.to_string())?;
+    if body.len() < len {
+        return Err("the body ended early".into());
+    }
+    Ok(body)
+}
+
+fn parse_request(mut reader: impl BufRead) -> Result<Option<Request>, String> {
+    let line = read_line_within(&mut reader, MAX_HEADERS)?;
+    if line.is_empty() {
         return Ok(None);
     }
     let mut parts = line.split_whitespace();
@@ -127,14 +170,11 @@ fn read_request(stream: &mut TcpStream) -> Result<Option<Request>, String> {
     let mut headers = HashMap::new();
     let mut total = line.len();
     loop {
-        let mut h = String::new();
-        let n = reader.read_line(&mut h).map_err(|e| e.to_string())?;
+        let h = read_line_within(&mut reader, MAX_HEADERS - total)?;
+        let n = h.len();
         total += n;
         if n == 0 || h == "\r\n" || h == "\n" {
             break;
-        }
-        if total > MAX_HEADERS {
-            return Err("headers too large".into());
         }
         if let Some((k, v)) = h.split_once(':') {
             headers.insert(k.trim().to_ascii_lowercase(), v.trim().to_string());
@@ -144,8 +184,7 @@ fn read_request(stream: &mut TcpStream) -> Result<Option<Request>, String> {
     if len > MAX_BODY {
         return Err("body too large".into());
     }
-    let mut body = vec![0u8; len];
-    reader.read_exact(&mut body).map_err(|e| e.to_string())?;
+    let body = read_body(&mut reader, len)?;
     let (path, q) = target.split_once('?').unwrap_or((&target, ""));
     let query = q
         .split('&')
@@ -520,6 +559,23 @@ mod tests {
         assert_eq!(uniq.len(), ids.len());
     }
 
+    /// Bug: a connection's place was given back only when its thread ended normally; a panic
+    /// (or a thread that couldn't start) kept it, and after 64 the server refused everyone.
+    #[test]
+    fn a_connection_gives_its_place_back_even_when_it_panics() {
+        let st = Arc::new(State::default());
+        let slot = Slot::take(st.clone());
+        assert_eq!(st.active.load(Ordering::SeqCst), 1);
+        let t = std::thread::spawn(move || {
+            let _slot = slot;
+            panic!("a broken request (expected in this test)");
+        });
+        assert!(t.join().is_err());
+        assert_eq!(st.active.load(Ordering::SeqCst), 0);
+        drop(Slot::take(st.clone()));
+        assert_eq!(st.active.load(Ordering::SeqCst), 0, "a place whose thread never ran comes back too");
+    }
+
     #[test]
     fn sessions_are_kept_found_and_forgotten() {
         let st = State::default();
@@ -589,6 +645,68 @@ mod tests {
         // A junk Content-Length reads as no body.
         let r = parse_raw(b"POST /mcp HTTP/1.1\r\nContent-Length: lots\r\n\r\n").unwrap().unwrap();
         assert!(r.body.is_empty());
+    }
+
+    // ---- broken and hostile requests (in memory, no sockets) ----
+
+    fn parse_bytes(raw: &[u8]) -> Result<Option<Request>, String> {
+        parse_request(std::io::Cursor::new(raw))
+    }
+
+    #[test]
+    fn random_and_broken_requests_never_panic_or_reserve_much() {
+        let good = format!("POST /messages?sessionId=a%20b HTTP/1.1\r\nHost: 127.0.0.1:45831\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{PING}", PING.len());
+        assert_eq!(parse_bytes(good.as_bytes()).unwrap().unwrap().body, PING.as_bytes());
+        let mut g = crate::testalloc::Bytes::new(3);
+        for i in 0..5_000 {
+            let input = match i % 3 {
+                0 => g.mutate(good.as_bytes()),
+                1 => g.noise(300),
+                // Big numbers where the length goes.
+                _ => format!("POST /mcp HTTP/1.1\r\nContent-Length: {}\r\n\r\nxyz", g.next() % (MAX_BODY as u64 * 2)).into_bytes(),
+            };
+            let (r, largest, _) = crate::testalloc::measure(|| parse_bytes(&input));
+            if let Ok(Some(r)) = r {
+                assert!(r.body.len() <= MAX_BODY && r.headers.len() <= input.len());
+            }
+            assert!(largest <= 256 * 1024 + 4 * input.len(), "input {i} ({} bytes) reserved {largest} bytes", input.len());
+        }
+    }
+
+    /// Bug: the body's buffer was made as big as Content-Length said before anything was read,
+    /// so 64 connections each claiming 32 MB took 2 GB without sending it.
+    #[test]
+    fn a_claimed_body_size_isnt_reserved_before_it_arrives() {
+        let raw = format!("POST /mcp HTTP/1.1\r\nContent-Length: {MAX_BODY}\r\n\r\nshort");
+        let (r, largest, _) = crate::testalloc::measure(|| parse_bytes(raw.as_bytes()));
+        assert_eq!(r.err().as_deref(), Some("the body ended early"));
+        assert!(largest < 1 << 20, "reserved {largest} bytes for 5");
+        // A body that is all there reads in full.
+        let body = "x".repeat(300_000);
+        let r = parse_bytes(format!("POST /mcp HTTP/1.1\r\nContent-Length: {}\r\n\r\n{body}", body.len()).as_bytes()).unwrap().unwrap();
+        assert_eq!(r.body.len(), 300_000);
+    }
+
+    /// Bug: the request line had no length limit (only header lines were counted), so a
+    /// client sending one endless line filled the memory.
+    #[test]
+    fn an_endless_request_line_is_refused() {
+        let mut raw = b"GET /".to_vec();
+        raw.extend(std::iter::repeat_n(b'a', 1 << 20));
+        assert_eq!(parse_raw(&raw).err().as_deref(), Some("headers too large"));
+        let (r, largest, _) = crate::testalloc::measure(|| parse_bytes(&raw));
+        assert!(r.is_err());
+        assert!(largest < 1 << 20, "{largest}");
+        // One endless header line likewise.
+        let mut raw = b"GET / HTTP/1.1\r\nX-Long: ".to_vec();
+        raw.extend(std::iter::repeat_n(b'b', 1 << 20));
+        let (r, largest, _) = crate::testalloc::measure(|| parse_bytes(&raw));
+        assert_eq!(r.err().as_deref(), Some("headers too large"));
+        assert!(largest < 1 << 20, "{largest}");
+        // Headers that just fit are fine; bytes that aren't UTF-8 are no error either.
+        let fits = format!("GET / HTTP/1.1\r\nX-A: {}\r\nX-B: caf\u{e9}\r\n\r\n", "y".repeat(MAX_HEADERS - 100));
+        assert!(parse_bytes(fits.as_bytes()).unwrap().is_some());
+        assert!(parse_bytes(b"GET /\xff\xfe HTTP/1.1\r\n\r\n").unwrap().is_some());
     }
 
     // ---- the whole server on 127.0.0.1 with a free port ----

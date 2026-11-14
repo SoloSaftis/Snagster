@@ -229,7 +229,7 @@ impl<'de> Deserialize<'de> for ImgData {
         use base64::Engine as _;
         let s = String::deserialize(d)?;
         let bytes = base64::engine::general_purpose::STANDARD.decode(s).map_err(serde::de::Error::custom)?;
-        let img = image::load_from_memory(&bytes).map_err(serde::de::Error::custom)?.to_rgba8();
+        let img = crate::export::decode_image(&bytes).map_err(serde::de::Error::custom)?.to_rgba8();
         Ok(ImgData(Arc::new(img)))
     }
 }
