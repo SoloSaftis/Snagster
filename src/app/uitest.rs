@@ -270,7 +270,12 @@ impl UiTest {
                 if a.ocr_busy {
                     return false;
                 }
-                assert!(a.grabbed_text.as_deref().is_some_and(|t| t.contains("Snagster")), "text not read");
+                // Text recognition is built into Windows only; elsewhere it must say so, not fail silently.
+                if cfg!(windows) {
+                    assert!(a.grabbed_text.as_deref().is_some_and(|t| t.contains("Snagster")), "text not read");
+                } else {
+                    assert!(a.status.contains("Windows"), "no clear message: {}", a.status);
+                }
                 true
             }),
         ));
@@ -285,7 +290,11 @@ impl UiTest {
                 if a.ocr_busy {
                     return false;
                 }
-                assert!(a.status.contains("Blurred"), "nothing redacted: {}", a.status);
+                if cfg!(windows) {
+                    assert!(a.status.contains("Blurred"), "nothing redacted: {}", a.status);
+                } else {
+                    assert!(a.status.contains("Windows"), "no clear message: {}", a.status);
+                }
                 true
             }),
         ));
@@ -385,7 +394,9 @@ impl UiTest {
                 let Some(d) = &st.last else { return false };
                 assert!(d.result.is_ok(), "{:?}", d.result);
                 let p = crate::video::probe(&d.path).expect("the Studio video can't be read back");
-                assert!(p.frames >= 20, "only {} frames", p.frames);
+                // Windows encodes on the graphics chip; elsewhere it's software, slower on small machines.
+                let least = if cfg!(windows) { 20 } else { 5 };
+                assert!(p.frames >= least, "only {} frames", p.frames);
                 assert_eq!((p.width, p.height), (a.settings.studio.width & !1, a.settings.studio.height & !1));
                 true
             }),
