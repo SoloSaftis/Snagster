@@ -28,8 +28,8 @@ pub(super) fn tools() -> Vec<Tool> {
         },
         Tool {
             name: "capture_scrolling",
-            description: "Scroll a desktop area (a web page, a document) and stitch it into one long picture, as the current picture. Keep the mouse still while it runs.",
-            schema: obj(with(with(rect(), json!({"horizontal": b("Scroll sideways instead (panorama)."), "max_steps": n("Most scroll steps, default: the setting (40).")})), capture_props()), &["x", "y", "width", "height"]),
+            description: "Scroll a desktop area (a web page, a document) and stitch it into one long picture, as the current picture. Uses the scrolling settings (wheel notches, longest picture, start from the top). Keep the mouse still while it runs. Where Snagster can't scroll other programs (Wayland, a Mac without the Accessibility permission, Linux without xdotool) the person scrolls instead, for up to manual_seconds.",
+            schema: obj(with(with(rect(), json!({"horizontal": b("Scroll sideways instead (panorama)."), "max_steps": n("Most scroll steps, default: the setting (40)."), "manual_seconds": n("Where the person has to scroll: how long to keep taking pictures (5-600, default 30).")})), capture_props()), &["x", "y", "width", "height"]),
             edits: true,
         },
         Tool {
@@ -509,6 +509,23 @@ fn scene_index(a: &Value, st: &crate::studio::StudioSettings) -> Result<usize, S
     Ok(i)
 }
 
+/// A scrolling capture for AI apps (capture_scrolling and scrolling presets): the window's
+/// scrolling settings, at most 200 steps. Where Snagster can't scroll other programs the person
+/// scrolls, and the pictures stop after `manual_seconds` (default 30) since nobody presses Stop.
+fn scroll_opts(s: &crate::settings::Settings, horizontal: bool, max_steps: Option<f64>, manual_seconds: Option<f64>, can_scroll: bool) -> capture::ScrollOptions {
+    let mut o = capture::ScrollOptions::from_settings(s, horizontal, false, can_scroll, capture::detect::Space::default());
+    o.max_steps = max_steps.unwrap_or(s.scroll_max_steps as f64).clamp(1.0, 200.0) as u32;
+    if o.manual {
+        o.time_limit = Some(std::time::Duration::from_secs(manual_seconds.unwrap_or(30.0).clamp(5.0, 600.0) as u64));
+    }
+    o
+}
+
+/// What the progress notes say while scrolling.
+fn scroll_what(o: &capture::ScrollOptions) -> &'static str {
+    if o.manual { "Snagster can't scroll other programs here: scroll the area yourself now" } else { "Scrolling and stitching" }
+}
+
 impl Workspace {
     pub(super) fn call_more(&mut self, name: &str, a: &Value) -> Outcome {
         match name {
@@ -530,10 +547,10 @@ impl Workspace {
                 let ca = CaptureArgs::parse(a)?;
                 let horizontal = a.get("horizontal").and_then(Value::as_bool).unwrap_or(false);
                 let s = self.settings();
-                let steps = num(a, "max_steps").unwrap_or(s.scroll_max_steps as f64).clamp(1.0, 200.0) as u32;
+                let o = scroll_opts(&s, horizontal, num(a, "max_steps"), num(a, "manual_seconds"), capture::can_scroll_itself());
                 let area = (r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32);
                 self.wait(ca.delay_s)?;
-                let img = self.ticking(None, "Scrolling and stitching", || capture::scroll_capture(area, horizontal, steps, s.scroll_wait_ms, self.stop.clone(), false))?;
+                let img = self.ticking(None, scroll_what(&o), || capture::scroll_capture(area, &o, self.stop.clone(), None))?;
                 self.last_area = Some(area);
                 let title = if horizontal { "Panorama" } else { "Scrolling capture" };
                 let g = Grabbed { image: img, origin: (area.0, area.1), cursor: None, title: title.into(), app: capture::foreground_info().1 };
@@ -1001,7 +1018,8 @@ impl Workspace {
             (PresetSource::AllScreens, _) => Grabbed::from_shot(capture::grab(&CaptureKind::AllScreens, (0, 0))?, Some("All screens")),
             (PresetSource::ActiveWindow, _) => Grabbed::from_shot(capture::grab(&CaptureKind::ActiveWindow, (0, 0))?, None),
             (PresetSource::Scrolling, Some(r)) => {
-                let img = self.ticking(None, "Scrolling and stitching", || capture::scroll_capture(r, false, s.scroll_max_steps.clamp(1, 200), s.scroll_wait_ms, self.stop.clone(), false))?;
+                let o = scroll_opts(&s, false, None, None, capture::can_scroll_itself());
+                let img = self.ticking(None, scroll_what(&o), || capture::scroll_capture(r, &o, self.stop.clone(), None))?;
                 self.last_area = Some(r);
                 Grabbed { image: img, origin: (r.0, r.1), cursor: None, title: p.name.clone(), app: capture::foreground_info().1 }
             }
@@ -1054,6 +1072,25 @@ impl Workspace {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ai_scrolling_uses_the_windows_scroll_settings() {
+        // Before, capture_scrolling ignored these three settings and never fell back to manual.
+        let s = crate::settings::Settings { scroll_notches: 9, scroll_max_height: 7000, scroll_from_top: false, scroll_wait_ms: 222, scroll_max_steps: 33, ..Default::default() };
+        let o = scroll_opts(&s, true, None, None, true);
+        assert!(o.horizontal && !o.manual && !o.from_start);
+        assert_eq!((o.notches, o.max_length, o.delay_ms, o.max_steps, o.time_limit), (9, 7000, 222, 33, None));
+        assert_eq!(scroll_what(&o), "Scrolling and stitching");
+        assert_eq!(scroll_opts(&s, false, Some(500.0), None, true).max_steps, 200, "at most 200 steps");
+        assert_eq!(scroll_opts(&s, false, Some(0.0), None, true).max_steps, 1);
+        // Wayland and the like: the person scrolls, and it stops by itself.
+        let m = scroll_opts(&s, false, None, None, false);
+        assert!(m.manual);
+        assert_eq!(m.time_limit, Some(std::time::Duration::from_secs(30)));
+        assert!(scroll_what(&m).contains("scroll the area yourself"));
+        assert_eq!(scroll_opts(&s, false, None, Some(1.0), false).time_limit, Some(std::time::Duration::from_secs(5)));
+        assert_eq!(scroll_opts(&s, false, None, Some(9999.0), false).time_limit, Some(std::time::Duration::from_secs(600)));
+    }
 
     fn temp_dir(tag: &str) -> PathBuf {
         let d = std::env::temp_dir().join(format!("snagster-mcp-more-{tag}-{}", std::process::id()));

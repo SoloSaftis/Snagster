@@ -99,14 +99,9 @@ struct FontFacts {
     plain: bool,
 }
 
+/// The font cache, in Snagster's folder beside settings.json.
 fn cache_path() -> Option<PathBuf> {
-    cache_path_from(std::env::var_os("APPDATA"), std::env::var_os("HOME"))
-}
-
-/// The font cache for these APPDATA and HOME values (APPDATA wins).
-fn cache_path_from(appdata: Option<std::ffi::OsString>, home: Option<std::ffi::OsString>) -> Option<PathBuf> {
-    let base = appdata.map(PathBuf::from).or_else(|| home.map(|h| PathBuf::from(h).join(".config")))?;
-    Some(base.join("Snagster").join("fonts-cache.json"))
+    Some(crate::userdirs::snagster_dir()?.join("fonts-cache.json"))
 }
 
 fn read_facts(p: &std::path::Path, size: u64, modified: u64) -> FontFacts {
@@ -312,7 +307,6 @@ pub fn export_font(family: &str, bold: bool, italic: bool) -> Option<ab_glyph::F
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ffi::OsString;
 
     fn p(s: &str) -> Option<PathBuf> {
         Some(PathBuf::from(s))
@@ -356,12 +350,11 @@ mod tests {
     }
 
     #[test]
-    fn cache_path_prefers_appdata_then_home() {
-        let c = cache_path_from(Some(OsString::from("ad")), Some(OsString::from("h"))).unwrap();
-        assert_eq!(c, PathBuf::from("ad").join("Snagster").join("fonts-cache.json"));
-        let c = cache_path_from(None, Some(OsString::from("h"))).unwrap();
-        assert_eq!(c, PathBuf::from("h").join(".config").join("Snagster").join("fonts-cache.json"));
-        assert!(cache_path_from(None, None).is_none());
+    fn the_cache_sits_beside_the_settings() {
+        if let (Some(c), Some(s)) = (cache_path(), crate::settings::settings_path()) {
+            assert_eq!(c.parent(), s.parent());
+            assert_eq!(c.file_name().unwrap(), "fonts-cache.json");
+        }
     }
 
     #[test]

@@ -3,12 +3,18 @@
 //! Windows: the portable zip's Snagster.exe replaces the running one (which is renamed first, as
 //! Windows allows), then the new one starts. Linux: the AppImage (or the portable binary) is
 //! replaced the same way. macOS: the app bundle is replaced. The download is checked against the
-//! size GitHub lists for it. Nothing runs before the person chooses to update.
+//! size GitHub lists for it and against its SHA-256 in the release's `SHA256SUMS` file (which
+//! the release job of `.github/workflows/build.yml` makes); a release without that file, or a
+//! download whose checksum differs, is not installed. Nothing runs before the person chooses
+//! to update.
 
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 pub const REPO: &str = "SoloSaftis/Snagster";
+
+/// The release file with the SHA-256 of every other file, in `sha256sum`'s format.
+pub const SUMS_NAME: &str = "SHA256SUMS";
 
 /// What GitHub says about the newest release.
 #[derive(Clone, Debug)]
@@ -18,6 +24,8 @@ pub struct Release {
     pub page: String,
     /// The file for this computer, its address and size.
     pub asset: Option<(String, String, u64)>,
+    /// Where the release's SHA256SUMS file is (None: the release has none).
+    pub sums: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -106,14 +114,100 @@ fn release_from(r: ApiRelease, want: &str) -> Result<Release, String> {
         return Err("The newest release isn't final yet.".into());
     }
     let asset = r.assets.iter().find(|a| a.name == want).map(|a| (a.name.clone(), a.browser_download_url.clone(), a.size));
-    Ok(Release { version: r.tag_name.trim_start_matches('v').to_string(), notes: r.body, page: r.html_url, asset })
+    let sums = r.assets.iter().find(|a| a.name == SUMS_NAME).map(|a| a.browser_download_url.clone());
+    Ok(Release { version: r.tag_name.trim_start_matches('v').to_string(), notes: r.body, page: r.html_url, asset, sums })
+}
+
+fn from_github(url: &str) -> Result<(), String> {
+    if !url.starts_with("https://github.com/") && !url.starts_with("https://objects.githubusercontent.com/") {
+        return Err("The download address isn't GitHub's.".into());
+    }
+    Ok(())
+}
+
+/// The SHA-256 of every file a SHA256SUMS file lists. Lines are `<64 hex digits>  <name>`
+/// (`sha256sum`'s text mode) or `<hex> *<name>` (binary mode); blank and broken lines are
+/// skipped.
+pub fn parse_sums(text: &str) -> std::collections::HashMap<String, [u8; 32]> {
+    let mut out = std::collections::HashMap::new();
+    for line in text.lines() {
+        let line = line.trim_end_matches('\r');
+        let Some((hex, name)) = line.split_once(char::is_whitespace) else { continue };
+        let name = name.trim_start();
+        let name = name.strip_prefix('*').unwrap_or(name).trim_end();
+        if let Some(sum) = from_hex(hex)
+            && !name.is_empty()
+        {
+            out.insert(name.to_string(), sum);
+        }
+    }
+    out
+}
+
+fn from_hex(hex: &str) -> Option<[u8; 32]> {
+    if hex.len() != 64 || !hex.is_ascii() {
+        return None;
+    }
+    let mut out = [0u8; 32];
+    for (i, b) in out.iter_mut().enumerate() {
+        *b = u8::from_str_radix(&hex[i * 2..i * 2 + 2], 16).ok()?;
+    }
+    Some(out)
+}
+
+fn to_hex(sum: &[u8]) -> String {
+    sum.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// The SHA-256 the SHA256SUMS text gives for `name`.
+fn expected_sum(sums: &str, name: &str) -> Result<[u8; 32], String> {
+    parse_sums(sums).get(name).copied().ok_or_else(|| format!("The release's {SUMS_NAME} file has no line for {name}, so the download can't be checked; nothing was installed."))
+}
+
+/// The SHA-256 of a file.
+fn sha256_file(path: &Path) -> Result<[u8; 32], String> {
+    use std::io::Read;
+    let mut f = std::fs::File::open(path).map_err(|e| e.to_string())?;
+    let mut ctx = ring::digest::Context::new(&ring::digest::SHA256);
+    let mut buf = vec![0u8; 1 << 16];
+    loop {
+        let n = f.read(&mut buf).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        ctx.update(&buf[..n]);
+    }
+    let mut out = [0u8; 32];
+    out.copy_from_slice(ctx.finish().as_ref());
+    Ok(out)
+}
+
+/// Check a downloaded file against the SHA-256 SHA256SUMS gives for it; a file that doesn't
+/// match is deleted.
+fn verify(path: &Path, name: &str, sums: &str) -> Result<(), String> {
+    let want = expected_sum(sums, name)?;
+    let got = sha256_file(path)?;
+    if got != want {
+        let _ = std::fs::remove_file(path);
+        return Err(format!(
+            "The download of {name} doesn't match its SHA-256 checksum (expected {}, got {}); it may be damaged or not the real file. Nothing was installed.",
+            to_hex(&want),
+            to_hex(&got)
+        ));
+    }
+    Ok(())
+}
+
+/// The release's SHA256SUMS file (small text).
+fn download_sums(url: &str) -> Result<String, String> {
+    from_github(url)?;
+    let mut resp = agent().get(url).call().map_err(|e| format!("The {SUMS_NAME} file couldn't be downloaded: {e}"))?;
+    resp.body_mut().with_config().limit(1 << 20).read_to_string().map_err(|e| format!("The {SUMS_NAME} file couldn't be read: {e}"))
 }
 
 /// Download the release file into a new temporary folder; returns its path.
 fn download(url: &str, name: &str, size: u64, progress: &dyn Fn(f32)) -> Result<PathBuf, String> {
-    if !url.starts_with("https://github.com/") && !url.starts_with("https://objects.githubusercontent.com/") {
-        return Err("The download address isn't GitHub's.".into());
-    }
+    from_github(url)?;
     let dir = std::env::temp_dir().join(format!("snagster-update-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
@@ -185,7 +279,14 @@ pub fn clean_up() {
 /// Download and install `release`, returning the program to start next.
 pub fn install(release: &Release, progress: &dyn Fn(f32)) -> Result<PathBuf, String> {
     let (name, url, size) = release.asset.clone().ok_or("There's no download for this kind of computer in that release.")?;
+    let sums_url = release.sums.as_deref().ok_or(format!(
+        "That release has no {SUMS_NAME} file, so the download can't be checked; nothing was installed. Download it from the release page instead."
+    ))?;
+    let sums = download_sums(sums_url)?;
+    // Refuse before the large download when the file isn't listed.
+    expected_sum(&sums, &name)?;
     let file = download(&url, &name, size, progress)?;
+    verify(&file, &name, &sums)?;
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     if cfg!(windows) {
         let fresh = file.with_file_name("Snagster.exe");
@@ -333,7 +434,8 @@ mod tests {
             { "name": "Snagster-windows-x64-portable.zip", "browser_download_url": "https://github.com/w.zip", "size": 100 },
             { "name": "Snagster-macos-arm64.zip", "browser_download_url": "https://github.com/m.zip", "size": 200 },
             { "name": "Snagster-linux-x86_64.AppImage", "browser_download_url": "https://github.com/l.AppImage", "size": 300 },
-            { "name": "Snagster-linux-x86_64-portable.tar.gz", "browser_download_url": "https://github.com/l.tar.gz" }
+            { "name": "Snagster-linux-x86_64-portable.tar.gz", "browser_download_url": "https://github.com/l.tar.gz" },
+            { "name": "SHA256SUMS", "browser_download_url": "https://github.com/SHA256SUMS", "size": 400 }
         ]
     }"#;
 
@@ -356,7 +458,68 @@ mod tests {
             assert_eq!(r.notes, "What changed");
             assert!(r.page.ends_with("/v0.10.2"));
             assert_eq!(r.asset, Some((want.to_string(), url.to_string(), size)), "{os}");
+            assert_eq!(r.sums.as_deref(), Some("https://github.com/SHA256SUMS"));
         }
+    }
+
+    // `sha256sum` of the three bytes "abc" (the FIPS 180-2 example) and of nothing.
+    const ABC: &str = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+    const EMPTY: &str = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
+    #[test]
+    fn sums_files_are_read_in_both_sha256sum_formats() {
+        let text = format!("{ABC}  Snagster-windows-x64-portable.zip\n{EMPTY} *Snagster-macos-arm64.zip\r\n\nnot a line\n{}  short.zip\nzz{}  bad-hex.zip\n", &ABC[..10], &ABC[2..]);
+        let s = parse_sums(&text);
+        assert_eq!(s.len(), 2, "{s:?}");
+        assert_eq!(to_hex(&s["Snagster-windows-x64-portable.zip"]), ABC);
+        assert_eq!(to_hex(&s["Snagster-macos-arm64.zip"]), EMPTY, "binary-mode star and CRLF");
+        assert!(parse_sums("").is_empty());
+        // Upper-case hex reads the same.
+        let up = parse_sums(&format!("{}  a.zip", ABC.to_uppercase()));
+        assert_eq!(to_hex(&up["a.zip"]), ABC);
+        // A name with spaces stays whole.
+        assert!(parse_sums(&format!("{ABC}  my file.zip")).contains_key("my file.zip"));
+    }
+
+    #[test]
+    fn a_file_without_a_line_is_refused() {
+        let e = expected_sum(&format!("{ABC}  other.zip\n"), "Snagster-windows-x64-portable.zip").unwrap_err();
+        assert!(e.contains("no line for Snagster-windows-x64-portable.zip") && e.contains("nothing was installed"), "{e}");
+    }
+
+    #[test]
+    fn downloads_are_checked_against_their_sha256() {
+        let dir = temp_folder("sha");
+        let f = dir.join("a.zip");
+        std::fs::write(&f, b"abc").unwrap();
+        assert_eq!(to_hex(&sha256_file(&f).unwrap()), ABC);
+        let sums = format!("{ABC}  a.zip\n{EMPTY}  b.zip\n");
+        assert_eq!(verify(&f, "a.zip", &sums), Ok(()));
+        // The same bytes under another name's checksum: refused and deleted.
+        let e = verify(&f, "b.zip", &sums).unwrap_err();
+        assert!(e.contains("doesn't match its SHA-256") && e.contains(EMPTY) && e.contains(ABC), "{e}");
+        assert!(!f.exists(), "a file that doesn't match is not left to be used");
+        // A big file is read in pieces.
+        let big = dir.join("big.bin");
+        std::fs::write(&big, vec![7u8; 300_000]).unwrap();
+        let one = ring::digest::digest(&ring::digest::SHA256, &vec![7u8; 300_000]);
+        assert_eq!(sha256_file(&big).unwrap().as_slice(), one.as_ref());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_release_without_sums_is_not_installed() {
+        let r = Release {
+            version: "9.9.9".into(),
+            notes: String::new(),
+            page: String::new(),
+            asset: Some((asset_name().into(), "https://github.com/x.zip".into(), 1)),
+            sums: None,
+        };
+        let e = install(&r, &|_| {}).unwrap_err();
+        assert!(e.contains("no SHA256SUMS file") && e.contains("nothing was installed"), "{e}");
+        let e = download_sums("https://example.com/SHA256SUMS").unwrap_err();
+        assert_eq!(e, "The download address isn't GitHub's.");
     }
 
     #[test]
@@ -366,7 +529,7 @@ mod tests {
         let bare: ApiRelease = serde_json::from_str(r#"{ "tag_name": "0.11.0" }"#).unwrap();
         let r = release_from(bare, asset_name()).unwrap();
         assert_eq!(r.version, "0.11.0");
-        assert!(r.asset.is_none() && r.notes.is_empty() && r.page.is_empty());
+        assert!(r.asset.is_none() && r.sums.is_none() && r.notes.is_empty() && r.page.is_empty());
     }
 
     #[test]
@@ -452,7 +615,7 @@ mod tests {
 
     #[test]
     fn install_needs_a_file_for_this_computer() {
-        let r = Release { version: "9.9.9".into(), notes: String::new(), page: String::new(), asset: None };
+        let r = Release { version: "9.9.9".into(), notes: String::new(), page: String::new(), asset: None, sums: None };
         assert!(install(&r, &|_| {}).is_err());
     }
 }

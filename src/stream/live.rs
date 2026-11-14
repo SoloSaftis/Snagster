@@ -26,6 +26,8 @@ pub struct LiveOptions {
     /// kbit/s; 0: recommended.
     pub kbps: u32,
     pub hardware: bool,
+    /// Send HEVC where the service takes it (Enhanced RTMP) and this computer can encode it.
+    pub hevc: bool,
     pub keyframe_s: u32,
     pub audio: crate::audio::AudioSource,
     pub mic: String,
@@ -46,6 +48,7 @@ impl LiveOptions {
             fps: st.fps,
             kbps: st.kbps,
             hardware: st.hardware,
+            hevc: st.hevc,
             keyframe_s: st.keyframe_s,
             audio: if crate::audio::AudioSource::supported() { st.audio } else { crate::audio::AudioSource::None },
             mic: s.audio_mic.clone(),
@@ -64,6 +67,18 @@ pub enum StudioFrames {
     Start(crate::studio::StudioSettings),
 }
 
+/// The video codec to stream: HEVC only when the person asked for it, the service takes it
+/// (Enhanced RTMP: YouTube, custom servers) and this system has an HEVC encoder; else H.264,
+/// which every service takes.
+pub fn pick_codec(want_hevc: bool, service_takes_hevc: bool, hevc_encoder: bool) -> Codec {
+    if want_hevc && service_takes_hevc && hevc_encoder { Codec::Hevc } else { Codec::H264 }
+}
+
+/// Whether this system has an HEVC encoder at all (Linux has none yet).
+fn hevc_encoder_here(hardware: bool) -> bool {
+    !crate::encode::plan(crate::encode::Os::current(), Codec::Hevc, hardware).is_empty()
+}
+
 /// The stream's size and rate for a source of `sw` × `sh` (pure, so it can be tested).
 pub fn plan(o: &LiveOptions, sw: u32, sh: u32) -> StreamConfig {
     let (mut w, mut h) = (sw.max(2), sh.max(2));
@@ -71,8 +86,9 @@ pub fn plan(o: &LiveOptions, sw: u32, sh: u32) -> StreamConfig {
         w = ((w as u64 * o.max_height as u64) / h as u64).max(2) as u32;
         h = o.max_height;
     }
-    let mut c = StreamConfig::for_target(o.target.clone(), w, h, o.fps, Codec::H264);
     let p = o.target.service.preset();
+    let codec = pick_codec(o.hevc, p.hevc, hevc_encoder_here(o.hardware));
+    let mut c = StreamConfig::for_target(o.target.clone(), w, h, o.fps, codec);
     if o.kbps > 0 {
         c.video_kbps = o.kbps.clamp(300, p.max_video_kbps);
     }
@@ -165,19 +181,22 @@ impl Live {
                 (studio_frames(sh, cfg.width, cfg.height), cfg)
             }
         };
-        let sound = if o.audio == crate::audio::AudioSource::None {
-            SoundSource::None
-        } else {
-            match crate::audio::Capture::start(o.audio, &o.mic) {
-                Ok(c) => SoundSource::Capture(c),
-                Err(e) => {
-                    notice = Some(format!("Streaming without sound: {e}"));
-                    SoundSource::None
-                }
-            }
+        let mut cfg = cfg;
+        // A computer that has no HEVC encoder after all streams H.264 rather than not at all.
+        if cfg.codec == Codec::Hevc && super::engine::video_config(&cfg).and_then(|v| (encoders.video)(&v)).is_err() {
+            cfg.codec = Codec::H264;
+            notice = Some("This computer couldn't start an HEVC encoder, so the stream is H.264.".to_string());
+        }
+        let (capture, sound_notice) = sound_for(o.audio, || crate::audio::Capture::start(o.audio, &o.mic));
+        let sound = match capture {
+            Some(c) => SoundSource::Capture(c),
+            None => SoundSource::Silence,
+        };
+        notice = match (notice, sound_notice) {
+            (Some(a), Some(b)) => Some(format!("{a} {b}")),
+            (a, b) => a.or(b),
         };
         let has_sound = !matches!(sound, SoundSource::None);
-        let mut cfg = cfg;
         let copy = match &o.copy_to {
             Some(p) => {
                 let meta = Meta { width: cfg.width, height: cfg.height, fps: cfg.fps, video_kbps: cfg.video_kbps, codec: cfg.codec, audio_kbps: has_sound.then_some(cfg.audio_kbps) };
@@ -224,6 +243,20 @@ impl Live {
         drop(_engine);
         let copy = copy.map(Recorder::finish);
         Ended { info, stats, copy }
+    }
+}
+
+/// Where a stream's sound comes from: the chosen capture, else a silent track. Services expect
+/// an audio track (some warn without one), so a stream without sound chosen, on a system
+/// without sound capture yet (Linux, macOS), or whose sound couldn't start sends silence, which
+/// the AAC encoder makes for next to nothing. The note says why there is no sound.
+fn sound_for<C>(audio: crate::audio::AudioSource, start: impl FnOnce() -> Result<C, String>) -> (Option<C>, Option<String>) {
+    if audio == crate::audio::AudioSource::None {
+        return (None, None);
+    }
+    match start() {
+        Ok(c) => (Some(c), None),
+        Err(e) => (None, Some(format!("Streaming without sound (a silent audio track): {e}"))),
     }
 }
 
@@ -406,6 +439,7 @@ mod tests {
             fps: 30,
             kbps: 0,
             hardware: false,
+            hevc: false,
             keyframe_s: 2,
             audio: crate::audio::AudioSource::None,
             mic: String::new(),
@@ -413,6 +447,39 @@ mod tests {
             copy_to: None,
             max_reconnects: 0,
         }
+    }
+
+    #[test]
+    fn hevc_only_when_asked_taken_and_encodable() {
+        assert_eq!(pick_codec(true, true, true), Codec::Hevc);
+        assert_eq!(pick_codec(false, true, true), Codec::H264, "not asked for");
+        assert_eq!(pick_codec(true, false, true), Codec::H264, "the service takes only H.264 (Twitch)");
+        assert_eq!(pick_codec(true, true, false), Codec::H264, "no HEVC encoder here (Linux)");
+        // Before, the plan always asked for H.264.
+        let mut o = opts("rtmp://h/live", "k");
+        o.hevc = true;
+        let here = hevc_encoder_here(o.hardware);
+        assert_eq!(plan(&o, 1280, 720).codec, if here { Codec::Hevc } else { Codec::H264 }, "a custom server takes HEVC");
+        o.target.service = Service::YouTube;
+        assert_eq!(plan(&o, 1280, 720).codec, if here { Codec::Hevc } else { Codec::H264 });
+        o.target.service = Service::Twitch;
+        assert_eq!(plan(&o, 1280, 720).codec, Codec::H264);
+        o.target.service = Service::Custom;
+        o.hevc = false;
+        assert_eq!(plan(&o, 1280, 720).codec, Codec::H264);
+        assert_eq!(hevc_encoder_here(true), !cfg!(all(unix, not(target_os = "macos"))), "Windows and macOS have HEVC encoders, Linux not yet");
+    }
+
+    #[test]
+    fn a_stream_without_sound_gets_a_silent_track() {
+        use crate::audio::AudioSource;
+        let (c, n) = sound_for::<u8>(AudioSource::None, || panic!("nothing is started when no sound is chosen"));
+        assert_eq!((c, n), (None, None));
+        let (c, n) = sound_for::<u8>(AudioSource::System, || Err("no speakers".into()));
+        assert_eq!(c, None);
+        assert_eq!(n.as_deref(), Some("Streaming without sound (a silent audio track): no speakers"));
+        let (c, n) = sound_for(AudioSource::Both, || Ok(7u8));
+        assert_eq!((c, n), (Some(7), None));
     }
 
     #[test]

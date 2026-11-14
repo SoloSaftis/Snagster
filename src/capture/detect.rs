@@ -10,7 +10,10 @@
 //!   element costs one call). Child windows (`EnumChildWindows`) are what the picker has until
 //!   then, and stay if UI Automation can't read a program.
 //! - macOS: the Accessibility API, when Snagster is allowed to use it; window bounds otherwise.
-//! - Linux: window bounds (from the window list).
+//! - Linux (X11): the window bounds from the window list first, then each window's child
+//!   windows as `xwininfo -tree` lists them (toolkits that draw their own controls have few,
+//!   so those windows snap to their bounds only). Without X11 or `xwininfo` (Wayland), window
+//!   bounds only.
 
 use super::Object;
 use std::sync::Arc;

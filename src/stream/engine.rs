@@ -46,7 +46,10 @@ pub type AudioFeed = Box<dyn FnMut(usize) -> Vec<i16> + Send>;
 
 /// Where the sound comes from.
 pub enum SoundSource {
+    /// No audio track at all.
     None,
+    /// A silent audio track: services expect one, and some warn without it.
+    Silence,
     /// System sound and/or microphone, with Studio's mixer.
     Capture(crate::audio::Capture),
     #[cfg(test)]
@@ -57,6 +60,7 @@ impl SoundSource {
     fn into_feed(self) -> Option<AudioFeed> {
         match self {
             SoundSource::None => None,
+            SoundSource::Silence => Some(Box::new(|n| vec![0; n * 2])),
             #[cfg(test)]
             SoundSource::Feed(f) => Some(f),
             SoundSource::Capture(c) => Some(capture_feed(c)),
@@ -365,24 +369,29 @@ pub struct Streamer {
     _timely: crate::video::TimelyActivity,
 }
 
+/// What the video encoder of a stream with `cfg` is asked for.
+pub fn video_config(cfg: &StreamConfig) -> Result<VideoConfig, String> {
+    let (w, h) = crate::video::even_size(cfg.width, cfg.height)?;
+    Ok(VideoConfig {
+        width: w,
+        height: h,
+        fps: cfg.fps.clamp(1, 120),
+        bitrate_bps: cfg.video_kbps.saturating_mul(1000),
+        keyframe_every_s: cfg.keyframe_s.max(1),
+        codec: cfg.codec,
+        prefer_hardware: cfg.hardware,
+        low_latency: true,
+    })
+}
+
 impl Streamer {
     /// Check the address, open the encoders and start streaming in the background. Errors (bad
     /// address, no video encoder) come back at once; connection problems show in `stats`.
     pub fn start(cfg: StreamConfig, frames: FrameSource, sound: SoundSource, encoders: Encoders) -> Result<Streamer, String> {
         let key = cfg.target.key.clone();
         let ep = cfg.target.endpoint()?;
-        let (w, h) = crate::video::even_size(cfg.width, cfg.height)?;
-        let fps = cfg.fps.clamp(1, 120);
-        let vcfg = VideoConfig {
-            width: w,
-            height: h,
-            fps,
-            bitrate_bps: cfg.video_kbps.saturating_mul(1000),
-            keyframe_every_s: cfg.keyframe_s.max(1),
-            codec: cfg.codec,
-            prefer_hardware: cfg.hardware,
-            low_latency: true,
-        };
+        let vcfg = video_config(&cfg)?;
+        let (w, h, fps) = (vcfg.width, vcfg.height, vcfg.fps);
         let venc = (encoders.video)(&vcfg).map_err(|e| mask(&e, &key))?;
         let shared = Arc::new(Shared::default());
         let mut sound = sound.into_feed();

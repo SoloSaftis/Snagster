@@ -87,10 +87,8 @@ impl SnagApp {
         ui.painter().rect_filled(Rect::from_min_size(tabs_rect.min, vec2(tabs_rect.width(), 34.0)), CornerRadius::ZERO, look::TABS);
         ui.horizontal(|ui| {
             ui.set_height(34.0);
+            // The title bar shows Snagster's icon and name, so the tabs start at the edge.
             ui.add_space(6.0);
-            logo(ui, 22.0);
-            ui.label(RichText::new("Snagster").size(16.0).strong().color(Color32::WHITE));
-            ui.add_space(8.0);
             // File: a menu, like Word's.
             let file = look::tab(ui, t("File"), t("New, open, save, export and settings"), false);
             egui::Popup::menu(&file).show(|ui| {

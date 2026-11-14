@@ -625,6 +625,7 @@ pub fn grab(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String>
                 Err("not available on this system".into())
             }
         }
+        CaptureKind::Menus if !menus_supported() => Err(MENUS_UNAVAILABLE.into()),
         CaptureKind::Menus => {
             let objs = objects();
             let menus: Vec<&Object> = objs.iter().filter(|o| o.label == "Menu").collect();
@@ -644,6 +645,16 @@ pub fn grab(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String>
         }
     }
 }
+
+/// Whether open menus can be found and captured here. Only Windows tells menus apart from
+/// other windows (their window class); macOS and Linux would need the Accessibility API or
+/// the window manager's menu type, which Snagster doesn't read yet.
+pub fn menus_supported() -> bool {
+    cfg!(windows)
+}
+
+/// What the Menu capture says where it isn't available (translated in the window).
+pub const MENUS_UNAVAILABLE: &str = "Menu capture isn't available on this system yet: open the menu and capture an area instead.";
 
 /// Wait `delay_ms`, grab, and send the result back; the UI thread restores the window.
 pub fn spawn(kind: CaptureKind, delay_ms: u64, at: (i32, i32), ctx: eframe::egui::Context, tx: Sender<CaptureResult>) {
@@ -676,6 +687,28 @@ pub struct ScrollOptions {
     pub from_start: bool,
     /// From the desktop pixels the area is given in to the system's own units.
     pub space: detect::Space,
+    /// Stop after this long, however far it got (AI apps waiting on a person who scrolls).
+    pub time_limit: Option<Duration>,
+}
+
+impl ScrollOptions {
+    /// The options a scrolling capture gets from the settings, the same for the window, presets
+    /// and AI apps. `manual`: the person asked to scroll themselves; where Snagster can't turn
+    /// other programs' mouse wheels (`can_scroll` false: Wayland, a Mac without the
+    /// Accessibility permission, Linux without xdotool) it is manual anyway.
+    pub fn from_settings(s: &crate::settings::Settings, horizontal: bool, manual: bool, can_scroll: bool, space: detect::Space) -> ScrollOptions {
+        ScrollOptions {
+            horizontal,
+            manual: manual || !can_scroll,
+            delay_ms: s.scroll_wait_ms,
+            notches: s.scroll_notches,
+            max_steps: s.scroll_max_steps,
+            max_length: s.scroll_max_height,
+            from_start: s.scroll_from_top,
+            space,
+            time_limit: None,
+        }
+    }
 }
 
 impl Default for ScrollOptions {
@@ -689,6 +722,7 @@ impl Default for ScrollOptions {
             max_length: 20000,
             from_start: false,
             space: detect::Space::default(),
+            time_limit: None,
         }
     }
 }
@@ -847,24 +881,11 @@ fn scroll_to_start(center: (i32, i32), o: &ScrollOptions, stop: &AtomicBool, gra
     Ok(())
 }
 
-/// Capture a desktop area while scrolling the content under it, and stitch the frames.
-/// (The older form, for callers that only set these.)
-pub fn scroll_capture(
-    rect: (i32, i32, u32, u32),
-    horizontal: bool,
-    max_steps: u32,
-    wait_ms: u64,
-    stop: Arc<AtomicBool>,
-    manual: bool,
-) -> Result<RgbaImage, String> {
-    let o = ScrollOptions { horizontal, manual, delay_ms: wait_ms, max_steps, ..Default::default() };
-    scroll_capture_with(rect, &o, stop, None)
-}
-
 /// Capture a desktop area (desktop pixels) while scrolling the content under it, and stitch
 /// the frames. Stops at the end of the content, at the step or length limit, on `stop`, or
-/// when Esc is pressed. Sideways works the same on turned frames.
-pub fn scroll_capture_with(
+/// when Esc is pressed (or after `time_limit`). Sideways works the same on turned frames. The
+/// window, presets and AI apps all scroll through here, with `ScrollOptions::from_settings`.
+pub fn scroll_capture(
     rect: (i32, i32, u32, u32),
     o: &ScrollOptions,
     stop: Arc<AtomicBool>,
@@ -892,8 +913,9 @@ pub fn scroll_capture_with(
     report(&st);
     let steps = if o.manual { 6000 } else { o.max_steps.clamp(1, 500) };
     let notches = o.notches.clamp(1, 50) as i32;
+    let started = Instant::now();
     for _ in 0..steps {
-        if stop.load(Ordering::Relaxed) || escape_down() {
+        if stop.load(Ordering::Relaxed) || escape_down() || o.time_limit.is_some_and(|t| started.elapsed() >= t) {
             break;
         }
         if o.manual {
@@ -1245,6 +1267,10 @@ mod tests {
         assert!(!CaptureKind::Window(1, "x".into()).uses_overlay());
         assert!(!CaptureKind::LastRegion(0, 0, 10, 10).uses_overlay());
         assert!(!CaptureKind::Menus.uses_overlay());
+        assert_eq!(menus_supported(), cfg!(windows));
+        if !menus_supported() {
+            assert_eq!(grab(&CaptureKind::Menus, (0, 0)).err().as_deref(), Some(MENUS_UNAVAILABLE), "says so instead of finding nothing");
+        }
     }
 
     #[test]
@@ -1371,6 +1397,20 @@ mod tests {
         assert_eq!(xdotool_args((0, 0), true, -2).last().unwrap(), "6");
         assert_eq!(xdotool_args((0, 0), true, -2)[5], "2");
         assert_eq!(xdotool_args((0, 0), false, 0)[5], "1", "at least one notch");
+    }
+
+    #[test]
+    fn scroll_options_come_from_the_settings() {
+        let s = crate::settings::Settings { scroll_notches: 7, scroll_max_height: 9000, scroll_from_top: false, scroll_wait_ms: 123, scroll_max_steps: 17, ..Default::default() };
+        let space = detect::Space { origin: (5, 6), scale: 2.0 };
+        let o = ScrollOptions::from_settings(&s, true, false, true, space);
+        assert!(o.horizontal && !o.manual && !o.from_start);
+        assert_eq!((o.notches, o.max_length, o.delay_ms, o.max_steps, o.space, o.time_limit), (7, 9000, 123, 17, space, None));
+        // Where Snagster can't scroll other programs (Wayland), the person scrolls.
+        assert!(ScrollOptions::from_settings(&s, false, false, false, space).manual);
+        assert!(ScrollOptions::from_settings(&s, false, true, true, space).manual, "asked for");
+        let d = ScrollOptions::from_settings(&crate::settings::Settings::default(), false, false, true, space);
+        assert!(d.from_start, "the settings start at the top unless told not to");
     }
 
     #[test]

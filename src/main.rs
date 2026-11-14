@@ -24,6 +24,7 @@ mod look;
 mod audio;
 mod studio;
 mod update;
+mod userdirs;
 mod mcp_http;
 mod render;
 mod sample;

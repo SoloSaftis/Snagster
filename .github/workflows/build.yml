@@ -267,6 +267,16 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
+      # The updater (src/update.rs) installs a download only when its SHA-256 matches this file.
+      - name: Write SHA256SUMS
+        run: |
+          cd artifacts
+          ls -l
+          test "$(ls | wc -l)" -eq 4
+          sha256sum -b -- * > ../SHA256SUMS
+          mv ../SHA256SUMS .
+          cat SHA256SUMS
+          sha256sum -c SHA256SUMS
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}

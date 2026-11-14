@@ -677,6 +677,15 @@ impl UiTest {
             assert_eq!(*out.get_pixel(5, 10), image::Rgba([255, 0, 0, 255]));
             assert_eq!(*out.get_pixel(5, 30 + 300), page(300, 5));
         }));
+        s.push(once("Menu capture says so where it isn't available", |a, c| {
+            // Windows captures the real menu (skipped here: it takes over the screen).
+            if !crate::capture::menus_supported() {
+                a.status.clear();
+                a.do_action(c, Action::MenuCapture);
+                assert_eq!(a.status, crate::i18n::t(crate::capture::MENUS_UNAVAILABLE));
+                assert!(a.overlay.is_none());
+            }
+        }));
         s.push(once("scrolling capture: the settings reach the capture", |a, _| {
             a.settings.scroll_notches = 5;
             a.settings.scroll_max_height = 9000;

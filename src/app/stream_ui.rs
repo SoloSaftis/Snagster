@@ -417,6 +417,7 @@ impl SnagApp {
             ui.label(RichText::new(t("(services ask for 2 s)")).color(TEXT_DIM));
         });
         ui.checkbox(&mut s.hardware, t("Use the graphics chip to encode (Intel, AMD or NVIDIA)"));
+        ui.checkbox(&mut s.hevc, t("Send HEVC (H.265) where the service takes it")).on_hover_text(t("YouTube and custom servers take HEVC over Enhanced RTMP; other services, and computers without an HEVC encoder, get H.264."));
         ui.checkbox(&mut s.cursor, t("Show the mouse pointer"));
         ui.add_space(4.0);
         ui.label(RichText::new(t("Sound")).strong());
@@ -427,7 +428,7 @@ impl SnagApp {
                 }
             });
         } else {
-            ui.label(RichText::new(t("Streaming sound isn't available on this system yet: the stream goes out silent.")).color(TEXT_DIM));
+            ui.label(RichText::new(t("There's no computer sound on this system yet, so the stream's audio track is silent.")).color(TEXT_DIM));
         }
         ui.add_space(4.0);
         ui.label(RichText::new(t("Connection")).strong());
@@ -533,7 +534,7 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
             let icon = if a == crate::audio::AudioSource::None { ph::SPEAKER_SLASH } else if a.mic() { ph::MICROPHONE } else { ph::SPEAKER };
             look::small_menu(ui, icon, t(a.label()), t("Sound to stream"), |ui| {
                 if !crate::audio::AudioSource::supported() {
-                    ui.label(RichText::new(t("Streaming sound isn't available on this system yet: the stream goes out silent.")).color(TEXT_DIM));
+                    ui.label(RichText::new(t("There's no computer sound on this system yet, so the stream's audio track is silent.")).color(TEXT_DIM));
                     return;
                 }
                 for v in crate::audio::AudioSource::ALL {

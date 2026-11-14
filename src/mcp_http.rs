@@ -306,22 +306,42 @@ impl State {
     }
 }
 
+/// Whether two secrets are equal, taking the same time wherever they differ (so the time a
+/// wrong token takes says nothing about how much of it was right). Only the length can show.
+fn same_secret(given: &str, want: &str) -> bool {
+    let (a, b) = (given.as_bytes(), want.as_bytes());
+    let mut diff = (a.len() ^ b.len()) as u64;
+    for i in 0..b.len() {
+        diff |= (a.get(i).copied().unwrap_or(0) ^ b[i]) as u64;
+    }
+    // Keep the compiler from cutting the loop short.
+    std::hint::black_box(diff) == 0
+}
+
+/// The token a request carries: `Authorization: Bearer <token>`, else `?token=` in the address
+/// (kept for clients that can't set headers, as docs/MCP.md says; a token in an address can
+/// end up in logs, so the header is the one to use).
+fn token_of(req: &Request) -> Option<String> {
+    let bearer = req.headers.get("authorization").and_then(|a| a.strip_prefix("Bearer ").or_else(|| a.strip_prefix("bearer "))).map(str::trim);
+    bearer.map(String::from).or_else(|| req.query.get("token").cloned())
+}
+
 fn serve(mut stream: TcpStream, st: &State) -> Result<(), String> {
     let Some(req) = read_request(&mut stream)? else { return Ok(()) };
-    let mut extra = cors(&req);
     let host = req.headers.get("host").cloned().unwrap_or_default();
     if !local_host(&host) || !origin_ok(req.headers.get("origin").map(String::as_str).unwrap_or("")) {
-        let _ = respond(&mut stream, "403 Forbidden", &extra, b"Only apps on this computer may connect.");
+        // No CORS headers: a foreign page never sees its Origin allowed, not even on the refusal.
+        let _ = respond(&mut stream, "403 Forbidden", &[], b"Only apps on this computer may connect.");
         return Ok(());
     }
+    let mut extra = cors(&req);
     if req.method == "OPTIONS" {
         let _ = respond(&mut stream, "204 No Content", &extra, b"");
         return Ok(());
     }
     if !st.token.is_empty() {
-        let bearer = req.headers.get("authorization").and_then(|a| a.strip_prefix("Bearer ").or_else(|| a.strip_prefix("bearer "))).map(str::trim);
-        let given = bearer.map(String::from).or_else(|| req.query.get("token").cloned()).unwrap_or_default();
-        if given != st.token {
+        let given = token_of(&req).unwrap_or_default();
+        if !same_secret(&given, &st.token) {
             extra.push(("WWW-Authenticate", "Bearer".into()));
             let _ = respond(&mut stream, "401 Unauthorized", &extra, b"Send the token set in Snagster: Authorization: Bearer <token>");
             return Ok(());
@@ -532,6 +552,28 @@ mod tests {
             headers: headers.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect(),
             body: Vec::new(),
         }
+    }
+
+    #[test]
+    fn secrets_compare_whole() {
+        assert!(same_secret("s3cret", "s3cret"));
+        assert!(!same_secret("s3cres", "s3cret"));
+        assert!(!same_secret("s3cret", "s3cre"), "a longer guess");
+        assert!(!same_secret("s3cre", "s3cret"), "a shorter guess");
+        assert!(!same_secret("", "s3cret"));
+        assert!(!same_secret("s3cret\0", "s3cret"));
+        assert!(same_secret("", ""));
+        assert!(!same_secret("é", "e\u{301}"), "bytes, not looks");
+    }
+
+    #[test]
+    fn the_header_token_wins_over_the_address() {
+        let mut r = request(&[("authorization", "Bearer from-header ")]);
+        r.query.insert("token".into(), "from-query".into());
+        assert_eq!(token_of(&r).as_deref(), Some("from-header"));
+        r.headers.clear();
+        assert_eq!(token_of(&r).as_deref(), Some("from-query"));
+        assert_eq!(token_of(&request(&[("authorization", "Basic abc")])), None);
     }
 
     #[test]
@@ -776,7 +818,11 @@ mod tests {
     fn other_hosts_and_sites_are_refused() {
         let srv = start(0, "").unwrap();
         assert_eq!(http(srv.port, "GET", "/health", &[("Host", "evil.example")], "").status, 403);
-        assert_eq!(http(srv.port, "POST", "/mcp", &[("Origin", "https://evil.example")], INIT).status, 403);
+        let r = http(srv.port, "POST", "/mcp", &[("Origin", "https://evil.example")], INIT);
+        assert_eq!(r.status, 403);
+        assert_eq!(r.header("access-control-allow-origin"), None, "a foreign Origin is never echoed");
+        let r = http(srv.port, "OPTIONS", "/mcp", &[("Origin", "https://evil.example")], "");
+        assert_eq!((r.status, r.header("access-control-allow-origin")), (403, None));
         let r = http(srv.port, "OPTIONS", "/mcp", &[("Origin", "http://localhost:3000")], "");
         assert_eq!(r.status, 204);
         assert_eq!(r.header("access-control-allow-origin"), Some("http://localhost:3000"));

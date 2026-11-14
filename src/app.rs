@@ -665,9 +665,12 @@ impl SnagApp {
             Action::Polygon => self.start_capture(ctx, pick(CutShape::Polygon, PickPurpose::Capture)),
             Action::MultiArea => self.start_capture(ctx, pick(CutShape::Rect, PickPurpose::Multi)),
             Action::ManualScroll => self.start_capture(ctx, pick(CutShape::Rect, PickPurpose::ManualScroll)),
+            Action::MenuCapture if !capture::menus_supported() => {
+                self.status = crate::i18n::t(capture::MENUS_UNAVAILABLE).into();
+            }
             Action::MenuCapture => {
                 let d = self.settings.menu_delay_s.max(1);
-                self.status = format!("Open the menu now: Snagster captures it in {d} seconds.");
+                self.status = crate::i18n::tf("Open the menu now: Snagster captures it in {seconds} seconds.", &[("seconds", &d.to_string())]);
                 self.start_capture_with(ctx, CaptureKind::Menus, d);
             }
             Action::GrabText => self.start_capture(ctx, pick(CutShape::Rect, PickPurpose::GrabText)),
@@ -797,7 +800,7 @@ impl SnagApp {
                 Err(e) => {
                     self.show_window(ctx);
                     self.pending_preset = None;
-                    self.status = format!("Capture failed: {e}");
+                    self.status = crate::i18n::tf("Capture failed: {error}", &[("error", &e)]);
                 }
             }
         }
@@ -846,7 +849,7 @@ impl SnagApp {
             d.shapes.push(Shape::Pointer { pos: c, size: doc::pointer_size(4.0) });
         }
         self.add_entry(name, d);
-        let mut notes = vec![format!("Captured {w} x {h}.")];
+        let mut notes = vec![crate::i18n::tf("Captured {width} x {height}.", &[("width", &w.to_string()), ("height", &h.to_string())])];
         // Only Recent is filled here; the library, the clipboard and the save folder are
         // written by the job queue in this order (an error shows in the status line).
         if self.settings.after_library {
@@ -859,7 +862,7 @@ impl SnagApp {
         };
         if copy {
             self.copy_quietly(true);
-            notes.push("Copied.".into());
+            notes.push(crate::i18n::t("Copied.").into());
         }
         if save {
             self.quick_save();
@@ -872,7 +875,7 @@ impl SnagApp {
             self.panel_share(share);
         }
         if let Some(p) = preset {
-            notes.push(format!("Preset \"{}\".", p.name));
+            notes.push(crate::i18n::tf("Preset \"{name}\".", &[("name", &p.name)]));
         }
         self.status = notes.join(" ");
     }
@@ -893,7 +896,7 @@ impl SnagApp {
                 let hex = format!("#{:02X}{:02X}{:02X}", c[0], c[1], c[2]);
                 self.settings.color = c;
                 let _ = arboard::Clipboard::new().and_then(|mut cb| cb.set_text(hex.clone()));
-                self.status = format!("Picked {hex}. It's copied and set as the drawing color.");
+                self.status = crate::i18n::tf("Picked {color}. It's copied and set as the drawing color.", &[("color", &hex)]);
                 self.leave_overlay(&ctx, true);
             }
             Outcome::Multi(rects) => {
@@ -1012,23 +1015,13 @@ impl SnagApp {
 
     /// The options a scrolling capture gets from the settings.
     pub(crate) fn scroll_options(&self, horizontal: bool, manual: bool, space: capture::detect::Space) -> capture::ScrollOptions {
-        let s = &self.settings;
-        capture::ScrollOptions {
-            horizontal,
-            manual,
-            delay_ms: s.scroll_wait_ms,
-            notches: s.scroll_notches,
-            max_steps: s.scroll_max_steps,
-            max_length: s.scroll_max_height,
-            from_start: s.scroll_from_top,
-            space,
-        }
+        capture::ScrollOptions::from_settings(&self.settings, horizontal, manual, true, space)
     }
 
     fn start_scroll(&mut self, ctx: &egui::Context, rect: (i32, i32, u32, u32), horizontal: bool, manual: bool, space: capture::detect::Space) {
         // Where Snagster can't turn other programs' mouse wheels, the person scrolls.
         let can = manual || capture::can_scroll_itself();
-        let opts = self.scroll_options(horizontal, manual || !can, space);
+        let opts = capture::ScrollOptions::from_settings(&self.settings, horizontal, manual, can, space);
         self.scroll_manual = opts.manual;
         let stop = Arc::new(AtomicBool::new(false));
         self.job_stop = Some(stop.clone());
@@ -1041,16 +1034,16 @@ impl SnagApp {
         std::thread::spawn(move || {
             // Let Snagster's bar settle before the first frame.
             std::thread::sleep(Duration::from_millis(400));
-            let r = capture::scroll_capture_with(rect, &opts, stop, Some(progress));
+            let r = capture::scroll_capture(rect, &opts, stop, Some(progress));
             let _ = tx.send(r);
             ctx2.request_repaint();
         });
         self.status = if !can {
             crate::i18n::t("Snagster can't scroll other programs here, so scroll it yourself and press Stop.").into()
         } else if manual {
-            "Scroll the page yourself; press Stop at the end.".into()
+            crate::i18n::t("Scroll the page yourself; press Stop at the end.").into()
         } else {
-            "Scrolling and stitching... keep the mouse still.".into()
+            crate::i18n::t("Scrolling and stitching... keep the mouse still.").into()
         };
     }
 
@@ -1095,7 +1088,7 @@ impl SnagApp {
         }
         self.enter_mini(ctx, Mini::Video);
         crate::video::spawn(opts, stop, pause, Some(ctx.clone()), self.video_tx.clone());
-        self.status = format!("Recording video at {} frames per second...", self.settings.video_fps);
+        self.status = crate::i18n::tf("Recording video at {fps} frames per second...", &[("fps", &self.settings.video_fps.to_string())]);
     }
 
     /// The display under the mouse pointer (or the first one), as a desktop area.
@@ -1129,7 +1122,7 @@ impl SnagApp {
         #[cfg(all(unix, not(target_os = "macos")))]
         let r = std::process::Command::new("xdg-open").arg(path).spawn();
         if let Err(e) = r {
-            self.status = format!("Couldn't open it: {e}");
+            self.status = crate::i18n::tf("Couldn't open it: {error}", &[("error", &e.to_string())]);
         }
     }
 
@@ -1142,7 +1135,7 @@ impl SnagApp {
         #[cfg(all(unix, not(target_os = "macos")))]
         let r = std::process::Command::new("xdg-open").arg(path.parent().unwrap_or(path)).spawn();
         if let Err(e) = r {
-            self.status = format!("Couldn't open the folder: {e}");
+            self.status = crate::i18n::tf("Couldn't open the folder: {error}", &[("error", &e.to_string())]);
         }
     }
 
@@ -1183,7 +1176,7 @@ impl SnagApp {
         self.stop_job();
         self.step_rx = None;
         self.leave_mini(ctx);
-        self.status = format!("Recorded {} steps. Use File > Export guide to make a document.", self.guide.len());
+        self.status = crate::i18n::tf("Recorded {count} steps. Use File > Export guide to make a document.", &[("count", &self.guide.len().to_string())]);
     }
 
     fn poll_jobs(&mut self, ctx: &egui::Context) {
@@ -1196,7 +1189,7 @@ impl SnagApp {
             self.leave_mini(ctx);
             match r {
                 Ok(img) => self.finish_capture(img, "Scrolling capture", "", "Scrolling", None),
-                Err(e) => self.status = format!("Scrolling capture failed: {e}"),
+                Err(e) => self.status = crate::i18n::tf("Scrolling capture failed: {error}", &[("error", &e)]),
             }
         }
         while let Ok(done) = self.gif_rx.try_recv() {
@@ -1206,11 +1199,11 @@ impl SnagApp {
             }
             match done.result {
                 Ok(()) => {
-                    self.status = format!("Recorded {} frames ({:.1} s). Open Tools > GIF recordings to trim or grab frames.", done.frames, done.seconds);
+                    self.status = crate::i18n::tf("Recorded {frames} frames ({seconds} s). Open Tools > GIF recordings to trim or grab frames.", &[("frames", &done.frames.to_string()), ("seconds", &format!("{:.1}", done.seconds))]);
                     self.recordings.insert(0, Recording { path: done.path.clone(), frames: done.frames, seconds: done.seconds });
                     self.open_gif(ctx, done.path);
                 }
-                Err(e) => self.status = format!("Recording failed: {e}"),
+                Err(e) => self.status = crate::i18n::tf("Recording failed: {error}", &[("error", &e)]),
             }
         }
         while let Ok(done) = self.video_rx.try_recv() {
@@ -1223,15 +1216,18 @@ impl SnagApp {
             match &done.result {
                 Ok(()) => {
                     let name = done.path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
-                    let how = if done.hardware { format!("graphics chip: {}", done.encoder) } else { done.encoder.clone() };
-                    self.status = format!("Saved {name}: {:.1} s, {} frames, {}x{} ({how}). Record > Play last video.", done.seconds, done.frames, done.width, done.height);
+                    let how = if done.hardware { crate::i18n::tf("graphics chip: {encoder}", &[("encoder", &done.encoder)]) } else { done.encoder.clone() };
+                    self.status = crate::i18n::tf(
+                        "Saved {name}: {seconds} s, {frames} frames, {width}x{height} ({encoder}). Record > Play last video.",
+                        &[("name", &name), ("seconds", &format!("{:.1}", done.seconds)), ("frames", &done.frames.to_string()), ("width", &done.width.to_string()), ("height", &done.height.to_string()), ("encoder", &how)],
+                    );
                     if !done.note.is_empty() {
-                        self.status = format!("{} {}.", self.status, done.note);
+                        self.status = format!("{} {}.", self.status, recording_note(&done.note));
                     }
                     self.videos.insert(0, done);
                 }
                 Err(e) => {
-                    self.status = format!("Video recording failed: {e}");
+                    self.status = crate::i18n::tf("Video recording failed: {error}", &[("error", e)]);
                     if done.frames > 0 {
                         self.videos.insert(0, done);
                     }
@@ -1305,7 +1301,7 @@ impl SnagApp {
         let item = match r {
             Ok(item) => item,
             Err(e) => {
-                self.status = format!("Not added to the library: {e}");
+                self.status = crate::i18n::tf("Not added to the library: {error}", &[("error", &e)]);
                 return;
             }
         };
@@ -1349,7 +1345,7 @@ impl SnagApp {
                     self.status = "No text was found there.".into();
                 } else {
                     let _ = arboard::Clipboard::new().and_then(|mut c| c.set_text(text.clone()));
-                    self.status = format!("Read {} lines of text; they're copied to the clipboard.", lines.len());
+                    self.status = crate::i18n::tf("Read {count} lines of text; they're copied to the clipboard.", &[("count", &lines.len().to_string())]);
                     self.grabbed_text = Some(text);
                 }
             }
@@ -1372,7 +1368,7 @@ impl SnagApp {
                 if let Some(e) = self.entries.get_mut(i) {
                     e.push_undo();
                     e.doc = Doc::new(out);
-                    self.status = format!("Simplified: {} lines of text became bars. Undo brings them back.", lines.len());
+                    self.status = crate::i18n::tf("Simplified: {count} lines of text became bars. Undo brings them back.", &[("count", &lines.len().to_string())]);
                 }
             }
         }
@@ -1434,9 +1430,9 @@ impl SnagApp {
                     if let Some(e) = self.entry() {
                         e.path = Some(p.to_path_buf());
                     }
-                    self.status = format!("Opened project {}", p.display());
+                    self.status = crate::i18n::tf("Opened project {path}", &[("path", &p.display().to_string())]);
                 }
-                Err(e) => self.status = format!("Couldn't open {}: {e}", p.display()),
+                Err(e) => self.status = crate::i18n::tf("Couldn't open {path}: {error}", &[("path", &p.display().to_string()), ("error", &e.to_string())]),
             }
             return;
         }
@@ -1447,9 +1443,9 @@ impl SnagApp {
                 if let Some(e) = self.entry() {
                     e.path = Some(p.to_path_buf());
                 }
-                self.status = format!("Opened {}", p.display());
+                self.status = crate::i18n::tf("Opened {path}", &[("path", &p.display().to_string())]);
             }
-            Err(e) => self.status = format!("Couldn't open {}: {e}", p.display()),
+            Err(e) => self.status = crate::i18n::tf("Couldn't open {path}: {error}", &[("path", &p.display().to_string()), ("error", &e.to_string())]),
         }
     }
 
@@ -1477,7 +1473,7 @@ impl SnagApp {
                 let (w, h) = rgba.dimensions();
                 let name = app.next_name("Pasted");
                 app.add_entry(name, Doc::new(rgba));
-                app.status = format!("Pasted a {w} x {h} picture.");
+                app.status = crate::i18n::tf("Pasted a {width} x {height} picture.", &[("width", &w.to_string()), ("height", &h.to_string())]);
             }
             None => app.status = "There's no picture on the clipboard.".into(),
         });
@@ -1499,9 +1495,9 @@ impl SnagApp {
             let data = arboard::ImageData { width: w as usize, height: h as usize, bytes: out.into_raw().into() };
             let r = arboard::Clipboard::new().and_then(|mut c| c.set_image(data)).map_err(|e| e.to_string());
             Box::new(move |app: &mut SnagApp, _: &egui::Context| match r {
-                Ok(()) if !quiet => app.status = format!("Copied the {w} x {h} picture. Paste it anywhere."),
+                Ok(()) if !quiet => app.status = crate::i18n::tf("Copied the {width} x {height} picture. Paste it anywhere.", &[("width", &w.to_string()), ("height", &h.to_string())]),
                 Ok(()) => {}
-                Err(e) => app.status = format!("Couldn't copy: {e}"),
+                Err(e) => app.status = crate::i18n::tf("Couldn't copy: {error}", &[("error", &e.to_string())]),
             })
         });
     }
@@ -1512,9 +1508,9 @@ impl SnagApp {
             Ok(()) => {
                 self.entries[i].path = Some(path.clone());
                 self.remember_file(&path);
-                format!("Saved {}", path.display())
+                crate::i18n::tf("Saved {path}", &[("path", &path.display().to_string())])
             }
-            Err(e) => format!("Couldn't save: {e}"),
+            Err(e) => crate::i18n::tf("Couldn't save: {error}", &[("error", &e.to_string())]),
         };
     }
 
@@ -1571,7 +1567,7 @@ impl SnagApp {
         let Some(e) = self.entries.get(i) else { return };
         let (id, doc, name, settings) = (e.id, e.doc.clone(), e.name.clone(), self.settings.clone());
         self.saving.insert(path.clone());
-        self.status = format!("Saved {}", path.display());
+        self.status = crate::i18n::tf("Saved {path}", &[("path", &path.display().to_string())]);
         self.jobs.queue(move || {
             let r = export::save_doc(&doc, &name, &path, &settings);
             Box::new(move |app: &mut SnagApp, _: &egui::Context| app.saved(id, path, r))
@@ -1587,7 +1583,7 @@ impl SnagApp {
                 }
                 self.remember_file(&path);
             }
-            Err(e) => self.status = format!("Couldn't save: {e}"),
+            Err(e) => self.status = crate::i18n::tf("Couldn't save: {error}", &[("error", &e.to_string())]),
         }
     }
 
@@ -1606,7 +1602,7 @@ impl SnagApp {
         #[cfg(all(unix, not(target_os = "macos")))]
         let r = std::process::Command::new("xdg-open").arg(target).spawn();
         if let Err(e) = r {
-            self.status = format!("Couldn't open the folder: {e}");
+            self.status = crate::i18n::tf("Couldn't open the folder: {error}", &[("error", &e.to_string())]);
         }
     }
 
@@ -1616,7 +1612,7 @@ impl SnagApp {
         let Some(i) = self.current else { return };
         let path = std::env::temp_dir().join(format!("snag-share-{}.png", chrono::Local::now().format("%H%M%S")));
         if let Err(e) = export::save_doc(&self.entries[i].doc, &self.entries[i].name, &path, &self.settings) {
-            self.status = format!("Couldn't prepare the file: {e}");
+            self.status = crate::i18n::tf("Couldn't prepare the file: {error}", &[("error", &e.to_string())]);
             return;
         }
         #[cfg(windows)]
@@ -1626,7 +1622,7 @@ impl SnagApp {
         #[cfg(all(unix, not(target_os = "macos")))]
         let r = std::process::Command::new("xdg-open").arg(&path).spawn();
         if let Err(e) = r {
-            self.status = format!("Couldn't open it: {e}");
+            self.status = crate::i18n::tf("Couldn't open it: {error}", &[("error", &e.to_string())]);
         }
     }
 
@@ -1652,7 +1648,7 @@ impl SnagApp {
             if let Some(img) = effects::guide_page(&title, &items, 1200) {
                 let name = self.next_name("Guide");
                 self.add_entry(name, Doc::new(img));
-                self.status = format!("Made a one-page guide from {} pictures.", items.len());
+                self.status = crate::i18n::tf("Made a one-page guide from {count} pictures.", &[("count", &items.len().to_string())]);
             }
             return;
         }
@@ -1671,8 +1667,8 @@ impl SnagApp {
             export::html_guide(&title, &items).and_then(|s| std::fs::write(&path, s).map_err(|e| e.to_string()))
         };
         self.status = match result {
-            Ok(()) => format!("Saved the guide to {}", path.display()),
-            Err(e) => format!("Couldn't save the guide: {e}"),
+            Ok(()) => crate::i18n::tf("Saved the guide to {path}", &[("path", &path.display().to_string())]),
+            Err(e) => crate::i18n::tf("Couldn't save the guide: {error}", &[("error", &e.to_string())]),
         };
     }
 
@@ -1767,7 +1763,7 @@ impl SnagApp {
         e.doc = Doc::new(out);
         self.zoom = None;
         self.pan = Vec2::ZERO;
-        self.status = format!("{} applied ({w} x {h}). Undo brings the marks back.", eff.label());
+        self.status = crate::i18n::tf("{effect} applied ({width} x {height}). Undo brings the marks back.", &[("effect", crate::i18n::t(eff.label())), ("width", &w.to_string()), ("height", &h.to_string())]);
     }
 
     fn combine(&mut self, vertical: bool) {
@@ -1781,7 +1777,7 @@ impl SnagApp {
             let name = self.next_name("Combined");
             let n = imgs.len();
             self.add_entry(name, Doc::new(out));
-            self.status = format!("Combined {n} pictures.");
+            self.status = crate::i18n::tf("Combined {count} pictures.", &[("count", &n.to_string())]);
         }
     }
 
@@ -1950,7 +1946,7 @@ impl SnagApp {
                     e.push_undo();
                     let (w, h) = d.image.dimensions();
                     e.doc = d;
-                    self.status = format!("Cut out a band; the picture is now {w} x {h}.");
+                    self.status = crate::i18n::tf("Cut out a band; the picture is now {width} x {height}.", &[("width", &w.to_string()), ("height", &h.to_string())]);
                 }
                 None
             }
@@ -1963,7 +1959,7 @@ impl SnagApp {
                     self.zoom = None;
                     self.pan = Vec2::ZERO;
                     self.tool = Tool::Arrow;
-                    self.status = format!("Cropped to {w} x {h}.");
+                    self.status = crate::i18n::tf("Cropped to {width} x {height}.", &[("width", &w.to_string()), ("height", &h.to_string())]);
                 }
                 None
             }
@@ -2194,7 +2190,7 @@ impl SnagApp {
             && let Some(p) = &path
         {
             let _ = arboard::Clipboard::new().and_then(|mut c| c.set_text(p.display().to_string()));
-            self.status = format!("Copied {}", p.display());
+            self.status = crate::i18n::tf("Copied {path}", &[("path", &p.display().to_string())]);
         }
         if item(ui, "Open save folder", "") {
             let f = PathBuf::from(&self.settings.save_folder);
@@ -2429,10 +2425,10 @@ impl SnagApp {
                 match r {
                     Ok(()) => {
                         app.recordings.insert(0, Recording { path: path.clone(), frames: n as u32, seconds: n as f32 * ms as f32 / 1000.0 });
-                        app.status = format!("Made a {n}-picture slideshow GIF.");
+                        app.status = crate::i18n::tf("Made a {count}-picture slideshow GIF.", &[("count", &n.to_string())]);
                         app.open_gif(ctx, path);
                     }
-                    Err(e) => app.status = format!("Couldn't make the slideshow: {e}"),
+                    Err(e) => app.status = crate::i18n::tf("Couldn't make the slideshow: {error}", &[("error", &e.to_string())]),
                 }
             })
         });
@@ -2608,7 +2604,7 @@ impl SnagApp {
         if item(ui, &format!("Copy color #{:02X}{:02X}{:02X}", c[0], c[1], c[2]), "") {
             let hex = format!("#{:02X}{:02X}{:02X}", c[0], c[1], c[2]);
             let _ = arboard::Clipboard::new().and_then(|mut cb| cb.set_text(hex.clone()));
-            self.status = format!("Copied {hex}.");
+            self.status = crate::i18n::tf("Copied {color}.", &[("color", &hex)]);
         }
         if !self.pins.is_empty() && item(ui, "Close all pins", "") {
             for p in &mut self.pins {
@@ -2800,7 +2796,7 @@ impl SnagApp {
                     self.settings.font = t.font;
                     self.settings.text_background = t.text_background;
                     self.settings.shadow = t.shadow;
-                    self.status = format!("Theme \"{}\" applied.", t.name);
+                    self.status = crate::i18n::tf("Theme \"{name}\" applied.", &[("name", &t.name)]);
                 }
             });
             ui.add_space(10.0);
@@ -3956,7 +3952,17 @@ fn clean_file_name(name: &str) -> String {
 fn redact_status(found: &[&str]) -> String {
     let mut kinds = found.to_vec();
     kinds.dedup();
-    format!("Blurred {} items ({}). Undo brings them back.", found.len(), kinds.join(", "))
+    crate::i18n::tf("Blurred {count} items ({kinds}). Undo brings them back.", &[("count", &found.len().to_string()), ("kinds", &kinds.join(", "))])
+}
+
+/// A recording's note for the status line, in the person's language. The note itself stays
+/// English (AI apps get it as it is); the reason after "Recorded without sound:" comes from the
+/// system and is translated only when it is one of Snagster's own texts.
+fn recording_note(note: &str) -> String {
+    match note.strip_prefix("Recorded without sound: ") {
+        Some(reason) => crate::i18n::tf("Recorded without sound: {reason}", &[("reason", &crate::i18n::tr(reason))]),
+        None => crate::i18n::tr(note),
+    }
 }
 
 /// The picture on the clipboard, if there is one.
@@ -4429,7 +4435,7 @@ impl SnagApp {
                 self.tray = Some(t);
                 self.tray_for = Some(key);
             }
-            Err(e) => self.status = format!("The taskbar-corner icon couldn't be added: {e}"),
+            Err(e) => self.status = crate::i18n::tf("The taskbar-corner icon couldn't be added: {error}", &[("error", &e.to_string())]),
         }
     }
 
@@ -4662,26 +4668,26 @@ impl SnagApp {
                     self.remember_file(&target);
                 }
                 Err(e) => {
-                    self.status = format!("Couldn't rename the file: {e}");
+                    self.status = crate::i18n::tf("Couldn't rename the file: {error}", &[("error", &e.to_string())]);
                     return;
                 }
             }
         }
         self.entries[i].name = name.to_string();
-        self.status = format!("Renamed to {name}.");
+        self.status = crate::i18n::tf("Renamed to {name}.", &[("name", &name)]);
     }
 
     pub(crate) fn recycle_current(&mut self) {
         let Some(i) = self.current else { return };
         if let Some(p) = self.entries[i].path.clone() {
             if let Err(e) = trash::delete(&p) {
-                self.status = format!("Couldn't move it to the Recycle Bin: {e}");
+                self.status = crate::i18n::tf("Couldn't move it to the Recycle Bin: {error}", &[("error", &e.to_string())]);
                 return;
             }
             let s = p.display().to_string();
             self.settings.recent_files.retain(|f| *f != s);
             self.lib_loaded = false;
-            self.status = format!("Moved {} to the Recycle Bin.", p.display());
+            self.status = crate::i18n::tf("Moved {path} to the Recycle Bin.", &[("path", &p.display().to_string())]);
         } else {
             self.status = "Removed from Recent (it was never saved).".into();
         }
@@ -4751,11 +4757,11 @@ impl SnagApp {
         };
         match export::docx(&self.guide_title, &items, &path) {
             Ok(()) => {
-                self.status = format!("Saved {}", path.display());
+                self.status = crate::i18n::tf("Saved {path}", &[("path", &path.display().to_string())]);
                 #[cfg(windows)]
                 let _ = std::process::Command::new("cmd").args(["/C", "start", ""]).arg(&path).spawn();
             }
-            Err(e) => self.status = format!("Couldn't make the Word document: {e}"),
+            Err(e) => self.status = crate::i18n::tf("Couldn't make the Word document: {error}", &[("error", &e.to_string())]),
         }
     }
 
@@ -4770,7 +4776,7 @@ impl SnagApp {
         e.doc = Doc::new(out);
         self.zoom = None;
         self.pan = Vec2::ZERO;
-        self.status = format!("{what}: now {w} x {h}.");
+        self.status = crate::i18n::tf("{what}: now {width} x {height}.", &[("what", &crate::i18n::tr(what)), ("width", &w.to_string()), ("height", &h.to_string())]);
     }
 
     fn template_menu(&mut self, ui: &mut egui::Ui) {
@@ -4985,7 +4991,7 @@ impl SnagApp {
     }
     fn recovered(&mut self, e: Box<dyn std::any::Any + Send>) {
         let msg = e.downcast_ref::<String>().cloned().or_else(|| e.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
-        self.status = format!("Something went wrong and was skipped ({msg}). Details are in crash.log (Help > Problem reports).");
+        self.status = crate::i18n::tf("Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).", &[("message", &msg)]);
         // Whatever was half-done is dropped, so it can't fail again every frame.
         self.overlay = None;
         self.text_edit = None;
@@ -5057,6 +5063,33 @@ impl SnagApp {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn recording_notes_keep_their_reason() {
+        // English here (tests never switch the language): the same words, built from a template.
+        assert_eq!(recording_note("Recorded without sound: no speakers or headphones to record from"), "Recorded without sound: no speakers or headphones to record from");
+        assert_eq!(recording_note("Something else"), "Something else");
+        assert_eq!(recording_note(""), "");
+    }
+
+    #[test]
+    fn status_texts_built_at_run_time_are_translatable() {
+        // Every template the status line fills in is in strings.json, so every pack translates it.
+        let keys: Vec<String> = serde_json::from_str(include_str!("../assets/i18n/strings.json")).unwrap();
+        for k in [
+            "Captured {width} x {height}.",
+            "Capture failed: {error}",
+            "Saved {name}: {seconds} s, {frames} frames, {width}x{height} ({encoder}). Record > Play last video.",
+            "Recorded without sound: {reason}",
+            "Open the menu now: Snagster captures it in {seconds} seconds.",
+            "Blurred {count} items ({kinds}). Undo brings them back.",
+            "Copied.",
+        ] {
+            assert!(keys.iter().any(|x| x == k), "{k} is missing from strings.json");
+        }
+        let a = crate::i18n::tf("Captured {width} x {height}.", &[("width", "640"), ("height", "480")]);
+        assert_eq!(a, "Captured 640 x 480.");
+    }
 
     /// A window state with one white 200 x 100 picture open; no screen, files or threads.
     fn app() -> SnagApp {

@@ -179,7 +179,7 @@ mod tests {
     use super::*;
 
     fn release(version: &str) -> Release {
-        Release { version: version.into(), notes: String::new(), page: String::new(), asset: None }
+        Release { version: version.into(), notes: String::new(), page: String::new(), asset: None, sums: None }
     }
 
     /// A window state whose update check has answered `r` (no network: the answer is handed in).

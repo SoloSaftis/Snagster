@@ -482,6 +482,26 @@ fn start_reports_bad_addresses_and_missing_encoders_at_once() {
 }
 
 #[test]
+fn a_silent_track_goes_out_with_snagsters_own_aac_encoder() {
+    // No sound source (Linux and macOS today): the stream still has an AAC track, all silence.
+    let srv = Server::start(ServerOpts::default());
+    let (frames, _) = grey();
+    let mut enc = fakes(30, 0);
+    enc.audio = Arc::new(|bps| crate::encode::OwnAac::open(bps).map(|a| Box::new(a) as Box<dyn AudioEncoder>));
+    let s = Streamer::start(config(srv.url(), KEY), frames, SoundSource::Silence, enc).unwrap();
+    srv.wait("sound", 15, |c| c.first().is_some_and(|c| c.video.len() >= 5 && c.audio.len() >= 5));
+    let st = s.stop();
+    assert!(st.notice.is_none(), "{:?}", st.notice);
+    assert!(st.audio_encoder.is_some());
+    let g = srv.conns.lock().unwrap();
+    assert_eq!(g[0].metadata[2].get("audiocodecid").and_then(Amf::as_number), Some(10.0), "AAC");
+    assert_eq!(&g[0].audio[0].1[..2], &[0xAF, 0], "the AAC sequence header first");
+    // Silence costs next to nothing: a few bytes a frame.
+    let frames: Vec<usize> = g[0].audio[1..].iter().map(|(_, p)| p.len()).collect();
+    assert!(frames.iter().all(|&n| n < 64), "{frames:?}");
+}
+
+#[test]
 fn without_an_aac_encoder_it_streams_without_sound_and_says_so() {
     let srv = Server::start(ServerOpts::default());
     let (frames, _) = grey();

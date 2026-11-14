@@ -669,10 +669,7 @@ impl Default for Settings {
 }
 
 fn home() -> PathBuf {
-    std::env::var_os("USERPROFILE")
-        .or_else(|| std::env::var_os("HOME"))
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("."))
+    crate::userdirs::home().unwrap_or_else(|| PathBuf::from("."))
 }
 
 /// Live streaming choices. The stream key is secret and is deliberately not here: it is kept by
@@ -692,6 +689,9 @@ pub struct StreamSettings {
     pub kbps: u32,
     /// Encode on the graphics chip when there is one.
     pub hardware: bool,
+    /// Send HEVC (H.265) where the service takes it (Enhanced RTMP) and the computer can
+    /// encode it; H.264 otherwise.
+    pub hevc: bool,
     /// Seconds between keyframes (services ask for 2).
     pub keyframe_s: u32,
     pub audio: crate::audio::AudioSource,
@@ -712,6 +712,7 @@ impl Default for StreamSettings {
             fps: 30,
             kbps: 0,
             hardware: true,
+            hevc: false,
             keyframe_s: 2,
             audio: crate::audio::AudioSource::System,
             reconnects: 5,
@@ -736,12 +737,12 @@ impl StreamSettings {
 }
 
 pub fn pictures() -> PathBuf {
-    dirs::picture_dir().unwrap_or_else(|| home().join("Pictures"))
+    crate::userdirs::pictures().unwrap_or_else(|| home().join("Pictures"))
 }
 
 /// The person's Videos folder (Movies on macOS).
 pub fn videos() -> PathBuf {
-    dirs::video_dir().unwrap_or_else(|| home().join(if cfg!(target_os = "macos") { "Movies" } else { "Videos" }))
+    crate::userdirs::videos().unwrap_or_else(|| home().join(if cfg!(target_os = "macos") { "Movies" } else { "Videos" }))
 }
 
 /// Folders that sync to the cloud, when the person has them.
@@ -770,14 +771,11 @@ pub fn cloud_folders() -> Vec<(String, PathBuf)> {
     out
 }
 
+/// `settings.json` in Snagster's folder (`userdirs::snagster_dir`: `%APPDATA%\Snagster`,
+/// `~/Library/Application Support/Snagster`, `$XDG_CONFIG_HOME/Snagster` or
+/// `~/.config/Snagster`). crash.log, the stream key file and the font cache sit beside it.
 pub fn settings_path() -> Option<PathBuf> {
-    settings_path_from(std::env::var_os("APPDATA"), std::env::var_os("HOME"))
-}
-
-/// The settings file for these APPDATA and HOME values (APPDATA wins).
-fn settings_path_from(appdata: Option<std::ffi::OsString>, home: Option<std::ffi::OsString>) -> Option<PathBuf> {
-    let base = appdata.map(PathBuf::from).or_else(|| home.map(|h| PathBuf::from(h).join(".config")))?;
-    Some(base.join("Snagster").join("settings.json"))
+    Some(crate::userdirs::snagster_dir()?.join("settings.json"))
 }
 
 impl Settings {
@@ -1116,7 +1114,6 @@ pub enum CalloutShape {
 mod tests {
     use super::*;
     use std::collections::HashSet;
-    use std::ffi::OsString;
 
     /// A new, empty folder of its own under the temp folder.
     fn temp_folder(tag: &str) -> PathBuf {
@@ -1270,6 +1267,7 @@ mod tests {
             fps: 60,
             kbps: 4500,
             hardware: false,
+            hevc: true,
             keyframe_s: 2,
             audio: crate::audio::AudioSource::Both,
             reconnects: 3,
@@ -1382,12 +1380,10 @@ mod tests {
     }
 
     #[test]
-    fn settings_path_prefers_appdata_then_home() {
-        let p = settings_path_from(Some(OsString::from("appdata")), Some(OsString::from("home"))).unwrap();
-        assert_eq!(p, PathBuf::from("appdata").join("Snagster").join("settings.json"));
-        let p = settings_path_from(None, Some(OsString::from("home"))).unwrap();
-        assert_eq!(p, PathBuf::from("home").join(".config").join("Snagster").join("settings.json"));
-        assert_eq!(settings_path_from(None, None), None);
+    fn settings_live_in_snagsters_folder() {
+        if let (Some(p), Some(dir)) = (settings_path(), crate::userdirs::snagster_dir()) {
+            assert_eq!(p, dir.join("settings.json"));
+        }
     }
 
     #[test]
