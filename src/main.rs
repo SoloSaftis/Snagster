@@ -597,6 +597,31 @@ fn attach_console() {
 mod main_tests {
     use super::*;
 
+    /// build.rs puts assets/snagster.ico into Snagster.exe; Windows picks the size it needs
+    /// (16 in lists, 24/32 on the taskbar, 48 in Explorer, 256 for large icons).
+    #[test]
+    fn the_exe_icon_has_every_size_windows_asks_for() {
+        let ico = include_bytes!("../assets/snagster.ico");
+        let u16_at = |i: usize| u16::from_le_bytes([ico[i], ico[i + 1]]);
+        let u32_at = |i: usize| u32::from_le_bytes([ico[i], ico[i + 1], ico[i + 2], ico[i + 3]]);
+        assert_eq!((u16_at(0), u16_at(2)), (0, 1), "not an icon file");
+        let n = u16_at(4) as usize;
+        let mut sizes = Vec::new();
+        for k in 0..n {
+            let e = 6 + 16 * k;
+            let side = if ico[e] == 0 { 256 } else { ico[e] as u32 };
+            let (len, off) = (u32_at(e + 8) as usize, u32_at(e + 12) as usize);
+            assert!(off + len <= ico.len(), "entry {k} runs past the end");
+            // Each picture is a PNG of the size the entry says.
+            let img = image::load_from_memory(&ico[off..off + len]).expect("a picture in the icon can't be read");
+            assert_eq!((img.width(), img.height()), (side, side));
+            sizes.push(side);
+        }
+        for want in [16, 24, 32, 48, 256] {
+            assert!(sizes.contains(&want), "no {want} px picture in {sizes:?}");
+        }
+    }
+
     fn args(list: &[&str]) -> Vec<String> {
         list.iter().map(|s| s.to_string()).collect()
     }
