@@ -704,14 +704,17 @@ pub struct Pacer {
 
 impl Pacer {
     /// Fold one sleep's overrun into the estimate: rises quickly (being late is what hurts),
-    /// falls slowly (one quick wake-up proves little). Capped at 30 ms so a 30 fps frame still
-    /// starts with a sleep, which keeps the estimate learning after a one-off stall.
+    /// falls slowly (one quick wake-up proves little). Capped at 60 ms: a timer that overruns
+    /// by more than a frame lasts (the CI Mac's did by 37 ms) can't be slept on at all, so the
+    /// pacer yields instead. That only happens where `calibrated` found sleeps coarse; a normal
+    /// computer sleeps plainly and never uses this estimate. The price on a coarse machine: after
+    /// a long stall it may yield (use processor time) for good, but its frames stay on time.
     fn learn(&mut self, over: Duration) {
         let over = over.min(Self::MOST);
         self.overshoot = if over > self.overshoot { (self.overshoot + over * 3) / 4 } else { (self.overshoot * 15 + over) / 16 };
     }
 
-    const MOST: Duration = Duration::from_millis(30);
+    const MOST: Duration = Duration::from_millis(60);
 
     /// A pacer that starts from how much three 1 ms sleeps overrun here (it keeps learning).
     pub fn calibrated() -> Pacer {
@@ -2854,13 +2857,20 @@ mod tests {
         assert!(p.overshoot > ms(24) && p.overshoot <= ms(25), "{:?}", p.overshoot);
         p.learn(Duration::ZERO);
         assert!(p.overshoot > ms(23), "one quick wake-up changes little: {:?}", p.overshoot);
-        // A stall of seconds counts as the most, so a 30 fps frame still starts with a sleep.
+        // A stall of seconds counts only as the most.
         let mut q = Pacer::default();
         for _ in 0..20 {
             q.learn(Duration::from_secs(2));
         }
-        assert!(q.overshoot <= Pacer::MOST);
-        assert!(matches!(next_wait(ms(33), q.overshoot), Wait::Sleep(_)));
+        assert!(q.overshoot <= Pacer::MOST && q.overshoot > ms(59), "{:?}", q.overshoot);
+        // A timer overrunning by more than a 30 fps frame (37 ms, seen on the CI Mac): no sleep
+        // can end in time, so it yields; with a 25 ms overrun a short sleep still fits.
+        let mut r = Pacer::default();
+        for _ in 0..10 {
+            r.learn(ms(37));
+        }
+        assert_eq!(next_wait(ms(33), r.overshoot), Wait::Yield);
+        assert!(matches!(next_wait(ms(33), ms(25)), Wait::Sleep(_)));
     }
 
     #[test]

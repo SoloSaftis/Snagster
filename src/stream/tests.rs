@@ -434,10 +434,12 @@ fn a_slow_network_drops_frames_and_never_holds_up_the_capture() {
     let st = s.stats();
     assert!(st.frames_dropped >= 10, "{st:?}");
     assert!(st.queue_ms >= 300 || st.frames_dropped > 0);
-    // The capture kept its pace meanwhile (at least half the frames it was due).
+    // The capture kept going meanwhile. Held up by the stuck network it would make next to
+    // nothing; a quarter of the frames it was due tells that apart even on a 3-core CI Mac
+    // running every test at once (it made 13 a second there once, against 30 alone).
     let secs = t.elapsed().as_secs_f64();
     let made = calls.load(Ordering::Relaxed) - c0;
-    assert!(made as f64 >= secs * 30.0 * 0.5, "{made} frames in {secs:.1} s");
+    assert!(made as f64 >= secs * 30.0 * 0.25, "{made} frames in {secs:.1} s");
     // Stopping doesn't hang on the stuck connection for long.
     let t = Instant::now();
     drop(s);
