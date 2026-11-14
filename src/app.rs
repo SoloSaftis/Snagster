@@ -1187,6 +1187,9 @@ impl SnagApp {
                     let name = done.path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
                     let how = if done.hardware { format!("graphics chip: {}", done.encoder) } else { done.encoder.clone() };
                     self.status = format!("Saved {name}: {:.1} s, {} frames, {}x{} ({how}). Record > Play last video.", done.seconds, done.frames, done.width, done.height);
+                    if !done.note.is_empty() {
+                        self.status = format!("{} {}.", self.status, done.note);
+                    }
                     self.videos.insert(0, done);
                 }
                 Err(e) => {

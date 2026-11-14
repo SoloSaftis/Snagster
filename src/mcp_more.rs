@@ -752,7 +752,7 @@ impl Workspace {
                         d.height,
                         d.encoder,
                         if d.hardware { "graphics chip" } else { "processor" }
-                    ),
+                    ) + &if d.note.is_empty() { String::new() } else { format!(" {}.", d.note) },
                 ))
             }
             other => Err(format!("unknown tool {other} (tools/list shows them all)")),

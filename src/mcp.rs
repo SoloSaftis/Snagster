@@ -1015,7 +1015,7 @@ impl Workspace {
                     d.encoder,
                     if d.hardware { "graphics chip" } else { "processor" },
                     d.capture
-                )))
+                ) + &if d.note.is_empty() { String::new() } else { format!(" {}.", d.note) }))
             }
             "record_gif" => {
                 let s = self.settings();

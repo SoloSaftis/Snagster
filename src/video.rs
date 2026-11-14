@@ -167,6 +167,18 @@ pub struct VideoDone {
     pub width: u32,
     pub height: u32,
     pub result: Result<(), String>,
+    /// Something the person should know about a recording that worked, e.g. that the sound
+    /// was left out because there was nothing to record it from. Empty when all went as asked.
+    pub note: String,
+}
+
+/// Sound that can't be started doesn't stop the recording: the video is made without it and
+/// the reason is kept as a note (a computer with no speakers, a microphone that was unplugged).
+fn sound_or_note<T>(r: Result<T, String>) -> (Option<T>, String) {
+    match r {
+        Ok(c) => (Some(c), String::new()),
+        Err(e) => (None, format!("Recorded without sound: {e}")),
+    }
 }
 
 /// A video encoder this computer offers.
@@ -238,6 +250,7 @@ pub fn record(opts: &VideoOpts, stop: &AtomicBool, pause: &AtomicBool) -> VideoD
         width: 0,
         height: 0,
         result: Ok(()),
+        note: String::new(),
     };
     if opts.format == VideoFormat::Gif {
         done.result = Err("GIFs are made by the GIF recorder.".into());
@@ -934,14 +947,9 @@ mod win {
         // Sound starts first so the devices are ready; what it hears before the first frame
         // is dropped.
         let sound = if opts.audio != crate::audio::AudioSource::None && opts.format != VideoFormat::Wmv {
-            match crate::audio::Capture::start(opts.audio, &opts.mic) {
-                Ok(c) if !c.is_silent() => Some(c),
-                Ok(_) => None,
-                Err(e) => {
-                    done.result = Err(format!("Couldn't record sound: {e}"));
-                    return;
-                }
-            }
+            let (c, note) = sound_or_note(crate::audio::Capture::start(opts.audio, &opts.mic));
+            done.note = note;
+            c.filter(|c| !c.is_silent())
         } else {
             None
         };
@@ -1346,6 +1354,10 @@ mod soft {
         done.height = h;
         done.capture = "screen grab";
         done.encoder = "OpenH264 (software)".into();
+        if opts.audio != crate::audio::AudioSource::None {
+            // Sound recording is Windows-only so far; say so instead of leaving it out quietly.
+            done.note = super::sound_or_note::<()>(Err("sound recording isn't available on this system yet".into())).1;
+        }
         done.result = encode(opts, (x, y, w, h), stop, pause, done);
     }
 
@@ -1541,6 +1553,16 @@ mod soft {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sound_that_cant_start_leaves_a_note_instead_of_stopping_the_recording() {
+        let (c, note) = sound_or_note::<u8>(Err("no speakers or headphones to record from".into()));
+        assert!(c.is_none());
+        assert_eq!(note, "Recorded without sound: no speakers or headphones to record from");
+        let (c, note) = sound_or_note(Ok(7u8));
+        assert_eq!(c, Some(7));
+        assert!(note.is_empty());
+    }
 
     #[test]
     fn formats_parse_and_name_their_files() {

@@ -73,10 +73,6 @@ jobs:
           Copy-Item "$($gl.DirectoryName)/*.dll" uitest/
           Get-ChildItem uitest | Format-Table Name, Length
           $env:GALLIUM_DRIVER = "llvmpipe"
-          # Diagnostic: how video recording behaves on a machine with no graphics chip.
-          $v = Start-Process uitest/snagster.exe -ArgumentList '--video-test','quick' -NoNewWindow -PassThru -RedirectStandardOutput video-test.txt -RedirectStandardError video-err.txt
-          if (-not $v.WaitForExit(240000)) { Write-Host "video test still running after 4 minutes"; Stop-Process -Id $v.Id -Force }
-          Get-Content video-test.txt, video-err.txt
           # The release build is a windowed program: wait for it and collect what it prints.
           Start-Process uitest/snagster.exe -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test.txt
           Get-Content ui-test.txt

@@ -320,6 +320,9 @@ impl SnagApp {
                         ("h", &done.height.to_string()),
                         ("enc", &done.encoder),
                     ]);
+                    if !done.note.is_empty() {
+                        self.status = format!("{} {}.", self.status, done.note);
+                    }
                     self.videos.insert(0, done.clone());
                 }
                 Err(e) => self.status = tf("Studio recording failed: {e}", &[("e", e)]),
