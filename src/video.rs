@@ -717,7 +717,7 @@ mod objc {
     unsafe extern "C" {}
     #[link(name = "CoreFoundation", kind = "framework")]
     unsafe extern "C" {
-        pub fn CFStringCreateWithCString(a: *const c_void, s: *const c_char, encoding: u32) -> Id;
+        pub fn CFStringCreateWithCString(a: *const c_void, s: *const c_char, encoding: u32) -> *const c_void;
         pub fn CFRelease(cf: *const c_void);
     }
     pub const UTF8: u32 = 0x0800_0100;
@@ -740,7 +740,7 @@ impl TimelyActivity {
             let text = CFStringCreateWithCString(std::ptr::null(), why.as_ptr(), UTF8);
             let mut token = std::ptr::null_mut();
             if !info.is_null() && !text.is_null() {
-                let begin: unsafe extern "C" fn(Id, Id, u64, Id) -> Id = std::mem::transmute(objc_msgSend as unsafe extern "C" fn());
+                let begin: unsafe extern "C" fn(Id, Id, u64, *const std::ffi::c_void) -> Id = std::mem::transmute(objc_msgSend as unsafe extern "C" fn());
                 token = begin(info, sel_registerName(c"beginActivityWithOptions:reason:".as_ptr()), OPTIONS, text);
                 if !token.is_null() {
                     token = send0(token, c"retain");
