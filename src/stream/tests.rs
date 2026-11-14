@@ -283,6 +283,21 @@ fn assert_frame_spacing(ts: &[u32]) {
 
 // ---- tests ----
 
+/// The picture and network threads' counters fill in while streaming.
+#[test]
+fn a_stream_counts_its_encoding_and_sending_time() {
+    let srv = Server::start(ServerOpts { expected_key: Some(KEY.into()), ..Default::default() });
+    let (frames, calls) = grey();
+    let s = Streamer::start(config(srv.url(), KEY), frames, silence(), fakes(30, 0)).unwrap();
+    srv.wait("10 video frames", 15, |c| c.first().is_some_and(|c| c.video.len() >= 10));
+    let tm = s.stop().timing;
+    assert!(tm.frames_in >= 10 && tm.frames_in <= calls.load(Ordering::Relaxed), "{tm:?}");
+    assert!(tm.packets_out >= 10 && tm.sends >= 10, "{tm:?}");
+    assert!(tm.encode_us >= tm.encode_max_us, "{tm:?}");
+    assert_eq!(tm.encoder_dropped, 0, "the fake encoder drops nothing");
+    assert!(tm.summary(1.0).starts_with("encoder took "));
+}
+
 #[test]
 fn publishes_metadata_sequence_headers_and_frames_with_timestamps() {
     let srv = Server::start(ServerOpts { expected_key: Some(KEY.into()), ..Default::default() });

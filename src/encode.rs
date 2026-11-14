@@ -70,6 +70,11 @@ pub trait VideoEncoder: Send {
     /// Everything still inside the encoder, at the end.
     fn finish(&mut self) -> Result<Vec<VideoPacket>, String>;
     fn name(&self) -> EncoderName;
+    /// Pictures the encoder threw away so far because it couldn't keep up (VideoToolbox in
+    /// real-time mode may); 0 for encoders that never do.
+    fn dropped(&self) -> u64 {
+        0
+    }
 }
 
 pub trait AudioEncoder: Send {
@@ -471,6 +476,10 @@ impl VideoEncoder for Paced {
 
     fn name(&self) -> EncoderName {
         self.inner.name()
+    }
+
+    fn dropped(&self) -> u64 {
+        self.inner.dropped()
     }
 }
 

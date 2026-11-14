@@ -194,14 +194,25 @@ fn bool_ref(b: bool) -> CFTypeRef {
 struct Shared {
     codec: Codec,
     out: Mutex<Vec<Result<VideoPacket, String>>>,
+    /// Frames VideoToolbox dropped (real-time mode drops what it can't keep up with).
+    dropped: std::sync::atomic::AtomicU64,
 }
 
-unsafe extern "C" fn on_frame(refcon: *mut c_void, _frame: *mut c_void, status: OSStatus, _flags: u32, sample: CMSampleBufferRef) {
+/// `kVTEncodeInfo_FrameDropped` in the output callback's flags.
+const FRAME_DROPPED: u32 = 1 << 1;
+
+/// The output callback dropped a frame rather than encoding it.
+fn was_dropped(status: OSStatus, flags: u32, has_sample: bool) -> bool {
+    status == 0 && (flags & FRAME_DROPPED != 0 || !has_sample)
+}
+
+unsafe extern "C" fn on_frame(refcon: *mut c_void, _frame: *mut c_void, status: OSStatus, flags: u32, sample: CMSampleBufferRef) {
     let shared = unsafe { &*(refcon as *const Shared) };
     let r = if status != 0 {
         Err(format!("VideoToolbox couldn't encode a frame (error {status})"))
-    } else if sample.is_null() {
-        return; // the frame was dropped
+    } else if was_dropped(status, flags, !sample.is_null()) {
+        shared.dropped.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        return;
     } else {
         unsafe { packet(shared.codec, sample) }
     };
@@ -283,7 +294,7 @@ impl Vt {
             src.set_i32(kCVPixelBufferHeightKey, cfg.height as i32);
             let io = Dict::new();
             src.set(kCVPixelBufferIOSurfacePropertiesKey, io.0);
-            let shared = Box::new(Shared { codec: cfg.codec, out: Mutex::new(Vec::new()) });
+            let shared = Box::new(Shared { codec: cfg.codec, out: Mutex::new(Vec::new()), dropped: Default::default() });
             let codec = match cfg.codec {
                 Codec::H264 => CODEC_H264,
                 Codec::Hevc => CODEC_HEVC,
@@ -409,6 +420,10 @@ impl VideoEncoder for Vt {
 
     fn name(&self) -> EncoderName {
         EncoderName { name: self.name.clone(), hardware: self.hardware }
+    }
+
+    fn dropped(&self) -> u64 {
+        self.shared.dropped.load(std::sync::atomic::Ordering::Relaxed)
     }
 }
 
@@ -623,6 +638,15 @@ impl Drop for Aac {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dropped_frames_are_told_apart_from_errors_and_encoded_ones() {
+        assert!(was_dropped(0, FRAME_DROPPED, false));
+        assert!(was_dropped(0, FRAME_DROPPED, true));
+        assert!(was_dropped(0, 0, false), "no picture back: dropped");
+        assert!(!was_dropped(0, 0, true));
+        assert!(!was_dropped(-12902, FRAME_DROPPED, false), "an error is an error, not a drop");
+    }
 
     #[test]
     fn times_convert_between_core_media_and_microseconds() {

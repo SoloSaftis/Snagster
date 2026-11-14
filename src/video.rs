@@ -639,15 +639,73 @@ trait Grab {
     fn name(&self) -> &'static str;
 }
 
-/// The best way to copy `rect` on this system.
+/// The best way to copy `rect` on this system: Desktop Duplication (or GDI) on Windows; on
+/// Linux one X connection with shared memory (X11; Wayland keeps xcap's way); on macOS
+/// `CGDisplayCreateImageForRect`; xcap where those can't be had.
 fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, String> {
     #[cfg(windows)]
     return win::open_grab(rect, cursor);
+    #[cfg(target_os = "linux")]
+    if !x11::is_wayland()
+        && let Ok(g) = x11::X11Grab::open(rect, cursor)
+    {
+        return Ok(Box::new(g));
+    }
+    #[cfg(target_os = "macos")]
+    if let Some(g) = cg::CgGrab::open(rect, cursor) {
+        return Ok(Box::new(g));
+    }
     #[cfg(not(windows))]
     return Ok(Box::new(XcapGrab { rect, cursor }));
 }
 
-/// Linux and macOS: xcap, one grab per frame.
+/// Wait until `until` (now if it has passed).
+#[cfg(not(windows))]
+fn sleep_until(until: Instant) {
+    let now = Instant::now();
+    if until > now {
+        std::thread::sleep(until - now);
+    }
+}
+
+/// The part of `rect` inside `bounds` (both left, top, width, height); None when less than
+/// 2 × 2 pixels of it is.
+#[cfg(any(not(windows), test))]
+fn clip_area(rect: (i32, i32, u32, u32), bounds: (i32, i32, u32, u32)) -> Option<(i32, i32, u32, u32)> {
+    let (l, t) = (rect.0.max(bounds.0) as i64, rect.1.max(bounds.1) as i64);
+    let r = (rect.0 as i64 + rect.2 as i64).min(bounds.0 as i64 + bounds.2 as i64);
+    let b = (rect.1 as i64 + rect.3 as i64).min(bounds.1 as i64 + bounds.3 as i64);
+    (r - l >= 2 && b - t >= 2).then(|| (l as i32, t as i32, (r - l) as u32, (b - t) as u32))
+}
+
+/// Where a pointer at `rel` (from the copied area's top left, in the area's units) lands in a
+/// frame of `frame` pixels that shows an area of `area` units fitted in proportion.
+#[cfg(any(not(windows), test))]
+fn pointer_in_frame(rel: (f64, f64), area: (f64, f64), frame: (u32, u32)) -> (f32, f32) {
+    if area.0 <= 0.0 || area.1 <= 0.0 {
+        return (-100.0, -100.0);
+    }
+    // In proportion to the area's own size (fit_rect wants whole numbers; keep the precision).
+    let s = (frame.0 as f64 / area.0).min(frame.1 as f64 / area.1);
+    let (dw, dh) = (area.0 * s, area.1 * s);
+    let (x, y) = ((frame.0 as f64 - dw) / 2.0, (frame.1 as f64 - dh) / 2.0);
+    ((x + rel.0 * s) as f32, (y + rel.1 * s) as f32)
+}
+
+/// Draw the mouse pointer into a finished frame at `at` (frame pixels).
+#[cfg(not(windows))]
+fn stamp_frame_pointer(out: &mut Frame, at: (f32, f32)) {
+    let (w, h) = (out.width, out.height);
+    if let Some(mut img) = image::RgbaImage::from_raw(w, h, std::mem::take(&mut out.rgba)) {
+        crate::capture::stamp_pointer(&mut img, at);
+        out.rgba = img.into_raw();
+    }
+}
+
+/// Linux and macOS when nothing quicker works (Wayland, an X server without the pixel format
+/// handled here, a Mac without `CGDisplayCreateImageForRect`): xcap, one grab per frame. Each
+/// xcap grab opens new X connections and looks the monitor up again, so it is slow (a few
+/// pictures a second on X11); `X11Grab` and `CgGrab` are what normally runs.
 #[cfg(not(windows))]
 struct XcapGrab {
     rect: (i32, i32, u32, u32),
@@ -657,10 +715,7 @@ struct XcapGrab {
 #[cfg(not(windows))]
 impl Grab for XcapGrab {
     fn grab(&mut self, until: Instant, _force: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String> {
-        let now = Instant::now();
-        if until > now {
-            std::thread::sleep(until - now);
-        }
+        sleep_until(until);
         let (x, y, w, h) = self.rect;
         let mut img = crate::capture::grab_rect(x, y, w, h)?;
         if self.cursor
@@ -683,6 +738,346 @@ impl Grab for XcapGrab {
     }
 }
 
+/// Bytes of shared memory for a `w` × `h` picture at 4 bytes a pixel, rounded up to whole
+/// 4 KiB pages (a segment is made once and reused while pictures fit in it).
+#[cfg(any(target_os = "linux", test))]
+fn shm_segment_bytes(w: u32, h: u32) -> usize {
+    (w as usize * h as usize * 4).div_ceil(4096).max(1) * 4096
+}
+
+/// Whether an X server's pictures can be read as 4-byte BGRA here: 24- or 32-bit colour stored
+/// in 32 bits a pixel, least significant byte first (every PC X server; others use xcap).
+#[cfg(any(target_os = "linux", test))]
+fn x11_bgra(depth: u8, bits_per_pixel: u8, lsb_first: bool) -> bool {
+    matches!(depth, 24 | 32) && bits_per_pixel == 32 && lsb_first
+}
+
+/// Linux on X11: one connection kept open, the area copied into shared memory with MIT-SHM
+/// (`ShmGetImage`: the X server writes the pixels straight into memory Snagster reads) and
+/// only the area asked for; plain `GetImage` where shared memory can't be had (a remote
+/// display, a server without the extension).
+#[cfg(target_os = "linux")]
+mod x11 {
+    use super::*;
+    use x11rb::connection::{Connection, RequestConnection};
+    use x11rb::protocol::shm::{self, ConnectionExt as _};
+    use x11rb::protocol::xproto::{ConnectionExt as _, ImageFormat, ImageOrder, Window};
+    use x11rb::rust_connection::RustConnection;
+
+    /// A Wayland session (X11 calls would only see XWayland's windows): xcap's Wayland path.
+    pub fn is_wayland() -> bool {
+        let var = |k: &str| std::env::var_os(k).unwrap_or_default().to_string_lossy().to_lowercase();
+        var("XDG_SESSION_TYPE") == "wayland" || var("WAYLAND_DISPLAY").contains("wayland")
+    }
+
+    /// A System V shared-memory segment attached here and by the X server.
+    struct Segment {
+        seg: shm::Seg,
+        addr: *mut u8,
+        len: usize,
+    }
+
+    pub struct X11Grab {
+        conn: RustConnection,
+        root: Window,
+        screen: (u32, u32),
+        rect: (i32, i32, u32, u32),
+        cursor: bool,
+        /// None: not made yet (or given up on: `shm_ok` is false).
+        segment: Option<Segment>,
+        shm_ok: bool,
+    }
+
+    impl X11Grab {
+        pub fn open(rect: (i32, i32, u32, u32), cursor: bool) -> Result<X11Grab, String> {
+            let (conn, n) = RustConnection::connect(None).map_err(|e| format!("no X display: {e}"))?;
+            let setup = conn.setup();
+            let scr = setup.roots.get(n).ok_or("no X screen")?;
+            let bpp = setup.pixmap_formats.iter().find(|f| f.depth == scr.root_depth).map_or(0, |f| f.bits_per_pixel);
+            if !x11_bgra(scr.root_depth, bpp, setup.image_byte_order == ImageOrder::LSB_FIRST) {
+                return Err(format!("{}-bit X screens are copied by xcap", scr.root_depth));
+            }
+            let (root, screen) = (scr.root, (scr.width_in_pixels as u32, scr.height_in_pixels as u32));
+            let shm_ok = conn.extension_information(shm::X11_EXTENSION_NAME).ok().flatten().is_some() && conn.shm_query_version().ok().and_then(|c| c.reply().ok()).is_some();
+            Ok(X11Grab { conn, root, screen, rect, cursor, segment: None, shm_ok })
+        }
+
+        /// A segment of at least `len` bytes, attached on both sides; None (and no more tries)
+        /// when shared memory doesn't work here.
+        fn segment(&mut self, len: usize) -> Option<&Segment> {
+            if self.segment.as_ref().is_some_and(|s| s.len < len) {
+                self.drop_segment();
+            }
+            if self.segment.is_none() && self.shm_ok {
+                self.segment = self.make_segment(len);
+                self.shm_ok = self.segment.is_some();
+            }
+            self.segment.as_ref()
+        }
+
+        fn make_segment(&self, len: usize) -> Option<Segment> {
+            unsafe {
+                let id = libc::shmget(libc::IPC_PRIVATE, len, libc::IPC_CREAT | 0o600);
+                if id < 0 {
+                    return None;
+                }
+                let addr = libc::shmat(id, std::ptr::null(), 0);
+                let mapped = addr as isize != -1;
+                let seg = if mapped { self.conn.generate_id().ok().filter(|&seg| self.conn.shm_attach(seg, id as u32, false).ok().is_some_and(|c| c.check().is_ok())) } else { None };
+                // Marked for removal at once: the system frees it when both sides have let go
+                // (also when Snagster ends without detaching).
+                libc::shmctl(id, libc::IPC_RMID, std::ptr::null_mut());
+                match seg {
+                    Some(seg) => Some(Segment { seg, addr: addr as *mut u8, len }),
+                    None => {
+                        if mapped {
+                            libc::shmdt(addr);
+                        }
+                        None
+                    }
+                }
+            }
+        }
+
+        fn drop_segment(&mut self) {
+            if let Some(s) = self.segment.take() {
+                let _ = self.conn.shm_detach(s.seg).map(|c| c.ignore_error());
+                let _ = self.conn.flush();
+                unsafe {
+                    libc::shmdt(s.addr as *const libc::c_void);
+                }
+            }
+        }
+
+        /// Copy the area into the shared segment (BGRA, rows packed); false: use GetImage.
+        fn shm_copy(&mut self, x: i32, y: i32, w: u32, h: u32) -> bool {
+            let root = self.root;
+            let Some(seg) = self.segment(shm_segment_bytes(w, h)).map(|s| s.seg) else { return false };
+            let ok = self
+                .conn
+                .shm_get_image(root, x as i16, y as i16, w as u16, h as u16, !0, ImageFormat::Z_PIXMAP.into(), seg, 0)
+                .ok()
+                .and_then(|c| c.reply().ok())
+                .is_some();
+            if !ok {
+                // Shared memory stopped working (or never did for this drawable): GetImage.
+                self.drop_segment();
+                self.shm_ok = false;
+            }
+            ok
+        }
+    }
+
+    impl Drop for X11Grab {
+        fn drop(&mut self) {
+            self.drop_segment();
+        }
+    }
+
+    impl Grab for X11Grab {
+        fn grab(&mut self, until: Instant, _force: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String> {
+            sleep_until(until);
+            let (x, y, w, h) = clip_area(self.rect, (0, 0, self.screen.0, self.screen.1)).ok_or("that area is off screen")?;
+            let (w, h) = (w.min(u16::MAX as u32), h.min(u16::MAX as u32));
+            let size = fit.unwrap_or((w, h));
+            let len = w as usize * h as usize * 4;
+            let plain;
+            let data: &[u8] = match if self.shm_copy(x, y, w, h) { self.segment.as_ref() } else { None } {
+                // The X server has written the picture into the segment (it is at least `len`).
+                Some(s) => unsafe { std::slice::from_raw_parts(s.addr, len) },
+                None => {
+                    let r = self.conn.get_image(ImageFormat::Z_PIXMAP, self.root, x as i16, y as i16, w as u16, h as u16, !0).map_err(|e| e.to_string())?.reply().map_err(|e| format!("the X server didn't give the picture: {e}"))?;
+                    plain = r.data;
+                    &plain[..]
+                }
+            };
+            if data.len() < w as usize * h as usize * 4 {
+                return Err("the X server gave a short picture".into());
+            }
+            fit_into(&Pixels { data, width: w, height: h, stride: w as usize * 4, bgra: true }, out, size);
+            if self.cursor
+                && let Some(p) = self.conn.query_pointer(self.root).ok().and_then(|c| c.reply().ok())
+            {
+                let rel = ((p.root_x as i32 - x) as f64, (p.root_y as i32 - y) as f64);
+                stamp_frame_pointer(out, pointer_in_frame(rel, (w as f64, h as f64), size));
+            }
+            Ok(true)
+        }
+
+        fn retarget(&mut self, rect: (i32, i32, u32, u32)) -> bool {
+            self.rect = rect;
+            true
+        }
+
+        fn name(&self) -> &'static str {
+            if self.shm_ok { "X11 shared memory" } else { "X11" }
+        }
+    }
+}
+
+/// How a Core Graphics picture's pixels are laid out: Some(true) for BGRA (32-bit little-endian
+/// with alpha or padding first, what screens give), Some(false) for RGBA, None for anything
+/// else (wide colour, 16-bit).
+#[cfg(any(target_os = "macos", test))]
+fn cg_bgra(bits_per_pixel: usize, bitmap_info: u32) -> Option<bool> {
+    const ALPHA_MASK: u32 = 0x1F;
+    const ORDER_MASK: u32 = 0x7000;
+    const ORDER_DEFAULT: u32 = 0;
+    const ORDER_32_LITTLE: u32 = 2 << 12;
+    const ORDER_32_BIG: u32 = 4 << 12;
+    // CGImageAlphaInfo: 1 premultiplied last, 2 premultiplied first, 3 last, 4 first,
+    // 5 none (skip last), 6 none (skip first).
+    let first = matches!(bitmap_info & ALPHA_MASK, 2 | 4 | 6);
+    let last = matches!(bitmap_info & ALPHA_MASK, 1 | 3 | 5);
+    if bits_per_pixel != 32 || bitmap_info & 0x100 != 0 {
+        return None; // not 8 bits a channel, or floating point
+    }
+    match bitmap_info & ORDER_MASK {
+        ORDER_32_LITTLE if first => Some(true),
+        ORDER_DEFAULT | ORDER_32_BIG if last => Some(false),
+        _ => None,
+    }
+}
+
+/// macOS: `CGDisplayCreateImageForRect` (the display's own picture, only the area asked for),
+/// much quicker than the `CGWindowListCreateImage` xcap uses, which puts every window together
+/// again for each grab. It is looked up while running, so a macOS without it uses xcap.
+#[cfg(target_os = "macos")]
+mod cg {
+    use super::*;
+    use std::ffi::c_void;
+    use std::sync::atomic::AtomicBool;
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct CGPoint {
+        x: f64,
+        y: f64,
+    }
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct CGSize {
+        width: f64,
+        height: f64,
+    }
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct CGRect {
+        origin: CGPoint,
+        size: CGSize,
+    }
+
+    type CreateForRect = unsafe extern "C" fn(u32, CGRect) -> *mut c_void;
+
+    #[link(name = "CoreGraphics", kind = "framework")]
+    unsafe extern "C" {
+        fn CGGetDisplaysWithPoint(p: CGPoint, max: u32, ids: *mut u32, count: *mut u32) -> i32;
+        fn CGDisplayBounds(id: u32) -> CGRect;
+        fn CGImageGetWidth(i: *mut c_void) -> usize;
+        fn CGImageGetHeight(i: *mut c_void) -> usize;
+        fn CGImageGetBytesPerRow(i: *mut c_void) -> usize;
+        fn CGImageGetBitsPerPixel(i: *mut c_void) -> usize;
+        fn CGImageGetBitmapInfo(i: *mut c_void) -> u32;
+        fn CGImageGetDataProvider(i: *mut c_void) -> *mut c_void;
+        fn CGDataProviderCopyData(p: *mut c_void) -> *const c_void;
+        fn CGImageRelease(i: *mut c_void);
+        fn CGEventCreate(source: *const c_void) -> *mut c_void;
+        fn CGEventGetLocation(e: *mut c_void) -> CGPoint;
+    }
+    #[link(name = "CoreFoundation", kind = "framework")]
+    unsafe extern "C" {
+        fn CFDataGetBytePtr(d: *const c_void) -> *const u8;
+        fn CFDataGetLength(d: *const c_void) -> isize;
+        fn CFRelease(cf: *const c_void);
+    }
+    unsafe extern "C" {
+        fn dlsym(handle: *mut c_void, symbol: *const std::ffi::c_char) -> *mut c_void;
+    }
+    const RTLD_DEFAULT: *mut c_void = -2isize as *mut c_void;
+
+    /// Set once a grab gave nothing (the call exists but doesn't work here): xcap from then on.
+    static BROKEN: AtomicBool = AtomicBool::new(false);
+
+    fn create_for_rect() -> Option<CreateForRect> {
+        let p = unsafe { dlsym(RTLD_DEFAULT, c"CGDisplayCreateImageForRect".as_ptr()) };
+        (!p.is_null()).then(|| unsafe { std::mem::transmute::<*mut c_void, CreateForRect>(p) })
+    }
+
+    pub struct CgGrab {
+        create: CreateForRect,
+        rect: (i32, i32, u32, u32),
+        cursor: bool,
+    }
+
+    impl CgGrab {
+        pub fn open(rect: (i32, i32, u32, u32), cursor: bool) -> Option<CgGrab> {
+            if BROKEN.load(Ordering::Relaxed) {
+                return None;
+            }
+            Some(CgGrab { create: create_for_rect()?, rect, cursor })
+        }
+    }
+
+    impl Grab for CgGrab {
+        fn grab(&mut self, until: Instant, _force: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String> {
+            sleep_until(until);
+            let (x, y, w, h) = self.rect;
+            unsafe {
+                // The display under the area's centre, and the area in its own points.
+                let centre = CGPoint { x: x as f64 + w as f64 / 2.0, y: y as f64 + h as f64 / 2.0 };
+                let (mut id, mut n) = (0u32, 0u32);
+                if CGGetDisplaysWithPoint(centre, 1, &mut id, &mut n) != 0 || n == 0 {
+                    return Err("that area is off screen".into());
+                }
+                let b = CGDisplayBounds(id);
+                let bounds = (b.origin.x as i32, b.origin.y as i32, b.size.width as u32, b.size.height as u32);
+                let (cx, cy, cw, ch) = clip_area(self.rect, bounds).ok_or("that area is off screen")?;
+                let local = CGRect { origin: CGPoint { x: (cx - bounds.0) as f64, y: (cy - bounds.1) as f64 }, size: CGSize { width: cw as f64, height: ch as f64 } };
+                let img = (self.create)(id, local);
+                if img.is_null() {
+                    BROKEN.store(true, Ordering::Relaxed);
+                    return Err("macOS gave no picture of the screen (is screen recording allowed?)".into());
+                }
+                let (iw, ih, stride) = (CGImageGetWidth(img), CGImageGetHeight(img), CGImageGetBytesPerRow(img));
+                let Some(bgra) = cg_bgra(CGImageGetBitsPerPixel(img), CGImageGetBitmapInfo(img)) else {
+                    CGImageRelease(img);
+                    BROKEN.store(true, Ordering::Relaxed);
+                    return Err("this screen's pixel format is copied by xcap".into());
+                };
+                let data = CGDataProviderCopyData(CGImageGetDataProvider(img));
+                CGImageRelease(img);
+                if data.is_null() {
+                    return Err("couldn't read the screen's picture".into());
+                }
+                let bytes = std::slice::from_raw_parts(CFDataGetBytePtr(data), CFDataGetLength(data).max(0) as usize);
+                let size = fit.unwrap_or((iw as u32, ih as u32));
+                if bytes.len() >= stride * ih.saturating_sub(1) + iw * 4 {
+                    fit_into(&Pixels { data: bytes, width: iw as u32, height: ih as u32, stride, bgra }, out, size);
+                }
+                CFRelease(data);
+                if self.cursor {
+                    let e = CGEventCreate(std::ptr::null());
+                    if !e.is_null() {
+                        let p = CGEventGetLocation(e);
+                        CFRelease(e);
+                        stamp_frame_pointer(out, pointer_in_frame((p.x - cx as f64, p.y - cy as f64), (cw as f64, ch as f64), size));
+                    }
+                }
+            }
+            Ok(true)
+        }
+
+        fn retarget(&mut self, rect: (i32, i32, u32, u32)) -> bool {
+            self.rect = rect;
+            true
+        }
+
+        fn name(&self) -> &'static str {
+            "display copy"
+        }
+    }
+}
+
 #[derive(Default)]
 struct FeedShared {
     front: std::sync::Mutex<Frame>,
@@ -693,6 +1088,9 @@ struct FeedShared {
     error: std::sync::Mutex<Option<String>>,
     /// The number of the newest picture (the same as `front`'s, without taking the lock).
     count: std::sync::atomic::AtomicU64,
+    /// Grabs made and the microseconds they took (not counting the wait for the next frame).
+    grabs: std::sync::atomic::AtomicU64,
+    grab_us: std::sync::atomic::AtomicU64,
 }
 
 /// The newest picture of a screen area, copied `fps` times a second by a thread of its own
@@ -762,6 +1160,11 @@ impl ScreenFeed {
     pub fn error(&self) -> Option<String> {
         self.sh.error.lock().ok().and_then(|e| e.clone())
     }
+
+    /// Grabs made so far and the microseconds they took in all (for `--stream-test`).
+    pub fn grab_time(&self) -> (u64, u64) {
+        (self.sh.grabs.load(Ordering::Relaxed), self.sh.grab_us.load(Ordering::Relaxed))
+    }
 }
 
 impl Drop for ScreenFeed {
@@ -817,7 +1220,12 @@ fn feed_loop(sh: &FeedShared, mut rect: (i32, i32, u32, u32), o: FeedOptions, op
             // Fell behind: carry on from now rather than rushing to catch up.
             next = now;
         }
-        match g.grab(next, force || o.every_frame, &mut back, o.fit) {
+        let r = g.grab(next, force || o.every_frame, &mut back, o.fit);
+        // The copy's own time: from the frame's start (or now, when late) to done.
+        let began = next.max(now);
+        sh.grab_us.fetch_add(began.elapsed().as_micros() as u64, Ordering::Relaxed);
+        sh.grabs.fetch_add(1, Ordering::Relaxed);
+        match r {
             Ok(true) => {
                 force = false;
                 back.number = sh.count.load(Ordering::Relaxed) + 1;
@@ -2196,6 +2604,71 @@ mod tests {
         assert!(out.rgba.chunks(4).all(|p| p == [30, 20, 10, 255]), "{:?}", &out.rgba[..8]);
         fit_into(&Pixels { data: &src, width: 4, height: 2, stride: 16, bgra: false }, &mut out, (4, 2));
         assert!(out.rgba.chunks(4).all(|p| p == [10, 20, 30, 255]));
+    }
+
+    #[test]
+    fn the_copied_area_is_clipped_to_the_screen() {
+        let screen = (0, 0, 1920, 1080);
+        assert_eq!(clip_area((100, 50, 640, 360), screen), Some((100, 50, 640, 360)));
+        assert_eq!(clip_area((-10, -20, 100, 100), screen), Some((0, 0, 90, 80)));
+        assert_eq!(clip_area((1900, 1000, 100, 100), screen), Some((1900, 1000, 20, 80)));
+        assert_eq!(clip_area((1919, 0, 100, 100), screen), None, "1 pixel wide is too little");
+        assert_eq!(clip_area((3000, 0, 100, 100), screen), None);
+        // A second screen left of the first, at negative desktop pixels.
+        assert_eq!(clip_area((-1500, 10, 2000, 100), (-1280, 0, 1280, 1024)), Some((-1280, 10, 1280, 100)));
+        assert_eq!(clip_area((i32::MAX - 1, 0, u32::MAX, 10), screen), None, "no overflow");
+    }
+
+    #[test]
+    fn the_pointer_lands_where_the_area_is_drawn_in_the_frame() {
+        // The same size: where it is.
+        assert_eq!(pointer_in_frame((10.0, 20.0), (1280.0, 720.0), (1280, 720)), (10.0, 20.0));
+        // 1920 × 1080 into 1280 × 720: two thirds.
+        assert_eq!(pointer_in_frame((960.0, 540.0), (1920.0, 1080.0), (1280, 720)), (640.0, 360.0));
+        // 1024 × 768 (4:3) into 1280 × 720: 960 × 720 in the middle, 160 px bars at the sides.
+        assert_eq!(pointer_in_frame((0.0, 0.0), (1024.0, 768.0), (1280, 720)), (160.0, 0.0));
+        assert_eq!(pointer_in_frame((1024.0, 768.0), (1024.0, 768.0), (1280, 720)), (1120.0, 720.0));
+        // Macs: an area in points (1440 × 900) and a frame in pixels.
+        assert_eq!(pointer_in_frame((720.0, 450.0), (1440.0, 900.0), (2880, 1800)), (1440.0, 900.0));
+        // Outside the area: outside the picture (stamp_pointer leaves it out).
+        assert!(pointer_in_frame((-50.0, 0.0), (100.0, 100.0), (100, 100)).0 < -16.0);
+        assert!(pointer_in_frame((5.0, 5.0), (0.0, 100.0), (100, 100)).0 < -16.0, "an empty area draws no pointer");
+    }
+
+    #[test]
+    fn shared_memory_segments_are_whole_pages_big_enough_for_the_picture() {
+        assert_eq!(shm_segment_bytes(1920, 1080), 1920 * 1080 * 4);
+        assert_eq!(shm_segment_bytes(1, 1), 4096);
+        assert_eq!(shm_segment_bytes(0, 0), 4096, "never empty");
+        let odd = shm_segment_bytes(1279, 719);
+        assert!(odd >= 1279 * 719 * 4 && odd % 4096 == 0 && odd - 1279 * 719 * 4 < 4096);
+        // The biggest X allows (65535 × 65535) doesn't overflow.
+        assert!(shm_segment_bytes(65535, 65535) >= 65535 * 65535 * 4);
+    }
+
+    #[test]
+    fn x11_screens_read_as_bgra_only_in_32_bit_pixels_low_byte_first() {
+        assert!(x11_bgra(24, 32, true));
+        assert!(x11_bgra(32, 32, true));
+        assert!(!x11_bgra(24, 24, true), "packed 3-byte pixels");
+        assert!(!x11_bgra(16, 16, true));
+        assert!(!x11_bgra(24, 32, false), "a big-endian server");
+    }
+
+    #[test]
+    fn core_graphics_pixel_layouts() {
+        let little = 2 << 12;
+        // What a Mac screen gives: 32-bit little-endian, alpha (or padding) first: BGRA.
+        assert_eq!(cg_bgra(32, little | 6), Some(true));
+        assert_eq!(cg_bgra(32, little | 2), Some(true));
+        // Big-endian or default order with alpha last: RGBA.
+        assert_eq!(cg_bgra(32, 1), Some(false));
+        assert_eq!(cg_bgra(32, (4 << 12) | 5), Some(false));
+        // Others go to xcap.
+        assert_eq!(cg_bgra(64, little | 6), None, "16 bits a channel");
+        assert_eq!(cg_bgra(32, little | 6 | 0x100), None, "floating point");
+        assert_eq!(cg_bgra(32, little | 1), None, "alpha last in little-endian is ABGR");
+        assert_eq!(cg_bgra(32, 0), None, "no alpha information");
     }
 
     #[test]

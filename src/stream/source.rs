@@ -148,6 +148,11 @@ impl Grabber {
         self.feed.as_ref().map_or(0, |f| f.frames())
     }
 
+    /// Grabs made and the microseconds they took in all (0, 0 without a feed).
+    pub fn grab_time(&self) -> (u64, u64) {
+        self.feed.as_ref().map_or((0, 0), |f| f.grab_time())
+    }
+
     /// A picture has been copied (for waiting at the start).
     pub fn ready(&self) -> bool {
         self.captured() > 0

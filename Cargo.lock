@@ -3585,6 +3585,7 @@ dependencies = [
  "gif",
  "global-hotkey",
  "image",
+ "libc",
  "libloading",
  "mp4",
  "openh264",
@@ -3606,6 +3607,7 @@ dependencies = [
  "windows-sys 0.61.2",
  "winit",
  "winresource",
+ "x11rb",
  "xcap",
  "zip",
 ]

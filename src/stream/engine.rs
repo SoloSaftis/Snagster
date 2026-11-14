@@ -213,6 +213,104 @@ pub struct Stats {
     pub notice: Option<String>,
     pub video_encoder: Option<EncoderName>,
     pub audio_encoder: Option<EncoderName>,
+    /// Where the picture and network threads spend their time (for `--stream-test`).
+    pub timing: Timing,
+}
+
+/// Running totals of the picture and network threads' work, so a slow stream shows which step
+/// is slow: taking the picture, encoding it or sending it. Two snapshots give the numbers for
+/// the time between them (`Timing::since`).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Timing {
+    /// Pictures handed to the video encoder.
+    pub frames_in: u64,
+    /// Video packets the encoder gave back.
+    pub packets_out: u64,
+    /// Pictures the encoder itself threw away (it couldn't keep up).
+    pub encoder_dropped: u64,
+    /// Frame slots skipped because the picture thread fell behind its timeline.
+    pub late: u64,
+    /// Microseconds taking pictures from the source.
+    pub fill_us: u64,
+    /// Microseconds inside the encoder, and the longest single call since the start.
+    pub encode_us: u64,
+    pub encode_max_us: u64,
+    /// Messages written to the server and the microseconds that took.
+    pub sends: u64,
+    pub send_us: u64,
+}
+
+impl Timing {
+    /// The work done between `earlier` and `self` (the longest call stays the longest since
+    /// the start).
+    pub fn since(&self, earlier: &Timing) -> Timing {
+        Timing {
+            frames_in: self.frames_in.saturating_sub(earlier.frames_in),
+            packets_out: self.packets_out.saturating_sub(earlier.packets_out),
+            encoder_dropped: self.encoder_dropped.saturating_sub(earlier.encoder_dropped),
+            late: self.late.saturating_sub(earlier.late),
+            fill_us: self.fill_us.saturating_sub(earlier.fill_us),
+            encode_us: self.encode_us.saturating_sub(earlier.encode_us),
+            encode_max_us: self.encode_max_us,
+            sends: self.sends.saturating_sub(earlier.sends),
+            send_us: self.send_us.saturating_sub(earlier.send_us),
+        }
+    }
+
+    /// One line for a person: rates over `secs` seconds and the average time of each step.
+    pub fn summary(&self, secs: f64) -> String {
+        let secs = secs.max(1e-6);
+        let per = |us: u64, n: u64| if n == 0 { 0.0 } else { us as f64 / n as f64 / 1000.0 };
+        format!(
+            "encoder took {:.1} pictures a second and gave back {:.1} ({} thrown away by it, {} frame slots late); per picture: taking it {:.2} ms, encoding {:.2} ms (longest {:.1} ms); per message sent {:.2} ms",
+            self.frames_in as f64 / secs,
+            self.packets_out as f64 / secs,
+            self.encoder_dropped,
+            self.late,
+            per(self.fill_us, self.frames_in),
+            per(self.encode_us, self.frames_in),
+            self.encode_max_us as f64 / 1000.0,
+            per(self.send_us, self.sends),
+        )
+    }
+}
+
+/// The live side of `Timing`, written by the stream's threads.
+#[derive(Default)]
+struct TimingCounters {
+    frames_in: AtomicU64,
+    packets_out: AtomicU64,
+    encoder_dropped: AtomicU64,
+    late: AtomicU64,
+    fill_us: AtomicU64,
+    encode_us: AtomicU64,
+    encode_max_us: AtomicU64,
+    sends: AtomicU64,
+    send_us: AtomicU64,
+}
+
+impl TimingCounters {
+    fn snapshot(&self) -> Timing {
+        let g = |a: &AtomicU64| a.load(Ordering::Relaxed);
+        Timing {
+            frames_in: g(&self.frames_in),
+            packets_out: g(&self.packets_out),
+            encoder_dropped: g(&self.encoder_dropped),
+            late: g(&self.late),
+            fill_us: g(&self.fill_us),
+            encode_us: g(&self.encode_us),
+            encode_max_us: g(&self.encode_max_us),
+            sends: g(&self.sends),
+            send_us: g(&self.send_us),
+        }
+    }
+}
+
+/// Add the microseconds since `since` to `a`; returns them.
+fn add_us(a: &AtomicU64, since: Instant) -> u64 {
+    let us = since.elapsed().as_micros() as u64;
+    a.fetch_add(us, Ordering::Relaxed);
+    us
 }
 
 #[derive(Default)]
@@ -236,6 +334,7 @@ struct Shared {
     wake: Condvar,
     /// Give up sending at once (stopping took too long).
     abort: Arc<AtomicBool>,
+    timing: TimingCounters,
 }
 
 impl Shared {
@@ -334,6 +433,7 @@ impl Streamer {
             notice: s.notice.try_lock().ok().and_then(|e| e.clone()),
             video_encoder: names.0,
             audio_encoder: names.1,
+            timing: s.timing.snapshot(),
         }
     }
 
@@ -416,16 +516,29 @@ fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEnco
         if due > now {
             std::thread::sleep(due - now);
         } else if now - due > Duration::from_micros(frame_us as u64) {
-            n = (now.duration_since(started).as_micros() as f64 / frame_us) as u64;
+            let caught_up = (now.duration_since(started).as_micros() as f64 / frame_us) as u64;
+            sh.timing.late.fetch_add(caught_up.saturating_sub(n), Ordering::Relaxed);
+            n = caught_up;
         }
+        let t = Instant::now();
         if !frames.fill(&mut buf) {
             sh.stop.store(true, Ordering::Relaxed);
             break;
         }
+        add_us(&sh.timing.fill_us, t);
         let pts = (n as f64 * frame_us) as i64;
         let key = sh.want_key.swap(false, Ordering::Relaxed);
-        match enc.encode(&buf, pts, key) {
-            Ok(ps) => ps.into_iter().for_each(|p| queue_packet(&sh, &hook, Packet::Video(p))),
+        let t = Instant::now();
+        let r = enc.encode(&buf, pts, key);
+        let took = add_us(&sh.timing.encode_us, t);
+        sh.timing.encode_max_us.fetch_max(took, Ordering::Relaxed);
+        sh.timing.frames_in.fetch_add(1, Ordering::Relaxed);
+        sh.timing.encoder_dropped.store(enc.dropped(), Ordering::Relaxed);
+        match r {
+            Ok(ps) => {
+                sh.timing.packets_out.fetch_add(ps.len() as u64, Ordering::Relaxed);
+                ps.into_iter().for_each(|p| queue_packet(&sh, &hook, Packet::Video(p)))
+            }
             Err(e) => {
                 sh.set_error(format!("Video encoder: {e}"));
                 sh.stop.store(true, Ordering::Relaxed);
@@ -665,7 +778,10 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
             let mut r = Ok(());
             if let Some(p) = &p {
                 for m in s.messages(p) {
+                    let t = Instant::now();
                     r = if m.video { c.send_video(m.ts, m.body) } else { c.send_audio(m.ts, m.body) };
+                    add_us(&sh.timing.send_us, t);
+                    sh.timing.sends.fetch_add(1, Ordering::Relaxed);
                     if r.is_err() {
                         break;
                     }
@@ -729,6 +845,22 @@ mod tests {
     fn vid(ms: i64, key: bool) -> Packet {
         let data = if key { key_au() } else { vec![0, 0, 1, 0x41, 0xBB] };
         Packet::Video(VideoPacket { data, pts_us: ms * 1000 + 40_000, dts_us: ms * 1000, keyframe: key })
+    }
+
+    #[test]
+    fn timing_between_two_snapshots_and_its_summary() {
+        let a = Timing { frames_in: 10, packets_out: 9, encoder_dropped: 1, late: 2, fill_us: 1000, encode_us: 20_000, encode_max_us: 5000, sends: 10, send_us: 500 };
+        let b = Timing { frames_in: 70, packets_out: 66, encoder_dropped: 3, late: 2, fill_us: 7000, encode_us: 140_000, encode_max_us: 9000, sends: 130, send_us: 3500 };
+        let d = b.since(&a);
+        assert_eq!(d, Timing { frames_in: 60, packets_out: 57, encoder_dropped: 2, late: 0, fill_us: 6000, encode_us: 120_000, encode_max_us: 9000, sends: 120, send_us: 3000 });
+        assert_eq!(
+            d.summary(2.0),
+            "encoder took 30.0 pictures a second and gave back 28.5 (2 thrown away by it, 0 frame slots late); per picture: taking it 0.10 ms, encoding 2.00 ms (longest 9.0 ms); per message sent 0.03 ms"
+        );
+        // Nothing happened (and counters that went backwards don't wrap round).
+        let z = a.since(&b);
+        assert_eq!((z.frames_in, z.send_us), (0, 0));
+        assert!(Timing::default().summary(0.0).contains("encoding 0.00 ms"));
     }
 
     #[test]

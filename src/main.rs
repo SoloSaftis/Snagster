@@ -577,7 +577,15 @@ fn stream_test(quick: bool) -> bool {
         let target = StreamTarget { service: Service::Custom, url: srv.url(), key: "stream-test".into() };
         let cfg = StreamConfig::for_target(target, w, h, fps, encode::Codec::H264);
         let (w, h, fps) = (cfg.width, cfg.height, cfg.fps);
-        let opts = video::FeedOptions { fps, cursor: true, fit: Some((w, h)), every_frame };
+        // The graphics chip's encoder alone at this size (nothing else running), to tell a slow
+        // encoder from a slow copy or network.
+        if let Some(&b) = encode::plan(encode::Os::current(), encode::Codec::H264, true).first().filter(|b| b.hardware()) {
+            match encode::speed(b, w, h, 60) {
+                Ok((_, f)) => println!("{} {w}x{h} encode speed: {f:.0} fps", b.label()),
+                Err(e) => println!("     {} {w}x{h}: {e}", b.label()),
+            }
+        }
+        let opts =video::FeedOptions { fps, cursor: true, fit: Some((w, h)), every_frame };
         let grabber = stream::source::Grabber::open((mx, my, sw, sh), None, opts);
         let t = std::time::Instant::now();
         while !grabber.ready() && t.elapsed() < std::time::Duration::from_secs(3) {
@@ -609,8 +617,10 @@ fn stream_test(quick: bool) -> bool {
         }
         std::thread::sleep(std::time::Duration::from_millis(500));
         let (v0, g0, c0, t0) = (srv.video_messages(), grabber.captured(), cpu_seconds(), std::time::Instant::now());
+        let (timing0, grabs0) = (s.stats().timing, grabber.grab_time());
         std::thread::sleep(std::time::Duration::from_secs(secs));
         let (v1, g1, c1, wall) = (srv.video_messages(), grabber.captured(), cpu_seconds(), t0.elapsed().as_secs_f64());
+        let (timing1, grabs1) = (s.stats().timing, grabber.grab_time());
         let copied = (g1 - g0) as f64 / wall;
         let stats = s.stop();
         drop(grabber);
@@ -633,9 +643,21 @@ fn stream_test(quick: bool) -> bool {
             stats.video_encoder.map(|e| e.name).unwrap_or_default(),
             stats.error.map(|e| format!(", error: {e}")).unwrap_or_default()
         );
+        // Where the time went, so a slow run says which step is slow.
+        if grabber_used {
+            println!("     screen copy: {}", grab_summary(grabs1.0 - grabs0.0, grabs1.1 - grabs0.1, wall));
+        }
+        println!("     stream: {}", timing1.since(&timing0).summary(wall));
     }
     println!("{}", if failed == 0 { "stream test: all passed".to_string() } else { format!("stream test: {failed} failed") });
     failed == 0
+}
+
+/// `grabs` screen copies that took `us` microseconds in all over `secs` seconds, for a person.
+fn grab_summary(grabs: u64, us: u64, secs: f64) -> String {
+    let each = if grabs == 0 { 0.0 } else { us as f64 / grabs as f64 / 1000.0 };
+    let most = if each > 0.0 { 1000.0 / each } else { 0.0 };
+    format!("{:.1} grabs a second, {each:.2} ms each (at most {most:.0} a second)", grabs as f64 / secs.max(1e-6))
 }
 
 /// Where crash reports go: Snagster's settings folder (crash.log, newest last, kept small).
@@ -805,6 +827,13 @@ mod main_tests {
         // The centre dot and a bracket corner are white.
         assert_eq!(px(32, 32), [255, 255, 255, 255]);
         assert_eq!(px(13, 13), [255, 255, 255, 255]);
+    }
+
+    #[test]
+    fn grab_summary_gives_rate_and_time_per_grab() {
+        assert_eq!(grab_summary(60, 300_000, 2.0), "30.0 grabs a second, 5.00 ms each (at most 200 a second)");
+        assert_eq!(grab_summary(0, 0, 1.0), "0.0 grabs a second, 0.00 ms each (at most 0 a second)");
+        assert_eq!(grab_summary(3, 900_000, 0.0), "3000000.0 grabs a second, 300.00 ms each (at most 3 a second)", "no division by zero");
     }
 
     #[test]
