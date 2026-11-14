@@ -18,22 +18,24 @@ Windows · Mac · Linux · 86 languages · works offline · written in Rust · f
 
 ## What it does
 
-- **Capture anything** – press Print Screen, then drag an area or click a window, button or menu. Or the whole screen, all screens, a fixed size, or fun shapes: circle, lasso, star, heart.
-- **Long pages** – scrolling and sideways capture stitch a whole web page or document into one picture.
+- **Capture anything** – press Print Screen, then drag an area or click a window, button or menu. While you select, the window, button or panel under the pointer lights up: click to take it, turn the mouse wheel for the bigger part around it. Or the whole screen, all screens, a fixed size, or fun shapes: circle, lasso, star, heart.
+- **Long pages** – scrolling capture scrolls by itself, keeps sticky headers once and stops at the end of the page, stitching a whole web page or document into one picture (sideways too).
 - **Mark it up** – arrows, boxes, text in any of your fonts, speech bubbles, numbered steps, 1,300+ color emojis, highlighter, spotlight, magnifier, blur and smart redact for private details.
 - **Tidy it up** – crop, cut out, move parts of the picture, borders, shadows, torn edges and more.
 - **Grab text** – copy the text out of any picture or part of the screen (Windows).
-- **Record videos with sound** – MP4 (H.264 or HEVC) or WMV, 1 to 120 frames per second, with the computer's sound, your microphone or both. On Windows the graphics chip does the encoding (Intel Quick Sync, AMD or NVIDIA), so recording barely touches the processor or the battery. Videos go to your **Videos/Snagster** folder, pictures to **Pictures/Snagster**.
+- **Record videos with sound** – MP4 (H.264 or HEVC) or WMV, 1 to 120 frames per second, with the computer's sound, your microphone or both (sound on Windows for now). The graphics chip does the encoding where it can (Intel Quick Sync, AMD or NVIDIA on Windows; VideoToolbox on Mac and VA-API on Linux are new and not yet tried on real hardware), so recording barely touches the processor or the battery. Videos go to your **Videos/Snagster** folder, pictures to **Pictures/Snagster**.
 - **Studio mode** – a live recording studio: scenes made of screens, windows, screen areas, pictures, text and colours, arranged by dragging, a sound mixer with level meters, and one-click recording.
+- **Go live** – stream the screen, a window, an area or a Studio scene to Twitch, YouTube, Kick, Facebook Live, Restream or your own RTMP server, with a LIVE badge, automatic reconnecting and an optional copy on disk. Your stream key is kept encrypted (Windows), in the Keychain (Mac) or in a private file (Linux), never in the settings file. New in the next version; not yet tried against the real services.
 - **Record GIFs** that stay small, and step-by-step guides as PDF, Word or web pages.
 - **Library** – every capture is kept, searchable by date, program and tags; works from your OneDrive or Dropbox folder.
 - **Your language** – 86 languages, picked automatically from your computer and changeable at any time; right-to-left languages read right to left.
-- **A ribbon like Word's** – tabs for Home, Capture, Record, Studio, Edit, Image, Share, View and Help, every tool with an icon and an explanation when you point at it.
+- **A ribbon like Word's** – tabs for Home, Capture, Record, Studio, Stream, Edit, Image, Share, View and Help, every tool with an icon and an explanation when you point at it.
 - **Keeps itself up to date** – Snagster checks for a new version once a day (you can turn it off) and installs it with one click.
-- **For AI apps** – Snagster is an MCP server with 62 tools: Claude, ChatGPT, Cursor, VS Code and local AI (Ollama, LM Studio, llama.cpp through apps such as Open WebUI) can capture, mark up, read text, record videos and run Studio.
+- **For AI apps** – Snagster is an MCP server with 66 tools: Claude, ChatGPT, Cursor, VS Code and local AI (Ollama, LM Studio, llama.cpp through apps such as Open WebUI) can capture, mark up, read text, record videos, run Studio and go live.
 
 **Your pictures stay on your computer.** No account, no ads, no tracking. Nothing is sent anywhere
-(the only time Snagster goes online is the daily look for a new version, which you can switch off).
+(Snagster goes online only for the daily look for a new version, which you can switch off, and
+when you start a live stream).
 
 <div align="center">
 <img src="assets/screenshots/studio.png" alt="Studio mode: scenes and sources on the left, the live picture in the middle, the selected source and the sound mixer on the right" width="900">
@@ -100,11 +102,12 @@ snagster mcp-http --port 45831
 The server only listens on this computer, refuses web pages from other sites, and can require a
 password (`Authorization: Bearer ...`).
 
-**What an AI can do** (62 tools): capture the screen, a window, an area or a scrolling page; read text;
+**What an AI can do** (66 tools): capture the screen, a window, an area or a scrolling page; read text;
 add arrows, boxes, text, steps and blur; crop, resize and apply effects; undo and redo; save in every
 format; make PDF, Word and web-page guides; search and add to the library; record videos with sound at
-1–120 fps; set up and record Studio scenes; read and change settings; switch language; check for
-updates. It also offers ready-made prompts (annotate a screenshot, redact one, record a demo, make a
+1–120 fps; set up and record Studio scenes; start, watch and stop a live stream (the saved stream key
+is used and never shown); read and change settings; switch language; check for updates. Every tool is
+listed in [docs/MCP.md](docs/MCP.md). It also offers ready-made prompts (annotate a screenshot, redact one, record a demo, make a
 guide) and the current picture, settings and library as resources.
 
 **From a terminal**, the same tools: `snagster help` lists commands such as
@@ -113,7 +116,9 @@ guide) and the current picture, settings and library as resources.
 
 ## For developers
 
-Building, tests and how the code is laid out: [DEVELOPING.md](DEVELOPING.md).
+Building, tests and how the code is laid out: [DEVELOPING.md](DEVELOPING.md). Architecture,
+streaming, encoding, capture, MCP, testing, licensing and releasing: [docs/](docs/README.md).
+What changed: [CHANGELOG.md](CHANGELOG.md); how it got here: [DEVLOG.md](DEVLOG.md).
 
 ## Licence
 
