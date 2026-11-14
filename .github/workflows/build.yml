@@ -1,10 +1,11 @@
-# Builds Windows, Linux and macOS on every push. Pushing a tag like v0.7.0 also publishes a
-# GitHub release with the fixed file names the README's download links point to.
+# Builds and tests Windows, Linux and macOS on every push to any branch; a warning fails the build
+# on every system. Pushing a tag like v0.7.0 also publishes a GitHub release with the fixed file
+# names the README's download links point to.
 name: Build
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
@@ -12,7 +13,29 @@ on:
 permissions:
   contents: write
 
+# A newer push to the same branch cancels the older run (main and tags always finish).
+concurrency:
+  group: build-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  CARGO_TERM_COLOR: always
+  # Zero warnings on every system, not just the one the change was made on.
+  RUSTFLAGS: -D warnings
+
 jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Every language pack translates every text
+        run: node assets/i18n/check.js
+      - name: The MCP smoke test script parses
+        run: node --check tests/mcp-smoke.js
+
   windows:
     runs-on: windows-latest
     steps:
@@ -28,6 +51,14 @@ jobs:
           node-version: 22
       - name: MCP smoke test (stdio and HTTP, no screen needed)
         run: node tests/mcp-smoke.js target/release/snagster.exe
+      - name: Button test (every button in the real window)
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          # The release build is a windowed program: wait for it and collect what it prints.
+          Start-Process target/release/snagster.exe -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test.txt
+          Get-Content ui-test.txt
+          if (-not (Select-String -Path ui-test.txt -Pattern '^(\d+) of \1 button actions worked' -Quiet)) { exit 1 }
       - name: Package (portable zip)
         shell: pwsh
         run: |
@@ -102,6 +133,12 @@ jobs:
           echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  $tool" | sha256sum -c -
           chmod +x "$tool"
           ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 "$tool" --no-appstream "$appdir" dist/Snagster-linux-x86_64.AppImage
+      - name: The packaged AppImage and tar.gz start
+        run: |
+          set -euo pipefail
+          APPIMAGE_EXTRACT_AND_RUN=1 dist/Snagster-linux-x86_64.AppImage help | sed -n 1,5p
+          mkdir -p /tmp/tgz && tar -C /tmp/tgz -xzf dist/Snagster-linux-x86_64-portable.tar.gz
+          /tmp/tgz/Snagster/Snagster help | sed -n 1,5p
       - uses: actions/upload-artifact@v4
         with:
           name: linux
@@ -124,6 +161,11 @@ jobs:
           node-version: 22
       - name: MCP smoke test (stdio and HTTP, no screen needed)
         run: node tests/mcp-smoke.js target/release/snagster
+      - name: Button test (every button in the real window; the runner has a logged-in desktop)
+        timeout-minutes: 10
+        run: |
+          ./target/release/snagster --ui-test | tee ui-test.txt
+          grep -qE "^([0-9]+) of \1 button actions worked" ui-test.txt
       - name: Package (app in a zip)
         run: |
           set -euo pipefail
@@ -165,7 +207,7 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [windows, linux, macos]
+    needs: [checks, windows, linux, macos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
