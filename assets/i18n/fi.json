@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Oppaaseen ei ole vielä mitään lisättävää.",
   "Try the tools on a sample picture": "Kokeile työkaluja esimerkkikuvalla",
   "Write the time as hh:mm, for example 14:30.": "Kirjoita aika muodossa hh:mm, esimerkiksi 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Sähköpostiohjelmasi on auki; vedä kuva kansiosta sähköpostiin."
+  "Your mail program is open; drag the picture from the folder into the email.": "Sähköpostiohjelmasi on auki; vedä kuva kansiosta sähköpostiin.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Napsautus: kaappaa tämä. Rulla: suurempi tai pienempi osa.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Vieritetään: {frames} kuvaa, {height} pikseliä. Esc lopettaa.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster ei voi vierittää muita ohjelmia täällä, joten vieritä itse ja paina Pysäytä.",
+  "Most scroll steps": "Vieritysaskelia enintään",
+  "Wait after each scroll (ms)": "Odota jokaisen vierityksen jälkeen (ms)",
+  "Scroll by": "Vieritä",
+  "wheel notches each time": "rullan pykälää kerrallaan",
+  "Stop at a height of": "Pysähdy korkeuteen",
+  "Scroll to the top first": "Vieritä ensin ylös"
  }
 }

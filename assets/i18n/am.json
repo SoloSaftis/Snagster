@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "ወደ መመሪያው ለማስገባት ገና ምንም የለም።",
   "Try the tools on a sample picture": "መሣሪያዎቹን በናሙና ምስል ላይ ይሞክሩ",
   "Write the time as hh:mm, for example 14:30.": "ሰዓቱን እንደ hh:mm ይጻፉ፣ ለምሳሌ 14:30።",
-  "Your mail program is open; drag the picture from the folder into the email.": "የመልዕክት ፕሮግራምዎ ክፍት ነው፤ ምስሉን ከአቃፊው ወደ ኢሜይሉ ይጎትቱት።"
+  "Your mail program is open; drag the picture from the folder into the email.": "የመልዕክት ፕሮግራምዎ ክፍት ነው፤ ምስሉን ከአቃፊው ወደ ኢሜይሉ ይጎትቱት።",
+  "Click: capture this. Wheel: bigger or smaller part.": "ጠቅ ያድርጉ፦ ይህን ይቅረጹ። መንኮራኩር፦ ትልቅ ወይም ትንሽ ክፍል።",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "በማሸብለል ላይ፦ {frames} ምስሎች፣ {height} ፒክሰሎች። Esc ያቆማል።",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster እዚህ ሌሎች ፕሮግራሞችን ማሸብለል አይችልም፣ ስለዚህ ራስዎ ያሸብልሉና አቁም ይጫኑ።",
+  "Most scroll steps": "ከፍተኛ የማሸብለል ደረጃዎች",
+  "Wait after each scroll (ms)": "ከእያንዳንዱ ማሸብለል በኋላ ይጠብቁ (ms)",
+  "Scroll by": "በዚህ ያህል ያሸብልሉ",
+  "wheel notches each time": "የመንኮራኩር ደረጃዎች በእያንዳንዱ ጊዜ",
+  "Stop at a height of": "በዚህ ቁመት ያቁሙ",
+  "Scroll to the top first": "መጀመሪያ ወደ ላይ ያሸብልሉ"
  }
 }

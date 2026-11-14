@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Zatiaľ nie je čo vložiť do sprievodcu.",
   "Try the tools on a sample picture": "Vyskúšajte nástroje na ukážkovom obrázku",
   "Write the time as hh:mm, for example 14:30.": "Zadajte čas v tvare hh:mm, napríklad 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Váš poštový program je otvorený; presuňte obrázok z priečinka do e-mailu."
+  "Your mail program is open; drag the picture from the folder into the email.": "Váš poštový program je otvorený; presuňte obrázok z priečinka do e-mailu.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Kliknutie: zachytiť toto. Koliesko: väčšia alebo menšia časť.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Posúvanie: {frames} obrázkov, {height} pixelov. Esc zastaví.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster tu nemôže posúvať iné programy, posúvajte preto sami a stlačte Stop.",
+  "Most scroll steps": "Najviac krokov posúvania",
+  "Wait after each scroll (ms)": "Čakať po každom posunutí (ms)",
+  "Scroll by": "Posunúť o",
+  "wheel notches each time": "zárezov kolieska zakaždým",
+  "Stop at a height of": "Zastaviť pri výške",
+  "Scroll to the top first": "Najprv posunúť nahor"
  }
 }

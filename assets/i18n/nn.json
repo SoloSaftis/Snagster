@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Det er ingenting å leggje i ei rettleiing enno.",
   "Try the tools on a sample picture": "Prøv verktøya på eit eksempelbilete",
   "Write the time as hh:mm, for example 14:30.": "Skriv klokkeslettet som hh:mm, til dømes 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "E-postprogrammet ditt er ope. Dra biletet frå mappa inn i e-posten."
+  "Your mail program is open; drag the picture from the folder into the email.": "E-postprogrammet ditt er ope. Dra biletet frå mappa inn i e-posten.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Klikk: ta denne. Hjul: større eller mindre del.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Rullar: {frames} bilete, {height} pikslar. Esc stoppar.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster kan ikkje rulle andre program her, så rull sjølv og trykk på Stopp.",
+  "Most scroll steps": "Flest rullesteg",
+  "Wait after each scroll (ms)": "Vent etter kvar rulling (ms)",
+  "Scroll by": "Rull med",
+  "wheel notches each time": "hjulhakk kvar gong",
+  "Stop at a height of": "Stopp ved ei høgd på",
+  "Scroll to the top first": "Rull til toppen først"
  }
 }

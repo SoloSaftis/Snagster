@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Кулланмага өстәр өчен әлегә берни дә юк.",
   "Try the tools on a sample picture": "Коралларны үрнәк рәсемдә сынап карагыз",
   "Write the time as hh:mm, for example 14:30.": "Вакытны hh:mm рәвешендә языгыз, мәсәлән 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Почта программасы ачык; рәсемне папкадан хатка сөйрәгез."
+  "Your mail program is open; drag the picture from the folder into the email.": "Почта программасы ачык; рәсемне папкадан хатка сөйрәгез.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Басу: моны төшерү. Тәгәрмәч: зуррак яки кечерәк өлеш.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Әйләндерү: {frames} рәсем, {height} пиксель. Esc туктата.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster монда башка программаларны әйләндерә алмый, шуңа күрә үзегез әйләндерегез һәм «Туктату» басыгыз.",
+  "Most scroll steps": "Иң күп әйләндерү адымнары",
+  "Wait after each scroll (ms)": "Һәр әйләндерүдән соң көтү (мс)",
+  "Scroll by": "Әйләндерү күләме",
+  "wheel notches each time": "тәгәрмәч баскычы һәр тапкыр",
+  "Stop at a height of": "Бу биеклектә туктау",
+  "Scroll to the top first": "Башта иң өскә әйләндерү"
  }
 }

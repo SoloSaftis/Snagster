@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Níl aon rud le cur i dtreoir fós.",
   "Try the tools on a sample picture": "Triail na huirlisí ar phictiúr samplach",
   "Write the time as hh:mm, for example 14:30.": "Scríobh an t-am mar hh:mm, mar shampla 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Tá do chlár poist oscailte; tarraing an pictiúr ón bhfillteán isteach sa ríomhphost."
+  "Your mail program is open; drag the picture from the folder into the email.": "Tá do chlár poist oscailte; tarraing an pictiúr ón bhfillteán isteach sa ríomhphost.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Cliceáil: gabh é seo. Roth: cuid níos mó nó níos lú.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Ag scrollú: {frames} pictiúr, {height} picteilín. Stopann Esc.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Ní féidir le Snagster cláir eile a scrollú anseo, mar sin scrollaigh féin é agus brúigh Stad.",
+  "Most scroll steps": "Líon is mó céimeanna scrollaithe",
+  "Wait after each scroll (ms)": "Fan tar éis gach scrollú (ms)",
+  "Scroll by": "Scrollaigh de réir",
+  "wheel notches each time": "eang rotha gach uair",
+  "Stop at a height of": "Stop ag airde",
+  "Scroll to the top first": "Scrollaigh go dtí an barr ar dtús"
  }
 }

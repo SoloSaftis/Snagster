@@ -104,7 +104,8 @@ jobs:
             libpipewire-0.3-dev libspa-0.2-dev \
             libwayland-dev libxkbcommon-dev libgbm-dev libegl1-mesa-dev libgl1-mesa-dev libdrm-dev \
             libxcb1-dev libxcb-randr0-dev libxcb-shm0-dev libxcb-xfixes0-dev libxcb-shape0-dev \
-            libdbus-1-dev libfuse2
+            libdbus-1-dev libfuse2 \
+            libva2 libva-drm2
       - name: Build
         run: cargo build --release --locked
       - name: Unit tests

@@ -27,6 +27,8 @@ mod update;
 mod mcp_http;
 mod render;
 mod sample;
+mod encode;
+mod stream;
 
 use eframe::egui;
 use std::path::PathBuf;
@@ -427,6 +429,11 @@ fn video_test(quick: bool) {
     for e in video::encoders() {
         println!("  {:5} {:9} {}{}", e.codec, if e.hardware { "hardware" } else { "software" }, e.name, if e.vendor.is_empty() { String::new() } else { format!(" ({})", e.vendor) });
     }
+    // The encoders that hand back frames (live streaming; recording off Windows) and their speed.
+    let (lines, encoders_failed) = video::encoder_report(quick);
+    for l in lines {
+        println!("{l}");
+    }
     let (mx, my, sw, sh) = capture::monitors().first().map(|m| (m.x, m.y, m.width, m.height)).unwrap_or((0, 0, 1280, 720));
     let rect = (mx, my, sw.min(1920), sh.min(1080));
     use audio::AudioSource as A;
@@ -442,7 +449,7 @@ fn video_test(quick: bool) {
             cases.push((VideoFormat::Mp4, 30, true, A::Both));
         }
     }
-    let mut failed = 0;
+    let mut failed = encoders_failed;
     for (format, fps, hardware, sound) in cases {
         if sound != A::None && !A::supported() {
             continue;

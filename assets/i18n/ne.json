@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "गाइडमा राख्न अहिले केही छैन।",
   "Try the tools on a sample picture": "औजारहरू नमुना तस्बिरमा प्रयास गर्नुहोस्",
   "Write the time as hh:mm, for example 14:30.": "समय hh:mm मा लेख्नुहोस्, जस्तै 14:30।",
-  "Your mail program is open; drag the picture from the folder into the email.": "तपाईंको मेल प्रोग्राम खुला छ; तस्बिरलाई फोल्डरबाट इमेलमा तान्नुहोस्।"
+  "Your mail program is open; drag the picture from the folder into the email.": "तपाईंको मेल प्रोग्राम खुला छ; तस्बिरलाई फोल्डरबाट इमेलमा तान्नुहोस्।",
+  "Click: capture this. Wheel: bigger or smaller part.": "क्लिक: यो क्याप्चर गर्नुहोस्। व्हील: ठूलो वा सानो भाग।",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "स्क्रोल हुँदैछ: {frames} तस्बिर, {height} पिक्सेल। Esc ले रोक्छ।",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster ले यहाँ अन्य प्रोग्राम स्क्रोल गर्न सक्दैन, त्यसैले आफैं स्क्रोल गर्नुहोस् र रोक्नुहोस् थिच्नुहोस्।",
+  "Most scroll steps": "अधिकतम स्क्रोल चरण",
+  "Wait after each scroll (ms)": "प्रत्येक स्क्रोलपछि पर्खनुहोस् (ms)",
+  "Scroll by": "यति स्क्रोल गर्नुहोस्",
+  "wheel notches each time": "प्रत्येक पटक व्हीलका खाँचा",
+  "Stop at a height of": "यो उचाइमा रोक्नुहोस्",
+  "Scroll to the top first": "पहिले माथिसम्म स्क्रोल गर्नुहोस्"
  }
 }

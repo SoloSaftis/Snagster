@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Ende nuk ka asgjë për ta futur në udhëzues.",
   "Try the tools on a sample picture": "Provoni mjetet te një figurë shembull",
   "Write the time as hh:mm, for example 14:30.": "Shkruajeni orën si hh:mm, për shembull 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Programi juaj i postës është hapur; tërhiqeni figurën nga dosja te emaili."
+  "Your mail program is open; drag the picture from the folder into the email.": "Programi juaj i postës është hapur; tërhiqeni figurën nga dosja te emaili.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Klikim: kape këtë. Rrota: pjesë më e madhe ose më e vogël.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Rrëshqitje: {frames} figura, {height} piksela. Esc ndalon.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster nuk mund të rrëshqasë programe të tjera këtu, ndaj rrëshqiteni vetë dhe shtypni Ndalo.",
+  "Most scroll steps": "Më së shumti hapa rrëshqitjeje",
+  "Wait after each scroll (ms)": "Prit pas çdo rrëshqitjeje (ms)",
+  "Scroll by": "Rrëshqit me",
+  "wheel notches each time": "dhëmbë rrote çdo herë",
+  "Stop at a height of": "Ndalo në lartësinë",
+  "Scroll to the top first": "Rrëshqit fillimisht në krye"
  }
 }

@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "У кіраўніцтва пакуль няма чаго дадаць.",
   "Try the tools on a sample picture": "Паспрабуйце інструменты на ўзоры відарыса",
   "Write the time as hh:mm, for example 14:30.": "Увядзіце час у фармаце hh:mm, напрыклад 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Паштовая праграма адкрыта; перацягніце відарыс з папкі ў ліст."
+  "Your mail program is open; drag the picture from the folder into the email.": "Паштовая праграма адкрыта; перацягніце відарыс з папкі ў ліст.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Пстрычка: захапіць гэта. Колца: большая ці меншая частка.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Пракрутка: {frames} здымкаў, {height} пікселяў. Esc спыняе.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster не можа тут пракручваць іншыя праграмы, таму пракручвайце самі і націсніце «Стоп».",
+  "Most scroll steps": "Найбольш крокаў пракруткі",
+  "Wait after each scroll (ms)": "Чакаць пасля кожнай пракруткі (мс)",
+  "Scroll by": "Пракручваць на",
+  "wheel notches each time": "пстрычак колца кожны раз",
+  "Stop at a height of": "Спыніцца на вышыні",
+  "Scroll to the top first": "Спачатку пракруціць уверх"
  }
 }

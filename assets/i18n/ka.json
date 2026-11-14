@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "გზამკვლევში ჩასადები ჯერ არაფერია.",
   "Try the tools on a sample picture": "სცადეთ ინსტრუმენტები ნიმუშის სურათზე",
   "Write the time as hh:mm, for example 14:30.": "დრო ჩაწერეთ hh:mm ფორმატით, მაგალითად 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "თქვენი ფოსტის პროგრამა ღიაა; გადაათრიეთ სურათი საქაღალდიდან ელფოსტაში."
+  "Your mail program is open; drag the picture from the folder into the email.": "თქვენი ფოსტის პროგრამა ღიაა; გადაათრიეთ სურათი საქაღალდიდან ელფოსტაში.",
+  "Click: capture this. Wheel: bigger or smaller part.": "დაწკაპება: ამის გადაღება. ბორბალი: უფრო დიდი ან პატარა ნაწილი.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "გადახვევა: {frames} სურათი, {height} პიქსელი. Esc აჩერებს.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster-ს აქ სხვა პროგრამების გადახვევა არ შეუძლია, ამიტომ თავად გადაახვიეთ და დააჭირეთ გაჩერება-ს.",
+  "Most scroll steps": "გადახვევის მაქსიმალური ნაბიჯები",
+  "Wait after each scroll (ms)": "ლოდინი ყოველი გადახვევის შემდეგ (მწ)",
+  "Scroll by": "გადახვევა",
+  "wheel notches each time": "ბორბლის საფეხური ყოველ ჯერზე",
+  "Stop at a height of": "გაჩერება სიმაღლეზე",
+  "Scroll to the top first": "ჯერ ზემოთ გადახვევა"
  }
 }

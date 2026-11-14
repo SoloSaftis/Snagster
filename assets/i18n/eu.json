@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Oraindik ez dago ezer gidaren barruan jartzeko.",
   "Try the tools on a sample picture": "Probatu tresnak lagin-irudi batean",
   "Write the time as hh:mm, for example 14:30.": "Idatzi ordua hh:mm moduan, adibidez 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Zure posta-programa irekita dago; arrastatu irudia karpetatik mezu elektronikora."
+  "Your mail program is open; drag the picture from the folder into the email.": "Zure posta-programa irekita dago; arrastatu irudia karpetatik mezu elektronikora.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Klik: hau kapturatu. Gurpila: zati handiagoa edo txikiagoa.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Korritzen: {frames} irudi, {height} pixel. Esc-ek gelditzen du.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster-ek ezin ditu hemen beste programak korritu; beraz, korritu zuk zeuk eta sakatu Gelditu.",
+  "Most scroll steps": "Korritze-urrats gehienez",
+  "Wait after each scroll (ms)": "Itxaron korritze bakoitzaren ondoren (ms)",
+  "Scroll by": "Korritu",
+  "wheel notches each time": "gurpil-koska aldi bakoitzean",
+  "Stop at a height of": "Gelditu altuera honetan",
+  "Scroll to the top first": "Korritu lehenik goraino"
  }
 }

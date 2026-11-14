@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Er is nog niets om in een handleiding te zetten.",
   "Try the tools on a sample picture": "Probeer de hulpmiddelen uit op een voorbeeldafbeelding",
   "Write the time as hh:mm, for example 14:30.": "Schrijf de tijd als hh:mm, bijvoorbeeld 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Je e-mailprogramma is geopend; sleep de afbeelding uit de map naar de e-mail."
+  "Your mail program is open; drag the picture from the folder into the email.": "Je e-mailprogramma is geopend; sleep de afbeelding uit de map naar de e-mail.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Klik: dit vastleggen. Wiel: groter of kleiner deel.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Scrollen: {frames} afbeeldingen, {height} pixels. Esc stopt.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster kan hier geen andere programma's scrollen, dus scrol zelf en druk op Stop.",
+  "Most scroll steps": "Meeste scrolstappen",
+  "Wait after each scroll (ms)": "Wachten na elke scroll (ms)",
+  "Scroll by": "Scrollen met",
+  "wheel notches each time": "wielklikken per keer",
+  "Stop at a height of": "Stoppen bij een hoogte van",
+  "Scroll to the top first": "Eerst naar boven scrollen"
  }
 }

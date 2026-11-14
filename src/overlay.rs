@@ -1,12 +1,16 @@
 //! The frozen-screen picker: choose an area in any shape, click a window, button or menu,
 //! pick a colour or measure. Snagster's window covers the screen while it is shown.
 
+use crate::capture::detect::{self, Detail};
 use crate::capture::{CutShape, Object, PickPurpose, Shot};
 use crate::settings::Settings;
 use eframe::egui::{
     self, Align2, Color32, CornerRadius, FontId, Key, PointerButton, Pos2, Rect, Sense, Stroke, StrokeKind, TextureHandle,
     TextureOptions, Vec2, pos2, vec2,
 };
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::Receiver;
 
 pub const ACCENT: Color32 = Color32::from_rgb(79, 124, 255);
 
@@ -48,7 +52,14 @@ pub struct Overlay {
     pub shape: CutShape,
     pub shot: Shot,
     tex: Option<TextureHandle>,
-    objects: Vec<(Rect, String, Vec<(Rect, String)>)>,
+    /// Windows and the controls inside them, in picture pixels.
+    nodes: Vec<Node>,
+    /// The part the mouse wheel stepped to (kept while the mouse stays inside it).
+    picked: Option<Rect>,
+    /// Wheel turns not yet used up.
+    wheel: f32,
+    /// Controls still arriving from the worker that reads the windows, and its stop switch.
+    details: Option<Details>,
     start: Option<Pos2>,
     cur: Option<Pos2>,
     path: Vec<Pos2>,
@@ -58,35 +69,177 @@ pub struct Overlay {
     multi: Vec<Rect>,
 }
 
-fn to_rect(o: &Object, origin: (i32, i32), full: Rect) -> Rect {
+/// A window or a control in it, in picture pixels.
+#[derive(Clone, Debug, PartialEq)]
+struct Node {
+    rect: Rect,
+    label: String,
+    /// Which top-level window it is in (front to back).
+    top: usize,
+    /// 0 for the window itself.
+    depth: usize,
+}
+
+/// An object's desktop rectangle in picture pixels, cut to `clip` (the screen, or its parent).
+fn to_rect(o: &Object, origin: (i32, i32), clip: Rect) -> Rect {
     Rect::from_min_size(
         pos2((o.x - origin.0) as f32, (o.y - origin.1) as f32),
         vec2(o.width as f32, o.height as f32),
     )
-    .intersect(full)
+    .intersect(clip)
+}
+
+/// Too small to aim at.
+fn tiny(r: Rect) -> bool {
+    r.width() < 6.0 || r.height() < 6.0
+}
+
+/// Every window and control as one list, windows front to back, each followed by its
+/// controls. Controls are cut to their parent; tiny or off-screen ones are left out.
+fn flatten(objs: &[Object], origin: (i32, i32), full: Rect) -> Vec<Node> {
+    fn add(kids: &[Object], clip: Rect, top: usize, depth: usize, origin: (i32, i32), out: &mut Vec<Node>) {
+        for c in kids {
+            let r = to_rect(c, origin, clip);
+            if tiny(r) {
+                continue;
+            }
+            out.push(Node { rect: r, label: c.label.clone(), top, depth });
+            add(&c.children, r, top, depth + 1, origin, out);
+        }
+    }
+    let mut out = Vec::new();
+    for (top, o) in objs.iter().enumerate() {
+        let r = to_rect(o, origin, full);
+        if tiny(r) {
+            continue;
+        }
+        out.push(Node { rect: r, label: o.label.clone(), top, depth: 0 });
+        add(&o.children, r, top, 1, origin, &mut out);
+    }
+    out
+}
+
+/// What's under `p`, smallest first and outward to the window: the front window holding `p`,
+/// and (with `deep`) every control of it that holds `p`. Parts that nearly fill the next
+/// bigger one (a client area inside its window) count once, as the bigger.
+fn chain_at(nodes: &[Node], p: Pos2, deep: bool) -> Vec<usize> {
+    let Some(w) = nodes.iter().position(|n| n.depth == 0 && n.rect.contains(p)) else { return Vec::new() };
+    if !deep {
+        return vec![w];
+    }
+    let top = nodes[w].top;
+    let mut under: Vec<usize> = (0..nodes.len()).filter(|&i| nodes[i].top == top && nodes[i].rect.contains(p)).collect();
+    under.sort_by(|&a, &b| {
+        nodes[a].rect.area().total_cmp(&nodes[b].rect.area()).then(nodes[b].depth.cmp(&nodes[a].depth)).then(a.cmp(&b))
+    });
+    let mut out: Vec<usize> = Vec::new();
+    for i in under {
+        match out.last_mut() {
+            Some(last) if nodes[*last].rect.area() >= nodes[i].rect.area() * 0.97 => *last = i,
+            _ => out.push(i),
+        }
+    }
+    out
+}
+
+/// Which step of `chain` to show: the part chosen before if the mouse is still inside it,
+/// else the smallest, then moved `steps` outward (negative: inward).
+fn step_in(chain: &[Rect], before: Option<Rect>, steps: i32) -> usize {
+    if chain.is_empty() {
+        return 0;
+    }
+    let at = before.and_then(|b| chain.iter().position(|r| *r == b)).unwrap_or(0);
+    (at as i32 + steps).clamp(0, chain.len() as i32 - 1) as usize
+}
+
+/// Mouse wheel movement in notches; up (away from you) is positive.
+fn wheel_notches(unit: egui::MouseWheelUnit, dy: f32) -> f32 {
+    match unit {
+        egui::MouseWheelUnit::Line => dy,
+        egui::MouseWheelUnit::Page => dy * 3.0,
+        egui::MouseWheelUnit::Point => dy / 50.0,
+    }
+}
+
+/// The worker reading controls, stopped when the picker closes.
+struct Details {
+    rx: Receiver<Detail>,
+    cancel: Arc<AtomicBool>,
+}
+
+impl Drop for Details {
+    fn drop(&mut self) {
+        self.cancel.store(true, Ordering::Relaxed);
+    }
 }
 
 impl Overlay {
     pub fn new(mode: OverlayMode, shape: CutShape, shot: Shot) -> Self {
         let full = Rect::from_min_size(Pos2::ZERO, vec2(shot.image.width() as f32, shot.image.height() as f32));
-        let objects = shot
-            .objects
-            .iter()
-            .filter_map(|o| {
-                let r = to_rect(o, shot.origin, full);
-                if r.width() < 6.0 || r.height() < 6.0 {
-                    return None;
-                }
-                let kids = o
-                    .children
-                    .iter()
-                    .map(|c| (to_rect(c, shot.origin, full), c.label.clone()))
-                    .filter(|(r, _)| r.width() >= 6.0 && r.height() >= 6.0)
-                    .collect();
-                Some((r, o.label.clone(), kids))
-            })
-            .collect();
-        Self { mode, shape, shot, tex: None, objects, start: None, cur: None, path: Vec::new(), ruler: None, chosen: None, multi: Vec::new() }
+        let nodes = flatten(&shot.objects, shot.origin, full);
+        Self {
+            mode,
+            shape,
+            shot,
+            tex: None,
+            nodes,
+            picked: None,
+            wheel: 0.0,
+            details: None,
+            start: None,
+            cur: None,
+            path: Vec::new(),
+            ruler: None,
+            chosen: None,
+            multi: Vec::new(),
+        }
+    }
+
+    /// Start reading the controls inside the windows on screen (on a worker; the picker
+    /// snaps to whole windows until each one's controls arrive).
+    pub fn read_controls(&mut self, ctx: &egui::Context) {
+        let (w, h) = self.shot.image.dimensions();
+        let view = (self.shot.origin.0, self.shot.origin.1, w, h);
+        let targets = detect::order(&self.shot.objects, self.shot.cursor, view, detect::WINDOWS);
+        let cancel = Arc::new(AtomicBool::new(false));
+        let rx = detect::spawn(targets, self.shot.space, cancel.clone(), Some(ctx.clone()));
+        self.details = Some(Details { rx, cancel });
+    }
+
+    /// Take in the controls that have arrived.
+    fn take_details(&mut self) {
+        let Some(details) = &self.details else { return };
+        let mut changed = false;
+        while let Ok(d) = details.rx.try_recv() {
+            if let Some(o) = self.shot.objects.get_mut(d.index) {
+                o.children = d.children;
+                changed = true;
+            }
+        }
+        if changed {
+            let full = Rect::from_min_size(Pos2::ZERO, vec2(self.shot.image.width() as f32, self.shot.image.height() as f32));
+            self.nodes = flatten(&self.shot.objects, self.shot.origin, full);
+        }
+    }
+
+    /// The part under `p` after `steps` wheel notches: its rectangle, name, and which step
+    /// of how many it is (0 is the smallest).
+    fn pick_at(&mut self, p: Pos2, deep: bool, steps: i32) -> Option<(Rect, String, usize, usize)> {
+        let chain = chain_at(&self.nodes, p, deep);
+        if chain.is_empty() {
+            self.picked = None;
+            return None;
+        }
+        let rects: Vec<Rect> = chain.iter().map(|i| self.nodes[*i].rect).collect();
+        let at = step_in(&rects, self.picked, steps);
+        self.picked = Some(rects[at]);
+        Some((rects[at], self.nodes[chain[at]].label.clone(), at, rects.len()))
+    }
+
+    /// What hovering at `p` (picture pixels) highlights after `wheel` notches, as the picker
+    /// would show it; `whole_window` is Ctrl held. For the button test.
+    pub(crate) fn hover_at(&mut self, p: Pos2, whole_window: bool, wheel: i32) -> Option<String> {
+        self.pick_at(p, !whole_window, wheel).map(|f| f.1)
     }
 
     fn pixel(&self, p: Pos2) -> [u8; 3] {
@@ -94,20 +247,6 @@ impl Overlay {
         let y = (p.y.max(0.0) as u32).min(self.shot.image.height().saturating_sub(1));
         let c = self.shot.image.get_pixel(x, y).0;
         [c[0], c[1], c[2]]
-    }
-
-    /// The window (or, with `objects`, the smallest control) under `p`.
-    fn object_at(&self, p: Pos2, objects: bool) -> Option<(Rect, String)> {
-        let (r, label, kids) = self.objects.iter().find(|(r, _, _)| r.contains(p))?;
-        if objects
-            && let Some((kr, kl)) = kids
-                .iter()
-                .filter(|(kr, _)| kr.contains(p) && kr.area() < r.area() * 0.97)
-                .min_by(|a, b| a.0.area().total_cmp(&b.0.area()))
-        {
-            return Some((*kr, kl.clone()));
-        }
-        Some((*r, label.clone()))
     }
 
     fn purpose(&self) -> Option<PickPurpose> {
@@ -290,7 +429,29 @@ impl Overlay {
         let snapping = s.detect_windows
             && matches!(self.mode, OverlayMode::Window)
             || (s.detect_windows && picking && self.shape == CutShape::Rect && self.start.is_none());
-        let hovered = if snapping { hover.and_then(|h| self.object_at(h, s.detect_objects && !ctrl)) } else { None };
+        self.take_details();
+        // The mouse wheel steps out to the part around the highlighted one, or back in.
+        let turned: f32 = ui.input(|i| {
+            i.events
+                .iter()
+                .map(|e| match e {
+                    egui::Event::MouseWheel { unit, delta, .. } => wheel_notches(*unit, delta.y),
+                    _ => 0.0,
+                })
+                .sum()
+        });
+        let steps = if snapping {
+            self.wheel += turned;
+            let n = self.wheel.trunc();
+            self.wheel -= n;
+            n as i32
+        } else {
+            self.wheel = 0.0;
+            0
+        };
+        let found = if snapping { hover.and_then(|h| self.pick_at(h, s.detect_objects && !ctrl, steps)) } else { None };
+        let level = found.as_ref().map(|f| (f.2, f.3));
+        let hovered = found.map(|f| (f.0, f.1));
 
         let mut outcome = Outcome::Pending;
         let mut label: Option<String> = None;
@@ -432,8 +593,20 @@ impl Overlay {
             label = Some(format!("{} x {}", r.width().round(), r.height().round()));
         } else if let Some((r, title)) = &hovered {
             dim_except(*r);
-            p.rect_stroke(scr_rect(*r), CornerRadius::ZERO, Stroke::new(3.0, ACCENT), StrokeKind::Inside);
-            label = Some(format!("{title}   {} x {}", r.width().round(), r.height().round()));
+            let sr = scr_rect(*r);
+            // A bright outline that shows on dark and light programs alike, and the size.
+            p.rect_stroke(sr, CornerRadius::ZERO, Stroke::new(1.0, Color32::WHITE), StrokeKind::Outside);
+            p.rect_stroke(sr, CornerRadius::ZERO, Stroke::new(3.0, ACCENT), StrokeKind::Inside);
+            let size = format!("{} x {}", r.width().round(), r.height().round());
+            let tag = size_tag(&size, level);
+            let above = sr.min.y - 26.0 > area.min.y;
+            let at = if above { pos2(sr.min.x, sr.min.y - 4.0) } else { pos2(sr.min.x + 4.0, sr.min.y + 4.0) };
+            pill(&p, at, if above { Align2::LEFT_BOTTOM } else { Align2::LEFT_TOP }, &tag, 13.0);
+            if level.is_some_and(|(_, n)| n > 1) {
+                let hint = crate::i18n::t("Click: capture this. Wheel: bigger or smaller part.");
+                pill(&p, pos2(area.center().x, area.min.y + 64.0), Align2::CENTER_TOP, hint, 13.0);
+            }
+            label = Some(format!("{title}   {size}"));
         } else if !fixed && self.mode != OverlayMode::ColorPicker {
             p.rect_filled(scr_rect(full), CornerRadius::ZERO, dim);
         }
@@ -574,6 +747,15 @@ fn magnifier_cells(box_size: f32, zoom: u32) -> f32 {
     if cells as i32 % 2 == 0 { cells - 1.0 } else { cells }
 }
 
+/// The size shown on a highlighted part and, when the wheel can change it, which of the
+/// nested parts it is (1 is the whole window).
+fn size_tag(size: &str, level: Option<(usize, usize)>) -> String {
+    match level {
+        Some((at, n)) if n > 1 => format!("{size}   {}/{n}", n - at),
+        _ => size.to_string(),
+    }
+}
+
 fn pill(p: &egui::Painter, at: Pos2, align: Align2, text: &str, size: f32) {
     let galley = p.layout(text.to_string(), FontId::proportional(size), Color32::WHITE, 900.0);
     let r = align.anchor_size(at, galley.size() + vec2(16.0, 8.0));
@@ -587,12 +769,18 @@ mod tests {
     use image::{Rgba, RgbaImage};
 
     fn obj(x: i32, y: i32, w: u32, h: u32, label: &str, children: Vec<Object>) -> Object {
-        Object { x, y, width: w, height: h, label: label.into(), children }
+        Object { x, y, width: w, height: h, label: label.into(), children, handle: 0, pid: 0 }
     }
 
     fn shot(w: u32, h: u32, origin: (i32, i32), objects: Vec<Object>) -> Shot {
         let image = RgbaImage::from_fn(w, h, |x, y| Rgba([x as u8, y as u8, 7, 255]));
-        Shot { image, origin, objects, title: String::new(), app: String::new(), cursor: None }
+        Shot { image, origin, objects, title: String::new(), app: String::new(), cursor: None, space: detect::Space::default() }
+    }
+
+    /// The label of what is picked at `p` (no wheel).
+    fn at(o: &mut Overlay, p: Pos2, deep: bool) -> Option<String> {
+        o.picked = None;
+        o.pick_at(p, deep, 0).map(|f| f.1)
     }
 
     fn pick(p: PickPurpose) -> Overlay {
@@ -622,34 +810,137 @@ mod tests {
             obj(5000, 10, 100, 100, "Elsewhere", Vec::new()),
         ];
         let o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), objects));
-        assert_eq!(o.objects.len(), 1);
-        assert_eq!(o.objects[0].1, "Window");
-        assert_eq!(o.objects[0].2.len(), 1);
-        assert_eq!(o.objects[0].2[0].1, "Button");
+        let labels: Vec<(&str, usize)> = o.nodes.iter().map(|n| (n.label.as_str(), n.depth)).collect();
+        assert_eq!(labels, [("Window", 0), ("Button", 1)]);
     }
 
     #[test]
-    fn object_at_finds_the_front_window_and_its_smallest_control() {
+    fn the_front_window_and_its_smallest_control_are_picked() {
         let objects = vec![
             obj(10, 10, 100, 80, "Front", vec![obj(20, 20, 60, 40, "Panel", Vec::new()), obj(30, 30, 20, 10, "Button", Vec::new())]),
             obj(0, 0, 200, 100, "Back", Vec::new()),
         ];
-        let o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), objects));
-        let at = pos2(35.0, 33.0);
-        assert_eq!(o.object_at(at, false).unwrap().1, "Front");
-        let (rect, label) = o.object_at(at, true).unwrap();
-        assert_eq!(label, "Button");
+        let mut o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), objects));
+        let p = pos2(35.0, 33.0);
+        assert_eq!(at(&mut o, p, false).unwrap(), "Front");
+        o.picked = None;
+        let (rect, label, step, of) = o.pick_at(p, true, 0).unwrap();
+        assert_eq!((label.as_str(), step, of), ("Button", 0, 3));
         assert_eq!(rect, r(30.0, 30.0, 50.0, 40.0));
-        assert_eq!(o.object_at(pos2(25.0, 70.0), true).unwrap().1, "Front");
-        assert_eq!(o.object_at(pos2(150.0, 50.0), true).unwrap().1, "Back");
+        assert_eq!(at(&mut o, pos2(25.0, 70.0), true).unwrap(), "Front");
+        assert_eq!(at(&mut o, pos2(150.0, 50.0), true).unwrap(), "Back", "the back window shows where the front one doesn't");
     }
 
     #[test]
     fn a_control_that_fills_its_window_is_skipped() {
         let objects = vec![obj(0, 0, 100, 100, "Window", vec![obj(0, 0, 100, 99, "Client", Vec::new())])];
-        let o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), objects));
-        assert_eq!(o.object_at(pos2(50.0, 50.0), true).unwrap().1, "Window");
-        assert!(o.object_at(pos2(150.0, 50.0), true).is_none());
+        let mut o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), objects));
+        assert_eq!(at(&mut o, pos2(50.0, 50.0), true).unwrap(), "Window");
+        assert!(at(&mut o, pos2(150.0, 50.0), true).is_none());
+    }
+
+    /// A window with a toolbar holding a button group holding a button, and a list.
+    fn nested() -> Overlay {
+        let objects = vec![obj(
+            0,
+            0,
+            400,
+            300,
+            "Window",
+            vec![
+                obj(0, 0, 400, 60, "Toolbar", vec![obj(10, 10, 120, 40, "Group", vec![obj(15, 15, 40, 30, "Button: Save", Vec::new())])]),
+                obj(0, 60, 400, 240, "List", vec![obj(0, 60, 400, 20, "Row", Vec::new())]),
+            ],
+        )];
+        Overlay::new(OverlayMode::Window, CutShape::Rect, shot(400, 300, (0, 0), objects))
+    }
+
+    #[test]
+    fn the_wheel_steps_out_to_parents_and_back_in() {
+        let mut o = nested();
+        let p = pos2(20.0, 20.0);
+        let name = |o: &mut Overlay, steps: i32| o.pick_at(p, true, steps).map(|f| f.1).unwrap();
+        assert_eq!(name(&mut o, 0), "Button: Save");
+        assert_eq!(name(&mut o, 1), "Group");
+        assert_eq!(name(&mut o, 1), "Toolbar");
+        assert_eq!(name(&mut o, 1), "Window");
+        assert_eq!(name(&mut o, 5), "Window", "it stops at the window");
+        assert_eq!(name(&mut o, -2), "Group");
+        assert_eq!(name(&mut o, -9), "Button: Save", "and at the smallest");
+        // Moving within the chosen part keeps it; moving out of it starts again at the smallest.
+        assert_eq!(name(&mut o, 2), "Toolbar");
+        assert_eq!(o.pick_at(pos2(300.0, 30.0), true, 0).unwrap().1, "Toolbar");
+        assert_eq!(o.pick_at(pos2(200.0, 70.0), true, 0).unwrap().1, "Row");
+        // Off every window, nothing is kept.
+        let mut o = nested();
+        o.pick_at(p, true, 1);
+        assert!(o.pick_at(pos2(500.0, 500.0), true, 0).is_none());
+        assert!(o.picked.is_none());
+    }
+
+    #[test]
+    fn whole_window_ignores_the_controls() {
+        let mut o = nested();
+        let (rect, label, _, of) = o.pick_at(pos2(20.0, 20.0), false, 0).unwrap();
+        assert_eq!((label.as_str(), of), ("Window", 1));
+        assert_eq!(rect, r(0.0, 0.0, 400.0, 300.0));
+    }
+
+    #[test]
+    fn controls_are_cut_to_their_parent_and_the_screen() {
+        // A list row reaching past its list, and a window hanging off the screen's left edge.
+        let objects = vec![obj(-50, 10, 200, 80, "Window", vec![obj(-50, 20, 100, 60, "List", vec![obj(-60, 30, 400, 10, "Row", Vec::new())])])];
+        let o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(300, 100, (0, 0), objects));
+        let rects: Vec<Rect> = o.nodes.iter().map(|n| n.rect).collect();
+        assert_eq!(rects, [r(0.0, 10.0, 150.0, 90.0), r(0.0, 20.0, 50.0, 80.0), r(0.0, 30.0, 50.0, 40.0)]);
+        // Pictures of a second screen: desktop positions move by its origin.
+        let objects = vec![obj(1930, 20, 100, 50, "Right", vec![obj(1940, 30, 20, 20, "Button", Vec::new())])];
+        let o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(300, 100, (1920, 0), objects));
+        assert_eq!(o.nodes[1].rect, r(20.0, 30.0, 40.0, 50.0));
+    }
+
+    #[test]
+    fn controls_that_arrive_later_are_used() {
+        let mut o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), vec![obj(0, 0, 200, 100, "Window", Vec::new())]));
+        assert_eq!(at(&mut o, pos2(15.0, 15.0), true).unwrap(), "Window");
+        let (tx, rx) = std::sync::mpsc::channel();
+        let cancel = Arc::new(AtomicBool::new(false));
+        o.details = Some(Details { rx, cancel: cancel.clone() });
+        tx.send(Detail { index: 0, children: vec![obj(10, 10, 30, 20, "Button", Vec::new())] }).unwrap();
+        tx.send(Detail { index: 7, children: Vec::new() }).unwrap();
+        o.take_details();
+        assert_eq!(at(&mut o, pos2(15.0, 15.0), true).unwrap(), "Button");
+        // Closing the picker stops the worker.
+        drop(o);
+        assert!(cancel.load(Ordering::Relaxed));
+    }
+
+    #[test]
+    fn z_order_decides_between_overlapping_windows() {
+        let objects = vec![
+            obj(50, 0, 100, 100, "Popup menu", vec![obj(55, 5, 90, 20, "Menu item", Vec::new())]),
+            obj(0, 0, 200, 100, "Editor", vec![obj(60, 5, 80, 20, "Behind the menu", Vec::new())]),
+        ];
+        let mut o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), objects));
+        assert_eq!(at(&mut o, pos2(70.0, 10.0), true).unwrap(), "Menu item");
+        assert_eq!(at(&mut o, pos2(10.0, 10.0), true).unwrap(), "Editor");
+    }
+
+    #[test]
+    fn wheel_turns_become_notches() {
+        use egui::MouseWheelUnit::*;
+        assert_eq!(wheel_notches(Line, 1.0), 1.0);
+        assert_eq!(wheel_notches(Line, -2.0), -2.0);
+        assert_eq!(wheel_notches(Point, 50.0), 1.0);
+        assert_eq!(wheel_notches(Page, 1.0), 3.0);
+        assert_eq!(step_in(&[], None, 3), 0);
+        let rs = [r(0.0, 0.0, 1.0, 1.0), r(0.0, 0.0, 2.0, 2.0)];
+        assert_eq!(step_in(&rs, Some(r(5.0, 5.0, 6.0, 6.0)), 0), 0, "a part the mouse left is forgotten");
+        assert_eq!(step_in(&rs, Some(rs[1]), 0), 1);
+        assert_eq!(size_tag("40 x 30", Some((0, 4))), "40 x 30   4/4");
+        assert_eq!(size_tag("40 x 30", Some((3, 4))), "40 x 30   1/4");
+        assert_eq!(size_tag("40 x 30", Some((0, 1))), "40 x 30");
+        assert_eq!(size_tag("40 x 30", None), "40 x 30");
     }
 
     #[test]

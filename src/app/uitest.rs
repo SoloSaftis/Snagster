@@ -539,6 +539,67 @@ impl UiTest {
             a.set_zoom(c, Some(0.0));
             a.set_zoom(c, None);
         }));
+        // The picker on a made-up screen: a window with a toolbar, a button group and a button.
+        s.push(once("picker: a click snaps to the control under the mouse, the wheel steps out", |a, _| {
+            use crate::capture::{CutShape, Object, Shot, detect};
+            let o = |x, y, w, h, label: &str, children| Object { x, y, width: w, height: h, label: label.into(), children, handle: 0, pid: 0 };
+            let objects = vec![o(
+                100,
+                100,
+                600,
+                400,
+                "Window",
+                vec![o(100, 100, 600, 60, "Toolbar", vec![o(110, 110, 200, 40, "Group", vec![o(115, 115, 60, 30, "Button: Save", Vec::new())])])],
+            )];
+            let image = image::RgbaImage::from_fn(800, 600, |x, y| image::Rgba([(x / 4) as u8, (y / 3) as u8, 90, 255]));
+            let shot = Shot { image, origin: (0, 0), objects, title: "Test".into(), app: String::new(), cursor: None, space: detect::Space::default() };
+            let mut ov = Overlay::new(OverlayMode::Window, CutShape::Rect, shot);
+            let p = pos2(130.0, 130.0);
+            assert_eq!(ov.hover_at(p, false, 0).as_deref(), Some("Button: Save"));
+            assert_eq!(ov.hover_at(p, false, 1).as_deref(), Some("Group"));
+            assert_eq!(ov.hover_at(p, false, 5).as_deref(), Some("Window"));
+            assert_eq!(ov.hover_at(p, false, -1).as_deref(), Some("Toolbar"));
+            assert_eq!(ov.hover_at(p, true, 0).as_deref(), Some("Window"), "Ctrl takes the whole window");
+            assert_eq!(ov.hover_at(pos2(750.0, 550.0), false, 0), None);
+            a.overlay = Some(ov);
+        }));
+        s.push((
+            "picker: the frozen screen is drawn".to_string(),
+            Box::new(|a: &mut SnagApp, _: &egui::Context| {
+                assert!(a.overlay.is_some(), "the picker closed by itself");
+                true
+            }),
+        ));
+        s.push(once("picker: close", |a, _| {
+            a.overlay = None;
+        }));
+        s.push(once("scrolling capture: a page with a sticky header is stitched once, the end is found", |_, _| {
+            use crate::capture::stitch::{Step, Stitcher};
+            // A 2000-row page under a 30-row header that stays put, seen 200 rows at a time.
+            let page = |y: u32, x: u32| image::Rgba([(y % 251) as u8, (y / 251 * 30) as u8, (x * 4) as u8, 255]);
+            let view = |top: u32| image::RgbaImage::from_fn(60, 200, |x, y| if y < 30 { image::Rgba([255, 0, 0, 255]) } else { page(top + y - 30, x) });
+            let mut st = Stitcher::new(view(0), 100_000);
+            for top in [80, 160, 240] {
+                assert_eq!(st.push(&view(top)), Step::Added(80));
+            }
+            assert_eq!(st.push(&view(240)), Step::Same);
+            assert_eq!(st.push(&view(240)), Step::Same);
+            assert_eq!(st.still(), 2, "two unchanged pictures end it");
+            let out = st.finish();
+            assert_eq!(out.height(), 200 + 240);
+            assert_eq!(*out.get_pixel(5, 10), image::Rgba([255, 0, 0, 255]));
+            assert_eq!(*out.get_pixel(5, 30 + 300), page(300, 5));
+        }));
+        s.push(once("scrolling capture: the settings reach the capture", |a, _| {
+            a.settings.scroll_notches = 5;
+            a.settings.scroll_max_height = 9000;
+            a.settings.scroll_from_top = false;
+            let o = a.scroll_options(true, false, crate::capture::detect::Space::default());
+            assert!(o.horizontal && !o.manual && !o.from_start);
+            assert_eq!((o.notches, o.max_length, o.delay_ms, o.max_steps), (5, 9000, a.settings.scroll_wait_ms, a.settings.scroll_max_steps));
+            let d = crate::settings::Settings::default();
+            (a.settings.scroll_notches, a.settings.scroll_max_height, a.settings.scroll_from_top) = (d.scroll_notches, d.scroll_max_height, d.scroll_from_top);
+        }));
         UiTest { steps: s, at: 0, tries: 0, waiting: None, frames: 0, passed: 0, failed: Vec::new(), dir }
     }
 

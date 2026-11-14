@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "가이드에 넣을 내용이 아직 없습니다.",
   "Try the tools on a sample picture": "샘플 사진으로 도구를 사용해 보세요",
   "Write the time as hh:mm, for example 14:30.": "시간을 hh:mm 형식으로 입력하세요. 예: 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "메일 프로그램이 열려 있습니다. 폴더에서 사진을 메일로 끌어다 놓으세요."
+  "Your mail program is open; drag the picture from the folder into the email.": "메일 프로그램이 열려 있습니다. 폴더에서 사진을 메일로 끌어다 놓으세요.",
+  "Click: capture this. Wheel: bigger or smaller part.": "클릭: 이 부분 캡처. 휠: 더 큰 부분 또는 더 작은 부분.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "스크롤 중: 사진 {frames}장, {height}픽셀. Esc로 중지.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster는 여기서 다른 프로그램을 스크롤할 수 없습니다. 직접 스크롤한 다음 중지을(를) 누르세요.",
+  "Most scroll steps": "최대 스크롤 횟수",
+  "Wait after each scroll (ms)": "스크롤할 때마다 대기 (ms)",
+  "Scroll by": "스크롤 양",
+  "wheel notches each time": "회당 휠 눈금",
+  "Stop at a height of": "다음 높이에서 중지",
+  "Scroll to the top first": "먼저 맨 위로 스크롤"
  }
 }

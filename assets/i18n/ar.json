@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "لا يوجد شيء لوضعه في دليل بعد.",
   "Try the tools on a sample picture": "جرّب الأدوات على صورة نموذجية",
   "Write the time as hh:mm, for example 14:30.": "اكتب الوقت بالصيغة hh:mm، مثل 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "برنامج البريد مفتوح؛ اسحب الصورة من المجلد إلى البريد الإلكتروني."
+  "Your mail program is open; drag the picture from the folder into the email.": "برنامج البريد مفتوح؛ اسحب الصورة من المجلد إلى البريد الإلكتروني.",
+  "Click: capture this. Wheel: bigger or smaller part.": "انقر: التقط هذا. العجلة: جزء أكبر أو أصغر.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "جارٍ التمرير: {frames} صور، {height} بكسل. Esc للإيقاف.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "لا يستطيع Snagster تمرير البرامج الأخرى هنا، لذا مرّر بنفسك ثم اضغط إيقاف.",
+  "Most scroll steps": "أقصى عدد لخطوات التمرير",
+  "Wait after each scroll (ms)": "الانتظار بعد كل تمرير (مللي ثانية)",
+  "Scroll by": "التمرير بمقدار",
+  "wheel notches each time": "نقرات العجلة في كل مرة",
+  "Stop at a height of": "التوقف عند ارتفاع",
+  "Scroll to the top first": "التمرير إلى الأعلى أولاً"
  }
 }

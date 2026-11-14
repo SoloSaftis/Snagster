@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Mana ima guíapi churanapaq kanchu.",
   "Try the tools on a sample picture": "Llamk'anakunata yachaykuy huk ejemplo rikch'api",
   "Write the time as hh:mm, for example 14:30.": "Pachata hh:mm hina qillqay, ejemplopaq 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Correo programayki kichasqa; rikch'ata folderpa ukunmanta correoman aysay."
+  "Your mail program is open; drag the picture from the folder into the email.": "Correo programayki kichasqa; rikch'ata folderpa ukunmanta correoman aysay.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Ñit'iy: kayta hap'iy. Muyu: aswan hatun utaq aswan huch'uy t'aqa.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Kuyuchichkan: {frames} siq'ikuna, {height} pixel. Esc sayachin.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster manam kaypi huk programakunata kuyuchiyta atinchu, chayrayku qam kikiyki kuyuchiy hinaspa Sayachiy ñit'iy.",
+  "Most scroll steps": "Aswan achka kuyuchiy purikuna",
+  "Wait after each scroll (ms)": "Sapa kuyuchiy qhipaman suyay (ms)",
+  "Scroll by": "Kuyuchiy",
+  "wheel notches each time": "muyup k'utunkuna sapa kuti",
+  "Stop at a height of": "Kay sayayninpi sayay",
+  "Scroll to the top first": "Ñawpaqta hanaqman kuyuchiy"
  }
 }

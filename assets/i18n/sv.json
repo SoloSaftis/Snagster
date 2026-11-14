@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Det finns inget att lägga i en guide än.",
   "Try the tools on a sample picture": "Prova verktygen på en exempelbild",
   "Write the time as hh:mm, for example 14:30.": "Skriv tiden som hh:mm, till exempel 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Ditt e-postprogram är öppet. Dra bilden från mappen in i mejlet."
+  "Your mail program is open; drag the picture from the folder into the email.": "Ditt e-postprogram är öppet. Dra bilden från mappen in i mejlet.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Klicka: ta den här. Hjul: större eller mindre del.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Rullar: {frames} bilder, {height} pixlar. Esc stoppar.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster kan inte rulla andra program här, så rulla själv och tryck på Stopp.",
+  "Most scroll steps": "Flest rullningssteg",
+  "Wait after each scroll (ms)": "Vänta efter varje rullning (ms)",
+  "Scroll by": "Rulla",
+  "wheel notches each time": "hjulsteg varje gång",
+  "Stop at a height of": "Stoppa vid en höjd av",
+  "Scroll to the top first": "Rulla till toppen först"
  }
 }

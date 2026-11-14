@@ -125,8 +125,18 @@ impl SnagApp {
                         ui.add(egui::Slider::new(&mut s.dim_alpha, 0..=220).text("Darken the rest of the screen"));
                         ui.add_space(6.0);
                         ui.label(RichText::new(crate::i18n::t("Scrolling capture")).strong());
-                        ui.add(egui::Slider::new(&mut s.scroll_max_steps, 5..=150).text("Most scroll steps"));
-                        ui.add(egui::Slider::new(&mut s.scroll_wait_ms, 100..=1500).text("Wait after each scroll (ms)"));
+                        ui.add(egui::Slider::new(&mut s.scroll_max_steps, 5..=150).text(crate::i18n::t("Most scroll steps")));
+                        ui.add(egui::Slider::new(&mut s.scroll_wait_ms, 100..=1500).text(crate::i18n::t("Wait after each scroll (ms)")));
+                        ui.horizontal(|ui| {
+                            ui.label(crate::i18n::t("Scroll by"));
+                            ui.add(egui::DragValue::new(&mut s.scroll_notches).range(1..=20));
+                            ui.label(crate::i18n::t("wheel notches each time"));
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label(crate::i18n::t("Stop at a height of"));
+                            ui.add(egui::DragValue::new(&mut s.scroll_max_height).range(1000..=60000).speed(100).suffix(" px"));
+                        });
+                        ui.checkbox(&mut s.scroll_from_top, crate::i18n::t("Scroll to the top first"));
                     }
                     SettingsTab::Recording => {
                         if self.encoders.is_none() {

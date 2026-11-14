@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Wala pang mailalagay sa gabay.",
   "Try the tools on a sample picture": "Subukan ang mga tool sa isang sample na larawan",
   "Write the time as hh:mm, for example 14:30.": "Isulat ang oras bilang hh:mm, halimbawa 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Bukas ang iyong mail program; i-drag ang larawan mula sa folder papunta sa email."
+  "Your mail program is open; drag the picture from the folder into the email.": "Bukas ang iyong mail program; i-drag ang larawan mula sa folder papunta sa email.",
+  "Click: capture this. Wheel: bigger or smaller part.": "I-click: kunan ito. Gulong: mas malaki o mas maliit na bahagi.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Nag-i-scroll: {frames} larawan, {height} pixel. Pinapahinto ng Esc.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Hindi kayang i-scroll ng Snagster ang ibang program dito, kaya ikaw na ang mag-scroll at pindutin ang Ihinto.",
+  "Most scroll steps": "Pinakamaraming hakbang ng pag-scroll",
+  "Wait after each scroll (ms)": "Maghintay pagkatapos ng bawat scroll (ms)",
+  "Scroll by": "Mag-scroll nang",
+  "wheel notches each time": "ikot ng gulong bawat beses",
+  "Stop at a height of": "Huminto sa taas na",
+  "Scroll to the top first": "Mag-scroll muna sa itaas"
  }
 }

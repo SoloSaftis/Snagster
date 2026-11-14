@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Nu există încă nimic de pus într-un ghid.",
   "Try the tools on a sample picture": "Încercați uneltele pe o imagine exemplu",
   "Write the time as hh:mm, for example 14:30.": "Scrieți ora ca hh:mm, de exemplu 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Programul de e-mail este deschis; trageți imaginea din dosar în e-mail."
+  "Your mail program is open; drag the picture from the folder into the email.": "Programul de e-mail este deschis; trageți imaginea din dosar în e-mail.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Clic: capturează asta. Rotiță: parte mai mare sau mai mică.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Derulare: {frames} imagini, {height} pixeli. Esc oprește.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster nu poate derula alte programe aici, așa că derulați singur și apăsați Stop.",
+  "Most scroll steps": "Cei mai mulți pași de derulare",
+  "Wait after each scroll (ms)": "Așteaptă după fiecare derulare (ms)",
+  "Scroll by": "Derulează cu",
+  "wheel notches each time": "trepte de rotiță de fiecare dată",
+  "Stop at a height of": "Oprește la o înălțime de",
+  "Scroll to the top first": "Derulează mai întâi până sus"
  }
 }

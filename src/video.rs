@@ -7,7 +7,8 @@
 //! time. When that path isn't available it falls back to copying the screen with GDI, and then
 //! to Windows' software encoder.
 //!
-//! Linux and macOS: the screen is grabbed with xcap and encoded with OpenH264 into an MP4.
+//! Linux and macOS: the screen is grabbed with xcap and encoded by `encode::open_video` (the
+//! graphics chip through VideoToolbox or VA-API when it can, otherwise OpenH264) into an MP4.
 //!
 //! Written from the Windows SDK documentation; no code was taken from other recorders.
 
@@ -352,8 +353,97 @@ pub fn encoders() -> Vec<EncoderInfo> {
     }
     #[cfg(not(windows))]
     {
-        vec![EncoderInfo { name: "OpenH264 (software)".into(), codec: "H.264", hardware: false, vendor: String::new() }]
+        // What `encode::open_video` can pick for an MP4 here: VideoToolbox or VA-API when the
+        // graphics chip has it, and OpenH264 always.
+        crate::encode::available()
+            .into_iter()
+            .filter(|(c, _)| *c == crate::encode::Codec::H264)
+            .map(|(c, n)| EncoderInfo { vendor: crate::encode::vendor_in(&n.name).to_string(), name: n.name, codec: c.label(), hardware: n.hardware })
+            .collect()
     }
+}
+
+/// For `--video-test`: the encoders `encode::open_video` can use (live streaming everywhere,
+/// recording off Windows), then how fast each one in line encodes 1080p H.264 here. A
+/// graphics-chip or system encoder that won't start is skipped; OpenH264 must always work.
+/// Returns the lines to print and how many checks failed.
+pub fn encoder_report(quick: bool) -> (Vec<String>, u32) {
+    use crate::encode::{Codec, Os};
+    let mut lines = vec!["Encoders that hand back frames (live streaming; recording off Windows):".to_string()];
+    for (c, n) in crate::encode::available() {
+        lines.push(format!("  {:5} {:9} {}", c.label(), if n.hardware { "hardware" } else { "software" }, n.name));
+    }
+    let frames = if quick { 90 } else { 300 };
+    let mut failed = 0;
+    for b in crate::encode::plan(Os::current(), Codec::H264, true) {
+        match crate::encode::speed(b, 1920, 1080, frames) {
+            Ok((n, fps)) => {
+                let vendor = crate::encode::vendor_in(&n.name);
+                let place = match (n.hardware, vendor) {
+                    (false, _) => String::new(),
+                    (true, "") => " (graphics chip)".to_string(),
+                    (true, v) => format!(" ({v} graphics chip)"),
+                };
+                lines.push(format!("ok   1920x1080 H.264 encode speed via {}: {fps:.0} fps{place}", n.name));
+            }
+            Err(e) if b != crate::encode::Backend::OpenH264 => lines.push(format!("skip {}: {e}", b.label())),
+            Err(e) => {
+                failed += 1;
+                lines.push(format!("FAIL {}: {e}", b.label()));
+            }
+        }
+    }
+    (lines, failed)
+}
+
+/// Holds one encoded frame back until the next arrives, so each frame in the file lasts until
+/// the next one starts (frames the encoder skipped or the clock dropped don't shorten the
+/// video). Lengths are in 100 ns units, as the MP4 track's time scale.
+#[cfg(any(not(windows), test))]
+struct Spacer {
+    pending: Option<crate::encode::VideoPacket>,
+    frame_100ns: i64,
+}
+
+#[cfg(any(not(windows), test))]
+impl Spacer {
+    fn new(fps: u32) -> Spacer {
+        Spacer { pending: None, frame_100ns: 10_000_000 / fps.clamp(1, 120) as i64 }
+    }
+
+    /// The frame before `p`, with its length, once `p` has come.
+    fn push(&mut self, p: crate::encode::VideoPacket) -> Option<(crate::encode::VideoPacket, i64)> {
+        let prev = self.pending.replace(p)?;
+        let next = self.pending.as_ref().map_or(prev.pts_us, |n| n.pts_us);
+        let d = ((next - prev.pts_us) * 10).max(1);
+        Some((prev, d))
+    }
+
+    /// The last frame, one frame long.
+    fn last(&mut self) -> Option<(crate::encode::VideoPacket, i64)> {
+        self.pending.take().map(|p| (p, self.frame_100ns))
+    }
+}
+
+/// An Annex-B access unit as an MP4 sample (4-byte lengths), without the SPS and PPS (which
+/// go into the track header), and the SPS and PPS when it carried them.
+#[cfg(any(not(windows), test))]
+fn avcc_sample(au: &[u8]) -> (Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>) {
+    use crate::encode::{Codec, nal_type, split_annex_b};
+    let (mut data, mut sps, mut pps) = (Vec::with_capacity(au.len() + 16), None, None);
+    for n in split_annex_b(au) {
+        match nal_type(Codec::H264, n) {
+            7 => sps = Some(n.to_vec()),
+            8 => pps = Some(n.to_vec()),
+            // Access unit delimiters don't belong in MP4 samples.
+            9 => {}
+            _ => {
+                data.extend_from_slice(&(n.len() as u32).to_be_bytes());
+                data.extend_from_slice(n);
+            }
+        }
+    }
+    (data, sps, pps)
 }
 
 /// Read a saved video back: its size, frame count, length and first frame.
@@ -1353,7 +1443,6 @@ mod soft {
         done.width = w;
         done.height = h;
         done.capture = "screen grab";
-        done.encoder = "OpenH264 (software)".into();
         if opts.audio != crate::audio::AudioSource::None {
             // Sound recording is Windows-only so far; say so instead of leaving it out quietly.
             done.note = super::sound_or_note::<()>(Err("sound recording isn't available on this system yet".into())).1;
@@ -1362,20 +1451,30 @@ mod soft {
     }
 
     fn encode(opts: &VideoOpts, rect: (i32, i32, u32, u32), stop: &AtomicBool, pause: &AtomicBool, done: &mut VideoDone) -> Result<(), String> {
-        use openh264::encoder::{BitRate, Encoder, EncoderConfig, FrameRate};
-        use openh264::formats::{RgbSliceU8, YUVBuffer};
+        use crate::encode::{Codec, VideoConfig};
         let (x, y, w, h) = rect;
         let fps = opts.fps.clamp(1, 120);
-        let cfg = EncoderConfig::new()
-            .bitrate(BitRate::from_bps(bitrate(w, h, fps, opts.format, opts.quality)))
-            .max_frame_rate(FrameRate::from_hz(fps as f32));
-        let api = openh264::OpenH264API::from_source();
-        let mut enc = Encoder::with_api_config(api, cfg).map_err(|e| e.to_string())?;
+        // The graphics chip's encoder when there is one (VideoToolbox, VA-API), else OpenH264.
+        let cfg = VideoConfig {
+            width: w,
+            height: h,
+            fps,
+            bitrate_bps: bitrate(w, h, fps, opts.format, opts.quality),
+            keyframe_every_s: 2,
+            codec: Codec::H264,
+            prefer_hardware: opts.hardware,
+            low_latency: true,
+        };
+        let mut enc = crate::encode::open_video(&cfg)?;
+        let name = enc.name();
+        done.encoder = name.name;
+        done.hardware = name.hardware;
         let file = std::fs::File::create(&opts.path).map_err(|e| e.to_string())?;
-        let mut mux = Mux::new(std::io::BufWriter::new(file), w, h, fps)?;
+        let mut mux = Mux::new(std::io::BufWriter::new(file), w, h)?;
+        let mut spacer = Spacer::new(fps);
         let mut clock = Clock::new(fps);
         let mut first = true;
-        let mut rgb = vec![0u8; (w * h * 3) as usize];
+        let mut rgba = vec![0u8; (w * h * 4) as usize];
         loop {
             if !first && (stop.load(Ordering::Relaxed) || clock.over(opts.max_s)) {
                 break;
@@ -1393,14 +1492,11 @@ mod soft {
             }
             if let Some(feed) = &opts.frames {
                 // Studio frames come as BGRA.
-                let mut bgra = vec![0u8; (w * h * 4) as usize];
-                if !feed(&mut bgra) {
+                if !feed(&mut rgba) {
                     break;
                 }
-                for (d, s) in rgb.chunks_exact_mut(3).zip(bgra.chunks_exact(4)) {
-                    d[0] = s[2];
-                    d[1] = s[1];
-                    d[2] = s[0];
+                for p in rgba.chunks_exact_mut(4) {
+                    p.swap(0, 2);
                 }
             } else {
                 let mut img = crate::capture::grab_rect(x, y, w, h)?;
@@ -1410,78 +1506,55 @@ mod soft {
                     crate::capture::stamp_pointer(&mut img, ((c.0 - x) as f32, (c.1 - y) as f32));
                 }
                 let img = if img.dimensions() != (w, h) { image::imageops::resize(&img, w, h, image::imageops::FilterType::Nearest) } else { img };
-                for (d, s) in rgb.chunks_exact_mut(3).zip(img.as_raw().chunks_exact(4)) {
-                    d.copy_from_slice(&s[..3]);
+                rgba.copy_from_slice(img.as_raw());
+            }
+            let (t, _) = clock.stamp(fps);
+            for p in enc.encode(&rgba, t / 10, false)? {
+                if let Some((p, d)) = spacer.push(p) {
+                    mux.frame(&p, d)?;
                 }
             }
-            let yuv = YUVBuffer::from_rgb_source(RgbSliceU8::new(&rgb, (w as usize, h as usize)));
-            let bits = enc.encode(&yuv).map_err(|e| e.to_string())?;
-            let (t, d) = clock.stamp(fps);
-            let mut nals = Vec::new();
-            for l in 0..bits.num_layers() {
-                let layer = bits.layer(l).ok_or("missing layer")?;
-                for n in 0..layer.nal_count() {
-                    nals.push(layer.nal_unit(n).ok_or("missing NAL")?.to_vec());
-                }
-            }
-            mux.frame(&nals, t, d)?;
             first = false;
             done.frames += 1;
             clock.advance();
+        }
+        for p in enc.finish()? {
+            if let Some((p, d)) = spacer.push(p) {
+                mux.frame(&p, d)?;
+            }
+        }
+        if let Some((p, d)) = spacer.last() {
+            mux.frame(&p, d)?;
         }
         mux.finish()?;
         done.seconds = clock.recorded.as_secs_f32();
         Ok(())
     }
 
-    /// Writes H.264 frames into an MP4 file with the `mp4` crate.
-    struct Mux<W: std::io::Write + std::io::Seek> {
+    /// Writes H.264 frames (Annex-B access units) into an MP4 file with the `mp4` crate; the
+    /// track starts once the first SPS and PPS have come.
+    pub(super) struct Mux<W: std::io::Write + std::io::Seek> {
         w: Option<W>,
         mp4: Option<mp4::Mp4Writer<W>>,
         width: u32,
         height: u32,
-        fps: u32,
         sps: Vec<u8>,
         pps: Vec<u8>,
     }
 
-    /// Strip the Annex B start code (00 00 01 or 00 00 00 01).
-    fn payload(n: &[u8]) -> &[u8] {
-        if n.starts_with(&[0, 0, 0, 1]) {
-            &n[4..]
-        } else if n.starts_with(&[0, 0, 1]) {
-            &n[3..]
-        } else {
-            n
-        }
-    }
-
     impl<W: std::io::Write + std::io::Seek> Mux<W> {
-        fn new(w: W, width: u32, height: u32, fps: u32) -> Result<Self, String> {
-            Ok(Mux { w: Some(w), mp4: None, width, height, fps, sps: Vec::new(), pps: Vec::new() })
+        pub(super) fn new(w: W, width: u32, height: u32) -> Result<Self, String> {
+            Ok(Mux { w: Some(w), mp4: None, width, height, sps: Vec::new(), pps: Vec::new() })
         }
 
-        fn frame(&mut self, nals: &[Vec<u8>], t: i64, d: i64) -> Result<(), String> {
-            let mut data = Vec::new();
-            let mut key = false;
-            for n in nals {
-                let p = payload(n);
-                if p.is_empty() {
-                    continue;
-                }
-                match p[0] & 0x1f {
-                    7 => self.sps = p.to_vec(),
-                    8 => self.pps = p.to_vec(),
-                    5 => {
-                        key = true;
-                        data.extend_from_slice(&(p.len() as u32).to_be_bytes());
-                        data.extend_from_slice(p);
-                    }
-                    _ => {
-                        data.extend_from_slice(&(p.len() as u32).to_be_bytes());
-                        data.extend_from_slice(p);
-                    }
-                }
+        /// One frame lasting `d` (100 ns units).
+        pub(super) fn frame(&mut self, p: &crate::encode::VideoPacket, d: i64) -> Result<(), String> {
+            let (data, sps, pps) = avcc_sample(&p.data);
+            if let Some(s) = sps {
+                self.sps = s;
+            }
+            if let Some(s) = pps {
+                self.pps = s;
             }
             if self.mp4.is_none() {
                 if self.sps.is_empty() || self.pps.is_empty() {
@@ -1513,7 +1586,6 @@ mod soft {
                 })
                 .map_err(|e| e.to_string())?;
                 self.mp4 = Some(m);
-                let _ = self.fps;
             }
             if data.is_empty() {
                 return Ok(());
@@ -1521,12 +1593,12 @@ mod soft {
             let m = self.mp4.as_mut().ok_or("no file")?;
             m.write_sample(
                 1,
-                &mp4::Mp4Sample { start_time: t as u64, duration: d as u32, rendering_offset: 0, is_sync: key, bytes: data.into() },
+                &mp4::Mp4Sample { start_time: (p.pts_us * 10) as u64, duration: d.max(1) as u32, rendering_offset: 0, is_sync: p.keyframe, bytes: data.into() },
             )
             .map_err(|e| e.to_string())
         }
 
-        fn finish(mut self) -> Result<(), String> {
+        pub(super) fn finish(mut self) -> Result<(), String> {
             match self.mp4.take() {
                 Some(mut m) => m.write_end().map_err(|e| e.to_string()),
                 None => Err("no frames were recorded".into()),
@@ -1859,17 +1931,81 @@ mod tests {
 
     #[test]
     fn there_is_always_an_encoder_listed() {
-        // Off Windows this is the built-in software encoder; on Windows it asks Media Foundation,
-        // which every desktop Windows has.
+        // Off Windows: the graphics chip's H.264 encoder where there is one, and the built-in
+        // software encoder last. On Windows it asks Media Foundation, which every desktop
+        // Windows has.
         let list = encoders();
         if cfg!(not(windows)) {
-            assert_eq!(list.len(), 1);
-            assert!(!list[0].hardware);
-            assert_eq!(list[0].codec, "H.264");
+            let last = list.last().expect("OpenH264 at least");
+            assert!(!last.hardware);
+            assert_eq!(last.name, "OpenH264 (software)");
+            assert!(list.iter().all(|e| e.codec == "H.264"));
         }
         for e in &list {
             assert!(!e.name.is_empty());
         }
+    }
+
+    fn packet(data: Vec<u8>, pts_us: i64, keyframe: bool) -> crate::encode::VideoPacket {
+        crate::encode::VideoPacket { data, pts_us, dts_us: pts_us, keyframe }
+    }
+
+    #[test]
+    fn each_frame_lasts_until_the_next_one() {
+        let mut s = Spacer::new(30);
+        assert!(s.push(packet(vec![1], 0, true)).is_none(), "the first waits for the second");
+        let (p, d) = s.push(packet(vec![2], 33_333, false)).unwrap();
+        assert_eq!((p.data, d), (vec![1], 333_330));
+        // A dropped frame: the one before lasts twice as long.
+        let (p, d) = s.push(packet(vec![3], 100_000, false)).unwrap();
+        assert_eq!((p.data, d), (vec![2], 666_670));
+        let (p, d) = s.last().unwrap();
+        assert_eq!((p.data, d), (vec![3], 333_333), "the last one lasts one frame");
+        assert!(s.last().is_none());
+        // Equal times never give a zero length.
+        let mut s = Spacer::new(60);
+        s.push(packet(vec![1], 5, true));
+        assert_eq!(s.push(packet(vec![2], 5, false)).unwrap().1, 1);
+    }
+
+    #[test]
+    fn access_units_become_mp4_samples_and_give_up_their_parameter_sets() {
+        let au = [0, 0, 0, 1, 0x09, 0xf0, 0, 0, 0, 1, 0x67, 1, 2, 0, 0, 0, 1, 0x68, 3, 0, 0, 1, 0x06, 7, 0, 0, 0, 1, 0x65, 8, 9];
+        let (data, sps, pps) = avcc_sample(&au);
+        assert_eq!(sps, Some(vec![0x67, 1, 2]));
+        assert_eq!(pps, Some(vec![0x68, 3]));
+        assert_eq!(data, vec![0, 0, 0, 2, 0x06, 7, 0, 0, 0, 3, 0x65, 8, 9], "SEI and slice stay, delimiter goes");
+        let (data, sps, pps) = avcc_sample(&[0, 0, 1, 0x41, 5]);
+        assert_eq!((data, sps, pps), (vec![0, 0, 0, 2, 0x41, 5], None, None));
+    }
+
+    /// The whole Linux/macOS recording path minus the screen: frames from the encoder, through
+    /// the spacer, into an MP4 that reads back with every frame and the right length.
+    #[cfg(not(windows))]
+    #[test]
+    fn encoded_frames_make_a_readable_mp4() {
+        use crate::encode::{Codec, VideoConfig};
+        let c = VideoConfig { width: 128, height: 96, fps: 30, bitrate_bps: 4_000_000, keyframe_every_s: 1, codec: Codec::H264, prefer_hardware: false, low_latency: true };
+        let mut e = crate::encode::open_video(&c).unwrap();
+        let path = std::env::temp_dir().join(format!("snagster-mux-test-{}.mp4", std::process::id()));
+        let mut mux = soft::Mux::new(std::io::BufWriter::new(std::fs::File::create(&path).unwrap()), 128, 96).unwrap();
+        let mut s = Spacer::new(30);
+        let mut img = vec![0u8; c.rgba_len()];
+        for i in 0..45 {
+            crate::encode::test_picture(&mut img, 128, 96, i);
+            for p in e.encode(&img, i as i64 * 33_333, false).unwrap().into_iter().chain(if i == 44 { e.finish().unwrap() } else { vec![] }) {
+                if let Some((p, d)) = s.push(p) {
+                    mux.frame(&p, d).unwrap();
+                }
+            }
+        }
+        let (p, d) = s.last().unwrap();
+        mux.frame(&p, d).unwrap();
+        mux.finish().unwrap();
+        let pr = probe(&path).unwrap();
+        let _ = std::fs::remove_file(&path);
+        assert_eq!((pr.width, pr.height, pr.frames), (128, 96, 45));
+        assert!((pr.seconds - 1.5).abs() < 0.05, "{} s", pr.seconds);
     }
 
     #[test]

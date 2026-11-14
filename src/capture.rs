@@ -11,6 +11,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Sender;
 use std::time::{Duration, Instant};
 
+pub mod detect;
+#[cfg(any(target_os = "macos", test))]
+mod mac;
+pub mod stitch;
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum CutShape {
     Rect,
@@ -145,6 +150,10 @@ pub struct Object {
     pub label: String,
     /// Controls inside it (buttons, lists, toolbars...), any depth.
     pub children: Vec<Object>,
+    /// The system's handle of a top-level window (0 for controls, or when unknown).
+    pub handle: u64,
+    /// The program it belongs to (0 when unknown).
+    pub pid: u32,
 }
 
 /// What a capture brings back.
@@ -160,6 +169,8 @@ pub struct Shot {
     pub app: String,
     /// Where the mouse pointer was, in desktop pixels.
     pub cursor: Option<(i32, i32)>,
+    /// From desktop pixels to the system's units (points on a Retina Mac).
+    pub space: detect::Space,
 }
 
 pub struct CaptureResult {
@@ -202,10 +213,15 @@ pub fn monitor_under_cursor() -> Result<(i32, i32, u32, u32), String> {
 /// the order is kept as it comes (asking each window for its `z()` enumerates every window
 /// again, which made this O(n²)). The program name is looked up once per process.
 pub fn list_windows() -> Vec<WindowInfo> {
+    windows_and_programs().into_iter().map(|(w, _)| w).collect()
+}
+
+/// The windows `list_windows` gives, each with its program's process id (0 when unknown).
+fn windows_and_programs() -> Vec<(WindowInfo, u32)> {
     let me = std::process::id();
     let Ok(all) = xcap::Window::all() else { return Vec::new() };
     let mut apps = AppNames::default();
-    let mut out: Vec<WindowInfo> = Vec::new();
+    let mut out = Vec::new();
     for w in all {
         let pid = w.pid().ok();
         if pid == Some(me) || w.is_minimized().unwrap_or(true) {
@@ -220,7 +236,7 @@ pub fn list_windows() -> Vec<WindowInfo> {
         }
         let app = apps.get(pid, || w.app_name().unwrap_or_default());
         let label = window_label(title, &app);
-        out.push(WindowInfo { id, label, app, x, y, width, height });
+        out.push((WindowInfo { id, label, app, x, y, width, height }, pid.unwrap_or(0)));
     }
     out
 }
@@ -383,6 +399,8 @@ mod win {
                         height: (cr.bottom - cr.top) as u32,
                         label: if t.is_empty() { class(k) } else { t },
                         children: Vec::new(),
+                        handle: 0,
+                        pid: 0,
                     });
                 }
             }
@@ -393,6 +411,8 @@ mod win {
                 height: (r.bottom - r.top) as u32,
                 label,
                 children,
+                handle: h as usize as u64,
+                pid: pid_of(h),
             });
         }
         out
@@ -433,9 +453,9 @@ pub fn objects() -> Vec<Object> {
     }
     #[cfg(not(windows))]
     {
-        list_windows()
+        windows_and_programs()
             .into_iter()
-            .map(|w| Object { x: w.x, y: w.y, width: w.width, height: w.height, label: w.label, children: Vec::new() })
+            .map(|(w, pid)| Object { x: w.x, y: w.y, width: w.width, height: w.height, label: w.label, children: Vec::new(), handle: w.id as u64, pid })
             .collect()
     }
 }
@@ -482,6 +502,7 @@ fn shot(image: RgbaImage, origin: (i32, i32), title: String) -> Shot {
         title: if title.is_empty() { fg_title } else { title },
         app,
         cursor: cursor_pos(),
+        space: detect::Space { origin, scale: 1.0 },
     }
 }
 
@@ -581,8 +602,14 @@ pub fn grab(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String>
             grab_monitor(&m)
         }
         CaptureKind::Pick(..) | CaptureKind::WindowPick | CaptureKind::Fixed(..) | CaptureKind::ColorPicker | CaptureKind::Ruler => {
-            let objs = objects();
-            let mut s = grab_monitor(&xcap_monitor_at(at.0, at.1)?)?;
+            let mut objs = objects();
+            let m = xcap_monitor_at(at.0, at.1)?;
+            let mut s = grab_monitor(&m)?;
+            // macOS reports windows in points, the picture is in pixels.
+            if cfg!(target_os = "macos") {
+                s.space.scale = detect::Space::scale_for(s.image.width(), m.width().unwrap_or(0));
+            }
+            s.space.scale_objects(&mut objs);
             s.objects = objs;
             Ok(s)
         }
@@ -630,62 +657,64 @@ pub fn spawn(kind: CaptureKind, delay_ms: u64, at: (i32, i32), ctx: eframe::egui
 
 // ---------- scrolling and panoramic capture ----------
 
-fn row_sigs(img: &RgbaImage) -> Vec<u64> {
-    let w = img.width();
-    (0..img.height())
-        .map(|y| {
-            let mut h: u64 = 1469598103934665603;
-            let mut x = 0;
-            while x < w {
-                let p = img.get_pixel(x, y).0;
-                for c in &p[..3] {
-                    h ^= (*c >> 3) as u64;
-                    h = h.wrapping_mul(1099511628211);
-                }
-                x += 3;
-            }
-            h
-        })
-        .collect()
+/// How a scrolling capture goes.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ScrollOptions {
+    /// Sideways (a panorama) instead of down.
+    pub horizontal: bool,
+    /// The person scrolls; Snagster only keeps taking pictures.
+    pub manual: bool,
+    /// Wait after each scroll for the program to redraw.
+    pub delay_ms: u64,
+    /// Mouse wheel notches per scroll.
+    pub notches: u32,
+    /// Scrolls at most.
+    pub max_steps: u32,
+    /// The longest picture, in pixels along the scrolling.
+    pub max_length: u32,
+    /// Go back to the top (or the left end) first.
+    pub from_start: bool,
+    /// From the desktop pixels the area is given in to the system's own units.
+    pub space: detect::Space,
 }
 
-/// How far `next` has moved up compared with `prev` (rows), and how sure we are.
-fn find_shift(prev: &[u64], next: &[u64]) -> (usize, f32) {
-    let h = prev.len().min(next.len());
-    let min_overlap = (h / 6).max(8);
-    let mut best = (0usize, 0f32);
-    for dy in 0..h.saturating_sub(min_overlap) {
-        let n = h - dy;
-        let mut same = 0;
-        let mut i = 0;
-        while i < n {
-            if prev[dy + i] == next[i] {
-                same += 1;
-            }
-            i += 2;
-        }
-        let score = same as f32 / n.div_ceil(2) as f32;
-        if score > best.1 + 0.001 {
-            best = (dy, score);
+impl Default for ScrollOptions {
+    fn default() -> Self {
+        ScrollOptions {
+            horizontal: false,
+            manual: false,
+            delay_ms: 350,
+            notches: 3,
+            max_steps: 40,
+            max_length: 20000,
+            from_start: false,
+            space: detect::Space::default(),
         }
     }
-    best
 }
 
-/// How many new rows a frame brings, from its shift against the last one. A weak match means
-/// the content jumped: keep the whole frame rather than losing it.
-fn rows_to_add(dy: usize, score: f32, frame_height: u32) -> u32 {
-    if score >= 0.6 { dy as u32 } else { frame_height }
+/// How far a scrolling capture has got, for the bar that shows it.
+#[derive(Default)]
+pub struct ScrollProgress {
+    pub frames: std::sync::atomic::AtomicU32,
+    pub length: std::sync::atomic::AtomicU32,
 }
 
-/// `out` with the bottom `add` rows of `frame` put underneath.
-fn append_rows(out: &RgbaImage, frame: &RgbaImage, add: u32) -> RgbaImage {
-    let add = add.min(frame.height());
-    let mut grown = RgbaImage::new(out.width(), out.height() + add);
-    image::imageops::replace(&mut grown, out, 0, 0);
-    let part = image::imageops::crop_imm(frame, 0, frame.height() - add, frame.width(), add).to_image();
-    image::imageops::replace(&mut grown, &part, 0, out.height() as i64);
-    grown
+/// Whether Snagster can turn the mouse wheel for other programs here. Where it can't (Wayland,
+/// a Mac without the Accessibility permission, Linux without `xdotool`), the person scrolls.
+pub fn can_scroll_itself() -> bool {
+    #[cfg(windows)]
+    {
+        true
+    }
+    #[cfg(target_os = "macos")]
+    {
+        mac::trusted()
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        xdotool_available()
+    }
 }
 
 #[cfg(windows)]
@@ -714,11 +743,112 @@ fn scroll_wheel(at: (i32, i32), horizontal: bool, notches: i32) {
     }
 }
 
-#[cfg(not(windows))]
-fn scroll_wheel(_at: (i32, i32), _horizontal: bool, _notches: i32) {}
+#[cfg(target_os = "macos")]
+fn scroll_wheel(at: (i32, i32), horizontal: bool, notches: i32) {
+    mac::wheel((at.0 as f64, at.1 as f64), horizontal, notches);
+}
+
+#[cfg(all(unix, not(target_os = "macos")))]
+fn scroll_wheel(at: (i32, i32), horizontal: bool, notches: i32) {
+    let _ = std::process::Command::new("xdotool").args(xdotool_args(at, horizontal, notches)).output();
+}
+
+/// `xdotool` arguments that move the pointer to `at` and turn the wheel: buttons 4 and 5 are
+/// up and down, 6 and 7 left and right.
+#[cfg(any(all(unix, not(target_os = "macos")), test))]
+fn xdotool_args(at: (i32, i32), horizontal: bool, notches: i32) -> Vec<String> {
+    let button = match (horizontal, notches >= 0) {
+        (false, true) => 5,
+        (false, false) => 4,
+        (true, true) => 7,
+        (true, false) => 6,
+    };
+    ["mousemove", &at.0.to_string(), &at.1.to_string(), "click", "--repeat", &notches.unsigned_abs().max(1).to_string(), "--delay", "15", &button.to_string()]
+        .iter()
+        .map(|s| s.to_string())
+        .collect()
+}
+
+#[cfg(all(unix, not(target_os = "macos")))]
+fn xdotool_available() -> bool {
+    static OK: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *OK.get_or_init(|| {
+        let wayland = std::env::var("XDG_SESSION_TYPE").is_ok_and(|s| s.eq_ignore_ascii_case("wayland"));
+        !wayland
+            && std::env::var_os("DISPLAY").is_some()
+            && std::process::Command::new("xdotool").arg("version").output().is_ok_and(|o| o.status.success())
+    })
+}
+
+/// Windows: bring the window under `at` to the front and press Ctrl+Home, which takes pages,
+/// documents and lists to their top.
+#[cfg(windows)]
+fn press_ctrl_home(at: (i32, i32)) {
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
+        INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP, SendInput, VK_CONTROL, VK_HOME,
+    };
+    if let Some(h) = win::window_at(at.0, at.1) {
+        if win::pid_of(h) == std::process::id() {
+            return;
+        }
+        unsafe { windows_sys::Win32::UI::WindowsAndMessaging::SetForegroundWindow(h) };
+        std::thread::sleep(Duration::from_millis(120));
+    }
+    let key = |vk: u16, up: bool, ext: bool| INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: INPUT_0 {
+            ki: KEYBDINPUT {
+                wVk: vk,
+                wScan: 0,
+                dwFlags: (if up { KEYEVENTF_KEYUP } else { 0 }) | (if ext { KEYEVENTF_EXTENDEDKEY } else { 0 }),
+                time: 0,
+                dwExtraInfo: 0,
+            },
+        },
+    };
+    let keys = [key(VK_CONTROL, false, false), key(VK_HOME, false, true), key(VK_HOME, true, true), key(VK_CONTROL, true, false)];
+    unsafe { SendInput(keys.len() as u32, keys.as_ptr(), std::mem::size_of::<INPUT>() as i32) };
+}
+
+/// Whether Esc is held down right now, anywhere (Snagster's bar may not have the keyboard).
+fn escape_down() -> bool {
+    #[cfg(windows)]
+    unsafe {
+        use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_ESCAPE};
+        GetAsyncKeyState(VK_ESCAPE as i32) as u16 & 0x8000 != 0
+    }
+    #[cfg(not(windows))]
+    {
+        false
+    }
+}
+
+/// Wheel back to the top (or left end) until the picture stops changing.
+fn scroll_to_start(center: (i32, i32), o: &ScrollOptions, stop: &AtomicBool, grab: &dyn Fn() -> Result<RgbaImage, String>) -> Result<(), String> {
+    #[cfg(windows)]
+    if !o.horizontal {
+        press_ctrl_home(center);
+    }
+    let wait = Duration::from_millis(o.delay_ms.clamp(60, 400));
+    std::thread::sleep(wait);
+    let mut last = stitch::rows(&grab()?);
+    for _ in 0..40 {
+        if stop.load(Ordering::Relaxed) || escape_down() {
+            break;
+        }
+        scroll_wheel(center, o.horizontal, -15);
+        std::thread::sleep(wait);
+        let now = stitch::rows(&grab()?);
+        if now == last {
+            break;
+        }
+        last = now;
+    }
+    Ok(())
+}
 
 /// Capture a desktop area while scrolling the content under it, and stitch the frames.
-/// Sideways (`horizontal`) works the same on a turned picture.
+/// (The older form, for callers that only set these.)
 pub fn scroll_capture(
     rect: (i32, i32, u32, u32),
     horizontal: bool,
@@ -727,49 +857,66 @@ pub fn scroll_capture(
     stop: Arc<AtomicBool>,
     manual: bool,
 ) -> Result<RgbaImage, String> {
+    let o = ScrollOptions { horizontal, manual, delay_ms: wait_ms, max_steps, ..Default::default() };
+    scroll_capture_with(rect, &o, stop, None)
+}
+
+/// Capture a desktop area (desktop pixels) while scrolling the content under it, and stitch
+/// the frames. Stops at the end of the content, at the step or length limit, on `stop`, or
+/// when Esc is pressed. Sideways works the same on turned frames.
+pub fn scroll_capture_with(
+    rect: (i32, i32, u32, u32),
+    o: &ScrollOptions,
+    stop: Arc<AtomicBool>,
+    progress: Option<Arc<ScrollProgress>>,
+) -> Result<RgbaImage, String> {
     let (x, y, w, h) = rect;
-    let center = (x + w as i32 / 2, y + h as i32 / 2);
+    // The system's own units for grabbing and pointing (points on a Retina Mac).
+    let (sx, sy, sw, sh) = o.space.from_pixels(x, y, w, h);
+    let (gx, gy, gw, gh) = (sx.round() as i32, sy.round() as i32, sw.round().max(2.0) as u32, sh.round().max(2.0) as u32);
+    let center = (gx + gw as i32 / 2, gy + gh as i32 / 2);
     let old_cursor = cursor_pos();
-    let turn = |img: RgbaImage| if horizontal { image::imageops::rotate90(&img) } else { img };
-    let mut frame = turn(grab_rect(x, y, w, h)?);
-    let fh = frame.height();
-    let mut out = frame.clone();
-    let mut prev = row_sigs(&frame);
-    let mut still = 0;
-    let steps = if manual { 6000 } else { max_steps.clamp(1, 200) };
+    let horizontal = o.horizontal;
+    let turn = move |img: RgbaImage| if horizontal { image::imageops::rotate90(&img) } else { img };
+    let grab = move || grab_rect(gx, gy, gw, gh).map(turn);
+    if !o.manual && o.from_start {
+        scroll_to_start(center, o, &stop, &grab)?;
+    }
+    let mut st = stitch::Stitcher::new(grab()?, o.max_length.max(100));
+    let report = |st: &stitch::Stitcher| {
+        if let Some(p) = &progress {
+            p.frames.store(st.frames, Ordering::Relaxed);
+            p.length.store(st.height(), Ordering::Relaxed);
+        }
+    };
+    report(&st);
+    let steps = if o.manual { 6000 } else { o.max_steps.clamp(1, 500) };
+    let notches = o.notches.clamp(1, 50) as i32;
     for _ in 0..steps {
-        if stop.load(Ordering::Relaxed) || out.height() > 30000 {
+        if stop.load(Ordering::Relaxed) || escape_down() {
             break;
         }
-        if manual {
+        if o.manual {
             std::thread::sleep(Duration::from_millis(120));
         } else {
-            scroll_wheel(center, horizontal, 3);
-            std::thread::sleep(Duration::from_millis(wait_ms));
+            scroll_wheel(center, horizontal, notches);
+            std::thread::sleep(Duration::from_millis(o.delay_ms.clamp(20, 5000)));
         }
-        frame = turn(grab_rect(x, y, w, h)?);
-        let sigs = row_sigs(&frame);
-        let (dy, score) = find_shift(&prev, &sigs);
-        if dy == 0 && score > 0.97 {
-            still += 1;
-            if still >= 2 && !manual {
-                break;
-            }
-            continue;
+        let frame = grab()?;
+        let step = st.push(&frame);
+        report(&st);
+        match step {
+            stitch::Step::Full => break,
+            stitch::Step::Same if !o.manual && st.still() >= 2 => break,
+            _ => {}
         }
-        still = 0;
-        let add = rows_to_add(dy, score, fh);
-        if add == 0 {
-            continue;
-        }
-        out = append_rows(&out, &frame, add);
-        prev = sigs;
     }
     #[cfg(windows)]
     if let Some(c) = old_cursor {
         unsafe { windows_sys::Win32::UI::WindowsAndMessaging::SetCursorPos(c.0, c.1) };
     }
     let _ = old_cursor;
+    let out = st.finish();
     Ok(if horizontal { image::imageops::rotate270(&out) } else { out })
 }
 
@@ -1072,12 +1219,8 @@ mod tests {
         assert!(monitor_at(&[], (0, 0)).is_none());
     }
 
-    fn rows(img: &RgbaImage, top: u32, h: u32) -> RgbaImage {
-        image::imageops::crop_imm(img, 0, top, img.width(), h).to_image()
-    }
-
     fn obj(x: i32, y: i32, w: u32, h: u32, label: &str) -> Object {
-        Object { x, y, width: w, height: h, label: label.into(), children: Vec::new() }
+        Object { x, y, width: w, height: h, label: label.into(), children: Vec::new(), handle: 0, pid: 0 }
     }
 
     #[test]
@@ -1219,99 +1362,25 @@ mod tests {
         assert_eq!(bounds(&[&a, &c]), Some((-300, -20, 600, 370)));
         assert_eq!(bounds(&[]), None);
     }
-
     #[test]
-    fn row_signatures_tell_rows_apart() {
-        let img = page(30, 100);
-        let s = row_sigs(&img);
-        assert_eq!(s.len(), 100);
-        let distinct: std::collections::HashSet<_> = s.iter().collect();
-        assert_eq!(distinct.len(), 100);
-        // Small colour noise (under 8 levels) doesn't change a signature.
-        let mut noisy = img.clone();
-        for p in noisy.pixels_mut() {
-            p.0[0] |= 3;
-        }
-        assert_eq!(row_sigs(&noisy), s);
+    fn xdotool_turns_the_right_wheel() {
+        let a = xdotool_args((10, 20), false, 3);
+        assert_eq!(a, ["mousemove", "10", "20", "click", "--repeat", "3", "--delay", "15", "5"]);
+        assert_eq!(xdotool_args((0, 0), false, -15).last().unwrap(), "4");
+        assert_eq!(xdotool_args((0, 0), true, 2).last().unwrap(), "7");
+        assert_eq!(xdotool_args((0, 0), true, -2).last().unwrap(), "6");
+        assert_eq!(xdotool_args((0, 0), true, -2)[5], "2");
+        assert_eq!(xdotool_args((0, 0), false, 0)[5], "1", "at least one notch");
     }
 
     #[test]
-    fn find_shift_measures_how_far_content_scrolled() {
-        let p = page(30, 400);
-        let a = row_sigs(&rows(&p, 0, 120));
-        for step in [1, 7, 20, 60] {
-            let b = row_sigs(&rows(&p, step, 120));
-            let (dy, score) = find_shift(&a, &b);
-            assert_eq!(dy, step as usize, "step {step}");
-            assert!(score > 0.99);
-        }
-    }
-
-    #[test]
-    fn find_shift_of_the_same_frame_is_zero() {
-        let p = page(30, 120);
-        let s = row_sigs(&p);
-        assert_eq!(find_shift(&s, &s), (0, 1.0));
-        // A blank area matches everywhere; the smallest shift wins.
-        let blank = row_sigs(&RgbaImage::from_pixel(30, 120, Rgba([255, 255, 255, 255])));
-        assert_eq!(find_shift(&blank, &blank), (0, 1.0));
-    }
-
-    #[test]
-    fn find_shift_is_unsure_when_content_jumped() {
-        let p = page(30, 600);
-        let a = row_sigs(&rows(&p, 0, 120));
-        let b = row_sigs(&rows(&p, 400, 120));
-        let (_, score) = find_shift(&a, &b);
-        assert!(score < 0.6, "{score}");
-        assert_eq!(rows_to_add(5, score, 120), 120);
-    }
-
-    #[test]
-    fn find_shift_of_tiny_frames_finds_nothing() {
-        let s = row_sigs(&page(10, 5));
-        assert_eq!(find_shift(&s, &s), (0, 0.0));
-        assert_eq!(find_shift(&[], &[]), (0, 0.0));
-    }
-
-    #[test]
-    fn rows_to_add_trusts_good_matches() {
-        assert_eq!(rows_to_add(30, 0.95, 200), 30);
-        assert_eq!(rows_to_add(30, 0.6, 200), 30);
-        assert_eq!(rows_to_add(30, 0.59, 200), 200);
-    }
-
-    #[test]
-    fn append_rows_puts_the_new_bottom_under() {
-        let p = page(20, 200);
-        let out = rows(&p, 0, 100);
-        let frame = rows(&p, 30, 100);
-        let grown = append_rows(&out, &frame, 30);
-        assert_eq!(grown.dimensions(), (20, 130));
-        assert_eq!(grown, rows(&p, 0, 130));
-        // Asking for more rows than the frame has adds the whole frame.
-        assert_eq!(append_rows(&out, &frame, 500).height(), 200);
-    }
-
-    #[test]
-    fn stitching_scrolled_frames_rebuilds_the_page() {
-        // What scroll_capture does, on frames of a synthetic page instead of the screen.
-        let p = page(40, 1000);
-        let fh = 150;
-        let mut out = rows(&p, 0, fh);
-        let mut prev = row_sigs(&out);
-        let mut top = 0;
-        for step in [40, 55, 13, 90, 70] {
-            top += step;
-            let frame = rows(&p, top, fh);
-            let sigs = row_sigs(&frame);
-            let (dy, score) = find_shift(&prev, &sigs);
-            let add = rows_to_add(dy, score, fh);
-            out = append_rows(&out, &frame, add);
-            prev = sigs;
-        }
-        assert_eq!(out.height(), top + fh);
-        assert_eq!(out, rows(&p, 0, top + fh));
+    fn scroll_options_have_sensible_defaults() {
+        let o = ScrollOptions::default();
+        assert!(!o.horizontal && !o.manual && !o.from_start);
+        assert_eq!((o.notches, o.max_length), (3, 20000));
+        assert_eq!(o.space, detect::Space::default());
+        let p = ScrollProgress::default();
+        assert_eq!(p.frames.load(Ordering::Relaxed), 0);
     }
 
     #[test]

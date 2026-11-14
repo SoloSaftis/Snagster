@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Il n'y a encore rien à mettre dans un guide.",
   "Try the tools on a sample picture": "Essayer les outils sur une image d'exemple",
   "Write the time as hh:mm, for example 14:30.": "Écrivez l'heure au format hh:mm, par exemple 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Votre programme de courriel est ouvert ; faites glisser l'image du dossier vers le courriel."
+  "Your mail program is open; drag the picture from the folder into the email.": "Votre programme de courriel est ouvert ; faites glisser l'image du dossier vers le courriel.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Clic : capturer ceci. Roulette : partie plus grande ou plus petite.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Défilement : {frames} images, {height} pixels. Échap arrête.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster ne peut pas faire défiler d'autres programmes ici : faites défiler vous-même puis appuyez sur Arrêter.",
+  "Most scroll steps": "Nombre maximal de défilements",
+  "Wait after each scroll (ms)": "Attendre après chaque défilement (ms)",
+  "Scroll by": "Défiler de",
+  "wheel notches each time": "crans de roulette à chaque fois",
+  "Stop at a height of": "S'arrêter à une hauteur de",
+  "Scroll to the top first": "Remonter d'abord en haut"
  }
 }

@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "ガイドに入れるものがまだありません。",
   "Try the tools on a sample picture": "サンプル画像でツールを試す",
   "Write the time as hh:mm, for example 14:30.": "時刻は hh:mm の形式で入力してください (例: 14:30)。",
-  "Your mail program is open; drag the picture from the folder into the email.": "メールプログラムが開いています。フォルダーから画像をメールにドラッグしてください。"
+  "Your mail program is open; drag the picture from the folder into the email.": "メールプログラムが開いています。フォルダーから画像をメールにドラッグしてください。",
+  "Click: capture this. Wheel: bigger or smaller part.": "クリック: これをキャプチャ。ホイール: より大きい/小さい部分。",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "スクロール中: {frames} 枚、{height} ピクセル。Esc で停止。",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster はここでは他のプログラムをスクロールできません。自分でスクロールして「停止」を押してください。",
+  "Most scroll steps": "最大スクロール回数",
+  "Wait after each scroll (ms)": "スクロールごとの待ち時間 (ms)",
+  "Scroll by": "スクロール量",
+  "wheel notches each time": "ホイール目盛り/回",
+  "Stop at a height of": "この高さで停止",
+  "Scroll to the top first": "最初に一番上までスクロール"
  }
 }

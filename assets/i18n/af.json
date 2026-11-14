@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Daar is nog niks om in 'n gids te sit nie.",
   "Try the tools on a sample picture": "Probeer die hulpmiddels op 'n voorbeeldprent",
   "Write the time as hh:mm, for example 14:30.": "Skryf die tyd as hh:mm, byvoorbeeld 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Jou e-posprogram is oop; sleep die prent uit die vouer na die e-pos."
+  "Your mail program is open; drag the picture from the folder into the email.": "Jou e-posprogram is oop; sleep die prent uit die vouer na die e-pos.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Klik: vang dit vas. Wiel: groter of kleiner deel.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Rol: {frames} prente, {height} pieksels. Esc stop.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster kan nie ander programme hier laat rol nie, so rol dit self en druk Stop.",
+  "Most scroll steps": "Meeste rolstappe",
+  "Wait after each scroll (ms)": "Wag na elke rol (ms)",
+  "Scroll by": "Rol met",
+  "wheel notches each time": "wielkepe elke keer",
+  "Stop at a height of": "Stop by 'n hoogte van",
+  "Scroll to the top first": "Rol eers na bo"
  }
 }

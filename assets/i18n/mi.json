@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Kāore anō kia whai mea hei tuku ki tētahi aratohu.",
   "Try the tools on a sample picture": "Whakamātauria ngā taputapu ki runga i tētahi whakaahua tauira",
   "Write the time as hh:mm, for example 14:30.": "Tuhia te wā hei hh:mm, hei tauira 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Kua tuwhera tō hōtaka īmēra; toia te whakaahua mai i te kōpaki ki roto i te īmēra."
+  "Your mail program is open; drag the picture from the folder into the email.": "Kua tuwhera tō hōtaka īmēra; toia te whakaahua mai i te kōpaki ki roto i te īmēra.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Pāwhiri: hopukina tēnei. Wīra: wāhanga nui ake, iti iho rānei.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "E panuku ana: {frames} pikitia, {height} pika. Ka mutu mā Esc.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Kāore e taea e Snagster te panuku i ētahi atu hōtaka i konei, nā reira me panuku koe, ka pēhi i Whakamutu.",
+  "Most scroll steps": "Te nui rawa o ngā hīkoi panuku",
+  "Wait after each scroll (ms)": "Tatari i muri i ia panuku (ms)",
+  "Scroll by": "Panuku mā",
+  "wheel notches each time": "ngā pao wīra ia wā",
+  "Stop at a height of": "Kāti ki te teitei o",
+  "Scroll to the top first": "Panukutia ki runga i te tuatahi"
  }
 }

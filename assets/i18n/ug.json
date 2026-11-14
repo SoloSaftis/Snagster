@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "قوللانمىغا قويىدىغان ھېچنېمە تېخى يوق.",
   "Try the tools on a sample picture": "قوراللارنى ئۈلگە رەسىمدە سىناپ بېقىڭ",
   "Write the time as hh:mm, for example 14:30.": "ۋاقىتنى hh:mm شەكلىدە يېزىڭ، مەسىلەن 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "ئېلخەت پىروگراممىسى ئوچۇق؛ رەسىمنى قىسقۇچتىن ئېلخەتكە سۆرەڭ."
+  "Your mail program is open; drag the picture from the folder into the email.": "ئېلخەت پىروگراممىسى ئوچۇق؛ رەسىمنى قىسقۇچتىن ئېلخەتكە سۆرەڭ.",
+  "Click: capture this. Wheel: bigger or smaller part.": "چېكىش: بۇنى تۇتۇۋېلىڭ. چاق: چوڭراق ياكى كىچىكرەك قىسىم.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "سىيرىلىۋاتىدۇ: {frames} رەسىم، {height} پىكسېل. Esc توختىتىدۇ.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster بۇ يەردە باشقا پروگراممىلارنى سىيرىلدۇرالمايدۇ، شۇڭا ئۆزىڭىز سىيرىلدۇرۇپ توختىتىش نى بېسىڭ.",
+  "Most scroll steps": "ئەڭ كۆپ سىيرىلىش قەدىمى",
+  "Wait after each scroll (ms)": "ھەر قېتىم سىيرىلغاندىن كېيىن كۈتۈش (ms)",
+  "Scroll by": "سىيرىلىش مىقدارى",
+  "wheel notches each time": "ھەر قېتىمدا چاق پەللىسى",
+  "Stop at a height of": "بۇ ئېگىزلىكتە توختاش",
+  "Scroll to the top first": "ئالدى بىلەن ئەڭ ئۈستىگە سىيرىلدۇرۇش"
  }
 }

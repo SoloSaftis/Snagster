@@ -426,6 +426,8 @@ pub struct SnagApp {
     settings_changed_at: Option<Instant>,
     ui_test: Option<uitest::UiTest>,
     scroll_manual: bool,
+    /// How far the scrolling capture has got.
+    scroll_progress: Option<Arc<capture::ScrollProgress>>,
 }
 
 impl SnagApp {
@@ -588,6 +590,7 @@ impl SnagApp {
             settings_changed_at: None,
             ui_test: None,
             scroll_manual: false,
+            scroll_progress: None,
         }
     }
 
@@ -755,7 +758,12 @@ impl SnagApp {
                     };
                     let ppp = ctx.input(|i| i.viewport().native_pixels_per_point).unwrap_or(1.0);
                     let at = pos2(shot.origin.0 as f32 / ppp, shot.origin.1 as f32 / ppp);
-                    self.overlay = Some(Overlay::new(mode, shape, shot));
+                    let mut ov = Overlay::new(mode, shape, shot);
+                    // Buttons, lists and panels inside the windows are read on a worker.
+                    if self.settings.detect_windows && self.settings.detect_objects {
+                        ov.read_controls(ctx);
+                    }
+                    self.overlay = Some(ov);
                     ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
                     ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(at));
                     ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
@@ -941,11 +949,11 @@ impl SnagApp {
                     }
                     AreaAction::Scroll { horizontal } => {
                         self.leave_overlay(&ctx, true);
-                        self.start_scroll(&ctx, desktop, horizontal, false);
+                        self.start_scroll(&ctx, desktop, horizontal, false, ov.shot.space);
                     }
                     AreaAction::ManualScroll => {
                         self.leave_overlay(&ctx, true);
-                        self.start_scroll(&ctx, desktop, false, true);
+                        self.start_scroll(&ctx, desktop, false, true, ov.shot.space);
                     }
                     AreaAction::RecordGif => {
                         self.leave_overlay(&ctx, true);
@@ -998,23 +1006,48 @@ impl SnagApp {
         }
     }
 
-    fn start_scroll(&mut self, ctx: &egui::Context, rect: (i32, i32, u32, u32), horizontal: bool, manual: bool) {
-        self.scroll_manual = manual;
+    /// The options a scrolling capture gets from the settings.
+    pub(crate) fn scroll_options(&self, horizontal: bool, manual: bool, space: capture::detect::Space) -> capture::ScrollOptions {
+        let s = &self.settings;
+        capture::ScrollOptions {
+            horizontal,
+            manual,
+            delay_ms: s.scroll_wait_ms,
+            notches: s.scroll_notches,
+            max_steps: s.scroll_max_steps,
+            max_length: s.scroll_max_height,
+            from_start: s.scroll_from_top,
+            space,
+        }
+    }
+
+    fn start_scroll(&mut self, ctx: &egui::Context, rect: (i32, i32, u32, u32), horizontal: bool, manual: bool, space: capture::detect::Space) {
+        // Where Snagster can't turn other programs' mouse wheels, the person scrolls.
+        let can = manual || capture::can_scroll_itself();
+        let opts = self.scroll_options(horizontal, manual || !can, space);
+        self.scroll_manual = opts.manual;
         let stop = Arc::new(AtomicBool::new(false));
         self.job_stop = Some(stop.clone());
+        let progress = Arc::new(capture::ScrollProgress::default());
+        self.scroll_progress = Some(progress.clone());
         let (tx, rx) = channel();
         self.scroll_rx = Some(rx);
-        let (steps, wait) = (self.settings.scroll_max_steps, self.settings.scroll_wait_ms);
         let ctx2 = ctx.clone();
         self.enter_mini(ctx, Mini::Scroll);
         std::thread::spawn(move || {
             // Let Snagster's bar settle before the first frame.
             std::thread::sleep(Duration::from_millis(400));
-            let r = capture::scroll_capture(rect, horizontal, steps, wait, stop, manual);
+            let r = capture::scroll_capture_with(rect, &opts, stop, Some(progress));
             let _ = tx.send(r);
             ctx2.request_repaint();
         });
-        self.status = if manual { "Scroll the page yourself; press Stop at the end.".into() } else { "Scrolling and stitching... keep the mouse still.".into() };
+        self.status = if !can {
+            crate::i18n::t("Snagster can't scroll other programs here, so scroll it yourself and press Stop.").into()
+        } else if manual {
+            "Scroll the page yourself; press Stop at the end.".into()
+        } else {
+            "Scrolling and stitching... keep the mouse still.".into()
+        };
     }
 
     /// Whether a GIF or video recording is running.
@@ -1154,6 +1187,7 @@ impl SnagApp {
             && let Ok(r) = rx.try_recv()
         {
             self.scroll_rx = None;
+            self.scroll_progress = None;
             self.job_stop = None;
             self.leave_mini(ctx);
             match r {
@@ -3597,10 +3631,21 @@ impl SnagApp {
                 Some(Mini::Video) => format!("Recording {} at {} fps  {}:{:02}", self.settings.rec_format.ext().to_uppercase(), self.settings.video_fps, secs / 60, secs % 60),
                 Some(Mini::Steps) => format!("Recording steps: {} so far", self.guide.len()),
                 Some(Mini::Scroll) if self.scroll_manual => "Scroll it yourself, then press Stop".to_string(),
-                Some(Mini::Scroll) => "Scrolling and stitching...".to_string(),
+                Some(Mini::Scroll) => match &self.scroll_progress {
+                    Some(p) => crate::i18n::tf(
+                        "Scrolling: {frames} pictures, {height} pixels. Esc stops.",
+                        &[("frames", &p.frames.load(Ordering::Relaxed).to_string()), ("height", &p.length.load(Ordering::Relaxed).to_string())],
+                    ),
+                    None => "Scrolling and stitching...".to_string(),
+                },
                 None => String::new(),
             };
             ui.label(RichText::new(text).color(Color32::WHITE).strong());
+            // Esc stops a scrolling capture when this bar has the keyboard (on Windows it
+            // works anywhere: the capture itself watches the key).
+            if self.mini == Some(Mini::Scroll) && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                self.stop_job();
+            }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(10.0);
                 let stop = egui::Button::new(RichText::new(crate::i18n::t("Stop")).color(Color32::WHITE).strong()).fill(Color32::from_rgb(229, 72, 77));

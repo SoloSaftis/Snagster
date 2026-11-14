@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Още няма нищо за добавяне в ръководство.",
   "Try the tools on a sample picture": "Опитайте инструментите върху примерна снимка",
   "Write the time as hh:mm, for example 14:30.": "Въведете часа като hh:mm, например 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Пощенската ви програма е отворена; плъзнете снимката от папката в имейла."
+  "Your mail program is open; drag the picture from the folder into the email.": "Пощенската ви програма е отворена; плъзнете снимката от папката в имейла.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Щракване: заснемане на това. Колелце: по-голяма или по-малка част.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Превъртане: {frames} снимки, {height} пиксела. Esc спира.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster не може да превърта други програми тук, затова превъртете сами и натиснете „Стоп“.",
+  "Most scroll steps": "Най-много стъпки на превъртане",
+  "Wait after each scroll (ms)": "Изчакване след всяко превъртане (мс)",
+  "Scroll by": "Превъртане с",
+  "wheel notches each time": "стъпки на колелцето всеки път",
+  "Stop at a height of": "Спиране при височина",
+  "Scroll to the top first": "Първо превъртане до началото"
  }
 }

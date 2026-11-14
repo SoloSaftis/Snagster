@@ -125,10 +125,13 @@ pub fn is_cjk(code: &str) -> bool {
 
 /// `code`'s name in the language `in_lang` ("Deutsch" for de in de, "German" in en).
 pub fn name_in(code: &str, in_lang: &str) -> String {
+    // Snagster's Norwegian pack is "no", but inside the table of names Norwegian Bokmål has its
+    // standard code, "nb" (as Nynorsk has "nn").
+    let named = if code == "no" { "nb" } else { code };
     NAMES
         .get(in_lang)
-        .and_then(|m| m.get(code))
-        .or_else(|| NAMES.get("en").and_then(|m| m.get(code)))
+        .and_then(|m| m.get(named))
+        .or_else(|| NAMES.get("en").and_then(|m| m.get(named)))
         .cloned()
         .unwrap_or_else(|| code.to_string())
 }
@@ -361,6 +364,18 @@ mod lookup_tests {
         }
         for not in ["en", "th", "vi", "", "kok"] {
             assert!(!is_cjk(not), "{not}");
+        }
+    }
+
+    #[test]
+    fn norwegian_is_called_by_its_name_not_its_code() {
+        assert_eq!(native_name("no"), "Norsk bokmål");
+        assert_eq!(name_in("no", "en"), "Norwegian Bokmål");
+        assert_eq!(name_in("no", "de"), "Norwegisch (Bokmål)");
+        assert_eq!(native_name("nn"), "Norsk nynorsk");
+        // Every language in the list has a real name in itself, never just its code.
+        for code in CODES {
+            assert_ne!(native_name(code), *code, "{code} has no name in itself");
         }
     }
 

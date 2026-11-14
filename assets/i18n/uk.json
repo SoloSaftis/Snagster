@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "У посібник поки нічого додавати.",
   "Try the tools on a sample picture": "Спробуйте інструменти на зразку зображення",
   "Write the time as hh:mm, for example 14:30.": "Введіть час у форматі hh:mm, наприклад 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Поштову програму відкрито; перетягніть зображення з папки до листа."
+  "Your mail program is open; drag the picture from the folder into the email.": "Поштову програму відкрито; перетягніть зображення з папки до листа.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Клацання: захопити це. Коліщатко: більша чи менша частина.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Прокручування: {frames} знімків, {height} пікселів. Esc зупиняє.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster не може прокручувати тут інші програми, тож прокручуйте самі й натисніть «Стоп».",
+  "Most scroll steps": "Найбільше кроків прокручування",
+  "Wait after each scroll (ms)": "Чекати після кожного прокручування (мс)",
+  "Scroll by": "Прокручувати на",
+  "wheel notches each time": "клацань коліщатка щоразу",
+  "Stop at a height of": "Зупинитися на висоті",
+  "Scroll to the top first": "Спершу прокрутити догори"
  }
 }

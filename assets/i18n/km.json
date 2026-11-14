@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "មិនទាន់មានអ្វីដាក់ក្នុងមគ្គុទ្ទេសក៍នៅឡើយទេ។",
   "Try the tools on a sample picture": "សាកល្បងឧបករណ៍លើរូបភាពគំរូ",
   "Write the time as hh:mm, for example 14:30.": "សរសេរម៉ោងជា hh:mm ឧទាហរណ៍ 14:30។",
-  "Your mail program is open; drag the picture from the folder into the email.": "កម្មវិធីអ៊ីមែលរបស់អ្នកបានបើក។ អូសរូបភាពពីថតទៅក្នុងអ៊ីមែល។"
+  "Your mail program is open; drag the picture from the folder into the email.": "កម្មវិធីអ៊ីមែលរបស់អ្នកបានបើក។ អូសរូបភាពពីថតទៅក្នុងអ៊ីមែល។",
+  "Click: capture this. Wheel: bigger or smaller part.": "ចុច៖ ថតផ្នែកនេះ។ កង់៖ ផ្នែកធំជាង ឬតូចជាង។",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "កំពុងរំកិល៖ រូបភាព {frames}, {height} ភីកសែល។ Esc បញ្ឈប់។",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster មិនអាចរំកិលកម្មវិធីផ្សេងនៅទីនេះបានទេ ដូច្នេះសូមរំកិលដោយខ្លួនឯង ហើយចុច ឈប់។",
+  "Most scroll steps": "ជំហានរំកិលច្រើនបំផុត",
+  "Wait after each scroll (ms)": "រង់ចាំក្រោយការរំកិលនីមួយៗ (ms)",
+  "Scroll by": "រំកិលដោយ",
+  "wheel notches each time": "ស្នាមកង់រាល់ដង",
+  "Stop at a height of": "ឈប់នៅកម្ពស់",
+  "Scroll to the top first": "រំកិលទៅខាងលើជាមុនសិន"
  }
 }

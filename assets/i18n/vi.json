@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Chưa có gì để đưa vào hướng dẫn.",
   "Try the tools on a sample picture": "Thử các công cụ trên một ảnh mẫu",
   "Write the time as hh:mm, for example 14:30.": "Viết giờ theo dạng hh:mm, ví dụ 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Chương trình thư của bạn đang mở; hãy kéo ảnh từ thư mục vào email."
+  "Your mail program is open; drag the picture from the folder into the email.": "Chương trình thư của bạn đang mở; hãy kéo ảnh từ thư mục vào email.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Nhấp: chụp phần này. Con lăn: phần lớn hơn hoặc nhỏ hơn.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Đang cuộn: {frames} ảnh, {height} điểm ảnh. Esc để dừng.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster không thể cuộn các chương trình khác ở đây, nên hãy tự cuộn rồi nhấn Dừng.",
+  "Most scroll steps": "Số bước cuộn tối đa",
+  "Wait after each scroll (ms)": "Chờ sau mỗi lần cuộn (ms)",
+  "Scroll by": "Cuộn",
+  "wheel notches each time": "nấc con lăn mỗi lần",
+  "Stop at a height of": "Dừng ở chiều cao",
+  "Scroll to the top first": "Cuộn lên đầu trước"
  }
 }

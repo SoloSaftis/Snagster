@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Belum ada yang bisa dimasukkan ke panduan.",
   "Try the tools on a sample picture": "Coba alat pada gambar contoh",
   "Write the time as hh:mm, for example 14:30.": "Tulis waktu sebagai hh:mm, misalnya 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Program email Anda terbuka; seret gambar dari folder ke email."
+  "Your mail program is open; drag the picture from the folder into the email.": "Program email Anda terbuka; seret gambar dari folder ke email.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Klik: tangkap ini. Roda: bagian lebih besar atau lebih kecil.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Menggulir: {frames} gambar, {height} piksel. Esc menghentikan.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster tidak bisa menggulir program lain di sini, jadi gulir sendiri lalu tekan Berhenti.",
+  "Most scroll steps": "Langkah gulir terbanyak",
+  "Wait after each scroll (ms)": "Tunggu setelah setiap guliran (ms)",
+  "Scroll by": "Gulir sebanyak",
+  "wheel notches each time": "takik roda setiap kali",
+  "Stop at a height of": "Berhenti pada tinggi",
+  "Scroll to the top first": "Gulir ke atas dahulu"
  }
 }

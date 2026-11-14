@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Does dim byd i'w roi mewn canllaw eto.",
   "Try the tools on a sample picture": "Rhowch gynnig ar yr offer ar lun sampl",
   "Write the time as hh:mm, for example 14:30.": "Ysgrifennwch yr amser fel hh:mm, er enghraifft 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Mae eich rhaglen bost ar agor; llusgwch y llun o'r ffolder i'r e-bost."
+  "Your mail program is open; drag the picture from the folder into the email.": "Mae eich rhaglen bost ar agor; llusgwch y llun o'r ffolder i'r e-bost.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Clicio: dal hwn. Olwyn: rhan fwy neu lai.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Sgrolio: {frames} llun, {height} picsel. Mae Esc yn stopio.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Ni all Snagster sgrolio rhaglenni eraill yma, felly sgroliwch eich hun a phwyso Stopio.",
+  "Most scroll steps": "Y nifer mwyaf o gamau sgrolio",
+  "Wait after each scroll (ms)": "Aros ar ôl pob sgrôl (ms)",
+  "Scroll by": "Sgrolio",
+  "wheel notches each time": "rhicyn olwyn bob tro",
+  "Stop at a height of": "Stopio ar uchder o",
+  "Scroll to the top first": "Sgrolio i'r brig yn gyntaf"
  }
 }

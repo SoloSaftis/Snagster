@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Ուղեցույցում դնելու ոչինչ դեռ չկա։",
   "Try the tools on a sample picture": "Փորձեք գործիքները նմուշային նկարի վրա",
   "Write the time as hh:mm, for example 14:30.": "Գրեք ժամը hh:mm ձևաչափով, օրինակ՝ 14:30։",
-  "Your mail program is open; drag the picture from the folder into the email.": "Ձեր փոստի ծրագիրը բաց է. քաշեք նկարը պանակից նամակի մեջ։"
+  "Your mail program is open; drag the picture from the folder into the email.": "Ձեր փոստի ծրագիրը բաց է. քաշեք նկարը պանակից նամակի մեջ։",
+  "Click: capture this. Wheel: bigger or smaller part.": "Սեղմում՝ նկարել սա։ Անիվ՝ ավելի մեծ կամ փոքր մաս։",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Ոլորում՝ {frames} նկար, {height} պիքսել։ Esc-ը կանգնեցնում է։",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster-ը այստեղ չի կարող ոլորել այլ ծրագրեր, ուստի ոլորեք ինքներդ և սեղմեք Կանգնեցնել։",
+  "Most scroll steps": "Ոլորման առավելագույն քայլեր",
+  "Wait after each scroll (ms)": "Սպասել յուրաքանչյուր ոլորումից հետո (մվ)",
+  "Scroll by": "Ոլորել",
+  "wheel notches each time": "անիվի աստիճան ամեն անգամ",
+  "Stop at a height of": "Կանգնել այս բարձրության վրա",
+  "Scroll to the top first": "Նախ ոլորել վերև"
  }
 }

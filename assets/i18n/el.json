@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Δεν υπάρχει ακόμη τίποτα για να μπει σε οδηγό.",
   "Try the tools on a sample picture": "Δοκιμάστε τα εργαλεία σε μια δοκιμαστική εικόνα",
   "Write the time as hh:mm, for example 14:30.": "Γράψτε την ώρα ως hh:mm, για παράδειγμα 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Το πρόγραμμα αλληλογραφίας είναι ανοιχτό· σύρετε την εικόνα από τον φάκελο στο email."
+  "Your mail program is open; drag the picture from the folder into the email.": "Το πρόγραμμα αλληλογραφίας είναι ανοιχτό· σύρετε την εικόνα από τον φάκελο στο email.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Κλικ: λήψη αυτού. Ροδέλα: μεγαλύτερο ή μικρότερο τμήμα.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Κύλιση: {frames} εικόνες, {height} pixel. Το Esc σταματά.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Το Snagster δεν μπορεί να κάνει κύλιση σε άλλα προγράμματα εδώ, οπότε κάντε κύλιση μόνοι σας και πατήστε Διακοπή.",
+  "Most scroll steps": "Μέγιστα βήματα κύλισης",
+  "Wait after each scroll (ms)": "Αναμονή μετά από κάθε κύλιση (ms)",
+  "Scroll by": "Κύλιση κατά",
+  "wheel notches each time": "εγκοπές ροδέλας κάθε φορά",
+  "Stop at a height of": "Διακοπή σε ύψος",
+  "Scroll to the top first": "Κύλιση πρώτα στην αρχή"
  }
 }

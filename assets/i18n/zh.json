@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "指南中还没有可放入的内容。",
   "Try the tools on a sample picture": "在示例图片上试用这些工具",
   "Write the time as hh:mm, for example 14:30.": "请按 hh:mm 格式输入时间，例如 14:30。",
-  "Your mail program is open; drag the picture from the folder into the email.": "邮件程序已打开；请将图片从文件夹拖到邮件中。"
+  "Your mail program is open; drag the picture from the folder into the email.": "邮件程序已打开；请将图片从文件夹拖到邮件中。",
+  "Click: capture this. Wheel: bigger or smaller part.": "单击：截取此部分。滚轮：更大或更小的部分。",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "正在滚动：{frames} 张图片，{height} 像素。按 Esc 停止。",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster 无法在此滚动其他程序，请自己滚动，然后按“停止”。",
+  "Most scroll steps": "最多滚动次数",
+  "Wait after each scroll (ms)": "每次滚动后等待（毫秒）",
+  "Scroll by": "每次滚动",
+  "wheel notches each time": "个滚轮刻度",
+  "Stop at a height of": "在此高度停止",
+  "Scroll to the top first": "先滚动到顶部"
  }
 }

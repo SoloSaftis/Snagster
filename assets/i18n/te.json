@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "గైడ్‌లో పెట్టడానికి ఇంకా ఏమీ లేదు.",
   "Try the tools on a sample picture": "నమూనా చిత్రంపై సాధనాలను ప్రయత్నించండి",
   "Write the time as hh:mm, for example 14:30.": "సమయాన్ని hh:mm గా రాయండి, ఉదాహరణకు 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "మీ మెయిల్ ప్రోగ్రామ్ తెరిచి ఉంది; ఫోల్డర్ నుండి చిత్రాన్ని ఇమెయిల్‌లోకి లాగండి."
+  "Your mail program is open; drag the picture from the folder into the email.": "మీ మెయిల్ ప్రోగ్రామ్ తెరిచి ఉంది; ఫోల్డర్ నుండి చిత్రాన్ని ఇమెయిల్‌లోకి లాగండి.",
+  "Click: capture this. Wheel: bigger or smaller part.": "క్లిక్: దీన్ని క్యాప్చర్ చేయండి. వీల్: పెద్ద లేదా చిన్న భాగం.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "స్క్రోల్ అవుతోంది: {frames} చిత్రాలు, {height} పిక్సెల్‌లు. Esc ఆపుతుంది.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster ఇక్కడ ఇతర ప్రోగ్రామ్‌లను స్క్రోల్ చేయలేదు, కాబట్టి మీరే స్క్రోల్ చేసి ఆపు నొక్కండి.",
+  "Most scroll steps": "గరిష్ఠ స్క్రోల్ దశలు",
+  "Wait after each scroll (ms)": "ప్రతి స్క్రోల్ తర్వాత వేచి ఉండండి (ms)",
+  "Scroll by": "ఇంత స్క్రోల్ చేయండి",
+  "wheel notches each time": "ప్రతిసారి వీల్ గీతలు",
+  "Stop at a height of": "ఈ ఎత్తు వద్ద ఆపండి",
+  "Scroll to the top first": "ముందుగా పైకి స్క్రోల్ చేయండి"
  }
 }

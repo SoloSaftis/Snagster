@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Qo‘llanmaga qo‘yadigan hech narsa hali yo‘q.",
   "Try the tools on a sample picture": "Asboblarni namunaviy rasmda sinab ko‘ring",
   "Write the time as hh:mm, for example 14:30.": "Vaqtni hh:mm ko‘rinishida yozing, masalan, 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Pochta dasturi ochiq; rasmni papkadan xatga torting."
+  "Your mail program is open; drag the picture from the folder into the email.": "Pochta dasturi ochiq; rasmni papkadan xatga torting.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Bosish: buni olish. G‘ildirak: kattaroq yoki kichikroq qism.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Aylantirilmoqda: {frames} rasm, {height} piksel. Esc to‘xtatadi.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster bu yerda boshqa dasturlarni aylantira olmaydi, shuning uchun o‘zingiz aylantiring va To‘xtatish tugmasini bosing.",
+  "Most scroll steps": "Eng ko‘p aylantirish qadamlari",
+  "Wait after each scroll (ms)": "Har aylantirishdan keyin kutish (ms)",
+  "Scroll by": "Aylantirish miqdori",
+  "wheel notches each time": "har safar g‘ildirak pog‘onasi",
+  "Stop at a height of": "Shu balandlikda to‘xtash",
+  "Scroll to the top first": "Avval eng yuqoriga aylantirish"
  }
 }

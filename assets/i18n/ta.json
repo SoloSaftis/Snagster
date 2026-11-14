@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "வழிகாட்டியில் சேர்க்க இன்னும் எதுவும் இல்லை.",
   "Try the tools on a sample picture": "மாதிரிப் படத்தில் கருவிகளை முயன்று பாருங்கள்",
   "Write the time as hh:mm, for example 14:30.": "நேரத்தை hh:mm என எழுதுங்கள், எ.கா. 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "உங்கள் அஞ்சல் நிரல் திறந்துள்ளது; கோப்புறையிலிருந்து படத்தை மின்னஞ்சலுக்கு இழுக்கவும்."
+  "Your mail program is open; drag the picture from the folder into the email.": "உங்கள் அஞ்சல் நிரல் திறந்துள்ளது; கோப்புறையிலிருந்து படத்தை மின்னஞ்சலுக்கு இழுக்கவும்.",
+  "Click: capture this. Wheel: bigger or smaller part.": "கிளிக்: இதைப் பிடி. சக்கரம்: பெரிய அல்லது சிறிய பகுதி.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "உருட்டுகிறது: {frames} படங்கள், {height} பிக்சல்கள். Esc நிறுத்தும்.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster இங்கே மற்ற நிரல்களை உருட்ட முடியாது, எனவே நீங்களே உருட்டி நிறுத்து அழுத்தவும்.",
+  "Most scroll steps": "அதிகபட்ச உருட்டல் படிகள்",
+  "Wait after each scroll (ms)": "ஒவ்வொரு உருட்டலுக்கும் பின் காத்திரு (ms)",
+  "Scroll by": "இவ்வளவு உருட்டு",
+  "wheel notches each time": "ஒவ்வொரு முறையும் சக்கரப் படிகள்",
+  "Stop at a height of": "இந்த உயரத்தில் நிறுத்து",
+  "Scroll to the top first": "முதலில் மேலே உருட்டு"
  }
 }

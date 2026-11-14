@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "There's nothing to put in a guide yet.",
   "Try the tools on a sample picture": "Try the tools on a sample picture",
   "Write the time as hh:mm, for example 14:30.": "Write the time as hh:mm, for example 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Your mail program is open; drag the picture from the folder into the email."
+  "Your mail program is open; drag the picture from the folder into the email.": "Your mail program is open; drag the picture from the folder into the email.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Click: capture this. Wheel: bigger or smaller part.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Scrolling: {frames} pictures, {height} pixels. Esc stops.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster can't scroll other programs here, so scroll it yourself and press Stop.",
+  "Most scroll steps": "Most scroll steps",
+  "Wait after each scroll (ms)": "Wait after each scroll (ms)",
+  "Scroll by": "Scroll by",
+  "wheel notches each time": "wheel notches each time",
+  "Stop at a height of": "Stop at a height of",
+  "Scroll to the top first": "Scroll to the top first"
  }
 }

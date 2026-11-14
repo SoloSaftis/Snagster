@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Нұсқаулыққа қосатын ештеңе жоқ.",
   "Try the tools on a sample picture": "Құралдарды үлгі суретте байқап көріңіз",
   "Write the time as hh:mm, for example 14:30.": "Уақытты hh:mm пішімінде жазыңыз, мысалы 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Пошта бағдарламасы ашық; суретті қалтадан хатқа сүйреңіз."
+  "Your mail program is open; drag the picture from the folder into the email.": "Пошта бағдарламасы ашық; суретті қалтадан хатқа сүйреңіз.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Шерту: мұны түсіру. Дөңгелек: үлкенірек не кішірек бөлік.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Айналдыру: {frames} сурет, {height} пиксель. Esc тоқтатады.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster мұнда басқа бағдарламаларды айналдыра алмайды, сондықтан өзіңіз айналдырып, «Тоқтату» түймесін басыңыз.",
+  "Most scroll steps": "Айналдыру қадамдарының ең көбі",
+  "Wait after each scroll (ms)": "Әр айналдырудан кейін күту (мс)",
+  "Scroll by": "Айналдыру мөлшері",
+  "wheel notches each time": "дөңгелек сатысы әр жолы",
+  "Stop at a height of": "Мына биіктікте тоқтау",
+  "Scroll to the top first": "Алдымен жоғарыға айналдыру"
  }
 }

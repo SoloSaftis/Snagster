@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Et gëtt nach näischt fir an e Guide ze setzen.",
   "Try the tools on a sample picture": "Probéier d'Wierkzeug op engem Beispillbild",
   "Write the time as hh:mm, for example 14:30.": "Schreif d'Zäit als hh:mm, zum Beispill 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Däi Mailprogramm ass op; zéi d'Bild aus dem Dossier an d'E-Mail."
+  "Your mail program is open; drag the picture from the folder into the email.": "Däi Mailprogramm ass op; zéi d'Bild aus dem Dossier an d'E-Mail.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Klick: dëst ophuelen. Rad: méi grousst oder méi klengen Deel.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Scrollen: {frames} Biller, {height} Pixel. Esc stoppt.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster kann hei aner Programmer net scrollen, scrollt also selwer an dréckt op Stopp.",
+  "Most scroll steps": "Héchstens esou vill Scrollschrëtt",
+  "Wait after each scroll (ms)": "No all Scrollen waarden (ms)",
+  "Scroll by": "Scrolle ëm",
+  "wheel notches each time": "Radstufen all Kéier",
+  "Stop at a height of": "Stoppen op enger Héicht vun",
+  "Scroll to the top first": "Fir d'éischt no uewen scrollen"
  }
 }

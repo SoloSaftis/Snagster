@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "ഗൈഡിൽ ചേർക്കാൻ ഇതുവരെ ഒന്നുമില്ല.",
   "Try the tools on a sample picture": "ഒരു സാമ്പിൾ ചിത്രത്തിൽ ടൂളുകൾ പരീക്ഷിക്കുക",
   "Write the time as hh:mm, for example 14:30.": "സമയം hh:mm എന്ന് എഴുതുക, ഉദാഹരണത്തിന് 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "നിങ്ങളുടെ മെയിൽ പ്രോഗ്രാം തുറന്നിരിക്കുന്നു; ഫോൾഡറിൽ നിന്ന് ചിത്രം ഇമെയിലിലേക്ക് വലിച്ചിടുക."
+  "Your mail program is open; drag the picture from the folder into the email.": "നിങ്ങളുടെ മെയിൽ പ്രോഗ്രാം തുറന്നിരിക്കുന്നു; ഫോൾഡറിൽ നിന്ന് ചിത്രം ഇമെയിലിലേക്ക് വലിച്ചിടുക.",
+  "Click: capture this. Wheel: bigger or smaller part.": "ക്ലിക്ക്: ഇത് പകർത്തുക. വീൽ: വലുതോ ചെറുതോ ആയ ഭാഗം.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "സ്ക്രോൾ ചെയ്യുന്നു: {frames} ചിത്രങ്ങൾ, {height} പിക്സൽ. Esc നിർത്തുന്നു.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster-ന് ഇവിടെ മറ്റ് പ്രോഗ്രാമുകൾ സ്ക്രോൾ ചെയ്യാനാവില്ല, അതിനാൽ നിങ്ങൾ തന്നെ സ്ക്രോൾ ചെയ്ത് നിർത്തുക അമർത്തുക.",
+  "Most scroll steps": "പരമാവധി സ്ക്രോൾ ഘട്ടങ്ങൾ",
+  "Wait after each scroll (ms)": "ഓരോ സ്ക്രോളിനും ശേഷം കാത്തിരിക്കുക (ms)",
+  "Scroll by": "ഇത്രയും സ്ക്രോൾ ചെയ്യുക",
+  "wheel notches each time": "ഓരോ തവണയും വീൽ പടികൾ",
+  "Stop at a height of": "ഈ ഉയരത്തിൽ നിർത്തുക",
+  "Scroll to the top first": "ആദ്യം മുകളിലേക്ക് സ്ക്രോൾ ചെയ്യുക"
  }
 }

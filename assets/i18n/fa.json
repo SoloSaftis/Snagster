@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "هنوز چیزی برای افزودن به راهنما نیست.",
   "Try the tools on a sample picture": "ابزارها را روی یک تصویر نمونه امتحان کنید",
   "Write the time as hh:mm, for example 14:30.": "زمان را به شکل hh:mm بنویسید، مثلاً 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "برنامه ایمیل شما باز است؛ تصویر را از پوشه به ایمیل بکشید."
+  "Your mail program is open; drag the picture from the folder into the email.": "برنامه ایمیل شما باز است؛ تصویر را از پوشه به ایمیل بکشید.",
+  "Click: capture this. Wheel: bigger or smaller part.": "کلیک: این را بگیر. چرخ: بخش بزرگ‌تر یا کوچک‌تر.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "در حال پیمایش: {frames} تصویر، {height} پیکسل. Esc متوقف می‌کند.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster اینجا نمی‌تواند برنامه‌های دیگر را پیمایش کند، پس خودتان پیمایش کنید و توقف را بزنید.",
+  "Most scroll steps": "بیشترین گام‌های پیمایش",
+  "Wait after each scroll (ms)": "انتظار پس از هر پیمایش (میلی‌ثانیه)",
+  "Scroll by": "پیمایش به اندازهٔ",
+  "wheel notches each time": "ضامن چرخ در هر بار",
+  "Stop at a height of": "توقف در ارتفاع",
+  "Scroll to the top first": "ابتدا تا بالا پیمایش شود"
  }
 }

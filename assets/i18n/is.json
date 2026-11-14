@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Það er ekkert að setja í leiðbeiningar ennþá.",
   "Try the tools on a sample picture": "Prófaðu verkfærin á sýnismynd",
   "Write the time as hh:mm, for example 14:30.": "Skrifaðu tímann sem hh:mm, til dæmis 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Tölvupóstforritið þitt er opið; dragðu myndina úr möppunni inn í tölvupóstinn."
+  "Your mail program is open; drag the picture from the folder into the email.": "Tölvupóstforritið þitt er opið; dragðu myndina úr möppunni inn í tölvupóstinn.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Smella: fanga þetta. Hjól: stærri eða minni hluti.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Skrunar: {frames} myndir, {height} dílar. Esc stöðvar.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster getur ekki skrunað öðrum forritum hér, svo skrunaðu sjálf(ur) og ýttu á Stöðva.",
+  "Most scroll steps": "Flest skrunskref",
+  "Wait after each scroll (ms)": "Bíða eftir hvert skrun (ms)",
+  "Scroll by": "Skruna um",
+  "wheel notches each time": "hjólhök í hvert sinn",
+  "Stop at a height of": "Stöðva við hæðina",
+  "Scroll to the top first": "Skruna fyrst efst"
  }
 }

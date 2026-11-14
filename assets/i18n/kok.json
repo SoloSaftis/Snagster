@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "मार्गदर्शकांत घालपाक अजून कांयच ना.",
   "Try the tools on a sample picture": "साधनां नमुन्याच्या चित्रार तपासून पळयात",
   "Write the time as hh:mm, for example 14:30.": "वेळ hh:mm अशी बरयात, उदा. 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "तुमचो मेल प्रोग्राम उक्तो आसा; चित्र फोल्डरांतल्यान ईमेलींत ओडात."
+  "Your mail program is open; drag the picture from the folder into the email.": "तुमचो मेल प्रोग्राम उक्तो आसा; चित्र फोल्डरांतल्यान ईमेलींत ओडात.",
+  "Click: capture this. Wheel: bigger or smaller part.": "क्लिक: हें कॅप्चर करात. चाक: व्हडलो वा ल्हान भाग.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "स्क्रोल जाता: {frames} चित्रां, {height} पिक्सेल. Esc थांबयता.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster हांगा हेर प्रोग्राम स्क्रोल करूंक शकना, देखून तुमी स्वता स्क्रोल करात आनी थांबय दामात.",
+  "Most scroll steps": "चडांत चड स्क्रोल पावलां",
+  "Wait after each scroll (ms)": "दर स्क्रोला उपरांत राकात (ms)",
+  "Scroll by": "इतलें स्क्रोल करात",
+  "wheel notches each time": "दर फावटीं चाकाचे खांचे",
+  "Stop at a height of": "ह्या उंचायेर थांबात",
+  "Scroll to the top first": "पयलीं वयर मेरेन स्क्रोल करात"
  }
 }

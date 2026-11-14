@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Juhendisse pole veel midagi panna.",
   "Try the tools on a sample picture": "Proovi tööriistu näidispildil",
   "Write the time as hh:mm, for example 14:30.": "Kirjuta kellaaeg kujul hh:mm, näiteks 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Sinu meiliprogramm on avatud; lohista pilt kaustast meilile."
+  "Your mail program is open; drag the picture from the folder into the email.": "Sinu meiliprogramm on avatud; lohista pilt kaustast meilile.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Klõps: jäädvusta see. Ratas: suurem või väiksem osa.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Kerimine: {frames} pilti, {height} pikslit. Esc peatab.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster ei saa siin teisi programme kerida, seega kerige ise ja vajutage Peata.",
+  "Most scroll steps": "Kõige rohkem kerimissamme",
+  "Wait after each scroll (ms)": "Oota pärast iga kerimist (ms)",
+  "Scroll by": "Keri",
+  "wheel notches each time": "rattasammu korraga",
+  "Stop at a height of": "Peatu kõrgusel",
+  "Scroll to the top first": "Keri kõigepealt üles"
  }
 }

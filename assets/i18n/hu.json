@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Még nincs mit betenni az útmutatóba.",
   "Try the tools on a sample picture": "Próbálja ki az eszközöket egy minta képen",
   "Write the time as hh:mm, for example 14:30.": "Írja be az időt hh:mm formában, például 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "A levelezőprogram megnyílt; húzza a képet a mappából az e-mailbe."
+  "Your mail program is open; drag the picture from the folder into the email.": "A levelezőprogram megnyílt; húzza a képet a mappából az e-mailbe.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Kattintás: ennek rögzítése. Görgő: nagyobb vagy kisebb rész.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Görgetés: {frames} kép, {height} képpont. Az Esc leállítja.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "A Snagster itt nem tud más programokat görgetni, ezért görgessen saját maga, majd nyomja meg ezt: Leállítás.",
+  "Most scroll steps": "Legtöbb görgetési lépés",
+  "Wait after each scroll (ms)": "Várakozás minden görgetés után (ms)",
+  "Scroll by": "Görgetés",
+  "wheel notches each time": "görgőlépéssel egyszerre",
+  "Stop at a height of": "Megállás ekkora magasságnál:",
+  "Scroll to the top first": "Előbb görgetés a tetejére"
  }
 }

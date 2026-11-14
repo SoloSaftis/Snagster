@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "עדיין אין מה להכניס למדריך.",
   "Try the tools on a sample picture": "נסו את הכלים על תמונת דוגמה",
   "Write the time as hh:mm, for example 14:30.": "כתבו את השעה כ-hh:mm, לדוגמה 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "תוכנת הדואר פתוחה; גררו את התמונה מהתיקייה אל האימייל."
+  "Your mail program is open; drag the picture from the folder into the email.": "תוכנת הדואר פתוחה; גררו את התמונה מהתיקייה אל האימייל.",
+  "Click: capture this. Wheel: bigger or smaller part.": "לחיצה: לכידת זה. גלגלת: חלק גדול או קטן יותר.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "גלילה: {frames} תמונות, {height} פיקסלים. Esc עוצר.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster לא יכול לגלול תוכניות אחרות כאן, לכן גללו בעצמכם ולחצו על עצירה.",
+  "Most scroll steps": "מספר צעדי גלילה מרבי",
+  "Wait after each scroll (ms)": "המתנה אחרי כל גלילה (ms)",
+  "Scroll by": "גלילה ב־",
+  "wheel notches each time": "חריצי גלגלת בכל פעם",
+  "Stop at a height of": "עצירה בגובה של",
+  "Scroll to the top first": "גלילה לראש הדף קודם"
  }
 }

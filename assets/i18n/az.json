@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "Bələdçiyə qoymaq üçün hələ heç nə yoxdur.",
   "Try the tools on a sample picture": "Alətləri nümunə şəkil üzərində sınayın",
   "Write the time as hh:mm, for example 14:30.": "Vaxtı hh:mm formatında yazın, məsələn, 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Poçt proqramınız açıqdır; şəkli qovluqdan e-poçta sürüşdürün."
+  "Your mail program is open; drag the picture from the folder into the email.": "Poçt proqramınız açıqdır; şəkli qovluqdan e-poçta sürüşdürün.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Klik: bunu çək. Təkər: daha böyük və ya kiçik hissə.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Sürüşdürülür: {frames} şəkil, {height} piksel. Esc dayandırır.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster burada digər proqramları sürüşdürə bilmir, ona görə özünüz sürüşdürün və Dayandır düyməsini basın.",
+  "Most scroll steps": "Ən çox sürüşdürmə addımı",
+  "Wait after each scroll (ms)": "Hər sürüşdürmədən sonra gözlə (ms)",
+  "Scroll by": "Sürüşdürmə miqdarı",
+  "wheel notches each time": "hər dəfə təkər pilləsi",
+  "Stop at a height of": "Bu hündürlükdə dayan",
+  "Scroll to the top first": "Əvvəlcə yuxarıya sürüşdür"
  }
 }

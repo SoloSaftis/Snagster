@@ -454,6 +454,12 @@ pub struct Settings {
     pub include_cursor: bool,
     pub scroll_max_steps: u32,
     pub scroll_wait_ms: u64,
+    /// Mouse wheel notches per scroll.
+    pub scroll_notches: u32,
+    /// The longest scrolling picture, in pixels.
+    pub scroll_max_height: u32,
+    /// Scroll back to the top (or the left end) before capturing.
+    pub scroll_from_top: bool,
     // Timer
     pub interval_s: u64,
     pub interval_count: u32,
@@ -578,6 +584,9 @@ impl Default for Settings {
             include_cursor: false,
             scroll_max_steps: 40,
             scroll_wait_ms: 350,
+            scroll_notches: 3,
+            scroll_max_height: 20000,
+            scroll_from_top: true,
             interval_s: 10,
             interval_count: 6,
             schedule_time: "12:00".into(),
@@ -1223,6 +1232,16 @@ mod tests {
         assert_eq!(s.mcp_port, 45831);
         assert_eq!(s.themes, default_themes());
         assert_eq!(s.panel, PanelSettings::default());
+    }
+
+    #[test]
+    fn scrolling_capture_settings_get_defaults_and_keep_what_was_saved() {
+        // Saved before these existed: the defaults.
+        let s = Settings::from_saved(Some(r#"{ "scroll_wait_ms": 500 }"#));
+        assert_eq!(s.scroll_wait_ms, 500);
+        assert_eq!((s.scroll_notches, s.scroll_max_height, s.scroll_from_top), (3, 20000, true));
+        let s = Settings::from_saved(Some(r#"{ "scroll_notches": 8, "scroll_max_height": 5000, "scroll_from_top": false }"#));
+        assert_eq!((s.scroll_notches, s.scroll_max_height, s.scroll_from_top), (8, 5000, false));
     }
 
     #[test]

@@ -751,6 +751,15 @@
   "There's nothing to put in a guide yet.": "M'hemm xejn x'tpoġġi f'gwida għadu.",
   "Try the tools on a sample picture": "Ipprova l-għodod fuq ritratt tal-kampjun",
   "Write the time as hh:mm, for example 14:30.": "Ikteb il-ħin bħala hh:mm, pereżempju 14:30.",
-  "Your mail program is open; drag the picture from the folder into the email.": "Il-programm tal-posta miftuħ; kaxkar ir-ritratt mill-folder fl-e-mail."
+  "Your mail program is open; drag the picture from the folder into the email.": "Il-programm tal-posta miftuħ; kaxkar ir-ritratt mill-folder fl-e-mail.",
+  "Click: capture this. Wheel: bigger or smaller part.": "Ikklikkja: aqbad dan. Rota: parti akbar jew iżgħar.",
+  "Scrolling: {frames} pictures, {height} pixels. Esc stops.": "Qed jiskrollja: {frames} stampi, {height} pixel. Esc iwaqqaf.",
+  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.": "Snagster ma jistax jiskrollja programmi oħra hawn, allura skrollja int u agħfas Waqqaf.",
+  "Most scroll steps": "L-akbar numru ta' passi tal-iskrolljar",
+  "Wait after each scroll (ms)": "Stenna wara kull skrollja (ms)",
+  "Scroll by": "Skrollja b'",
+  "wheel notches each time": "tikki tar-rota kull darba",
+  "Stop at a height of": "Ieqaf f'għoli ta'",
+  "Scroll to the top first": "Skrollja l-ewwel sal-quċċata"
  }
 }
