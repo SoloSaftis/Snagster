@@ -55,8 +55,18 @@ jobs:
         timeout-minutes: 10
         shell: pwsh
         run: |
+          # The CI machine has no graphics driver (OpenGL 1.1 only), so the test copy gets Mesa's
+          # software OpenGL beside it: a pinned release, checked against its published checksum.
+          # The shipped zip doesn't include it; real computers use their own driver.
+          $mesa = "mesa3d-26.2.6-release-msvc.7z"
+          Invoke-WebRequest -Uri "https://github.com/pal1000/mesa-dist-win/releases/download/26.2.6/$mesa" -OutFile $mesa
+          if ((Get-FileHash $mesa -Algorithm SHA256).Hash -ne "B2E00615FEABA45942343C265CC8C5F576142CA682C1AC6661922D4B72492877") { throw "Mesa checksum differs" }
+          7z x $mesa -omesa x64 -y | Out-Null
+          New-Item -ItemType Directory -Force uitest | Out-Null
+          Copy-Item target/release/snagster.exe uitest/
+          Copy-Item mesa/x64/*.dll uitest/
           # The release build is a windowed program: wait for it and collect what it prints.
-          Start-Process target/release/snagster.exe -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test.txt
+          Start-Process uitest/snagster.exe -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test.txt
           Get-Content ui-test.txt
           if (-not (Select-String -Path ui-test.txt -Pattern '^(\d+) of \1 button actions worked' -Quiet)) { exit 1 }
       - name: Package (portable zip)
