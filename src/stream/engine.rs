@@ -400,11 +400,13 @@ impl Streamer {
         let asc = aenc.as_ref().map(|a| a.audio_specific_config());
         *shared.queue.lock().unwrap_or_else(|p| p.into_inner()) = Some(SendQueue::new(cfg.max_queue_ms));
         let meta = Meta { width: w, height: h, fps, video_kbps: cfg.video_kbps, codec: cfg.codec, audio_kbps: asc.as_ref().map(|_| cfg.audio_kbps) };
+        // How this machine's sleeps behave, found before the clock starts (it takes a few ms).
+        let pacer = crate::video::Pacer::calibrated();
         let started = Instant::now();
         let mut threads = Vec::new();
         let hook = cfg.on_packet.clone();
         let sh = shared.clone();
-        threads.push(spawn("snagster-stream-video", move || video_thread(sh, frames, venc, w, h, fps, started, hook)).map_err(|e| e.to_string())?);
+        threads.push(spawn("snagster-stream-video", move || video_thread(sh, frames, venc, w, h, fps, started, pacer, hook)).map_err(|e| e.to_string())?);
         if let (Some(feed), Some(enc)) = (sound, aenc) {
             let sh = shared.clone();
             let hook = cfg.on_packet.clone();
@@ -507,50 +509,82 @@ fn queue_packet(sh: &Shared, hook: &Option<PacketHook>, p: Packet) {
     });
 }
 
-fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEncoder>, w: u32, h: u32, fps: u32, started: Instant, hook: Option<PacketHook>) {
+/// At most this many due frame slots are filled at once when the picture thread wakes late;
+/// slots older than that are skipped (counted as late) rather than sent in a burst.
+const CATCH_UP: u64 = 3;
+
+/// What the picture thread does at `now_us` (since the stream started) with frame slots
+/// `frame_us` apart and `next` the first slot not yet filled.
+#[derive(Clone, Debug, PartialEq)]
+struct SlotPlan {
+    /// Not due yet: wait this many microseconds (and plan again).
+    wait_us: Option<u64>,
+    /// The slots to fill now with the newest picture.
+    emit: std::ops::Range<u64>,
+    /// Slots too old to send, skipped.
+    skipped: u64,
+}
+
+fn plan_slots(now_us: u64, frame_us: f64, next: u64, catch_up: u64) -> SlotPlan {
+    let due_us = |slot: u64| (slot as f64 * frame_us) as u64;
+    if now_us < due_us(next) {
+        return SlotPlan { wait_us: Some(due_us(next) - now_us), emit: next..next, skipped: 0 };
+    }
+    // The newest slot that is due, and up to `catch_up` slots ending with it.
+    let newest = ((now_us as f64 / frame_us) as u64).max(next);
+    let first = newest.saturating_sub(catch_up.max(1) - 1).max(next);
+    SlotPlan { wait_us: None, emit: first..newest + 1, skipped: first - next }
+}
+
+fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEncoder>, w: u32, h: u32, fps: u32, started: Instant, mut pacer: crate::video::Pacer, hook: Option<PacketHook>) {
     crate::video::timely_thread();
     let mut buf = vec![0u8; w as usize * h as usize * 4];
     let frame_us = 1_000_000.0 / fps as f64;
+    // The next frame slot to fill: slot n is due at `started + n frames` (fixed deadlines, so
+    // nothing drifts however the waits go).
     let mut n: u64 = 0;
-    // Sleeps that overrun (a virtual machine's) must not slow the frame rate.
-    let mut pacer = crate::video::Pacer::default();
-    while !sh.stop.load(Ordering::Relaxed) {
-        // The frame's place on the timeline; frames we fell behind on are skipped, not queued.
-        let due = started + Duration::from_micros((n as f64 * frame_us) as u64);
-        let now = Instant::now();
-        if due > now {
-            pacer.wait_until(due);
-        } else if now - due > Duration::from_micros(frame_us as u64) {
-            let caught_up = (now.duration_since(started).as_micros() as f64 / frame_us) as u64;
-            sh.timing.late.fetch_add(caught_up.saturating_sub(n), Ordering::Relaxed);
-            n = caught_up;
+    'frames: while !sh.stop.load(Ordering::Relaxed) {
+        let mut plan = plan_slots(started.elapsed().as_micros() as u64, frame_us, n, CATCH_UP);
+        if let Some(wait) = plan.wait_us {
+            // Wait for the slot, then fill it (also when told to stop meanwhile: the slot was
+            // due, and its picture goes out with the rest).
+            pacer.wait_until(Instant::now() + Duration::from_micros(wait));
+            plan = plan_slots(started.elapsed().as_micros() as u64, frame_us, n, CATCH_UP);
+            if plan.wait_us.is_some() {
+                continue;
+            }
         }
+        sh.timing.late.fetch_add(plan.skipped, Ordering::Relaxed);
         let t = Instant::now();
         if !frames.fill(&mut buf) {
             sh.stop.store(true, Ordering::Relaxed);
             break;
         }
         add_us(&sh.timing.fill_us, t);
-        let pts = (n as f64 * frame_us) as i64;
-        let key = sh.want_key.swap(false, Ordering::Relaxed);
-        let t = Instant::now();
-        let r = enc.encode(&buf, pts, key);
-        let took = add_us(&sh.timing.encode_us, t);
-        sh.timing.encode_max_us.fetch_max(took, Ordering::Relaxed);
-        sh.timing.frames_in.fetch_add(1, Ordering::Relaxed);
-        sh.timing.encoder_dropped.store(enc.dropped(), Ordering::Relaxed);
-        match r {
-            Ok(ps) => {
-                sh.timing.packets_out.fetch_add(ps.len() as u64, Ordering::Relaxed);
-                ps.into_iter().for_each(|p| queue_packet(&sh, &hook, Packet::Video(p)))
-            }
-            Err(e) => {
-                sh.set_error(format!("Video encoder: {e}"));
-                sh.stop.store(true, Ordering::Relaxed);
-                break;
+        // The newest picture for every slot that is due (a slot missed is filled with a repeat,
+        // so the service sees a steady frame rate).
+        for slot in plan.emit.clone() {
+            let pts = (slot as f64 * frame_us) as i64;
+            let key = sh.want_key.swap(false, Ordering::Relaxed);
+            let t = Instant::now();
+            let r = enc.encode(&buf, pts, key);
+            let took = add_us(&sh.timing.encode_us, t);
+            sh.timing.encode_max_us.fetch_max(took, Ordering::Relaxed);
+            sh.timing.frames_in.fetch_add(1, Ordering::Relaxed);
+            sh.timing.encoder_dropped.store(enc.dropped(), Ordering::Relaxed);
+            match r {
+                Ok(ps) => {
+                    sh.timing.packets_out.fetch_add(ps.len() as u64, Ordering::Relaxed);
+                    ps.into_iter().for_each(|p| queue_packet(&sh, &hook, Packet::Video(p)))
+                }
+                Err(e) => {
+                    sh.set_error(format!("Video encoder: {e}"));
+                    sh.stop.store(true, Ordering::Relaxed);
+                    break 'frames;
+                }
             }
         }
-        n += 1;
+        n = plan.emit.end;
     }
     if let Ok(ps) = enc.finish() {
         ps.into_iter().for_each(|p| queue_packet(&sh, &hook, Packet::Video(p)));
@@ -850,6 +884,47 @@ mod tests {
     fn vid(ms: i64, key: bool) -> Packet {
         let data = if key { key_au() } else { vec![0, 0, 1, 0x41, 0xBB] };
         Packet::Video(VideoPacket { data, pts_us: ms * 1000 + 40_000, dts_us: ms * 1000, keyframe: key })
+    }
+
+    #[test]
+    fn frame_slots_wait_emit_and_catch_up() {
+        let f = 1_000_000.0 / 30.0;
+        // Before slot 1 is due: wait for it.
+        assert_eq!(plan_slots(10_000, f, 1, 3), SlotPlan { wait_us: Some(23_333), emit: 1..1, skipped: 0 });
+        // On time: just that slot.
+        assert_eq!(plan_slots(33_400, f, 1, 3), SlotPlan { wait_us: None, emit: 1..2, skipped: 0 });
+        // Woke 2 slots late: slots 1, 2 and 3 all get the newest picture.
+        assert_eq!(plan_slots(100_100, f, 1, 3), SlotPlan { wait_us: None, emit: 1..4, skipped: 0 });
+        // Woke 10 slots late: the last 3 are sent, the rest are skipped.
+        assert_eq!(plan_slots(366_700, f, 1, 3), SlotPlan { wait_us: None, emit: 9..12, skipped: 8 });
+        // The first slot at the start.
+        assert_eq!(plan_slots(0, f, 0, 3), SlotPlan { wait_us: None, emit: 0..1, skipped: 0 });
+    }
+
+    /// A machine whose sleeps all overrun by 30 ms (the CI Mac): with fixed deadlines and
+    /// catch-up, every slot still goes out, even with no allowance in the wait at all.
+    #[test]
+    fn a_coarse_timer_still_gets_every_frame_out() {
+        let f = 1_000_000.0 / 30.0;
+        let (mut now, mut next, mut sent, mut skipped) = (0u64, 0u64, 0u64, 0u64);
+        while now < 3_000_000 {
+            let p = plan_slots(now, f, next, CATCH_UP);
+            match p.wait_us {
+                // A plain sleep that runs 30 ms long, then the encode (3 ms).
+                Some(w) => now += w + 30_000,
+                None => {
+                    sent += p.emit.end - p.emit.start;
+                    skipped += p.skipped;
+                    next = p.emit.end;
+                    now += 3_000 * (p.emit.end - p.emit.start);
+                }
+            }
+        }
+        let due = (3_000_000.0 / f) as u64;
+        assert!(sent as f64 >= 0.9 * due as f64, "{sent} of {due} sent, {skipped} skipped");
+        assert_eq!(skipped, 0);
+        // Timestamps stay on the slots: none twice, none missing.
+        assert_eq!(next, sent);
     }
 
     #[test]

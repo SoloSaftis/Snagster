@@ -690,12 +690,16 @@ fn next_wait(left: Duration, overshoot: Duration) -> Wait {
 }
 
 /// Waits until a moment on time even where sleeps run long. It learns how much this system's
-/// sleeps overrun and sleeps that much less, finishing the last part by yielding. On a normal
-/// computer sleeps overrun by a fraction of a millisecond, so it nearly only sleeps; the CI
+/// sleeps overrun and, where that is a lot, sleeps that much less and yields the last part. On a
+/// normal computer sleeps overrun by a fraction of a millisecond, so it only sleeps; the CI
 /// Mac (a virtual machine) overran a 5 ms sleep by 25 ms, which held a 30 fps stream to 17.
 #[derive(Debug, Default)]
 pub struct Pacer {
     overshoot: Duration,
+    /// Sleeps here overrun too much to sleep straight to the moment (decided once, by
+    /// `calibrated`): cut them short and yield the rest. Otherwise plain sleeps, so a
+    /// normal computer never spends processor time waiting.
+    coarse: bool,
 }
 
 impl Pacer {
@@ -709,7 +713,49 @@ impl Pacer {
 
     const MOST: Duration = Duration::from_millis(30);
 
+    /// A pacer that starts from how much three 1 ms sleeps overrun here (it keeps learning).
+    pub fn calibrated() -> Pacer {
+        // The smallest overrun of five 1 ms sleeps: one stalled sleep on a busy machine doesn't
+        // make it coarse; a timer that is coarse overruns every time.
+        let least = (0..5)
+            .map(|_| {
+                let t = Instant::now();
+                std::thread::sleep(Duration::from_millis(1));
+                t.elapsed().saturating_sub(Duration::from_millis(1))
+            })
+            .min()
+            .unwrap_or_default();
+        Pacer { overshoot: least.min(Self::MOST), coarse: least >= COARSE }
+    }
+
+    /// How it waits, for a person: plain sleeps, or sleeps cut short and finished by yielding.
+    pub fn mode(&self) -> String {
+        pacer_mode(self.overshoot)
+    }
+}
+
+/// Sleeps overrunning by less than this are taken as precise.
+const COARSE: Duration = Duration::from_millis(2);
+
+fn pacer_mode(overshoot: Duration) -> String {
+    if overshoot < COARSE {
+        format!("precise sleeps (overrun {:.1} ms)", overshoot.as_secs_f64() * 1000.0)
+    } else {
+        format!("coarse timer (sleeps overrun {:.0} ms): sleeps cut short, the rest yielded", overshoot.as_secs_f64() * 1000.0)
+    }
+}
+
+impl Pacer {
+
     pub fn wait_until(&mut self, until: Instant) {
+        if !self.coarse {
+            let mut now = Instant::now();
+            while now < until {
+                std::thread::sleep(until - now);
+                now = Instant::now();
+            }
+            return;
+        }
         loop {
             let now = Instant::now();
             match next_wait(until.saturating_duration_since(now), self.overshoot) {
@@ -726,7 +772,7 @@ impl Pacer {
 
 thread_local! {
     /// The feed thread's pacer (see `sleep_until`).
-    static PACER: std::cell::RefCell<Pacer> = std::cell::RefCell::new(Pacer::default());
+    static PACER: std::cell::RefCell<Pacer> = std::cell::RefCell::new(Pacer::calibrated());
 }
 
 thread_local! {
@@ -2815,6 +2861,13 @@ mod tests {
         }
         assert!(q.overshoot <= Pacer::MOST);
         assert!(matches!(next_wait(ms(33), q.overshoot), Wait::Sleep(_)));
+    }
+
+    #[test]
+    fn the_pacing_mode_reads_for_a_person() {
+        assert_eq!(pacer_mode(Duration::from_micros(300)), "precise sleeps (overrun 0.3 ms)");
+        assert_eq!(pacer_mode(Duration::from_millis(25)), "coarse timer (sleeps overrun 25 ms): sleeps cut short, the rest yielded");
+        assert!(Pacer::calibrated().overshoot <= Pacer::MOST);
     }
 
     #[test]

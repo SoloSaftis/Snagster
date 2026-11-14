@@ -555,21 +555,21 @@ fn stream_test(quick: bool) -> bool {
     // A system whose sleeps run long can't keep a frame rate: how long a 5 ms sleep takes on a
     // plain thread, and on a timely one while the stream's activity is held (what streaming uses).
     let plain = video::measured_sleep_ms(5, 20);
-    let (timely, paced) = std::thread::spawn(|| {
+    let (timely, paced, mode) = std::thread::spawn(|| {
         let _a = video::TimelyActivity::begin("Stream test");
         video::timely_thread();
         let slept = video::measured_sleep_ms(5, 20);
         // What the stream's threads really do: `Pacer` learns the overrun and allows for it.
-        let mut p = video::Pacer::default();
+        let mut p = video::Pacer::calibrated();
         let t = std::time::Instant::now();
         for _ in 0..20 {
             p.wait_until(std::time::Instant::now() + std::time::Duration::from_millis(5));
         }
-        (slept, t.elapsed().as_secs_f64() * 1000.0 / 20.0)
+        (slept, t.elapsed().as_secs_f64() * 1000.0 / 20.0, p.mode())
     })
     .join()
-    .unwrap_or((0.0, 0.0));
-    println!("A 5 ms sleep takes {plain:.1} ms ({timely:.1} ms on a streaming thread); a paced 5 ms wait takes {paced:.1} ms");
+    .unwrap_or((0.0, 0.0, String::new()));
+    println!("A 5 ms sleep takes {plain:.1} ms ({timely:.1} ms on a streaming thread); a paced 5 ms wait takes {paced:.1} ms; pacing: {mode}");
     // (height, frame rate, seconds, copy every frame even when the screen doesn't change: the cost
     // of a screen that changes all the time)
     let cases: &[(u32, u32, u64, bool)] = if quick { &[(720, 30, 3, true)] } else { &[(1080, 30, 6, false), (1080, 30, 6, true), (1440, 60, 6, false), (1440, 60, 6, true)] };
