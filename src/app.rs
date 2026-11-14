@@ -41,6 +41,7 @@ mod uitest;
 pub(crate) mod work;
 pub(crate) mod ribbon;
 pub(crate) mod studio_ui;
+pub(crate) mod stream_ui;
 pub(crate) mod updates_ui;
 /// The editor window's smallest size (lifted while it is the panel or the recording bar).
 pub const MIN_SIZE: Vec2 = Vec2::new(900.0, 560.0);
@@ -163,6 +164,7 @@ pub(crate) enum SettingsTab {
     Presets,
     Ai,
     Language,
+    Streaming,
 }
 
 /// The small always-on-top bar shown while something runs in the background.
@@ -957,7 +959,9 @@ impl SnagApp {
                     }
                     AreaAction::RecordGif => {
                         self.leave_overlay(&ctx, true);
-                        self.start_record(&ctx, desktop);
+                        if !self.stream_area_picked(&ctx, desktop) {
+                            self.start_record(&ctx, desktop);
+                        }
                     }
                 }
             }
@@ -3042,7 +3046,14 @@ impl SnagApp {
             ui.vertical(|ui| {
                 ui.set_width(250.0);
                 ui.add_space(8.0);
-                ui.label(RichText::new(crate::i18n::t("Recent")).strong().color(Color32::WHITE));
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new(crate::i18n::t("Recent")).strong().color(Color32::WHITE));
+                    let snap = self.x.stream.snap.clone();
+                    if snap.on_air() && stream_ui::live_badge(ui, &snap).clicked() {
+                        let ctx = ui.ctx().clone();
+                        self.switch_tab(&ctx, ribbon::RibbonTab::Stream);
+                    }
+                });
                 ui.add(egui::Label::new(RichText::new(crate::i18n::tr(&self.status)).color(TEXT_DIM).size(12.5)).wrap());
             });
             ui.separator();
@@ -3760,6 +3771,11 @@ impl SnagApp {
             ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
             self.status = "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.".into();
         }
+        // Closing for good ends a stream cleanly (it is unpublished, not cut off).
+        if ctx.input(|i| i.viewport().close_requested()) && !(!self.quitting && self.tray.is_some() && self.settings.close_to_tray) && crate::stream::live::end() {
+            crate::stream::live::wait_idle(Duration::from_secs(5));
+        }
+        self.poll_stream(ctx);
         self.poll_capture(ctx);
         self.poll_jobs(ctx);
         self.poll_timers(ctx);
@@ -3793,6 +3809,7 @@ impl SnagApp {
         if self.panel_open {
             egui::CentralPanel::default().frame(Self::panel_frame()).show(ui, |ui| self.panel_ui(ui));
             self.settings_window(&ctx);
+            self.stream_confirm_window(&ctx);
             return;
         }
         if self.mini.is_some() {
@@ -3813,6 +3830,7 @@ impl SnagApp {
             .show(ui, |ui| self.ribbon(ui));
         self.language_window(&ctx);
         self.update_window(&ctx);
+        self.stream_confirm_window(&ctx);
         if self.x.tab == ribbon::RibbonTab::Studio {
             self.studio_view(ui);
             self.dialog_window(&ctx);
@@ -5014,6 +5032,16 @@ impl SnagApp {
                 }
             }
             "record" => self.x.tab = ribbon::RibbonTab::Record,
+            "stream" => self.x.tab = ribbon::RibbonTab::Stream,
+            "panel-stream" => {
+                self.settings.panel.tab = 3;
+                self.enter_panel(ctx);
+            }
+            "settings-stream" => {
+                self.x.tab = ribbon::RibbonTab::Stream;
+                self.settings_open = true;
+                self.settings_tab = SettingsTab::Streaming;
+            }
             "settings-ai" => {
                 self.settings_open = true;
                 self.settings_tab = SettingsTab::Ai;

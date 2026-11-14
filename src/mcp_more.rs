@@ -191,7 +191,162 @@ pub(super) fn tools() -> Vec<Tool> {
             ),
             edits: false,
         },
+        Tool {
+            name: "stream_services",
+            description: "The live-streaming services Snagster knows (Twitch, YouTube, Kick, Facebook Live, Restream, a custom RTMP/RTMPS server): their usual server address, the largest picture, frame rate and bitrate they take, and where to find the stream key.",
+            schema: obj(json!({}), &[]),
+            edits: false,
+        },
+        Tool {
+            name: "stream_start",
+            description: "Go live: stream the screen, a window, a desktop area or the Studio scene to a service over RTMP/RTMPS, in the background (it keeps going after this call; stop it with stream_stop). Uses the stream key saved in Snagster's settings unless key is given; the key is never shown back. Returns once the stream is on the air (or after 15 s still connecting). One stream at a time. Defaults come from the Streaming settings.",
+            schema: obj(
+                json!({
+                    "service": {"type": "string", "enum": ["twitch", "youtube", "kick", "facebook", "restream", "custom"], "description": "Default: the setting."},
+                    "url": s("Server address (rtmp:// or rtmps://); default: the setting, or the service's usual server."),
+                    "key": s("The stream key, only if it should not come from the settings. Secret: it is never repeated in answers."),
+                    "source": {"type": "string", "enum": ["screen", "window", "area", "studio"], "description": "What to stream; default: the setting."},
+                    "title": s("Part of the window title (source window)."),
+                    "x": n("Desktop x (source area)."), "y": n("Desktop y."), "width": n("Desktop width."), "height": n("Desktop height."),
+                    "fps": n("Frames per second (the service's limit applies)."),
+                    "bitrate": n("Video bitrate in kbit/s (0: recommended; the service's limit applies)."),
+                    "max_height": n("The tallest picture sent, e.g. 720 (0: the source's size)."),
+                    "audio": {"type": "string", "enum": ["none", "system", "microphone", "both"], "description": "Sound to stream (Windows); default: the setting."},
+                    "record_copy": b("Also save what is streamed as an FLV file in the recordings folder.")
+                }),
+                &[],
+            ),
+            edits: false,
+        },
+        Tool { name: "stream_status", description: "Whether Snagster is live, and how it goes: state, time on the air, bitrate, frames sent and dropped, reconnects, encoder, and the last error (the key masked).", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "stream_stop", description: "End the live stream (the last packets are sent and the stream is closed); returns its final numbers and the copy's file when one was recorded.", schema: obj(json!({}), &[]), edits: false },
     ]
+}
+
+impl Workspace {
+    /// stream_start: the Streaming settings with the arguments on top; the key from the key
+    /// store unless given. Every message has the key masked.
+    fn stream_start(&mut self, a: &Value) -> Outcome {
+        use crate::stream::live::{self, LiveOptions, Phase, StudioFrames};
+        use crate::stream::{Service, Source, mask};
+        let mut s = self.settings();
+        if let Some(v) = str_arg(a, "service") {
+            s.stream.service = Service::parse(v).ok_or("service is twitch, youtube, kick, facebook, restream or custom")?;
+            s.stream.url.clear();
+        }
+        if let Some(u) = str_arg(a, "url") {
+            s.stream.url = u.trim().to_string();
+        }
+        if let Some(v) = str_arg(a, "source") {
+            s.stream.source = match Source::parse(v).ok_or("source is screen, window, area or studio")? {
+                Source::Window(_) => Source::Window(str_arg(a, "title").ok_or("source window needs the title (part of it is enough)")?.to_string()),
+                Source::Area(..) => {
+                    let r = rect_arg(a)?;
+                    Source::Area(r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32)
+                }
+                other => other,
+            };
+        }
+        if let Some(f) = num(a, "fps") {
+            s.stream.fps = f.clamp(1.0, 120.0) as u32;
+        }
+        if let Some(k) = num(a, "bitrate") {
+            s.stream.kbps = k.clamp(0.0, 100_000.0) as u32;
+        }
+        if let Some(h) = num(a, "max_height") {
+            s.stream.max_height = h.clamp(0.0, 4320.0) as u32;
+        }
+        if let Some(x) = str_arg(a, "audio") {
+            s.stream.audio = crate::audio::AudioSource::parse(x).ok_or("audio is none, system, microphone or both")?;
+        }
+        if let Some(c) = bool_arg(a, "record_copy") {
+            s.stream.record_copy = c;
+        }
+        let key = match str_arg(a, "key") {
+            Some(k) => k.trim().to_string(),
+            None => crate::stream::keystore::load().unwrap_or_default(),
+        };
+        let o = LiveOptions::from_settings(&s, &key);
+        // Check the address and the key before anything starts (no network yet).
+        o.target.endpoint().map_err(|e| {
+            let e = mask(&e, &key);
+            if key.is_empty() { format!("{e} (no stream key is saved: add it in Snagster's Settings > Streaming, or pass key)") } else { e }
+        })?;
+        let studio = (o.source == Source::Studio).then(|| StudioFrames::Start(s.studio.clone()));
+        live::begin(o, studio, crate::stream::Encoders::system()).map_err(|e| mask(&e, &key))?;
+        let stop = self.stop.clone();
+        let cancelled = self.ticking(Some(15.0), "Going live", || {
+            let t = std::time::Instant::now();
+            while t.elapsed() < std::time::Duration::from_secs(15) {
+                if stop.load(std::sync::atomic::Ordering::Relaxed) {
+                    return true;
+                }
+                let snap = live::snapshot();
+                if snap.live() || snap.phase == Phase::Idle || snap.stats.as_ref().is_some_and(|s| s.state == crate::stream::State::Failed) {
+                    break;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(50));
+            }
+            false
+        });
+        if cancelled {
+            live::end();
+            return Err("cancelled".into());
+        }
+        let snap = live::snapshot();
+        let v = stream_json(&snap);
+        if snap.phase == Phase::Idle {
+            return Err(format!("Couldn't go live: {}", snap.error.as_deref().map(|e| mask(e, &key)).unwrap_or_else(|| "it stopped at once".into())));
+        }
+        if let Some(e) = snap.stats.as_ref().filter(|s| s.state == crate::stream::State::Failed).and_then(|s| s.error.clone()) {
+            live::end();
+            return Err(format!("Couldn't go live: {}", mask(&e, &key)));
+        }
+        let line = match &snap.info {
+            Some(i) if snap.live() => format!("Live on {} ({}): {}, {} x {} at {} fps, {} kbit/s. Stop it with stream_stop.", i.service, i.address, i.source, i.width, i.height, i.fps, i.kbps),
+            Some(i) => format!("Still connecting to {} ({}); check with stream_status.", i.service, i.address),
+            None => "Still starting; check with stream_status.".to_string(),
+        };
+        self.structured = Some(v);
+        Ok(vec![text(mask(&line, &key))])
+    }
+}
+
+/// The stream's state as JSON (no secret in it).
+fn stream_json(s: &crate::stream::live::Snapshot) -> Value {
+    use crate::stream::live::Phase;
+    let phase = match s.phase {
+        Phase::Idle => "idle",
+        Phase::Starting => "starting",
+        Phase::Running => "running",
+        Phase::Stopping => "stopping",
+    };
+    let mut v = json!({"phase": phase, "live": s.live(), "error": s.error});
+    if let Some(i) = &s.info {
+        v["service"] = json!(i.service);
+        v["address"] = json!(i.address);
+        v["source"] = json!(i.source);
+        v["width"] = json!(i.width);
+        v["height"] = json!(i.height);
+        v["fps"] = json!(i.fps);
+        v["video_kbps"] = json!(i.kbps);
+        v["copy"] = json!(i.copy.as_ref().map(|p| p.display().to_string()));
+    }
+    if let Some(st) = &s.stats {
+        v["state"] = json!(format!("{:?}", st.state).to_lowercase());
+        v["uptime_s"] = json!((st.uptime_s * 10.0).round() / 10.0);
+        v["bitrate_bps"] = json!(st.bitrate_bps);
+        v["frames_sent"] = json!(st.frames_sent);
+        v["frames_dropped"] = json!(st.frames_dropped);
+        v["reconnects"] = json!(st.reconnects);
+        v["queue_ms"] = json!(st.queue_ms);
+        v["encoder"] = json!(st.video_encoder.as_ref().map(|e| format!("{} ({})", e.name, if e.hardware { "graphics chip" } else { "processor" })));
+        v["notice"] = json!(st.notice);
+        if st.error.is_some() {
+            v["error"] = json!(st.error);
+        }
+    }
+    v
 }
 
 /// Whether two paths name the same file.
@@ -755,6 +910,47 @@ impl Workspace {
                     ) + &if d.note.is_empty() { String::new() } else { format!(" {}.", d.note) },
                 ))
             }
+            "stream_services" => {
+                let items: Vec<Value> = crate::stream::PRESETS
+                    .iter()
+                    .map(|p| {
+                        json!({
+                            "service": format!("{:?}", p.service).to_lowercase(), "name": p.name, "url": p.url, "key_help": p.key_help,
+                            "max_width": p.max_width, "max_height": p.max_height, "max_fps": p.max_fps, "max_video_kbps": p.max_video_kbps,
+                            "keyframe_s": p.keyframe_s, "audio_kbps": p.audio_kbps, "hevc": p.hevc
+                        })
+                    })
+                    .collect();
+                self.structured = Some(json!({ "items": items }));
+                Ok(vec![json_text(&items)])
+            }
+            "stream_status" => {
+                let v = stream_json(&crate::stream::live::snapshot());
+                self.structured = Some(v.clone());
+                Ok(vec![json_text(&v)])
+            }
+            "stream_stop" => {
+                use crate::stream::live;
+                if !live::end() {
+                    return Ok(vec![text("Nothing is being streamed.")]);
+                }
+                self.ticking(Some(8.0), "Stopping the stream", || live::wait_idle(std::time::Duration::from_secs(8)));
+                let s = live::snapshot();
+                let mut line = "The stream stopped.".to_string();
+                if let Some(e) = &s.last {
+                    line = format!(
+                        "The stream stopped after {:.0} s: {} frames sent, {} dropped, {} reconnects.",
+                        e.stats.uptime_s, e.stats.frames_sent, e.stats.frames_dropped, e.stats.reconnects
+                    );
+                    match &e.copy {
+                        Some(Ok(c)) => line += &format!(" Copy: {} ({} frames).", c.path.display(), c.video_frames),
+                        Some(Err(err)) => line += &format!(" The copy failed: {err}"),
+                        None => {}
+                    }
+                }
+                Ok(vec![text(line)])
+            }
+            "stream_start" => self.stream_start(a),
             other => Err(format!("unknown tool {other} (tools/list shows them all)")),
         }
     }

@@ -492,6 +492,8 @@ pub struct Settings {
     pub update_skip: String,
     /// Studio mode's scenes.
     pub studio: crate::studio::StudioSettings,
+    /// Live streaming (the stream key is kept apart, see `stream::keystore`).
+    pub stream: StreamSettings,
     /// The ribbon is folded away.
     pub ribbon_folded: bool,
     /// Let AI apps on this computer connect over HTTP while Snagster runs.
@@ -608,6 +610,7 @@ impl Default for Settings {
             update_checked_at: 0,
             update_skip: String::new(),
             studio: Default::default(),
+            stream: StreamSettings::default(),
             ribbon_folded: false,
             mcp_http: false,
             mcp_port: 45831,
@@ -670,6 +673,66 @@ fn home() -> PathBuf {
         .or_else(|| std::env::var_os("HOME"))
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."))
+}
+
+/// Live streaming choices. The stream key is secret and is deliberately not here: it is kept by
+/// `stream::keystore` (DPAPI, the Keychain, or a private file), never in settings.json.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct StreamSettings {
+    pub service: crate::stream::Service,
+    /// The server address; empty: the service's usual one.
+    pub url: String,
+    /// What goes out live.
+    pub source: crate::stream::Source,
+    /// The tallest picture sent (0: the source's own size); the service's limit still applies.
+    pub max_height: u32,
+    pub fps: u32,
+    /// Video bitrate in kbit/s (0: recommended for the size); at most what the service takes.
+    pub kbps: u32,
+    /// Encode on the graphics chip when there is one.
+    pub hardware: bool,
+    /// Seconds between keyframes (services ask for 2).
+    pub keyframe_s: u32,
+    pub audio: crate::audio::AudioSource,
+    /// Connection drops are retried this many times in a row.
+    pub reconnects: u32,
+    pub cursor: bool,
+    /// Also write what is streamed to an FLV file in the recordings folder.
+    pub record_copy: bool,
+}
+
+impl Default for StreamSettings {
+    fn default() -> Self {
+        StreamSettings {
+            service: crate::stream::Service::Twitch,
+            url: String::new(),
+            source: crate::stream::Source::Screen,
+            max_height: 1080,
+            fps: 30,
+            kbps: 0,
+            hardware: true,
+            keyframe_s: 2,
+            audio: crate::audio::AudioSource::System,
+            reconnects: 5,
+            cursor: true,
+            record_copy: false,
+        }
+    }
+}
+
+impl StreamSettings {
+    /// Every number brought within what the chosen service takes.
+    pub fn clamped(&self) -> StreamSettings {
+        let p = self.service.preset();
+        let mut s = self.clone();
+        s.max_height = if s.max_height == 0 { 0 } else { s.max_height.clamp(144, p.max_height) };
+        s.fps = s.fps.clamp(1, p.max_fps);
+        s.kbps = if s.kbps == 0 { 0 } else { s.kbps.clamp(300, p.max_video_kbps) };
+        s.keyframe_s = s.keyframe_s.clamp(1, 4);
+        s.reconnects = s.reconnects.min(50);
+        s
+    }
 }
 
 pub fn pictures() -> PathBuf {
@@ -1194,6 +1257,45 @@ mod tests {
         assert_eq!(r.format(3999), "mmmcmxcix");
         assert_eq!(r.format(0), "i", "clamped to 1");
         assert_eq!(r.format(10_000), "mmmcmxcix", "clamped to 3999");
+    }
+
+    #[test]
+    fn streaming_settings_round_trip_and_never_hold_the_key() {
+        let mut s = Settings::default();
+        s.stream = StreamSettings {
+            service: crate::stream::Service::YouTube,
+            url: "rtmps://b.rtmps.youtube.com:443/live2".into(),
+            source: crate::stream::Source::Window("Notepad".into()),
+            max_height: 720,
+            fps: 60,
+            kbps: 4500,
+            hardware: false,
+            keyframe_s: 2,
+            audio: crate::audio::AudioSource::Both,
+            reconnects: 3,
+            cursor: false,
+            record_copy: true,
+        };
+        let text = serde_json::to_string_pretty(&s).unwrap();
+        assert_eq!(Settings::from_saved(Some(&text)), s);
+        let v: serde_json::Value = serde_json::from_str(&text).unwrap();
+        let keys: Vec<&String> = v["stream"].as_object().unwrap().keys().collect();
+        assert!(!keys.iter().any(|k| k.contains("key") && *k != "keyframe_s"), "no stream key in settings.json: {keys:?}");
+        // Older settings files have no stream section: the defaults.
+        let old = Settings::from_saved(Some(r#"{ "jpeg_quality": 70 }"#));
+        assert_eq!(old.stream, StreamSettings::default());
+        let d = StreamSettings::default();
+        assert_eq!((d.service, d.fps, d.keyframe_s, d.kbps, d.max_height), (crate::stream::Service::Twitch, 30, 2, 0, 1080));
+        assert!(d.hardware && d.cursor && !d.record_copy);
+    }
+
+    #[test]
+    fn streaming_numbers_are_kept_within_the_services_limits() {
+        let s = StreamSettings { service: crate::stream::Service::Twitch, max_height: 2160, fps: 144, kbps: 20_000, keyframe_s: 30, reconnects: 1000, ..Default::default() }.clamped();
+        assert_eq!((s.max_height, s.fps, s.kbps, s.keyframe_s, s.reconnects), (1080, 60, 6000, 4, 50));
+        let s = StreamSettings { service: crate::stream::Service::Custom, max_height: 0, kbps: 0, fps: 0, keyframe_s: 0, ..Default::default() }.clamped();
+        assert_eq!((s.max_height, s.kbps, s.fps, s.keyframe_s), (0, 0, 1, 1), "0 keeps meaning the source size and the recommended bitrate");
+        assert_eq!(StreamSettings { kbps: 10, ..Default::default() }.clamped().kbps, 300);
     }
 
     #[test]

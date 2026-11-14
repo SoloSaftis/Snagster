@@ -371,6 +371,7 @@ impl UiTest {
             (SettingsTab::Hotkeys, "Hotkeys"),
             (SettingsTab::Presets, "Presets"),
             (SettingsTab::Ai, "AI apps"),
+            (SettingsTab::Streaming, "Streaming"),
             (SettingsTab::Language, "Language & updates"),
         ];
         for (tab, name) in tabs {
@@ -456,6 +457,92 @@ impl UiTest {
             a.switch_tab(c, super::ribbon::RibbonTab::Home);
             assert!(a.x.studio.is_none(), "Studio kept running after leaving it");
         }));
+        // Live streaming, to a small RTMP server inside this process (never the internet).
+        let server: std::rc::Rc<std::cell::RefCell<Option<crate::stream::testserver::TestServer>>> = Default::default();
+        s.push(once("Stream: the ribbon tab", |a, c| {
+            a.switch_tab(c, super::ribbon::RibbonTab::Stream);
+            assert_eq!(a.x.tab, super::ribbon::RibbonTab::Stream);
+        }));
+        let srv = server.clone();
+        s.push(once("Stream: the Settings page, pointed at a local test server", move |a, _| {
+            let t = crate::stream::testserver::TestServer::start().expect("no local test server");
+            a.settings_open = true;
+            a.settings_tab = SettingsTab::Streaming;
+            let st = &mut a.settings.stream;
+            st.service = crate::stream::Service::Custom;
+            st.url = t.url();
+            st.source = crate::stream::Source::Area(0, 0, 320, 240);
+            st.max_height = 240;
+            st.fps = 30;
+            st.kbps = 800;
+            st.audio = crate::audio::AudioSource::None;
+            st.record_copy = true;
+            a.settings.video_folder = test_dir().to_string_lossy().to_string();
+            a.set_stream_key("ui_test_stream_key");
+            *srv.borrow_mut() = Some(t);
+        }));
+        s.push(once("Stream: the capture panel's Stream tab", |a, c| {
+            a.settings_open = false;
+            if !a.panel_open {
+                a.enter_panel(c);
+            }
+            a.settings.panel.tab = 3;
+        }));
+        s.push(once("Stream: Go live asks first", |a, c| {
+            a.toggle_stream(c);
+            assert!(a.x.stream.confirm_open, "no confirmation the first time");
+            assert_eq!(crate::stream::live::snapshot().phase, crate::stream::live::Phase::Idle, "it went live without asking");
+        }));
+        s.push(once("Stream: confirm and go live", |a, c| {
+            a.x.stream.confirmed = true;
+            a.x.stream.confirm_open = false;
+            a.start_stream_now(c);
+            assert!(crate::stream::live::snapshot().phase != crate::stream::live::Phase::Idle, "{}", a.status);
+        }));
+        let srv = server.clone();
+        s.push((
+            "Stream: live at the local server".to_string(),
+            Box::new(move |a: &mut SnagApp, _: &egui::Context| {
+                let snap = a.x.stream.snap.clone();
+                assert!(snap.error.is_none(), "{:?}", snap.error);
+                if let Some(st) = &snap.stats {
+                    assert!(st.state != crate::stream::State::Failed, "{:?}", st.error);
+                }
+                let got = srv.borrow().as_ref().map(|t| t.video_messages()).unwrap_or(0);
+                if !snap.live() || got < 10 {
+                    return false;
+                }
+                assert_eq!(srv.borrow().as_ref().unwrap().publish_name(), "ui_test_stream_key");
+                let i = snap.info.unwrap();
+                assert_eq!((i.width, i.height), (320, 240));
+                assert!(!i.address.contains("ui_test_stream_key"));
+                true
+            }),
+        ));
+        s.push(once("Stream: Stop is instant", |a, c| {
+            let t = std::time::Instant::now();
+            a.toggle_stream(c);
+            assert!(t.elapsed() < std::time::Duration::from_millis(300), "stopping took {:?}", t.elapsed());
+            assert!(!crate::stream::live::snapshot().on_air());
+        }));
+        s.push((
+            "Stream: it ends cleanly with a copy on disk".to_string(),
+            Box::new(|a: &mut SnagApp, c: &egui::Context| {
+                if a.x.stream.snap.phase != crate::stream::live::Phase::Idle {
+                    return false;
+                }
+                let Some(end) = a.x.stream.snap.last.clone() else { return false };
+                assert!(end.stats.frames_sent >= 10, "{:?}", end.stats);
+                let copy = end.copy.expect("no copy was recorded").expect("the copy failed");
+                assert!(copy.video_frames >= 10 && copy.path.exists(), "{copy:?}");
+                assert!(a.status.contains(&copy.path.display().to_string()), "{}", a.status);
+                a.leave_panel(c);
+                true
+            }),
+        ));
+        s.push(once("Stream: close the test server", move |_, _| {
+            *server.borrow_mut() = None;
+        }));
         // Languages: German, Arabic (right to left), Japanese (the computer's CJK fonts), then automatic.
         for code in ["de", "ar", "ja", "zh-Hant", ""] {
             s.push(once(format!("language: {}", if code.is_empty() { "automatic" } else { code }), move |a, c| {
@@ -505,8 +592,8 @@ impl UiTest {
         }
         s.push(once("close dialog", |a, _| a.dialog = None));
         // The capture panel and its tabs.
-        for tab in 0..3u8 {
-            s.push(once(format!("capture panel: tab {}", ["All-in-One", "Image", "Video"][tab as usize]), move |a, c| {
+        for tab in 0..4u8 {
+            s.push(once(format!("capture panel: tab {}", ["All-in-One", "Image", "Video", "Stream"][tab as usize]), move |a, c| {
                 if !a.panel_open {
                     a.enter_panel(c);
                 }

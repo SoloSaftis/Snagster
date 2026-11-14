@@ -272,18 +272,66 @@ pub fn open_backend(b: Backend, cfg: &VideoConfig) -> Result<Box<dyn VideoEncode
 
 /// AAC-LC, 48 kHz stereo, at about `bitrate_bps` (encoders round to the rates they offer).
 pub fn open_audio(bitrate_bps: u32) -> Result<Box<dyn AudioEncoder>, String> {
+    // The system's own encoder first (Media Foundation, AudioToolbox), then Snagster's own
+    // AAC encoder (src/aac), which is the only one on Linux.
     #[cfg(windows)]
-    {
-        win::open_audio(bitrate_bps)
-    }
+    let system = win::open_audio(bitrate_bps);
     #[cfg(target_os = "macos")]
-    {
-        mac::open_audio(bitrate_bps)
-    }
+    let system = mac::open_audio(bitrate_bps);
     #[cfg(not(any(windows, target_os = "macos")))]
-    {
-        let _ = bitrate_bps;
-        Err("AAC sound encoding isn't available on this system (there is no freely licensed AAC encoder Snagster could include)".into())
+    let system: Result<Box<dyn AudioEncoder>, String> = Err("no system AAC encoder".into());
+    system.or_else(|e| {
+        OwnAac::open(bitrate_bps)
+            .map(|a| Box::new(a) as Box<dyn AudioEncoder>)
+            .map_err(|own| format!("{e}; Snagster's AAC encoder: {own}"))
+    })
+}
+
+/// Snagster's own AAC-LC encoder (src/aac) behind the `AudioEncoder` contract.
+pub struct OwnAac {
+    enc: crate::aac::AacEncoder,
+    first_pts: Option<i64>,
+    frames: i64,
+}
+
+impl OwnAac {
+    pub fn open(bitrate_bps: u32) -> Result<OwnAac, String> {
+        let enc = crate::aac::AacEncoder::new(bitrate_bps.clamp(64_000, 320_000))?;
+        Ok(OwnAac { enc, first_pts: None, frames: 0 })
+    }
+
+    /// Frame k plays 1024 samples after frame k-1, counted from the first sound handed in.
+    fn packets(&mut self, frames: Vec<Vec<u8>>) -> Vec<AudioPacket> {
+        let first = self.first_pts.unwrap_or(0);
+        frames
+            .into_iter()
+            .map(|data| {
+                let pts_us = first + self.frames * AAC_FRAME as i64 * 1_000_000 / AUDIO_RATE as i64;
+                self.frames += 1;
+                AudioPacket { data, pts_us }
+            })
+            .collect()
+    }
+}
+
+impl AudioEncoder for OwnAac {
+    fn encode(&mut self, pcm: &[i16], pts_us: i64) -> Result<Vec<AudioPacket>, String> {
+        self.first_pts.get_or_insert(pts_us);
+        let f = self.enc.encode(pcm);
+        Ok(self.packets(f))
+    }
+
+    fn finish(&mut self) -> Result<Vec<AudioPacket>, String> {
+        let f = self.enc.finish();
+        Ok(self.packets(f))
+    }
+
+    fn audio_specific_config(&self) -> Vec<u8> {
+        crate::aac::AacEncoder::audio_specific_config().to_vec()
+    }
+
+    fn name(&self) -> EncoderName {
+        EncoderName { name: format!("Snagster AAC (software, {} kbit/s)", self.enc.bitrate() / 1000), hardware: false }
     }
 }
 
@@ -660,6 +708,36 @@ pub fn aac_packet_pts(start_us: i64, n: u64) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn snagsters_own_aac_makes_evenly_timed_packets_and_says_what_it_is() {
+        let mut a = OwnAac::open(128_000).unwrap();
+        assert_eq!(a.audio_specific_config(), vec![0x11, 0x90]);
+        assert_eq!(a.name(), EncoderName { name: "Snagster AAC (software, 128 kbit/s)".into(), hardware: false });
+        // One second of a 440 Hz tone in odd-sized pieces, starting at 5 s.
+        let tone: Vec<i16> = (0..48_000).flat_map(|i| {
+            let v = ((i as f32 * 440.0 * std::f32::consts::TAU / 48_000.0).sin() * 8000.0) as i16;
+            [v, v]
+        }).collect();
+        let mut out = Vec::new();
+        for (k, piece) in tone.chunks(2 * 777).enumerate() {
+            out.extend(a.encode(piece, 5_000_000 + k as i64 * 16_187).unwrap());
+        }
+        out.extend(a.finish().unwrap());
+        // ~47 frames per second (plus the encoder's delay), 21 333.3 µs apart, from the first time
+        // given; counted from the start, so rounding never adds up.
+        assert!((47..=50).contains(&out.len()), "{} packets", out.len());
+        assert_eq!(out[0].pts_us, 5_000_000);
+        for w in out.windows(2) {
+            assert!((21_333..=21_334).contains(&(w[1].pts_us - w[0].pts_us)), "packets not evenly spaced");
+        }
+        let n = out.len() as i64 - 1;
+        assert_eq!(out[n as usize].pts_us, 5_000_000 + n * 1024 * 1_000_000 / 48_000);
+        assert!(out.iter().all(|p| !p.data.is_empty()));
+        // Out-of-range rates are brought into what the encoder takes.
+        assert!(OwnAac::open(8_000).is_ok());
+        assert!(OwnAac::open(1_000_000).is_ok());
+    }
 
     pub(crate) fn cfg(w: u32, h: u32) -> VideoConfig {
         VideoConfig { width: w, height: h, fps: 30, bitrate_bps: 2_000_000, keyframe_every_s: 1, codec: Codec::H264, prefer_hardware: false, low_latency: true }

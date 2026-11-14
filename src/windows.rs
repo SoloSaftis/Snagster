@@ -64,6 +64,7 @@ impl SnagApp {
                         (SettingsTab::Hotkeys, crate::i18n::t("Hotkeys")),
                         (SettingsTab::Presets, crate::i18n::t("Presets")),
                         (SettingsTab::Ai, crate::i18n::t("AI apps")),
+                        (SettingsTab::Streaming, crate::i18n::t("Streaming")),
                         (SettingsTab::Language, crate::i18n::t("Language & updates")),
                     ] {
                         ui.selectable_value(&mut self.settings_tab, tab, label);
@@ -267,6 +268,7 @@ impl SnagApp {
                         run_preset = self.presets_tab(ui);
                     }
                     SettingsTab::Ai => self.ai_tab(ui),
+                    SettingsTab::Streaming => self.streaming_tab(ui),
                     SettingsTab::Language => self.language_tab(ui),
                 });
                 ui.add_space(8.0);

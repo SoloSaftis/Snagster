@@ -19,40 +19,17 @@ pub type RgbaFeed = Arc<dyn Fn(&mut [u8]) -> bool + Send + Sync>;
 #[derive(Clone)]
 pub enum FrameSource {
     /// The recorder's feed (BGRA), e.g. `studio::Engine::feed()`.
+    #[cfg(test)]
     Bgra(crate::video::FrameFeed),
     Rgba(RgbaFeed),
 }
 
 impl FrameSource {
-    /// Studio's compositor: its newest frame, as it draws it (RGBA, no conversion). Set the
-    /// engine's `recording_fps` to the stream's frame rate so it draws often enough.
-    pub fn studio(engine: &crate::studio::Engine) -> FrameSource {
-        let sh = engine.shared.clone();
-        FrameSource::Rgba(Arc::new(move |buf: &mut [u8]| {
-            if sh.stop.load(Ordering::Relaxed) {
-                return false;
-            }
-            if let Some(f) = sh.frame.lock().ok().and_then(|f| f.clone()) {
-                copy_into(buf, f.as_raw());
-            }
-            true
-        }))
-    }
-
-    /// A desktop area, grabbed every frame (simple; Studio's screen source is faster).
-    pub fn screen(rect: (i32, i32, u32, u32)) -> FrameSource {
-        FrameSource::Rgba(Arc::new(move |buf: &mut [u8]| {
-            if let Ok(img) = crate::capture::grab_rect(rect.0, rect.1, rect.2, rect.3) {
-                copy_into(buf, img.as_raw());
-            }
-            true
-        }))
-    }
-
     /// Fill `rgba`; false: the source has ended.
     fn fill(&self, rgba: &mut [u8]) -> bool {
         match self {
             FrameSource::Rgba(f) => f(rgba),
+            #[cfg(test)]
             FrameSource::Bgra(f) => {
                 let go = f(rgba);
                 for p in rgba.chunks_exact_mut(4) {
@@ -64,13 +41,6 @@ impl FrameSource {
     }
 }
 
-/// Copy a picture into the frame buffer, as far as both go (they are the same size when the
-/// stream's size matches the source's).
-fn copy_into(dst: &mut [u8], src: &[u8]) {
-    let n = dst.len().min(src.len());
-    dst[..n].copy_from_slice(&src[..n]);
-}
-
 /// Takes `frames` stereo 48 kHz frames (interleaved i16) from wherever the sound comes from.
 pub type AudioFeed = Box<dyn FnMut(usize) -> Vec<i16> + Send>;
 
@@ -79,6 +49,7 @@ pub enum SoundSource {
     None,
     /// System sound and/or microphone, with Studio's mixer.
     Capture(crate::audio::Capture),
+    #[cfg(test)]
     Feed(AudioFeed),
 }
 
@@ -86,6 +57,7 @@ impl SoundSource {
     fn into_feed(self) -> Option<AudioFeed> {
         match self {
             SoundSource::None => None,
+            #[cfg(test)]
             SoundSource::Feed(f) => Some(f),
             SoundSource::Capture(c) => Some(capture_feed(c)),
         }
@@ -366,6 +338,7 @@ impl Streamer {
     }
 
     /// Still streaming or trying to (not stopped, not failed).
+    #[cfg(test)]
     pub fn is_running(&self) -> bool {
         !matches!(self.stats().state, State::Stopped | State::Failed)
     }

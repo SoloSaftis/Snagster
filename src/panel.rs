@@ -42,6 +42,9 @@ fn tab_icon(p: &egui::Painter, c: Pos2, tab: u8, color: Color32) {
             p.circle_filled(c, 3.5, BG_DARK);
             p.rect_filled(Rect::from_min_size(r.min + vec2(3.0, -3.0), vec2(6.0, 3.0)), CornerRadius::same(1), color);
         }
+        3 => {
+            p.text(c, Align2::CENTER_CENTER, crate::look::ph::BROADCAST, FontId::new(20.0, crate::look::icons()), color);
+        }
         _ => {
             let r = Rect::from_min_size(c - vec2(10.0, 6.0), vec2(13.0, 12.0));
             p.rect_filled(r, CornerRadius::same(3), color);
@@ -67,7 +70,8 @@ impl SnagApp {
             self.hide_panel(&ctx);
             return;
         }
-        let tab = self.settings.panel.tab.min(2);
+        let tab = self.settings.panel.tab.min(3);
+        let mut go_live = false;
         let mut capture_now = false;
         let mut open_editor = false;
         let mut reset = false;
@@ -76,8 +80,9 @@ impl SnagApp {
         // ---- left: tabs ----
         let tabs_rect = Rect::from_min_size(full.min, vec2(92.0, full.height() - 44.0));
         ui.painter().rect_filled(tabs_rect, CornerRadius { nw: 12, ne: 0, sw: 0, se: 0 }, BG_DARK);
-        for (i, name) in ["All-in-One", "Image", "Video"].iter().enumerate() {
-            let r = Rect::from_min_size(tabs_rect.min + vec2(0.0, i as f32 * 64.0), vec2(92.0, 64.0));
+        let tab_h = tabs_rect.height() / 4.0;
+        for (i, name) in ["All-in-One", "Image", "Video", crate::i18n::t("Stream")].iter().enumerate() {
+            let r = Rect::from_min_size(tabs_rect.min + vec2(0.0, i as f32 * tab_h), vec2(92.0, tab_h));
             let resp = ui.interact(r, ui.scope_id().with(("tab", i)), Sense::click());
             let sel = tab as usize == i;
             if sel {
@@ -86,8 +91,8 @@ impl SnagApp {
                 ui.painter().rect_filled(r.shrink(4.0), CornerRadius::same(8), Color32::from_rgb(38, 40, 48));
             }
             let col = if sel { ACCENT } else { Color32::from_rgb(200, 204, 215) };
-            tab_icon(ui.painter(), r.center() - vec2(0.0, 9.0), i as u8, col);
-            ui.painter().text(r.center() + vec2(0.0, 16.0), Align2::CENTER_CENTER, *name, FontId::proportional(12.0), col);
+            tab_icon(ui.painter(), r.center() - vec2(0.0, 7.0), i as u8, col);
+            ui.painter().text(r.center() + vec2(0.0, 13.0), Align2::CENTER_CENTER, *name, FontId::proportional(12.0), col);
             if resp.clicked() {
                 self.settings.panel.tab = i as u8;
             }
@@ -96,6 +101,10 @@ impl SnagApp {
         // ---- middle: what, effect, where ----
         let mid = Rect::from_min_size(full.min + vec2(108.0, 18.0), vec2(330.0, 150.0));
         ui.scope_builder(egui::UiBuilder::new().max_rect(mid), |ui| {
+            if tab == 3 {
+                self.panel_stream_grid(ui);
+                return;
+            }
             egui::Grid::new("panel-grid").num_columns(2).spacing(vec2(14.0, 14.0)).show(ui, |ui| {
                 ui.label(RichText::new(crate::i18n::t("Selection:")).color(Color32::WHITE));
                 ui.horizontal(|ui| {
@@ -195,6 +204,11 @@ impl SnagApp {
                     });
                 });
             };
+            if tab == 3 {
+                row(ui, crate::i18n::t("Show the pointer"), &mut self.settings.stream.cursor);
+                row(ui, crate::i18n::t("Record a copy"), &mut self.settings.stream.record_copy);
+                return;
+            }
             if tab == 2 {
                 row(ui, "Preview in Editor", &mut self.settings.after_show_editor);
                 row(ui, "Show the pointer", &mut self.settings.gif_cursor);
@@ -239,7 +253,9 @@ impl SnagApp {
         }
         let big = Rect::from_center_size(pos2(full.max.x - 66.0, full.min.y + 100.0), vec2(100.0, 100.0));
         let br = ui.interact(big, ui.scope_id().with("big"), Sense::click());
-        let fill = if br.is_pointer_button_down_on() {
+        let fill = if tab == 3 && self.x.stream.snap.on_air() {
+            Color32::from_rgb(150, 40, 46)
+        } else if br.is_pointer_button_down_on() {
             Color32::from_rgb(196, 52, 58)
         } else if br.hovered() {
             Color32::from_rgb(240, 96, 100)
@@ -248,10 +264,21 @@ impl SnagApp {
         };
         ui.painter().circle_filled(big.center() + vec2(0.0, 3.0), 50.0, Color32::from_black_alpha(70));
         ui.painter().circle_filled(big.center(), 50.0, fill);
-        let label = if tab == 2 { if self.is_recording() { "Stop" } else { "Record" } } else { "Capture" };
+        let label = match tab {
+            3 if self.x.stream.snap.phase != crate::stream::live::Phase::Idle => crate::i18n::t("Stop"),
+            3 => crate::i18n::t("Go live"),
+            2 if self.is_recording() => "Stop",
+            2 => "Record",
+            _ => "Capture",
+        };
         ui.painter().text(big.center(), Align2::CENTER_CENTER, label, FontId::proportional(17.0), Color32::WHITE);
-        if br.on_hover_text("Print Screen does the same").clicked() {
-            capture_now = true;
+        let tip = if tab == 3 { crate::i18n::t("Start or stop the live stream") } else { "Print Screen does the same" };
+        if br.on_hover_text(tip).clicked() {
+            if tab == 3 {
+                go_live = true;
+            } else {
+                capture_now = true;
+            }
         }
 
         // ---- bottom row ----
@@ -296,6 +323,10 @@ impl SnagApp {
                         open_editor = true;
                     }
                     ui.label(RichText::new(&self.status).color(TEXT_DIM).size(11.5));
+                    let snap = self.x.stream.snap.clone();
+                    if snap.on_air() && crate::app::stream_ui::live_badge(ui, &snap).clicked() {
+                        self.settings.panel.tab = 3;
+                    }
                 });
             });
         });
@@ -313,7 +344,64 @@ impl SnagApp {
             self.show_window(&ctx);
         } else if capture_now {
             self.panel_capture(&ctx);
+        } else if go_live {
+            self.toggle_stream(&ctx);
         }
+    }
+
+    /// The Stream tab's choices: what goes out and where.
+    fn panel_stream_grid(&mut self, ui: &mut egui::Ui) {
+        use crate::app::stream_ui::service_name;
+        use crate::i18n::t;
+        use crate::stream::Source;
+        let idle = self.x.stream.snap.phase == crate::stream::live::Phase::Idle;
+        egui::Grid::new("panel-stream-grid").num_columns(2).spacing(vec2(14.0, 14.0)).show(ui, |ui| {
+            ui.label(RichText::new(t("Selection:")).color(Color32::WHITE));
+            let src = self.settings.stream.source.clone();
+            let shown = match &src {
+                Source::Window(w) if !w.is_empty() => w.clone(),
+                s => t(s.label()).to_string(),
+            };
+            let mut pick_area = false;
+            ui.add_enabled_ui(idle, |ui| {
+                egui::ComboBox::from_id_salt("p-stream-src").width(230.0).selected_text(shown).show_ui(ui, |ui| {
+                    ui.selectable_value(&mut self.settings.stream.source, Source::Screen, t("Whole screen"));
+                    if ui.selectable_label(matches!(src, Source::Area(..)), t("Pick an area...")).clicked() {
+                        pick_area = true;
+                    }
+                    ui.selectable_value(&mut self.settings.stream.source, Source::Studio, t("Studio scene"));
+                    ui.separator();
+                    ui.label(RichText::new(t("A window")).color(TEXT_DIM));
+                    let ctx = ui.ctx().clone();
+                    self.win_cache.get(Some(&ctx), crate::capture::list_windows);
+                    for w in self.win_cache.items() {
+                        ui.selectable_value(&mut self.settings.stream.source, Source::Window(w.label.clone()), &w.label);
+                    }
+                });
+            });
+            if pick_area {
+                let ctx = ui.ctx().clone();
+                self.pick_stream_area(&ctx, false);
+            }
+            ui.end_row();
+            ui.label(RichText::new(t("Service:")).color(Color32::WHITE));
+            ui.add_enabled_ui(idle, |ui| {
+                egui::ComboBox::from_id_salt("p-stream-service").width(230.0).selected_text(service_name(self.settings.stream.service)).show_ui(ui, |ui| self.service_menu(ui));
+            });
+            ui.end_row();
+            ui.label(RichText::new(t("Status:")).color(Color32::WHITE));
+            let snap = self.x.stream.snap.clone();
+            ui.horizontal(|ui| {
+                ui.label(RichText::new(crate::app::stream_ui::state_label(&snap)).color(TEXT_DIM));
+                if ui.small_button(t("Stream settings...")).clicked() {
+                    self.settings_open = true;
+                    self.settings_tab = crate::app::SettingsTab::Streaming;
+                    let ctx = ui.ctx().clone();
+                    self.leave_panel(&ctx);
+                }
+            });
+            ui.end_row();
+        });
     }
 
     pub(crate) fn panel_as_preset(&self) -> Preset {

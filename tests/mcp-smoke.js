@@ -2,7 +2,7 @@
 // stdio: initialize, tools/list (new tools, output schemas, hints), prompts, resources and
 // templates, completions, and tools that need no display (languages, app info, open a picture,
 // add/update marks, crop, save with a resource link, undo/redo, a guide with progress
-// notifications, a cancelled capture delay);
+// notifications, a cancelled capture delay, live-stream tools that refuse bad input without going live);
 // HTTP: the same handshake over Streamable HTTP, progress on an event stream, and a refused
 // foreign host. It changes no settings and nothing in the library.
 // Usage: node tests/mcp-smoke.js path/to/snagster
@@ -146,6 +146,21 @@ function stdio() {
         const t0 = Date.now();
         const cancelled = await Promise.race([waited, new Promise((r) => setTimeout(() => r(null), 20000))]);
         check(cancelled && cancelled.result && cancelled.result.isError && cancelled.result.content[0].text === 'cancelled' && Date.now() - t0 < 15000, 'a cancelled capture delay stops', JSON.stringify(cancelled));
+        // Live streaming: schemas and answers only; nothing goes live.
+        const ss = byName('stream_start');
+        check(ss.inputSchema && ss.inputSchema.properties.source.enum.join() === 'screen,window,area,studio' && ss.inputSchema.properties.key && ss.annotations.openWorldHint === true && ss.annotations.readOnlyHint === false, 'stream_start schema and hints');
+        check(byName('stream_status').annotations.readOnlyHint === true && byName('stream_stop').annotations.idempotentHint === true, 'stream_status / stream_stop hints');
+        const services = await tool('stream_services');
+        const svc = services.structuredContent && services.structuredContent.items;
+        check(!services.isError && svc && svc.length === 6 && svc.some((s) => s.service === 'youtube' && s.url.startsWith('rtmps://')), 'stream_services lists the presets');
+        const idle = await tool('stream_status');
+        check(!idle.isError && idle.structuredContent && idle.structuredContent.phase === 'idle' && idle.structuredContent.live === false, 'stream_status says nothing is live');
+        const none = await tool('stream_stop');
+        check(!none.isError && none.content[0].text === 'Nothing is being streamed.', 'stream_stop with nothing live');
+        const badStream = await tool('stream_start', { service: 'custom', url: 'ftp://example.invalid/live', key: 'sk_smoke_secret_42' });
+        check(badStream.isError === true && !JSON.stringify(badStream).includes('sk_smoke_secret_42'), 'stream_start refuses a bad address without echoing the key', JSON.stringify(badStream));
+        const badSource = await tool('stream_start', { source: 'window', key: 'sk_smoke_secret_42' });
+        check(badSource.isError === true && badSource.content[0].text.includes('title'), 'stream_start needs a window title');
         const bad = await tool('no_such_tool');
         check(bad.isError === true, 'unknown tool is an error, not a crash');
         const read = await call('resources/read', { uri: 'snagster://picture/current' });

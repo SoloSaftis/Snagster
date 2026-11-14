@@ -27,6 +27,7 @@ mod update;
 mod mcp_http;
 mod render;
 mod sample;
+mod aac;
 mod encode;
 mod stream;
 

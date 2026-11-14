@@ -71,6 +71,8 @@ pub mod ph {
     pub const STOP: &str = "\u{e46c}";
     pub const PLAY: &str = "\u{e3d0}";
     pub const BROADCAST: &str = "\u{e0f2}";
+    pub const KEY: &str = "\u{e2d6}";
+    pub const EYE: &str = "\u{e220}";
     pub const MONITOR_PLAY: &str = "\u{e58c}";
     pub const STACK: &str = "\u{e466}";
     pub const PLUS: &str = "\u{e3d4}";
@@ -279,7 +281,7 @@ pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, 
     }
     let icol = if !enabled {
         FAINT
-    } else if icon == ph::RECORD || icon == ph::STOP {
+    } else if icon == ph::RECORD || icon == ph::STOP || icon == ph::BROADCAST {
         REC
     } else {
         ACCENT

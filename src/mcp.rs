@@ -33,7 +33,9 @@ library_add or open_in_snagster keep it. Text recognition (Windows only): read_t
 simplify. Recording: record_video (MP4 with H.264 everywhere; HEVC and WMV on Windows; 1-120 frames per second; sound \
 on Windows), record_gif, and Studio scenes (studio_scenes, studio_add_scene, studio_add_source, studio_update_source, \
 studio_record). Guides: make_guide (PDF, web page, Word or one tall picture). Library: library_search, library_tag, \
-library_delete. Defaults come from Snagster's settings (get_settings, set_setting). Long calls send progress when the \
+library_delete. Live streaming: stream_services, stream_start (Twitch, YouTube, Kick, Facebook, Restream or any RTMP/RTMPS \
+server; the screen, a window, an area or the Studio scene; the stream key saved in Snagster is used and never shown), \
+stream_status and stream_stop. Defaults come from Snagster's settings (get_settings, set_setting). Long calls send progress when the \
 request has a progressToken and stop early when cancelled. Coordinates are picture pixels from the top-left corner \
 (desktop pixels for captures and recordings). Colours are #RRGGBB or a name (red, orange, yellow, green, blue, purple, \
 black, white).";
@@ -276,11 +278,11 @@ fn base_tools() -> Vec<Tool> {
 const MARK_KINDS: [&str; 14] = ["arrow", "line", "box", "oval", "highlight", "pen", "text", "callout", "step", "stamp", "pointer", "spotlight", "magnify", "image"];
 
 /// Tools that change something outside the current picture (files, clipboard, settings, screen).
-const SIDE: [&str; 24] = [
+const SIDE: [&str; 26] = [
     "save", "quick_save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "library_delete", "library_tag",
     "set_setting", "set_language", "open_in_snagster", "studio_add_source", "studio_remove_source", "studio_update_source",
     "studio_add_scene", "studio_remove_scene", "studio_set_current", "studio_record", "capture_scrolling", "paste_from_clipboard",
-    "capture_screen", "capture_region", "capture_window",
+    "capture_screen", "capture_region", "capture_window", "stream_start", "stream_stop",
 ];
 
 /// Tools that may delete or replace something (a mark, a source or scene, a library picture,
@@ -290,7 +292,7 @@ const DESTRUCTIVE: [&str; 11] =
 
 /// Tools that change something but leave the same result when called again with the same
 /// arguments.
-const IDEMPOTENT: [&str; 10] = ["save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
+const IDEMPOTENT: [&str; 11] = ["stream_stop", "save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
 
 /// What a tool's structured answer looks like, for the tools that always give one.
 fn output_schema(name: &str) -> Option<Value> {
@@ -322,6 +324,8 @@ fn output_schema(name: &str) -> Option<Value> {
         "app_info" => json!({"type": "object", "properties": {"version": st, "system": st, "architecture": st, "features": {"type": "object"}, "folders": {"type": "object"}}, "required": ["version", "system"]}),
         "studio_scenes" => json!({"type": "object", "properties": {"scenes": {"type": "array", "items": {"type": "object"}}, "current": num, "width": num, "height": num, "fps": num}, "required": ["scenes", "current"]}),
         "library_tag" => json!({"type": "object", "properties": {"path": st, "title": st, "tags": strings}, "required": ["path", "title", "tags"]}),
+        "stream_services" => items(props(json!({"service": st, "name": st, "url": st, "key_help": st, "max_width": num, "max_height": num, "max_fps": num, "max_video_kbps": num, "keyframe_s": num, "audio_kbps": num, "hevc": bo}))),
+        "stream_status" => json!({"type": "object", "properties": {"phase": st, "live": bo, "state": st, "uptime_s": num, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num, "service": st, "address": st, "source": st, "width": num, "height": num, "fps": num}, "required": ["phase", "live"]}),
         _ => return None,
     })
 }
@@ -346,7 +350,7 @@ pub fn tool_list() -> Value {
                     "readOnlyHint": read_only,
                     "destructiveHint": DESTRUCTIVE.contains(&t.name),
                     "idempotentHint": read_only || IDEMPOTENT.contains(&t.name),
-                    "openWorldHint": t.name == "check_for_update",
+                    "openWorldHint": matches!(t.name, "check_for_update" | "stream_start"),
                 },
             });
             if let Some(o) = output_schema(t.name) {
@@ -2382,7 +2386,7 @@ mod tests {
             find(n);
         }
         for t in tools {
-            let open = t["name"] == "check_for_update";
+            let open = t["name"] == "check_for_update" || t["name"] == "stream_start";
             assert_eq!(t["annotations"]["openWorldHint"], open, "{}", t["name"]);
             assert!(t["title"].as_str().unwrap().chars().next().unwrap().is_uppercase());
         }
@@ -3012,5 +3016,72 @@ mod tests {
         assert_eq!(image::open(&out).unwrap().height(), 8);
         assert_eq!(run_cli(&args(&["convert", dir.join("missing.png").to_str().unwrap()])), Some(1));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
+#[cfg(test)]
+mod stream_tests {
+    use super::*;
+
+    fn text_of(o: Outcome) -> String {
+        o.expect("the tool should have worked")[0]["text"].as_str().unwrap_or_default().to_string()
+    }
+
+    fn ws() -> Workspace {
+        let mut s = Settings::default();
+        s.stream.hardware = false;
+        s.stream.audio = crate::audio::AudioSource::None;
+        s.studio.width = 64;
+        s.studio.height = 64;
+        s.studio.scenes = vec![crate::studio::Scene {
+            name: "t".into(),
+            items: vec![crate::studio::Item { name: "c".into(), kind: crate::studio::SourceKind::Color { color: [10, 90, 200, 255] }, x: 0.0, y: 0.0, w: 64.0, h: 64.0, visible: true }],
+        }];
+        s.studio.current = 0;
+        Workspace::with_settings(s)
+    }
+
+    #[test]
+    fn stream_services_lists_every_preset() {
+        let mut w = ws();
+        w.call("stream_services", &json!({})).unwrap();
+        let items = w.structured.clone().unwrap()["items"].as_array().unwrap().clone();
+        assert_eq!(items.len(), crate::stream::PRESETS.len());
+        assert_eq!(items[0]["service"], "twitch");
+        assert!(items.iter().all(|i| i["max_fps"].as_u64().unwrap() >= 30 && i["keyframe_s"] == 2));
+    }
+
+    #[test]
+    fn stream_start_checks_its_arguments_and_never_echoes_the_key() {
+        let _g = crate::stream::live::TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        let mut w = ws();
+        let e = w.call("stream_start", &json!({"service": "custom", "url": "ftp://example.com/live", "key": "sk_mcp_secret_1"})).unwrap_err();
+        assert!(e.contains("rtmp") && !e.contains("sk_mcp_secret_1"), "{e}");
+        assert!(w.call("stream_start", &json!({"service": "myspace", "key": "k"})).unwrap_err().contains("service is"));
+        assert!(w.call("stream_start", &json!({"source": "window", "key": "k"})).unwrap_err().contains("title"));
+        assert!(w.call("stream_start", &json!({"source": "area", "key": "k"})).is_err());
+        assert_eq!(crate::stream::live::snapshot().phase, crate::stream::live::Phase::Idle, "nothing started");
+    }
+
+    #[test]
+    fn stream_start_status_and_stop_against_a_local_server() {
+        let _g = crate::stream::live::TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        let srv = crate::stream::testserver::TestServer::start().unwrap();
+        let mut w = ws();
+        let t = text_of(w.call("stream_start", &json!({"service": "custom", "url": srv.url(), "key": "sk_mcp_secret_2", "source": "studio", "fps": 15})));
+        assert!(t.starts_with("Live on Custom server"), "{t}");
+        assert!(!t.contains("sk_mcp_secret_2"), "{t}");
+        assert_eq!(srv.publish_name(), "sk_mcp_secret_2");
+        assert!(w.call("stream_start", &json!({"key": "k"})).unwrap_err().contains("already"));
+        w.call("stream_status", &json!({})).unwrap();
+        let st = w.structured.clone().unwrap();
+        assert_eq!(st["phase"], "running");
+        assert_eq!((st["width"].as_u64(), st["fps"].as_u64()), (Some(64), Some(15)));
+        assert!(!st.to_string().contains("sk_mcp_secret_2"));
+        let t = text_of(w.call("stream_stop", &json!({})));
+        assert!(t.starts_with("The stream stopped"), "{t}");
+        assert_eq!(text_of(w.call("stream_stop", &json!({}))), "Nothing is being streamed.");
+        w.call("stream_status", &json!({})).unwrap();
+        assert_eq!(w.structured.clone().unwrap()["phase"], "idle");
     }
 }

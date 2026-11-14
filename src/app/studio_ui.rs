@@ -57,6 +57,11 @@ impl StudioUi {
         }
     }
 
+    /// The compositor's shared state (the live stream takes its frames from it).
+    pub fn engine_shared(&self) -> Arc<crate::studio::Shared> {
+        self.engine.shared.clone()
+    }
+
     pub fn recording(&self) -> bool {
         self.rec.is_some()
     }

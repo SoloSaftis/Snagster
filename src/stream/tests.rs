@@ -232,7 +232,7 @@ impl AudioEncoder for FakeAudio {
     }
 }
 
-fn fakes(gop: u64, pad: usize) -> Encoders {
+pub(crate) fn fakes(gop: u64, pad: usize) -> Encoders {
     Encoders {
         video: Arc::new(move |c| {
             assert!(c.low_latency);
@@ -294,6 +294,8 @@ fn publishes_metadata_sequence_headers_and_frames_with_timestamps() {
     let last = s.stop();
     assert_eq!(last.state, State::Stopped);
     assert!(last.bytes_sent > 0);
+    // The server reads on its own thread: give it time to see the goodbye (slow CI machines).
+    srv.wait("deleteStream at the server", 10, |c| c.first().is_some_and(|c| c.commands.iter().any(|x| x == "deleteStream")));
 
     let g = srv.conns.lock().unwrap();
     let c = &g[0];

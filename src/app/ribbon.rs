@@ -13,6 +13,7 @@ pub(crate) enum RibbonTab {
     Capture,
     Record,
     Studio,
+    Stream,
     Edit,
     Image,
     Share,
@@ -21,8 +22,8 @@ pub(crate) enum RibbonTab {
 }
 
 impl RibbonTab {
-    pub const ALL: [RibbonTab; 9] =
-        [RibbonTab::Home, RibbonTab::Capture, RibbonTab::Record, RibbonTab::Studio, RibbonTab::Edit, RibbonTab::Image, RibbonTab::Share, RibbonTab::View, RibbonTab::Help];
+    pub const ALL: [RibbonTab; 10] =
+        [RibbonTab::Home, RibbonTab::Capture, RibbonTab::Record, RibbonTab::Studio, RibbonTab::Stream, RibbonTab::Edit, RibbonTab::Image, RibbonTab::Share, RibbonTab::View, RibbonTab::Help];
 
     pub fn name(self) -> &'static str {
         match self {
@@ -30,6 +31,7 @@ impl RibbonTab {
             RibbonTab::Capture => t("Capture"),
             RibbonTab::Record => t("Record"),
             RibbonTab::Studio => t("Studio"),
+            RibbonTab::Stream => t("Stream"),
             RibbonTab::Edit => t("Edit"),
             RibbonTab::Image => t("Image"),
             RibbonTab::Share => t("Share"),
@@ -44,6 +46,7 @@ impl RibbonTab {
             RibbonTab::Capture => t("Every way to capture the screen"),
             RibbonTab::Record => t("Record videos and GIFs, with sound"),
             RibbonTab::Studio => t("Studio mode: scenes made of screens, windows, pictures and text, recorded live"),
+            RibbonTab::Stream => t("Go live on Twitch, YouTube, Kick, Facebook or your own server"),
             RibbonTab::Edit => t("Undo, marks and the clipboard"),
             RibbonTab::Image => t("Turn, resize, effects and hiding private details"),
             RibbonTab::Share => t("Copy, save, email, print and export"),
@@ -67,6 +70,7 @@ pub(crate) struct Extra {
     pub mcp_error: Option<String>,
     pub mcp_wanted: Option<(u16, String)>,
     pub mics: Option<Vec<crate::audio::Device>>,
+    pub stream: crate::app::stream_ui::StreamUi,
 }
 
 fn kbd(s: &Settings, a: Action) -> String {
@@ -106,6 +110,10 @@ impl SnagApp {
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(6.0);
+                let snap = self.x.stream.snap.clone();
+                if snap.on_air() && crate::app::stream_ui::live_badge(ui, &snap).clicked() {
+                    self.switch_tab(&ctx, RibbonTab::Stream);
+                }
                 if look::icon_button(ui, ph::GEAR, &format!("{} (Ctrl+,)", t("Settings"))).clicked() {
                     self.settings_open = true;
                 }
@@ -134,6 +142,7 @@ impl SnagApp {
                     RibbonTab::Capture => self.band_capture(ui, &ctx),
                     RibbonTab::Record => self.band_record(ui, &ctx),
                     RibbonTab::Studio => self.band_studio(ui, &ctx),
+                    RibbonTab::Stream => crate::app::stream_ui::band(self, ui, &ctx),
                     RibbonTab::Edit => self.band_edit(ui),
                     RibbonTab::Image => self.band_image(ui),
                     RibbonTab::Share => self.band_share(ui),
@@ -153,6 +162,7 @@ impl SnagApp {
         if tab != RibbonTab::Studio
             && let Some(s) = &self.x.studio
             && !s.recording()
+            && !(self.x.stream.uses_studio && self.x.stream.snap.phase != crate::stream::live::Phase::Idle)
         {
             // Leaving Studio stops its preview (and the screen copies behind it).
             self.x.studio = None;
@@ -780,6 +790,7 @@ impl SnagApp {
                         RibbonTab::Edit => self.edit_menu(ui),
                         RibbonTab::Image => self.image_menu(ui),
                         RibbonTab::Share => self.share_menu(ui),
+                        RibbonTab::Stream => self.stream_menu(ui, ctx),
                         _ => self.view_menu(ui, ctx),
                     });
                     if matches!(tab, RibbonTab::Image | RibbonTab::Capture | RibbonTab::Edit) {
@@ -867,11 +878,12 @@ mod tests {
             RibbonTab::Capture => 1,
             RibbonTab::Record => 2,
             RibbonTab::Studio => 3,
-            RibbonTab::Edit => 4,
-            RibbonTab::Image => 5,
-            RibbonTab::Share => 6,
-            RibbonTab::View => 7,
-            RibbonTab::Help => 8,
+            RibbonTab::Stream => 4,
+            RibbonTab::Edit => 5,
+            RibbonTab::Image => 6,
+            RibbonTab::Share => 7,
+            RibbonTab::View => 8,
+            RibbonTab::Help => 9,
         };
         for (i, t) in RibbonTab::ALL.iter().enumerate() {
             assert_eq!(index(*t), i, "{t:?} out of place");

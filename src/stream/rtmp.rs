@@ -269,14 +269,6 @@ impl Transport {
         }
     }
 
-    pub fn set_read_timeout(&self, d: Duration) -> std::io::Result<()> {
-        self.tcp().set_read_timeout(Some(d))
-    }
-
-    pub fn set_write_timeout(&self, d: Duration) -> std::io::Result<()> {
-        self.tcp().set_write_timeout(Some(d))
-    }
-
     pub fn set_nonblocking(&self) -> std::io::Result<()> {
         self.tcp().set_nonblocking(true)
     }
@@ -396,8 +388,7 @@ pub fn handshake<S: Read + Write>(s: &mut S) -> Result<(), String> {
     s.flush().map_err(io)
 }
 
-/// The server's side of the handshake (for the tests' server).
-#[cfg(test)]
+/// The server's side of the handshake (for the test servers: `testserver` and the unit tests).
 pub fn server_handshake<S: Read + Write>(s: &mut S) -> Result<(), String> {
     let io = |e: std::io::Error| e.to_string();
     let mut c0c1 = vec![0u8; 1 + HANDSHAKE_LEN];
