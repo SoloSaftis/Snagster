@@ -659,13 +659,132 @@ fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, 
     return Ok(Box::new(XcapGrab { rect, cursor }));
 }
 
-/// Wait until `until` (now if it has passed).
+/// Wait until `until` (now if it has passed). Notes when the wait ended, so the feed can time
+/// the copy on its own (a sleep that overruns isn't the copy's fault).
 #[cfg(not(windows))]
 fn sleep_until(until: Instant) {
     let now = Instant::now();
     if until > now {
         std::thread::sleep(until - now);
     }
+    WOKE.with(|w| w.set(Some(Instant::now())));
+}
+
+thread_local! {
+    /// When the grabber on this thread last finished waiting (see `sleep_until`).
+    static WOKE: std::cell::Cell<Option<Instant>> = const { std::cell::Cell::new(None) };
+}
+
+/// A thread that has to keep time to the frame (the stream's picture thread, the screen
+/// feed). macOS: user-interactive quality of service, so its sleeps end on time rather than
+/// being gathered up with other timers (that made a 30 fps stream run at 20). Elsewhere the
+/// default is already on time.
+pub fn timely_thread() {
+    #[cfg(target_os = "macos")]
+    unsafe {
+        unsafe extern "C" {
+            fn pthread_set_qos_class_self_np(qos: u32, relative_priority: i32) -> i32;
+        }
+        const QOS_CLASS_USER_INTERACTIVE: u32 = 0x21;
+        pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+    }
+}
+
+/// While this lives, macOS doesn't nap Snagster or stretch its timers (a stream or recording
+/// in progress with the window in the background, or a process without a window): an
+/// `NSProcessInfo` activity, user-initiated and latency-critical, as media programs take.
+/// Nothing elsewhere.
+pub struct TimelyActivity {
+    #[cfg(target_os = "macos")]
+    token: *mut std::ffi::c_void,
+}
+
+// The activity token is an Objective-C object that may be ended from any thread.
+unsafe impl Send for TimelyActivity {}
+unsafe impl Sync for TimelyActivity {}
+
+#[cfg(target_os = "macos")]
+mod objc {
+    use std::ffi::{c_char, c_void};
+    pub type Id = *mut c_void;
+    #[link(name = "objc")]
+    unsafe extern "C" {
+        pub fn objc_getClass(name: *const c_char) -> Id;
+        pub fn sel_registerName(name: *const c_char) -> Id;
+        pub fn objc_msgSend();
+    }
+    #[link(name = "Foundation", kind = "framework")]
+    unsafe extern "C" {}
+    #[link(name = "CoreFoundation", kind = "framework")]
+    unsafe extern "C" {
+        pub fn CFStringCreateWithCString(a: *const c_void, s: *const c_char, encoding: u32) -> Id;
+        pub fn CFRelease(cf: *const c_void);
+    }
+    pub const UTF8: u32 = 0x0800_0100;
+    /// `objc_msgSend` with no arguments, returning an object.
+    pub unsafe fn send0(obj: Id, sel: &std::ffi::CStr) -> Id {
+        let f: unsafe extern "C" fn(Id, Id) -> Id = unsafe { std::mem::transmute(objc_msgSend as unsafe extern "C" fn()) };
+        unsafe { f(obj, sel_registerName(sel.as_ptr())) }
+    }
+}
+
+impl TimelyActivity {
+    pub fn begin(reason: &str) -> TimelyActivity {
+        #[cfg(target_os = "macos")]
+        unsafe {
+            use objc::*;
+            // NSActivityUserInitiated | NSActivityLatencyCritical
+            const OPTIONS: u64 = 0x00FF_FFFF | 0xFF_0000_0000;
+            let info = send0(objc_getClass(c"NSProcessInfo".as_ptr()), c"processInfo");
+            let why = std::ffi::CString::new(reason).unwrap_or_default();
+            let text = CFStringCreateWithCString(std::ptr::null(), why.as_ptr(), UTF8);
+            let mut token = std::ptr::null_mut();
+            if !info.is_null() && !text.is_null() {
+                let begin: unsafe extern "C" fn(Id, Id, u64, Id) -> Id = std::mem::transmute(objc_msgSend as unsafe extern "C" fn());
+                token = begin(info, sel_registerName(c"beginActivityWithOptions:reason:".as_ptr()), OPTIONS, text);
+                if !token.is_null() {
+                    token = send0(token, c"retain");
+                }
+            }
+            if !text.is_null() {
+                CFRelease(text);
+            }
+            TimelyActivity { token }
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            let _ = reason;
+            TimelyActivity {}
+        }
+    }
+}
+
+impl Drop for TimelyActivity {
+    fn drop(&mut self) {
+        #[cfg(target_os = "macos")]
+        unsafe {
+            use objc::*;
+            if self.token.is_null() {
+                return;
+            }
+            let info = send0(objc_getClass(c"NSProcessInfo".as_ptr()), c"processInfo");
+            if !info.is_null() {
+                let end: unsafe extern "C" fn(Id, Id, Id) = std::mem::transmute(objc_msgSend as unsafe extern "C" fn());
+                end(info, sel_registerName(c"endActivity:".as_ptr()), self.token);
+            }
+            send0(self.token, c"release");
+        }
+    }
+}
+
+/// How long `sleep(ms)` really takes on this thread, on average over `n` sleeps (for
+/// `--stream-test`: a system that oversleeps can't keep a frame rate).
+pub fn measured_sleep_ms(ms: u64, n: u32) -> f64 {
+    let t = Instant::now();
+    for _ in 0..n.max(1) {
+        std::thread::sleep(Duration::from_millis(ms));
+    }
+    t.elapsed().as_secs_f64() * 1000.0 / n.max(1) as f64
 }
 
 /// The part of `rect` inside `bounds` (both left, top, width, height); None when less than
@@ -1181,6 +1300,7 @@ type Opener = fn((i32, i32, u32, u32), bool) -> Result<Box<dyn Grab>, String>;
 
 fn feed_loop(sh: &FeedShared, mut rect: (i32, i32, u32, u32), o: FeedOptions, open: Opener) {
     crate::capture::background_thread(false);
+    timely_thread();
     let every = Duration::from_nanos(1_000_000_000 / o.fps.clamp(1, 240) as u64);
     let mut back = Frame::default();
     let mut grab: Option<Box<dyn Grab>> = None;
@@ -1221,8 +1341,8 @@ fn feed_loop(sh: &FeedShared, mut rect: (i32, i32, u32, u32), o: FeedOptions, op
             next = now;
         }
         let r = g.grab(next, force || o.every_frame, &mut back, o.fit);
-        // The copy's own time: from the frame's start (or now, when late) to done.
-        let began = next.max(now);
+        // The copy's own time: from the end of its wait (or the frame's start) to done.
+        let began = WOKE.with(|w| w.take()).unwrap_or(next.max(now));
         sh.grab_us.fetch_add(began.elapsed().as_micros() as u64, Ordering::Relaxed);
         sh.grabs.fetch_add(1, Ordering::Relaxed);
         match r {

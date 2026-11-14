@@ -552,6 +552,17 @@ fn stream_test(quick: bool) -> bool {
     use stream::{Encoders, Service, State, StreamTarget};
     let (mx, my, sw, sh) = capture::monitor_under_cursor().unwrap_or((0, 0, 1280, 720));
     println!("Screen {sw}x{sh} at {mx},{my}");
+    // A system whose sleeps run long can't keep a frame rate: how long a 5 ms sleep takes on a
+    // plain thread, and on a timely one while the stream's activity is held (what streaming uses).
+    let plain = video::measured_sleep_ms(5, 20);
+    let timely = std::thread::spawn(|| {
+        let _a = video::TimelyActivity::begin("Stream test");
+        video::timely_thread();
+        video::measured_sleep_ms(5, 20)
+    })
+    .join()
+    .unwrap_or(0.0);
+    println!("A 5 ms sleep takes {plain:.1} ms ({timely:.1} ms on a streaming thread)");
     // (height, frame rate, seconds, copy every frame even when the screen doesn't change: the cost
     // of a screen that changes all the time)
     let cases: &[(u32, u32, u64, bool)] = if quick { &[(720, 30, 3, true)] } else { &[(1080, 30, 6, false), (1080, 30, 6, true), (1440, 60, 6, false), (1440, 60, 6, true)] };

@@ -361,6 +361,8 @@ pub struct Streamer {
     shared: Arc<Shared>,
     started: Instant,
     threads: Vec<JoinHandle<()>>,
+    /// Keeps macOS from napping Snagster or stretching its timers while streaming.
+    _timely: crate::video::TimelyActivity,
 }
 
 impl Streamer {
@@ -411,7 +413,7 @@ impl Streamer {
         let sh = shared.clone();
         let net = NetCfg { ep, codec: cfg.codec, meta, asc, max_reconnects: cfg.max_reconnects, connect_timeout: cfg.connect_timeout, write_timeout: cfg.write_timeout, backoff: cfg.backoff };
         threads.push(spawn("snagster-stream-net", move || net_thread(sh, net, started)).map_err(|e| e.to_string())?);
-        Ok(Streamer { shared, started, threads })
+        Ok(Streamer { shared, started, threads, _timely: crate::video::TimelyActivity::begin("Live streaming") })
     }
 
     /// Where the stream stands; never waits on the stream's threads.
@@ -506,6 +508,7 @@ fn queue_packet(sh: &Shared, hook: &Option<PacketHook>, p: Packet) {
 }
 
 fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEncoder>, w: u32, h: u32, fps: u32, started: Instant, hook: Option<PacketHook>) {
+    crate::video::timely_thread();
     let mut buf = vec![0u8; w as usize * h as usize * 4];
     let frame_us = 1_000_000.0 / fps as f64;
     let mut n: u64 = 0;
