@@ -230,3 +230,161 @@ mod more_tests {
         }
     }
 }
+
+#[cfg(test)]
+mod lookup_tests {
+    //! These never call [`set`]: the language is shared by every test running at the same time.
+    use super::*;
+
+    fn english_texts() -> Vec<String> {
+        serde_json::from_str(include_str!("../assets/i18n/strings.json")).unwrap()
+    }
+
+    /// The `{name}` placeholders in a text, sorted.
+    fn placeholders(s: &str) -> Vec<String> {
+        let mut out = Vec::new();
+        let mut rest = s;
+        while let Some(i) = rest.find('{') {
+            rest = &rest[i + 1..];
+            match rest.find('}') {
+                Some(j) if j > 0 && rest[..j].chars().all(|c| c.is_ascii_alphanumeric() || c == '_') => {
+                    out.push(rest[..j].to_string());
+                    rest = &rest[j + 1..];
+                }
+                _ => {}
+            }
+        }
+        out.sort();
+        out
+    }
+
+    #[test]
+    fn more_locales_match() {
+        assert_eq!(match_locale("de_DE.UTF-8"), "de");
+        assert_eq!(match_locale("de-AT"), "de");
+        assert_eq!(match_locale("DE"), "de");
+        assert_eq!(match_locale("no_NO"), "no");
+        assert_eq!(match_locale("nn-NO"), "nn");
+        assert_eq!(match_locale("zh_TW"), "zh-Hant");
+        assert_eq!(match_locale("zh-HK"), "zh-Hant");
+        assert_eq!(match_locale("zh-Hans-CN"), "zh");
+        assert_eq!(match_locale("sr-RS"), "sr");
+        assert_eq!(match_locale("sr-Cyrl-BA"), "sr-Cyrl-BA");
+        assert_eq!(match_locale("ca-ES-valencia"), "ca-ES-valencia");
+        assert_eq!(match_locale("ca-ES"), "ca");
+        assert_eq!(match_locale("es-ES"), "es");
+        assert_eq!(match_locale("es-AR"), "es-MX");
+        assert_eq!(match_locale("fr-CA"), "fr-CA");
+        assert_eq!(match_locale("fr-BE"), "fr");
+        assert_eq!(match_locale("en-GB"), "en-GB");
+        assert_eq!(match_locale("en_IE"), "en-GB");
+        assert_eq!(match_locale("tl-PH"), "fil");
+        assert_eq!(match_locale("fil-PH"), "fil");
+        assert_eq!(match_locale("sv-SE@euro"), "sv");
+        assert_eq!(match_locale("C"), "en");
+        assert_eq!(match_locale("POSIX"), "en");
+        assert_eq!(match_locale("--"), "en");
+    }
+
+    #[test]
+    fn every_code_matches_itself() {
+        for c in CODES {
+            assert_eq!(match_locale(c), c);
+            assert_eq!(known(&c.to_ascii_uppercase()), Some(c));
+        }
+    }
+
+    #[test]
+    fn settings_resolve_to_codes() {
+        assert_eq!(resolve("de"), "de");
+        assert_eq!(resolve("PT-br"), "pt-BR");
+        // Empty, or a language that doesn't exist, means the computer's language.
+        assert_eq!(resolve(""), system());
+        assert_eq!(resolve("klingon"), system());
+        assert!(CODES.contains(&system()));
+    }
+
+    #[test]
+    fn english_has_no_table() {
+        assert!(table_for("en").is_none());
+        assert!(table_for("not-a-language").is_none());
+    }
+
+    #[test]
+    fn a_pack_is_loaded_once_and_translates() {
+        let de = table_for("de").unwrap();
+        assert!(std::ptr::eq(de, table_for("de").unwrap()), "the table is kept");
+        let key = "%Y year  %m month  %d day  %H hour  %M minute  %S second  %n counter  %t title";
+        assert!(de[key].contains("Jahr"));
+        assert!(de.values().all(|v| !v.trim().is_empty()), "empty entries fall back to English");
+    }
+
+    #[test]
+    fn translations_keep_the_placeholders() {
+        let keys = english_texts();
+        for (code, _) in packs::PACKS {
+            let table = table_for(code).unwrap();
+            for k in &keys {
+                if let Some(v) = table.get(k) {
+                    assert_eq!(placeholders(v), placeholders(k), "{code}: {k:?} became {v:?}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn placeholder_finder_works() {
+        assert_eq!(placeholders("a {x} b {name} {x}"), ["name", "x", "x"]);
+        assert!(placeholders("{ } {} {a b} no").is_empty());
+    }
+
+    #[test]
+    fn placeholders_fill_in_any_order_and_repeat() {
+        assert_eq!(tf("{a} and {b}", &[("b", "2"), ("a", "1")]), "1 and 2");
+        assert_eq!(tf("{a}{a}", &[("a", "x")]), "xx");
+        assert_eq!(tf("{a} {missing}", &[("a", "x")]), "x {missing}", "an unknown name stays as it is");
+        assert_eq!(tf("no names", &[("a", "x")]), "no names");
+        assert_eq!(tf("{a}", &[("a", "{b}"), ("b", "y")]), "y", "replacements are applied one after another");
+        assert_eq!(tf("{e}", &[("e", "")]), "");
+    }
+
+    #[test]
+    fn writing_direction_and_scripts() {
+        for rtl in ["ar", "fa", "he", "ur", "ug", "ar-EG"] {
+            assert!(is_rtl(rtl), "{rtl}");
+        }
+        for ltr in ["en", "de", "hi", "zh", "", "arn"] {
+            assert!(!is_rtl(ltr), "{ltr}");
+        }
+        for cjk in ["zh", "zh-Hant", "ja", "ko"] {
+            assert!(is_cjk(cjk), "{cjk}");
+        }
+        for not in ["en", "th", "vi", "", "kok"] {
+            assert!(!is_cjk(not), "{not}");
+        }
+    }
+
+    #[test]
+    fn language_names() {
+        assert_eq!(native_name("de"), "Deutsch");
+        assert_eq!(native_name("ja"), "日本語");
+        assert_eq!(name_in("ja", "en"), "Japanese");
+        assert_eq!(name_in("de", "fr"), "Allemand");
+        // An unknown interface language falls back to English, an unknown code to itself.
+        assert_eq!(name_in("de", "xx"), "German");
+        assert_eq!(name_in("xx", "de"), "xx");
+        assert!(!name("de").is_empty());
+    }
+
+    #[test]
+    fn packs_cover_every_language_but_english() {
+        let codes: Vec<&str> = CODES.iter().copied().filter(|c| *c != "en").collect();
+        let packs: Vec<&str> = packs::PACKS.iter().map(|(c, _)| *c).collect();
+        assert_eq!(packs, codes, "PACKS and CODES must list the same languages in the same order");
+        let unique: std::collections::HashSet<&str> = CODES.iter().copied().collect();
+        assert_eq!(unique.len(), CODES.len());
+        for (code, text) in packs::PACKS {
+            assert!(!text.trim().is_empty(), "{code}");
+        }
+    }
+}

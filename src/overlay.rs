@@ -169,14 +169,7 @@ impl Overlay {
         p.image(tex, scr_rect(full), Rect::from_min_max(Pos2::ZERO, pos2(1.0, 1.0)), Color32::WHITE);
         let dim = Color32::from_black_alpha(s.dim_alpha);
         let dim_except = |hole: Rect| {
-            let f = scr_rect(full);
-            let h = scr_rect(hole);
-            for piece in [
-                Rect::from_min_max(f.min, pos2(f.max.x, h.min.y)),
-                Rect::from_min_max(pos2(f.min.x, h.max.y), f.max),
-                Rect::from_min_max(pos2(f.min.x, h.min.y), pos2(h.min.x, h.max.y)),
-                Rect::from_min_max(pos2(h.max.x, h.min.y), pos2(f.max.x, h.max.y)),
-            ] {
+            for piece in dim_pieces(scr_rect(full), scr_rect(hole)) {
                 if piece.is_positive() {
                     p.rect_filled(piece, CornerRadius::ZERO, dim);
                 }
@@ -372,9 +365,7 @@ impl Overlay {
             }
             OverlayMode::Fixed(w, h) => {
                 if let Some(c) = hover {
-                    let size = vec2((w as f32).min(iw), (h as f32).min(ih));
-                    let mut r = Rect::from_center_size(c, size);
-                    r = r.translate(vec2((-r.min.x).max(0.0) - (r.max.x - iw).max(0.0), (-r.min.y).max(0.0) - (r.max.y - ih).max(0.0)));
+                    let r = fixed_frame(c, w, h, iw, ih);
                     dim_except(r);
                     p.rect_stroke(scr_rect(r), CornerRadius::ZERO, Stroke::new(2.0, ACCENT), StrokeKind::Outside);
                     label = Some(format!("{w} x {h}   click to capture"));
@@ -494,9 +485,7 @@ impl Overlay {
                 mag_pos.y = hs.y - 24.0 - box_size - 50.0;
             }
             if mag_on {
-                let zoom = s.magnifier_zoom.clamp(2, 32) as f32;
-                let cells = (box_size / zoom).floor().max(3.0);
-                let cells = if cells as i32 % 2 == 0 { cells - 1.0 } else { cells };
+                let cells = magnifier_cells(box_size, s.magnifier_zoom);
                 let cell = box_size / cells;
                 let (cx, cy) = (h.x.floor(), h.y.floor());
                 let src = Rect::from_min_size(pos2(cx - (cells - 1.0) / 2.0, cy - (cells - 1.0) / 2.0), Vec2::splat(cells));
@@ -560,9 +549,247 @@ impl Overlay {
     }
 }
 
+/// The four strips of `full` around `hole` (above, below, left, right) that get dimmed.
+/// Strips can be empty or negative when the hole touches or passes an edge.
+fn dim_pieces(f: Rect, h: Rect) -> [Rect; 4] {
+    [
+        Rect::from_min_max(f.min, pos2(f.max.x, h.min.y)),
+        Rect::from_min_max(pos2(f.min.x, h.max.y), f.max),
+        Rect::from_min_max(pos2(f.min.x, h.min.y), pos2(h.min.x, h.max.y)),
+        Rect::from_min_max(pos2(h.max.x, h.min.y), pos2(f.max.x, h.max.y)),
+    ]
+}
+
+/// The fixed-size frame centred on `c`, pushed back inside an `iw` x `ih` picture.
+fn fixed_frame(c: Pos2, w: u32, h: u32, iw: f32, ih: f32) -> Rect {
+    let size = vec2((w as f32).min(iw), (h as f32).min(ih));
+    let r = Rect::from_center_size(c, size);
+    r.translate(vec2((-r.min.x).max(0.0) - (r.max.x - iw).max(0.0), (-r.min.y).max(0.0) - (r.max.y - ih).max(0.0)))
+}
+
+/// How many pixels across the magnifier shows: odd, so one sits in the middle, and at least 3.
+fn magnifier_cells(box_size: f32, zoom: u32) -> f32 {
+    let zoom = zoom.clamp(2, 32) as f32;
+    let cells = (box_size / zoom).floor().max(3.0);
+    if cells as i32 % 2 == 0 { cells - 1.0 } else { cells }
+}
+
 fn pill(p: &egui::Painter, at: Pos2, align: Align2, text: &str, size: f32) {
     let galley = p.layout(text.to_string(), FontId::proportional(size), Color32::WHITE, 900.0);
     let r = align.anchor_size(at, galley.size() + vec2(16.0, 8.0));
     p.rect_filled(r, CornerRadius::same(6), Color32::from_rgba_unmultiplied(20, 22, 28, 225));
     p.galley(r.min + vec2(8.0, 4.0), galley, Color32::WHITE);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::{Rgba, RgbaImage};
+
+    fn obj(x: i32, y: i32, w: u32, h: u32, label: &str, children: Vec<Object>) -> Object {
+        Object { x, y, width: w, height: h, label: label.into(), children }
+    }
+
+    fn shot(w: u32, h: u32, origin: (i32, i32), objects: Vec<Object>) -> Shot {
+        let image = RgbaImage::from_fn(w, h, |x, y| Rgba([x as u8, y as u8, 7, 255]));
+        Shot { image, origin, objects, title: String::new(), app: String::new(), cursor: None }
+    }
+
+    fn pick(p: PickPurpose) -> Overlay {
+        Overlay::new(OverlayMode::Pick(p), CutShape::Rect, shot(200, 100, (0, 0), Vec::new()))
+    }
+
+    fn r(x0: f32, y0: f32, x1: f32, y1: f32) -> Rect {
+        Rect::from_min_max(pos2(x0, y0), pos2(x1, y1))
+    }
+
+    #[test]
+    fn objects_move_from_desktop_to_picture_pixels() {
+        let full = r(0.0, 0.0, 1920.0, 1080.0);
+        // The screen starts at x = -1920 (a monitor to the left of the primary one).
+        let o = obj(-1800, 100, 400, 300, "W", Vec::new());
+        assert_eq!(to_rect(&o, (-1920, 0), full), r(120.0, 100.0, 520.0, 400.0));
+        // Windows hanging off the screen are cut to it.
+        let o = obj(-2000, -50, 400, 300, "W", Vec::new());
+        assert_eq!(to_rect(&o, (-1920, 0), full), r(0.0, 0.0, 320.0, 250.0));
+    }
+
+    #[test]
+    fn tiny_and_off_screen_objects_are_dropped() {
+        let objects = vec![
+            obj(10, 10, 100, 80, "Window", vec![obj(20, 20, 30, 20, "Button", Vec::new()), obj(20, 50, 5, 5, "Dot", Vec::new())]),
+            obj(150, 10, 5, 50, "Thin", Vec::new()),
+            obj(5000, 10, 100, 100, "Elsewhere", Vec::new()),
+        ];
+        let o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), objects));
+        assert_eq!(o.objects.len(), 1);
+        assert_eq!(o.objects[0].1, "Window");
+        assert_eq!(o.objects[0].2.len(), 1);
+        assert_eq!(o.objects[0].2[0].1, "Button");
+    }
+
+    #[test]
+    fn object_at_finds_the_front_window_and_its_smallest_control() {
+        let objects = vec![
+            obj(10, 10, 100, 80, "Front", vec![obj(20, 20, 60, 40, "Panel", Vec::new()), obj(30, 30, 20, 10, "Button", Vec::new())]),
+            obj(0, 0, 200, 100, "Back", Vec::new()),
+        ];
+        let o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), objects));
+        let at = pos2(35.0, 33.0);
+        assert_eq!(o.object_at(at, false).unwrap().1, "Front");
+        let (rect, label) = o.object_at(at, true).unwrap();
+        assert_eq!(label, "Button");
+        assert_eq!(rect, r(30.0, 30.0, 50.0, 40.0));
+        assert_eq!(o.object_at(pos2(25.0, 70.0), true).unwrap().1, "Front");
+        assert_eq!(o.object_at(pos2(150.0, 50.0), true).unwrap().1, "Back");
+    }
+
+    #[test]
+    fn a_control_that_fills_its_window_is_skipped() {
+        let objects = vec![obj(0, 0, 100, 100, "Window", vec![obj(0, 0, 100, 99, "Client", Vec::new())])];
+        let o = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), objects));
+        assert_eq!(o.object_at(pos2(50.0, 50.0), true).unwrap().1, "Window");
+        assert!(o.object_at(pos2(150.0, 50.0), true).is_none());
+    }
+
+    #[test]
+    fn finishing_an_area_does_what_the_pick_was_for() {
+        let area = r(10.0, 10.0, 50.0, 40.0);
+        let cases = [
+            (PickPurpose::Capture, AreaAction::Capture),
+            (PickPurpose::Scrolling { horizontal: true }, AreaAction::Scroll { horizontal: true }),
+            (PickPurpose::Scrolling { horizontal: false }, AreaAction::Scroll { horizontal: false }),
+            (PickPurpose::ManualScroll, AreaAction::ManualScroll),
+            (PickPurpose::RecordGif, AreaAction::RecordGif),
+            (PickPurpose::GrabText, AreaAction::GrabText),
+        ];
+        for (purpose, want) in cases {
+            match pick(purpose).finish(area, CutShape::Ellipse, Vec::new()) {
+                Outcome::Area { rect, shape, action, .. } => {
+                    assert_eq!(rect, area);
+                    assert_eq!(shape, CutShape::Ellipse);
+                    assert_eq!(action, want, "{purpose:?}");
+                }
+                _ => panic!("{purpose:?} should give an area"),
+            }
+        }
+        let mut w = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), Vec::new()));
+        assert!(matches!(w.finish(area, CutShape::Rect, Vec::new()), Outcome::Area { action: AreaAction::Capture, .. }));
+    }
+
+    #[test]
+    fn all_in_one_waits_for_a_choice() {
+        let mut o = pick(PickPurpose::AllInOne);
+        let area = r(1.0, 2.0, 30.0, 40.0);
+        assert!(matches!(o.finish(area, CutShape::Star, vec![pos2(1.0, 1.0)]), Outcome::Pending));
+        let (rect, shape, points) = o.chosen.clone().unwrap();
+        assert_eq!((rect, shape, points.len()), (area, CutShape::Star, 1));
+    }
+
+    #[test]
+    fn multi_collects_areas() {
+        let mut o = pick(PickPurpose::Multi);
+        assert!(matches!(o.finish(r(0.0, 0.0, 10.0, 10.0), CutShape::Rect, Vec::new()), Outcome::Pending));
+        assert!(matches!(o.finish(r(20.0, 0.0, 30.0, 10.0), CutShape::Rect, Vec::new()), Outcome::Pending));
+        assert_eq!(o.multi.len(), 2);
+        assert_eq!(o.multi[1], r(20.0, 0.0, 30.0, 10.0));
+    }
+
+    #[test]
+    fn closing_a_path_makes_points_relative_to_its_box() {
+        let mut o = pick(PickPurpose::Capture);
+        o.shape = CutShape::Polygon;
+        o.path = vec![pos2(10.0, 20.0), pos2(50.0, 20.0), pos2(30.0, 60.0)];
+        match o.close_path() {
+            Outcome::Area { rect, shape, points, .. } => {
+                assert_eq!(rect, r(10.0, 20.0, 50.0, 60.0));
+                assert_eq!(shape, CutShape::Polygon);
+                assert_eq!(points, vec![pos2(0.0, 0.0), pos2(40.0, 0.0), pos2(20.0, 40.0)]);
+            }
+            _ => panic!("expected an area"),
+        }
+        assert!(o.path.is_empty());
+    }
+
+    #[test]
+    fn a_path_too_thin_to_cut_is_ignored() {
+        let mut o = pick(PickPurpose::Capture);
+        o.shape = CutShape::Freehand;
+        o.path = vec![pos2(10.0, 20.0), pos2(50.0, 21.0), pos2(30.0, 22.0)];
+        assert!(matches!(o.close_path(), Outcome::Pending));
+        assert!(o.path.is_empty());
+    }
+
+    #[test]
+    fn outlines_follow_the_shape() {
+        let o = pick(PickPurpose::Capture);
+        let b = r(10.0, 20.0, 110.0, 70.0);
+        assert_eq!(o.shape_outline(CutShape::Rect, b, &[]), vec![b.left_top(), b.right_top(), b.right_bottom(), b.left_bottom()]);
+        assert_eq!(o.shape_outline(CutShape::Rounded, b, &[]).len(), 4);
+        assert_eq!(o.shape_outline(CutShape::Triangle, b, &[]), vec![pos2(60.0, 20.0), b.right_bottom(), b.left_bottom()]);
+        let ell = o.shape_outline(CutShape::Ellipse, b, &[]);
+        assert_eq!(ell.len(), 72);
+        for q in &ell {
+            let (dx, dy) = ((q.x - 60.0) / 50.0, (q.y - 45.0) / 25.0);
+            assert!((dx * dx + dy * dy - 1.0).abs() < 1e-3);
+        }
+        let path = [pos2(1.0, 1.0), pos2(5.0, 9.0)];
+        assert_eq!(o.shape_outline(CutShape::Freehand, b, &path), path.to_vec());
+        assert_eq!(o.shape_outline(CutShape::Polygon, b, &path), path.to_vec());
+        for sh in [CutShape::Star, CutShape::Heart] {
+            let pts = o.shape_outline(sh, b, &[]);
+            assert!(pts.len() >= 10);
+            // (The heart's tip dips a hair below its box.)
+            assert!(pts.iter().all(|q| b.expand(2.0).contains(*q)), "{sh:?}");
+        }
+    }
+
+    #[test]
+    fn pixel_reads_the_frozen_screen_and_clamps() {
+        let o = pick(PickPurpose::Capture);
+        assert_eq!(o.pixel(pos2(12.7, 34.2)), [12, 34, 7]);
+        assert_eq!(o.pixel(pos2(-5.0, -5.0)), [0, 0, 7]);
+        assert_eq!(o.pixel(pos2(5000.0, 5000.0)), [199, 99, 7]);
+    }
+
+    #[test]
+    fn dimmed_strips_and_the_hole_cover_the_screen() {
+        let f = r(0.0, 0.0, 200.0, 100.0);
+        let hole = r(50.0, 20.0, 120.0, 70.0);
+        let pieces = dim_pieces(f, hole);
+        let area: f32 = pieces.iter().filter(|p| p.is_positive()).map(|p| p.area()).sum();
+        assert_eq!(area + hole.area(), f.area());
+        for (i, a) in pieces.iter().enumerate() {
+            assert!(!a.intersects(hole.shrink(0.01)), "piece {i} covers the hole");
+            for b in &pieces[i + 1..] {
+                assert!(!a.shrink(0.01).intersects(b.shrink(0.01)));
+            }
+        }
+        // A hole at the corner leaves empty strips, which aren't painted.
+        let pieces = dim_pieces(f, r(0.0, 0.0, 50.0, 50.0));
+        assert_eq!(pieces.iter().filter(|p| p.is_positive()).count(), 2);
+    }
+
+    #[test]
+    fn fixed_frame_stays_on_the_picture() {
+        assert_eq!(fixed_frame(pos2(100.0, 50.0), 40, 20, 200.0, 100.0), r(80.0, 40.0, 120.0, 60.0));
+        assert_eq!(fixed_frame(pos2(5.0, 5.0), 40, 20, 200.0, 100.0), r(0.0, 0.0, 40.0, 20.0));
+        assert_eq!(fixed_frame(pos2(199.0, 99.0), 40, 20, 200.0, 100.0), r(160.0, 80.0, 200.0, 100.0));
+        // Bigger than the picture: the whole picture.
+        assert_eq!(fixed_frame(pos2(10.0, 90.0), 4000, 3000, 200.0, 100.0), r(0.0, 0.0, 200.0, 100.0));
+    }
+
+    #[test]
+    fn magnifier_shows_an_odd_number_of_pixels() {
+        assert_eq!(magnifier_cells(132.0, 8), 15.0);
+        assert_eq!(magnifier_cells(132.0, 12), 11.0);
+        assert_eq!(magnifier_cells(132.0, 32), 3.0);
+        // Zoom is kept between 2 and 32.
+        assert_eq!(magnifier_cells(132.0, 0), magnifier_cells(132.0, 2));
+        assert_eq!(magnifier_cells(132.0, 1000), 3.0);
+        for z in 0..40 {
+            let c = magnifier_cells(132.0, z);
+            assert!(c >= 3.0 && c as i32 % 2 == 1, "zoom {z}: {c}");
+        }
+    }
 }

@@ -305,3 +305,192 @@ fn draw(ef: &EmojiFont, ch: char, px: u32, tint: [u8; 4]) -> Option<RgbaImage> {
     }
     Some(crate::render::from_pixmap(pm))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ttf_parser::RgbaColor;
+    use ttf_parser::colr::{ColorStop, GradientExtend};
+
+    /// The built-in black-and-white font, the same on every system.
+    fn builtin() -> EmojiFont {
+        EmojiFont { data: epaint_default_fonts::NOTO_EMOJI_REGULAR, color: false, groups: Vec::new() }
+    }
+
+    /// A stamp the built-in font can draw.
+    fn drawable() -> char {
+        let face = ttf_parser::Face::parse(epaint_default_fonts::NOTO_EMOJI_REGULAR, 0).unwrap();
+        *STAMPS.iter().find(|c| face.glyph_index(**c).is_some()).expect("the built-in font has some stamps")
+    }
+
+    #[test]
+    fn stamps_are_unique() {
+        let mut v = STAMPS.to_vec();
+        v.sort();
+        v.dedup();
+        assert_eq!(v.len(), STAMPS.len());
+    }
+
+    #[test]
+    fn blocks_are_valid_ranges() {
+        for (name, ranges) in BLOCKS {
+            assert!(!name.is_empty());
+            for (a, b) in *ranges {
+                assert!(a <= b, "{name}: {a:x} > {b:x}");
+                assert!(char::from_u32(*a).is_some() && char::from_u32(*b).is_some());
+            }
+        }
+    }
+
+    #[test]
+    fn font_groups_start_with_stamps() {
+        // Uses whichever emoji font this computer has; the shape of the result is the same.
+        let f = font();
+        assert_eq!(f.groups[0].0, "Stamps & badges");
+        assert!(f.groups.len() > 1, "at least one block of emojis");
+        assert!(f.groups.iter().skip(1).all(|g| !g.1.is_empty()));
+        assert_eq!(f.count(), f.groups.iter().skip(1).map(|g| g.1.len()).sum::<usize>());
+        // Skin-tone pieces never show up on their own.
+        assert!(f.groups.iter().flat_map(|g| g.1.iter()).all(|c| !(0x1F3FB..=0x1F3FF).contains(&(*c as u32))));
+        assert!(std::ptr::eq(f, font()), "loaded once");
+    }
+
+    #[test]
+    fn count_skips_the_stamps_group() {
+        let ef = EmojiFont {
+            data: epaint_default_fonts::NOTO_EMOJI_REGULAR,
+            color: false,
+            groups: vec![("Stamps & badges", vec!['a', 'b']), ("x", vec!['c']), ("y", vec!['d', 'e', 'f'])],
+        };
+        assert_eq!(ef.count(), 4);
+        assert_eq!(builtin().count(), 0);
+    }
+
+    #[test]
+    fn built_in_emoji_draws_in_the_tint() {
+        let ch = drawable();
+        let img = draw(&builtin(), ch, 48, [200, 30, 40, 255]).expect("drawn");
+        assert_eq!(img.dimensions(), (48, 48));
+        let inked: Vec<_> = img.pixels().filter(|p| p.0[3] > 0).collect();
+        assert!(inked.len() > 48, "something is drawn");
+        assert!(inked.len() < 48 * 48, "not a solid square");
+        // Fully covered pixels have exactly the tint colour.
+        for p in inked.iter().filter(|p| p.0[3] == 255) {
+            assert_eq!(p.0, [200, 30, 40, 255]);
+        }
+        // The glyph sits inside the square, roughly centred.
+        let (mut sx, mut n) = (0f32, 0f32);
+        for (x, _, p) in img.enumerate_pixels() {
+            if p.0[3] > 0 {
+                sx += x as f32;
+                n += 1.0;
+            }
+        }
+        assert!((sx / n - 24.0).abs() < 12.0);
+    }
+
+    #[test]
+    fn missing_glyphs_draw_nothing() {
+        assert!(draw(&builtin(), '\u{FDD0}', 32, [0, 0, 0, 255]).is_none());
+    }
+
+    #[test]
+    fn render_clamps_and_caches() {
+        let ch = drawable();
+        let a = render(ch, 1, [1, 2, 3, 255]);
+        let b = render(ch, 1, [1, 2, 3, 255]);
+        if let (Some(a), Some(b)) = (&a, &b) {
+            assert_eq!(a.dimensions(), (8, 8), "never smaller than 8 pixels");
+            assert!(Arc::ptr_eq(a, b), "the second call comes from the cache");
+        }
+        if let Some(big) = render(ch, 100_000, [1, 2, 3, 255]) {
+            assert_eq!(big.dimensions(), (1024, 1024), "never bigger than 1024 pixels");
+        }
+        assert!(render('\u{FDD0}', 32, [0, 0, 0, 255]).is_none());
+    }
+
+    #[test]
+    fn glyph_paths_follow_the_transform() {
+        let face = ttf_parser::Face::parse(epaint_default_fonts::NOTO_EMOJI_REGULAR, 0).unwrap();
+        let g = face.glyph_index(drawable()).unwrap();
+        let plain = glyph_path(&face, g, ts::Transform::identity()).unwrap();
+        let moved = glyph_path(&face, g, ts::Transform::from_translate(100.0, 50.0)).unwrap();
+        let (a, b) = (plain.bounds(), moved.bounds());
+        assert!((b.left() - a.left() - 100.0).abs() < 1e-2);
+        assert!((b.top() - a.top() - 50.0).abs() < 1e-2);
+        let half = glyph_path(&face, g, ts::Transform::from_scale(0.5, 0.5)).unwrap();
+        assert!((half.bounds().width() - a.width() / 2.0).abs() < 1e-2);
+        // The space glyph has no outline.
+        if let Some(sp) = face.glyph_index(' ') {
+            assert!(glyph_path(&face, sp, ts::Transform::identity()).is_none());
+        }
+    }
+
+    fn stop(offset: f32, red: u8) -> ColorStop {
+        ColorStop { stop_offset: offset, color: RgbaColor::new(red, 0, 0, 255) }
+    }
+
+    #[test]
+    fn gradient_stops_are_sorted_and_clamped() {
+        let v = Painter::stops([stop(0.9, 3), stop(-1.0, 1), stop(2.0, 4), stop(0.5, 2)].into_iter());
+        let offsets: Vec<f32> = v.iter().map(|s| s.0).collect();
+        assert_eq!(offsets, vec![0.0, 0.5, 0.9, 1.0]);
+        let reds: Vec<u8> = v.iter().map(|s| s.1.to_color_u8().red()).collect();
+        assert_eq!(reds, vec![1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn shaders_fall_back_to_solid_colours() {
+        let black = Painter::shader(Vec::new(), |_| panic!("not needed"));
+        assert!(matches!(black, ts::Shader::SolidColor(c) if c == ts::Color::BLACK));
+        let red = ts::Color::from_rgba8(255, 0, 0, 255);
+        let one = Painter::shader(vec![(0.0, red)], |_| panic!("not needed"));
+        assert!(matches!(one, ts::Shader::SolidColor(c) if c == red));
+        // When the gradient can't be made, the middle colour is used.
+        let green = ts::Color::from_rgba8(0, 255, 0, 255);
+        let blue = ts::Color::from_rgba8(0, 0, 255, 255);
+        let failed = Painter::shader(vec![(0.0, red), (0.5, green), (1.0, blue)], |_| None);
+        assert!(matches!(failed, ts::Shader::SolidColor(c) if c == green));
+        let made = Painter::shader(vec![(0.0, red), (1.0, blue)], |s| {
+            assert_eq!(s.len(), 2);
+            ts::LinearGradient::new(ts::Point::from_xy(0.0, 0.0), ts::Point::from_xy(10.0, 0.0), s, ts::SpreadMode::Pad, ts::Transform::identity())
+        });
+        assert!(!matches!(made, ts::Shader::SolidColor(_)));
+    }
+
+    #[test]
+    fn spread_modes_map_one_to_one() {
+        assert_eq!(Painter::spread(GradientExtend::Pad), ts::SpreadMode::Pad);
+        assert_eq!(Painter::spread(GradientExtend::Repeat), ts::SpreadMode::Repeat);
+        assert_eq!(Painter::spread(GradientExtend::Reflect), ts::SpreadMode::Reflect);
+    }
+
+    #[test]
+    fn clip_masks_multiply() {
+        let face = ttf_parser::Face::parse(epaint_default_fonts::NOTO_EMOJI_REGULAR, 0).unwrap();
+        let mut p = Painter { face: &face, pm: ts::Pixmap::new(10, 10).unwrap(), transforms: vec![ts::Transform::identity()], outline: None, clips: Vec::new() };
+        let left = ts::PathBuilder::from_rect(ts::Rect::from_ltrb(0.0, 0.0, 6.0, 10.0).unwrap());
+        let top = ts::PathBuilder::from_rect(ts::Rect::from_ltrb(0.0, 0.0, 10.0, 6.0).unwrap());
+        p.push_mask(Some(left));
+        p.push_mask(Some(top));
+        let m = p.clips.last().unwrap();
+        // Only the top-left square is inside both clips.
+        assert_eq!(m.data()[2 * 10 + 2], 255);
+        assert_eq!(m.data()[2 * 10 + 8], 0);
+        assert_eq!(m.data()[8 * 10 + 2], 0);
+        // No path means nothing is inside.
+        p.push_mask(None);
+        assert!(p.clips.last().unwrap().data().iter().all(|v| *v == 0));
+        assert_eq!(p.clips.len(), 3);
+        // The base transform is never popped.
+        use ttf_parser::colr::Painter as _;
+        p.pop_transform();
+        p.pop_transform();
+        assert_eq!(p.transforms.len(), 1);
+        p.push_transform(ttf_parser::Transform { a: 2.0, b: 0.0, c: 0.0, d: 2.0, e: 1.0, f: 0.0 });
+        assert_eq!(p.current().sx, 2.0);
+        assert_eq!(p.current().tx, 1.0);
+        p.pop_transform();
+        assert_eq!(p.current(), ts::Transform::identity());
+    }
+}

@@ -197,19 +197,51 @@ pub fn list_windows() -> Vec<WindowInfo> {
         let (Ok(x), Ok(y), Ok(width), Ok(height), Ok(id)) = (w.x(), w.y(), w.width(), w.height(), w.id()) else {
             continue;
         };
-        if title.trim().is_empty() || width < 60 || height < 40 {
+        if !listable(&title, width, height) {
             continue;
         }
         let app = w.app_name().unwrap_or_default();
-        let mut label = if app.is_empty() || title.contains(&app) { title } else { format!("{title}  ({app})") };
-        if label.chars().count() > 70 {
-            label = label.chars().take(67).collect::<String>() + "...";
-        }
+        let label = window_label(title, &app);
         let z = w.z().unwrap_or(0);
         out.push((z, WindowInfo { id, label, app, x, y, width, height }));
     }
     out.sort_by(|a, b| b.0.cmp(&a.0));
     out.into_iter().map(|(_, w)| w).collect()
+}
+
+/// Whether a window is worth listing: it has a title and isn't tiny.
+fn listable(title: &str, width: u32, height: u32) -> bool {
+    !title.trim().is_empty() && width >= 60 && height >= 40
+}
+
+/// The name shown for a window: its title, with the program added when the title doesn't
+/// say it, cut to 70 characters.
+fn window_label(title: String, app: &str) -> String {
+    let label = if app.is_empty() || title.contains(app) { title } else { format!("{title}  ({app})") };
+    if label.chars().count() > 70 { label.chars().take(67).collect::<String>() + "..." } else { label }
+}
+
+/// The desktop rectangle (x, y, width, height) that holds all of `objs`.
+fn bounds(objs: &[&Object]) -> Option<(i32, i32, u32, u32)> {
+    let x0 = objs.iter().map(|o| o.x).min()?;
+    let y0 = objs.iter().map(|o| o.y).min()?;
+    let x1 = objs.iter().map(|o| o.x + o.width as i32).max()?;
+    let y1 = objs.iter().map(|o| o.y + o.height as i32).max()?;
+    Some((x0, y0, (x1 - x0) as u32, (y1 - y0) as u32))
+}
+
+/// The name of a top-level window without a title, from its class.
+#[cfg(any(windows, test))]
+fn untitled_label(title: String, class: &str) -> String {
+    if !title.is_empty() {
+        title
+    } else if class == "#32768" {
+        "Menu".into()
+    } else if class == "Progman" || class == "WorkerW" {
+        "Desktop".into()
+    } else {
+        class.to_string()
+    }
 }
 
 /// Where the mouse is on the desktop, in physical pixels.
@@ -305,16 +337,7 @@ mod win {
                 continue;
             }
             let Some(r) = rect(h, true) else { continue };
-            let title = text(h);
-            let label = if !title.is_empty() {
-                title
-            } else if cls == "#32768" {
-                "Menu".into()
-            } else if cls == "Progman" || cls == "WorkerW" {
-                "Desktop".into()
-            } else {
-                cls.clone()
-            };
+            let label = super::untitled_label(text(h), &cls);
             let mut kids: Vec<HWND> = Vec::new();
             unsafe { EnumChildWindows(h, Some(collect), &mut kids as *mut Vec<HWND> as LPARAM) };
             let mut children = Vec::new();
@@ -549,15 +572,11 @@ pub fn grab(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String>
         CaptureKind::Menus => {
             let objs = objects();
             let menus: Vec<&Object> = objs.iter().filter(|o| o.label == "Menu").collect();
-            if menus.is_empty() {
+            let Some((x0, y0, mw, mh)) = bounds(&menus) else {
                 return Err("No open menu was found. Open the menu during the countdown.".into());
-            }
-            let x0 = menus.iter().map(|o| o.x).min().unwrap();
-            let y0 = menus.iter().map(|o| o.y).min().unwrap();
-            let x1 = menus.iter().map(|o| o.x + o.width as i32).max().unwrap();
-            let y1 = menus.iter().map(|o| o.y + o.height as i32).max().unwrap();
+            };
             let all = grab_all_screens()?;
-            let img = crop_desktop(&all.image, all.origin, x0, y0, (x1 - x0) as u32, (y1 - y0) as u32).ok_or("the menu is off screen")?;
+            let img = crop_desktop(&all.image, all.origin, x0, y0, mw, mh).ok_or("the menu is off screen")?;
             let mut s = shot(img, (x0, y0), "Menu".into());
             s.app = all.app;
             Ok(s)
@@ -622,6 +641,22 @@ fn find_shift(prev: &[u64], next: &[u64]) -> (usize, f32) {
         }
     }
     best
+}
+
+/// How many new rows a frame brings, from its shift against the last one. A weak match means
+/// the content jumped: keep the whole frame rather than losing it.
+fn rows_to_add(dy: usize, score: f32, frame_height: u32) -> u32 {
+    if score >= 0.6 { dy as u32 } else { frame_height }
+}
+
+/// `out` with the bottom `add` rows of `frame` put underneath.
+fn append_rows(out: &RgbaImage, frame: &RgbaImage, add: u32) -> RgbaImage {
+    let add = add.min(frame.height());
+    let mut grown = RgbaImage::new(out.width(), out.height() + add);
+    image::imageops::replace(&mut grown, out, 0, 0);
+    let part = image::imageops::crop_imm(frame, 0, frame.height() - add, frame.width(), add).to_image();
+    image::imageops::replace(&mut grown, &part, 0, out.height() as i64);
+    grown
 }
 
 #[cfg(windows)]
@@ -694,16 +729,11 @@ pub fn scroll_capture(
             continue;
         }
         still = 0;
-        // A weak match means the content jumped: keep the whole frame rather than losing it.
-        let add = if score >= 0.6 { dy as u32 } else { fh };
+        let add = rows_to_add(dy, score, fh);
         if add == 0 {
             continue;
         }
-        let mut grown = RgbaImage::new(out.width(), out.height() + add);
-        image::imageops::replace(&mut grown, &out, 0, 0);
-        let part = image::imageops::crop_imm(&frame, 0, fh - add, frame.width(), add).to_image();
-        image::imageops::replace(&mut grown, &part, 0, out.height() as i64);
-        out = grown;
+        out = append_rows(&out, &frame, add);
         prev = sigs;
     }
     #[cfg(windows)]
@@ -990,4 +1020,291 @@ pub fn stamp_pointer(img: &mut RgbaImage, at: (f32, f32)) {
         return;
     }
     image::imageops::overlay(img, pointer_sprite(), at.0 as i64 - 1, at.1 as i64 - 1);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::Rgba;
+
+    /// A tall "page" whose every row has its own colour, so rows can be told apart.
+    fn page(w: u32, h: u32) -> RgbaImage {
+        RgbaImage::from_fn(w, h, |x, y| Rgba([((y % 32) * 8) as u8, ((y / 32) * 8) as u8, if x % 2 == 0 { 40 } else { 200 }, 255]))
+    }
+
+    fn rows(img: &RgbaImage, top: u32, h: u32) -> RgbaImage {
+        image::imageops::crop_imm(img, 0, top, img.width(), h).to_image()
+    }
+
+    fn obj(x: i32, y: i32, w: u32, h: u32, label: &str) -> Object {
+        Object { x, y, width: w, height: h, label: label.into(), children: Vec::new() }
+    }
+
+    #[test]
+    fn shape_keys_are_unique_and_real_keys() {
+        let keys: std::collections::HashSet<_> = CutShape::ALL.iter().map(|s| s.key()).collect();
+        assert_eq!(keys.len(), CutShape::ALL.len());
+        for s in CutShape::ALL {
+            assert!(eframe::egui::Key::from_name(s.key()).is_some(), "{s:?}");
+            assert!(!s.label().is_empty());
+        }
+    }
+
+    #[test]
+    fn only_picking_kinds_freeze_the_screen() {
+        assert!(CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture).uses_overlay());
+        assert!(CaptureKind::WindowPick.uses_overlay());
+        assert!(CaptureKind::Fixed(10, 10).uses_overlay());
+        assert!(CaptureKind::ColorPicker.uses_overlay());
+        assert!(CaptureKind::Ruler.uses_overlay());
+        assert!(!CaptureKind::Screen.uses_overlay());
+        assert!(!CaptureKind::AllScreens.uses_overlay());
+        assert!(!CaptureKind::Window(1, "x".into()).uses_overlay());
+        assert!(!CaptureKind::LastRegion(0, 0, 10, 10).uses_overlay());
+        assert!(!CaptureKind::Menus.uses_overlay());
+    }
+
+    #[test]
+    fn opaque_sets_every_alpha() {
+        let img = opaque(RgbaImage::from_pixel(3, 2, Rgba([1, 2, 3, 0])));
+        assert!(img.pixels().all(|p| p.0 == [1, 2, 3, 255]));
+    }
+
+    #[test]
+    fn crop_inside_the_picture() {
+        let img = page(100, 80);
+        let c = crop_desktop(&img, (0, 0), 10, 20, 30, 40).unwrap();
+        assert_eq!(c.dimensions(), (30, 40));
+        assert_eq!(c.get_pixel(0, 0), img.get_pixel(10, 20));
+    }
+
+    #[test]
+    fn crop_uses_the_picture_origin() {
+        // A monitor left of and above the primary one starts at negative desktop pixels.
+        let img = page(100, 80);
+        let c = crop_desktop(&img, (-100, -80), -90, -70, 20, 20).unwrap();
+        assert_eq!(c.dimensions(), (20, 20));
+        assert_eq!(c.get_pixel(0, 0), img.get_pixel(10, 10));
+    }
+
+    #[test]
+    fn crop_is_clipped_at_the_edges() {
+        let img = page(100, 80);
+        let c = crop_desktop(&img, (0, 0), -10, -5, 30, 25).unwrap();
+        assert_eq!(c.dimensions(), (20, 20));
+        assert_eq!(c.get_pixel(0, 0), img.get_pixel(0, 0));
+        let c = crop_desktop(&img, (0, 0), 90, 70, 50, 50).unwrap();
+        assert_eq!(c.dimensions(), (10, 10));
+    }
+
+    #[test]
+    fn crop_off_the_picture_or_too_small_is_none() {
+        let img = page(100, 80);
+        assert!(crop_desktop(&img, (0, 0), 200, 200, 10, 10).is_none());
+        assert!(crop_desktop(&img, (0, 0), -50, 0, 10, 10).is_none());
+        assert!(crop_desktop(&img, (0, 0), 10, 10, 1, 50).is_none());
+        assert!(crop_desktop(&img, (0, 0), 99, 10, 10, 10).is_none());
+    }
+
+    #[test]
+    fn windows_without_a_title_or_too_small_are_not_listed() {
+        assert!(listable("Notepad", 800, 600));
+        assert!(listable("x", 60, 40));
+        assert!(!listable("", 800, 600));
+        assert!(!listable("   ", 800, 600));
+        assert!(!listable("Tiny", 59, 600));
+        assert!(!listable("Tiny", 800, 39));
+    }
+
+    #[test]
+    fn window_label_adds_the_program_once() {
+        assert_eq!(window_label("notes.txt".into(), "Notepad"), "notes.txt  (Notepad)");
+        assert_eq!(window_label("notes.txt - Notepad".into(), "Notepad"), "notes.txt - Notepad");
+        assert_eq!(window_label("notes.txt".into(), ""), "notes.txt");
+    }
+
+    #[test]
+    fn long_window_labels_are_cut_to_70_characters() {
+        // Counted in characters, not bytes, so non-English titles don't panic or cut short.
+        let long = "\u{e5}".repeat(100);
+        let l = window_label(long, "");
+        assert_eq!(l.chars().count(), 70);
+        assert!(l.ends_with("..."));
+        let exact = "a".repeat(70);
+        assert_eq!(window_label(exact.clone(), ""), exact);
+    }
+
+    #[test]
+    fn untitled_windows_are_named_by_class() {
+        assert_eq!(untitled_label("Title".into(), "#32768"), "Title");
+        assert_eq!(untitled_label(String::new(), "#32768"), "Menu");
+        assert_eq!(untitled_label(String::new(), "Progman"), "Desktop");
+        assert_eq!(untitled_label(String::new(), "WorkerW"), "Desktop");
+        assert_eq!(untitled_label(String::new(), "Shell_TrayWnd"), "Shell_TrayWnd");
+    }
+
+    #[test]
+    fn menu_bounds_hold_every_open_menu() {
+        let a = obj(100, 50, 200, 300, "Menu");
+        let b = obj(290, 120, 180, 100, "Menu");
+        assert_eq!(bounds(&[&a, &b]), Some((100, 50, 370, 300)));
+        assert_eq!(bounds(&[&a]), Some((100, 50, 200, 300)));
+        let c = obj(-300, -20, 100, 40, "Menu");
+        assert_eq!(bounds(&[&a, &c]), Some((-300, -20, 600, 370)));
+        assert_eq!(bounds(&[]), None);
+    }
+
+    #[test]
+    fn row_signatures_tell_rows_apart() {
+        let img = page(30, 100);
+        let s = row_sigs(&img);
+        assert_eq!(s.len(), 100);
+        let distinct: std::collections::HashSet<_> = s.iter().collect();
+        assert_eq!(distinct.len(), 100);
+        // Small colour noise (under 8 levels) doesn't change a signature.
+        let mut noisy = img.clone();
+        for p in noisy.pixels_mut() {
+            p.0[0] |= 3;
+        }
+        assert_eq!(row_sigs(&noisy), s);
+    }
+
+    #[test]
+    fn find_shift_measures_how_far_content_scrolled() {
+        let p = page(30, 400);
+        let a = row_sigs(&rows(&p, 0, 120));
+        for step in [1, 7, 20, 60] {
+            let b = row_sigs(&rows(&p, step, 120));
+            let (dy, score) = find_shift(&a, &b);
+            assert_eq!(dy, step as usize, "step {step}");
+            assert!(score > 0.99);
+        }
+    }
+
+    #[test]
+    fn find_shift_of_the_same_frame_is_zero() {
+        let p = page(30, 120);
+        let s = row_sigs(&p);
+        assert_eq!(find_shift(&s, &s), (0, 1.0));
+        // A blank area matches everywhere; the smallest shift wins.
+        let blank = row_sigs(&RgbaImage::from_pixel(30, 120, Rgba([255, 255, 255, 255])));
+        assert_eq!(find_shift(&blank, &blank), (0, 1.0));
+    }
+
+    #[test]
+    fn find_shift_is_unsure_when_content_jumped() {
+        let p = page(30, 600);
+        let a = row_sigs(&rows(&p, 0, 120));
+        let b = row_sigs(&rows(&p, 400, 120));
+        let (_, score) = find_shift(&a, &b);
+        assert!(score < 0.6, "{score}");
+        assert_eq!(rows_to_add(5, score, 120), 120);
+    }
+
+    #[test]
+    fn find_shift_of_tiny_frames_finds_nothing() {
+        let s = row_sigs(&page(10, 5));
+        assert_eq!(find_shift(&s, &s), (0, 0.0));
+        assert_eq!(find_shift(&[], &[]), (0, 0.0));
+    }
+
+    #[test]
+    fn rows_to_add_trusts_good_matches() {
+        assert_eq!(rows_to_add(30, 0.95, 200), 30);
+        assert_eq!(rows_to_add(30, 0.6, 200), 30);
+        assert_eq!(rows_to_add(30, 0.59, 200), 200);
+    }
+
+    #[test]
+    fn append_rows_puts_the_new_bottom_under() {
+        let p = page(20, 200);
+        let out = rows(&p, 0, 100);
+        let frame = rows(&p, 30, 100);
+        let grown = append_rows(&out, &frame, 30);
+        assert_eq!(grown.dimensions(), (20, 130));
+        assert_eq!(grown, rows(&p, 0, 130));
+        // Asking for more rows than the frame has adds the whole frame.
+        assert_eq!(append_rows(&out, &frame, 500).height(), 200);
+    }
+
+    #[test]
+    fn stitching_scrolled_frames_rebuilds_the_page() {
+        // What scroll_capture does, on frames of a synthetic page instead of the screen.
+        let p = page(40, 1000);
+        let fh = 150;
+        let mut out = rows(&p, 0, fh);
+        let mut prev = row_sigs(&out);
+        let mut top = 0;
+        for step in [40, 55, 13, 90, 70] {
+            top += step;
+            let frame = rows(&p, top, fh);
+            let sigs = row_sigs(&frame);
+            let (dy, score) = find_shift(&prev, &sigs);
+            let add = rows_to_add(dy, score, fh);
+            out = append_rows(&out, &frame, add);
+            prev = sigs;
+        }
+        assert_eq!(out.height(), top + fh);
+        assert_eq!(out, rows(&p, 0, top + fh));
+    }
+
+    #[test]
+    fn changed_rect_of_identical_frames_is_none() {
+        let a = page(50, 40);
+        assert_eq!(changed_rect(&a, &a.clone()), None);
+    }
+
+    #[test]
+    fn changed_rect_of_a_new_size_is_everything() {
+        let a = page(50, 40);
+        let b = page(60, 40);
+        assert_eq!(changed_rect(&a, &b), Some((0, 0, 60, 40)));
+    }
+
+    #[test]
+    fn changed_rect_finds_one_pixel() {
+        let a = page(50, 40);
+        let mut b = a.clone();
+        b.put_pixel(17, 23, Rgba([1, 2, 3, 4]));
+        assert_eq!(changed_rect(&a, &b), Some((17, 23, 1, 1)));
+    }
+
+    #[test]
+    fn changed_rect_holds_every_change() {
+        let a = page(50, 40);
+        let mut b = a.clone();
+        b.put_pixel(40, 5, Rgba([0, 0, 0, 0]));
+        b.put_pixel(3, 30, Rgba([0, 0, 0, 0]));
+        b.put_pixel(20, 15, Rgba([0, 0, 0, 0]));
+        assert_eq!(changed_rect(&a, &b), Some((3, 5, 38, 26)));
+        // Corners too.
+        let mut c = a.clone();
+        c.put_pixel(0, 0, Rgba([9, 9, 9, 9]));
+        c.put_pixel(49, 39, Rgba([9, 9, 9, 9]));
+        assert_eq!(changed_rect(&a, &c), Some((0, 0, 50, 40)));
+    }
+
+    #[test]
+    fn pointer_is_drawn_only_near_its_spot() {
+        let blank = RgbaImage::from_pixel(80, 60, Rgba([0, 120, 0, 255]));
+        let mut img = blank.clone();
+        stamp_pointer(&mut img, (10.0, 10.0));
+        let (l, t, w, h) = changed_rect(&blank, &img).expect("pointer drawn");
+        assert!(l >= 9 && t >= 9, "{l},{t}");
+        assert!(l + w <= 9 + 16 && t + h <= 9 + 24, "{w}x{h}");
+    }
+
+    #[test]
+    fn pointer_off_the_frame_changes_nothing() {
+        let blank = RgbaImage::from_pixel(40, 30, Rgba([0, 120, 0, 255]));
+        for at in [(-17.0, 5.0), (5.0, -25.0), (40.0, 5.0), (5.0, 30.0)] {
+            let mut img = blank.clone();
+            stamp_pointer(&mut img, at);
+            assert_eq!(img, blank, "{at:?}");
+        }
+        // Partly off the left edge still draws the part that shows.
+        let mut img = blank.clone();
+        stamp_pointer(&mut img, (-5.0, 5.0));
+        assert_ne!(img, blank);
+    }
 }

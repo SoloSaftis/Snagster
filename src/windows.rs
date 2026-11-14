@@ -1453,14 +1453,26 @@ pub fn set_run_at_startup(on: bool) -> Result<(), String> {
             std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
         }
         #[cfg(target_os = "macos")]
-        let body = format!(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\"><dict><key>Label</key><string>app.snagster</string><key>ProgramArguments</key><array><string>{}</string></array><key>RunAtLoad</key><true/></dict></plist>\n",
-            exe.display()
-        );
+        let body = launch_agent(&exe);
         #[cfg(not(target_os = "macos"))]
-        let body = format!("[Desktop Entry]\nType=Application\nName=Snagster\nExec=\"{}\"\nX-GNOME-Autostart-enabled=true\n", exe.display());
+        let body = desktop_entry(&exe);
         std::fs::write(&file, body).map_err(|e| e.to_string())
     }
+}
+
+/// The macOS LaunchAgent that starts `exe` at login.
+#[cfg(any(target_os = "macos", test))]
+fn launch_agent(exe: &std::path::Path) -> String {
+    format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\"><dict><key>Label</key><string>app.snagster</string><key>ProgramArguments</key><array><string>{}</string></array><key>RunAtLoad</key><true/></dict></plist>\n",
+        exe.display()
+    )
+}
+
+/// The Linux autostart entry that starts `exe` at login.
+#[cfg(any(all(not(windows), not(target_os = "macos")), test))]
+fn desktop_entry(exe: &std::path::Path) -> String {
+    format!("[Desktop Entry]\nType=Application\nName=Snagster\nExec=\"{}\"\nX-GNOME-Autostart-enabled=true\n", exe.display())
 }
 
 /// Where Linux (autostart entry) or macOS (LaunchAgent) looks for programs to start at login.
@@ -1607,5 +1619,70 @@ impl SnagApp {
         if let Some(p) = crate::crash_log_path() {
             ui.label(RichText::new(tf("If Snagster ever stops unexpectedly, what happened is written to {file}.", &[("file", &p.display().to_string())])).color(TEXT_DIM));
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn new_image_dialog_starts_white_720p() {
+        match Dialog::new_image() {
+            Dialog::NewImage { w, h, color } => assert_eq!((w, h, color), (1280, 720, [255, 255, 255, 255])),
+            _ => panic!("wrong dialog"),
+        }
+    }
+
+    #[test]
+    fn export_dialog_picks_everything_and_uses_the_settings() {
+        let mut s = Settings::default();
+        s.save_folder = "/tmp/pictures".into();
+        match Dialog::export(3, &s) {
+            Dialog::Export { pick, folder, format } => {
+                assert_eq!(pick, vec![true, true, true]);
+                assert_eq!(folder, "/tmp/pictures");
+                assert_eq!(format, s.format);
+            }
+            _ => panic!("wrong dialog"),
+        }
+        match Dialog::export(0, &s) {
+            Dialog::Export { pick, .. } => assert!(pick.is_empty()),
+            _ => panic!("wrong dialog"),
+        }
+    }
+
+    #[test]
+    fn linux_autostart_entry_runs_the_program() {
+        let e = desktop_entry(Path::new("/opt/Snag ster/snagster"));
+        assert!(e.starts_with("[Desktop Entry]\n"));
+        assert!(e.contains("\nType=Application\n"));
+        assert!(e.contains("\nName=Snagster\n"));
+        // Quoted, so a folder with a space still works.
+        assert!(e.contains("\nExec=\"/opt/Snag ster/snagster\"\n"));
+        assert!(e.ends_with('\n'));
+    }
+
+    #[test]
+    fn mac_launch_agent_runs_the_program_at_login() {
+        let p = launch_agent(Path::new("/Applications/Snagster.app/Contents/MacOS/snagster"));
+        assert!(p.starts_with("<?xml version=\"1.0\""));
+        assert!(p.contains("<key>Label</key><string>app.snagster</string>"));
+        assert!(p.contains("<array><string>/Applications/Snagster.app/Contents/MacOS/snagster</string></array>"));
+        assert!(p.contains("<key>RunAtLoad</key><true/>"));
+        assert!(p.trim_end().ends_with("</plist>"));
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn autostart_file_is_in_the_home_folder() {
+        let Some(home) = std::env::var_os("HOME") else { return };
+        let f = autostart_file().unwrap();
+        assert!(f.starts_with(home));
+        #[cfg(target_os = "macos")]
+        assert!(f.ends_with("Library/LaunchAgents/app.snagster.plist"));
+        #[cfg(not(target_os = "macos"))]
+        assert!(f.ends_with(".config/autostart/snagster.desktop"));
     }
 }

@@ -561,3 +561,45 @@ impl SnagApp {
 fn test_dir() -> PathBuf {
     std::env::temp_dir().join("snagster-ui-test")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn steps_have_unique_names_and_cover_every_tool() {
+        let t = UiTest::new(std::env::temp_dir().join("snagster-ui-test-unit-never-created"));
+        assert!(t.steps.len() > Tool::ALL.len());
+        let mut names = std::collections::HashSet::new();
+        for (name, _) in &t.steps {
+            assert!(names.insert(name.as_str()), "two steps are called {name:?}");
+        }
+        for tool in Tool::ALL {
+            assert!(names.contains(format!("tool button: {}", tool.label()).as_str()), "{tool:?}");
+        }
+        assert_eq!((t.at, t.passed), (0, 0));
+        assert!(t.failed.is_empty());
+    }
+
+    #[test]
+    fn skipped_list_says_why() {
+        assert!(!UiTest::SKIPPED.is_empty());
+        for s in UiTest::SKIPPED {
+            assert!(s.contains('(') && s.ends_with(')'), "{s}: give the reason in brackets");
+        }
+    }
+
+    #[test]
+    fn the_test_folder_is_in_temp() {
+        assert!(test_dir().starts_with(std::env::temp_dir()));
+    }
+
+    #[test]
+    fn once_steps_always_finish() {
+        let (name, f) = once("x", |a, _| a.tool = Tool::Pen);
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        assert_eq!(name, "x");
+        assert!(f(&mut a, &egui::Context::default()));
+        assert_eq!(a.tool, Tool::Pen);
+    }
+}

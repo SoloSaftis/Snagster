@@ -854,3 +854,63 @@ impl SnagApp {
         self.ui_fonts.ensure_base(ctx, lang, cjk);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn all_lists_every_tab_once_starting_at_home() {
+        // A match with no wildcard: adding a tab without listing it here fails to compile.
+        let index = |t: RibbonTab| match t {
+            RibbonTab::Home => 0,
+            RibbonTab::Capture => 1,
+            RibbonTab::Record => 2,
+            RibbonTab::Studio => 3,
+            RibbonTab::Edit => 4,
+            RibbonTab::Image => 5,
+            RibbonTab::Share => 6,
+            RibbonTab::View => 7,
+            RibbonTab::Help => 8,
+        };
+        for (i, t) in RibbonTab::ALL.iter().enumerate() {
+            assert_eq!(index(*t), i, "{t:?} out of place");
+        }
+        assert_eq!(RibbonTab::default(), RibbonTab::Home);
+        assert_eq!(RibbonTab::ALL[0], RibbonTab::default());
+    }
+
+    #[test]
+    fn every_tab_has_a_unique_name_and_a_tip() {
+        let mut names = std::collections::HashSet::new();
+        for t in RibbonTab::ALL {
+            assert!(!t.name().trim().is_empty(), "{t:?}");
+            assert!(names.insert(t.name()), "two tabs are called {}", t.name());
+            assert!(t.tip().len() > t.name().len(), "{t:?} tip should say more than its name");
+        }
+    }
+
+    #[test]
+    fn switching_between_ordinary_tabs_starts_no_studio() {
+        let ctx = egui::Context::default();
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        for t in RibbonTab::ALL.into_iter().filter(|t| *t != RibbonTab::Studio) {
+            a.switch_tab(&ctx, t);
+            assert_eq!(a.x.tab, t);
+            assert!(a.x.studio.is_none());
+        }
+    }
+
+    #[test]
+    fn kbd_shows_a_set_shortcut_in_brackets() {
+        let s = Settings::default();
+        for b in &s.bindings {
+            let k = kbd(&s, b.action);
+            if b.combo.is_set() {
+                assert!(k.starts_with(" (") && k.ends_with(')'), "{k:?}");
+            } else {
+                assert!(k.is_empty());
+            }
+        }
+    }
+}

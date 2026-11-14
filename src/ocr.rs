@@ -1,7 +1,9 @@
 //! Reading text in pictures with the OCR engine built into Windows, and the features built
 //! on it: grab text, smart redact, simplify.
 
-use eframe::egui::{Rect, pos2, vec2};
+#[cfg(any(windows, test))]
+use eframe::egui::pos2;
+use eframe::egui::{Rect, vec2};
 use image::RgbaImage;
 
 pub struct Word {
@@ -106,8 +108,9 @@ pub fn find_sensitive(lines: &[Line], k: RedactKinds) -> Vec<(Rect, &'static str
     };
     add(k.emails, "email", r"(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}");
     add(k.cards, "card number", r"\b(?:\d[ \-]?){13,19}\b");
-    add(k.phones, "phone number", r"(?:\+\d{1,3}[ \-.]?)?(?:\(\d{1,4}\)[ \-.]?)?\d{2,4}[ \-.]?\d{2,4}[ \-.]?\d{2,4}\b");
+    // Before phone numbers: "192.168.10.254" also looks like one, and the first name found wins.
     add(k.ips, "IP address", r"\b(?:\d{1,3}\.){3}\d{1,3}\b");
+    add(k.phones, "phone number", r"(?:\+\d{1,3}[ \-.]?)?(?:\(\d{1,4}\)[ \-.]?)?\d{2,4}[ \-.]?\d{2,4}[ \-.]?\d{2,4}\b");
     add(
         k.addresses,
         "address",
@@ -214,4 +217,166 @@ fn contrast_ink(img: &RgbaImage, r: Rect, bg: [u8; 3]) -> [u8; 3] {
         }
     }
     best
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::Rgba;
+
+    const ALL: RedactKinds = RedactKinds { emails: true, phones: true, cards: true, addresses: true, ips: true, urls: true };
+    const NONE: RedactKinds = RedactKinds { emails: false, phones: false, cards: false, addresses: false, ips: false, urls: false };
+
+    /// A line laid out as words 10 px per character with a 10 px gap, like OCR gives back.
+    fn line(text: &str, y: f32) -> Line {
+        let mut x = 0.0;
+        let words = text
+            .split(' ')
+            .map(|w| {
+                let width = w.chars().count() as f32 * 10.0;
+                let word = Word { text: w.into(), rect: Rect::from_min_size(pos2(x, y), vec2(width, 20.0)) };
+                x += width + 10.0;
+                word
+            })
+            .collect();
+        Line { text: text.into(), words }
+    }
+
+    fn kinds(lines: &[Line], k: RedactKinds) -> Vec<&'static str> {
+        find_sensitive(lines, k).into_iter().map(|f| f.1).collect()
+    }
+
+    #[test]
+    fn line_rect_is_the_union_of_its_words() {
+        let l = line("hello big world", 5.0);
+        assert_eq!(l.rect(), Rect::from_min_max(pos2(0.0, 5.0), pos2(150.0, 25.0)));
+        let empty = Line { text: String::new(), words: Vec::new() };
+        assert_eq!(empty.rect(), Rect::NOTHING);
+    }
+
+    #[test]
+    fn plain_text_joins_lines() {
+        assert_eq!(plain_text(&[line("one two", 0.0), line("three", 30.0)]), "one two\nthree");
+        assert_eq!(plain_text(&[]), "");
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn recognition_says_it_needs_windows() {
+        let err = recognize(&RgbaImage::new(4, 4)).err().unwrap();
+        assert!(err.contains("Windows"));
+    }
+
+    #[test]
+    fn finds_an_email_and_covers_only_its_word() {
+        let lines = [line("Mail me at test.person@example.com today", 0.0)];
+        let found = find_sensitive(&lines, ALL);
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].1, "email");
+        // "Mail me at " is 4+2+2 chars plus 3 gaps: the address starts at x = 110.
+        let email = lines[0].words[3].rect;
+        assert_eq!(found[0].0, email.expand(3.0));
+    }
+
+    #[test]
+    fn finds_each_kind() {
+        assert_eq!(kinds(&[line("card 4111 1111 1111 1111 ok", 0.0)], ALL), vec!["card number"]);
+        // An IP address also looks like a phone number; it must be named as what it is.
+        assert_eq!(kinds(&[line("server 192.168.10.254 down", 0.0)], ALL), vec!["IP address"]);
+        assert_eq!(kinds(&[line("see https://example.com/x?y=1 now", 0.0)], ALL), vec!["web address"]);
+        assert_eq!(kinds(&[line("see www.example.org", 0.0)], ALL), vec!["web address"]);
+        assert_eq!(kinds(&[line("call +47 912 34 567 now", 0.0)], ALL), vec!["phone number"]);
+        assert_eq!(kinds(&[line("ship to 221 Baker Street please", 0.0)], ALL), vec!["address"]);
+        assert_eq!(kinds(&[line("bor i Storgata 12 i dag", 0.0)], ALL), vec!["address"]);
+    }
+
+    #[test]
+    fn short_numbers_are_not_phone_numbers() {
+        assert!(kinds(&[line("page 12 of 3456", 0.0)], ALL).is_empty());
+        assert!(kinds(&[line("total 1234", 0.0)], ALL).is_empty());
+    }
+
+    #[test]
+    fn switched_off_kinds_are_not_looked_for() {
+        let lines = [line("a@b.com 10.0.0.1 https://x.io 4111111111111111", 0.0)];
+        assert!(find_sensitive(&lines, NONE).is_empty());
+        let only_ip = RedactKinds { ips: true, ..NONE };
+        assert_eq!(kinds(&lines, only_ip), vec!["IP address"]);
+        let only_mail = RedactKinds { emails: true, ..NONE };
+        assert_eq!(kinds(&lines, only_mail), vec!["email"]);
+    }
+
+    #[test]
+    fn a_match_inside_one_already_found_is_not_repeated() {
+        // The web address holds an email-like part; one box is enough.
+        let lines = [line("https://user@example.com/path", 0.0)];
+        let found = find_sensitive(&lines, ALL);
+        assert_eq!(found.len(), 1, "{:?}", found.iter().map(|f| f.1).collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn matches_across_words_cover_all_of_them() {
+        let lines = [line("pay 4111 1111 1111 1111", 40.0)];
+        let found = find_sensitive(&lines, RedactKinds { cards: true, ..NONE });
+        assert_eq!(found.len(), 1);
+        let want = lines[0].words[1].rect.union(lines[0].words[4].rect).expand(3.0);
+        assert_eq!(found[0].0, want);
+    }
+
+    #[test]
+    fn each_line_is_searched() {
+        let lines = [line("first a@b.no", 0.0), line("nothing here", 30.0), line("10.1.2.3", 60.0)];
+        assert_eq!(kinds(&lines, ALL), vec!["email", "IP address"]);
+    }
+
+    #[test]
+    fn sample_clamps_to_the_picture() {
+        let img = RgbaImage::from_fn(10, 8, |x, y| Rgba([x as u8, y as u8, 0, 255]));
+        assert_eq!(sample(&img, 3.9, 2.1), [3, 2, 0]);
+        assert_eq!(sample(&img, -4.0, -1.0), [0, 0, 0]);
+        assert_eq!(sample(&img, 99.0, 99.0), [9, 7, 0]);
+    }
+
+    #[test]
+    fn contrast_ink_picks_the_colour_furthest_from_the_background() {
+        let mut img = RgbaImage::from_pixel(60, 20, Rgba([250, 250, 250, 255]));
+        for y in 6..14 {
+            for x in 10..50 {
+                img.put_pixel(x, y, Rgba([20, 30, 40, 255]));
+            }
+        }
+        let r = Rect::from_min_max(pos2(0.0, 0.0), pos2(60.0, 20.0));
+        assert_eq!(contrast_ink(&img, r, [250, 250, 250]), [20, 30, 40]);
+        // Nothing differs: the background itself.
+        let plain = RgbaImage::from_pixel(10, 10, Rgba([9, 9, 9, 255]));
+        assert_eq!(contrast_ink(&plain, Rect::from_min_max(pos2(0.0, 0.0), pos2(10.0, 10.0)), [9, 9, 9]), [9, 9, 9]);
+    }
+
+    #[test]
+    fn simplify_replaces_words_with_bars() {
+        // White picture with a black "word"; simplify paints over it in soft grey.
+        let mut img = RgbaImage::from_pixel(80, 40, Rgba([255, 255, 255, 255]));
+        for y in 12..28 {
+            for x in 20..60 {
+                if (x + y) % 3 == 0 {
+                    img.put_pixel(x, y, Rgba([0, 0, 0, 255]));
+                }
+            }
+        }
+        let lines = [Line {
+            text: "word".into(),
+            words: vec![Word { text: "word".into(), rect: Rect::from_min_max(pos2(20.0, 12.0), pos2(60.0, 28.0)) }],
+        }];
+        let out = simplify(&img, &lines);
+        assert_eq!(out.dimensions(), img.dimensions());
+        // No pure black left; the middle is the soft bar colour (a third of the way to black).
+        assert!(out.pixels().all(|p| p.0[0] > 60), "black left over");
+        let mid = out.get_pixel(40, 20).0;
+        assert!((150..=190).contains(&mid[0]), "{mid:?}");
+        // Far from the word nothing changed.
+        assert_eq!(out.get_pixel(2, 2).0, [255, 255, 255, 255]);
+        // Tiny words are left alone.
+        let tiny = [Line { text: "x".into(), words: vec![Word { text: "x".into(), rect: Rect::from_min_size(pos2(5.0, 5.0), vec2(1.0, 1.0)) }] }];
+        assert_eq!(simplify(&img, &tiny), img);
+    }
 }

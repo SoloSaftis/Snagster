@@ -126,3 +126,62 @@ pub fn sample_doc() -> Doc {
     ];
     d
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn px(img: &RgbaImage, x: u32, y: u32) -> [u8; 4] {
+        img.get_pixel(x, y).0
+    }
+
+    #[test]
+    fn sample_picture_has_the_expected_size_and_is_opaque() {
+        let img = sample_image(0);
+        assert_eq!(img.dimensions(), (1280, 800));
+        assert!(img.pixels().all(|p| p.0[3] == 255));
+    }
+
+    #[test]
+    fn sample_picture_is_the_same_every_time() {
+        assert_eq!(sample_image(0), sample_image(0));
+        assert_eq!(sample_image(1), sample_image(1));
+        assert_ne!(sample_image(0), sample_image(1));
+        // Every variant other than 0 uses the second backdrop.
+        assert_eq!(sample_image(1), sample_image(7));
+    }
+
+    #[test]
+    fn sample_picture_shows_the_mock_up() {
+        let img = sample_image(0);
+        // Backdrop corners: the gradient's two ends.
+        assert_eq!(px(&img, 0, 0), [88, 112, 220, 255]);
+        let end = px(&img, 1279, 799);
+        assert!(end[0] > 170 && end[2] > 200, "{end:?}");
+        // The window's body, its sidebar and the blue button.
+        assert_eq!(px(&img, 700, 660), [255, 255, 255, 255]);
+        assert_eq!(px(&img, 700, 710), [248, 249, 252, 255]);
+        assert_eq!(px(&img, 200, 700), [238, 240, 246, 255]);
+        assert_eq!(px(&img, 900, 642), [80, 110, 230, 255]);
+        assert_eq!(px(&img, 1150, 140), [248, 249, 252, 255]);
+        let second = sample_image(1);
+        assert_eq!(px(&second, 0, 0), [44, 150, 140, 255]);
+        assert_eq!(px(&second, 700, 660), [255, 255, 255, 255], "the mock-up is the same on both");
+    }
+
+    #[test]
+    fn sample_doc_has_marks_and_a_blurred_field() {
+        let d = sample_doc();
+        assert_eq!(d.image.dimensions(), (1280, 800));
+        assert_eq!(d.shapes.len(), 8);
+        let steps: Vec<u32> = d.shapes.iter().filter_map(|s| if let Shape::Step { n, .. } = s { Some(*n) } else { None }).collect();
+        assert_eq!(steps, vec![1, 2]);
+        assert_eq!(d.next_step(1), 3);
+        assert!(d.shapes.iter().any(|s| matches!(s, Shape::Text { text, .. } if text == "Press Save when done")));
+        // The third field was blurred into the picture; the first wasn't.
+        let plain = sample_image(0);
+        let changed = |y0: u32, y1: u32| (y0..y1).any(|y| (380..800).any(|x| d.image.get_pixel(x, y) != plain.get_pixel(x, y)));
+        assert!(changed(568, 600));
+        assert!(!changed(448, 480));
+    }
+}

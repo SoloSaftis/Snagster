@@ -100,9 +100,12 @@ struct FontFacts {
 }
 
 fn cache_path() -> Option<PathBuf> {
-    let base = std::env::var_os("APPDATA")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))?;
+    cache_path_from(std::env::var_os("APPDATA"), std::env::var_os("HOME"))
+}
+
+/// The font cache for these APPDATA and HOME values (APPDATA wins).
+fn cache_path_from(appdata: Option<std::ffi::OsString>, home: Option<std::ffi::OsString>) -> Option<PathBuf> {
+    let base = appdata.map(PathBuf::from).or_else(|| home.map(|h| PathBuf::from(h).join(".config")))?;
     Some(base.join("Snagster").join("fonts-cache.json"))
 }
 
@@ -304,4 +307,124 @@ pub fn export_font(family: &str, bold: bool, italic: bool) -> Option<ab_glyph::F
         .map(ab_glyph::FontArc::new);
     cache.lock().ok()?.insert(k, font.clone());
     font
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ffi::OsString;
+
+    fn p(s: &str) -> Option<PathBuf> {
+        Some(PathBuf::from(s))
+    }
+
+    fn font_file() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/fonts/scripts/NotoSansHebrew-Regular.ttf")
+    }
+
+    #[test]
+    fn family_picks_the_asked_style() {
+        let f = Family { regular: p("r"), bold: p("b"), italic: p("i"), bold_italic: p("bi") };
+        assert_eq!(f.pick(false, false), p("r").as_ref());
+        assert_eq!(f.pick(true, false), p("b").as_ref());
+        assert_eq!(f.pick(false, true), p("i").as_ref());
+        assert_eq!(f.pick(true, true), p("bi").as_ref());
+    }
+
+    #[test]
+    fn family_falls_back_to_what_it_has() {
+        let only_bold = Family { bold: p("b"), ..Default::default() };
+        for (b, i) in [(false, false), (true, false), (false, true), (true, true)] {
+            assert_eq!(only_bold.pick(b, i), p("b").as_ref());
+        }
+        let regular_and_italic = Family { regular: p("r"), italic: p("i"), ..Default::default() };
+        assert_eq!(regular_and_italic.pick(true, true), p("r").as_ref(), "regular comes first");
+        assert_eq!(regular_and_italic.pick(true, false), p("r").as_ref());
+        assert_eq!(regular_and_italic.pick(false, true), p("i").as_ref());
+        let only_bi = Family { bold_italic: p("bi"), ..Default::default() };
+        assert_eq!(only_bi.pick(false, false), p("bi").as_ref());
+        assert_eq!(Family::default().pick(false, false), None);
+    }
+
+    #[test]
+    fn keys_name_each_style_apart() {
+        assert_eq!(key("Arial", false, false), "Arial#");
+        assert_eq!(key("Arial", true, false), "Arial#b");
+        assert_eq!(key("Arial", false, true), "Arial#i");
+        assert_eq!(key("Arial", true, true), "Arial#bi");
+        assert_ne!(key("A", true, false), key("A", false, true));
+    }
+
+    #[test]
+    fn cache_path_prefers_appdata_then_home() {
+        let c = cache_path_from(Some(OsString::from("ad")), Some(OsString::from("h"))).unwrap();
+        assert_eq!(c, PathBuf::from("ad").join("Snagster").join("fonts-cache.json"));
+        let c = cache_path_from(None, Some(OsString::from("h"))).unwrap();
+        assert_eq!(c, PathBuf::from("h").join(".config").join("Snagster").join("fonts-cache.json"));
+        assert!(cache_path_from(None, None).is_none());
+    }
+
+    #[test]
+    fn a_real_font_file_is_read() {
+        let f = read_facts(&font_file(), 123, 456);
+        assert_eq!((f.size, f.modified), (123, 456));
+        let family = f.family.expect("the built-in Hebrew font has a family name");
+        assert!(family.starts_with("Noto Sans"), "{family}");
+        assert!(!f.bold && !f.italic);
+        assert!(f.plain);
+    }
+
+    #[test]
+    fn files_that_are_not_fonts_have_no_family() {
+        let dir = std::env::temp_dir().join(format!("snagster-fonts-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let junk = dir.join("junk.ttf");
+        std::fs::write(&junk, b"definitely not a font").unwrap();
+        let f = read_facts(&junk, 1, 2);
+        assert!(f.family.is_none() && !f.bold && !f.italic && !f.plain);
+        assert_eq!((f.size, f.modified), (1, 2));
+        assert!(read_facts(&dir.join("missing.ttf"), 0, 0).family.is_none());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn font_facts_survive_the_cache() {
+        let f = read_facts(&font_file(), 9, 8);
+        let mut m = HashMap::new();
+        m.insert("k".to_string(), f.clone());
+        let back: HashMap<String, FontFacts> = serde_json::from_str(&serde_json::to_string(&m).unwrap()).unwrap();
+        let g = &back["k"];
+        assert_eq!((g.size, g.modified, &g.family, g.bold, g.italic, g.plain), (f.size, f.modified, &f.family, f.bold, f.italic, f.plain));
+    }
+
+    #[test]
+    fn font_folders_include_the_usual_places() {
+        let d = font_dirs();
+        assert!(d.contains(&PathBuf::from("/usr/share/fonts")));
+        assert!(d.contains(&PathBuf::from("/System/Library/Fonts")));
+    }
+
+    #[test]
+    fn no_family_means_the_interface_font() {
+        assert!(export_font("", false, false).is_none());
+        assert!(path_of("No Such Font Family 1234", false, false).is_none());
+        assert!(export_font("No Such Font Family 1234", true, true).is_none());
+        let ctx = eframe::egui::Context::default();
+        let mut ui = UiFonts::default();
+        assert_eq!(ui.family(&ctx, "", false, false), eframe::egui::FontFamily::Proportional);
+        assert_eq!(ui.family(&ctx, "No Such Font Family 1234", false, false), eframe::egui::FontFamily::Proportional);
+    }
+
+    #[test]
+    fn base_fonts_are_set_once_per_language() {
+        let ctx = eframe::egui::Context::default();
+        let mut ui = UiFonts::default();
+        assert!(ui.base.is_none());
+        ui.ensure_base(&ctx, "de", false);
+        assert_eq!(ui.base, Some((false, "de".to_string())));
+        ui.ensure_base(&ctx, "de", false);
+        assert_eq!(ui.base, Some((false, "de".to_string())));
+        ui.ensure_base(&ctx, "fr", false);
+        assert_eq!(ui.base, Some((false, "fr".to_string())));
+    }
 }

@@ -96,9 +96,7 @@ fn main() -> eframe::Result {
     // AI apps that connect over HTTP: `snagster mcp-http [--port N] [--token T]`.
     if matches!(all.first().map(|s| s.as_str()), Some("--mcp-http" | "mcp-http")) {
         attach_console();
-        let flag = |name: &str| all.windows(2).find(|w| w[0] == name).map(|w| w[1].clone());
-        let port = flag("--port").and_then(|p| p.parse().ok()).unwrap_or(s0.mcp_port);
-        let token = flag("--token").unwrap_or_else(|| s0.mcp_token.clone());
+        let (port, token) = mcp_http_options(&all, s0.mcp_port, &s0.mcp_token);
         if let Err(e) = mcp_http::serve_forever(port, &token) {
             eprintln!("Snagster: {e}");
             std::process::exit(1);
@@ -403,6 +401,18 @@ fn main() -> eframe::Result {
     )
 }
 
+/// The word after `name` on the command line (`--port 8080` gives "8080").
+fn flag_value(args: &[String], name: &str) -> Option<String> {
+    args.windows(2).find(|w| w[0] == name).map(|w| w[1].clone())
+}
+
+/// Port and token for `mcp-http`: `--port N` and `--token T`, else the saved settings.
+fn mcp_http_options(args: &[String], port: u16, token: &str) -> (u16, String) {
+    let port = flag_value(args, "--port").and_then(|p| p.parse().ok()).unwrap_or(port);
+    let token = flag_value(args, "--token").unwrap_or_else(|| token.to_string());
+    (port, token)
+}
+
 fn circle_free(img: &image::RgbaImage) -> image::RgbaImage {
     effects::trim(img)
 }
@@ -569,5 +579,85 @@ fn attach_console() {
     unsafe {
         use windows_sys::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole};
         AttachConsole(ATTACH_PARENT_PROCESS);
+    }
+}
+
+#[cfg(test)]
+mod main_tests {
+    use super::*;
+
+    fn args(list: &[&str]) -> Vec<String> {
+        list.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn flag_value_takes_the_next_word() {
+        let a = args(&["mcp-http", "--port", "9000", "--token", "abc"]);
+        assert_eq!(flag_value(&a, "--port").as_deref(), Some("9000"));
+        assert_eq!(flag_value(&a, "--token").as_deref(), Some("abc"));
+        assert_eq!(flag_value(&a, "--other"), None);
+        // A flag at the very end has no value.
+        assert_eq!(flag_value(&args(&["mcp-http", "--port"]), "--port"), None);
+        assert_eq!(flag_value(&[], "--port"), None);
+        // The first one counts.
+        assert_eq!(flag_value(&args(&["--port", "1", "--port", "2"]), "--port").as_deref(), Some("1"));
+    }
+
+    #[test]
+    fn mcp_http_uses_the_command_line_then_the_settings() {
+        assert_eq!(mcp_http_options(&args(&["mcp-http"]), 45831, "saved"), (45831, "saved".to_string()));
+        assert_eq!(mcp_http_options(&args(&["mcp-http", "--port", "8080"]), 45831, "saved"), (8080, "saved".to_string()));
+        assert_eq!(mcp_http_options(&args(&["mcp-http", "--token", "t0k"]), 45831, "saved"), (45831, "t0k".to_string()));
+        // A port that isn't a number (or doesn't fit) falls back to the saved one.
+        assert_eq!(mcp_http_options(&args(&["mcp-http", "--port", "http"]), 45831, "").0, 45831);
+        assert_eq!(mcp_http_options(&args(&["mcp-http", "--port", "70000"]), 45831, "").0, 45831);
+    }
+
+    #[test]
+    fn icon_has_the_asked_size() {
+        for n in [16, 32, 64, 256] {
+            let ic = icon_sized(n);
+            assert_eq!((ic.width, ic.height), (n, n));
+            assert_eq!(ic.rgba.len(), (n * n * 4) as usize);
+        }
+        let ic = icon();
+        assert_eq!((ic.width, ic.height), (64, 64));
+    }
+
+    #[test]
+    fn icon_is_a_rounded_blue_tile_with_a_white_dot() {
+        let ic = icon_sized(64);
+        let px = |x: u32, y: u32| {
+            let i = ((y * 64 + x) * 4) as usize;
+            [ic.rgba[i], ic.rgba[i + 1], ic.rgba[i + 2], ic.rgba[i + 3]]
+        };
+        // Rounded corners are see-through.
+        assert_eq!(px(0, 0)[3], 0);
+        assert_eq!(px(63, 63)[3], 0);
+        // The middle of an edge is solid blue.
+        assert_eq!(px(32, 2), [79, 124, 255, 255]);
+        // The centre dot and a bracket corner are white.
+        assert_eq!(px(32, 32), [255, 255, 255, 255]);
+        assert_eq!(px(13, 13), [255, 255, 255, 255]);
+    }
+
+    #[test]
+    fn icon_looks_the_same_at_any_size() {
+        // The 256 px icon scaled down matches the 64 px one at its main points.
+        let big = icon_sized(256);
+        let small = icon_sized(64);
+        for (x, y) in [(32u32, 32u32), (32, 2), (13, 13), (0, 0)] {
+            let i = ((y * 64 + x) * 4) as usize;
+            let j = (((y * 4 + 1) * 256 + x * 4 + 1) * 4) as usize;
+            assert_eq!(small.rgba[i..i + 3], big.rgba[j..j + 3], "at {x},{y}");
+        }
+    }
+
+    #[test]
+    fn crash_log_sits_next_to_the_settings() {
+        if let (Some(log), Some(settings)) = (crash_log_path(), settings::settings_path()) {
+            assert_eq!(log.file_name().unwrap(), "crash.log");
+            assert_eq!(log.parent(), settings.parent());
+        }
     }
 }

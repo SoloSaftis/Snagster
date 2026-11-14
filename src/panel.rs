@@ -5,7 +5,7 @@
 use crate::app::{ACCENT, BG_DARK, PANEL, PANEL_HI, SnagApp, TEXT_DIM};
 use crate::capture::{CaptureKind, CutShape, PickPurpose};
 use crate::effects::Effect;
-use crate::settings::{Action, PanelSelection, PanelShare, Preset, PresetMode};
+use crate::settings::{Action, PanelSelection, PanelSettings, PanelShare, Preset, PresetMode};
 use eframe::egui::{self, Align2, Color32, CornerRadius, FontId, Pos2, Rect, RichText, Sense, Stroke, StrokeKind, Vec2, pos2, vec2};
 
 pub const PANEL_SIZE: Vec2 = Vec2::new(780.0, 236.0);
@@ -317,39 +317,45 @@ impl SnagApp {
     }
 
     pub(crate) fn panel_as_preset(&self) -> Preset {
-        let p = &self.settings.panel;
-        let mode = match (p.tab, p.selection) {
-            (0, _) => PresetMode::Area,
-            (_, PanelSelection::Window | PanelSelection::Menu) => PresetMode::Window,
-            (_, PanelSelection::Screen) => PresetMode::Screen,
-            (_, PanelSelection::AllScreens) => PresetMode::AllScreens,
-            (_, PanelSelection::Scrolling | PanelSelection::Panorama) => PresetMode::Scrolling,
-            (_, PanelSelection::Circle) => PresetMode::Circle,
-            (_, PanelSelection::Freehand | PanelSelection::Polygon) => PresetMode::Freehand,
-            (_, PanelSelection::Star) => PresetMode::Star,
-            (_, PanelSelection::Heart) => PresetMode::Heart,
-            (_, PanelSelection::FixedSize) => PresetMode::FixedSize,
-            _ => PresetMode::Area,
-        };
-        let name = format!(
-            "{}{}",
-            if p.tab == 0 { "All-in-one" } else { p.selection.label() },
-            p.effect.map(|e| format!(" + {}", e.label())).unwrap_or_default()
-        );
-        Preset {
-            name,
-            mode,
-            delay_s: if p.delay_on { p.delay_s } else { 0 },
-            width: p.fixed_w,
-            height: p.fixed_h,
-            effects: p.effect.into_iter().collect(),
-            copy: self.settings.after_copy || p.share == PanelShare::Clipboard,
-            save: p.share == PanelShare::SaveFolder,
-            pin: p.share == PanelShare::Pin,
-            combo: Default::default(),
-        }
+        preset_from_panel(&self.settings.panel, self.settings.after_copy)
     }
+}
 
+/// The panel's choices as a preset (`after_copy`: the "copy after capture" switch).
+fn preset_from_panel(p: &PanelSettings, after_copy: bool) -> Preset {
+    let mode = match (p.tab, p.selection) {
+        (0, _) => PresetMode::Area,
+        (_, PanelSelection::Window | PanelSelection::Menu) => PresetMode::Window,
+        (_, PanelSelection::Screen) => PresetMode::Screen,
+        (_, PanelSelection::AllScreens) => PresetMode::AllScreens,
+        (_, PanelSelection::Scrolling | PanelSelection::Panorama) => PresetMode::Scrolling,
+        (_, PanelSelection::Circle) => PresetMode::Circle,
+        (_, PanelSelection::Freehand | PanelSelection::Polygon) => PresetMode::Freehand,
+        (_, PanelSelection::Star) => PresetMode::Star,
+        (_, PanelSelection::Heart) => PresetMode::Heart,
+        (_, PanelSelection::FixedSize) => PresetMode::FixedSize,
+        _ => PresetMode::Area,
+    };
+    let name = format!(
+        "{}{}",
+        if p.tab == 0 { "All-in-one" } else { p.selection.label() },
+        p.effect.map(|e| format!(" + {}", e.label())).unwrap_or_default()
+    );
+    Preset {
+        name,
+        mode,
+        delay_s: if p.delay_on { p.delay_s } else { 0 },
+        width: p.fixed_w,
+        height: p.fixed_h,
+        effects: p.effect.into_iter().collect(),
+        copy: after_copy || p.share == PanelShare::Clipboard,
+        save: p.share == PanelShare::SaveFolder,
+        pin: p.share == PanelShare::Pin,
+        combo: Default::default(),
+    }
+}
+
+impl SnagApp {
     fn panel_capture(&mut self, ctx: &egui::Context) {
         let p = self.settings.panel.clone();
         self.settings.delay_s = if p.delay_on { p.delay_s } else { 0 };
@@ -413,3 +419,96 @@ impl SnagApp {
 
 #[allow(dead_code)]
 fn unused(_: StrokeKind) {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn image_tab(selection: PanelSelection) -> PanelSettings {
+        PanelSettings { tab: 1, selection, ..Default::default() }
+    }
+
+    #[test]
+    fn all_in_one_tab_is_an_area_preset() {
+        let p = PanelSettings { tab: 0, selection: PanelSelection::Star, ..Default::default() };
+        let pr = preset_from_panel(&p, false);
+        assert_eq!(pr.mode, PresetMode::Area);
+        assert_eq!(pr.name, "All-in-one");
+    }
+
+    #[test]
+    fn every_selection_maps_to_a_preset_mode() {
+        use PanelSelection as S;
+        use PresetMode as M;
+        let want = [
+            (S::Region, M::Area),
+            (S::Window, M::Window),
+            (S::Menu, M::Window),
+            (S::Screen, M::Screen),
+            (S::AllScreens, M::AllScreens),
+            (S::Scrolling, M::Scrolling),
+            (S::Panorama, M::Scrolling),
+            (S::Circle, M::Circle),
+            (S::Freehand, M::Freehand),
+            (S::Polygon, M::Freehand),
+            (S::Star, M::Star),
+            (S::Heart, M::Heart),
+            (S::FixedSize, M::FixedSize),
+            (S::Multi, M::Area),
+            (S::MenuDelayed, M::Area),
+            (S::ScrollYourself, M::Area),
+            (S::GrabText, M::Area),
+        ];
+        assert_eq!(want.len(), PanelSelection::IMAGE.len());
+        for (sel, mode) in want {
+            let pr = preset_from_panel(&image_tab(sel), false);
+            assert_eq!(pr.mode, mode, "{sel:?}");
+            assert_eq!(pr.name, sel.label());
+        }
+    }
+
+    #[test]
+    fn the_effect_is_named_and_kept() {
+        let p = PanelSettings { effect: Some(Effect::Border), ..image_tab(PanelSelection::Window) };
+        let pr = preset_from_panel(&p, false);
+        assert_eq!(pr.effects, vec![Effect::Border]);
+        assert_eq!(pr.name, format!("Window + {}", Effect::Border.label()));
+        assert!(preset_from_panel(&image_tab(PanelSelection::Window), false).effects.is_empty());
+    }
+
+    #[test]
+    fn delay_counts_only_when_switched_on() {
+        let mut p = PanelSettings { delay_s: 7, ..image_tab(PanelSelection::Region) };
+        assert_eq!(preset_from_panel(&p, false).delay_s, 0);
+        p.delay_on = true;
+        assert_eq!(preset_from_panel(&p, false).delay_s, 7);
+    }
+
+    #[test]
+    fn fixed_size_is_carried() {
+        let p = PanelSettings { fixed_w: 640, fixed_h: 480, ..image_tab(PanelSelection::FixedSize) };
+        let pr = preset_from_panel(&p, false);
+        assert_eq!((pr.width, pr.height), (640, 480));
+    }
+
+    #[test]
+    fn where_it_goes_sets_copy_save_and_pin() {
+        let go = |share, after_copy| {
+            let pr = preset_from_panel(&PanelSettings { share, ..image_tab(PanelSelection::Region) }, after_copy);
+            (pr.copy, pr.save, pr.pin)
+        };
+        assert_eq!(go(PanelShare::None, false), (false, false, false));
+        assert_eq!(go(PanelShare::Clipboard, false), (true, false, false));
+        assert_eq!(go(PanelShare::SaveFolder, false), (false, true, false));
+        assert_eq!(go(PanelShare::Pin, false), (false, false, true));
+        assert_eq!(go(PanelShare::OpenWith, false), (false, false, false));
+        // "Copy after capture" copies whatever else happens.
+        assert_eq!(go(PanelShare::SaveFolder, true), (true, true, false));
+    }
+
+    #[test]
+    fn a_preset_from_the_panel_has_no_hotkey() {
+        let pr = preset_from_panel(&PanelSettings::default(), true);
+        assert_eq!(pr.combo, Preset::default().combo);
+    }
+}

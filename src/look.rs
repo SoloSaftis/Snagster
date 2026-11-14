@@ -364,3 +364,106 @@ pub fn icon_button(ui: &mut Ui, icon: &str, tip: &str) -> Response {
     resp
 }
 
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn interface_fonts_have_icons_after_the_first_font_and_every_script() {
+        let f = base_fonts(false, "en");
+        assert!(f.font_data.contains_key("Phosphor"));
+        assert_eq!(f.families.get(&icons()), Some(&vec!["Phosphor".to_string()]));
+        for fam in [FontFamily::Proportional, FontFamily::Monospace] {
+            let list = &f.families[&fam];
+            assert_eq!(list[1], "Phosphor", "{fam:?}: {list:?}");
+            assert_eq!(list.iter().filter(|n| *n == "Phosphor").count(), 1);
+            for script in ["NotoSansArabic", "NotoSansHebrew", "NotoSansThai", "NotoSansDevanagari", "NotoSansEthiopic"] {
+                assert!(list.iter().any(|n| n == script), "{fam:?} lacks {script}");
+            }
+            // Every font a family names is loaded.
+            for n in list {
+                assert!(f.font_data.contains_key(n), "{n} isn't loaded");
+            }
+            assert!(!list.iter().any(|n| n.starts_with("cjk-")), "no CJK fonts unless asked");
+        }
+    }
+
+    #[test]
+    fn built_in_fonts_parse() {
+        let f = base_fonts(false, "en");
+        for name in ["Phosphor", "NotoSansArabic", "NotoSansKhmer", "NotoSansGeorgian"] {
+            let data = &f.font_data[name];
+            assert!(ttf_parser::Face::parse((*data.font).as_ref(), data.index).is_ok(), "{name}");
+        }
+    }
+
+    #[test]
+    fn cjk_fonts_are_added_only_when_found() {
+        for lang in ["zh", "zh-Hant", "ja", "ko", "en"] {
+            let files = cjk_font_files(lang);
+            let unique: HashSet<_> = files.iter().map(|(p, _)| p.clone()).collect();
+            assert_eq!(unique.len(), files.len(), "{lang}: a file is listed twice");
+            for (p, index) in &files {
+                assert!(p.exists());
+                if p.to_string_lossy().contains("NotoSansCJK") {
+                    let want = match lang {
+                        "ja" => 0,
+                        "ko" => 1,
+                        "zh-Hant" => 3,
+                        _ => 2,
+                    };
+                    assert_eq!(*index, want, "{lang}");
+                } else {
+                    assert_eq!(*index, 0);
+                }
+            }
+            let f = base_fonts(true, lang);
+            let cjk = f.families[&FontFamily::Proportional].iter().filter(|n| n.starts_with("cjk-")).count();
+            assert!(cjk <= files.len());
+        }
+    }
+
+    /// Every icon in `ph`: one private-use character, and no two names share one.
+    #[test]
+    fn icons_are_single_private_use_characters() {
+        let src = include_str!("look.rs");
+        let start = src.find("pub mod ph {").unwrap();
+        let end = start + src[start..].find("\n}").unwrap();
+        let mut seen = std::collections::HashMap::new();
+        let mut count = 0;
+        for line in src[start..end].lines() {
+            let line = line.trim();
+            let Some(rest) = line.strip_prefix("pub const ") else { continue };
+            let name = rest.split(':').next().unwrap();
+            let hex = rest.split(r"\u{").nth(1).and_then(|h| h.split('}').next()).unwrap();
+            let cp = u32::from_str_radix(hex, 16).unwrap();
+            assert!((0xE000..=0xF8FF).contains(&cp), "{name} U+{cp:X} isn't private use");
+            if let Some(other) = seen.insert(cp, name.to_string()) {
+                panic!("{name} and {other} are the same icon (U+{cp:X})");
+            }
+            count += 1;
+        }
+        assert!(count > 50, "only {count} icons found; did the module change shape?");
+        for icon in [ph::CAMERA, ph::RECORD, ph::STOP, ph::CARET_DOWN, ph::X] {
+            assert_eq!(icon.chars().count(), 1);
+        }
+    }
+
+    #[test]
+    fn colours_stand_apart() {
+        // Text must be readable on the ribbon, and the hover and pressed colours visible.
+        let lum = |c: Color32| 0.2126 * c.r() as f32 + 0.7152 * c.g() as f32 + 0.0722 * c.b() as f32;
+        assert!(lum(TEXT) - lum(BAND) > 150.0);
+        assert!(lum(DIM) - lum(BAND) > 80.0);
+        assert!(lum(FAINT) > lum(BAND));
+        assert_ne!(HOVER, BAND);
+        assert_ne!(PRESSED, HOVER);
+        assert_ne!(TABS, BAND);
+        assert!(REC.r() > REC.g() && REC.r() > REC.b(), "recording is red");
+        for c in [ACCENT, TEXT, DIM, FAINT, HOVER, PRESSED, BAND, TABS, REC] {
+            assert_eq!(c.a(), 255, "interface colours are opaque");
+        }
+    }
+}

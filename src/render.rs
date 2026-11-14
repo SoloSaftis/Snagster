@@ -598,3 +598,360 @@ pub fn text_image(text: &str, size: f32, color: [u8; 4]) -> RgbaImage {
     draw_text(&mut pm, text, Pos2::new(4.0, 4.0), size, c, Some(Color32::from_black_alpha(160)), false);
     from_pixmap(pm)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::capture::CutShape;
+    use crate::settings::{CalloutShape, StepStyle};
+    use std::sync::Arc;
+
+    const WHITE: [u8; 4] = [255, 255, 255, 255];
+
+    fn solid(w: u32, h: u32, c: [u8; 4]) -> RgbaImage {
+        RgbaImage::from_pixel(w, h, image::Rgba(c))
+    }
+
+    fn doc_with(img: RgbaImage, shapes: Vec<Shape>) -> Doc {
+        let mut d = Doc::new(img);
+        d.shapes = shapes;
+        d
+    }
+
+    fn r(x0: f32, y0: f32, x1: f32, y1: f32) -> Rect {
+        Rect::from_min_max(pos2(x0, y0), pos2(x1, y1))
+    }
+
+    fn px(img: &RgbaImage, x: u32, y: u32) -> [u8; 4] {
+        img.get_pixel(x, y).0
+    }
+
+    fn changed(a: &RgbaImage, b: &RgbaImage) -> usize {
+        a.pixels().zip(b.pixels()).filter(|(p, q)| p != q).count()
+    }
+
+    fn text_shape(text: &str, align: u8, bg: bool) -> Shape {
+        Shape::Text {
+            pos: pos2(10.0, 10.0),
+            text: text.into(),
+            color: Color32::RED,
+            size: 20.0,
+            bg,
+            shadow: false,
+            font: String::new(),
+            bold: false,
+            italic: false,
+            outline: true,
+            align,
+        }
+    }
+
+    #[test]
+    fn pixmap_round_trip() {
+        let img = RgbaImage::from_fn(16, 4, |x, y| image::Rgba([(x * 16) as u8, (y * 60) as u8, 200, 255]));
+        assert_eq!(from_pixmap(to_pixmap(&img).unwrap()), img, "opaque pictures survive exactly");
+        // See-through pixels come back within rounding.
+        let semi = RgbaImage::from_fn(16, 1, |x, _| image::Rgba([200, 100, 50, 64 + x as u8 * 10]));
+        let back = from_pixmap(to_pixmap(&semi).unwrap());
+        for (a, b) in semi.pixels().zip(back.pixels()) {
+            assert_eq!(a.0[3], b.0[3]);
+            for i in 0..3 {
+                assert!((a.0[i] as i16 - b.0[i] as i16).abs() <= 2, "{a:?} -> {b:?}");
+            }
+        }
+        // Fully see-through pixels lose their colour.
+        let clear = from_pixmap(to_pixmap(&solid(2, 2, [9, 9, 9, 0])).unwrap());
+        assert_eq!(px(&clear, 0, 0), [0, 0, 0, 0]);
+        // Premultiplied inside tiny-skia.
+        let pm = to_pixmap(&solid(1, 1, [200, 100, 0, 128])).unwrap();
+        let p = pm.pixel(0, 0).unwrap();
+        assert_eq!((p.red(), p.green(), p.alpha()), (100, 50, 128));
+    }
+
+    #[test]
+    fn compose_without_marks_is_the_picture() {
+        let img = RgbaImage::from_fn(5, 5, |x, y| image::Rgba([x as u8 * 40, y as u8 * 40, 0, 255]));
+        assert_eq!(compose(&Doc::new(img.clone())), img);
+    }
+
+    #[test]
+    fn filled_and_outlined_boxes() {
+        let fill = Shape::Rect { rect: r(5.0, 5.0, 15.0, 15.0), color: Color32::RED, width: 2.0, fill: true, radius: 0.0, shadow: false };
+        let out = compose(&doc_with(solid(20, 20, WHITE), vec![fill]));
+        assert_eq!(px(&out, 10, 10), [255, 0, 0, 255]);
+        assert_eq!(px(&out, 2, 2), WHITE);
+        assert_eq!(px(&out, 16, 16), WHITE);
+
+        let outline = Shape::Rect { rect: r(5.0, 5.0, 15.0, 15.0), color: Color32::BLUE, width: 2.0, fill: false, radius: 0.0, shadow: false };
+        let out = compose(&doc_with(solid(20, 20, WHITE), vec![outline]));
+        assert_eq!(px(&out, 10, 10), WHITE, "an outline leaves the middle alone");
+        assert_eq!(px(&out, 10, 5), [0, 0, 255, 255]);
+        assert_eq!(px(&out, 4, 4), [0, 0, 255, 255], "square corners, not rounded ones");
+
+        let rounded = Shape::Rect { rect: r(2.0, 2.0, 38.0, 38.0), color: Color32::BLUE, width: 2.0, fill: true, radius: 12.0, shadow: false };
+        let out = compose(&doc_with(solid(40, 40, WHITE), vec![rounded]));
+        assert_eq!(px(&out, 2, 2), WHITE, "rounded corners stay empty");
+        assert_eq!(px(&out, 20, 20), [0, 0, 255, 255]);
+    }
+
+    #[test]
+    fn shadows_are_drawn_offset_and_under_the_mark() {
+        let s = Shape::Rect { rect: r(5.0, 5.0, 15.0, 15.0), color: Color32::RED, width: 2.0, fill: true, radius: 0.0, shadow: true };
+        let out = compose(&doc_with(solid(30, 30, WHITE), vec![s]));
+        assert_eq!(px(&out, 10, 10), [255, 0, 0, 255], "the mark covers its own shadow");
+        let sh = px(&out, 16, 16); // offset 3: shadow covers 8..18
+        assert!(sh[0] < 255 && sh[0] == sh[1] && sh[1] == sh[2], "grey shadow, got {sh:?}");
+        assert_eq!(px(&out, 25, 25), WHITE);
+    }
+
+    #[test]
+    fn lines_arrows_and_ellipses() {
+        let line = Shape::Line { a: pos2(2.0, 10.0), b: pos2(18.0, 10.0), color: Color32::BLUE, width: 4.0, shadow: false };
+        let out = compose(&doc_with(solid(20, 20, WHITE), vec![line]));
+        assert_eq!(px(&out, 10, 10), [0, 0, 255, 255]);
+        assert_eq!(px(&out, 10, 2), WHITE);
+
+        // Arrow head at the end (heads 1) and at both ends (heads 2).
+        let arrow = |heads| Shape::Arrow { a: pos2(5.0, 30.0), b: pos2(95.0, 30.0), color: Color32::RED, width: 4.0, shadow: false, heads };
+        let one = compose(&doc_with(solid(100, 60, WHITE), vec![arrow(1)]));
+        let two = compose(&doc_with(solid(100, 60, WHITE), vec![arrow(2)]));
+        let none = compose(&doc_with(solid(100, 60, WHITE), vec![arrow(0)]));
+        // The head is 16 long and 16 wide at its base, so 4 pixels off the line it still shows.
+        assert_eq!(px(&one, 82, 34), [255, 0, 0, 255]);
+        assert_eq!(px(&one, 18, 34), WHITE);
+        assert_eq!(px(&two, 18, 34), [255, 0, 0, 255]);
+        assert_eq!(px(&none, 82, 34), WHITE);
+        assert_eq!(px(&none, 50, 30), [255, 0, 0, 255]);
+
+        let ellipse = Shape::Ellipse { rect: r(0.0, 0.0, 20.0, 20.0), color: Color32::GREEN, width: 2.0, fill: true, shadow: false };
+        let out = compose(&doc_with(solid(20, 20, WHITE), vec![ellipse]));
+        assert_eq!(px(&out, 10, 10), Color32::GREEN.to_srgba_unmultiplied());
+        assert_eq!(px(&out, 1, 1), WHITE);
+    }
+
+    #[test]
+    fn pen_and_highlighter() {
+        let pen = Shape::Pen { points: vec![pos2(2.0, 2.0), pos2(18.0, 18.0)], color: Color32::BLACK, width: 3.0, shadow: false };
+        let out = compose(&doc_with(solid(20, 20, WHITE), vec![pen]));
+        assert_eq!(px(&out, 10, 10), [0, 0, 0, 255]);
+        assert_eq!(px(&out, 18, 2), WHITE);
+        // A single point still leaves a dot.
+        let dot = Shape::Pen { points: vec![pos2(10.0, 10.0)], color: Color32::BLACK, width: 6.0, shadow: false };
+        let out = compose(&doc_with(solid(20, 20, WHITE), vec![dot]));
+        assert!(px(&out, 10, 10)[0] < 128);
+
+        let hl = Shape::Highlight { points: vec![pos2(2.0, 10.0), pos2(38.0, 10.0)], color: Color32::from_rgb(255, 255, 0), width: 2.0 };
+        let out = compose(&doc_with(solid(40, 20, [0, 0, 0, 255]), vec![hl]));
+        let p = px(&out, 20, 10);
+        // See-through yellow over black: partly yellow, still dark blue.
+        assert!(p[0] > 60 && p[0] < 200 && p[0] == p[1] && p[2] == 0, "{p:?}");
+    }
+
+    #[test]
+    fn spotlight_dims_everything_else() {
+        let s = Shape::Spotlight { rect: r(5.0, 5.0, 15.0, 15.0) };
+        let out = compose(&doc_with(solid(20, 20, WHITE), vec![s]));
+        assert_eq!(px(&out, 10, 10), WHITE);
+        let dim = px(&out, 1, 1);
+        assert!((dim[0] as i16 - 105).abs() <= 2, "{dim:?}");
+        assert_eq!(dim[3], 255);
+    }
+
+    #[test]
+    fn magnify_enlarges_the_picture_under_it() {
+        // Red encodes the column, so the sample position can be read back.
+        let base = RgbaImage::from_fn(64, 64, |x, _| image::Rgba([(x * 4) as u8, 0, 0, 255]));
+        let m = Shape::Magnify { center: pos2(32.0, 32.0), radius: 20.0, zoom: 2.0 };
+        let out = compose(&doc_with(base.clone(), vec![m]));
+        assert_eq!(px(&out, 40, 32)[0], 36 * 4, "half the distance from the centre at 2x");
+        assert_eq!(px(&out, 2, 2), px(&base, 2, 2), "outside the lens nothing changes");
+        // The ring around the lens is drawn.
+        assert_ne!(px(&out, 52, 32), px(&base, 52, 32));
+    }
+
+    #[test]
+    fn step_badges_pointer_and_pictures() {
+        let st = Shape::Step { center: pos2(20.0, 20.0), n: 1, color: Color32::RED, radius: 10.0, shadow: false, style: StepStyle::Numbers };
+        let out = compose(&doc_with(solid(40, 40, WHITE), vec![st]));
+        assert_eq!(px(&out, 13, 20), [255, 0, 0, 255]);
+        assert_eq!(px(&out, 20, 2), WHITE);
+        let p10 = px(&out, 20, 10);
+        assert_eq!(p10, WHITE, "the white ring around the badge");
+
+        let ptr = Shape::Pointer { pos: pos2(5.0, 5.0), size: 40.0 };
+        let out = compose(&doc_with(solid(40, 60, [0, 0, 0, 255]), vec![ptr]));
+        assert_eq!(px(&out, 9, 25), WHITE, "the pointer is white inside");
+        assert_eq!(px(&out, 35, 10), [0, 0, 0, 255]);
+
+        let piece = solid(4, 4, [0, 255, 0, 255]);
+        let pic = Shape::Image { rect: r(0.0, 0.0, 8.0, 8.0), image: doc::ImgData(Arc::new(piece)) };
+        let out = compose(&doc_with(solid(10, 10, WHITE), vec![pic]));
+        assert_eq!(px(&out, 6, 6), [0, 255, 0, 255], "the piece is scaled to its box");
+        assert_eq!(px(&out, 9, 9), WHITE);
+    }
+
+    #[test]
+    fn text_and_callouts_draw_inside_their_box() {
+        let base = solid(200, 100, WHITE);
+        let out = compose(&doc_with(base.clone(), vec![text_shape("Hi there", 0, false)]));
+        assert!(changed(&out, &base) > 20);
+        assert_eq!(px(&out, 199, 99), WHITE);
+        let boxed = compose(&doc_with(base.clone(), vec![text_shape("Hi", 0, true)]));
+        // The box behind the text starts just before the text position.
+        assert_eq!(px(&boxed, 7, 20)[..3], [255, 0, 0]);
+
+        // Different alignments put the short line in different places.
+        let left = compose(&doc_with(base.clone(), vec![text_shape("i\nwide line", 0, false)]));
+        let right = compose(&doc_with(base.clone(), vec![text_shape("i\nwide line", 2, false)]));
+        let centre = compose(&doc_with(base.clone(), vec![text_shape("i\nwide line", 1, false)]));
+        assert_ne!(left, right);
+        assert_ne!(left, centre);
+
+        let callout = Shape::Callout {
+            pos: pos2(20.0, 20.0),
+            tail: pos2(180.0, 90.0),
+            text: "Look".into(),
+            color: Color32::from_rgb(255, 220, 0),
+            size: 16.0,
+            shadow: true,
+            font: String::new(),
+            bold: false,
+            italic: false,
+            shape: CalloutShape::Rounded,
+            outline: true,
+            align: 0,
+        };
+        let out = compose(&doc_with(base.clone(), vec![callout]));
+        assert_eq!(px(&out, 16, 30)[..3], [255, 220, 0], "inside the bubble padding");
+        let tail_pixels = (100..200).flat_map(|x| (0..100).map(move |y| (x, y))).filter(|&(x, y)| px(&out, x, y) != WHITE).count();
+        assert!(tail_pixels > 20, "the tail reaches towards its point");
+        assert_eq!(px(&out, 2, 98), WHITE);
+    }
+
+    #[test]
+    fn stamps_never_panic() {
+        let base = solid(64, 64, WHITE);
+        let s = Shape::Stamp { center: pos2(32.0, 32.0), emoji: "\u{2B50}".into(), size: 40.0, color: Color32::RED };
+        let empty = Shape::Stamp { center: pos2(32.0, 32.0), emoji: String::new(), size: 40.0, color: Color32::RED };
+        let out = compose(&doc_with(base.clone(), vec![s, empty]));
+        assert_eq!(out.dimensions(), (64, 64));
+    }
+
+    #[test]
+    fn rounded_rect_paths() {
+        let square = rounded_rect(r(0.0, 0.0, 10.0, 20.0), 0.0).unwrap();
+        let b = square.bounds();
+        assert_eq!((b.left(), b.top(), b.right(), b.bottom()), (0.0, 0.0, 10.0, 20.0));
+        // A huge radius is limited to half the short side; the path stays inside the box.
+        let pill = rounded_rect(r(0.0, 0.0, 10.0, 20.0), 1000.0).unwrap();
+        let b = pill.bounds();
+        assert!(b.left() >= -0.01 && b.right() <= 10.01 && b.top() >= -0.01 && b.bottom() <= 20.01);
+        assert!(rounded_rect(r(0.0, 0.0, 10.0, 20.0), -5.0).is_some());
+    }
+
+    #[test]
+    fn halo_contrasts_with_the_text() {
+        assert_eq!(halo_color(Color32::WHITE), Color32::from_rgb(20, 20, 24));
+        assert_eq!(halo_color(Color32::from_rgb(255, 255, 0)), Color32::from_rgb(20, 20, 24));
+        assert_eq!(halo_color(Color32::BLACK), Color32::WHITE);
+        assert_eq!(halo_color(Color32::from_rgb(0, 0, 255)), Color32::WHITE);
+    }
+
+    #[test]
+    fn measuring_text() {
+        assert_eq!(text_width("", 20.0), 0.0);
+        let a = text_width("a", 20.0);
+        let ab = text_width("ab", 20.0);
+        assert!(a > 0.0 && ab > a);
+        assert!((text_width("ab", 40.0) - 2.0 * ab).abs() < 0.5, "width scales with size");
+        assert!((text_width("ab\nab", 20.0) - ab).abs() < 1e-3, "the widest line counts");
+        let h1 = text_height("x", 20.0);
+        assert!((text_height("x\ny\nz", 20.0) - 3.0 * h1).abs() < 1e-3);
+        assert_eq!(measure("abc", 20.0, "", false, false).x, text_width("abc", 20.0));
+        let m = measure("abc", 20.0, "", false, false);
+        let tb = text_box(pos2(0.0, 0.0), "abc", 20.0, "", false, false);
+        assert!((tb.width() - (m.x + 2.0 * 20.0 * doc::TEXT_PAD_FACTOR)).abs() < 1e-3);
+        // An empty callout still has a bubble.
+        let cb = callout_bubble(pos2(0.0, 0.0), "", 20.0, "", false, false);
+        assert!(cb.width() > 20.0 && cb.height() > 20.0);
+    }
+
+    #[test]
+    fn drawing_text_off_the_picture_is_harmless() {
+        let mut pm = ts::Pixmap::new(20, 20).unwrap();
+        draw_text(&mut pm, "Hello", pos2(500.0, 500.0), 20.0, Color32::RED, Some(Color32::WHITE), false);
+        draw_text(&mut pm, "Hello", pos2(-500.0, -500.0), 20.0, Color32::RED, None, true);
+        assert!(pm.pixels().iter().all(|p| p.alpha() == 0));
+        draw_text(&mut pm, "H", pos2(10.0, 10.0), 16.0, Color32::RED, Some(Color32::WHITE), true);
+        assert!(pm.pixels().iter().any(|p| p.alpha() > 0));
+    }
+
+    #[test]
+    fn text_image_fits_the_text() {
+        let img = text_image("Hello", 20.0, [255, 0, 0, 255]);
+        let m = measure("Hello", 20.0, "", false, false);
+        assert_eq!(img.width(), m.x.ceil() as u32 + 8);
+        assert!(img.pixels().any(|p| p.0[3] > 200));
+        assert_eq!(px(&img, 0, 0)[3], 0, "the background is see-through");
+        let tiny = text_image("", 0.0, [0, 0, 0, 255]);
+        assert!(tiny.width() >= 8 && tiny.height() >= 8);
+    }
+
+    #[test]
+    fn cut_to_shape_clears_outside_the_shape() {
+        let img = solid(40, 40, [10, 20, 30, 255]);
+        assert_eq!(cut_to_shape(&img, CutShape::Rect, &[]), img);
+        for shape in [CutShape::Ellipse, CutShape::Rounded, CutShape::Star, CutShape::Heart] {
+            let out = cut_to_shape(&img, shape, &[]);
+            assert_eq!(px(&out, 0, 0)[3], 0, "{shape:?} corner");
+            assert_eq!(px(&out, 20, 22)[3], 255, "{shape:?} middle");
+            assert_eq!(px(&out, 20, 22)[..3], [10, 20, 30]);
+        }
+        let tri = cut_to_shape(&img, CutShape::Triangle, &[]);
+        assert_eq!(px(&tri, 0, 0)[3], 0);
+        assert_eq!(px(&tri, 20, 38)[3], 255);
+        let lasso = [pos2(0.0, 0.0), pos2(20.0, 0.0), pos2(20.0, 20.0), pos2(0.0, 20.0)];
+        let free = cut_to_shape(&img, CutShape::Freehand, &lasso);
+        assert_eq!(px(&free, 5, 5)[3], 255);
+        assert_eq!(px(&free, 30, 30)[3], 0);
+        assert_eq!(cut_to_shape(&img, CutShape::Polygon, &lasso), free);
+        // No points: nothing to cut with, the picture is kept.
+        assert_eq!(cut_to_shape(&img, CutShape::Polygon, &[]), img);
+    }
+
+    #[test]
+    fn star_and_heart_points_stay_in_their_box() {
+        let b = r(10.0, 20.0, 110.0, 220.0);
+        let star = star_points(b);
+        assert_eq!(star.len(), 10);
+        let c = b.center();
+        for (i, p) in star.iter().enumerate() {
+            assert!(b.contains(*p), "{p:?}");
+            // Tips (even) are further out than the inner corners (odd).
+            if i % 2 == 0 {
+                assert!(p.distance(c) > 40.0);
+            } else {
+                assert!(p.distance(c) < 50.0);
+            }
+        }
+        assert!((star[0].x - c.x).abs() < 1e-3 && star[0].y < c.y, "first tip points up");
+        let heart = heart_points(b);
+        assert_eq!(heart.len(), 64);
+        let slack = b.expand(b.height() * 0.03);
+        assert!(heart.iter().all(|p| slack.contains(*p)));
+        // Symmetric around the middle.
+        assert!((heart[16].x - c.x + (heart[48].x - c.x)).abs() < 1e-2);
+    }
+
+    #[test]
+    fn callout_bodies() {
+        let bubble = r(0.0, 0.0, 100.0, 40.0);
+        for s in [CalloutShape::Rounded, CalloutShape::Rectangle, CalloutShape::Oval] {
+            assert!(callout_body(bubble, s, 16.0).is_some(), "{s:?}");
+        }
+        let rect = callout_body(bubble, CalloutShape::Rectangle, 16.0).unwrap().bounds();
+        assert_eq!((rect.left(), rect.top(), rect.right(), rect.bottom()), (0.0, 0.0, 100.0, 40.0));
+        let oval = callout_body(bubble, CalloutShape::Oval, 16.0).unwrap().bounds();
+        assert!(oval.width() > 100.0 && oval.height() > 40.0, "the oval reaches past the text box");
+    }
+}

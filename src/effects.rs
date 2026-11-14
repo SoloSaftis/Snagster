@@ -489,3 +489,358 @@ pub fn grid(images: &[RgbaImage], cols: u32, gap: u32, labels: &[&str]) -> Optio
     }
     Some(out)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn opts() -> EffectOptions {
+        EffectOptions {
+            resize_percent: 50,
+            border_width: 3,
+            border_color: [10, 20, 30],
+            shadow_size: 8,
+            rounded_radius: 6,
+            watermark_text: String::new(),
+            tilt_percent: 20,
+            brightness: 0,
+            contrast: 0,
+            saturation: 0,
+            info_text: "Captured here".into(),
+        }
+    }
+
+    /// A small picture where every pixel is different.
+    fn gradient(w: u32, h: u32) -> RgbaImage {
+        RgbaImage::from_fn(w, h, |x, y| Rgba([(x * 20) as u8, (y * 20) as u8, ((x + y) * 7) as u8, 255]))
+    }
+
+    fn solid(w: u32, h: u32, c: [u8; 4]) -> RgbaImage {
+        RgbaImage::from_pixel(w, h, Rgba(c))
+    }
+
+    fn differs(a: &RgbaImage, b: &RgbaImage) -> usize {
+        a.pixels().zip(b.pixels()).filter(|(p, q)| p != q).count()
+    }
+
+    #[test]
+    fn every_effect_has_a_unique_label() {
+        let mut labels: Vec<_> = Effect::ALL.iter().map(|e| e.label()).collect();
+        assert!(labels.iter().all(|l| !l.is_empty()));
+        labels.sort();
+        labels.dedup();
+        assert_eq!(labels.len(), Effect::ALL.len());
+        assert!(!Effect::RotateLeft.starts_group());
+        assert!(Effect::Border.starts_group());
+        assert_eq!(Effect::ALL.iter().filter(|e| e.starts_group()).count(), 5);
+    }
+
+    #[test]
+    fn every_effect_runs_on_a_small_picture() {
+        let img = gradient(12, 9);
+        for e in Effect::ALL {
+            let out = apply(e, &img, &opts());
+            assert!(out.width() > 0 && out.height() > 0, "{e:?}");
+        }
+    }
+
+    #[test]
+    fn rotate_and_flip_move_pixels() {
+        let img = gradient(4, 3);
+        let o = opts();
+        let l = apply(Effect::RotateLeft, &img, &o);
+        let r = apply(Effect::RotateRight, &img, &o);
+        assert_eq!(l.dimensions(), (3, 4));
+        assert_eq!(r.dimensions(), (3, 4));
+        // Rotating right puts the top-left corner at the top-right.
+        assert_eq!(r.get_pixel(2, 0), img.get_pixel(0, 0));
+        // Rotating left puts it at the bottom-left.
+        assert_eq!(l.get_pixel(0, 3), img.get_pixel(0, 0));
+        assert_eq!(apply(Effect::RotateLeft, &r, &o), img);
+        let h = apply(Effect::FlipHorizontal, &img, &o);
+        assert_eq!(h.get_pixel(3, 0), img.get_pixel(0, 0));
+        let v = apply(Effect::FlipVertical, &img, &o);
+        assert_eq!(v.get_pixel(0, 2), img.get_pixel(0, 0));
+        assert_eq!(apply(Effect::FlipVertical, &v, &o), img);
+    }
+
+    #[test]
+    fn resize_uses_the_percentage_within_limits() {
+        let img = gradient(20, 10);
+        let mut o = opts();
+        assert_eq!(apply(Effect::Resize, &img, &o).dimensions(), (10, 5));
+        o.resize_percent = 200;
+        assert_eq!(apply(Effect::Resize, &img, &o).dimensions(), (40, 20));
+        o.resize_percent = 0; // clamped to 5 %, never smaller than one pixel
+        assert_eq!(apply(Effect::Resize, &img, &o).dimensions(), (1, 1));
+        o.resize_percent = 10_000; // clamped to 800 %
+        assert_eq!(apply(Effect::Resize, &img, &o).dimensions(), (160, 80));
+    }
+
+    #[test]
+    fn border_surrounds_the_picture() {
+        let img = gradient(5, 4);
+        let out = border(&img, 3, [10, 20, 30]);
+        assert_eq!(out.dimensions(), (11, 10));
+        assert_eq!(out.get_pixel(0, 0).0, [10, 20, 30, 255]);
+        assert_eq!(out.get_pixel(10, 9).0, [10, 20, 30, 255]);
+        assert_eq!(out.get_pixel(3, 3), img.get_pixel(0, 0));
+        assert_eq!(out.get_pixel(7, 6), img.get_pixel(4, 3));
+        assert_eq!(border(&img, 10_000, [0, 0, 0]).width(), 5 + 1000, "width is capped at 500");
+    }
+
+    #[test]
+    fn blur_alpha_keeps_flat_areas_and_spreads_dots() {
+        let mut flat = vec![0.5f32; 30 * 20];
+        blur_alpha(&mut flat, 30, 20, 3);
+        assert!(flat.iter().all(|v| (v - 0.5).abs() < 1e-5));
+
+        let mut same = vec![0f32; 25];
+        same[12] = 1.0;
+        let before = same.clone();
+        blur_alpha(&mut same, 5, 5, 0);
+        assert_eq!(same, before, "radius 0 does nothing");
+
+        let (w, h) = (21usize, 21usize);
+        let mut dot = vec![0f32; w * h];
+        dot[10 * w + 10] = 1.0;
+        blur_alpha(&mut dot, w, h, 2);
+        let c = dot[10 * w + 10];
+        assert!(c < 1.0 && c > 0.0);
+        // Symmetric spread, falling off with distance.
+        assert!((dot[10 * w + 8] - dot[10 * w + 12]).abs() < 1e-6);
+        assert!((dot[8 * w + 10] - dot[12 * w + 10]).abs() < 1e-6);
+        assert!(dot[10 * w + 11] < c && dot[10 * w + 13] < dot[10 * w + 11]);
+        assert_eq!(dot[0], 0.0);
+    }
+
+    #[test]
+    fn drop_shadow_adds_a_margin_with_a_soft_shadow() {
+        let img = solid(10, 10, [200, 0, 0, 255]);
+        let out = drop_shadow(&img, 8);
+        // margin = 2 * size on every side.
+        assert_eq!(out.dimensions(), (10 + 32, 10 + 32));
+        assert_eq!(out.get_pixel(16, 16).0, [200, 0, 0, 255]);
+        assert_eq!(out.get_pixel(0, 0).0[3], 0, "far corner has no shadow");
+        // Down and to the right of the picture there is a dark see-through shadow.
+        let s = out.get_pixel(16 + 11, 16 + 11).0;
+        assert_eq!(&s[..3], &[0, 0, 0]);
+        assert!(s[3] > 0 && s[3] <= 150);
+        // Tiny sizes are clamped up to 2.
+        assert_eq!(drop_shadow(&img, 0).dimensions(), (18, 18));
+    }
+
+    #[test]
+    fn rounded_corners_clear_the_corners_only() {
+        let img = solid(20, 20, [9, 9, 9, 255]);
+        let out = rounded(&img, 6.0);
+        assert_eq!(out.get_pixel(0, 0).0[3], 0);
+        assert_eq!(out.get_pixel(19, 19).0[3], 0);
+        assert_eq!(out.get_pixel(10, 10).0[3], 255);
+        assert_eq!(out.get_pixel(10, 0).0[3], 255);
+        assert_eq!(rounded(&img, 0.0), img);
+        // A huge radius becomes a circle, never more.
+        let circle = rounded(&img, 1000.0);
+        assert_eq!(circle.get_pixel(10, 10).0[3], 255);
+        assert_eq!(circle.get_pixel(1, 1).0[3], 0);
+    }
+
+    #[test]
+    fn torn_edge_only_touches_the_bottom() {
+        let img = solid(50, 100, [1, 2, 3, 255]);
+        let out = torn_edge(&img);
+        assert_eq!(out.dimensions(), img.dimensions());
+        for x in 0..50 {
+            assert_eq!(out.get_pixel(x, 0).0[3], 255);
+            assert_eq!(out.get_pixel(x, 80).0[3], 255);
+            assert!(out.get_pixel(x, 99).0[3] < 100, "the last row is always (mostly) torn off");
+        }
+        assert_eq!(torn_edge(&img), out, "the tear is the same every time");
+    }
+
+    #[test]
+    fn colour_effects() {
+        let img = RgbaImage::from_fn(3, 1, |x, _| match x {
+            0 => Rgba([255, 0, 0, 255]),
+            1 => Rgba([10, 200, 30, 128]),
+            _ => Rgba([255, 255, 255, 255]),
+        });
+        let o = opts();
+        let g = apply(Effect::Grayscale, &img, &o);
+        for p in g.pixels() {
+            assert!(p.0[0] == p.0[1] && p.0[1] == p.0[2]);
+        }
+        assert_eq!(g.get_pixel(0, 0).0, [76, 76, 76, 255]);
+        assert_eq!(g.get_pixel(1, 0).0[3], 128, "alpha is kept");
+        let inv = apply(Effect::Invert, &img, &o);
+        assert_eq!(inv.get_pixel(0, 0).0, [0, 255, 255, 255]);
+        assert_eq!(apply(Effect::Invert, &inv, &o), img);
+        let sep = apply(Effect::Sepia, &img, &o);
+        assert_eq!(sep.get_pixel(2, 0).0, [255, 255, 238, 255], "white is clamped, not wrapped");
+    }
+
+    #[test]
+    fn adjust_colours() {
+        let img = gradient(8, 8);
+        let same = adjust(&img, 0, 0, 0);
+        for (a, b) in same.pixels().zip(img.pixels()) {
+            for i in 0..4 {
+                assert!((a.0[i] as i16 - b.0[i] as i16).abs() <= 1);
+            }
+        }
+        let grey = adjust(&img, 0, 0, -100);
+        for p in grey.pixels() {
+            assert!((p.0[0] as i16 - p.0[1] as i16).abs() <= 1 && (p.0[1] as i16 - p.0[2] as i16).abs() <= 1);
+        }
+        let mid = solid(1, 1, [100, 100, 100, 255]);
+        assert!(adjust(&mid, 50, 0, 0).get_pixel(0, 0).0[0] > 150);
+        assert!(adjust(&mid, -50, 0, 0).get_pixel(0, 0).0[0] < 50);
+        // More contrast pushes values away from the middle.
+        let dark = solid(1, 1, [100, 100, 100, 255]);
+        assert!(adjust(&dark, 0, 50, 0).get_pixel(0, 0).0[0] < 100);
+        // Out-of-range settings are clamped, not wrapped.
+        assert_eq!(adjust(&mid, 1000, 0, 0), adjust(&mid, 100, 0, 0));
+    }
+
+    #[test]
+    fn soften_and_sharpen_keep_a_flat_picture() {
+        let img = solid(10, 10, [80, 90, 100, 255]);
+        let o = opts();
+        for (a, b) in apply(Effect::Soften, &img, &o).pixels().zip(img.pixels()) {
+            assert!((0..4).all(|i| (a.0[i] as i16 - b.0[i] as i16).abs() <= 1));
+        }
+        assert_eq!(apply(Effect::Sharpen, &img, &o), img);
+        let g = gradient(10, 10);
+        assert_eq!(apply(Effect::Soften, &g, &o).dimensions(), (10, 10));
+        assert!(differs(&apply(Effect::Soften, &g, &o), &g) > 0);
+    }
+
+    #[test]
+    fn tilt_shrinks_the_left_edge() {
+        let img = solid(40, 40, [5, 6, 7, 255]);
+        let out = tilt(&img, 30);
+        assert_eq!(out.dimensions(), (40, 40));
+        // The left column is shorter: its top and bottom are empty.
+        assert_eq!(out.get_pixel(0, 0).0[3], 0);
+        assert_eq!(out.get_pixel(0, 39).0[3], 0);
+        assert_eq!(out.get_pixel(0, 20).0, [5, 6, 7, 255]);
+        // The right column keeps its full height.
+        assert_eq!(out.get_pixel(39, 0).0, [5, 6, 7, 255]);
+        assert_eq!(out.get_pixel(39, 39).0, [5, 6, 7, 255]);
+        // One-pixel-wide pictures don't divide by zero.
+        assert_eq!(tilt(&solid(1, 5, [1, 1, 1, 255]), 30).dimensions(), (1, 5));
+    }
+
+    #[test]
+    fn watermark_and_capture_info_draw_text() {
+        let img = solid(300, 200, [40, 40, 40, 255]);
+        let wm = watermark(&img, "");
+        assert_eq!(wm.dimensions(), img.dimensions());
+        assert!(differs(&wm, &img) > 0, "the default text is drawn");
+        // Only the bottom-right corner is touched.
+        assert_eq!(wm.get_pixel(5, 5), img.get_pixel(5, 5));
+        let info = capture_info(&img, "Hello");
+        let strip = (13.0f32 * 2.0) as u32; // 300 * 0.018 < 13, so the smallest size
+        assert_eq!(info.dimensions(), (300, 200 + strip));
+        assert_eq!(info.get_pixel(299, 200 + strip - 1).0, [32, 34, 42, 255]);
+        assert_eq!(info.get_pixel(10, 10), img.get_pixel(10, 10));
+        let blank_strip = RgbaImage::from_pixel(300, strip, Rgba([32, 34, 42, 255]));
+        let drawn = imageops::crop_imm(&info, 0, 200, 300, strip).to_image();
+        assert!(differs(&drawn, &blank_strip) > 0, "the caption is drawn in the strip");
+    }
+
+    #[test]
+    fn combine_side_by_side_and_stacked() {
+        let a = solid(10, 5, [255, 0, 0, 255]);
+        let b = solid(4, 8, [0, 0, 255, 255]);
+        assert!(combine(&[], false, 4).is_none());
+        let h = combine(&[a.clone(), b.clone()], false, 2).unwrap();
+        assert_eq!(h.dimensions(), (16, 8));
+        assert_eq!(h.get_pixel(0, 0).0, [255, 0, 0, 255]);
+        assert_eq!(h.get_pixel(11, 0).0, [255, 255, 255, 255], "the gap is white");
+        assert_eq!(h.get_pixel(12, 7).0, [0, 0, 255, 255]);
+        assert_eq!(h.get_pixel(0, 7).0, [255, 255, 255, 255]);
+        let v = combine(&[a, b], true, 3).unwrap();
+        assert_eq!(v.dimensions(), (10, 16));
+        assert_eq!(v.get_pixel(0, 9).0, [0, 0, 255, 255]);
+        assert_eq!(v.get_pixel(0, 6).0, [255, 255, 255, 255]);
+    }
+
+    #[test]
+    fn guide_page_layout() {
+        assert!(guide_page("T", &[], 800).is_none());
+        let items = vec![("First".to_string(), solid(100, 50, [255, 0, 0, 255])), ("Second".to_string(), solid(2000, 100, [0, 255, 0, 255]))];
+        let page = guide_page("Guide", &items, 100).unwrap();
+        assert_eq!(page.width(), 400, "width is clamped to at least 400");
+        // The wide picture is shrunk to the inner width (400 - 2*48 = 304), keeping its shape.
+        let inner = 304u32;
+        let second_h = (100.0f32 * inner as f32 / 2000.0).round() as u32;
+        let expected = 48 + 64 + 16 + (38 + 50 + 36) + (38 + second_h + 36) + 48;
+        assert_eq!(page.height(), expected);
+        assert_eq!(page.get_pixel(399, page.height() - 1).0, [255, 255, 255, 255]);
+        // The first picture sits at the left margin under its caption.
+        let y = 48 + 64 + 16 + 38;
+        assert_eq!(page.get_pixel(48 + 10, y + 10).0, [255, 0, 0, 255]);
+    }
+
+    #[test]
+    fn trim_removes_flat_edges() {
+        let mut img = solid(20, 10, [255, 255, 255, 255]);
+        for y in 3..6 {
+            for x in 5..9 {
+                img.put_pixel(x, y, Rgba([0, 0, 0, 255]));
+            }
+        }
+        let t = trim(&img);
+        assert_eq!(t.dimensions(), (4, 3));
+        assert!(t.pixels().all(|p| p.0 == [0, 0, 0, 255]));
+        // Nearly the same colour counts as flat.
+        img.put_pixel(19, 9, Rgba([250, 250, 250, 255]));
+        assert_eq!(trim(&img).dimensions(), (4, 3));
+        // Tiny pictures and pictures with no flat edge stay as they are.
+        assert_eq!(trim(&solid(2, 2, [0, 0, 0, 255])).dimensions(), (2, 2));
+        let g = gradient(8, 8);
+        assert_eq!(trim(&g), g);
+        assert_eq!(trim(&solid(6, 6, [1, 1, 1, 255])).dimensions(), (1, 1));
+    }
+
+    #[test]
+    fn canvas_centres_the_picture() {
+        let img = solid(4, 2, [255, 0, 0, 255]);
+        let big = canvas(&img, 10, 6, [0, 0, 0, 0]);
+        assert_eq!(big.dimensions(), (10, 6));
+        assert_eq!(big.get_pixel(3, 2).0, [255, 0, 0, 255]);
+        assert_eq!(big.get_pixel(2, 2).0, [0, 0, 0, 0]);
+        assert_eq!(big.get_pixel(6, 3).0, [255, 0, 0, 255]);
+        assert_eq!(big.get_pixel(7, 3).0, [0, 0, 0, 0]);
+        let small = canvas(&gradient(10, 10), 4, 4, [0, 0, 0, 255]);
+        assert_eq!(small.get_pixel(0, 0), gradient(10, 10).get_pixel(3, 3));
+        assert_eq!(canvas(&img, 0, 0, [0; 4]).dimensions(), (1, 1));
+    }
+
+    #[test]
+    fn resize_exact_clamps() {
+        let img = gradient(10, 10);
+        assert_eq!(resize_exact(&img, 3, 7).dimensions(), (3, 7));
+        assert_eq!(resize_exact(&img, 0, 0).dimensions(), (1, 1));
+    }
+
+    #[test]
+    fn grid_layout() {
+        assert!(grid(&[], 2, 4, &[]).is_none());
+        let imgs = vec![solid(10, 10, [255, 0, 0, 255]), solid(10, 10, [0, 255, 0, 255]), solid(10, 10, [0, 0, 255, 255])];
+        let g = grid(&imgs, 2, 4, &[]).unwrap();
+        // 2 columns, 2 rows of 10x10 cells with 4-pixel gaps.
+        assert_eq!(g.dimensions(), (2 * 10 + 3 * 4, 2 * 10 + 3 * 4));
+        assert_eq!(g.get_pixel(4, 4).0, [255, 0, 0, 255]);
+        assert_eq!(g.get_pixel(18, 4).0, [0, 255, 0, 255]);
+        assert_eq!(g.get_pixel(4, 18).0, [0, 0, 255, 255]);
+        assert_eq!(g.get_pixel(18, 18).0, [255, 255, 255, 255], "empty cell");
+        // More columns than pictures collapses to one row.
+        assert_eq!(grid(&imgs, 10, 0, &[]).unwrap().dimensions(), (30, 10));
+        // Labels add a 44-pixel band above each row.
+        let labelled = grid(&imgs, 3, 0, &["a", "b", "c"]).unwrap();
+        assert_eq!(labelled.dimensions(), (30, 54));
+        assert_eq!(labelled.get_pixel(5, 50).0, [255, 0, 0, 255]);
+    }
+}

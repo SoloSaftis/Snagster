@@ -107,3 +107,55 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
     }));
     Ok(Tray { _icon: tray })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_menu_action_id_reads_back() {
+        // The ids `create` gives the menu items must parse to the same action.
+        for a in ACTIONS {
+            assert_eq!(parse(&format!("a:{a:?}")), Some(TrayCmd::Action(a)));
+        }
+        for a in Action::ALL {
+            assert_eq!(parse(&format!("a:{a:?}")), Some(TrayCmd::Action(a)));
+        }
+    }
+
+    #[test]
+    fn menu_actions_are_real_and_listed_once() {
+        for (i, a) in ACTIONS.iter().enumerate() {
+            assert!(Action::ALL.contains(a), "{a:?}");
+            assert!(!ACTIONS[i + 1..].contains(a), "{a:?} twice");
+        }
+    }
+
+    #[test]
+    fn preset_ids_read_back() {
+        assert_eq!(parse("p:0"), Some(TrayCmd::Preset(0)));
+        assert_eq!(parse("p:12"), Some(TrayCmd::Preset(12)));
+        assert_eq!(parse("p:"), None);
+        assert_eq!(parse("p:-1"), None);
+        assert_eq!(parse("p:two"), None);
+    }
+
+    #[test]
+    fn fixed_items_read_back() {
+        assert_eq!(parse("panel"), Some(TrayCmd::Panel));
+        assert_eq!(parse("editor"), Some(TrayCmd::Editor));
+        assert_eq!(parse("library"), Some(TrayCmd::Library));
+        assert_eq!(parse("settings"), Some(TrayCmd::Settings));
+        assert_eq!(parse("quit"), Some(TrayCmd::Quit));
+    }
+
+    #[test]
+    fn unknown_ids_are_ignored() {
+        assert_eq!(parse(""), None);
+        assert_eq!(parse("Quit"), None);
+        assert_eq!(parse("a:"), None);
+        assert_eq!(parse("a:NoSuchAction"), None);
+        assert_eq!(parse("a:area"), None);
+        assert_eq!(parse("x:1"), None);
+    }
+}

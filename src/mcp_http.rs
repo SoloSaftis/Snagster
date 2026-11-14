@@ -397,4 +397,336 @@ mod tests {
         assert!(!origin_ok("https://evil.example"));
         assert_eq!(percent_decode("a%20b+c"), "a b c");
     }
+
+    // ---- pure helpers ----
+
+    #[test]
+    fn percent_decoding_handles_odd_input() {
+        assert_eq!(percent_decode(""), "");
+        assert_eq!(percent_decode("plain"), "plain");
+        assert_eq!(percent_decode("%41%62"), "Ab");
+        assert_eq!(percent_decode("caf%C3%A9"), "café", "UTF-8 bytes join up");
+        assert_eq!(percent_decode("100%"), "100%", "a lone % at the end stays");
+        assert_eq!(percent_decode("a%2"), "a%2", "too short to be an escape");
+        assert_eq!(percent_decode("%zz"), "%zz", "not hex");
+        assert_eq!(percent_decode("%2B"), "+", "an escaped plus is a plus, not a space");
+        assert_eq!(percent_decode("%FF"), "\u{FFFD}", "bad UTF-8 is replaced, not a panic");
+        assert_eq!(percent_decode("%e2%82%ac"), "€", "lower-case hex");
+    }
+
+    #[test]
+    fn only_this_computers_names_are_local() {
+        for ok in ["127.0.0.1", "127.0.0.1:1", "LOCALHOST:45831", "localhost", "[::1]", "[::1]:45831", ""] {
+            assert!(local_host(ok), "{ok}");
+        }
+        for bad in ["127.0.0.2", "0.0.0.0", "localhost.evil.example", "evil.localhost", "[::2]:80", "192.168.1.5:45831", "127.0.0.1.nip.io"] {
+            assert!(!local_host(bad), "{bad}");
+        }
+    }
+
+    #[test]
+    fn only_local_web_pages_may_call() {
+        for ok in ["null", "http://127.0.0.1:5173", "https://localhost", "http://[::1]:3000/app", "http://localhost:8080/some/page"] {
+            assert!(origin_ok(ok), "{ok}");
+        }
+        for bad in ["http://evil.example", "https://localhost.evil.example", "http://127.0.0.1@evil.example", "http://10.0.0.1:45831"] {
+            assert!(!origin_ok(bad), "{bad}");
+        }
+    }
+
+    fn request(headers: &[(&str, &str)]) -> Request {
+        Request {
+            method: "GET".into(),
+            path: "/".into(),
+            query: HashMap::new(),
+            headers: headers.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect(),
+            body: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn cors_headers_only_for_web_pages() {
+        assert!(cors(&request(&[])).is_empty());
+        let h = cors(&request(&[("origin", "http://localhost:3000")]));
+        let get = |k: &str| h.iter().find(|(n, _)| *n == k).map(|(_, v)| v.clone());
+        assert_eq!(get("Access-Control-Allow-Origin").as_deref(), Some("http://localhost:3000"));
+        assert!(get("Access-Control-Allow-Headers").unwrap().contains("Mcp-Session-Id"));
+        assert!(get("Access-Control-Allow-Methods").unwrap().contains("DELETE"));
+        assert_eq!(get("Access-Control-Expose-Headers").as_deref(), Some("Mcp-Session-Id"));
+        assert_eq!(get("Vary").as_deref(), Some("Origin"));
+    }
+
+    #[test]
+    fn session_ids_are_long_hex_and_differ() {
+        let ids: Vec<String> = (0..20).map(|_| new_id()).collect();
+        for id in &ids {
+            assert_eq!(id.len(), 32);
+            assert!(id.chars().all(|c| c.is_ascii_hexdigit()), "{id}");
+        }
+        let mut uniq = ids.clone();
+        uniq.sort();
+        uniq.dedup();
+        assert_eq!(uniq.len(), ids.len());
+    }
+
+    #[test]
+    fn sessions_are_kept_found_and_forgotten() {
+        let st = State::default();
+        assert!(st.session("nope").is_none());
+        let (id, s) = st.create();
+        assert!(Arc::ptr_eq(&st.session(&id).unwrap(), &s));
+        st.sessions.lock().unwrap().remove(&id);
+        assert!(st.session(&id).is_none());
+    }
+
+    // ---- reading requests over a loopback socket (127.0.0.1, no outside network) ----
+
+    /// Send `raw` from one end of a fresh 127.0.0.1 connection and parse it at the other.
+    fn parse_raw(raw: &[u8]) -> Result<Option<Request>, String> {
+        let l = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let port = l.local_addr().unwrap().port();
+        let raw = raw.to_vec();
+        let client = std::thread::spawn(move || {
+            let mut c = TcpStream::connect(("127.0.0.1", port)).unwrap();
+            let _ = c.write_all(&raw);
+            let _ = c.shutdown(std::net::Shutdown::Write);
+            // Keep the socket until the server side has read.
+            std::thread::sleep(Duration::from_millis(200));
+        });
+        let (mut s, _) = l.accept().unwrap();
+        let r = read_request(&mut s);
+        // Close first: a client still writing (oversized headers) then stops instead of waiting.
+        drop(s);
+        let _ = client.join();
+        r
+    }
+
+    #[test]
+    fn a_request_is_split_into_method_path_query_headers_and_body() {
+        let raw = b"post /messages?sessionId=ab%20c&x=1&flag HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nX-Spaced :  v a l  \r\nContent-Length: 5\r\n\r\nhelloEXTRA";
+        let r = parse_raw(raw).unwrap().unwrap();
+        assert_eq!(r.method, "POST", "upper-cased");
+        assert_eq!(r.path, "/messages");
+        assert_eq!(r.query.get("sessionId").map(String::as_str), Some("ab c"));
+        assert_eq!(r.query.get("x").map(String::as_str), Some("1"));
+        assert!(!r.query.contains_key("flag"), "a key without = is skipped");
+        assert_eq!(r.headers.get("content-type").map(String::as_str), Some("application/json"), "names are lower-cased");
+        assert_eq!(r.headers.get("x-spaced").map(String::as_str), Some("v a l"));
+        assert_eq!(r.body, b"hello", "only Content-Length bytes are read");
+    }
+
+    #[test]
+    fn requests_with_bare_newlines_and_no_body_parse() {
+        let r = parse_raw(b"GET /health HTTP/1.1\nHost: localhost\n\n").unwrap().unwrap();
+        assert_eq!((r.method.as_str(), r.path.as_str()), ("GET", "/health"));
+        assert!(r.body.is_empty() && r.query.is_empty());
+        assert_eq!(r.headers.get("host").map(String::as_str), Some("localhost"));
+    }
+
+    #[test]
+    fn empty_oversized_and_short_requests() {
+        assert!(parse_raw(b"").unwrap().is_none(), "a closed connection is no request");
+        let big = format!("POST /mcp HTTP/1.1\r\nContent-Length: {}\r\n\r\n", MAX_BODY + 1);
+        assert_eq!(parse_raw(big.as_bytes()).err().as_deref(), Some("body too large"));
+        let mut huge = b"GET / HTTP/1.1\r\n".to_vec();
+        for i in 0..2000 {
+            huge.extend_from_slice(format!("X-Filler-{i}: {}\r\n", "y".repeat(40)).as_bytes());
+        }
+        huge.extend_from_slice(b"\r\n");
+        assert_eq!(parse_raw(&huge).err().as_deref(), Some("headers too large"));
+        assert!(parse_raw(b"POST /mcp HTTP/1.1\r\nContent-Length: 50\r\n\r\nshort").is_err(), "the body ended early");
+        // A junk Content-Length reads as no body.
+        let r = parse_raw(b"POST /mcp HTTP/1.1\r\nContent-Length: lots\r\n\r\n").unwrap().unwrap();
+        assert!(r.body.is_empty());
+    }
+
+    // ---- the whole server on 127.0.0.1 with a free port ----
+
+    struct Reply {
+        status: u16,
+        headers: HashMap<String, String>,
+        body: String,
+    }
+
+    impl Reply {
+        fn header(&self, k: &str) -> Option<&str> {
+            self.headers.get(&k.to_ascii_lowercase()).map(String::as_str)
+        }
+    }
+
+    fn split_reply(raw: &str) -> Reply {
+        let (head, body) = raw.split_once("\r\n\r\n").unwrap_or((raw, ""));
+        let mut lines = head.lines();
+        let status = lines.next().and_then(|l| l.split_whitespace().nth(1)).and_then(|s| s.parse().ok()).unwrap_or(0);
+        let headers = lines.filter_map(|l| l.split_once(':')).map(|(k, v)| (k.trim().to_ascii_lowercase(), v.trim().to_string())).collect();
+        Reply { status, headers, body: body.to_string() }
+    }
+
+    /// One HTTP exchange: `head` lines (without Content-Length) and a body.
+    fn http(port: u16, method: &str, target: &str, headers: &[(&str, &str)], body: &str) -> Reply {
+        let mut c = TcpStream::connect(("127.0.0.1", port)).unwrap();
+        c.set_read_timeout(Some(Duration::from_secs(20))).unwrap();
+        let mut req = format!("{method} {target} HTTP/1.1\r\n");
+        if !headers.iter().any(|(k, _)| k.eq_ignore_ascii_case("host")) {
+            req.push_str(&format!("Host: 127.0.0.1:{port}\r\n"));
+        }
+        for (k, v) in headers {
+            req.push_str(&format!("{k}: {v}\r\n"));
+        }
+        req.push_str(&format!("Content-Length: {}\r\n\r\n{body}", body.len()));
+        c.write_all(req.as_bytes()).unwrap();
+        let mut out = String::new();
+        let _ = c.read_to_string(&mut out);
+        split_reply(&out)
+    }
+
+    const INIT: &str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}"#;
+    const PING: &str = r#"{"jsonrpc":"2.0","id":2,"method":"ping"}"#;
+
+    #[test]
+    fn health_and_unknown_paths() {
+        let srv = start(0, "").unwrap();
+        assert!(srv.port > 0);
+        assert_eq!(srv.url(), format!("http://127.0.0.1:{}/mcp", srv.port));
+        let r = http(srv.port, "GET", "/health", &[], "");
+        assert_eq!(r.status, 200);
+        assert_eq!(r.header("content-type"), Some("application/json"));
+        assert_eq!(r.header("cache-control"), Some("no-store"));
+        let v: serde_json::Value = serde_json::from_str(&r.body).unwrap();
+        assert_eq!(v["name"], "snagster");
+        assert_eq!(v["tools"], crate::mcp::tool_names().len());
+        assert_eq!(v["mcp"], srv.url());
+        assert_eq!(http(srv.port, "GET", "/", &[], "").status, 200);
+        assert_eq!(http(srv.port, "GET", "/elsewhere", &[], "").status, 404);
+        let r = http(srv.port, "GET", "/mcp", &[], "");
+        assert_eq!(r.status, 405);
+        assert_eq!(r.header("allow"), Some("POST, DELETE"));
+    }
+
+    #[test]
+    fn other_hosts_and_sites_are_refused() {
+        let srv = start(0, "").unwrap();
+        assert_eq!(http(srv.port, "GET", "/health", &[("Host", "evil.example")], "").status, 403);
+        assert_eq!(http(srv.port, "POST", "/mcp", &[("Origin", "https://evil.example")], INIT).status, 403);
+        let r = http(srv.port, "OPTIONS", "/mcp", &[("Origin", "http://localhost:3000")], "");
+        assert_eq!(r.status, 204);
+        assert_eq!(r.header("access-control-allow-origin"), Some("http://localhost:3000"));
+    }
+
+    #[test]
+    fn a_token_is_required_when_set() {
+        let srv = start(0, "  s3cret ").unwrap();
+        let r = http(srv.port, "GET", "/health", &[], "");
+        assert_eq!(r.status, 401);
+        assert_eq!(r.header("www-authenticate"), Some("Bearer"));
+        assert_eq!(http(srv.port, "GET", "/health", &[("Authorization", "Bearer wrong")], "").status, 401);
+        assert_eq!(http(srv.port, "GET", "/health", &[("Authorization", "Bearer s3cret")], "").status, 200, "the token is trimmed");
+        assert_eq!(http(srv.port, "GET", "/health", &[("Authorization", "bearer  s3cret ")], "").status, 200);
+        assert_eq!(http(srv.port, "GET", "/health?token=s3cret", &[], "").status, 200);
+        assert_eq!(http(srv.port, "GET", "/health", &[("Authorization", "Basic s3cret")], "").status, 401);
+        // Preflight requests carry no token and still get through.
+        assert_eq!(http(srv.port, "OPTIONS", "/mcp", &[("Origin", "http://localhost")], "").status, 204);
+    }
+
+    #[test]
+    fn streamable_http_keeps_a_session() {
+        let srv = start(0, "").unwrap();
+        let p = srv.port;
+        let r = http(p, "POST", "/mcp", &[("Content-Type", "application/json"), ("Accept", "application/json, text/event-stream")], INIT);
+        assert_eq!(r.status, 200, "{}", r.body);
+        assert_eq!(r.header("content-type"), Some("application/json"));
+        let sid = r.header("mcp-session-id").expect("a session id").to_string();
+        let v: serde_json::Value = serde_json::from_str(&r.body).unwrap();
+        assert_eq!(v["result"]["protocolVersion"], "2025-06-18");
+
+        let r = http(p, "POST", "/mcp", &[("Mcp-Session-Id", &sid)], PING);
+        assert_eq!(r.status, 200);
+        assert_eq!(r.header("mcp-session-id"), Some(sid.as_str()));
+        // A notification gets 202 and no body.
+        let r = http(p, "POST", "/mcp", &[("Mcp-Session-Id", &sid)], r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#);
+        assert_eq!(r.status, 202);
+        assert!(r.body.is_empty());
+        // Clients asking only for an event stream get the answer framed as one event.
+        let r = http(p, "POST", "/mcp", &[("Mcp-Session-Id", &sid), ("Accept", "text/event-stream")], PING);
+        assert_eq!(r.header("content-type"), Some("text/event-stream"));
+        assert!(r.body.starts_with("event: message\ndata: {") && r.body.ends_with("}\n\n"), "{:?}", r.body);
+
+        // Unknown sessions must initialize again; an initialize with a stale id starts afresh.
+        assert_eq!(http(p, "POST", "/mcp", &[("Mcp-Session-Id", "feedface")], PING).status, 404);
+        let r = http(p, "POST", "/mcp", &[("Mcp-Session-Id", "feedface")], INIT);
+        assert_eq!(r.status, 200);
+        assert_ne!(r.header("mcp-session-id"), Some("feedface"));
+
+        // DELETE ends the session.
+        assert_eq!(http(p, "DELETE", "/mcp", &[("Mcp-Session-Id", &sid)], "").status, 200);
+        assert_eq!(http(p, "POST", "/mcp", &[("Mcp-Session-Id", &sid)], PING).status, 404);
+    }
+
+    #[test]
+    fn sessions_keep_their_own_pictures() {
+        let srv = start(0, "").unwrap();
+        let p = srv.port;
+        let a = http(p, "POST", "/mcp", &[], INIT).header("mcp-session-id").unwrap().to_string();
+        let b = http(p, "POST", "/mcp", &[], INIT).header("mcp-session-id").unwrap().to_string();
+        assert_ne!(a, b);
+        let list = r#"{"jsonrpc":"2.0","id":3,"method":"resources/list"}"#;
+        let count = |sid: &str| {
+            let r = http(p, "POST", "/mcp", &[("Mcp-Session-Id", sid)], list);
+            let v: serde_json::Value = serde_json::from_str(&r.body).unwrap();
+            v["result"]["resources"].as_array().unwrap().len()
+        };
+        let dir = std::env::temp_dir().join(format!("snagster-http-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let img = dir.join("p.png");
+        image::RgbaImage::new(8, 8).save(&img).unwrap();
+        let open = serde_json::json!({"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "open_image", "arguments": {"path": img}}}).to_string();
+        let r = http(p, "POST", "/mcp", &[("Mcp-Session-Id", &a)], &open);
+        assert!(r.body.contains("\"isError\":false"), "{}", r.body);
+        assert_eq!(count(&a), 3, "a has a current picture");
+        assert_eq!(count(&b), 2, "b does not");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn the_older_sse_transport_answers_on_the_stream() {
+        let srv = start(0, "").unwrap();
+        let p = srv.port;
+        let mut sse = TcpStream::connect(("127.0.0.1", p)).unwrap();
+        sse.set_read_timeout(Some(Duration::from_secs(20))).unwrap();
+        sse.write_all(format!("GET /sse HTTP/1.1\r\nHost: 127.0.0.1:{p}\r\nAccept: text/event-stream\r\n\r\n").as_bytes()).unwrap();
+        let mut reader = BufReader::new(sse.try_clone().unwrap());
+        // Read lines until the endpoint event's data line.
+        let mut status = String::new();
+        reader.read_line(&mut status).unwrap();
+        assert!(status.starts_with("HTTP/1.1 200"), "{status}");
+        let mut saw_type = false;
+        // The data line of the next event, noting the stream's content type on the way.
+        let mut next_data = |saw_type: &mut bool| loop {
+            let mut l = String::new();
+            assert!(reader.read_line(&mut l).unwrap() > 0, "the stream ended early");
+            if l.to_ascii_lowercase().starts_with("content-type: text/event-stream") {
+                *saw_type = true;
+            }
+            if let Some(d) = l.strip_prefix("data: ") {
+                break d.trim().to_string();
+            }
+        };
+        let endpoint = next_data(&mut saw_type);
+        assert!(saw_type);
+        assert!(endpoint.starts_with("/messages?sessionId="), "{endpoint}");
+
+        let r = http(p, "POST", &endpoint, &[], PING);
+        assert_eq!(r.status, 202);
+        // The answer arrives as a message event.
+        let event = next_data(&mut saw_type);
+        let v: serde_json::Value = serde_json::from_str(&event).unwrap();
+        assert_eq!(v["id"], 2);
+        assert_eq!(v["result"], serde_json::json!({}));
+
+        assert_eq!(http(p, "POST", "/messages?sessionId=nope", &[], PING).status, 404);
+        let id = endpoint.split('=').nth(1).unwrap().to_string();
+        assert_eq!(http(p, "POST", &format!("/message?session_id={id}"), &[], PING).status, 202, "the other spelling works too");
+        drop(reader);
+        drop(sse);
+    }
 }

@@ -1,7 +1,7 @@
 //! The rest of Snagster's commands as MCP tools: more ways to capture, editing, guides,
 //! the library, settings, languages, updates, sound devices, Studio scenes and recordings.
 
-use super::{Outcome, Tool, Workspace, num, obj, preview, rect_arg, text};
+use super::{Outcome, Tool, Workspace, index_arg, num, obj, preview, rect_arg, text};
 use crate::capture::{self, CaptureKind};
 use crate::doc::Doc;
 use crate::{effects, export, library, ocr, render};
@@ -154,7 +154,10 @@ fn settings() -> crate::settings::Settings {
 }
 
 fn scene_index(a: &Value, st: &crate::studio::StudioSettings) -> Result<usize, String> {
-    let i = num(a, "scene").map(|v| v as usize).unwrap_or(st.current);
+    let i = match num(a, "scene") {
+        Some(_) => index_arg(a, "scene")?,
+        None => st.current,
+    };
     if i >= st.scenes.len() {
         return Err(format!("there is no scene {i} (see studio_scenes)"));
     }
@@ -420,7 +423,7 @@ impl Workspace {
             "studio_remove_source" => {
                 let mut s = settings();
                 let si = scene_index(a, &s.studio)?;
-                let i = super::need(a, "index")? as usize;
+                let i = index_arg(a, "index")?;
                 if i >= s.studio.scenes[si].items.len() {
                     return Err(format!("scene {si} has no source {i}"));
                 }
@@ -474,5 +477,249 @@ impl Workspace {
         let d = self.doc.as_ref()?;
         let p = preview(d, 4096).ok()?;
         Some((self.name.clone(), p))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_dir(tag: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("snagster-mcp-more-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    fn png(dir: &Path, name: &str, w: u32, h: u32, c: [u8; 4]) -> PathBuf {
+        let p = dir.join(name);
+        image::RgbaImage::from_pixel(w, h, image::Rgba(c)).save(&p).unwrap();
+        p
+    }
+
+    fn ws_with(img: image::RgbaImage) -> Workspace {
+        let mut ws = Workspace::default();
+        ws.set(Doc::new(img), "test").unwrap();
+        ws
+    }
+
+    fn size(ws: &Workspace) -> (u32, u32) {
+        ws.doc.as_ref().unwrap().image.dimensions()
+    }
+
+    #[test]
+    fn colours_with_alpha_parse() {
+        let d = [1, 2, 3, 4];
+        assert_eq!(color4(None, d), d);
+        assert_eq!(color4(Some("#102030"), d), [0x10, 0x20, 0x30, 255]);
+        assert_eq!(color4(Some("102030"), d), [0x10, 0x20, 0x30, 255], "the # is optional");
+        assert_eq!(color4(Some(" #10203080 "), d), [0x10, 0x20, 0x30, 0x80]);
+        assert_eq!(color4(Some("#zz2030"), d), [255, 0x20, 0x30, 255], "a bad pair reads as ff");
+        assert_eq!(color4(Some("white"), d), [255, 255, 255, 255]);
+        assert_eq!(color4(Some("blue"), d), [0, 144, 255, 255]);
+        assert_eq!(color4(Some("#abc"), d), [229, 72, 77, 255], "anything else is the default red");
+    }
+
+    #[test]
+    fn scenes_are_picked_by_number_or_the_current_one() {
+        let mut st = crate::studio::StudioSettings::default();
+        st.scenes.push(crate::studio::Scene { name: "Two".into(), items: Vec::new() });
+        st.current = 1;
+        assert_eq!(scene_index(&json!({}), &st), Ok(1));
+        assert_eq!(scene_index(&json!({"scene": 0}), &st), Ok(0));
+        assert_eq!(scene_index(&json!({"scene": "x"}), &st), Ok(1), "not a number: the current one");
+        assert!(scene_index(&json!({"scene": 2}), &st).unwrap_err().contains("no scene 2"));
+        st.current = 5;
+        assert!(scene_index(&json!({}), &st).is_err(), "a stale current scene is refused, not indexed");
+    }
+
+    /// Bug: scene -1 became scene 0 (`as usize` saturates).
+    #[test]
+    fn a_negative_scene_number_is_refused() {
+        let st = crate::studio::StudioSettings::default();
+        assert!(scene_index(&json!({"scene": -1}), &st).is_err());
+    }
+
+    #[test]
+    fn small_helpers() {
+        let a = json!({"s": "x", "n": 1});
+        assert_eq!(str_arg(&a, "s"), Some("x"));
+        assert_eq!(str_arg(&a, "n"), None);
+        assert_eq!(str_arg(&a, "missing"), None);
+        let t = json_text(&json!({"a": [1, 2]}));
+        assert_eq!(t["type"], "text");
+        let back: Value = serde_json::from_str(t["text"].as_str().unwrap()).unwrap();
+        assert_eq!(back, json!({"a": [1, 2]}));
+    }
+
+    #[test]
+    fn the_extra_tools_have_their_own_names() {
+        let base: Vec<&str> = super::super::base_tools().iter().map(|t| t.name).collect();
+        for t in tools() {
+            assert!(!base.contains(&t.name), "{} is defined twice", t.name);
+            assert!(!t.description.is_empty(), "{}", t.name);
+        }
+    }
+
+    #[test]
+    fn trim_cuts_flat_edges() {
+        let mut img = image::RgbaImage::from_pixel(50, 40, image::Rgba([255, 255, 255, 255]));
+        for y in 10..20 {
+            for x in 5..25 {
+                img.put_pixel(x, y, image::Rgba([0, 0, 0, 255]));
+            }
+        }
+        let mut ws = ws_with(img);
+        let t = ws.call("trim", &json!({})).unwrap();
+        let (w, h) = size(&ws);
+        assert!(w < 50 && h < 40 && w >= 20 && h >= 10, "{w} x {h}");
+        assert_eq!(t[0]["text"], format!("Trimmed to {w} x {h}."));
+        ws.call("undo", &json!({})).unwrap();
+        assert_eq!(size(&ws), (50, 40));
+    }
+
+    #[test]
+    fn the_canvas_grows_around_the_picture_in_the_given_colour() {
+        let mut ws = ws_with(image::RgbaImage::from_pixel(10, 10, image::Rgba([0, 0, 0, 255])));
+        assert!(ws.call("set_canvas", &json!({"width": 30})).is_err());
+        ws.call("set_canvas", &json!({"width": 30, "height": 20, "color": "#FF000080"})).unwrap();
+        let d = ws.doc.as_ref().unwrap();
+        assert_eq!(d.image.dimensions(), (30, 20));
+        assert_eq!(d.image.get_pixel(0, 0).0, [255, 0, 0, 0x80]);
+        assert_eq!(d.image.get_pixel(15, 10).0, [0, 0, 0, 255], "the picture is in the middle");
+        // Sizes are kept between 1 and 30000.
+        ws.call("set_canvas", &json!({"width": -5, "height": 0})).unwrap();
+        assert_eq!(size(&ws), (1, 1));
+        ws.call("set_canvas", &json!({"width": 4, "height": 4})).unwrap();
+        assert_eq!(ws.doc.as_ref().unwrap().image.get_pixel(0, 0).0, [255, 255, 255, 255], "default white");
+    }
+
+    #[test]
+    fn redo_comes_back_after_undo() {
+        let mut ws = ws_with(image::RgbaImage::new(20, 20));
+        ws.call("set_canvas", &json!({"width": 40, "height": 40})).unwrap();
+        ws.call("undo", &json!({})).unwrap();
+        assert_eq!(ws.call("redo", &json!({})).unwrap()[0]["text"], "Redone.");
+        assert_eq!(size(&ws), (40, 40));
+        assert!(ws.call("redo", &json!({})).is_err());
+        ws.call("undo", &json!({})).unwrap();
+        assert_eq!(size(&ws), (20, 20));
+    }
+
+    #[test]
+    fn combining_needs_two_pictures_that_open() {
+        let dir = temp_dir("combine");
+        let a = png(&dir, "a.png", 30, 20, [255, 0, 0, 255]);
+        let b = png(&dir, "b.png", 10, 40, [0, 255, 0, 255]);
+        let mut ws = Workspace::default();
+        assert_eq!(ws.call("combine_images", &json!({})).unwrap_err(), "give two or more picture paths");
+        assert!(ws.call("combine_images", &json!({"paths": [a]})).is_err());
+        let e = ws.call("combine_images", &json!({"paths": [a, dir.join("nope.png")]})).unwrap_err();
+        assert!(e.contains("nope.png"), "{e}");
+        ws.call("combine_images", &json!({"paths": [a, b]})).unwrap();
+        let (w, h) = size(&ws);
+        assert!(w >= 40 && h >= 40, "side by side: {w} x {h}");
+        ws.call("combine_images", &json!({"paths": [a, b], "vertical": true})).unwrap();
+        let (w, h) = size(&ws);
+        assert!(w >= 30 && h >= 60, "top to bottom: {w} x {h}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn guides_check_steps_and_format_and_save() {
+        let dir = temp_dir("guide");
+        let a = png(&dir, "a.png", 40, 30, [10, 20, 30, 255]);
+        let mut ws = Workspace::default();
+        assert_eq!(ws.call("make_guide", &json!({})).unwrap_err(), "missing path");
+        assert_eq!(ws.call("make_guide", &json!({"path": dir.join("g.pdf")})).unwrap_err(), "give steps (or include_current)");
+        assert!(ws.call("make_guide", &json!({"path": dir.join("g.pdf"), "include_current": true})).unwrap_err().contains("no current picture"));
+        assert_eq!(ws.call("make_guide", &json!({"path": dir.join("g.pdf"), "steps": [{"caption": "x"}]})).unwrap_err(), "each step needs a path");
+        let e = ws.call("make_guide", &json!({"path": dir.join("g.txt"), "steps": [{"path": a}]})).unwrap_err();
+        assert!(e.contains(".pdf, .html"), "{e}");
+        let html = dir.join("sub").join("g.html");
+        let r = ws.call("make_guide", &json!({"title": "My <guide>", "path": html, "steps": [{"path": a, "caption": "First"}, {"path": a}]})).unwrap();
+        assert!(r[0]["text"].as_str().unwrap().starts_with("Saved a 2-step guide"));
+        let page = std::fs::read_to_string(&html).unwrap();
+        assert!(page.contains("First") && page.contains("Step 2"), "captions, with a default for the second");
+        assert!(page.contains("My &lt;guide&gt;"), "the title is escaped");
+        ws.set(Doc::new(image::RgbaImage::new(16, 16)), "Now").unwrap();
+        let pdf = dir.join("g.pdf");
+        ws.call("make_guide", &json!({"path": pdf, "include_current": true})).unwrap();
+        assert!(std::fs::read(&pdf).unwrap().starts_with(b"%PDF"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn video_info_needs_a_readable_file() {
+        let dir = temp_dir("video-info");
+        let mut ws = Workspace::default();
+        assert_eq!(ws.call("video_info", &json!({})).unwrap_err(), "missing path");
+        assert!(ws.call("video_info", &json!({"path": dir.join("none.gif")})).is_err());
+        assert!(ws.call("video_info", &json!({"path": dir.join("none.mp4")})).is_err());
+        let junk = dir.join("junk.mp4");
+        std::fs::write(&junk, b"not a video").unwrap();
+        assert!(ws.call("video_info", &json!({"path": junk})).is_err());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// These refuse before anything is saved, so the person's settings are left alone.
+    #[test]
+    fn settings_tools_check_their_arguments() {
+        let mut ws = Workspace::default();
+        assert_eq!(ws.call("set_setting", &json!({})).unwrap_err(), "missing key");
+        assert_eq!(ws.call("set_setting", &json!({"key": "video_fps"})).unwrap_err(), "missing value");
+        assert!(ws.call("set_setting", &json!({"key": "no_such_setting_xyz", "value": 1})).unwrap_err().contains("no setting no_such_setting_xyz"));
+        assert!(ws.call("set_setting", &json!({"key": "video_fps", "value": "lots"})).unwrap_err().contains("doesn't fit video_fps"));
+        assert!(ws.call("get_settings", &json!({"key": "no_such_setting_xyz"})).unwrap_err().contains("no setting"));
+        assert_eq!(ws.call("set_language", &json!({})).unwrap_err(), "missing code");
+        assert!(ws.call("set_language", &json!({"code": "xx-nope"})).unwrap_err().contains("isn't one of"));
+    }
+
+    #[test]
+    fn languages_are_listed_with_names() {
+        let mut ws = Workspace::default();
+        let r = ws.call("list_languages", &json!({})).unwrap();
+        let list: Value = serde_json::from_str(r[0]["text"].as_str().unwrap()).unwrap();
+        let list = list.as_array().unwrap();
+        assert_eq!(list.len(), crate::i18n::CODES.len());
+        assert!(list.iter().all(|l| l["code"].is_string() && l["name"].is_string() && l["native"].is_string()));
+        assert!(list.iter().any(|l| l["code"] == "en"));
+    }
+
+    /// These refuse before anything is saved, so the person's Studio setup is left alone.
+    #[test]
+    fn studio_tools_check_their_arguments() {
+        let mut ws = Workspace::default();
+        let big = json!({"scene": 9999, "kind": "color"});
+        assert!(ws.call("studio_add_source", &big).unwrap_err().contains("no scene 9999"));
+        assert!(ws.call("studio_add_source", &json!({"scene": 0, "kind": "hologram"})).unwrap_err().contains("unknown kind hologram"));
+        assert!(ws.call("studio_add_source", &json!({"scene": 0})).unwrap_err().contains("unknown kind"));
+        assert_eq!(ws.call("studio_add_source", &json!({"scene": 0, "kind": "window"})).unwrap_err(), "kind window needs a title");
+        assert_eq!(ws.call("studio_add_source", &json!({"scene": 0, "kind": "picture"})).unwrap_err(), "kind picture needs a path");
+        assert_eq!(ws.call("studio_add_source", &json!({"scene": 0, "kind": "text"})).unwrap_err(), "kind text needs text");
+        assert!(ws.call("studio_add_source", &json!({"scene": 0, "kind": "area", "x": 0, "y": 0, "width": 0, "height": 5})).is_err());
+        assert!(ws.call("studio_remove_source", &json!({"scene": 0})).unwrap_err().contains("index"));
+        assert!(ws.call("studio_remove_source", &json!({"scene": 0, "index": 1_000_000})).unwrap_err().contains("has no source"));
+        assert!(ws.call("studio_remove_source", &json!({"scene": 0, "index": -1})).unwrap_err().contains("0 or more"));
+        assert!(ws.call("studio_remove_source", &json!({"scene": -1, "index": 0})).unwrap_err().contains("0 or more"));
+        assert_eq!(ws.call("studio_record", &json!({"scene": 0})).unwrap_err(), "missing seconds");
+        assert_eq!(ws.call("studio_record", &json!({"scene": 0, "seconds": 1, "format": "gif"})).unwrap_err(), "format is mp4, hevc or wmv");
+        assert!(ws.call("studio_record", &json!({"scene": 0, "seconds": 1, "audio": "loud"})).unwrap_err().contains("audio is none"));
+    }
+
+    #[test]
+    fn the_current_picture_resource_is_a_png() {
+        let ws = Workspace::default();
+        assert!(ws.current_png().is_none());
+        let ws = ws_with(image::RgbaImage::new(5, 6));
+        let (name, img) = ws.current_png().unwrap();
+        assert_eq!(name, "test");
+        assert_eq!(img["mimeType"], "image/png");
+    }
+
+    #[test]
+    fn library_add_needs_a_picture() {
+        let mut ws = Workspace::default();
+        assert!(ws.call("library_add", &json!({"title": "x"})).unwrap_err().contains("no current picture"));
     }
 }

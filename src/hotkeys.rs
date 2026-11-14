@@ -298,12 +298,14 @@ struct HookState {
     keys: Vec<(u16, bool, bool, bool, bool, u32)>,
     tx: Option<Sender<u32>>,
     wake: Option<Wake>,
+    // The key-up of a caught combination, swallowed too (only the Windows hook catches keys).
+    #[cfg(windows)]
     swallow_up: Option<u32>,
 }
 
 fn hook_state() -> &'static std::sync::Mutex<HookState> {
     static S: std::sync::OnceLock<std::sync::Mutex<HookState>> = std::sync::OnceLock::new();
-    S.get_or_init(|| std::sync::Mutex::new(HookState { keys: Vec::new(), tx: None, wake: None, swallow_up: None }))
+    S.get_or_init(|| std::sync::Mutex::new(HookState { keys: Vec::new(), tx: None, wake: None, #[cfg(windows)] swallow_up: None }))
 }
 
 /// Tell the keyboard hook which combinations to catch (starting it the first time).
@@ -378,4 +380,156 @@ unsafe extern "system" fn hook_proc(code: i32, wparam: usize, lparam: isize) -> 
         }
     }
     unsafe { CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam) }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::settings::{Binding, Preset, default_bindings};
+    use std::collections::HashSet;
+
+    fn settings_with(bindings: Vec<Binding>, presets: Vec<Preset>) -> Settings {
+        Settings { bindings, presets, ..Default::default() }
+    }
+
+    #[test]
+    fn key_names_and_codes_are_unique() {
+        let names: HashSet<&str> = KEYS.iter().map(|k| k.0).collect();
+        let codes: HashSet<Code> = KEYS.iter().map(|k| k.1).collect();
+        let vks: HashSet<u16> = KEYS.iter().map(|k| k.2).collect();
+        assert_eq!(names.len(), KEYS.len());
+        assert_eq!(codes.len(), KEYS.len());
+        assert_eq!(vks.len(), KEYS.len());
+        // Letters and digits use their ASCII value as the Windows virtual-key code.
+        for (name, _, vk) in KEYS {
+            if name.len() == 1 {
+                assert_eq!(*vk, name.as_bytes()[0] as u16, "{name}");
+            }
+        }
+    }
+
+    #[test]
+    fn every_default_binding_uses_a_known_key() {
+        for b in default_bindings() {
+            if b.combo.is_set() {
+                assert!(to_hotkey(&b.combo).is_some(), "{} isn't a known key", b.combo.key);
+            }
+        }
+    }
+
+    #[test]
+    fn combos_become_hotkeys() {
+        let hk = to_hotkey(&Combo::new(true, false, true, "F9")).unwrap();
+        assert_eq!(hk, HotKey::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::F9));
+        let hk = to_hotkey(&Combo::new(false, false, false, "Print Screen")).unwrap();
+        assert_eq!(hk, HotKey::new(None, Code::PrintScreen));
+        let all = Combo { ctrl: true, alt: true, shift: true, win: true, key: "A".into() };
+        assert_eq!(
+            to_hotkey(&all).unwrap(),
+            HotKey::new(Some(Modifiers::CONTROL | Modifiers::ALT | Modifiers::SHIFT | Modifiers::META), Code::KeyA)
+        );
+    }
+
+    #[test]
+    fn unknown_or_empty_keys_are_not_hotkeys() {
+        assert!(to_hotkey(&Combo::default()).is_none());
+        assert!(to_hotkey(&Combo::new(true, false, false, "NoSuchKey")).is_none());
+        // Names are matched exactly.
+        assert!(to_hotkey(&Combo::new(true, false, false, "f9")).is_none());
+        assert!(to_hotkey(&Combo::new(true, false, false, "PrintScreen")).is_none());
+    }
+
+    #[test]
+    fn different_combos_get_different_ids() {
+        let mut ids = HashSet::new();
+        for (name, _, _) in KEYS {
+            for (c, a, s) in [(false, false, false), (true, false, false), (false, true, false), (true, true, true)] {
+                let hk = to_hotkey(&Combo::new(c, a, s, name)).unwrap();
+                assert!(ids.insert(hk.id()), "{name} {c} {a} {s}");
+            }
+        }
+        // The same combo always gets the same id.
+        let a = to_hotkey(&Combo::new(true, false, false, "F1")).unwrap().id();
+        let b = to_hotkey(&Combo::new(true, false, false, "F1")).unwrap().id();
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn wanted_lists_set_bindings_then_presets() {
+        let s = settings_with(
+            vec![
+                Binding { action: Action::Area, combo: Combo::new(true, false, false, "A") },
+                Binding { action: Action::Window, combo: Combo::default() },
+                Binding { action: Action::Screen, combo: Combo::new(false, true, false, "S") },
+            ],
+            vec![
+                Preset { combo: Combo::default(), ..Default::default() },
+                Preset { combo: Combo::new(false, false, true, "P"), ..Default::default() },
+            ],
+        );
+        let w = wanted(&s);
+        assert_eq!(
+            w,
+            vec![
+                (Target::Action(Action::Area), Combo::new(true, false, false, "A")),
+                (Target::Action(Action::Screen), Combo::new(false, true, false, "S")),
+                (Target::Preset(1), Combo::new(false, false, true, "P")),
+            ]
+        );
+        assert!(wanted(&settings_with(Vec::new(), Vec::new())).is_empty());
+    }
+
+    #[test]
+    fn default_settings_have_no_duplicates() {
+        let s = Settings::default();
+        assert!(duplicates(&s).is_empty());
+        assert_eq!(wanted(&s).len(), default_bindings().iter().filter(|b| b.combo.is_set()).count());
+    }
+
+    #[test]
+    fn duplicates_are_reported_once() {
+        let f1 = Combo::new(true, false, false, "F1");
+        let s = settings_with(
+            vec![
+                Binding { action: Action::Area, combo: f1.clone() },
+                Binding { action: Action::Window, combo: f1.clone() },
+                Binding { action: Action::Screen, combo: Combo::new(false, false, false, "F1") },
+            ],
+            vec![Preset { combo: f1.clone(), ..Default::default() }],
+        );
+        assert_eq!(duplicates(&s), vec!["Ctrl + F1".to_string()]);
+    }
+
+    fn registered(target: Target, id: u32, ok: bool, hooked: bool) -> Registered {
+        Registered { target, combo: Combo::default(), id, ok, hooked }
+    }
+
+    #[test]
+    fn targets_are_found_only_for_working_keys() {
+        let hk = Hotkeys {
+            _manager: None,
+            list: vec![
+                registered(Target::Action(Action::Area), 1, true, false),
+                registered(Target::Action(Action::Window), 2, false, true),
+                registered(Target::Preset(0), 3, false, false),
+            ],
+            summary: String::new(),
+        };
+        assert_eq!(hk.target(1), Some(Target::Action(Action::Area)));
+        assert_eq!(hk.target(2), Some(Target::Action(Action::Window)), "taken over keys work too");
+        assert_eq!(hk.target(3), None, "a key that failed doesn't fire");
+        assert_eq!(hk.target(99), None);
+        assert_eq!(hk.status_of(Target::Action(Action::Area)), Some(true));
+        assert_eq!(hk.status_of(Target::Action(Action::Window)), Some(true));
+        assert_eq!(hk.status_of(Target::Preset(0)), Some(false));
+        assert_eq!(hk.status_of(Target::Preset(1)), None);
+    }
+
+    #[test]
+    fn none_has_only_a_summary() {
+        let hk = Hotkeys::none("Hotkeys are switched off.");
+        assert!(hk.list.is_empty());
+        assert_eq!(hk.summary, "Hotkeys are switched off.");
+        assert_eq!(hk.target(0), None);
+    }
 }

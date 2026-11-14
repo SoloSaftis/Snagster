@@ -699,9 +699,12 @@ pub fn cloud_folders() -> Vec<(String, PathBuf)> {
 }
 
 pub fn settings_path() -> Option<PathBuf> {
-    let base = std::env::var_os("APPDATA")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))?;
+    settings_path_from(std::env::var_os("APPDATA"), std::env::var_os("HOME"))
+}
+
+/// The settings file for these APPDATA and HOME values (APPDATA wins).
+fn settings_path_from(appdata: Option<std::ffi::OsString>, home: Option<std::ffi::OsString>) -> Option<PathBuf> {
+    let base = appdata.map(PathBuf::from).or_else(|| home.map(|h| PathBuf::from(h).join(".config")))?;
     Some(base.join("Snagster").join("settings.json"))
 }
 
@@ -713,18 +716,23 @@ impl Settings {
         }
         // Settings from before the rename (the "Snag" folder) are carried over.
         let old = settings_path().and_then(|p| Some(p.parent()?.parent()?.join("Snag").join("settings.json")));
-        let mut s: Settings = settings_path()
+        let text = settings_path()
             .and_then(|p| std::fs::read_to_string(p).ok())
-            .or_else(|| old.and_then(|p| std::fs::read_to_string(p).ok()))
-            .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default();
+            .or_else(|| old.and_then(|p| std::fs::read_to_string(p).ok()));
+        let mut s = Self::from_saved(text.as_deref());
+        s.move_old_folder();
+        s
+    }
+
+    /// Settings from a saved file's text (the defaults when there is none or it can't be read).
+    fn from_saved(text: Option<&str>) -> Self {
+        let mut s: Settings = text.and_then(|s| serde_json::from_str(s).ok()).unwrap_or_default();
         // Settings saved by an older Snagster may lack newer actions.
         for d in default_bindings() {
             if !s.bindings.iter().any(|b| b.action == d.action) {
                 s.bindings.push(d);
             }
         }
-        s.move_old_folder();
         s
     }
 
@@ -1012,4 +1020,313 @@ pub enum CalloutShape {
     Rounded,
     Rectangle,
     Oval,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+    use std::ffi::OsString;
+
+    /// A new, empty folder of its own under the temp folder.
+    fn temp_folder(tag: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("snagster-settings-test-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    #[test]
+    fn defaults_are_sensible() {
+        let s = Settings::default();
+        assert!(s.after_show_editor && s.after_library);
+        assert_eq!(s.format, ImageFormat::Png);
+        assert_eq!(s.jpeg_quality, 90);
+        assert_eq!(s.save_counter, 1);
+        assert_eq!(s.mcp_port, 45831);
+        assert!(!s.mcp_http, "AI apps can't connect over HTTP until the person allows it");
+        assert!(s.mcp_token.is_empty());
+        assert!(s.language.is_empty(), "the interface follows the computer by default");
+        assert_eq!(s.color, DEFAULT_PALETTE[0]);
+        assert_eq!(s.palette, DEFAULT_PALETTE);
+        assert!(s.save_folder.ends_with("Snagster"));
+        assert!(PathBuf::from(&s.library_folder).ends_with(PathBuf::from("Snagster").join("Library")));
+        assert!(s.video_folder.ends_with("Snagster"));
+        assert_eq!(s.bindings, default_bindings());
+        assert_eq!(s.presets, default_presets());
+        assert_eq!(s.themes, default_themes());
+        assert_eq!(s.quick_styles, default_quick_styles());
+        assert_eq!(s.panel, PanelSettings::default());
+        assert_eq!(s.callout_shape, CalloutShape::Rounded);
+    }
+
+    #[test]
+    fn every_action_has_exactly_one_default_binding() {
+        let b = default_bindings();
+        assert_eq!(b.len(), Action::ALL.len());
+        let actions: HashSet<Action> = b.iter().map(|b| b.action).collect();
+        assert_eq!(actions.len(), Action::ALL.len());
+        for a in Action::ALL {
+            assert!(actions.contains(&a), "{a:?} has no default binding");
+            assert!(!a.label().is_empty());
+        }
+        // No two default key combinations are the same.
+        let set: Vec<&Combo> = b.iter().map(|b| &b.combo).filter(|c| c.is_set()).collect();
+        for (i, c) in set.iter().enumerate() {
+            assert!(!set[..i].contains(c), "{} is bound twice", c.label());
+        }
+        assert_eq!(Settings::default().binding(Action::AllInOne), Combo::new(false, false, false, "Print Screen"));
+        assert!(!Settings::default().binding(Action::Area).is_set());
+    }
+
+    #[test]
+    fn binding_of_a_missing_action_is_not_set() {
+        let mut s = Settings::default();
+        s.bindings.clear();
+        assert_eq!(s.binding(Action::Screen), Combo::default());
+    }
+
+    #[test]
+    fn combo_labels() {
+        assert_eq!(Combo::default().label(), "Not set");
+        assert!(!Combo::default().is_set());
+        assert_eq!(Combo::new(false, false, false, "F9").label(), "F9");
+        assert_eq!(Combo::new(true, false, true, "F9").label(), "Ctrl + Shift + F9");
+        let all = Combo { ctrl: true, alt: true, shift: true, win: true, key: "A".into() };
+        assert_eq!(all.label(), "Ctrl + Alt + Shift + Win + A");
+        // Modifiers without a key are still "not set".
+        let mods_only = Combo { ctrl: true, alt: true, shift: false, win: false, key: String::new() };
+        assert_eq!(mods_only.label(), "Not set");
+    }
+
+    #[test]
+    fn image_formats_have_distinct_extensions_and_labels() {
+        let exts: HashSet<&str> = ImageFormat::ALL.iter().map(|f| f.ext()).collect();
+        let labels: HashSet<&str> = ImageFormat::ALL.iter().map(|f| f.label()).collect();
+        assert_eq!(exts.len(), ImageFormat::ALL.len());
+        assert_eq!(labels.len(), ImageFormat::ALL.len());
+        assert_eq!(ImageFormat::Jpeg.ext(), "jpg");
+        for f in ImageFormat::ALL {
+            assert!(f.ext().chars().all(|c| c.is_ascii_lowercase()));
+            assert_eq!(f.label().to_ascii_lowercase().replace("jpeg", "jpg"), f.ext());
+        }
+    }
+
+    #[test]
+    fn every_enum_lists_all_its_values_with_labels() {
+        fn distinct(labels: Vec<&'static str>) {
+            let set: HashSet<&str> = labels.iter().copied().collect();
+            assert_eq!(set.len(), labels.len(), "duplicate label in {labels:?}");
+            assert!(labels.iter().all(|l| !l.is_empty()));
+        }
+        distinct(PresetMode::ALL.iter().map(|m| m.label()).collect());
+        distinct(StepStyle::ALL.iter().map(|m| m.label()).collect());
+        distinct(PanelSelection::IMAGE.iter().map(|m| m.label()).collect());
+        distinct(PanelShare::ALL.iter().map(|m| m.label()).collect());
+        distinct(StartMode::ALL.iter().map(|m| m.label()).collect());
+        distinct(BlurMode::ALL.iter().map(|m| m.label()).collect());
+        for v in PanelSelection::VIDEO {
+            assert!(PanelSelection::IMAGE.contains(&v));
+        }
+    }
+
+    #[test]
+    fn step_numbers() {
+        let n = StepStyle::Numbers;
+        assert_eq!(n.format(0), "0");
+        assert_eq!(n.format(1), "1");
+        assert_eq!(n.format(42), "42");
+    }
+
+    #[test]
+    fn step_letters_run_like_spreadsheet_columns() {
+        let u = StepStyle::Upper;
+        assert_eq!(u.format(0), "A", "0 counts as the first step");
+        assert_eq!(u.format(1), "A");
+        assert_eq!(u.format(2), "B");
+        assert_eq!(u.format(26), "Z");
+        assert_eq!(u.format(27), "AA");
+        assert_eq!(u.format(52), "AZ");
+        assert_eq!(u.format(53), "BA");
+        assert_eq!(u.format(702), "ZZ");
+        assert_eq!(u.format(703), "AAA");
+        assert_eq!(StepStyle::Lower.format(28), "ab");
+    }
+
+    #[test]
+    fn step_roman_numerals() {
+        let r = StepStyle::Roman;
+        assert_eq!(r.format(1), "i");
+        assert_eq!(r.format(4), "iv");
+        assert_eq!(r.format(9), "ix");
+        assert_eq!(r.format(14), "xiv");
+        assert_eq!(r.format(40), "xl");
+        assert_eq!(r.format(90), "xc");
+        assert_eq!(r.format(400), "cd");
+        assert_eq!(r.format(1994), "mcmxciv");
+        assert_eq!(r.format(3999), "mmmcmxcix");
+        assert_eq!(r.format(0), "i", "clamped to 1");
+        assert_eq!(r.format(10_000), "mmmcmxcix", "clamped to 3999");
+    }
+
+    #[test]
+    fn settings_survive_a_save_and_load_round_trip() {
+        let mut s = Settings::default();
+        s.format = ImageFormat::Webp;
+        s.jpeg_quality = 55;
+        s.name_pattern = "shot_%n".into();
+        s.language = "de".into();
+        s.mcp_token = "secret".into();
+        s.recent_files = vec!["a.png".into(), "b.png".into()];
+        s.bindings[0].combo = Combo { ctrl: true, alt: false, shift: false, win: true, key: "Z".into() };
+        s.presets.push(Preset { name: "Mine".into(), mode: PresetMode::Heart, delay_s: 3, ..Default::default() });
+        s.panel.effect = Some(Effect::DropShadow);
+        s.step_style = StepStyle::Roman;
+        s.callout_shape = CalloutShape::Oval;
+        let text = serde_json::to_string_pretty(&s).unwrap();
+        assert_eq!(Settings::from_saved(Some(&text)), s);
+    }
+
+    #[test]
+    fn missing_or_unreadable_file_gives_defaults() {
+        assert_eq!(Settings::from_saved(None), Settings::default());
+        assert_eq!(Settings::from_saved(Some("")), Settings::default());
+        assert_eq!(Settings::from_saved(Some("{ not json")), Settings::default());
+        assert_eq!(Settings::from_saved(Some("[1, 2, 3]")), Settings::default());
+    }
+
+    #[test]
+    fn old_files_keep_what_they_have_and_get_defaults_for_the_rest() {
+        // A file from an early version: a few fields only.
+        let s = Settings::from_saved(Some(r#"{ "jpeg_quality": 70, "format": "Jpeg", "after_copy": true }"#));
+        assert_eq!(s.jpeg_quality, 70);
+        assert_eq!(s.format, ImageFormat::Jpeg);
+        assert!(s.after_copy);
+        assert_eq!(s.mcp_port, 45831);
+        assert_eq!(s.themes, default_themes());
+        assert_eq!(s.panel, PanelSettings::default());
+    }
+
+    #[test]
+    fn unknown_fields_are_ignored() {
+        let s = Settings::from_saved(Some(r#"{ "gif_fps": 15, "a_setting_from_the_future": [1, 2], "panel": { "tab": 1, "zzz": 3 } }"#));
+        assert_eq!(s.gif_fps, 15);
+        assert_eq!(s.panel.tab, 1);
+        assert_eq!(s.panel.fixed_w, 1280);
+    }
+
+    #[test]
+    fn old_files_get_bindings_for_newer_actions() {
+        let s = Settings::from_saved(Some(
+            r#"{ "bindings": [ { "action": "Screen", "combo": { "ctrl": false, "alt": true, "key": "F1" } } ] }"#,
+        ));
+        assert_eq!(s.bindings.len(), Action::ALL.len());
+        // The saved binding wins over the default one and stays first.
+        assert_eq!(s.bindings[0].action, Action::Screen);
+        assert_eq!(s.binding(Action::Screen), Combo::new(false, true, false, "F1"));
+        assert_eq!(s.binding(Action::AllInOne), Combo::new(false, false, false, "Print Screen"));
+        for a in Action::ALL {
+            assert_eq!(s.bindings.iter().filter(|b| b.action == a).count(), 1, "{a:?}");
+        }
+    }
+
+    #[test]
+    fn partial_nested_values_take_defaults() {
+        let s = Settings::from_saved(Some(r#"{ "presets": [ { "name": "Only a name" } ], "quick_styles": [ { "width": 2.5 } ] }"#));
+        assert_eq!(s.presets.len(), 1);
+        assert_eq!(s.presets[0].name, "Only a name");
+        assert_eq!(s.presets[0].mode, PresetMode::Area);
+        assert_eq!(s.presets[0].width, 1280);
+        assert!(s.presets[0].copy);
+        assert_eq!(s.quick_styles[0].width, 2.5);
+        assert_eq!(s.quick_styles[0].color, DEFAULT_PALETTE[0]);
+    }
+
+    #[test]
+    fn settings_path_prefers_appdata_then_home() {
+        let p = settings_path_from(Some(OsString::from("appdata")), Some(OsString::from("home"))).unwrap();
+        assert_eq!(p, PathBuf::from("appdata").join("Snagster").join("settings.json"));
+        let p = settings_path_from(None, Some(OsString::from("home"))).unwrap();
+        assert_eq!(p, PathBuf::from("home").join(".config").join("Snagster").join("settings.json"));
+        assert_eq!(settings_path_from(None, None), None);
+    }
+
+    #[test]
+    fn file_name_fills_in_counter_and_title() {
+        let mut s = Settings { name_pattern: "shot_%n_%t".into(), save_counter: 7, ..Default::default() };
+        assert_eq!(s.file_name("Notes"), "shot_007_Notes");
+        assert_eq!(s.save_counter, 8);
+        assert_eq!(s.file_name("Notes"), "shot_008_Notes");
+        s.name_pattern = "%n%n".into();
+        assert_eq!(s.file_name(""), "009010");
+        assert_eq!(s.save_counter, 11);
+    }
+
+    #[test]
+    fn file_name_dates_have_the_right_shape() {
+        let mut s = Settings::default();
+        let name = s.file_name("x");
+        // Snagster_YYYY-MM-DD_HH-MM-SS
+        let rest = name.strip_prefix("Snagster_").unwrap();
+        assert_eq!(rest.len(), 19, "{name}");
+        for (i, c) in rest.chars().enumerate() {
+            match i {
+                4 | 7 | 13 | 16 => assert_eq!(c, '-', "{name}"),
+                10 => assert_eq!(c, '_', "{name}"),
+                _ => assert!(c.is_ascii_digit(), "{name}"),
+            }
+        }
+        assert_eq!(s.save_counter, 1, "no %n, so the counter doesn't move");
+    }
+
+    #[test]
+    fn file_name_keeps_unknown_codes_and_cleans_bad_characters() {
+        let mut s = Settings { name_pattern: "a%qb%%c%".into(), ..Default::default() };
+        assert_eq!(s.file_name(""), "a%qb%%c%");
+        s.name_pattern = "%t".into();
+        assert_eq!(s.file_name(r#"a\b/c:d*e?f"g<h>i|j"#), "a_b_c_d_e_f_g_h_i_j");
+        assert_eq!(s.file_name(""), "Snagster", "an empty name falls back");
+        assert_eq!(s.file_name("   "), "Snagster", "a blank name falls back");
+        s.name_pattern = String::new();
+        assert_eq!(s.file_name("ignored"), "Snagster");
+    }
+
+    #[test]
+    fn unique_path_counts_up_past_existing_files() {
+        let dir = temp_folder("unique");
+        assert_eq!(unique_path(&dir, "pic", "png"), dir.join("pic.png"));
+        std::fs::write(dir.join("pic.png"), b"x").unwrap();
+        assert_eq!(unique_path(&dir, "pic", "png"), dir.join("pic (2).png"));
+        std::fs::write(dir.join("pic (2).png"), b"x").unwrap();
+        assert_eq!(unique_path(&dir, "pic", "png"), dir.join("pic (3).png"));
+        // Another extension is another name.
+        assert_eq!(unique_path(&dir, "pic", "jpg"), dir.join("pic.jpg"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn next_save_path_uses_folder_pattern_and_format() {
+        let dir = temp_folder("next");
+        let mut s = Settings {
+            save_folder: dir.to_string_lossy().to_string(),
+            name_pattern: "cap_%n".into(),
+            format: ImageFormat::Jpeg,
+            ..Default::default()
+        };
+        assert_eq!(s.next_save_path("t"), dir.join("cap_001.jpg"));
+        std::fs::write(dir.join("cap_002.jpg"), b"x").unwrap();
+        assert_eq!(s.next_save_path("t"), dir.join("cap_002 (2).jpg"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn default_themes_and_presets_have_names() {
+        let themes = default_themes();
+        assert_eq!(themes[0], Theme::default());
+        let names: HashSet<&str> = themes.iter().map(|t| t.name.as_str()).collect();
+        assert_eq!(names.len(), themes.len());
+        let presets = default_presets();
+        assert!(presets.iter().all(|p| !p.name.is_empty() && !p.combo.is_set()));
+        assert_eq!(Preset::default().mode, PresetMode::Area);
+    }
 }

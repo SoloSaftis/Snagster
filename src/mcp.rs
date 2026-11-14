@@ -220,6 +220,16 @@ fn need(a: &Value, k: &str) -> Result<f64, String> {
     num(a, k).ok_or_else(|| format!("missing number \"{k}\""))
 }
 
+/// A list position (mark, source or scene number), 0 or more. A plain `as usize` would turn
+/// -1 into 0 and act on the first one.
+fn index_arg(a: &Value, k: &str) -> Result<usize, String> {
+    let v = need(a, k)?;
+    if v < 0.0 {
+        return Err(format!("\"{k}\" must be 0 or more"));
+    }
+    Ok(v as usize)
+}
+
 fn rect_arg(a: &Value) -> Result<Rect, String> {
     let (x, y, w, h) = (need(a, "x")?, need(a, "y")?, need(a, "width")?, need(a, "height")?);
     if w <= 0.0 || h <= 0.0 {
@@ -267,7 +277,9 @@ impl Workspace {
         let (w, h) = d.image.dimensions();
         self.doc = Some(d);
         self.name = name.to_string();
+        // A new picture: undo and redo belong to the old one.
         self.undo.clear();
+        self.redo.clear();
         let p = preview(self.doc.as_ref().unwrap(), 1024)?;
         Ok(vec![text(format!("Current picture: {name}, {w} x {h} pixels.")), p])
     }
@@ -374,7 +386,7 @@ impl Workspace {
                 Ok(vec![text(if lines.is_empty() { "No marks.".into() } else { lines.join("\n") })])
             }
             "remove_mark" => {
-                let i = need(a, "index")? as usize;
+                let i = index_arg(a, "index")?;
                 self.change(|d| {
                     if i >= d.shapes.len() {
                         return Err("no mark with that number".into());
@@ -1136,5 +1148,546 @@ mod tests {
     fn colours_parse() {
         assert_eq!(parse_color(Some("#00FF00")), Color32::from_rgb(0, 255, 0));
         assert_eq!(parse_color(Some("blue")), Color32::from_rgb(0, 144, 255));
+    }
+
+    // ---- helpers ----
+
+    /// A fresh folder in the temp directory for one test.
+    fn temp_dir(tag: &str) -> std::path::PathBuf {
+        let d = std::env::temp_dir().join(format!("snagster-mcp-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    /// A workspace holding a plain `w` x `h` picture (no file, no screen).
+    fn ws_with(w: u32, h: u32) -> Workspace {
+        let mut ws = Workspace::default();
+        ws.set(Doc::new(image::RgbaImage::from_pixel(w, h, image::Rgba([200, 210, 220, 255]))), "test").unwrap();
+        ws
+    }
+
+    fn err_of(o: Outcome) -> String {
+        o.expect_err("the tool should have refused")
+    }
+
+    fn text_of(o: Outcome) -> String {
+        let items = o.expect("the tool should have worked");
+        items[0]["text"].as_str().unwrap_or_default().to_string()
+    }
+
+    fn rpc(id: Value, method: &str, params: Value) -> Value {
+        json!({"jsonrpc": "2.0", "id": id, "method": method, "params": params})
+    }
+
+    // ---- JSON-RPC ----
+
+    #[test]
+    fn initialize_reports_capabilities_server_and_instructions() {
+        let s = Session::default();
+        let r = ask(&s, rpc(json!(1), "initialize", json!({})))["result"].clone();
+        assert_eq!(r["protocolVersion"], PROTOCOL_VERSIONS[0], "no version asked: the newest");
+        assert_eq!(r["serverInfo"]["name"], "snagster");
+        assert_eq!(r["serverInfo"]["version"], env!("CARGO_PKG_VERSION"));
+        assert_eq!(r["instructions"], INSTRUCTIONS);
+        for cap in ["tools", "resources", "prompts", "completions", "logging"] {
+            assert!(r["capabilities"][cap].is_object(), "capability {cap}");
+        }
+        for v in PROTOCOL_VERSIONS {
+            let r = ask(&s, rpc(json!(2), "initialize", json!({"protocolVersion": v})));
+            assert_eq!(r["result"]["protocolVersion"], v, "a supported version is echoed");
+        }
+    }
+
+    #[test]
+    fn replies_carry_the_request_id_and_jsonrpc_version() {
+        let s = Session::default();
+        for id in [json!(7), json!("abc-1"), json!(0)] {
+            let r = ask(&s, rpc(id.clone(), "ping", json!({})));
+            assert_eq!(r["id"], id);
+            assert_eq!(r["jsonrpc"], "2.0");
+        }
+        // An error for an unknown method keeps the id too.
+        let r = ask(&s, rpc(json!("x"), "tools/nothing", json!({})));
+        assert_eq!(r["id"], "x");
+        assert_eq!(r["error"]["code"], -32601);
+        assert!(r["error"]["message"].as_str().unwrap().contains("tools/nothing"));
+    }
+
+    #[test]
+    fn requests_without_a_method_are_invalid_and_replies_are_ignored() {
+        let s = Session::default();
+        let r = ask(&s, json!({"jsonrpc": "2.0", "id": 9}));
+        assert_eq!(r["error"]["code"], -32600);
+        assert_eq!(r["id"], 9);
+        // A client's answer to something (result or error) needs no reply.
+        assert!(s.handle(r#"{"jsonrpc":"2.0","id":3,"result":{}}"#).is_none());
+        assert!(s.handle(r#"{"jsonrpc":"2.0","id":3,"error":{"code":1,"message":"x"}}"#).is_none());
+        // Parse errors have a null id.
+        let r: Value = serde_json::from_str(&s.handle("{\"jsonrpc\":").unwrap()).unwrap();
+        assert_eq!(r["error"]["code"], -32700);
+        assert!(r["id"].is_null());
+        // Batches are refused with a null id.
+        let r: Value = serde_json::from_str(&s.handle("[]").unwrap()).unwrap();
+        assert_eq!(r["error"]["code"], -32600);
+    }
+
+    #[test]
+    fn cancelling_sets_the_stop_flag_without_a_reply() {
+        let s = Session::default();
+        assert!(!s.stop.load(std::sync::atomic::Ordering::Relaxed));
+        assert!(s.handle(r#"{"jsonrpc":"2.0","method":"notifications/progress","params":{}}"#).is_none());
+        assert!(!s.stop.load(std::sync::atomic::Ordering::Relaxed), "other notifications don't stop anything");
+        assert!(s.handle(r#"{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":1}}"#).is_none());
+        assert!(s.stop.load(std::sync::atomic::Ordering::Relaxed));
+        // The workspace sees the same flag.
+        assert!(s.ws.lock().unwrap().stop.load(std::sync::atomic::Ordering::Relaxed));
+    }
+
+    #[test]
+    fn small_methods_answer_with_empty_results() {
+        let s = Session::default();
+        assert_eq!(ask(&s, rpc(json!(1), "logging/setLevel", json!({"level": "info"})))["result"], json!({}));
+        assert_eq!(ask(&s, rpc(json!(2), "resources/templates/list", json!({})))["result"]["resourceTemplates"], json!([]));
+        let c = ask(&s, rpc(json!(3), "completion/complete", json!({})))["result"]["completion"].clone();
+        assert_eq!(c["values"], json!([]));
+        assert_eq!(c["hasMore"], false);
+    }
+
+    // ---- tools/list and schemas ----
+
+    #[test]
+    fn every_schema_is_a_valid_object_schema() {
+        let list = tool_list();
+        let allowed = ["string", "number", "integer", "boolean", "object", "array"];
+        for t in list["tools"].as_array().unwrap() {
+            let name = t["name"].as_str().unwrap();
+            assert!(name.chars().all(|c| c.is_ascii_lowercase() || c == '_'), "{name} is snake_case");
+            let schema = &t["inputSchema"];
+            assert_eq!(schema["type"], "object", "{name}");
+            let props = schema["properties"].as_object().unwrap_or_else(|| panic!("{name} has properties"));
+            let required = schema["required"].as_array().unwrap_or_else(|| panic!("{name} has a required list"));
+            for r in required {
+                let r = r.as_str().expect("required names are strings");
+                assert!(props.contains_key(r), "{name} requires {r}, which isn't a property");
+            }
+            for (p, def) in props {
+                assert!(def.is_object(), "{name}.{p} is a schema object");
+                if let Some(ty) = def.get("type") {
+                    assert!(allowed.contains(&ty.as_str().unwrap()), "{name}.{p} type {ty}");
+                    if ty == "array" {
+                        assert!(def["items"].is_object(), "{name}.{p} says what its items are");
+                    }
+                }
+                if let Some(e) = def.get("enum") {
+                    let e = e.as_array().unwrap();
+                    assert!(!e.is_empty() && e.iter().all(Value::is_string), "{name}.{p} enum");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn titles_and_hints_follow_the_tools() {
+        let list = tool_list();
+        let tools = list["tools"].as_array().unwrap();
+        let find = |n: &str| tools.iter().find(|t| t["name"] == n).unwrap_or_else(|| panic!("tool {n}")).clone();
+        let t = find("list_marks");
+        assert_eq!(t["title"], "List marks");
+        assert_eq!(t["annotations"]["title"], "List marks");
+        assert_eq!(t["annotations"]["readOnlyHint"], true);
+        assert_eq!(t["annotations"]["idempotentHint"], true);
+        for side in ["save", "copy_to_clipboard", "record_video", "set_setting", "capture_screen", "studio_add_source", "add_mark", "crop"] {
+            assert_eq!(find(side)["annotations"]["readOnlyHint"], false, "{side} changes something");
+        }
+        for d in ["remove_mark", "clear_marks", "studio_remove_source"] {
+            assert_eq!(find(d)["annotations"]["destructiveHint"], true, "{d}");
+        }
+        assert_eq!(find("add_mark")["annotations"]["destructiveHint"], false);
+        for t in tools {
+            let open = t["name"] == "check_for_update";
+            assert_eq!(t["annotations"]["openWorldHint"], open, "{}", t["name"]);
+            assert!(t["title"].as_str().unwrap().chars().next().unwrap().is_uppercase());
+        }
+    }
+
+    #[test]
+    fn tool_names_match_the_list_and_effects_are_offered() {
+        let list = tool_list();
+        let listed: Vec<&str> = list["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect();
+        let names: Vec<&str> = tool_names().into_iter().map(|(n, _)| n).collect();
+        assert_eq!(listed, names);
+        let s = Session::default();
+        assert_eq!(ask(&s, rpc(json!(1), "tools/list", json!({})))["result"], list);
+        let effect = list["tools"].as_array().unwrap().iter().find(|t| t["name"] == "apply_effect").unwrap()["inputSchema"]["properties"]["effect"]["enum"].clone();
+        assert_eq!(effect.as_array().unwrap().len(), effects::Effect::ALL.len());
+    }
+
+    // ---- prompts and resources ----
+
+    #[test]
+    fn every_prompt_fills_in_its_argument() {
+        let s = Session::default();
+        let list = ask(&s, rpc(json!(1), "prompts/list", json!({})))["result"]["prompts"].clone();
+        assert_eq!(list.as_array().unwrap().len(), PROMPTS.len());
+        for (name, _, arg, _) in PROMPTS {
+            let p = ask(&s, rpc(json!(2), "prompts/get", json!({"name": name})))["result"].clone();
+            let text = p["messages"][0]["content"]["text"].as_str().unwrap().to_string();
+            assert!(!text.contains('{'), "{name}: the default for {arg} is filled in: {text}");
+            assert_eq!(p["messages"][0]["role"], "user");
+            let p = ask(&s, rpc(json!(3), "prompts/get", json!({"name": name, "arguments": {arg: "ZZTOP"}})))["result"].clone();
+            assert!(p["messages"][0]["content"]["text"].as_str().unwrap().contains("ZZTOP"), "{name}");
+        }
+        let bad = ask(&s, rpc(json!(4), "prompts/get", json!({"name": "nope"})));
+        assert_eq!(bad["error"]["code"], -32602);
+        assert_eq!(ask(&s, rpc(json!(5), "prompts/get", json!({})))["error"]["code"], -32602);
+    }
+
+    #[test]
+    fn the_current_picture_is_a_resource_once_there_is_one() {
+        let s = Session::default();
+        let list = ask(&s, rpc(json!(1), "resources/list", json!({})))["result"]["resources"].clone();
+        let uris: Vec<&str> = list.as_array().unwrap().iter().map(|r| r["uri"].as_str().unwrap()).collect();
+        assert_eq!(uris, ["snagster://settings", "snagster://library"]);
+        let none = ask(&s, rpc(json!(2), "resources/read", json!({"uri": "snagster://picture/current"})));
+        assert_eq!(none["error"]["code"], -32002);
+        let unknown = ask(&s, rpc(json!(3), "resources/read", json!({"uri": "snagster://nothing"})));
+        assert_eq!(unknown["error"]["code"], -32002);
+        assert!(unknown["error"]["message"].as_str().unwrap().contains("snagster://nothing"));
+
+        *s.ws.lock().unwrap() = ws_with(40, 30);
+        let list = ask(&s, rpc(json!(4), "resources/list", json!({})))["result"]["resources"].clone();
+        assert_eq!(list[0]["uri"], "snagster://picture/current");
+        assert_eq!(list[0]["mimeType"], "image/png");
+        let r = ask(&s, rpc(json!(5), "resources/read", json!({"uri": "snagster://picture/current"})))["result"].clone();
+        let blob = r["contents"][0]["blob"].as_str().unwrap();
+        let png = base64::engine::general_purpose::STANDARD.decode(blob).unwrap();
+        let img = image::load_from_memory(&png).unwrap();
+        assert_eq!((img.width(), img.height()), (40, 30));
+    }
+
+    // ---- tools/call ----
+
+    #[test]
+    fn tool_errors_come_back_as_error_results_not_protocol_errors() {
+        let s = Session::default();
+        let r = call(&s, 1, "picture_info", json!({}));
+        assert_eq!(r["isError"], true);
+        assert!(r["content"][0]["text"].as_str().unwrap().contains("no current picture"));
+        // No name, no arguments: still an error result.
+        let r = ask(&s, rpc(json!(2), "tools/call", json!({})));
+        assert!(r.get("error").is_none());
+        assert_eq!(r["result"]["isError"], true);
+    }
+
+    #[test]
+    fn a_json_object_answer_is_also_structured_content() {
+        let dir = temp_dir("structured");
+        let gif = dir.join("a.gif");
+        {
+            let f = std::fs::File::create(&gif).unwrap();
+            let mut enc = image::codecs::gif::GifEncoder::new(f);
+            for _ in 0..3 {
+                let frame = image::Frame::from_parts(image::RgbaImage::from_pixel(8, 6, image::Rgba([1, 2, 3, 255])), 0, 0, image::Delay::from_numer_denom_ms(100, 1));
+                enc.encode_frame(frame).unwrap();
+            }
+        }
+        let s = Session::default();
+        let r = call(&s, 1, "video_info", json!({"path": gif}));
+        assert_eq!(r["isError"], false, "{r}");
+        assert_eq!(r["structuredContent"]["frames"], 3);
+        assert_eq!(r["structuredContent"]["width"], 8);
+        assert!((r["structuredContent"]["seconds"].as_f64().unwrap() - 0.3).abs() < 0.01);
+        // Plain text answers have no structured content.
+        *s.ws.lock().unwrap() = ws_with(10, 10);
+        let r = call(&s, 2, "picture_info", json!({}));
+        assert!(r.get("structuredContent").is_none());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn tools_that_need_a_picture_say_so() {
+        let mut ws = Workspace::default();
+        for (tool, args) in [
+            ("picture_info", json!({})),
+            ("view_picture", json!({})),
+            ("add_mark", json!({"kind": "box", "x": 1, "y": 1, "x2": 5, "y2": 5})),
+            ("list_marks", json!({})),
+            ("remove_mark", json!({"index": 0})),
+            ("blur_area", json!({"x": 0, "y": 0, "width": 5, "height": 5})),
+            ("crop", json!({"x": 0, "y": 0, "width": 5, "height": 5})),
+            ("resize", json!({"width": 5, "height": 5})),
+            ("save", json!({"path": "nowhere.png"})),
+            ("copy_to_clipboard", json!({})),
+            ("clear_marks", json!({})),
+            ("trim", json!({})),
+            ("set_canvas", json!({"width": 5, "height": 5})),
+            ("open_in_snagster", json!({})),
+            ("read_text", json!({})),
+            ("smart_redact", json!({})),
+        ] {
+            let e = err_of(ws.call(tool, &args));
+            assert!(e.contains("no current picture"), "{tool}: {e}");
+        }
+        assert_eq!(err_of(ws.call("undo", &json!({}))), "nothing to undo");
+        assert_eq!(err_of(ws.call("redo", &json!({}))), "nothing to redo");
+        assert!(err_of(ws.call("no_such_tool", &json!({}))).contains("unknown tool no_such_tool"));
+    }
+
+    #[test]
+    fn rectangles_need_four_numbers_and_a_size() {
+        let r = rect_arg(&json!({"x": 1, "y": 2, "width": 3, "height": 4})).unwrap();
+        assert_eq!((r.min.x, r.min.y, r.width(), r.height()), (1.0, 2.0, 3.0, 4.0));
+        assert_eq!(rect_arg(&json!({"y": 2, "width": 3, "height": 4})).unwrap_err(), "missing number \"x\"");
+        assert_eq!(rect_arg(&json!({"x": "1", "y": 2, "width": 3, "height": 4})).unwrap_err(), "missing number \"x\"");
+        assert!(rect_arg(&json!({"x": 1, "y": 2, "width": 0, "height": 4})).is_err());
+        assert!(rect_arg(&json!({"x": 1, "y": 2, "width": 3, "height": -4})).is_err());
+        // Tools that grab the screen check their rectangle first (no screen needed to refuse).
+        let mut ws = Workspace::default();
+        for tool in ["capture_region", "read_screen_text", "capture_scrolling", "record_gif"] {
+            assert!(err_of(ws.call(tool, &json!({"x": 0, "y": 0, "width": 0, "height": 10}))).contains("above 0"), "{tool}");
+        }
+        assert!(err_of(ws.call("pick_color", &json!({"y": 3}))).contains("\"x\""));
+    }
+
+    #[test]
+    fn record_video_checks_its_arguments_before_recording() {
+        let mut ws = Workspace::default();
+        assert_eq!(err_of(ws.call("record_video", &json!({}))), "missing seconds");
+        assert!(err_of(ws.call("record_video", &json!({"seconds": 1, "format": "gif"}))).contains("record_gif"));
+        assert!(err_of(ws.call("record_video", &json!({"seconds": 1, "format": "avi"}))).contains("mp4, hevc or wmv"));
+        let area = json!({"seconds": 1, "x": 0, "y": 0, "width": 64, "height": 64, "path": "unused.mp4", "audio": "loud"});
+        assert!(err_of(ws.call("record_video", &area)).contains("audio is none"));
+        let area = json!({"seconds": 1, "x": 0, "y": 0, "width": -1, "height": 64});
+        assert!(err_of(ws.call("record_video", &area)).contains("above 0"));
+        assert_eq!(err_of(ws.call("record_gif", &json!({"x": 0, "y": 0, "width": 10, "height": 10}))), "missing path");
+    }
+
+    #[test]
+    fn every_kind_of_mark_can_be_added_and_is_described() {
+        let mut ws = ws_with(400, 300);
+        let two = ["arrow", "line", "box", "oval", "highlight", "spotlight"];
+        let one = ["text", "callout", "step", "stamp", "pointer", "magnify"];
+        for k in two.iter().chain(one.iter()) {
+            let t = text_of(ws.call("add_mark", &json!({"kind": k, "x": 50, "y": 60, "x2": 150, "y2": 120, "text": "Hi"})));
+            assert!(t.starts_with("Added mark"), "{k}: {t}");
+        }
+        assert_eq!(ws.doc.as_ref().unwrap().shapes.len(), two.len() + one.len());
+        for k in one {
+            assert!(ws.call("add_mark", &json!({"kind": k, "x": 5, "y": 5})).is_ok(), "{k} needs only one point");
+        }
+        for k in two {
+            assert_eq!(err_of(ws.call("add_mark", &json!({"kind": k, "x": 5, "y": 5}))), format!("{k} needs x2 and y2"));
+        }
+        assert_eq!(err_of(ws.call("add_mark", &json!({"kind": "star", "x": 5, "y": 5}))), "unknown kind star");
+        assert_eq!(err_of(ws.call("add_mark", &json!({"x": 5, "y": 5}))), "missing kind");
+        assert_eq!(err_of(ws.call("add_mark", &json!({"kind": "box", "y": 5}))), "missing number \"x\"");
+        let list = text_of(ws.call("list_marks", &json!({})));
+        assert!(list.starts_with("0: arrow at "), "{list}");
+        assert!(list.contains("\n1: line at ") && list.contains("\n2: box at ") && list.contains("\n3: oval at "), "{list}");
+        assert!(list.contains("\n5: spotlight at 50,60 to 150,120"), "{list}");
+        assert!(list.contains("text \"Hi\" at 50,60"), "{list}");
+        assert!(list.contains("callout \"Hi\""), "{list}");
+        assert!(list.contains("step 1 at 50,60"), "{list}");
+    }
+
+    #[test]
+    fn steps_number_themselves_unless_told() {
+        let mut ws = ws_with(200, 200);
+        for _ in 0..3 {
+            ws.call("add_mark", &json!({"kind": "step", "x": 10, "y": 10})).unwrap();
+        }
+        ws.call("add_mark", &json!({"kind": "step", "x": 10, "y": 10, "number": 9})).unwrap();
+        ws.call("add_mark", &json!({"kind": "step", "x": 10, "y": 10})).unwrap();
+        let ns: Vec<u32> = ws.doc.as_ref().unwrap().shapes.iter().filter_map(|s| if let Shape::Step { n, .. } = s { Some(*n) } else { None }).collect();
+        assert_eq!(ns, [1, 2, 3, 9, 10]);
+    }
+
+    #[test]
+    fn marks_take_their_colour_width_and_fill() {
+        let mut ws = ws_with(200, 200);
+        ws.call("add_mark", &json!({"kind": "box", "x": 1, "y": 2, "x2": 30, "y2": 40, "color": "#102030", "width": 3, "fill": true, "shadow": true})).unwrap();
+        match &ws.doc.as_ref().unwrap().shapes[0] {
+            Shape::Rect { rect, color, width, fill, shadow, .. } => {
+                assert_eq!(*color, Color32::from_rgb(0x10, 0x20, 0x30));
+                assert_eq!(*width, 3.0);
+                assert!(*fill && *shadow);
+                assert_eq!((rect.min.x, rect.min.y, rect.max.x, rect.max.y), (1.0, 2.0, 30.0, 40.0));
+            }
+            other => panic!("not a box: {other:?}"),
+        }
+        // Points given the wrong way round still make a proper box.
+        ws.call("add_mark", &json!({"kind": "oval", "x": 30, "y": 40, "x2": 1, "y2": 2})).unwrap();
+        let b = ws.doc.as_ref().unwrap().shapes[1].bounds();
+        assert!(b.min.x <= 1.0 && b.max.x >= 30.0);
+        // An empty stamp gets the tick.
+        ws.call("add_mark", &json!({"kind": "stamp", "x": 50, "y": 50})).unwrap();
+        assert!(matches!(&ws.doc.as_ref().unwrap().shapes[2], Shape::Stamp { emoji, .. } if emoji == "\u{2705}"));
+    }
+
+    #[test]
+    fn marks_are_removed_by_number() {
+        let mut ws = ws_with(100, 100);
+        for x in [10, 20, 30] {
+            ws.call("add_mark", &json!({"kind": "pointer", "x": x, "y": 5})).unwrap();
+        }
+        assert_eq!(text_of(ws.call("remove_mark", &json!({"index": 1}))), "Removed mark 1.");
+        assert_eq!(ws.doc.as_ref().unwrap().shapes.len(), 2);
+        assert_eq!(err_of(ws.call("remove_mark", &json!({"index": 2}))), "no mark with that number");
+        assert!(err_of(ws.call("remove_mark", &json!({}))).contains("index"));
+        assert_eq!(ws.doc.as_ref().unwrap().shapes.len(), 2, "failed removals change nothing");
+        assert_eq!(text_of(ws.call("clear_marks", &json!({}))), "Every mark removed.");
+        assert_eq!(text_of(ws.call("list_marks", &json!({}))), "No marks.");
+    }
+
+    /// Bug: `-1 as usize` is 0, so remove_mark with index -1 quietly removed the first mark.
+    #[test]
+    fn a_negative_mark_number_is_refused() {
+        let mut ws = ws_with(100, 100);
+        ws.call("add_mark", &json!({"kind": "pointer", "x": 5, "y": 5})).unwrap();
+        assert!(err_of(ws.call("remove_mark", &json!({"index": -1}))).contains("0 or more"));
+        assert_eq!(ws.doc.as_ref().unwrap().shapes.len(), 1);
+        assert_eq!(index_arg(&json!({"i": 3}), "i"), Ok(3));
+        assert_eq!(index_arg(&json!({"i": 0}), "i"), Ok(0));
+        assert!(index_arg(&json!({"i": -0.5}), "i").is_err());
+        assert!(index_arg(&json!({}), "i").is_err());
+    }
+
+    #[test]
+    fn undo_and_redo_walk_through_changes() {
+        let mut ws = ws_with(100, 80);
+        ws.call("crop", &json!({"x": 0, "y": 0, "width": 50, "height": 40})).unwrap();
+        ws.call("resize", &json!({"width": 20, "height": 10})).unwrap();
+        let size = |ws: &Workspace| ws.doc.as_ref().unwrap().image.dimensions();
+        assert_eq!(size(&ws), (20, 10));
+        ws.call("undo", &json!({})).unwrap();
+        assert_eq!(size(&ws), (50, 40));
+        ws.call("undo", &json!({})).unwrap();
+        assert_eq!(size(&ws), (100, 80));
+        assert!(ws.call("undo", &json!({})).is_err());
+        ws.call("redo", &json!({})).unwrap();
+        assert_eq!(size(&ws), (50, 40));
+        // A new change forgets what could be redone.
+        ws.call("crop", &json!({"x": 0, "y": 0, "width": 10, "height": 10})).unwrap();
+        assert_eq!(err_of(ws.call("redo", &json!({}))), "nothing to redo");
+    }
+
+    #[test]
+    fn undo_keeps_the_last_fifty_changes() {
+        let mut ws = ws_with(50, 50);
+        for i in 0..60 {
+            ws.call("add_mark", &json!({"kind": "pointer", "x": i, "y": 1})).unwrap();
+        }
+        assert_eq!(ws.undo.len(), 50);
+        for _ in 0..50 {
+            ws.call("undo", &json!({})).unwrap();
+        }
+        assert_eq!(ws.doc.as_ref().unwrap().shapes.len(), 10);
+        assert!(ws.call("undo", &json!({})).is_err());
+    }
+
+    /// Bug: opening a new picture cleared undo but not redo, so redo brought back the old picture.
+    #[test]
+    fn a_new_picture_cannot_redo_the_old_one() {
+        let mut ws = ws_with(100, 100);
+        ws.call("crop", &json!({"x": 0, "y": 0, "width": 30, "height": 30})).unwrap();
+        ws.call("undo", &json!({})).unwrap();
+        ws.set(Doc::new(image::RgbaImage::new(7, 9)), "other").unwrap();
+        assert!(ws.call("redo", &json!({})).is_err());
+        assert_eq!(ws.doc.as_ref().unwrap().image.dimensions(), (7, 9));
+    }
+
+    #[test]
+    fn crop_blur_and_resize_check_their_areas() {
+        let mut ws = ws_with(100, 80);
+        assert_eq!(err_of(ws.call("crop", &json!({"x": 500, "y": 500, "width": 10, "height": 10}))), "that area is outside the picture");
+        assert_eq!(err_of(ws.call("blur_area", &json!({"x": 500, "y": 0, "width": 10, "height": 10}))), "that area is outside the picture");
+        assert_eq!(text_of(ws.call("crop", &json!({"x": 50, "y": 40, "width": 500, "height": 500}))), "Cropped to 50 x 40.");
+        for mode in ["pixelate", "blur", "solid", "other"] {
+            assert_eq!(text_of(ws.call("blur_area", &json!({"x": 0, "y": 0, "width": 20, "height": 20, "mode": mode}))), "Hidden.");
+        }
+        let px = ws.doc.as_ref().unwrap().image.get_pixel(5, 5).0;
+        assert_eq!(&px[..3], &[28, 28, 32], "the last (solid) box is black");
+        assert!(err_of(ws.call("resize", &json!({"width": 10}))).contains("height"));
+        assert_eq!(text_of(ws.call("resize", &json!({"width": 25, "height": 20}))), "Resized to 25 x 20.");
+        assert_eq!(text_of(ws.call("picture_info", &json!({}))), "test: 25 x 20 pixels, 0 marks.");
+    }
+
+    #[test]
+    fn effects_are_found_by_name_or_label() {
+        let mut ws = ws_with(40, 40);
+        assert_eq!(err_of(ws.call("apply_effect", &json!({}))), "missing effect");
+        let e = err_of(ws.call("apply_effect", &json!({"effect": "sparkles"})));
+        assert!(e.starts_with("unknown effect; use one of"), "{e}");
+        let first = effects::Effect::ALL[0];
+        assert!(ws.call("apply_effect", &json!({"effect": format!("{first:?}").to_uppercase()})).is_ok());
+        assert!(ws.call("apply_effect", &json!({"effect": first.label()})).is_ok());
+    }
+
+    #[test]
+    fn view_picture_scales_to_its_limit() {
+        let mut ws = ws_with(400, 200);
+        let size = |o: Outcome| {
+            let v = o.unwrap();
+            assert_eq!(v[0]["mimeType"], "image/png");
+            let png = base64::engine::general_purpose::STANDARD.decode(v[0]["data"].as_str().unwrap()).unwrap();
+            let i = image::load_from_memory(&png).unwrap();
+            (i.width(), i.height())
+        };
+        assert_eq!(size(ws.call("view_picture", &json!({}))), (400, 200), "small pictures stay as they are");
+        assert_eq!(size(ws.call("view_picture", &json!({"max_size": 100}))), (100, 50));
+        assert_eq!(size(ws.call("view_picture", &json!({"max_size": 1}))), (64, 32), "at least 64");
+    }
+
+    #[test]
+    fn saving_needs_a_path_and_keeps_projects_editable() {
+        let dir = temp_dir("save");
+        let mut ws = ws_with(60, 40);
+        ws.call("add_mark", &json!({"kind": "box", "x": 1, "y": 1, "x2": 20, "y2": 20})).unwrap();
+        assert_eq!(err_of(ws.call("save", &json!({}))), "missing path");
+        let snag = dir.join("p.snag");
+        ws.call("save", &json!({"path": snag})).unwrap();
+        let mut back = Workspace::default();
+        back.call("open_image", &json!({"path": snag})).unwrap();
+        assert_eq!(back.doc.as_ref().unwrap().shapes.len(), 1, "the mark is still a mark");
+        let png = dir.join("p.png");
+        ws.call("save", &json!({"path": png})).unwrap();
+        assert_eq!(image::open(&png).unwrap().width(), 60);
+        assert!(back.call("open_image", &json!({"path": dir.join("missing.png")})).is_err());
+        assert_eq!(err_of(back.call("open_image", &json!({}))), "missing path");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn colours_parse_names_hex_and_fall_back_to_red() {
+        let red = Color32::from_rgb(229, 72, 77);
+        assert_eq!(parse_color(None), red);
+        assert_eq!(parse_color(Some("  WHITE ")), Color32::WHITE);
+        assert_eq!(parse_color(Some("#abcdef")), Color32::from_rgb(0xab, 0xcd, 0xef));
+        assert_eq!(parse_color(Some("#abc")), red, "short hex isn't understood");
+        assert_eq!(parse_color(Some("#gggggg")), red);
+        assert_eq!(parse_color(Some("chartreuse")), red);
+        for n in ["red", "orange", "yellow", "green", "blue", "purple", "black", "white"] {
+            assert!(n == "red" || parse_color(Some(n)) != red, "{n} is its own colour");
+        }
+    }
+
+    #[test]
+    fn the_command_line_knows_its_commands() {
+        let args = |v: &[&str]| v.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        assert_eq!(run_cli(&[]), None, "no command opens the window");
+        assert_eq!(run_cli(&args(&["--some-window-flag"])), None);
+        assert_eq!(run_cli(&args(&["help"])), Some(0));
+        assert_eq!(run_cli(&args(&["tools"])), Some(0));
+        assert_eq!(run_cli(&args(&["ocr"])), Some(2), "a picture is needed");
+        assert_eq!(run_cli(&args(&["call", "no_such_tool"])), Some(1));
+        let dir = temp_dir("cli");
+        let src = dir.join("in.png");
+        image::RgbaImage::from_pixel(12, 8, image::Rgba([9, 9, 9, 255])).save(&src).unwrap();
+        let out = dir.join("out.bmp");
+        assert_eq!(run_cli(&args(&["convert", src.to_str().unwrap(), "-o", out.to_str().unwrap()])), Some(0));
+        assert_eq!(image::open(&out).unwrap().height(), 8);
+        assert_eq!(run_cli(&args(&["convert", dir.join("missing.png").to_str().unwrap()])), Some(1));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

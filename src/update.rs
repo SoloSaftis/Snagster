@@ -45,14 +45,17 @@ struct ApiAsset {
 
 /// The release file this kind of computer uses.
 pub fn asset_name() -> &'static str {
-    if cfg!(windows) {
-        "Snagster-windows-x64-portable.zip"
-    } else if cfg!(target_os = "macos") {
-        "Snagster-macos-arm64.zip"
-    } else if std::env::var_os("APPIMAGE").is_some() {
-        "Snagster-linux-x86_64.AppImage"
-    } else {
-        "Snagster-linux-x86_64-portable.tar.gz"
+    asset_name_for(std::env::consts::OS, std::env::var_os("APPIMAGE").is_some())
+}
+
+/// The release file for an operating system ("windows", "macos", "linux"...), and on Linux
+/// whether Snagster runs as an AppImage.
+fn asset_name_for(os: &str, app_image: bool) -> &'static str {
+    match os {
+        "windows" => "Snagster-windows-x64-portable.zip",
+        "macos" => "Snagster-macos-arm64.zip",
+        _ if app_image => "Snagster-linux-x86_64.AppImage",
+        _ => "Snagster-linux-x86_64-portable.tar.gz",
     }
 }
 
@@ -94,10 +97,14 @@ pub fn latest() -> Result<Release, String> {
         Err(e) => return Err(format!("Couldn't reach GitHub: {e}")),
     };
     let r: ApiRelease = resp.body_mut().read_json().map_err(|e| format!("GitHub's answer couldn't be read: {e}"))?;
+    release_from(r, asset_name())
+}
+
+/// The release GitHub described, with the file named `want`.
+fn release_from(r: ApiRelease, want: &str) -> Result<Release, String> {
     if r.draft || r.prerelease {
         return Err("The newest release isn't final yet.".into());
     }
-    let want = asset_name();
     let asset = r.assets.iter().find(|a| a.name == want).map(|a| (a.name.clone(), a.browser_download_url.clone(), a.size));
     Ok(Release { version: r.tag_name.trim_start_matches('v').to_string(), notes: r.body, page: r.html_url, asset })
 }
@@ -255,5 +262,197 @@ mod tests {
         assert!(!is_newer("v0.8.1", "0.9.0"));
         assert!(!is_newer("nonsense", "0.9.0"));
         assert_eq!(parse_version("v1.2.3-beta"), Some((1, 2, 3)));
+    }
+
+    fn temp_folder(tag: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("snagster-update-test-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    #[test]
+    fn versions_parse() {
+        assert_eq!(parse_version("0.9.0"), Some((0, 9, 0)));
+        assert_eq!(parse_version("  V2.0.1 "), Some((2, 0, 1)));
+        assert_eq!(parse_version("1"), Some((1, 0, 0)));
+        assert_eq!(parse_version("1.2"), Some((1, 2, 0)));
+        assert_eq!(parse_version("1.2.3+build.7"), Some((1, 2, 3)));
+        assert_eq!(parse_version("1.2.3.4"), Some((1, 2, 3)));
+        assert_eq!(parse_version(""), None);
+        assert_eq!(parse_version("v"), None);
+        assert_eq!(parse_version("latest"), None);
+    }
+
+    #[test]
+    fn versions_compare_as_numbers_not_text() {
+        assert!(is_newer("0.10.0", "0.9.9"));
+        assert!(is_newer("0.9.10", "0.9.9"));
+        assert!(is_newer("v1.0", "0.9.0"));
+        assert!(!is_newer("0.9.9", "0.10.0"));
+        // A pre-release of the same version isn't newer, and neither is the same version written differently.
+        assert!(!is_newer("0.9.0-beta", "0.9.0"));
+        assert!(!is_newer("v0.9", "0.9.0"));
+        assert!(!is_newer("0.9.0", ""));
+        assert!(!is_newer("", ""));
+    }
+
+    #[test]
+    fn this_version_is_readable() {
+        assert!(parse_version(env!("CARGO_PKG_VERSION")).is_some());
+        assert!(!is_newer(env!("CARGO_PKG_VERSION"), env!("CARGO_PKG_VERSION")));
+    }
+
+    #[test]
+    fn every_system_gets_its_own_file() {
+        assert_eq!(asset_name_for("windows", false), "Snagster-windows-x64-portable.zip");
+        assert_eq!(asset_name_for("windows", true), "Snagster-windows-x64-portable.zip");
+        assert_eq!(asset_name_for("macos", false), "Snagster-macos-arm64.zip");
+        assert_eq!(asset_name_for("macos", true), "Snagster-macos-arm64.zip");
+        assert_eq!(asset_name_for("linux", false), "Snagster-linux-x86_64-portable.tar.gz");
+        assert_eq!(asset_name_for("linux", true), "Snagster-linux-x86_64.AppImage");
+        // This computer's choice is one of them.
+        let here = asset_name();
+        if cfg!(windows) {
+            assert_eq!(here, "Snagster-windows-x64-portable.zip");
+        } else if cfg!(target_os = "macos") {
+            assert_eq!(here, "Snagster-macos-arm64.zip");
+        } else {
+            assert!(here.starts_with("Snagster-linux-x86_64"));
+        }
+    }
+
+    const ANSWER: &str = r#"{
+        "tag_name": "v0.10.2",
+        "body": "What changed",
+        "html_url": "https://github.com/SoloSaftis/Snagster/releases/tag/v0.10.2",
+        "draft": false,
+        "prerelease": false,
+        "unknown_field": 1,
+        "assets": [
+            { "name": "Snagster-windows-x64-portable.zip", "browser_download_url": "https://github.com/w.zip", "size": 100 },
+            { "name": "Snagster-macos-arm64.zip", "browser_download_url": "https://github.com/m.zip", "size": 200 },
+            { "name": "Snagster-linux-x86_64.AppImage", "browser_download_url": "https://github.com/l.AppImage", "size": 300 },
+            { "name": "Snagster-linux-x86_64-portable.tar.gz", "browser_download_url": "https://github.com/l.tar.gz" }
+        ]
+    }"#;
+
+    fn answer() -> ApiRelease {
+        serde_json::from_str(ANSWER).unwrap()
+    }
+
+    #[test]
+    fn release_picks_the_file_for_each_system() {
+        let cases = [
+            (("windows", false), ("https://github.com/w.zip", 100)),
+            (("macos", false), ("https://github.com/m.zip", 200)),
+            (("linux", true), ("https://github.com/l.AppImage", 300)),
+            (("linux", false), ("https://github.com/l.tar.gz", 0)),
+        ];
+        for ((os, app_image), (url, size)) in cases {
+            let want = asset_name_for(os, app_image);
+            let r = release_from(answer(), want).unwrap();
+            assert_eq!(r.version, "0.10.2");
+            assert_eq!(r.notes, "What changed");
+            assert!(r.page.ends_with("/v0.10.2"));
+            assert_eq!(r.asset, Some((want.to_string(), url.to_string(), size)), "{os}");
+        }
+    }
+
+    #[test]
+    fn release_without_a_file_for_this_system_has_no_asset() {
+        let r = release_from(answer(), "Snagster-solaris.zip").unwrap();
+        assert!(r.asset.is_none());
+        let bare: ApiRelease = serde_json::from_str(r#"{ "tag_name": "0.11.0" }"#).unwrap();
+        let r = release_from(bare, asset_name()).unwrap();
+        assert_eq!(r.version, "0.11.0");
+        assert!(r.asset.is_none() && r.notes.is_empty() && r.page.is_empty());
+    }
+
+    #[test]
+    fn drafts_and_prereleases_are_not_offered() {
+        let mut a = answer();
+        a.draft = true;
+        assert!(release_from(a, asset_name()).is_err());
+        let mut a = answer();
+        a.prerelease = true;
+        assert!(release_from(a, asset_name()).is_err());
+    }
+
+    #[test]
+    fn downloads_only_come_from_github() {
+        let none = |_: f32| {};
+        for url in [
+            "http://github.com/x.zip",
+            "https://example.com/x.zip",
+            "https://github.com.evil.example/x.zip",
+            "file:///C:/x.zip",
+            "",
+        ] {
+            let e = download(url, "x.zip", 1, &none).unwrap_err();
+            assert_eq!(e, "The download address isn't GitHub's.", "{url}");
+        }
+    }
+
+    fn make_zip(path: &Path, files: &[(&str, &[u8])]) {
+        use std::io::Write;
+        let mut z = zip::ZipWriter::new(std::fs::File::create(path).unwrap());
+        for (name, data) in files {
+            z.start_file(*name, zip::write::SimpleFileOptions::default()).unwrap();
+            z.write_all(data).unwrap();
+        }
+        z.finish().unwrap();
+    }
+
+    #[test]
+    fn unzip_finds_the_file_in_any_folder_and_any_case() {
+        let dir = temp_folder("unzip");
+        let zip = dir.join("a.zip");
+        make_zip(&zip, &[("readme.txt", b"hello"), ("Snagster/SNAGSTER.EXE", b"program")]);
+        let out = dir.join("out.exe");
+        unzip_one(&zip, "Snagster.exe", &out).unwrap();
+        assert_eq!(std::fs::read(&out).unwrap(), b"program");
+        let e = unzip_one(&zip, "missing.exe", &dir.join("m")).unwrap_err();
+        assert!(e.contains("missing.exe"));
+        assert!(unzip_one(&dir.join("no-such.zip"), "Snagster.exe", &out).is_err());
+        std::fs::write(dir.join("bad.zip"), b"not a zip").unwrap();
+        assert!(unzip_one(&dir.join("bad.zip"), "Snagster.exe", &out).is_err());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn swap_moves_the_old_version_aside() {
+        let dir = temp_folder("swap");
+        let target = dir.join("prog.bin");
+        let fresh = dir.join("fresh.bin");
+        std::fs::write(&target, b"old").unwrap();
+        std::fs::write(&fresh, b"new").unwrap();
+        swap(&target, &fresh).unwrap();
+        let aside = target.with_extension(if cfg!(windows) { "old.exe" } else { "old" });
+        assert_eq!(std::fs::read(&target).unwrap(), b"new");
+        assert_eq!(std::fs::read(&aside).unwrap(), b"old");
+        // A second update replaces the file left from the first.
+        std::fs::write(&fresh, b"newer").unwrap();
+        swap(&target, &fresh).unwrap();
+        assert_eq!(std::fs::read(&target).unwrap(), b"newer");
+        assert_eq!(std::fs::read(&aside).unwrap(), b"new");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn swap_puts_the_old_version_back_when_the_new_one_is_missing() {
+        let dir = temp_folder("swap-fail");
+        let target = dir.join("prog.bin");
+        std::fs::write(&target, b"old").unwrap();
+        assert!(swap(&target, &dir.join("nothing-here")).is_err());
+        assert_eq!(std::fs::read(&target).unwrap(), b"old");
+        assert!(swap(&dir.join("no-target"), &target).is_err());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn install_needs_a_file_for_this_computer() {
+        let r = Release { version: "9.9.9".into(), notes: String::new(), page: String::new(), asset: None };
+        assert!(install(&r, &|_| {}).is_err());
     }
 }

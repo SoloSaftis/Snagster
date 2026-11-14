@@ -321,3 +321,311 @@ pub fn docx(title: &str, items: &[(String, RgbaImage)], path: &Path) -> Result<(
     z.finish().map_err(err)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use eframe::egui::{Color32, Rect, pos2};
+    use std::io::Read as _;
+    use std::path::PathBuf;
+    use std::sync::Arc;
+
+    /// A fresh folder under the system's temp folder, removed again when dropped.
+    struct TempDir(PathBuf);
+
+    impl TempDir {
+        fn new(name: &str) -> Self {
+            let p = std::env::temp_dir().join(format!("snagster-export-test-{}-{name}", std::process::id()));
+            let _ = std::fs::remove_dir_all(&p);
+            std::fs::create_dir_all(&p).unwrap();
+            TempDir(p)
+        }
+        fn file(&self, name: &str) -> PathBuf {
+            self.0.join(name)
+        }
+    }
+
+    impl Drop for TempDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn gradient(w: u32, h: u32) -> RgbaImage {
+        RgbaImage::from_fn(w, h, |x, y| image::Rgba([(x * 25) as u8, (y * 25) as u8, 128, 255]))
+    }
+
+    fn solid(w: u32, h: u32, c: [u8; 4]) -> RgbaImage {
+        RgbaImage::from_pixel(w, h, image::Rgba(c))
+    }
+
+    fn find(hay: &[u8], needle: &[u8]) -> Option<usize> {
+        hay.windows(needle.len()).position(|w| w == needle)
+    }
+
+    fn count(hay: &str, needle: &str) -> usize {
+        hay.matches(needle).count()
+    }
+
+    #[test]
+    fn png_bytes_round_trip_exactly() {
+        let img = RgbaImage::from_fn(7, 5, |x, y| image::Rgba([x as u8 * 30, y as u8 * 50, 9, (x * y * 6) as u8]));
+        let bytes = png_bytes(&img).unwrap();
+        assert_eq!(&bytes[..8], b"\x89PNG\r\n\x1a\n");
+        assert_eq!(image::load_from_memory(&bytes).unwrap().to_rgba8(), img);
+    }
+
+    #[test]
+    fn jpeg_bytes_are_a_jpeg_of_the_same_size() {
+        let img = gradient(16, 8);
+        let bytes = jpeg_bytes(&img, 90).unwrap();
+        assert_eq!(&bytes[..2], &[0xFF, 0xD8]);
+        let back = image::load_from_memory(&bytes).unwrap();
+        assert_eq!((back.width(), back.height()), (16, 8));
+        // Quality is clamped, so 0 still works, and lower quality is not bigger.
+        let low = jpeg_bytes(&img, 0).unwrap();
+        assert!(low.len() <= bytes.len());
+    }
+
+    #[test]
+    fn save_image_writes_every_format() {
+        let dir = TempDir::new("formats");
+        let img = gradient(10, 6);
+        for name in ["a.png", "b.jpg", "c.jpeg", "d.bmp", "e.gif", "f.webp", "g.tiff", "h.tif", "i.ico", "UPPER.PNG"] {
+            let path = dir.file(name);
+            save_image(&img, &path, 85).unwrap_or_else(|e| panic!("{name}: {e}"));
+            let back = image::open(&path).unwrap_or_else(|e| panic!("{name}: {e}"));
+            assert_eq!((back.width(), back.height()), (10, 6), "{name}");
+        }
+        // Lossless formats keep every pixel.
+        for name in ["a.png", "g.tiff"] {
+            assert_eq!(image::open(dir.file(name)).unwrap().to_rgba8(), img, "{name}");
+        }
+        let svg_text = std::fs::read_to_string({
+            let p = dir.file("j.svg");
+            save_image(&img, &p, 85).unwrap();
+            p
+        })
+        .unwrap();
+        assert!(svg_text.starts_with("<svg ") && svg_text.contains("width=\"10\" height=\"6\""));
+        let p = dir.file("k.pdf");
+        save_image(&img, &p, 85).unwrap();
+        assert!(std::fs::read(&p).unwrap().starts_with(b"%PDF-1.4"));
+        // Folders on the way are made.
+        let nested = dir.file("x").join("y").join("z.png");
+        save_image(&img, &nested, 85).unwrap();
+        assert!(nested.exists());
+        // An unknown extension is an error, not a panic.
+        assert!(save_image(&img, &dir.file("nope.xyz"), 85).is_err());
+    }
+
+    #[test]
+    fn svg_embeds_the_picture() {
+        let img = gradient(5, 3);
+        let s = svg(&img).unwrap();
+        assert!(s.contains("viewBox=\"0 0 5 3\""));
+        let start = s.find("base64,").unwrap() + 7;
+        let end = s[start..].find('"').unwrap() + start;
+        let bytes = base64::engine::general_purpose::STANDARD.decode(&s[start..end]).unwrap();
+        assert_eq!(image::load_from_memory(&bytes).unwrap().to_rgba8(), img);
+    }
+
+    #[test]
+    fn pdf_text_escapes() {
+        assert_eq!(pdf_text("a(b)\\c"), "a\\(b\\)\\\\c");
+        assert_eq!(pdf_text("Hello, world!"), "Hello, world!");
+        assert_eq!(pdf_text("é"), "\\351");
+        assert_eq!(pdf_text("Æøå"), "\\306\\370\\345");
+        assert_eq!(pdf_text("€\n"), "??");
+        assert_eq!(pdf_text(""), "");
+    }
+
+    /// Check the cross-reference table points at each object.
+    fn check_xref(pdf: &[u8], objects: usize) {
+        // Work on bytes: the pictures are binary, so text offsets would not match.
+        assert!(pdf.starts_with(b"%PDF-1.4\n"));
+        assert!(pdf.ends_with(b"%%EOF\n"));
+        let sx = pdf.windows(10).rposition(|w| w == b"startxref\n").unwrap();
+        let tail = std::str::from_utf8(&pdf[sx + 10..]).unwrap();
+        let xref_at: usize = tail.lines().next().unwrap().parse().unwrap();
+        assert_eq!(&pdf[xref_at..xref_at + 5], b"xref\n");
+        let table = std::str::from_utf8(&pdf[xref_at..]).unwrap();
+        let mut lines = table.lines().skip(1);
+        assert_eq!(lines.next().unwrap(), format!("0 {}", objects + 1));
+        assert!(lines.next().unwrap().starts_with("0000000000 65535 f"));
+        for i in 1..=objects {
+            let line = lines.next().unwrap();
+            let off: usize = line[..10].parse().unwrap();
+            let head = format!("{i} 0 obj\n");
+            assert_eq!(&pdf[off..off + head.len()], head.as_bytes(), "object {i}");
+        }
+        assert!(table.contains(&format!("/Size {}", objects + 1)));
+    }
+
+    #[test]
+    fn pdf_one_page_per_picture() {
+        let pages = vec![(Some("First (one)".to_string()), gradient(40, 20)), (None, gradient(20, 40))];
+        let a4 = pdf(&pages, true, 80).unwrap();
+        check_xref(&a4, 3 + 2 * 3);
+        let t = String::from_utf8_lossy(&a4);
+        assert!(t.contains("/Count 2"));
+        assert!(t.contains("/Kids [4 0 R 7 0 R]"));
+        assert_eq!(count(&t, "/MediaBox [0 0 595.00 842.00]"), 2);
+        assert!(t.contains("(First \\(one\\)) Tj"), "the caption is escaped");
+        assert_eq!(count(&t, " Tj "), 1, "only the first page has a caption");
+        assert!(t.contains("/Width 40 /Height 20"));
+        // Each picture is a JPEG stream.
+        assert_eq!(a4.windows(3).filter(|w| *w == [0xFF, 0xD8, 0xFF]).count(), 2);
+
+        let exact = pdf(&[(Some("ignored".into()), gradient(100, 40))], false, 80).unwrap();
+        check_xref(&exact, 6);
+        let t = String::from_utf8_lossy(&exact);
+        assert!(t.contains("/MediaBox [0 0 75.00 30.00]"), "pixels become points at 0.75");
+        assert!(!t.contains("Tj"));
+        // The content stream's length is right.
+        let at = find(&exact, b"<< /Length ").unwrap();
+        let digits: Vec<u8> = exact[at + 11..].iter().copied().take_while(u8::is_ascii_digit).collect();
+        let len: usize = String::from_utf8(digits).unwrap().parse().unwrap();
+        let s = find(&exact[at..], b"stream\n").unwrap() + at + 7;
+        assert_eq!(&exact[s + len..s + len + 10], b"\nendstream");
+
+        let empty = pdf(&[], true, 80).unwrap();
+        check_xref(&empty, 3);
+    }
+
+    #[test]
+    fn html_guide_escapes_and_embeds() {
+        let steps = vec![("Click <OK> & wait".to_string(), gradient(4, 4)), ("Done".to_string(), gradient(3, 2))];
+        let h = html_guide("Fish & <chips>", &steps).unwrap();
+        assert!(h.starts_with("<!doctype html>"));
+        assert!(h.contains("<title>Fish &amp; &lt;chips&gt;</title>"));
+        assert!(h.contains("<h2>Step 1: Click &lt;OK&gt; &amp; wait</h2>"));
+        assert!(h.contains("<h2>Step 2: Done</h2>"));
+        assert_eq!(count(&h, "<img "), 2);
+        assert!(h.trim_end().ends_with("</body></html>"));
+        assert_eq!(count(&html_guide("x", &[]).unwrap(), "<img "), 0);
+    }
+
+    #[test]
+    fn project_round_trip_keeps_marks() {
+        let dir = TempDir::new("project");
+        let path = dir.file("one.snag");
+        let mut d = Doc::new(gradient(9, 7));
+        d.shapes.push(Shape::Rect {
+            rect: Rect::from_min_max(pos2(1.0, 1.0), pos2(5.0, 5.0)),
+            color: Color32::RED,
+            width: 3.0,
+            fill: false,
+            radius: 2.0,
+            shadow: true,
+        });
+        d.shapes.push(Shape::Image {
+            rect: Rect::from_min_max(pos2(0.0, 0.0), pos2(2.0, 2.0)),
+            image: crate::doc::ImgData(Arc::new(solid(2, 2, [1, 2, 3, 4]))),
+        });
+        save_project(&d, "My shot", &path).unwrap();
+        let (name, back) = load_project(&path).unwrap();
+        assert_eq!(name, "My shot");
+        assert_eq!(*back.image, *d.image);
+        assert_eq!(back.shapes.len(), 2);
+        assert!(matches!(back.shapes[0], Shape::Rect { width: 3.0, radius: 2.0, shadow: true, .. }));
+        let Shape::Image { image, .. } = &back.shapes[1] else { panic!("image mark lost") };
+        assert_eq!(*image.0, solid(2, 2, [1, 2, 3, 4]));
+        let json: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        assert_eq!(json["format"], "snag-project");
+        assert_eq!(json["version"], 1);
+    }
+
+    #[test]
+    fn load_project_rejects_other_files() {
+        let dir = TempDir::new("badproject");
+        let wrong = dir.file("wrong.snag");
+        std::fs::write(&wrong, r#"{"format":"other","version":1,"name":"x","image_png":"","shapes":[]}"#).unwrap();
+        assert_eq!(load_project(&wrong).err().unwrap(), "not a Snagster project");
+        let junk = dir.file("junk.snag");
+        std::fs::write(&junk, "hello").unwrap();
+        assert!(load_project(&junk).err().unwrap().starts_with("not a Snagster project"));
+        let bad_png = dir.file("badpng.snag");
+        std::fs::write(&bad_png, r#"{"format":"snag-project","version":1,"name":"x","image_png":"aGVsbG8=","shapes":[]}"#).unwrap();
+        assert!(load_project(&bad_png).is_err());
+        assert!(load_project(&dir.file("missing.snag")).is_err());
+    }
+
+    #[test]
+    fn gif_round_trip() {
+        let dir = TempDir::new("gif");
+        let path = dir.file("sub").join("anim.gif");
+        let frames = vec![(solid(8, 6, [255, 0, 0, 255]), 100), (solid(8, 6, [0, 0, 255, 255]), 250)];
+        write_gif(&path, &frames).unwrap();
+        let back = gif_frames(&path, 0).unwrap();
+        assert_eq!(back.len(), 2);
+        assert_eq!(back[0].1, 100);
+        assert_eq!(back[1].1, 250);
+        assert_eq!(back[0].0.dimensions(), (8, 6));
+        let p = back[0].0.get_pixel(3, 3).0;
+        assert!(p[0] > 240 && p[1] < 16 && p[2] < 16, "{p:?}");
+        let p = back[1].0.get_pixel(3, 3).0;
+        assert!(p[2] > 240 && p[0] < 16, "{p:?}");
+        // Shrunk to a maximum width, keeping the shape.
+        let small = gif_frames(&path, 4).unwrap();
+        assert_eq!(small[0].0.dimensions(), (4, 3));
+        assert!(gif_frames(&dir.file("missing.gif"), 0).is_err());
+        let not_gif = dir.file("not.gif");
+        std::fs::write(&not_gif, b"nope").unwrap();
+        assert!(gif_frames(&not_gif, 0).is_err());
+    }
+
+    #[test]
+    fn letterbox_puts_every_frame_on_one_canvas() {
+        let imgs = vec![solid(100, 50, [255, 0, 0, 255]), solid(50, 100, [0, 255, 0, 255])];
+        let out = letterbox(&imgs, 1000);
+        assert_eq!(out.len(), 2);
+        assert!(out.iter().all(|i| i.dimensions() == (100, 100)));
+        assert_eq!(out[0].get_pixel(50, 50).0, [255, 0, 0, 255]);
+        assert_eq!(out[0].get_pixel(50, 5).0, [30, 32, 38, 255], "bars above and below");
+        assert_eq!(out[1].get_pixel(5, 50).0, [30, 32, 38, 255], "bars left and right");
+        assert_eq!(out[1].get_pixel(50, 50).0, [0, 255, 0, 255]);
+        // The width limit is never below 64.
+        let capped = letterbox(&imgs, 10);
+        assert_eq!(capped[0].width(), 64);
+        assert!(letterbox(&[], 100).is_empty());
+    }
+
+    #[test]
+    fn xml_escape_covers_markup() {
+        assert_eq!(xml_escape(r#"a<b>&"c""#), "a&lt;b&gt;&amp;&quot;c&quot;");
+        assert_eq!(xml_escape("plain"), "plain");
+    }
+
+    #[test]
+    fn docx_is_a_valid_package() {
+        let dir = TempDir::new("docx");
+        let path = dir.file("guide.docx");
+        let items = vec![("Open <menu>".to_string(), gradient(100, 50)), ("Wide".to_string(), gradient(1000, 10))];
+        docx("Guide & notes", &items, &path).unwrap();
+        let mut z = zip::ZipArchive::new(std::fs::File::open(&path).unwrap()).unwrap();
+        let names: Vec<String> = z.file_names().map(|n| n.unwrap().to_string()).collect();
+        for n in ["[Content_Types].xml", "_rels/.rels", "word/_rels/document.xml.rels", "word/document.xml", "word/media/image1.png", "word/media/image2.png"] {
+            assert!(names.iter().any(|x| x == n), "missing {n}");
+        }
+        let mut doc = String::new();
+        z.by_name("word/document.xml").unwrap().read_to_string(&mut doc).unwrap();
+        assert!(doc.contains("Guide &amp; notes"));
+        assert!(doc.contains("1. Open &lt;menu&gt;"));
+        assert!(doc.contains(r#"<wp:extent cx="952500" cy="476250"/>"#), "small pictures keep their size");
+        // Wide pictures are scaled down to fit 6 inches (5486400 EMU), give or take rounding.
+        let widths: Vec<u64> = doc
+            .split(r#"<wp:extent cx=""#)
+            .skip(1)
+            .map(|s| s[..s.find('"').unwrap()].parse().unwrap())
+            .collect();
+        assert_eq!(widths.len(), 2);
+        assert!(widths[1].abs_diff(5_486_400) <= 1, "{widths:?}");
+        let mut rels = String::new();
+        z.by_name("word/_rels/document.xml.rels").unwrap().read_to_string(&mut rels).unwrap();
+        assert_eq!(count(&rels, "<Relationship "), 2);
+        let mut png = Vec::new();
+        z.by_name("word/media/image1.png").unwrap().read_to_end(&mut png).unwrap();
+        assert_eq!(image::load_from_memory(&png).unwrap().to_rgba8(), gradient(100, 50));
+    }
+}

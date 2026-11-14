@@ -458,4 +458,266 @@ mod tests {
         assert_eq!(s, back);
         assert!(s.scene().is_some());
     }
+
+    fn colour(name: &str, c: [u8; 4], x: f32, y: f32, w: f32, h: f32) -> Item {
+        Item { name: name.into(), kind: SourceKind::Color { color: c }, x, y, w, h, visible: true }
+    }
+
+    fn all_kinds() -> Vec<SourceKind> {
+        vec![
+            SourceKind::Display { index: 2 },
+            SourceKind::Window { title: "Notepad".into() },
+            SourceKind::Area { x: -10, y: 20, w: 300, h: 200 },
+            SourceKind::Image { path: "C:/pics/logo.png".into() },
+            SourceKind::Text { text: "Live \"now\"".into(), size: 36.5, color: [1, 2, 3, 4] },
+            SourceKind::Color { color: [9, 8, 7, 6] },
+        ]
+    }
+
+    #[test]
+    fn every_kind_has_its_own_label_and_an_icon() {
+        let kinds = all_kinds();
+        let mut labels: Vec<&str> = kinds.iter().map(|k| k.label()).collect();
+        labels.sort();
+        labels.dedup();
+        assert_eq!(labels.len(), kinds.len());
+        let mut icons: Vec<&str> = kinds.iter().map(|k| k.icon()).collect();
+        assert!(icons.iter().all(|i| !i.is_empty()));
+        icons.sort();
+        icons.dedup();
+        assert_eq!(icons.len(), kinds.len());
+    }
+
+    #[test]
+    fn every_source_kind_round_trips_through_json() {
+        let scene = Scene {
+            name: "All".into(),
+            items: all_kinds()
+                .into_iter()
+                .enumerate()
+                .map(|(i, kind)| Item { name: format!("s{i}"), kind, x: i as f32 * 1.5, y: -3.25, w: 640.0, h: 360.0, visible: i % 2 == 0 })
+                .collect(),
+        };
+        let st = StudioSettings { scenes: vec![scene.clone(), StudioSettings::default().scenes[0].clone()], current: 1, fps: 60, mic_muted: true, ..Default::default() };
+        let back: StudioSettings = serde_json::from_str(&serde_json::to_string_pretty(&st).unwrap()).unwrap();
+        assert_eq!(back, st);
+        assert_eq!(back.scene(), Some(&st.scenes[1]));
+    }
+
+    #[test]
+    fn missing_settings_take_their_defaults() {
+        let s: StudioSettings = serde_json::from_str("{}").unwrap();
+        assert_eq!(s, StudioSettings::default());
+        let s: StudioSettings = serde_json::from_str(r#"{"fps": 60, "width": 1280}"#).unwrap();
+        assert_eq!((s.fps, s.width, s.height), (60, 1280, 1080));
+        assert_eq!(s.scenes.len(), 1);
+        assert!((s.system_volume - 1.0).abs() < f32::EPSILON && !s.mic_muted);
+        // Unknown fields from a newer Snagster are ignored.
+        let s: StudioSettings = serde_json::from_str(r#"{"fps": 24, "future_thing": true}"#).unwrap();
+        assert_eq!(s.fps, 24);
+    }
+
+    #[test]
+    fn the_default_setup_shows_the_first_screen_on_a_full_hd_canvas() {
+        let s = StudioSettings::default();
+        assert_eq!((s.width, s.height, s.fps, s.current), (1920, 1080, 30, 0));
+        let item = &s.scene().unwrap().items[0];
+        assert_eq!(item.kind, SourceKind::Display { index: 0 });
+        assert_eq!((item.x, item.y, item.w, item.h), (0.0, 0.0, 1920.0, 1080.0));
+        assert!(item.visible);
+    }
+
+    #[test]
+    fn the_current_scene_falls_back_to_the_first() {
+        let mut s = StudioSettings::default();
+        s.scenes.push(Scene { name: "Two".into(), items: Vec::new() });
+        s.current = 1;
+        assert_eq!(s.scene().unwrap().name, "Two");
+        s.current = 99;
+        assert_eq!(s.scene().unwrap().name, "Scene 1");
+        s.scenes.clear();
+        assert!(s.scene().is_none());
+    }
+
+    #[test]
+    fn sources_can_be_added_removed_and_reordered() {
+        let mut scene = Scene { name: "s".into(), items: Vec::new() };
+        scene.items.push(colour("red", [255, 0, 0, 255], 0.0, 0.0, 8.0, 8.0));
+        scene.items.push(colour("blue", [0, 0, 255, 255], 0.0, 0.0, 8.0, 8.0));
+        let mut out = RgbaImage::new(8, 8);
+        let mut comp = Compositor::default();
+        comp.draw(&scene, &mut out);
+        assert_eq!(out.get_pixel(4, 4).0, [0, 0, 255, 255], "the later source is on top");
+        scene.items.swap(0, 1);
+        comp.draw(&scene, &mut out);
+        assert_eq!(out.get_pixel(4, 4).0, [255, 0, 0, 255], "moved to the top");
+        scene.items.remove(1);
+        comp.draw(&scene, &mut out);
+        assert_eq!(out.get_pixel(4, 4).0, [0, 0, 255, 255]);
+        scene.items.clear();
+        comp.draw(&scene, &mut out);
+        assert_eq!(out.get_pixel(4, 4).0, [0, 0, 0, 255], "an empty scene is opaque black");
+    }
+
+    #[test]
+    fn sources_are_placed_at_rounded_canvas_positions() {
+        let scene = Scene { name: "s".into(), items: vec![colour("c", [0, 255, 0, 255], 2.4, 3.6, 3.5, 1.2)] };
+        let mut out = RgbaImage::new(10, 10);
+        Compositor::default().draw(&scene, &mut out);
+        // x 2.4 -> 2, width 3.5 -> 4 (to x 5); y 3.6 -> 4, height 1.2 -> 1.
+        let green: Vec<(u32, u32)> = (0..10).flat_map(|y| (0..10).map(move |x| (x, y))).filter(|&(x, y)| out.get_pixel(x, y).0 == [0, 255, 0, 255]).collect();
+        assert_eq!(green, [(2, 4), (3, 4), (4, 4), (5, 4)]);
+        // A size of zero still draws one pixel; off-canvas sources are clipped, not a panic.
+        let scene = Scene { name: "s".into(), items: vec![colour("dot", [9, 9, 9, 255], 0.0, 0.0, 0.0, 0.0), colour("off", [1, 1, 1, 255], -50.0, 500.0, 10.0, 10.0)] };
+        Compositor::default().draw(&scene, &mut out);
+        assert_eq!(out.get_pixel(0, 0).0, [9, 9, 9, 255]);
+        assert_eq!(out.get_pixel(1, 0).0, [0, 0, 0, 255]);
+    }
+
+    #[test]
+    fn see_through_colours_blend_over_what_is_below() {
+        let mut out = RgbaImage::from_pixel(4, 4, image::Rgba([0, 0, 0, 255]));
+        fill(&mut out, 0, 0, 4, 4, [255, 100, 0, 128]);
+        let p = out.get_pixel(1, 1).0;
+        assert_eq!(p, [128, 50, 0, 255], "half way, alpha unchanged");
+        fill(&mut out, 0, 0, 4, 4, [10, 20, 30, 0]);
+        assert_eq!(out.get_pixel(1, 1).0, [128, 50, 0, 255], "fully clear changes nothing");
+        fill(&mut out, -2, -2, 3, 3, [255, 255, 255, 255]);
+        assert_eq!(out.get_pixel(0, 0).0, [255, 255, 255, 255]);
+        assert_eq!(out.get_pixel(1, 1).0, [128, 50, 0, 255], "clipped at the top-left");
+        fill(&mut out, 10, 10, 5, 5, [1, 1, 1, 255]);
+    }
+
+    #[test]
+    fn blending_blits_honour_alpha() {
+        let src = RgbaImage::from_pixel(2, 2, image::Rgba([200, 100, 50, 0]));
+        let mut out = RgbaImage::from_pixel(2, 2, image::Rgba([10, 20, 30, 255]));
+        blit_scaled(&mut out, &src, 0, 0, 2, 2, true);
+        assert_eq!(out.get_pixel(0, 0).0, [10, 20, 30, 255], "clear pixels leave the canvas alone");
+        let src = RgbaImage::from_pixel(2, 2, image::Rgba([210, 120, 30, 255]));
+        blit_scaled(&mut out, &src, 0, 0, 2, 2, true);
+        assert_eq!(out.get_pixel(1, 1).0, [210, 120, 30, 255], "opaque pixels replace");
+        // Without blending, alpha is ignored and the canvas pixel becomes opaque.
+        let src = RgbaImage::from_pixel(1, 1, image::Rgba([7, 8, 9, 0]));
+        blit_scaled(&mut out, &src, 0, 0, 1, 1, false);
+        assert_eq!(out.get_pixel(0, 0).0, [7, 8, 9, 255]);
+    }
+
+    #[test]
+    fn downscaling_averages_neighbours() {
+        let mut src = RgbaImage::new(2, 2);
+        src.put_pixel(0, 0, image::Rgba([0, 0, 0, 255]));
+        src.put_pixel(1, 0, image::Rgba([100, 40, 8, 255]));
+        src.put_pixel(0, 1, image::Rgba([200, 80, 16, 255]));
+        src.put_pixel(1, 1, image::Rgba([100, 40, 0, 255]));
+        let mut out = RgbaImage::new(1, 1);
+        blit_scaled(&mut out, &src, 0, 0, 1, 1, false);
+        assert_eq!(out.get_pixel(0, 0).0, [100, 40, 6, 255]);
+        // Upscaling a flat colour keeps it flat.
+        let flat = RgbaImage::from_pixel(3, 2, image::Rgba([33, 66, 99, 255]));
+        let mut big = RgbaImage::new(17, 11);
+        blit_scaled(&mut big, &flat, 0, 0, 17, 11, false);
+        assert!(big.pixels().all(|p| p.0 == [33, 66, 99, 255]));
+    }
+
+    #[test]
+    fn blits_with_nothing_to_draw_do_nothing() {
+        let before = RgbaImage::from_pixel(6, 6, image::Rgba([5, 5, 5, 255]));
+        let src = RgbaImage::from_pixel(3, 3, image::Rgba([250, 0, 0, 255]));
+        for (s, x, y, w, h) in [(&src, 0, 0, 0, 3), (&src, 0, 0, 3, 0), (&src, 6, 0, 3, 3), (&src, 0, -3, 3, 3), (&src, -100, -100, 50, 50)] {
+            let mut out = before.clone();
+            blit_scaled(&mut out, s, x, y, w, h, false);
+            assert_eq!(out, before, "({x}, {y}) {w} x {h}");
+        }
+        let mut out = before.clone();
+        blit_scaled(&mut out, &RgbaImage::new(0, 0), 0, 0, 3, 3, false);
+        assert_eq!(out, before);
+    }
+
+    #[test]
+    fn pictures_draw_once_loaded_and_missing_ones_draw_nothing() {
+        let dir = std::env::temp_dir().join(format!("snagster-studio-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("p.png");
+        RgbaImage::from_pixel(4, 4, image::Rgba([0, 200, 100, 255])).save(&path).unwrap();
+        let item = |p: &std::path::Path| Item { name: "p".into(), kind: SourceKind::Image { path: p.to_string_lossy().into() }, x: 0.0, y: 0.0, w: 8.0, h: 8.0, visible: true };
+        let mut comp = Compositor::default();
+        let mut out = RgbaImage::new(8, 8);
+        comp.draw(&Scene { name: "s".into(), items: vec![item(&path)] }, &mut out);
+        assert_eq!(out.get_pixel(7, 7).0, [0, 200, 100, 255]);
+        // The picture is kept: it still draws after the file is gone.
+        std::fs::remove_file(&path).unwrap();
+        comp.draw(&Scene { name: "s".into(), items: vec![item(&path)] }, &mut out);
+        assert_eq!(out.get_pixel(3, 3).0, [0, 200, 100, 255]);
+        let mut fresh = Compositor::default();
+        fresh.draw(&Scene { name: "s".into(), items: vec![item(&dir.join("missing.png"))] }, &mut out);
+        assert_eq!(out.get_pixel(3, 3).0, [0, 0, 0, 255]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn text_sources_draw_inside_their_box() {
+        let item = Item { name: "t".into(), kind: SourceKind::Text { text: "Hello".into(), size: 40.0, color: [255, 255, 255, 255] }, x: 10.0, y: 10.0, w: 30.0, h: 12.0, visible: true };
+        let mut out = RgbaImage::new(64, 64);
+        let mut comp = Compositor::default();
+        comp.draw(&Scene { name: "s".into(), items: vec![item.clone()] }, &mut out);
+        let lit = |x: u32, y: u32| out.get_pixel(x, y).0[..3] != [0, 0, 0];
+        assert!((10..40).any(|x| (10..22).any(|y| lit(x, y))), "some text is drawn");
+        assert!((0..64).all(|x| (0..64).all(|y| !lit(x, y) || ((10..40).contains(&x) && (10..22).contains(&y)))), "nothing outside its box");
+        // Drawn again from the cache, the same.
+        let first = out.clone();
+        comp.draw(&Scene { name: "s".into(), items: vec![item] }, &mut out);
+        assert_eq!(out, first);
+        assert_eq!(comp.texts.len(), 1);
+    }
+
+    #[test]
+    fn an_empty_area_grabs_nothing() {
+        // A zero-sized screen area is skipped before any screen is touched.
+        let item = Item { name: "a".into(), kind: SourceKind::Area { x: 0, y: 0, w: 0, h: 10 }, x: 0.0, y: 0.0, w: 8.0, h: 8.0, visible: true };
+        let mut out = RgbaImage::from_pixel(8, 8, image::Rgba([1, 2, 3, 4]));
+        Compositor::default().draw(&Scene { name: "s".into(), items: vec![item] }, &mut out);
+        assert!(out.pixels().all(|p| p.0 == [0, 0, 0, 255]));
+    }
+
+    #[test]
+    fn the_engine_feeds_frames_as_bgra_until_stopped() {
+        let scene = Scene { name: "s".into(), items: vec![colour("c", [250, 120, 10, 255], 0.0, 0.0, 16.0, 16.0)] };
+        let engine = Engine::start(scene, 4, 4, None);
+        let t = Instant::now();
+        while engine.latest().is_none() && t.elapsed() < Duration::from_secs(10) {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        let frame = engine.latest().expect("a frame");
+        assert_eq!(frame.dimensions(), (16, 16), "the canvas is at least 16 x 16");
+        assert_eq!(frame.get_pixel(0, 0).0, [250, 120, 10, 255]);
+        let feed = engine.feed();
+        let mut buf = vec![0u8; 16 * 16 * 4];
+        assert!(feed(&mut buf));
+        assert_eq!(&buf[..4], &[10, 120, 250, 255], "blue, green, red, opaque");
+        assert!(buf.chunks_exact(4).all(|p| p == [10, 120, 250, 255]));
+        // A smaller buffer is filled as far as it goes.
+        let mut small = vec![0u8; 8];
+        assert!(feed(&mut small));
+        assert_eq!(small, [10, 120, 250, 255, 10, 120, 250, 255]);
+        engine.shared.stop.store(true, Ordering::Relaxed);
+        assert!(!feed(&mut buf), "stopped");
+    }
+
+    #[test]
+    fn the_engine_follows_scene_changes() {
+        let engine = Engine::start(Scene { name: "s".into(), items: vec![colour("c", [255, 0, 0, 255], 0.0, 0.0, 16.0, 16.0)] }, 16, 16, None);
+        *engine.shared.scene.lock().unwrap() = Scene { name: "s".into(), items: vec![colour("c", [0, 255, 0, 255], 0.0, 0.0, 16.0, 16.0)] };
+        let t = Instant::now();
+        let n = engine.shared.frame_no.load(Ordering::Relaxed);
+        loop {
+            let green = engine.latest().is_some_and(|f| f.get_pixel(5, 5).0 == [0, 255, 0, 255]);
+            if green && engine.shared.frame_no.load(Ordering::Relaxed) > n {
+                break;
+            }
+            assert!(t.elapsed() < Duration::from_secs(10), "the new scene was never drawn");
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        drop(engine);
+    }
 }

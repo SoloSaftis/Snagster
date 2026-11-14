@@ -307,7 +307,8 @@ pub fn probe(path: &std::path::Path) -> Result<Probe, String> {
     }
 }
 
-/// "VEN_10DE" → "NVIDIA".
+/// "VEN_10DE" → "NVIDIA". (Only Windows lists graphics-chip encoders.)
+#[cfg(any(windows, test))]
 pub fn vendor_name(id: &str) -> String {
     let id = id.to_ascii_uppercase();
     if id.contains("8086") {
@@ -1536,5 +1537,232 @@ mod tests {
         assert_eq!(vendor_name("VEN_8086"), "Intel");
         assert_eq!(vendor_name("VEN_10DE"), "NVIDIA");
         assert_eq!(vendor_name("VEN_1002"), "AMD");
+    }
+
+    #[test]
+    fn every_format_has_a_label_an_extension_and_parses_back() {
+        let mut labels: Vec<&str> = VideoFormat::ALL.iter().map(|f| f.label()).collect();
+        labels.sort();
+        labels.dedup();
+        assert_eq!(labels.len(), VideoFormat::ALL.len());
+        for f in VideoFormat::ALL {
+            assert!(["mp4", "wmv", "gif"].contains(&f.ext()), "{f:?}");
+            assert_eq!(VideoFormat::parse(f.ext()).map(|p| p.ext()), Some(f.ext()));
+        }
+        for (s, f) in [(" H.264 ", VideoFormat::Mp4), ("avc", VideoFormat::Mp4), ("H.265", VideoFormat::Hevc), ("mp4-hevc", VideoFormat::Hevc), ("GIF", VideoFormat::Gif)] {
+            assert_eq!(VideoFormat::parse(s), Some(f), "{s}");
+        }
+        assert_eq!(VideoFormat::parse(""), None);
+        assert_eq!(VideoFormat::default(), VideoFormat::Mp4);
+    }
+
+    #[test]
+    fn formats_save_by_name_in_settings() {
+        for f in VideoFormat::ALL {
+            let s = serde_json::to_string(&f).unwrap();
+            assert_eq!(serde_json::from_str::<VideoFormat>(&s).unwrap(), f);
+        }
+        assert_eq!(serde_json::to_string(&VideoFormat::Hevc).unwrap(), "\"Hevc\"");
+    }
+
+    #[test]
+    fn what_each_system_can_make() {
+        assert!(VideoFormat::Mp4.available() && VideoFormat::Gif.available());
+        assert_eq!(VideoFormat::Hevc.available(), cfg!(windows));
+        assert_eq!(VideoFormat::Wmv.available(), cfg!(windows));
+    }
+
+    #[test]
+    fn even_sizes_round_down_and_keep_the_limits() {
+        assert_eq!(even_size(64, 64), Ok((64, 64)));
+        assert_eq!(even_size(65, 65), Ok((64, 64)), "odd sizes lose a pixel");
+        assert!(even_size(64, 63).is_err(), "63 rounds to 62, too small");
+        assert!(even_size(0, 0).is_err());
+        assert_eq!(even_size(8193, 100), Ok((8192, 100)));
+        assert_eq!(even_size(u32::MAX, u32::MAX), Ok((8192, 8192)));
+        let (w, h) = even_size(1367, 769).unwrap();
+        assert!(w % 2 == 0 && h % 2 == 0);
+    }
+
+    #[test]
+    fn bitrate_numbers_come_out_as_expected() {
+        // 1920 x 1080 x 0.08 bits per pixel x 30 frames.
+        assert_eq!(bitrate(1920, 1080, 30, VideoFormat::Mp4, 2), 4_976_640);
+        // HEVC needs about 60 %.
+        assert_eq!(bitrate(1920, 1080, 30, VideoFormat::Hevc, 2), 2_985_984);
+        // Above 30 fps each extra frame costs 40 %: 30 + 0.4 x 30 = 42 frames' worth at 60 fps.
+        assert_eq!(bitrate(1920, 1080, 60, VideoFormat::Mp4, 2), 6_967_296);
+        // WMV and MP4 cost the same.
+        assert_eq!(bitrate(1280, 720, 30, VideoFormat::Wmv, 3), bitrate(1280, 720, 30, VideoFormat::Mp4, 3));
+    }
+
+    #[test]
+    fn bitrate_clamps_odd_quality_and_rates() {
+        let b = |fps, q| bitrate(1920, 1080, fps, VideoFormat::Mp4, q);
+        assert_eq!(b(30, 0), b(30, 1), "quality 0 is 1");
+        assert_eq!(b(30, 200), b(30, 4), "quality above 4 is 4");
+        assert_eq!(b(0, 2), b(1, 2), "0 fps is 1");
+        assert_eq!(b(1000, 2), b(120, 2), "rates stop at 120");
+        assert_eq!(bitrate(0, 0, 30, VideoFormat::Mp4, 2), 250_000, "never below 250 kbit/s");
+        for q in 1..4 {
+            assert!(b(30, q) < b(30, q + 1));
+        }
+    }
+
+    #[test]
+    fn clock_intervals_follow_the_rate_and_are_clamped() {
+        assert_eq!(Clock::new(30).interval, Duration::from_nanos(33_333_333));
+        assert_eq!(Clock::new(60).interval, Duration::from_nanos(16_666_666));
+        assert_eq!(Clock::new(0).interval, Duration::from_secs(1), "0 fps is 1");
+        assert_eq!(Clock::new(1000).interval, Duration::from_nanos(8_333_333), "at most 120");
+    }
+
+    #[test]
+    fn frame_stamps_add_up_without_drift() {
+        for fps in [1, 24, 25, 30, 50, 60, 120] {
+            let mut c = Clock::new(fps);
+            let mut total = 0i64;
+            for n in 0..fps as u64 {
+                c.n = n;
+                let (t, d) = c.stamp(fps);
+                assert_eq!(t, total, "frame {n} at {fps} fps starts where the last ended");
+                assert!(d > 0);
+                total += d;
+            }
+            assert_eq!(total, 10_000_000, "{fps} frames last exactly one second");
+        }
+        // The rate used for stamps is clamped like the clock's.
+        let mut c = Clock::new(30);
+        c.n = 1;
+        assert_eq!(c.stamp(0), (10_000_000, 10_000_000));
+        assert_eq!(c.stamp(500), c.stamp(120));
+    }
+
+    #[test]
+    fn deadlines_step_one_interval_per_frame() {
+        let mut c = Clock::new(10);
+        let base = c.base;
+        assert_eq!(c.deadline(), base);
+        c.n = 3;
+        assert_eq!(c.deadline(), base + Duration::from_millis(300));
+        // After a pause the count restarts from n_base.
+        c.n_base = 3;
+        assert_eq!(c.deadline(), base);
+    }
+
+    #[test]
+    fn advancing_counts_recorded_time_and_skips_late_frames() {
+        let mut c = Clock::new(100);
+        c.advance();
+        assert_eq!(c.n, 1);
+        assert_eq!(c.recorded, Duration::from_millis(10));
+        // Pretend the encoder took a whole second: the frames it missed are skipped.
+        let mut c = Clock::new(100);
+        c.base -= Duration::from_secs(1);
+        c.advance();
+        assert!(c.n >= 90, "skipped ahead to about now: {}", c.n);
+        assert_eq!(c.recorded, Duration::from_millis(10) * c.n as u32, "recorded time covers skipped frames");
+    }
+
+    #[test]
+    fn recording_stops_after_max_seconds_only_when_set() {
+        let mut c = Clock::new(30);
+        c.recorded = Duration::from_millis(1999);
+        assert!(!c.over(0), "0 means no limit");
+        assert!(!c.over(2));
+        assert!(c.over(1));
+        c.recorded = Duration::from_secs(2);
+        assert!(c.over(2));
+        c.recorded = Duration::from_secs(100_000);
+        assert!(!c.over(0));
+    }
+
+    #[test]
+    fn pausing_holds_the_clock_and_resuming_restarts_it() {
+        let mut c = Clock::new(30);
+        c.n = 7;
+        let pause = AtomicBool::new(false);
+        assert!(!c.hold(&pause), "not paused");
+        assert_eq!(c.n_base, 0, "nothing restarts without a pause");
+        pause.store(true, Ordering::Relaxed);
+        assert!(c.hold(&pause));
+        assert!(c.paused_at.is_some());
+        let before = c.base;
+        pause.store(false, Ordering::Relaxed);
+        assert!(!c.hold(&pause));
+        assert!(c.paused_at.is_none());
+        assert_eq!(c.n_base, 7, "the count restarts where it was");
+        assert!(c.base >= before);
+        assert_eq!(c.recorded, Duration::ZERO, "paused time is not recorded time");
+    }
+
+    #[test]
+    fn plain_screen_options() {
+        let o = VideoOpts::screen((1, 2, 300, 200), 60, VideoFormat::Hevc, PathBuf::from("x.mp4"));
+        assert_eq!(o.rect, (1, 2, 300, 200));
+        assert_eq!((o.fps, o.format, o.quality, o.max_s), (60, VideoFormat::Hevc, 2, 0));
+        assert!(o.hardware && o.cursor && o.frames.is_none() && o.mic.is_empty());
+        assert_eq!(o.audio, crate::audio::AudioSource::None);
+    }
+
+    #[test]
+    fn gifs_are_refused_before_anything_starts() {
+        let dir = std::env::temp_dir().join(format!("snagster-video-gif-{}", std::process::id())).join("not-made");
+        let o = VideoOpts::screen((0, 0, 64, 64), 10, VideoFormat::Gif, dir.join("a.gif"));
+        let stop = AtomicBool::new(false);
+        let pause = AtomicBool::new(false);
+        let d = record(&o, &stop, &pause);
+        assert!(d.result.unwrap_err().contains("GIF recorder"));
+        assert_eq!((d.frames, d.width, d.height), (0, 0, 0));
+        assert_eq!(d.path, dir.join("a.gif"));
+        assert!(!dir.exists(), "no folder was made");
+    }
+
+    /// Off Windows, HEVC and WMV can't be made: say so before touching the screen.
+    #[cfg(not(windows))]
+    #[test]
+    fn formats_this_system_cannot_make_are_refused() {
+        let stop = AtomicBool::new(false);
+        let pause = AtomicBool::new(false);
+        for f in [VideoFormat::Hevc, VideoFormat::Wmv] {
+            let o = VideoOpts::screen((0, 0, 64, 64), 10, f, PathBuf::from("unused.mp4"));
+            assert!(record(&o, &stop, &pause).result.unwrap_err().contains("pick MP4"), "{f:?}");
+        }
+    }
+
+    #[test]
+    fn there_is_always_an_encoder_listed() {
+        // Off Windows this is the built-in software encoder; on Windows it asks Media Foundation,
+        // which every desktop Windows has.
+        let list = encoders();
+        if cfg!(not(windows)) {
+            assert_eq!(list.len(), 1);
+            assert!(!list[0].hardware);
+            assert_eq!(list[0].codec, "H.264");
+        }
+        for e in &list {
+            assert!(!e.name.is_empty());
+        }
+    }
+
+    #[test]
+    fn unknown_vendors_keep_their_id_in_capitals() {
+        assert_eq!(vendor_name("ven_8086&dev_1234"), "Intel");
+        assert_eq!(vendor_name("VEN_1022"), "AMD");
+        assert_eq!(vendor_name("QCOM"), "Qualcomm");
+        assert_eq!(vendor_name("VEN_5143"), "Qualcomm");
+        assert_eq!(vendor_name("ven_abcd"), "VEN_ABCD");
+        assert_eq!(vendor_name(""), "");
+    }
+
+    #[test]
+    fn probing_a_missing_or_broken_file_fails_politely() {
+        let dir = std::env::temp_dir().join(format!("snagster-video-probe-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        assert!(probe(&dir.join("missing.mp4")).is_err());
+        let junk = dir.join("junk.mp4");
+        std::fs::write(&junk, b"this is not an mp4 file at all").unwrap();
+        assert!(probe(&junk).is_err());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

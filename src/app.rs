@@ -299,18 +299,57 @@ impl SnagApp {
         setup_style(&cc.egui_ctx);
         let check_run = screenshot.is_some() || UI_TEST.load(Ordering::Relaxed);
         let settings = Settings::load(check_run);
+        fonts::start_scan(cc.egui_ctx.clone());
+        let mut app = Self::blank(settings, !check_run, screenshot);
+        if check_run {
+            let mut second = Doc::new(sample::sample_image(1));
+            second.shapes.push(Shape::Ellipse {
+                rect: Rect::from_min_max(pos2(700.0, 210.0), pos2(1150.0, 390.0)),
+                color: rgb(app.settings.palette[4]),
+                width: 6.0,
+                fill: false,
+                shadow: false,
+            });
+            app.add_entry("Sample 2".into(), second);
+            app.add_entry("Sample 1".into(), sample::sample_doc());
+            if UI_TEST.load(Ordering::Relaxed) {
+                let dir = std::env::temp_dir().join("snagster-ui-test");
+                let _ = std::fs::remove_dir_all(&dir);
+                let _ = std::fs::create_dir_all(&dir);
+                app.settings.library_folder = dir.join("Library").display().to_string();
+                app.settings.save_folder = dir.display().to_string();
+                app.ui_test = Some(uitest::UiTest::new(dir));
+            }
+            if START_PANEL.load(Ordering::Relaxed) {
+                app.panel_open = true;
+                app.settings.panel.delay_on = true;
+                app.status = String::new();
+            }
+            app.status = "Sample picture loaded. Pick a tool on the left and draw on it.".into();
+        } else {
+            app.apply_hotkeys(&cc.egui_ctx);
+            app.apply_tray(&cc.egui_ctx);
+        }
+        if let Some(p) = open {
+            app.open_path(&p);
+        }
+        app
+    }
+
+    /// The window's state with nothing open and nothing started (no window, threads, hotkeys
+    /// or files touched), so `new` and the unit tests share it.
+    fn blank(settings: Settings, persist: bool, screenshot: Option<PathBuf>) -> Self {
         let (cap_tx, cap_rx) = channel();
         let (hk_tx, hk_rx) = channel();
         let (ocr_tx, ocr_rx) = channel();
         let (gif_tx, gif_rx) = channel();
         let (video_tx, video_rx) = channel();
         let (tray_tx, tray_rx) = channel();
-        fonts::start_scan(cc.egui_ctx.clone());
-        let mut app = Self {
+        Self {
             x: ribbon::Extra::default(),
             saved_settings: settings.clone(),
             settings,
-            persist: !check_run,
+            persist,
             entries: Vec::new(),
             current: None,
             tool: Tool::Arrow,
@@ -411,40 +450,7 @@ impl SnagApp {
             settings_changed_at: None,
             ui_test: None,
             scroll_manual: false,
-        };
-        if check_run {
-            let mut second = Doc::new(sample::sample_image(1));
-            second.shapes.push(Shape::Ellipse {
-                rect: Rect::from_min_max(pos2(700.0, 210.0), pos2(1150.0, 390.0)),
-                color: rgb(app.settings.palette[4]),
-                width: 6.0,
-                fill: false,
-                shadow: false,
-            });
-            app.add_entry("Sample 2".into(), second);
-            app.add_entry("Sample 1".into(), sample::sample_doc());
-            if UI_TEST.load(Ordering::Relaxed) {
-                let dir = std::env::temp_dir().join("snagster-ui-test");
-                let _ = std::fs::remove_dir_all(&dir);
-                let _ = std::fs::create_dir_all(&dir);
-                app.settings.library_folder = dir.join("Library").display().to_string();
-                app.settings.save_folder = dir.display().to_string();
-                app.ui_test = Some(uitest::UiTest::new(dir));
-            }
-            if START_PANEL.load(Ordering::Relaxed) {
-                app.panel_open = true;
-                app.settings.panel.delay_on = true;
-                app.status = String::new();
-            }
-            app.status = "Sample picture loaded. Pick a tool on the left and draw on it.".into();
-        } else {
-            app.apply_hotkeys(&cc.egui_ctx);
-            app.apply_tray(&cc.egui_ctx);
         }
-        if let Some(p) = open {
-            app.open_path(&p);
-        }
-        app
     }
 
     pub(crate) fn color(&self) -> Color32 {
@@ -1485,6 +1491,10 @@ impl SnagApp {
     }
 
     pub(crate) fn redo(&mut self) {
+        // Text being typed belongs to the picture as it is now: settle it first (as undo does),
+        // or it would later be written over, or delete, whatever mark has its index in the
+        // redone picture.
+        self.commit_text();
         if let Some(e) = self.entry()
             && let Some(next) = e.redo.pop()
         {
@@ -3000,9 +3010,9 @@ impl SnagApp {
         let area = ui.max_rect();
         let ppp = ui.ctx().pixels_per_point();
         let size = self.entries[ci].doc.size();
-        let fit = ((area.width() - 48.0) / size.x).min((area.height() - 48.0) / size.y).min(1.0 / ppp).max(0.02);
+        let fit = fit_scale(area.size(), size, ppp);
         let mut scale = self.zoom.unwrap_or(fit);
-        let mut origin = area.center() - size * scale / 2.0 + self.pan;
+        let mut origin = canvas_origin(area.center(), size, scale, self.pan);
 
         let resp = ui.allocate_rect(area, Sense::click_and_drag());
         let shift = ui.input(|i| i.modifiers.shift);
@@ -3012,8 +3022,8 @@ impl SnagApp {
             if zd != 1.0 {
                 let new_scale = (scale * zd).clamp(0.02, 16.0);
                 let cursor = ui.input(|i| i.pointer.hover_pos()).unwrap_or(area.center());
-                let new_origin = cursor - (cursor - origin) * (new_scale / scale);
-                self.pan = new_origin - (area.center() - size * new_scale / 2.0);
+                let (new_origin, pan) = zoom_about(area.center(), size, origin, scale, new_scale, cursor);
+                self.pan = pan;
                 self.zoom = Some(new_scale);
                 scale = new_scale;
                 origin = new_origin;
@@ -3030,8 +3040,8 @@ impl SnagApp {
             origin += resp.drag_delta();
         }
         self.last_scale = scale;
-        let to_img = |p: Pos2| pos2((p.x - origin.x) / scale, (p.y - origin.y) / scale);
-        let to_scr = move |p: Pos2| pos2(origin.x + p.x * scale, origin.y + p.y * scale);
+        let to_img = |p: Pos2| screen_to_image(p, origin, scale);
+        let to_scr = move |p: Pos2| image_to_screen(p, origin, scale);
         let img_rect = Rect::from_min_size(origin, size * scale);
 
         let pointer = resp.interact_pointer_pos().or(resp.hover_pos());
@@ -3646,6 +3656,43 @@ fn setup_style(ctx: &egui::Context) {
 pub(crate) fn section(ui: &mut egui::Ui, title: &str) {
     ui.label(RichText::new(title).strong().color(Color32::WHITE));
     ui.add_space(2.0);
+}
+
+/// The scale that fits a picture of `size` in a canvas of `area` (24 px margin all round),
+/// never larger than one picture pixel per screen pixel, never below 2%.
+fn fit_scale(area: Vec2, size: Vec2, ppp: f32) -> f32 {
+    ((area.x - 48.0) / size.x).min((area.y - 48.0) / size.y).min(1.0 / ppp).max(0.02)
+}
+
+/// Where the picture's top-left corner goes: centred in the canvas, then panned.
+fn canvas_origin(center: Pos2, size: Vec2, scale: f32, pan: Vec2) -> Pos2 {
+    center - size * scale / 2.0 + pan
+}
+
+/// Zoom from `scale` to `new_scale` keeping the picture point under `cursor` where it is:
+/// the new origin and the pan that gives it.
+fn zoom_about(center: Pos2, size: Vec2, origin: Pos2, scale: f32, new_scale: f32, cursor: Pos2) -> (Pos2, Vec2) {
+    let new_origin = cursor - (cursor - origin) * (new_scale / scale);
+    (new_origin, new_origin - (center - size * new_scale / 2.0))
+}
+
+fn screen_to_image(p: Pos2, origin: Pos2, scale: f32) -> Pos2 {
+    pos2((p.x - origin.x) / scale, (p.y - origin.y) / scale)
+}
+
+fn image_to_screen(p: Pos2, origin: Pos2, scale: f32) -> Pos2 {
+    pos2(origin.x + p.x * scale, origin.y + p.y * scale)
+}
+
+/// A picture's name made safe as a file name on every system (renaming a saved picture).
+fn clean_file_name(name: &str) -> String {
+    let bad = ['\\', '/', ':', '*', '?', '"', '<', '>', '|'];
+    name.chars().map(|c| if bad.contains(&c) { '_' } else { c }).collect()
+}
+
+/// The start of a temporary file's name: letters and digits only.
+fn temp_base(name: &str) -> String {
+    name.chars().map(|c| if c.is_alphanumeric() { c } else { '_' }).collect()
 }
 
 fn dashed_rect(p: &egui::Painter, r: Rect, c: Color32) {
@@ -4332,9 +4379,7 @@ impl SnagApp {
         }
         if let Some(p) = self.entries[i].path.clone() {
             let ext = p.extension().map(|e| e.to_string_lossy().to_string()).unwrap_or_else(|| "png".into());
-            let bad = ['\\', '/', ':', '*', '?', '"', '<', '>', '|'];
-            let clean: String = name.chars().map(|c| if bad.contains(&c) { '_' } else { c }).collect();
-            let target = p.with_file_name(format!("{clean}.{ext}"));
+            let target = p.with_file_name(format!("{}.{ext}", clean_file_name(name)));
             match std::fs::rename(&p, &target) {
                 Ok(()) => {
                     self.entries[i].path = Some(target.clone());
@@ -4370,7 +4415,7 @@ impl SnagApp {
     fn temp_png(&mut self) -> Option<PathBuf> {
         self.commit_text();
         let i = self.current?;
-        let base: String = self.entries[i].name.chars().map(|c| if c.is_alphanumeric() { c } else { '_' }).collect();
+        let base = temp_base(&self.entries[i].name);
         let path = std::env::temp_dir().join(format!("{base}_{}.png", chrono::Local::now().format("%H%M%S")));
         export::save_image(&render::compose(&self.entries[i].doc), &path, 92).ok()?;
         Some(path)
@@ -4659,5 +4704,459 @@ impl SnagApp {
             }
             _ => {}
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A window state with one white 200 x 100 picture open; no screen, files or threads.
+    fn app() -> SnagApp {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.add_entry("Test".into(), Doc::new(RgbaImage::from_pixel(200, 100, image::Rgba([255, 255, 255, 255]))));
+        a
+    }
+
+    fn shapes(a: &SnagApp) -> &[Shape] {
+        &a.entries[a.current.unwrap()].doc.shapes
+    }
+
+    fn text(s: &str) -> Shape {
+        Shape::Text {
+            pos: pos2(10.0, 10.0),
+            text: s.into(),
+            color: Color32::RED,
+            size: 20.0,
+            bg: false,
+            shadow: false,
+            font: String::new(),
+            bold: false,
+            italic: false,
+            outline: false,
+            align: 0,
+        }
+    }
+
+    fn boxed() -> Shape {
+        Shape::Rect { rect: Rect::from_min_max(pos2(20.0, 20.0), pos2(60.0, 60.0)), color: Color32::RED, width: 3.0, fill: false, radius: 0.0, shadow: false }
+    }
+
+    #[test]
+    fn blank_state_has_nothing_open_and_does_not_persist() {
+        let a = SnagApp::blank(Settings::default(), false, None);
+        assert!(a.entries.is_empty());
+        assert_eq!(a.current, None);
+        assert_eq!(a.tool, Tool::Arrow);
+        assert!(!a.persist);
+        assert!(a.screenshot.is_none());
+        assert_eq!(a.x.tab, ribbon::RibbonTab::Home);
+    }
+
+    #[test]
+    fn add_entry_selects_the_new_picture_and_resets_the_view() {
+        let mut a = app();
+        a.zoom = Some(3.0);
+        a.pan = vec2(5.0, 5.0);
+        a.selected = Some(0);
+        a.add_entry("Second".into(), Doc::new(RgbaImage::new(10, 10)));
+        assert_eq!(a.current, Some(1));
+        assert_eq!(a.zoom, None);
+        assert_eq!(a.pan, Vec2::ZERO);
+        assert_eq!(a.selected, None);
+        assert_eq!(a.entry().unwrap().name, "Second");
+    }
+
+    #[test]
+    fn next_name_counts_up() {
+        let mut a = app();
+        assert_eq!(a.next_name("Capture"), "Capture 1");
+        assert_eq!(a.next_name("Combined"), "Combined 2");
+    }
+
+    #[test]
+    fn duplicate_copies_picture_and_marks() {
+        let mut a = app();
+        a.entries[0].doc.shapes.push(boxed());
+        a.duplicate();
+        assert_eq!(a.entries.len(), 2);
+        assert_eq!(a.current, Some(1));
+        assert_eq!(a.entries[1].name, "Test copy");
+        assert_eq!(a.entries[1].doc.shapes.len(), 1);
+    }
+
+    #[test]
+    fn remove_current_selects_a_neighbour_and_fixes_the_guide() {
+        let mut a = app();
+        a.add_entry("B".into(), Doc::new(RgbaImage::new(4, 4)));
+        a.add_entry("C".into(), Doc::new(RgbaImage::new(4, 4)));
+        a.guide = vec![0, 1, 2];
+        a.current = Some(1);
+        a.remove_current();
+        assert_eq!(a.entries.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(), ["Test", "C"]);
+        assert_eq!(a.current, Some(1));
+        assert_eq!(a.guide, vec![0, 1]);
+        a.remove_current();
+        assert_eq!(a.current, Some(0));
+        a.remove_current();
+        assert_eq!(a.current, None);
+        a.remove_current(); // nothing left: no panic
+    }
+
+    #[test]
+    fn push_undo_is_capped_and_clears_redo() {
+        let mut e = Entry::new("x".into(), Doc::new(RgbaImage::new(2, 2)));
+        e.redo.push(e.doc.clone());
+        for _ in 0..UNDO_LIMIT + 5 {
+            e.push_undo();
+        }
+        assert_eq!(e.undo.len(), UNDO_LIMIT);
+        assert!(e.redo.is_empty());
+    }
+
+    #[test]
+    fn undo_and_redo_walk_the_history() {
+        let mut a = app();
+        a.entry().unwrap().push_undo();
+        a.entries[0].doc.shapes.push(boxed());
+        a.entry().unwrap().push_undo();
+        a.entries[0].doc.shapes.push(text("hi"));
+        assert_eq!(shapes(&a).len(), 2);
+        a.undo();
+        assert_eq!(shapes(&a).len(), 1);
+        a.undo();
+        assert_eq!(shapes(&a).len(), 0);
+        a.undo(); // nothing more to undo
+        assert_eq!(shapes(&a).len(), 0);
+        a.redo();
+        a.redo();
+        assert_eq!(shapes(&a).len(), 2);
+        a.redo(); // nothing more to redo
+        assert_eq!(shapes(&a).len(), 2);
+        assert_eq!(a.entries[0].undo.len(), 2);
+    }
+
+    #[test]
+    fn undo_and_redo_without_a_picture_do_nothing() {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.undo();
+        a.redo();
+        assert!(a.entries.is_empty());
+    }
+
+    #[test]
+    fn finish_draw_makes_the_mark_of_each_drawing_tool() {
+        let cases: [(Tool, fn(&Shape) -> bool); 8] = [
+            (Tool::Arrow, |s| matches!(s, Shape::Arrow { .. })),
+            (Tool::Line, |s| matches!(s, Shape::Line { .. })),
+            (Tool::Rect, |s| matches!(s, Shape::Rect { .. })),
+            (Tool::Ellipse, |s| matches!(s, Shape::Ellipse { .. })),
+            (Tool::Spotlight, |s| matches!(s, Shape::Spotlight { .. })),
+            (Tool::Magnify, |s| matches!(s, Shape::Magnify { .. })),
+            (Tool::Pen, |s| matches!(s, Shape::Pen { .. })),
+            (Tool::Highlight, |s| matches!(s, Shape::Highlight { .. })),
+        ];
+        for (tool, is) in cases {
+            let mut a = app();
+            a.tool = tool;
+            let pts = vec![pos2(20.0, 20.0), pos2(40.0, 30.0), pos2(80.0, 60.0)];
+            a.finish_draw(pos2(20.0, 20.0), pos2(80.0, 60.0), pts, false);
+            assert_eq!(shapes(&a).len(), 1, "{tool:?}");
+            assert!(is(&shapes(&a)[0]), "{tool:?} made {:?}", shapes(&a)[0]);
+            assert_eq!(a.entries[0].undo.len(), 1, "{tool:?} is undoable");
+        }
+    }
+
+    #[test]
+    fn a_click_is_not_a_drag() {
+        for tool in [Tool::Arrow, Tool::Line, Tool::Rect, Tool::Ellipse, Tool::Spotlight, Tool::Magnify, Tool::Crop, Tool::Blur, Tool::Selection] {
+            let mut a = app();
+            a.tool = tool;
+            a.finish_draw(pos2(20.0, 20.0), pos2(21.0, 21.0), vec![pos2(20.0, 20.0)], false);
+            assert!(shapes(&a).is_empty(), "{tool:?}");
+            assert!(a.entries[0].undo.is_empty(), "{tool:?}");
+            assert_eq!(a.entries[0].doc.image.dimensions(), (200, 100));
+        }
+    }
+
+    #[test]
+    fn shift_makes_squares_and_straight_marker_lines() {
+        let mut a = app();
+        a.tool = Tool::Rect;
+        a.finish_draw(pos2(10.0, 10.0), pos2(70.0, 30.0), vec![], true);
+        let Shape::Rect { rect, .. } = &shapes(&a)[0] else { panic!() };
+        assert_eq!(rect.width(), rect.height());
+        a.tool = Tool::Highlight;
+        a.finish_draw(pos2(10.0, 10.0), pos2(90.0, 40.0), vec![pos2(10.0, 10.0), pos2(50.0, 30.0), pos2(90.0, 40.0)], true);
+        let Shape::Highlight { points, .. } = &shapes(&a)[1] else { panic!() };
+        assert_eq!(points, &vec![pos2(10.0, 10.0), pos2(90.0, 10.0)]);
+    }
+
+    #[test]
+    fn crop_cuts_the_picture_and_goes_back_to_the_arrow() {
+        let mut a = app();
+        a.tool = Tool::Crop;
+        a.zoom = Some(2.0);
+        a.finish_draw(pos2(10.0, 10.0), pos2(110.0, 60.0), vec![], false);
+        assert_eq!(a.entries[0].doc.image.dimensions(), (100, 50));
+        assert_eq!(a.tool, Tool::Arrow);
+        assert_eq!(a.zoom, None);
+        a.undo();
+        assert_eq!(a.entries[0].doc.image.dimensions(), (200, 100));
+    }
+
+    #[test]
+    fn selection_lifts_a_piece_and_selects_it() {
+        let mut a = app();
+        a.tool = Tool::Selection;
+        a.finish_draw(pos2(10.0, 10.0), pos2(60.0, 60.0), vec![], false);
+        assert_eq!(a.tool, Tool::Select);
+        assert_eq!(a.selected, Some(shapes(&a).len() - 1));
+    }
+
+    #[test]
+    fn callout_drag_starts_typing_with_the_tail_at_the_press() {
+        let mut a = app();
+        a.tool = Tool::Callout;
+        a.finish_draw(pos2(10.0, 10.0), pos2(90.0, 60.0), vec![], false);
+        let t = a.text_edit.as_ref().unwrap();
+        assert!(t.kind == TextKind::Callout { tail: pos2(10.0, 10.0) });
+        assert_eq!(t.pos, pos2(90.0, 60.0));
+        assert!(t.bg);
+        assert!(shapes(&a).is_empty(), "nothing is added before text is typed");
+    }
+
+    #[test]
+    fn commit_text_adds_trimmed_text_and_skips_empty_text() {
+        let mut a = app();
+        a.start_text(0, pos2(5.0, 5.0), None);
+        a.commit_text();
+        assert!(shapes(&a).is_empty());
+        assert!(a.entries[0].undo.is_empty());
+        a.start_text(0, pos2(5.0, 5.0), None);
+        a.text_edit.as_mut().unwrap().text = "Hello  \n".into();
+        a.commit_text();
+        assert!(a.text_edit.is_none());
+        let Shape::Text { text, pos, .. } = &shapes(&a)[0] else { panic!() };
+        assert_eq!(text, "Hello");
+        assert_eq!(*pos, pos2(5.0, 5.0));
+        assert_eq!(a.entries[0].undo.len(), 1);
+    }
+
+    #[test]
+    fn editing_existing_text_changes_it_or_deletes_it_when_emptied() {
+        let mut a = app();
+        a.entries[0].doc.shapes.push(text("old"));
+        a.start_text(0, pos2(0.0, 0.0), Some(0));
+        a.text_edit.as_mut().unwrap().text = "new".into();
+        a.commit_text();
+        let Shape::Text { text, .. } = &shapes(&a)[0] else { panic!() };
+        assert_eq!(text, "new");
+        a.start_text(0, pos2(0.0, 0.0), Some(0));
+        a.text_edit.as_mut().unwrap().text.clear();
+        a.commit_text();
+        assert!(shapes(&a).is_empty());
+    }
+
+    #[test]
+    fn redo_while_typing_does_not_touch_marks_of_the_redone_picture() {
+        // Editing the text mark at index 0, emptied (so committing deletes it)...
+        let mut a = app();
+        a.entries[0].doc.shapes.push(text("hello"));
+        let mut later = a.entries[0].doc.clone();
+        later.shapes = vec![boxed()];
+        a.entries[0].redo.push(later);
+        a.start_text(0, pos2(0.0, 0.0), Some(0));
+        a.text_edit.as_mut().unwrap().text.clear();
+        // ...then Redo. The edit must land on the picture it was made on, not delete the box
+        // that has index 0 in the redone picture.
+        a.redo();
+        assert!(a.text_edit.is_none(), "the edit was left open over a different picture");
+        a.commit_text();
+        // The text was removed from its own picture (an edit, so there is nothing left to redo),
+        // and undo brings that picture back with the text.
+        let e = &a.entries[0];
+        assert!(e.doc.shapes.is_empty());
+        assert!(e.redo.is_empty());
+        assert_eq!(e.undo.len(), 1);
+        assert!(matches!(&e.undo[0].shapes[..], [Shape::Text { .. }]));
+    }
+
+    #[test]
+    fn delete_clear_and_scale_are_undoable() {
+        let mut a = app();
+        a.entries[0].doc.shapes.extend([boxed(), text("a")]);
+        a.selected = Some(0);
+        a.scale_selected(2.0);
+        let Shape::Rect { rect, .. } = &shapes(&a)[0] else { panic!() };
+        assert!(rect.width() > 40.0);
+        a.delete_selected();
+        assert_eq!(shapes(&a).len(), 1);
+        assert_eq!(a.selected, None);
+        a.clear_marks();
+        assert!(shapes(&a).is_empty());
+        assert_eq!(a.entries[0].undo.len(), 3);
+        a.clear_marks(); // nothing to clear: no extra undo step
+        assert_eq!(a.entries[0].undo.len(), 3);
+        a.selected = Some(7);
+        a.delete_selected(); // out of range: ignored
+        assert_eq!(a.entries[0].undo.len(), 3);
+    }
+
+    #[test]
+    fn copy_and_paste_mark_puts_an_offset_copy_selected() {
+        let mut a = app();
+        a.entries[0].doc.shapes.push(boxed());
+        a.selected = Some(0);
+        a.copy_mark();
+        a.paste_mark();
+        a.paste_mark();
+        assert_eq!(shapes(&a).len(), 3);
+        assert_eq!(a.selected, Some(2));
+        assert_eq!(a.tool, Tool::Select);
+        let mins: Vec<Pos2> = shapes(&a).iter().map(|s| s.bounds().min).collect();
+        assert!((mins[1] - mins[0] - vec2(24.0, 24.0)).length() < 0.01);
+        assert!((mins[2] - mins[1] - vec2(24.0, 24.0)).length() < 0.01);
+        a.selected = Some(0);
+        a.cut_mark();
+        assert_eq!(shapes(&a).len(), 2);
+    }
+
+    #[test]
+    fn set_color_changes_the_pen_and_the_selected_mark() {
+        let mut a = app();
+        a.entries[0].doc.shapes.push(boxed());
+        a.selected = Some(0);
+        a.set_color(Color32::from_rgb(1, 2, 3));
+        assert_eq!(a.settings.color, [1, 2, 3]);
+        assert_eq!(a.color(), Color32::from_rgb(1, 2, 3));
+        let Shape::Rect { color, .. } = &shapes(&a)[0] else { panic!() };
+        assert_eq!(*color, Color32::from_rgb(1, 2, 3));
+        assert_eq!(a.entries[0].undo.len(), 1);
+    }
+
+    #[test]
+    fn pick_finds_the_topmost_mark() {
+        let mut a = app();
+        a.entries[0].doc.shapes.extend([boxed(), boxed()]);
+        assert_eq!(a.pick(pos2(20.0, 40.0)), Some(1));
+        assert_eq!(a.pick(pos2(150.0, 90.0)), None);
+    }
+
+    #[test]
+    fn set_zoom_fits_shows_actual_pixels_and_clamps() {
+        let ctx = egui::Context::default();
+        let mut a = app();
+        a.pan = vec2(9.0, 9.0);
+        a.set_zoom(&ctx, Some(0.0));
+        assert_eq!(a.zoom, Some(1.0 / ctx.pixels_per_point()));
+        assert_eq!(a.pan, Vec2::ZERO);
+        a.last_scale = 10.0;
+        a.set_zoom(&ctx, Some(4.0));
+        assert_eq!(a.zoom, Some(16.0));
+        a.last_scale = 0.01;
+        a.set_zoom(&ctx, Some(0.5));
+        assert_eq!(a.zoom, Some(0.02));
+        a.set_zoom(&ctx, None);
+        assert_eq!(a.zoom, None);
+    }
+
+    #[test]
+    fn canvas_maths_fit_centre_and_zoom_about_the_pointer() {
+        // A 1000 x 500 picture in a 548 x 548 canvas fits at half size.
+        assert_eq!(fit_scale(vec2(548.0, 548.0), vec2(1000.0, 500.0), 1.0), 0.5);
+        // Small pictures are never blown up past 1:1 screen pixels...
+        assert_eq!(fit_scale(vec2(2000.0, 2000.0), vec2(100.0, 100.0), 2.0), 0.5);
+        // ...and tiny canvases never go below 2%.
+        assert_eq!(fit_scale(vec2(10.0, 10.0), vec2(100.0, 100.0), 1.0), 0.02);
+        let center = pos2(400.0, 300.0);
+        let size = vec2(200.0, 100.0);
+        let origin = canvas_origin(center, size, 2.0, Vec2::ZERO);
+        assert_eq!(origin, pos2(200.0, 200.0));
+        assert_eq!(canvas_origin(center, size, 2.0, vec2(10.0, -5.0)), pos2(210.0, 195.0));
+        let p = pos2(37.0, 81.0);
+        assert_eq!(screen_to_image(image_to_screen(p, origin, 2.0), origin, 2.0), p);
+        // Zooming keeps the picture point under the pointer still, and the pan reproduces it.
+        let cursor = pos2(260.0, 230.0);
+        let under = screen_to_image(cursor, origin, 2.0);
+        let (o2, pan) = zoom_about(center, size, origin, 2.0, 5.0, cursor);
+        assert!((image_to_screen(under, o2, 5.0) - cursor).length() < 1e-3);
+        assert!((canvas_origin(center, size, 5.0, pan) - o2).length() < 1e-3);
+    }
+
+    #[test]
+    fn file_names_are_made_safe() {
+        assert_eq!(clean_file_name(r#"a/b\c:d*e?f"g<h>i|j"#), "a_b_c_d_e_f_g_h_i_j");
+        assert_eq!(clean_file_name("Snag 2 – ok"), "Snag 2 – ok");
+        assert_eq!(temp_base("Capture 3 (copy).png"), "Capture_3__copy__png");
+        assert_eq!(temp_base("Bild über"), "Bild_über");
+    }
+
+    #[test]
+    fn rename_without_a_file_renames_the_entry_only() {
+        let mut a = app();
+        a.rename_current("   ");
+        assert_eq!(a.entries[0].name, "Test");
+        a.rename_current("  New name ");
+        assert_eq!(a.entries[0].name, "New name");
+        assert!(a.settings.recent_files.is_empty());
+    }
+
+    #[test]
+    fn rename_with_a_file_renames_it_on_disk() {
+        let dir = std::env::temp_dir().join(format!("snagster-app-rename-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let old = dir.join("old.png");
+        std::fs::write(&old, b"x").unwrap();
+        let mut a = app();
+        a.entries[0].path = Some(old.clone());
+        a.rename_current("a:b");
+        let want = dir.join("a_b.png");
+        assert!(want.exists() && !old.exists());
+        assert_eq!(a.entries[0].path.as_deref(), Some(want.as_path()));
+        assert_eq!(a.entries[0].name, "a:b");
+        assert_eq!(a.settings.recent_files.first(), Some(&want.display().to_string()));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn recent_files_are_unique_newest_first_and_capped() {
+        let mut a = app();
+        for i in 0..20 {
+            a.remember_file(std::path::Path::new(&format!("f{i}.png")));
+        }
+        a.remember_file(std::path::Path::new("f15.png"));
+        assert_eq!(a.settings.recent_files.len(), 12);
+        assert_eq!(a.settings.recent_files[0], "f15.png");
+        assert_eq!(a.settings.recent_files.iter().filter(|f| *f == "f15.png").count(), 1);
+        assert_eq!(a.settings.recent_files[1], "f19.png");
+    }
+
+    #[test]
+    fn every_tool_has_a_unique_label_and_a_unique_working_key() {
+        let mut labels = std::collections::HashSet::new();
+        let mut keys = std::collections::HashSet::new();
+        for t in Tool::ALL {
+            assert!(labels.insert(t.label()), "label {} used twice", t.label());
+            assert!(keys.insert(t.key()), "key {} used twice", t.key());
+            assert!(Key::from_name(t.key()).is_some(), "{:?}'s key {} isn't a key", t, t.key());
+            assert!(!t.hint().is_empty());
+        }
+        // The zoom keys stay free.
+        for k in ["0", "1", "+", "=", "-"] {
+            assert!(!keys.contains(k));
+        }
+        // ALL lists every tool exactly once.
+        assert_eq!(Tool::ALL.len(), labels.len());
+    }
+
+    #[test]
+    fn effect_options_follow_the_settings() {
+        let mut a = app();
+        a.settings.border_width = 7;
+        let o = a.effect_options();
+        assert_eq!(o.border_width, 7);
+        assert!(o.info_text.ends_with("Test"));
     }
 }

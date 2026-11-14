@@ -683,24 +683,10 @@ impl SnagApp {
             let shift = ui.input(|inp| inp.modifiers.shift);
             match g {
                 Grab::Move => {
-                    let (mut nx, mut ny) = (x + d.x, y + d.y);
-                    // Snap to the video's edges.
-                    for (v, len, edge) in [(&mut nx, w, cw), (&mut ny, h, ch)] {
-                        if v.abs() < 12.0 {
-                            *v = 0.0;
-                        } else if (*v + len - edge).abs() < 12.0 {
-                            *v = edge - len;
-                        }
-                    }
-                    it.x = nx;
-                    it.y = ny;
+                    it.x = snap_edge(x + d.x, w, cw);
+                    it.y = snap_edge(y + d.y, h, ch);
                 }
-                Grab::Resize => {
-                    let nw = (w + d.x).max(8.0);
-                    let nh = if shift { (h + d.y).max(8.0) } else { nw * h / w.max(1.0) };
-                    it.w = nw;
-                    it.h = nh;
-                }
+                Grab::Resize => (it.w, it.h) = resized(w, h, d, shift),
             }
         }
         if resp.drag_stopped() {
@@ -728,21 +714,51 @@ fn mixer_row(ui: &mut egui::Ui, icon: &str, name: &str, level: f32, live: bool, 
     let (r, _) = ui.allocate_exact_size(vec2(ui.available_width(), 8.0), Sense::hover());
     ui.painter().rect_filled(r, CornerRadius::same(3), Color32::from_gray(40));
     if live && !*muted {
-        let l = (level * *volume).clamp(0.0, 1.0);
-        let db = if l > 0.0 { (20.0 * l.log10()).max(-60.0) } else { -60.0 };
-        let f = (db + 60.0) / 60.0;
-        let col = if f > 0.92 {
-            Color32::from_rgb(240, 80, 70)
-        } else if f > 0.75 {
-            Color32::from_rgb(240, 200, 70)
-        } else {
-            Color32::from_rgb(80, 200, 120)
-        };
+        let f = meter_fill(level, *volume);
+        let col = meter_color(f);
         ui.painter().rect_filled(Rect::from_min_size(r.min, vec2(r.width() * f, r.height())), CornerRadius::same(3), col);
     }
     let pct = format!("{:.0}%", *volume * 100.0);
     ui.add(egui::Slider::new(volume, 0.0..=2.0).show_value(false).text(pct));
     ui.add_space(4.0);
+}
+
+/// One coordinate of a source being dragged: snapped to the video's near or far edge when
+/// within 12 pixels of it.
+fn snap_edge(v: f32, len: f32, edge: f32) -> f32 {
+    if v.abs() < 12.0 {
+        0.0
+    } else if (v + len - edge).abs() < 12.0 {
+        edge - len
+    } else {
+        v
+    }
+}
+
+/// A source's new size when its corner is dragged by `d`: at least 8 pixels wide, keeping its
+/// shape unless `free` (Shift) is held.
+fn resized(w: f32, h: f32, d: Vec2, free: bool) -> (f32, f32) {
+    let nw = (w + d.x).max(8.0);
+    let nh = if free { (h + d.y).max(8.0) } else { nw * h / w.max(1.0) };
+    (nw, nh)
+}
+
+/// How full a mixer meter is (0..=1): the level times the volume on a -60..0 dB scale.
+fn meter_fill(level: f32, volume: f32) -> f32 {
+    let l = (level * volume).clamp(0.0, 1.0);
+    let db = if l > 0.0 { (20.0 * l.log10()).max(-60.0) } else { -60.0 };
+    (db + 60.0) / 60.0
+}
+
+/// Green, then yellow, then red near the top.
+fn meter_color(f: f32) -> Color32 {
+    if f > 0.92 {
+        Color32::from_rgb(240, 80, 70)
+    } else if f > 0.75 {
+        Color32::from_rgb(240, 200, 70)
+    } else {
+        Color32::from_rgb(80, 200, 120)
+    }
 }
 
 impl StudioUi {
@@ -760,5 +776,73 @@ impl StudioUi {
 impl StudioUi {
     pub fn select(&mut self, i: usize) {
         self.selected = Some(i);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dragged_sources_snap_to_the_video_edges() {
+        assert_eq!(snap_edge(8.0, 100.0, 1920.0), 0.0);
+        assert_eq!(snap_edge(-11.0, 100.0, 1920.0), 0.0);
+        assert_eq!(snap_edge(1815.0, 100.0, 1920.0), 1820.0);
+        assert_eq!(snap_edge(500.0, 100.0, 1920.0), 500.0);
+        assert_eq!(snap_edge(12.0, 100.0, 1920.0), 12.0);
+    }
+
+    #[test]
+    fn resizing_keeps_the_shape_unless_shift() {
+        assert_eq!(resized(160.0, 90.0, vec2(160.0, 0.0), false), (320.0, 180.0));
+        assert_eq!(resized(160.0, 90.0, vec2(40.0, 10.0), true), (200.0, 100.0));
+        // Never smaller than 8 pixels.
+        assert_eq!(resized(160.0, 90.0, vec2(-500.0, -500.0), true), (8.0, 8.0));
+        let (w, h) = resized(160.0, 90.0, vec2(-500.0, 0.0), false);
+        assert_eq!(w, 8.0);
+        assert!((h - 4.5).abs() < 1e-4);
+        // A zero-width source doesn't divide by zero.
+        assert!(resized(0.0, 90.0, vec2(10.0, 0.0), false).1.is_finite());
+    }
+
+    #[test]
+    fn meters_use_a_60_db_scale() {
+        assert_eq!(meter_fill(0.0, 1.0), 0.0);
+        assert_eq!(meter_fill(1.0, 1.0), 1.0);
+        assert_eq!(meter_fill(1.0, 2.0), 1.0, "volume can't push it past full");
+        assert!((meter_fill(0.1, 1.0) - 40.0 / 60.0).abs() < 1e-4, "-20 dB");
+        assert_eq!(meter_fill(0.000_001, 1.0), 0.0, "below -60 dB is empty");
+        assert_eq!(meter_fill(0.5, 0.0), 0.0, "volume 0 is silent");
+        assert_eq!(meter_color(0.5), Color32::from_rgb(80, 200, 120));
+        assert_eq!(meter_color(0.8), Color32::from_rgb(240, 200, 70));
+        assert_eq!(meter_color(0.95), Color32::from_rgb(240, 80, 70));
+    }
+
+    #[test]
+    fn added_sources_go_into_the_current_scene() {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        let item = |name: &str| Item { name: name.into(), kind: SourceKind::Color { color: [0, 0, 0, 255] }, x: 0.0, y: 0.0, w: 10.0, h: 10.0, visible: true };
+        a.settings.studio.scenes = vec![Scene { name: "A".into(), items: Vec::new() }, Scene { name: "B".into(), items: Vec::new() }];
+        a.settings.studio.current = 1;
+        add_item(&mut a, item("one"));
+        assert!(a.settings.studio.scenes[0].items.is_empty());
+        assert_eq!(a.settings.studio.scenes[1].items.len(), 1);
+        // A stale index past the end falls back to the last scene.
+        a.settings.studio.current = 9;
+        add_item(&mut a, item("two"));
+        assert_eq!(a.settings.studio.scenes[1].items.len(), 2);
+        // No scenes at all: nothing happens.
+        a.settings.studio.scenes.clear();
+        add_item(&mut a, item("three"));
+        assert!(a.settings.studio.scenes.is_empty());
+    }
+
+    #[test]
+    fn stop_and_pause_without_studio_do_nothing() {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        stop(&mut a);
+        toggle_pause(&mut a);
+        start(&mut a, &egui::Context::default()); // no Studio open: doesn't record
+        assert!(a.x.studio.is_none());
     }
 }

@@ -173,3 +173,81 @@ impl SnagApp {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn release(version: &str) -> Release {
+        Release { version: version.into(), notes: String::new(), page: String::new(), asset: None }
+    }
+
+    /// A window state whose update check has answered `r` (no network: the answer is handed in).
+    fn answered(r: Result<Release, String>, asked: bool) -> SnagApp {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        let (tx, rx) = channel();
+        tx.send(r).unwrap();
+        a.x.update.check_rx = Some(rx);
+        a.x.update.asked = asked;
+        assert!(a.x.update.checking());
+        a.poll_updates(&egui::Context::default());
+        assert!(!a.x.update.checking(), "the answer is taken");
+        a
+    }
+
+    #[test]
+    fn a_newer_version_opens_the_dialog() {
+        let a = answered(Ok(release("999.0.0")), false);
+        assert!(a.x.update.dialog);
+        assert_eq!(a.x.update.available().map(|r| r.version.as_str()), Some("999.0.0"));
+    }
+
+    #[test]
+    fn the_same_version_is_not_offered() {
+        let a = answered(Ok(release(env!("CARGO_PKG_VERSION"))), true);
+        assert!(!a.x.update.dialog);
+        assert!(a.x.update.available().is_none());
+        assert!(a.status.contains(env!("CARGO_PKG_VERSION")), "asked: says it's up to date");
+        let quiet = answered(Ok(release("0.0.1")), false);
+        assert!(!quiet.x.update.dialog);
+        assert!(!quiet.status.contains("0.0.1"));
+    }
+
+    #[test]
+    fn a_skipped_version_stays_quiet_unless_asked() {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.settings.update_skip = "999.0.0".into();
+        let (tx, rx) = channel();
+        tx.send(Ok(release("999.0.0"))).unwrap();
+        a.x.update.check_rx = Some(rx);
+        a.poll_updates(&egui::Context::default());
+        assert!(!a.x.update.dialog);
+        // Asking by hand shows it anyway.
+        let (tx, rx) = channel();
+        tx.send(Ok(release("999.0.0"))).unwrap();
+        a.x.update.check_rx = Some(rx);
+        a.x.update.asked = true;
+        a.poll_updates(&egui::Context::default());
+        assert!(a.x.update.dialog);
+    }
+
+    #[test]
+    fn a_failed_check_is_reported_only_when_asked() {
+        let before = SnagApp::blank(Settings::default(), false, None).status;
+        let quiet = answered(Err("offline".into()), false);
+        assert_eq!(quiet.status, before);
+        let asked = answered(Err("offline".into()), true);
+        assert!(asked.status.contains("offline"));
+    }
+
+    #[test]
+    fn no_automatic_check_when_settings_are_not_kept() {
+        // persist is false in tests and the button test: never reach for the network.
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.settings.update_check = true;
+        a.settings.update_checked_at = 0;
+        a.poll_updates(&egui::Context::default());
+        assert!(!a.x.update.checking());
+        assert_eq!(a.settings.update_checked_at, 0);
+    }
+}

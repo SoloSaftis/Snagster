@@ -7,12 +7,18 @@
 //! and picture stay in step. Other systems: no sound yet.
 
 use serde::{Deserialize, Serialize};
+#[cfg(any(windows, test))]
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
+// Sound is captured, queued and mixed only on Windows so far; elsewhere `Capture::start`
+// refuses anything but silence, so the queue and mixing code is built for Windows (and the
+// tests, which check the mixing maths on every system).
+#[cfg(any(windows, test))]
 pub const RATE: u32 = 48_000;
+#[cfg(any(windows, test))]
 pub const CHANNELS: u32 = 2;
 
 /// The mixer (Studio's volume sliders): volume 0..2 as f32 bits and mute, for the system sound
@@ -87,11 +93,14 @@ pub struct Device {
 
 /// One running sound source: samples waiting to be taken, its loudness and volume.
 struct Feed {
+    #[cfg(any(windows, test))]
     queue: Mutex<VecDeque<i16>>,
     /// Loudest sample of the latest chunk, 0..1 (f32 bits).
     peak: AtomicU32,
     /// Volume 0..2 (f32 bits).
+    #[cfg(any(windows, test))]
     gain: AtomicU32,
+    #[cfg(any(windows, test))]
     muted: AtomicBool,
     error: Mutex<Option<String>>,
 }
@@ -99,14 +108,18 @@ struct Feed {
 impl Feed {
     fn new() -> Arc<Feed> {
         Arc::new(Feed {
+            #[cfg(any(windows, test))]
             queue: Mutex::new(VecDeque::new()),
             peak: AtomicU32::new(0),
+            #[cfg(any(windows, test))]
             gain: AtomicU32::new(1.0f32.to_bits()),
+            #[cfg(any(windows, test))]
             muted: AtomicBool::new(false),
             error: Mutex::new(None),
         })
     }
 
+    #[cfg(any(windows, test))]
     fn push(&self, samples: &[i16]) {
         let peak = samples.iter().map(|s| s.unsigned_abs()).max().unwrap_or(0) as f32 / 32768.0;
         self.peak.store(peak.to_bits(), Ordering::Relaxed);
@@ -121,6 +134,7 @@ impl Feed {
         }
     }
 
+    #[cfg(any(windows, test))]
     fn silence(&self, n: usize) {
         self.peak.store(0, Ordering::Relaxed);
         if let Ok(mut q) = self.queue.lock() {
@@ -169,11 +183,13 @@ impl Capture {
         Ok(cap)
     }
 
+    #[cfg(any(windows, test))]
     pub fn is_silent(&self) -> bool {
         self.system.is_none() && self.mic.is_none()
     }
 
     /// Take `frames` stereo frames, mixed (silence where a source has nothing yet).
+    #[cfg(any(windows, test))]
     pub fn take(&self, frames: usize) -> Vec<i16> {
         let n = frames * CHANNELS as usize;
         let mut out = vec![0i32; n];
@@ -194,6 +210,7 @@ impl Capture {
     }
 
     /// Drop what has been captured so far (after a pause).
+    #[cfg(any(windows, test))]
     pub fn discard(&self) {
         for f in [&self.system, &self.mic].into_iter().flatten() {
             if let Ok(mut q) = f.queue.lock() {
@@ -261,6 +278,7 @@ fn spawn_source(_mic: Option<String>, _feed: Arc<Feed>, _stop: Arc<AtomicBool>) 
 #[cfg(windows)]
 mod win {
     use super::*;
+    use std::time::Instant;
     use windows::Win32::Devices::FunctionDiscovery::PKEY_Device_FriendlyName;
     use windows::Win32::Media::Audio::*;
     use windows::Win32::System::Com::{CLSCTX_ALL, COINIT_MULTITHREADED, CoCreateInstance, CoInitializeEx, CoTaskMemFree, STGM_READ};
@@ -386,5 +404,181 @@ mod tests {
         assert!(c.is_silent());
         assert_eq!(c.take(480).len(), 960);
         assert!(c.take(10).iter().all(|s| *s == 0));
+    }
+
+    /// `take` reads the global mixer, and some tests change it: they take turns.
+    static MIX_LOCK: Mutex<()> = Mutex::new(());
+
+    fn mix_lock() -> std::sync::MutexGuard<'static, ()> {
+        MIX_LOCK.lock().unwrap_or_else(|p| p.into_inner())
+    }
+
+    /// A capture made of plain feeds (no devices, no threads).
+    fn capture(system: Option<Arc<Feed>>, mic: Option<Arc<Feed>>) -> Capture {
+        Capture { system, mic, stop: Arc::new(AtomicBool::new(false)), threads: Vec::new() }
+    }
+
+    fn queued(f: &Feed) -> usize {
+        f.queue.lock().unwrap().len()
+    }
+
+    #[test]
+    fn every_source_has_a_label_and_parses_its_synonyms() {
+        let mut labels: Vec<&str> = AudioSource::ALL.iter().map(|s| s.label()).collect();
+        labels.sort();
+        labels.dedup();
+        assert_eq!(labels.len(), AudioSource::ALL.len());
+        for (words, want) in [
+            (&["none", "OFF", "no", "silent"][..], AudioSource::None),
+            (&["system", "Computer", "desktop"][..], AudioSource::System),
+            (&["mic", " microphone "][..], AudioSource::Microphone),
+            (&["both", "ALL"][..], AudioSource::Both),
+        ] {
+            for w in words {
+                assert_eq!(AudioSource::parse(w), Some(want), "{w}");
+            }
+        }
+        assert_eq!(AudioSource::parse(""), None);
+        assert_eq!(AudioSource::default(), AudioSource::System);
+        assert!(AudioSource::System.system() && !AudioSource::System.mic());
+        assert!(!AudioSource::Microphone.system() && AudioSource::Microphone.mic());
+    }
+
+    #[test]
+    fn sources_save_by_name() {
+        for s in AudioSource::ALL {
+            let j = serde_json::to_string(&s).unwrap();
+            assert_eq!(serde_json::from_str::<AudioSource>(&j).unwrap(), s);
+        }
+        assert_eq!(serde_json::to_string(&AudioSource::Both).unwrap(), "\"Both\"");
+    }
+
+    #[test]
+    fn sound_is_recorded_only_where_it_is_supported() {
+        assert_eq!(AudioSource::supported(), cfg!(windows));
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn off_windows_sound_is_refused_plainly() {
+        for s in [AudioSource::System, AudioSource::Microphone, AudioSource::Both] {
+            let e = Capture::start(s, "").err().expect("no sound here");
+            assert!(e.contains("isn't available"), "{e}");
+        }
+        assert!(microphones().is_empty());
+    }
+
+    #[test]
+    fn a_feed_tracks_its_peak_and_keeps_at_most_five_seconds() {
+        let f = Feed::new();
+        f.push(&[100, -16384, 50, 0]);
+        assert_eq!(f32::from_bits(f.peak.load(Ordering::Relaxed)), 0.5);
+        f.push(&[i16::MIN, 0]);
+        assert_eq!(f32::from_bits(f.peak.load(Ordering::Relaxed)), 1.0, "the loudest negative sample is full scale");
+        assert_eq!(queued(&f), 6);
+        f.push(&[]);
+        assert_eq!(f.peak.load(Ordering::Relaxed), 0, "an empty chunk is silent");
+        let max = (RATE * CHANNELS * 5) as usize;
+        f.push(&vec![7i16; max]);
+        assert_eq!(queued(&f), max, "the oldest samples are dropped");
+        assert!(f.queue.lock().unwrap().iter().all(|s| *s == 7));
+        f.push(&[1, 2]);
+        let q = f.queue.lock().unwrap();
+        assert_eq!(q.len(), max);
+        assert_eq!((q[max - 2], q[max - 1]), (1, 2), "the newest are kept at the end");
+    }
+
+    #[test]
+    fn silence_fills_in_zeros() {
+        let f = Feed::new();
+        f.push(&[9000, 9000]);
+        f.silence(4);
+        assert_eq!(f.peak.load(Ordering::Relaxed), 0);
+        assert_eq!(f.queue.lock().unwrap().iter().copied().collect::<Vec<_>>(), [9000, 9000, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn two_sources_are_added_together_and_clipped() {
+        let _g = mix_lock();
+        set_mix((1.0, false), (1.0, false));
+        let (a, b) = (Feed::new(), Feed::new());
+        a.push(&[1000, -1000, 30000, -30000]);
+        b.push(&[234, 66, 10000, -10000]);
+        let c = capture(Some(a.clone()), Some(b.clone()));
+        assert!(!c.is_silent() && c.has_system() && c.has_mic());
+        assert_eq!(c.take(2), [1234, -934, i16::MAX, i16::MIN]);
+        assert_eq!(queued(&a) + queued(&b), 0, "what was mixed is gone");
+    }
+
+    #[test]
+    fn a_short_source_is_padded_with_silence_and_order_is_kept() {
+        let _g = mix_lock();
+        set_mix((1.0, false), (1.0, false));
+        let a = Feed::new();
+        a.push(&[1, 2, 3, 4, 5, 6]);
+        let c = capture(Some(a.clone()), None);
+        assert!(c.has_system() && !c.has_mic());
+        assert_eq!(c.take(1), [1, 2]);
+        assert_eq!(c.take(3), [3, 4, 5, 6, 0, 0]);
+        assert_eq!(c.take(1), [0, 0]);
+        assert!(c.take(0).is_empty());
+    }
+
+    #[test]
+    fn volume_and_mute_apply_per_source() {
+        let _g = mix_lock();
+        set_mix((1.0, false), (1.0, false));
+        let (a, b) = (Feed::new(), Feed::new());
+        a.gain.store(0.5f32.to_bits(), Ordering::Relaxed);
+        b.muted.store(true, Ordering::Relaxed);
+        a.push(&[1000, -2000]);
+        b.push(&[500, 500]);
+        let c = capture(Some(a), Some(b.clone()));
+        assert_eq!(c.take(1), [500, -1000]);
+        assert_eq!(queued(&b), 0, "a muted source is still used up, so it doesn't fall behind");
+    }
+
+    #[test]
+    fn the_mixer_sliders_scale_mute_and_are_clamped() {
+        let _g = mix_lock();
+        let take_one = |sys: i16, mic: i16| {
+            let (a, b) = (Feed::new(), Feed::new());
+            a.push(&[sys, sys]);
+            b.push(&[mic, mic]);
+            capture(Some(a), Some(b)).take(1)
+        };
+        set_mix((2.0, false), (0.25, false));
+        assert_eq!(take_one(1000, 1000), [2250, 2250]);
+        set_mix((5.0, false), (-3.0, false));
+        assert_eq!(f32::from_bits(MIX_GAIN[0].load(Ordering::Relaxed)), 2.0, "at most 2");
+        assert_eq!(f32::from_bits(MIX_GAIN[1].load(Ordering::Relaxed)), 0.0, "at least 0");
+        assert_eq!(take_one(1000, 1000), [2000, 2000]);
+        set_mix((1.0, true), (1.0, false));
+        assert_eq!(take_one(1000, 7), [7, 7], "the system sound is muted");
+        set_mix((1.0, false), (1.0, false));
+        assert_eq!(take_one(1, 2), [3, 3]);
+    }
+
+    #[test]
+    fn levels_and_discard() {
+        let _g = mix_lock();
+        set_mix((1.0, false), (1.0, false));
+        let (a, b) = (Feed::new(), Feed::new());
+        a.push(&[8192, 0]);
+        b.push(&[0, -32768]);
+        let c = capture(Some(a.clone()), Some(b.clone()));
+        assert_eq!(c.levels(), (0.25, 1.0));
+        assert_eq!(capture(None, None).levels(), (0.0, 0.0));
+        c.discard();
+        assert_eq!(queued(&a) + queued(&b), 0);
+        assert_eq!(c.take(1), [0, 0]);
+    }
+
+    #[test]
+    fn dropping_a_capture_sets_its_stop_flag() {
+        let c = capture(None, None);
+        let stop = c.stop.clone();
+        drop(c);
+        assert!(stop.load(Ordering::Relaxed));
     }
 }

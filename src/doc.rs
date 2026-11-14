@@ -743,7 +743,9 @@ impl Doc {
     pub fn lift(&self, r: Rect) -> Option<Doc> {
         let r = r.intersect(self.image_rect());
         let (x, y) = (r.min.x.round() as u32, r.min.y.round() as u32);
-        let (w, h) = (r.width().round() as u32, r.height().round() as u32);
+        // Rounding the corner and the size separately can reach one pixel past the edge.
+        let w = (r.width().round() as u32).min(self.image.width().saturating_sub(x));
+        let h = (r.height().round() as u32).min(self.image.height().saturating_sub(y));
         if w < 2 || h < 2 {
             return None;
         }
@@ -782,5 +784,497 @@ impl Doc {
             image: ImgData(Arc::new(piece)),
         });
         Some(Doc { image: Arc::new(img), shapes })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::settings::BlurMode;
+
+    fn solid(w: u32, h: u32, c: [u8; 4]) -> RgbaImage {
+        RgbaImage::from_pixel(w, h, image::Rgba(c))
+    }
+
+    /// Each row y is filled with red value y*10, so rows can be told apart after a cut.
+    fn rows_image(w: u32, h: u32) -> RgbaImage {
+        RgbaImage::from_fn(w, h, |_, y| image::Rgba([(y * 10) as u8, 0, 0, 255]))
+    }
+
+    fn cols_image(w: u32, h: u32) -> RgbaImage {
+        RgbaImage::from_fn(w, h, |x, _| image::Rgba([0, (x * 10) as u8, 0, 255]))
+    }
+
+    fn step(center: Pos2, n: u32) -> Shape {
+        Shape::Step { center, n, color: Color32::RED, radius: 10.0, shadow: false, style: StepStyle::Numbers }
+    }
+
+    fn rect_shape(rect: Rect, fill: bool) -> Shape {
+        Shape::Rect { rect, color: Color32::RED, width: 2.0, fill, radius: 0.0, shadow: true }
+    }
+
+    fn close(a: Pos2, b: Pos2) -> bool {
+        a.distance(b) < 1e-3
+    }
+
+    #[test]
+    fn tools_have_unique_keys_and_labels() {
+        let mut keys: Vec<_> = Tool::ALL.iter().map(|t| t.key()).collect();
+        let mut labels: Vec<_> = Tool::ALL.iter().map(|t| t.label()).collect();
+        keys.sort();
+        keys.dedup();
+        labels.sort();
+        labels.dedup();
+        assert_eq!(keys.len(), Tool::ALL.len());
+        assert_eq!(labels.len(), Tool::ALL.len());
+        for t in Tool::ALL {
+            assert_eq!(t.key().chars().count(), 1);
+            assert!(!t.hint().is_empty());
+        }
+    }
+
+    #[test]
+    fn size_helpers_have_minimums() {
+        assert_eq!(arrow_head_len(1.0), ARROW_HEAD_MIN);
+        assert_eq!(arrow_head_len(10.0), 40.0);
+        assert_eq!(step_radius(0.0), STEP_RADIUS_MIN);
+        assert_eq!(step_radius(10.0), 35.0);
+        assert_eq!(text_size(1.0), TEXT_SIZE_MIN);
+        assert_eq!(text_size(10.0), 60.0);
+        assert_eq!(pointer_size(1.0), POINTER_MIN);
+        assert_eq!(pointer_size(10.0), 50.0);
+        let h = highlight_color(Color32::from_rgb(10, 20, 30));
+        // Color32 is stored premultiplied, so the colour comes back within rounding.
+        let [r, g, b, a] = h.to_srgba_unmultiplied();
+        assert_eq!(a, HIGHLIGHT_ALPHA);
+        assert!([(r, 10), (g, 20), (b, 30)].iter().all(|(v, want)| v.abs_diff(*want) <= 1));
+        assert_eq!(shadow_color().to_srgba_unmultiplied(), [0, 0, 0, SHADOW_ALPHA]);
+    }
+
+    #[test]
+    fn arrow_head_points_at_the_end() {
+        let [tip, l, r] = arrow_head(pos2(0.0, 0.0), pos2(100.0, 0.0), 10.0);
+        assert!(close(tip, pos2(100.0, 0.0)));
+        // The base is one head length back from the tip and symmetric around the line.
+        assert!(close(l, pos2(60.0, 20.0)));
+        assert!(close(r, pos2(60.0, -20.0)));
+        // A zero-length arrow still gives finite points.
+        let pts = arrow_head(pos2(5.0, 5.0), pos2(5.0, 5.0), 2.0);
+        assert!(pts.iter().all(|p| p.x.is_finite() && p.y.is_finite()));
+    }
+
+    #[test]
+    fn pointer_outline_scales_from_its_tip() {
+        let pts = pointer_outline(pos2(10.0, 20.0), 40.0);
+        assert_eq!(pts.len(), 7);
+        assert!(close(pts[0], pos2(10.0, 20.0)));
+        assert!(close(pts[1], pos2(10.0, 54.0)));
+        let bb = Rect::from_points(&pts);
+        assert!((bb.height() - 39.0).abs() < 1e-3);
+    }
+
+    #[test]
+    fn callout_tail_leaves_from_the_nearest_side() {
+        let bubble = Rect::from_min_max(pos2(0.0, 0.0), pos2(100.0, 40.0));
+        let [a, b, t] = callout_tail(bubble, pos2(300.0, 20.0));
+        assert_eq!(t, pos2(300.0, 20.0));
+        assert_eq!(a.x, 98.0);
+        assert_eq!(b.x, 98.0);
+        let [a, b, _] = callout_tail(bubble, pos2(50.0, 200.0));
+        assert_eq!(a.y, 38.0);
+        assert_eq!(b.y, 38.0);
+        let [a, _, _] = callout_tail(bubble, pos2(-300.0, 20.0));
+        assert_eq!(a.x, 2.0);
+        let [a, _, _] = callout_tail(bubble, pos2(50.0, -200.0));
+        assert_eq!(a.y, 2.0);
+    }
+
+    #[test]
+    fn segment_distance() {
+        let (a, b) = (pos2(0.0, 0.0), pos2(10.0, 0.0));
+        assert_eq!(seg_dist(pos2(5.0, 3.0), a, b), 3.0);
+        assert_eq!(seg_dist(pos2(-4.0, 3.0), a, b), 5.0); // past the start
+        assert_eq!(seg_dist(pos2(13.0, 4.0), a, b), 5.0); // past the end
+        assert_eq!(seg_dist(pos2(3.0, 4.0), a, a), 5.0); // degenerate segment
+    }
+
+    #[test]
+    fn text_extent_counts_lines_and_widest_line() {
+        let one = text_extent("abcd", 10.0);
+        assert!((one.x - 4.0 * 5.2).abs() < 1e-3);
+        assert!((one.y - 12.0).abs() < 1e-3);
+        let two = text_extent("ab\nabcdef", 10.0);
+        assert!((two.x - 6.0 * 5.2).abs() < 1e-3);
+        assert!((two.y - 24.0).abs() < 1e-3);
+        // Empty text still has a box one letter wide.
+        assert!(text_extent("", 10.0).x > 0.0);
+        let b = callout_bubble(pos2(0.0, 0.0), "abcd", 10.0);
+        assert_eq!(b.min, pos2(-5.0, -5.0));
+    }
+
+    #[test]
+    fn shape_properties() {
+        let mut s = rect_shape(Rect::from_min_max(pos2(0.0, 0.0), pos2(10.0, 10.0)), false);
+        assert!(s.shadow());
+        assert_eq!(s.width(), 2.0);
+        assert_eq!(s.shadow_offset(), Vec2::splat(SHADOW_OFFSET_MIN));
+        s.set_color(Color32::BLUE);
+        assert!(matches!(s, Shape::Rect { color, .. } if color == Color32::BLUE));
+        let st = step(pos2(0.0, 0.0), 1);
+        assert!((st.width() - 10.0 / STEP_RADIUS_FACTOR).abs() < 1e-5);
+        let sp = Shape::Spotlight { rect: Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)) };
+        assert!(!sp.shadow());
+        assert_eq!(sp.width(), 0.0);
+        let big = Shape::Pen { points: vec![pos2(0.0, 0.0)], color: Color32::RED, width: 20.0, shadow: true };
+        assert_eq!(big.shadow_offset(), Vec2::splat(12.0));
+    }
+
+    #[test]
+    fn bounds_of_each_kind() {
+        let line = Shape::Line { a: pos2(0.0, 0.0), b: pos2(100.0, 50.0), color: Color32::RED, width: 10.0, shadow: false };
+        assert_eq!(line.bounds(), Rect::from_min_max(pos2(-20.0, -20.0), pos2(120.0, 70.0)));
+        let r = rect_shape(Rect::from_min_max(pos2(10.0, 10.0), pos2(20.0, 30.0)), false);
+        assert_eq!(r.bounds(), Rect::from_min_max(pos2(9.0, 9.0), pos2(21.0, 31.0)));
+        assert_eq!(step(pos2(50.0, 50.0), 1).bounds(), Rect::from_min_max(pos2(40.0, 40.0), pos2(60.0, 60.0)));
+        let hl = Shape::Highlight { points: vec![pos2(0.0, 0.0), pos2(10.0, 0.0)], color: Color32::RED, width: 2.0 };
+        assert_eq!(hl.bounds(), Rect::from_min_max(pos2(-5.0, -5.0), pos2(15.0, 5.0)));
+        let stamp = Shape::Stamp { center: pos2(0.0, 0.0), emoji: "x".into(), size: 20.0, color: Color32::RED };
+        assert_eq!(stamp.bounds(), Rect::from_min_max(pos2(-10.0, -10.0), pos2(10.0, 10.0)));
+        let text = |bg| Shape::Text {
+            pos: pos2(0.0, 0.0),
+            text: "ab".into(),
+            color: Color32::RED,
+            size: 10.0,
+            bg,
+            shadow: false,
+            font: String::new(),
+            bold: false,
+            italic: false,
+            outline: true,
+            align: 0,
+        };
+        assert!(text(true).bounds().contains_rect(text(false).bounds()));
+        assert_eq!(text(true).bounds().min, pos2(-3.0, -3.0));
+    }
+
+    #[test]
+    fn translate_moves_every_point() {
+        let d = vec2(5.0, -3.0);
+        let shapes = vec![
+            Shape::Arrow { a: pos2(0.0, 0.0), b: pos2(10.0, 10.0), color: Color32::RED, width: 2.0, shadow: false, heads: 1 },
+            rect_shape(Rect::from_min_max(pos2(0.0, 0.0), pos2(10.0, 10.0)), true),
+            Shape::Pen { points: vec![pos2(0.0, 0.0), pos2(4.0, 4.0)], color: Color32::RED, width: 2.0, shadow: false },
+            Shape::Callout {
+                pos: pos2(0.0, 0.0),
+                tail: pos2(40.0, 40.0),
+                text: "hi".into(),
+                color: Color32::RED,
+                size: 12.0,
+                shadow: false,
+                font: String::new(),
+                bold: false,
+                italic: false,
+                shape: CalloutShape::Rounded,
+                outline: false,
+                align: 0,
+            },
+            step(pos2(3.0, 3.0), 1),
+            Shape::Magnify { center: pos2(3.0, 3.0), radius: 5.0, zoom: 2.0 },
+            Shape::Pointer { pos: pos2(1.0, 1.0), size: 24.0 },
+            Shape::Spotlight { rect: Rect::from_min_max(pos2(0.0, 0.0), pos2(10.0, 10.0)) },
+        ];
+        for s in shapes {
+            let before = s.bounds();
+            let mut m = s.clone();
+            m.translate(d);
+            let after = m.bounds();
+            assert!(close(after.min, before.min + d), "{s:?}");
+            assert!(close(after.max, before.max + d), "{s:?}");
+        }
+    }
+
+    #[test]
+    fn scale_keeps_the_centre_and_clamps_sizes() {
+        let mut r = rect_shape(Rect::from_min_max(pos2(0.0, 0.0), pos2(10.0, 20.0)), true);
+        r.scale(2.0);
+        let Shape::Rect { rect, .. } = r else { unreachable!() };
+        assert_eq!(rect, Rect::from_min_max(pos2(-5.0, -10.0), pos2(15.0, 30.0)));
+        let mut l = Shape::Line { a: pos2(0.0, 0.0), b: pos2(10.0, 0.0), color: Color32::RED, width: 1.0, shadow: false };
+        l.scale(0.5);
+        let Shape::Line { a, b, .. } = l else { unreachable!() };
+        assert!(close(a, pos2(2.5, 0.0)) && close(b, pos2(7.5, 0.0)));
+        let mut s = step(pos2(0.0, 0.0), 1);
+        s.scale(0.01);
+        assert!(matches!(s, Shape::Step { radius, .. } if radius == 4.0));
+        let mut s = step(pos2(0.0, 0.0), 1);
+        s.scale(1000.0);
+        assert!(matches!(s, Shape::Step { radius, .. } if radius == 400.0));
+    }
+
+    #[test]
+    fn hit_testing() {
+        let line = Shape::Line { a: pos2(0.0, 0.0), b: pos2(100.0, 0.0), color: Color32::RED, width: 4.0, shadow: false };
+        assert!(line.hit(pos2(50.0, 5.0), 3.0));
+        assert!(!line.hit(pos2(50.0, 6.0), 3.0));
+        let r = Rect::from_min_max(pos2(0.0, 0.0), pos2(100.0, 100.0));
+        // An outline is hit near its edge only; a filled box anywhere inside.
+        assert!(rect_shape(r, false).hit(pos2(1.0, 50.0), 2.0));
+        assert!(!rect_shape(r, false).hit(pos2(50.0, 50.0), 2.0));
+        assert!(rect_shape(r, true).hit(pos2(50.0, 50.0), 2.0));
+        assert!(!rect_shape(r, true).hit(pos2(150.0, 50.0), 2.0));
+        let sp = Shape::Spotlight { rect: r };
+        assert!(sp.hit(pos2(0.0, 50.0), 2.0));
+        assert!(!sp.hit(pos2(50.0, 50.0), 2.0));
+        assert!(step(pos2(0.0, 0.0), 1).hit(pos2(11.0, 0.0), 2.0));
+        assert!(!step(pos2(0.0, 0.0), 1).hit(pos2(13.0, 0.0), 2.0));
+        let pen = Shape::Pen { points: vec![pos2(0.0, 0.0)], color: Color32::RED, width: 2.0, shadow: false };
+        assert!(pen.hit(pos2(1.0, 1.0), 1.0));
+        let pen2 = Shape::Pen { points: vec![pos2(0.0, 0.0), pos2(0.0, 50.0)], color: Color32::RED, width: 2.0, shadow: false };
+        assert!(pen2.hit(pos2(1.5, 25.0), 1.0));
+        assert!(!pen2.hit(pos2(5.0, 25.0), 1.0));
+        let hl = Shape::Highlight { points: vec![pos2(0.0, 0.0), pos2(50.0, 0.0)], color: Color32::RED, width: 2.0 };
+        assert!(hl.hit(pos2(25.0, 5.0), 0.0));
+        assert!(!hl.hit(pos2(25.0, 6.0), 0.0));
+        let stamp = Shape::Stamp { center: pos2(0.0, 0.0), emoji: "x".into(), size: 20.0, color: Color32::RED };
+        assert!(stamp.hit(pos2(9.0, 9.0), 0.0));
+        assert!(!stamp.hit(pos2(12.0, 0.0), 1.0));
+    }
+
+    #[test]
+    fn shapes_round_trip_through_json() {
+        let piece = RgbaImage::from_fn(3, 2, |x, y| image::Rgba([x as u8 * 50, y as u8 * 100, 7, 200]));
+        let shapes = vec![
+            Shape::Arrow { a: pos2(1.0, 2.0), b: pos2(3.0, 4.0), color: Color32::RED, width: 2.0, shadow: true, heads: 2 },
+            rect_shape(Rect::from_min_max(pos2(0.0, 0.0), pos2(5.0, 5.0)), true),
+            step(pos2(9.0, 9.0), 7),
+            Shape::Image { rect: Rect::from_min_max(pos2(0.0, 0.0), pos2(3.0, 2.0)), image: ImgData(Arc::new(piece.clone())) },
+        ];
+        let json = serde_json::to_string(&shapes).unwrap();
+        let back: Vec<Shape> = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.len(), shapes.len());
+        assert!(matches!(back[0], Shape::Arrow { heads: 2, shadow: true, .. }));
+        assert!(matches!(back[2], Shape::Step { n: 7, .. }));
+        let Shape::Image { image, rect } = &back[3] else { panic!("image mark lost") };
+        assert_eq!(*rect, Rect::from_min_max(pos2(0.0, 0.0), pos2(3.0, 2.0)));
+        assert_eq!(*image.0, piece, "the picture inside a mark must survive exactly (PNG is lossless)");
+        // Re-serialising gives the same text.
+        assert_eq!(serde_json::to_string(&back).unwrap(), json);
+    }
+
+    #[test]
+    fn older_project_fields_get_defaults() {
+        let arrow = Shape::Arrow { a: pos2(0.0, 0.0), b: pos2(1.0, 1.0), color: Color32::RED, width: 2.0, shadow: false, heads: 2 };
+        let mut v = serde_json::to_value(&arrow).unwrap();
+        v["Arrow"].as_object_mut().unwrap().remove("heads");
+        let back: Shape = serde_json::from_value(v).unwrap();
+        assert!(matches!(back, Shape::Arrow { heads: 1, .. }), "old arrows have one head");
+
+        let text = Shape::Text {
+            pos: pos2(0.0, 0.0),
+            text: "x".into(),
+            color: Color32::RED,
+            size: 10.0,
+            bg: false,
+            shadow: false,
+            font: "Arial".into(),
+            bold: true,
+            italic: true,
+            outline: false,
+            align: 2,
+        };
+        let mut v = serde_json::to_value(&text).unwrap();
+        let o = v["Text"].as_object_mut().unwrap();
+        for k in ["font", "bold", "italic", "outline", "align"] {
+            o.remove(k);
+        }
+        let back: Shape = serde_json::from_value(v).unwrap();
+        let Shape::Text { font, bold, italic, outline, align, .. } = back else { panic!() };
+        assert_eq!((font.as_str(), bold, italic, outline, align), ("", false, false, true, 0));
+
+        let mut v = serde_json::to_value(step(pos2(0.0, 0.0), 3)).unwrap();
+        v["Step"].as_object_mut().unwrap().remove("style");
+        let back: Shape = serde_json::from_value(v).unwrap();
+        assert!(matches!(back, Shape::Step { style: StepStyle::Numbers, .. }));
+    }
+
+    #[test]
+    fn bad_image_data_is_an_error() {
+        assert!(serde_json::from_str::<ImgData>("\"not base64!!\"").is_err());
+        assert!(serde_json::from_str::<ImgData>("\"aGVsbG8=\"").is_err()); // base64 of "hello", not a picture
+    }
+
+    #[test]
+    fn doc_size_and_next_step() {
+        let mut d = Doc::new(solid(30, 20, [0, 0, 0, 255]));
+        assert_eq!(d.size(), vec2(30.0, 20.0));
+        assert_eq!(d.image_rect(), Rect::from_min_max(pos2(0.0, 0.0), pos2(30.0, 20.0)));
+        assert_eq!(d.next_step(1), 1);
+        assert_eq!(d.next_step(0), 1);
+        assert_eq!(d.next_step(5), 5);
+        d.shapes.push(step(pos2(0.0, 0.0), 3));
+        d.shapes.push(step(pos2(0.0, 0.0), 9));
+        d.shapes.push(rect_shape(Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), true));
+        assert_eq!(d.next_step(1), 10);
+    }
+
+    #[test]
+    fn crop_keeps_the_area_and_moves_marks() {
+        let img = RgbaImage::from_fn(10, 10, |x, y| image::Rgba([x as u8, y as u8, 0, 255]));
+        let mut d = Doc::new(img);
+        d.shapes.push(step(pos2(5.0, 5.0), 1));
+        let c = d.crop(Rect::from_min_max(pos2(2.0, 3.0), pos2(7.0, 9.0))).unwrap();
+        assert_eq!(c.image.dimensions(), (5, 6));
+        assert_eq!(c.image.get_pixel(0, 0).0, [2, 3, 0, 255]);
+        assert!(matches!(c.shapes[0], Shape::Step { center, .. } if center == pos2(3.0, 2.0)));
+        // Clamped to the picture.
+        let c = d.crop(Rect::from_min_max(pos2(-5.0, -5.0), pos2(50.0, 4.0))).unwrap();
+        assert_eq!(c.image.dimensions(), (10, 4));
+        // Too small or outside.
+        assert!(d.crop(Rect::from_min_max(pos2(2.0, 2.0), pos2(3.0, 9.0))).is_none());
+        assert!(d.crop(Rect::from_min_max(pos2(20.0, 20.0), pos2(30.0, 30.0))).is_none());
+    }
+
+    #[test]
+    fn pixelate_averages_each_block() {
+        let mut img = RgbaImage::from_fn(4, 2, |x, _| if x < 2 { image::Rgba([0, 0, 0, 255]) } else { image::Rgba([200, 100, 50, 255]) });
+        pixelate(&mut img, Rect::from_min_max(pos2(0.0, 0.0), pos2(4.0, 2.0)), 4);
+        for p in img.pixels() {
+            assert_eq!(p.0, [100, 50, 25, 255]);
+        }
+        // Only inside the rectangle.
+        let mut img = RgbaImage::from_fn(4, 4, |x, y| image::Rgba([(x * 60) as u8, (y * 60) as u8, 0, 255]));
+        let orig = img.clone();
+        pixelate(&mut img, Rect::from_min_max(pos2(0.0, 0.0), pos2(2.0, 2.0)), 2);
+        assert_eq!(img.get_pixel(0, 0).0, [30, 30, 0, 255]);
+        assert_eq!(img.get_pixel(3, 3), orig.get_pixel(3, 3));
+        assert_eq!(img.get_pixel(2, 0), orig.get_pixel(2, 0));
+    }
+
+    #[test]
+    fn blur_and_redact() {
+        let img = RgbaImage::from_fn(20, 20, |x, y| image::Rgba([((x + y) * 6) as u8, 0, 0, 255]));
+        let d = Doc::new(img.clone());
+        let area = Rect::from_min_max(pos2(4.0, 4.0), pos2(12.0, 12.0));
+        assert!(d.blur(Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 10.0)), 4).is_none());
+        let b = d.blur(area, 4).unwrap();
+        assert_eq!(b.image.get_pixel(0, 0), img.get_pixel(0, 0));
+        assert_ne!(b.image.get_pixel(4, 4), img.get_pixel(4, 4));
+
+        let solid_box = d.redact(area, BlurMode::Solid, 4, Color32::from_rgb(1, 2, 3)).unwrap();
+        for y in 4..12 {
+            for x in 4..12 {
+                assert_eq!(solid_box.image.get_pixel(x, y).0, [1, 2, 3, 255]);
+            }
+        }
+        assert_eq!(solid_box.image.get_pixel(12, 12), img.get_pixel(12, 12));
+        assert_eq!(solid_box.image.get_pixel(3, 3), img.get_pixel(3, 3));
+
+        let soft = d.redact(area, BlurMode::Blur, 6, Color32::BLACK).unwrap();
+        assert_eq!(soft.image.dimensions(), (20, 20));
+        assert_eq!(soft.image.get_pixel(0, 0), img.get_pixel(0, 0));
+        assert_ne!(soft.image.get_pixel(4, 4), img.get_pixel(4, 4));
+
+        let px = d.redact(area, BlurMode::Pixelate, 4, Color32::BLACK).unwrap();
+        assert_eq!(*px.image, *b.image);
+        assert!(d.redact(Rect::from_min_max(pos2(30.0, 30.0), pos2(40.0, 40.0)), BlurMode::Solid, 4, Color32::BLACK).is_none());
+    }
+
+    #[test]
+    fn cut_out_rows_closes_the_gap() {
+        let mut d = Doc::new(rows_image(10, 10));
+        let above = step(pos2(5.0, 1.0), 1); // bounds y -9..11: overlaps the band, stays put
+        let inside = Shape::Spotlight { rect: Rect::from_min_max(pos2(0.0, 3.0), pos2(5.0, 4.0)) };
+        let below = Shape::Spotlight { rect: Rect::from_min_max(pos2(0.0, 6.0), pos2(5.0, 8.0)) };
+        d.shapes = vec![above, inside, below];
+        let c = d.cut_out(Rect::from_min_max(pos2(0.0, 2.0), pos2(10.0, 5.0))).unwrap();
+        assert_eq!(c.image.dimensions(), (10, 7));
+        let reds: Vec<u8> = (0..7).map(|y| c.image.get_pixel(0, y).0[0]).collect();
+        assert_eq!(reds, vec![0, 10, 50, 60, 70, 80, 90]);
+        assert_eq!(c.shapes.len(), 2, "the mark inside the band goes");
+        assert!(matches!(c.shapes[0], Shape::Step { center, .. } if center == pos2(5.0, 1.0)));
+        assert!(matches!(c.shapes[1], Shape::Spotlight { rect } if rect.min.y == 3.0 && rect.max.y == 5.0));
+    }
+
+    #[test]
+    fn cut_out_columns() {
+        let d = Doc::new(cols_image(10, 10));
+        let c = d.cut_out(Rect::from_min_max(pos2(3.0, 0.0), pos2(6.0, 10.0))).unwrap();
+        assert_eq!(c.image.dimensions(), (7, 10));
+        let greens: Vec<u8> = (0..7).map(|x| c.image.get_pixel(x, 0).0[1]).collect();
+        assert_eq!(greens, vec![0, 10, 20, 60, 70, 80, 90]);
+        // Too thin, or the whole picture.
+        assert!(d.cut_out(Rect::from_min_max(pos2(3.0, 0.0), pos2(3.5, 10.0))).is_none());
+        assert!(d.cut_out(Rect::from_min_max(pos2(0.0, -1.0), pos2(10.0, 20.0))).is_none());
+        assert!(d.cut_out(Rect::from_min_max(pos2(-5.0, -2.0), pos2(20.0, 15.0))).is_none());
+    }
+
+    #[test]
+    fn snap_and_square() {
+        assert!(close(snap45(pos2(0.0, 0.0), pos2(10.0, 1.0)), pos2(10.0f32.hypot(1.0), 0.0)));
+        let p = snap45(pos2(0.0, 0.0), pos2(10.0, 9.0));
+        assert!((p.x - p.y).abs() < 1e-3 && p.x > 0.0);
+        let p = snap45(pos2(5.0, 5.0), pos2(5.5, -10.0));
+        assert!((p.x - 5.0).abs() < 1e-3 && p.y < 5.0);
+        assert_eq!(square(pos2(0.0, 0.0), pos2(10.0, 4.0)), pos2(10.0, 10.0));
+        assert_eq!(square(pos2(0.0, 0.0), pos2(-3.0, 8.0)), pos2(-8.0, 8.0));
+        assert_eq!(square(pos2(10.0, 10.0), pos2(4.0, 2.0)), pos2(2.0, 2.0));
+    }
+
+    #[test]
+    fn flood_fill_stops_at_other_colours() {
+        // White on both sides of a black wall at x=5.
+        let img = RgbaImage::from_fn(10, 6, |x, _| if x == 5 { image::Rgba([0, 0, 0, 255]) } else { image::Rgba([255, 255, 255, 255]) });
+        let d = Doc::new(img);
+        let f = d.flood_fill(pos2(1.0, 1.0), Color32::RED, 10).unwrap();
+        assert_eq!(f.image.get_pixel(0, 0).0, [255, 0, 0, 255]);
+        assert_eq!(f.image.get_pixel(4, 5).0, [255, 0, 0, 255]);
+        assert_eq!(f.image.get_pixel(5, 0).0, [0, 0, 0, 255]);
+        assert_eq!(f.image.get_pixel(9, 0).0, [255, 255, 255, 255]);
+        // Already that colour, or outside the picture.
+        assert!(d.flood_fill(pos2(1.0, 1.0), Color32::WHITE, 10).is_none());
+        assert!(d.flood_fill(pos2(-1.0, 1.0), Color32::RED, 10).is_none());
+        assert!(d.flood_fill(pos2(10.0, 1.0), Color32::RED, 10).is_none());
+        // A high tolerance crosses the wall.
+        let all = d.flood_fill(pos2(1.0, 1.0), Color32::RED, 255).unwrap();
+        assert!(all.image.pixels().all(|p| p.0 == [255, 0, 0, 255]));
+    }
+
+    #[test]
+    fn erase_makes_the_stroke_see_through() {
+        let d = Doc::new(solid(20, 20, [10, 20, 30, 255]));
+        let e = d.erase(&[pos2(2.0, 10.0), pos2(18.0, 10.0)], 4.0).unwrap();
+        assert_eq!(e.image.get_pixel(10, 10).0[3], 0);
+        assert_eq!(e.image.get_pixel(10, 2).0, [10, 20, 30, 255]);
+        // A single point still erases a dot.
+        let dot = d.erase(&[pos2(10.0, 10.0)], 6.0).unwrap();
+        assert!(dot.image.get_pixel(10, 10).0[3] < 255);
+        assert!(d.erase(&[], 4.0).is_none());
+    }
+
+    #[test]
+    fn lift_takes_a_piece_and_fills_the_hole() {
+        // White picture with a red square in the middle.
+        let img = RgbaImage::from_fn(10, 10, |x, y| {
+            if (3..6).contains(&x) && (3..6).contains(&y) { image::Rgba([255, 0, 0, 255]) } else { image::Rgba([255, 255, 255, 255]) }
+        });
+        let d = Doc::new(img);
+        let l = d.lift(Rect::from_min_max(pos2(3.0, 3.0), pos2(6.0, 6.0))).unwrap();
+        assert_eq!(l.image.get_pixel(4, 4).0, [255, 255, 255, 255], "the hole takes the edge colour");
+        let Some(Shape::Image { rect, image }) = l.shapes.last() else { panic!("no piece") };
+        assert_eq!(*rect, Rect::from_min_max(pos2(3.0, 3.0), pos2(6.0, 6.0)));
+        assert_eq!(image.0.dimensions(), (3, 3));
+        assert!(image.0.pixels().all(|p| p.0 == [255, 0, 0, 255]));
+        assert!(d.lift(Rect::from_min_max(pos2(3.0, 3.0), pos2(4.0, 6.0))).is_none());
+    }
+
+    #[test]
+    fn lift_near_the_edge_stays_inside_the_picture() {
+        // Rounding 0.5 up for the corner and 9.5 up for the size used to reach 11 pixels on a
+        // 10-pixel picture: the piece (clipped to 9) was then stretched over 10.
+        let d = Doc::new(solid(10, 10, [1, 2, 3, 255]));
+        let l = d.lift(Rect::from_min_max(pos2(0.5, 0.5), pos2(10.0, 10.0))).unwrap();
+        let Some(Shape::Image { rect, image }) = l.shapes.last() else { panic!("no piece") };
+        assert!(rect.max.x <= 10.0 && rect.max.y <= 10.0, "{rect:?}");
+        assert_eq!((image.0.width() as f32, image.0.height() as f32), (rect.width(), rect.height()));
     }
 }
