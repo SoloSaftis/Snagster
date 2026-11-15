@@ -7,14 +7,18 @@ body:
     attributes:
       value: |
         Thank you! Snagster records and streams with the graphics chip (Intel Quick Sync, NVIDIA NVENC,
-        AMD AMF, Apple VideoToolbox, Linux VA-API). Our test machines have no graphics chips, so your
-        report shows us whether it really works on yours.
+        AMD AMF, Apple VideoToolbox, Linux VA-API). Your report shows us whether it really works on yours.
 
-        Run the hardware test (it builds Snagster, then tests the encoders and streams into
-        Snagster's own server on your computer; nothing is sent anywhere):
-        - **Windows:** `powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/SoloSaftis/Snagster/main/scripts/hwtest.ps1 | iex"`
-          (or `-Exe C:\path\Snagster.exe` to test a downloaded Snagster without building)
-        - **macOS / Linux:** `curl -fsSL https://raw.githubusercontent.com/SoloSaftis/Snagster/main/scripts/hwtest.sh | bash`
+        Snagster has the tests built in. They record a few seconds of your screen into a temporary
+        file and stream into a small server inside Snagster on your computer; nothing is sent anywhere.
+        Run both in the folder where Snagster is, then paste the two files below:
+        - **Windows** (PowerShell):
+          `Start-Process .\Snagster.exe '--video-test quick' -Wait -NoNewWindow -RedirectStandardOutput video-test.txt`
+          and `Start-Process .\Snagster.exe '--stream-test quick' -Wait -NoNewWindow -RedirectStandardOutput stream-test.txt`
+        - **Mac:** `/Applications/Snagster.app/Contents/MacOS/Snagster --video-test quick > video-test.txt 2>&1`
+          and the same with `--stream-test quick > stream-test.txt`
+        - **Linux:** `./Snagster-linux-x86_64.AppImage --video-test quick > video-test.txt 2>&1`
+          and the same with `--stream-test quick > stream-test.txt`
   - type: dropdown
     id: system
     attributes:
@@ -32,11 +36,17 @@ body:
   - type: textarea
     id: report
     attributes:
-      label: hwtest-report.txt
-      description: Paste the whole file the script wrote.
+      label: video-test.txt
+      description: Paste the whole file.
       render: text
     validations:
       required: true
+  - type: textarea
+    id: stream
+    attributes:
+      label: stream-test.txt
+      description: Paste the whole file.
+      render: text
   - type: textarea
     id: notes
     attributes:

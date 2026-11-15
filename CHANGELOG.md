@@ -1,6 +1,6 @@
 # Changelog
 
-What changed for people using Snagster, per version. Developer details are in `DEVLOG.md`.
+What changed for people using Snagster, per version.
 
 ## Unreleased (0.10.0)
 

@@ -23,11 +23,12 @@ Windows · Mac · Linux · 86 languages · works offline · written in Rust · f
 - **Mark it up** – arrows, boxes, text in any of your fonts, speech bubbles, numbered steps, 1,300+ color emojis, highlighter, spotlight, magnifier, blur and smart redact for private details.
 - **Tidy it up** – crop, cut out, move parts of the picture, borders, shadows, torn edges and more.
 - **Grab text** – copy the text out of any picture or part of the screen (Windows).
-- **Record videos with sound** – MP4 (H.264 or HEVC) or WMV, 1 to 120 frames per second, with the computer's sound, your microphone or both (sound on Windows for now). The graphics chip does the encoding where it can (Intel Quick Sync, AMD or NVIDIA on Windows; VideoToolbox on Mac and VA-API on Linux are new and not yet tried on real hardware), so recording barely touches the processor or the battery. Videos go to your **Videos/Snagster** folder, pictures to **Pictures/Snagster**.
+- **Record videos with sound** – MP4 (H.264 or HEVC) or WMV, 1 to 120 frames per second, with the computer's sound, your microphone or both (sound on Windows for now). The graphics chip does the encoding where it can (Intel Quick Sync, AMD or NVIDIA on Windows; VideoToolbox on Mac and VA-API on Linux are new and not yet tried on real hardware), so recording barely touches the processor or the battery. Snagster picks the best encoder by itself, or you choose one in Settings; if it can't start, Snagster quietly uses the best one that works. Videos go to your **Videos/Snagster** folder, pictures to **Pictures/Snagster**.
 - **Studio mode** – a live recording studio: scenes made of screens, windows, screen areas, pictures, text and colours, arranged by dragging, a sound mixer with level meters, and one-click recording.
-- **Go live** – stream the screen, a window, an area or a Studio scene to Twitch, YouTube, Kick, Facebook Live, Restream or your own RTMP server – or to several of them at once from one encode – with a LIVE badge, automatic reconnecting and an optional copy on disk. Your stream key is kept encrypted (Windows), in the Keychain (Mac) or in a private file (Linux), never in the settings file. New in the next version; not yet tried against the real services.
+- **Go live** – stream the screen, a window, an area or a Studio scene to Twitch, YouTube, Kick, Facebook Live, Restream or your own RTMP server, up to 4K at 60 fps or 1080p at 120 fps where the service takes it. **Multistream** to up to five services at once from one encode, each with its own key and connection, so one slow or failing service never affects the others. A LIVE badge, automatic reconnecting, an encoder that takes over if the graphics chip's stops working, and an optional copy on disk. Your stream keys are kept encrypted (Windows), in the Keychain (Mac) or in a private file (Linux), never in the settings file. New in the next version; not yet tried against the real services.
 - **Record GIFs** that stay small, and step-by-step guides as PDF, Word or web pages.
 - **Library** – every capture is kept, searchable by date, program and tags; works from your OneDrive or Dropbox folder.
+- **Never stops answering** – saving, exporting, opening files and making guides all happen in the background, so the window stays quick even with big captures.
 - **Your language** – 86 languages, picked automatically from your computer and changeable at any time; right-to-left languages read right to left.
 - **A ribbon like Word's** – tabs for Home, Capture, Record, Studio, Stream, Edit, Image, Share, View and Help, every tool with an icon and an explanation when you point at it.
 - **Keeps itself up to date** – Snagster checks for a new version once a day (you can turn it off) and installs it with one click.
@@ -40,6 +41,15 @@ when you start a live stream).
 <div align="center">
 <img src="assets/screenshots/studio.png" alt="Studio mode: scenes and sources on the left, the live picture in the middle, the selected source and the sound mixer on the right" width="900">
 <br><sub>Studio mode: build a scene from screens, windows, pictures and text, then record it.</sub>
+<br><br>
+<img src="assets/screenshots/stream.png" alt="The Stream tab: Go live, the service and stream key, what to stream (whole screen, a window, an area or the Studio scene), options and the live status" width="900">
+<br><sub>The Stream tab: pick a service and what to show, then Go live.</sub>
+<br><br>
+<img src="assets/screenshots/streaming-settings.png" alt="Streaming settings: Twitch as the main service, YouTube under Also stream to, picture size, frame rate, bitrate, the video encoder choice, sound and reconnecting" width="900">
+<br><sub>Multistreaming: Twitch and YouTube at once, from one encode.</sub>
+<br><br>
+<img src="assets/screenshots/capture-panel.png" alt="The small capture panel on its Stream tab: selection, service, status and a big Go live button" width="680">
+<br><sub>The small capture panel goes live too.</sub>
 <br><br>
 <img src="assets/screenshots/languages.png" alt="Snagster in Arabic (right to left) and Japanese" width="900">
 <br><sub>86 languages, including right-to-left ones.</sub>
@@ -106,19 +116,26 @@ password (`Authorization: Bearer ...`).
 add arrows, boxes, text, steps and blur; crop, resize and apply effects; undo and redo; save in every
 format; make PDF, Word and web-page guides; search and add to the library; record videos with sound at
 1–120 fps; set up and record Studio scenes; start, watch and stop a live stream (the saved stream key
-is used and never shown); read and change settings; switch language; check for updates. Every tool is
-listed in [docs/MCP.md](docs/MCP.md). It also offers ready-made prompts (annotate a screenshot, redact one, record a demo, make a
+is used and never shown); read and change settings; switch language; check for updates. Your AI app
+lists every tool with what it does. It also offers ready-made prompts (annotate a screenshot, redact one, record a demo, make a
 guide) and the current picture, settings and library as resources.
 
 **From a terminal**, the same tools: `snagster help` lists commands such as
 `snagster capture region 0 0 800 600 -o shot.png`, `snagster record 10 --fps 60 -o clip.mp4`,
 `snagster ocr picture.png` and `snagster call list_languages`.
 
-## For developers
+## Building it yourself
 
-Building, tests and how the code is laid out: [DEVELOPING.md](DEVELOPING.md). Architecture,
-streaming, encoding, capture, MCP, testing, licensing and releasing: [docs/](docs/README.md).
-What changed: [CHANGELOG.md](CHANGELOG.md); how it got here: [DEVLOG.md](DEVLOG.md).
+Snagster is one Rust program. With [Rust](https://rustup.rs) 1.88 or newer:
+
+```sh
+cargo build --release      # target/release/snagster
+cargo test                 # the unit tests (no screen, sound card or network needed)
+```
+
+Linux needs a few development packages first (on Ubuntu:
+`sudo apt install pkg-config clang libclang-dev libpipewire-0.3-dev libspa-0.2-dev libwayland-dev libxkbcommon-dev libgbm-dev libegl1-mesa-dev libgl1-mesa-dev libdrm-dev libxcb1-dev libxcb-randr0-dev libxcb-shm0-dev libxcb-xfixes0-dev libxcb-shape0-dev libdbus-1-dev nasm`).
+What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 

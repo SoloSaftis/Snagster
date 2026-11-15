@@ -25,3 +25,15 @@
 /pinned/
 /investigation.cany/
 tmp_tr/
+
+# Private working files: kept in the private Snagster-internal repository, never published here
+/CLAUDE.md
+/CLAUDE.local.md
+/HANDOFF.md
+/DEVLOG.md
+/MECHANICS.md
+/mechanics.json
+/DEVELOPING.md
+/docs/
+/scripts/
+/.claude/
