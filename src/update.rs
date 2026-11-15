@@ -269,9 +269,27 @@ fn unzip_one(zip: &Path, want: &str, to: &Path) -> Result<(), String> {
 }
 
 /// Replace `target` with `new`: the running file is moved aside first (allowed while it runs).
+/// How many names a previous version may be moved aside to (see `aside`).
+const ASIDE_NAMES: u32 = 10;
+
+/// The name the previous version is moved aside to: `Snagster.old.exe`, or `Snagster.old1.exe`,
+/// `Snagster.old2.exe`... when that one is still running (Windows won't delete or replace a
+/// running program, so an update started from it would fail with "access denied").
+fn aside(target: &Path, n: u32) -> PathBuf {
+    let ext = if cfg!(windows) { "exe" } else { "" };
+    let name = if n == 0 { "old".to_string() } else { format!("old{n}") };
+    target.with_extension(if ext.is_empty() { name } else { format!("{name}.{ext}") })
+}
+
 fn swap(target: &Path, new: &Path) -> Result<(), String> {
-    let old = target.with_extension(if cfg!(windows) { "old.exe" } else { "old" });
-    let _ = std::fs::remove_file(&old);
+    // The first aside name that is free, or can be freed (an earlier version that isn't running).
+    let old = (0..ASIDE_NAMES)
+        .map(|n| aside(target, n))
+        .find(|p| {
+            let _ = std::fs::remove_file(p);
+            !p.exists()
+        })
+        .ok_or("Couldn't move the old version aside: close every Snagster and try again.")?;
     std::fs::rename(target, &old).map_err(|e| format!("Couldn't move the old version aside: {e}"))?;
     if let Err(e) = std::fs::copy(new, target) {
         let _ = std::fs::rename(&old, target);
@@ -288,8 +306,9 @@ fn swap(target: &Path, new: &Path) -> Result<(), String> {
 /// Remove what an earlier update left behind (the previous version's file).
 pub fn clean_up() {
     if let Ok(exe) = std::env::current_exe() {
-        let old = exe.with_extension(if cfg!(windows) { "old.exe" } else { "old" });
-        let _ = std::fs::remove_file(old);
+        for n in 0..ASIDE_NAMES {
+            let _ = std::fs::remove_file(aside(&exe, n));
+        }
     }
 }
 
@@ -625,6 +644,37 @@ mod tests {
         assert_eq!(std::fs::read(&target).unwrap(), b"newer");
         assert_eq!(std::fs::read(&aside).unwrap(), b"new");
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// The case that failed with "access denied" (os error 5): the program to replace is new and
+    /// idle, but `Snagster.old.exe` is a previous version that is still running.
+    #[cfg(windows)]
+    #[test]
+    fn swap_works_while_an_earlier_old_version_is_still_running() {
+        use std::os::windows::fs::OpenOptionsExt;
+        let dir = temp_folder("swap-busy");
+        let target = dir.join("prog.exe");
+        let fresh = dir.join("fresh.bin");
+        std::fs::write(&target, b"new").unwrap();
+        std::fs::write(&fresh, b"newer").unwrap();
+        let busy = aside(&target, 0);
+        std::fs::write(&busy, b"running").unwrap();
+        // No sharing: like a running program, it can't be deleted or replaced while open.
+        let lock = std::fs::OpenOptions::new().read(true).share_mode(0).open(&busy).unwrap();
+        swap(&target, &fresh).unwrap();
+        assert_eq!(std::fs::read(&target).unwrap(), b"newer");
+        assert_eq!(std::fs::read(aside(&target, 1)).unwrap(), b"new");
+        drop(lock);
+        assert_eq!(std::fs::read(&busy).unwrap(), b"running");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn aside_names_keep_the_program_name() {
+        let t = Path::new("dir").join("Snagster.exe");
+        let ext = if cfg!(windows) { ".exe" } else { "" };
+        assert_eq!(aside(&t, 0), Path::new("dir").join(format!("Snagster.old{ext}")));
+        assert_eq!(aside(&t, 2), Path::new("dir").join(format!("Snagster.old2{ext}")));
     }
 
     #[test]
