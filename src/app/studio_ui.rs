@@ -29,9 +29,9 @@ pub(crate) struct StudioUi {
     tex_frame: u64,
     selected: Option<usize>,
     grab: Option<(usize, Grab, Pos2, (f32, f32, f32, f32))>,
-    /// Sound levels for the mixer's meters.
+    /// Sound levels for the mixer's meters: every input the scenes use.
     meters: Option<crate::audio::Capture>,
-    meters_for: (crate::audio::AudioSource, String),
+    meters_for: Vec<crate::audio::SoundInput>,
     rec: Option<Rec>,
     pub last: Option<crate::video::VideoDone>,
     windows: Vec<crate::capture::WindowInfo>,
@@ -49,7 +49,7 @@ impl StudioUi {
             selected: None,
             grab: None,
             meters: None,
-            meters_for: (crate::audio::AudioSource::None, String::new()),
+            meters_for: Vec::new(),
             rec: None,
             last: None,
             windows: Vec::new(),
@@ -74,6 +74,26 @@ impl StudioUi {
 /// The ribbon band of the Studio tab.
 pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
     let recording = app.x.studio.as_ref().is_some_and(|s| s.recording());
+    if let Some(i) = crate::app::stream_ui::scene_key(ctx)
+        && i < app.settings.studio.scenes.len()
+    {
+        crate::app::stream_ui::switch_scene(app, i);
+    }
+    // Go live with the Studio scene, next to Record.
+    let snap = app.x.stream.snap.clone();
+    look::group(ui, t("Live"), |ui| {
+        if snap.on_air() {
+            if look::big_tool(ui, ph::STOP, t("Stop"), t("End the stream now"), true, true).clicked() {
+                app.stop_stream();
+            }
+        } else {
+            let tip = tf("Stream the Studio scene to {service}", &[("service", &crate::app::stream_ui::services_named(app.settings.stream.service, app.settings.stream.also_on().map(|a| a.service)))]);
+            if look::big_tool(ui, ph::BROADCAST, t("Go live"), &tip, snap.phase == crate::stream::live::Phase::Idle, false).clicked() {
+                app.settings.stream.source = crate::stream::Source::Studio;
+                app.go_live(ctx);
+            }
+        }
+    });
     look::group(ui, t("Record"), |ui| {
         if recording {
             if look::big_tool(ui, ph::STOP, t("Stop"), t("Stop recording and save the video"), true, true).clicked() {
@@ -150,8 +170,11 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
     });
     look::group(ui, t("Sound"), |ui| {
         look::column(ui, |ui| {
-            let src = app.settings.audio_source;
-            look::small_menu(ui, if src == crate::audio::AudioSource::None { ph::SPEAKER_SLASH } else { ph::SPEAKER }, t(src.label()), t("Sound to record"), |ui| app.sound_menu(ui));
+            let mut add = None;
+            look::small_menu(ui, ph::PLUS, t("Add sound"), t("Add the computer sound, a microphone or a sound file to this scene (up to 6)"), |ui| add = add_sound_menu(app, ui));
+            if let Some(s) = add {
+                add_sound(app, s);
+            }
             if look::small_tool(ui, ph::FOLDER_OPEN, t("Recordings folder"), t("Open the folder your videos are saved in"), true).clicked() {
                 let f = PathBuf::from(&app.settings.video_folder);
                 let _ = std::fs::create_dir_all(&f);
@@ -297,6 +320,31 @@ fn toggle_pause(app: &mut SnagApp) {
 }
 
 impl SnagApp {
+    /// Every frame while Studio runs (its tab, or a stream of it from the Stream tab): the
+    /// engine draws the current scene as it is now, the mixer follows the current scene, and
+    /// the meters listen to every input the scenes use.
+    pub(crate) fn studio_tick(&mut self) {
+        self.settings.studio.apply_mix();
+        if let Some(st) = &mut self.x.studio {
+            if let Some(scene) = self.settings.studio.scene()
+                && let Ok(mut sh) = st.engine.shared.scene.lock()
+                && *sh != *scene
+            {
+                *sh = scene.clone();
+            }
+            let want = self.settings.studio.sound_inputs();
+            if st.meters.is_none() || st.meters_for != want {
+                st.meters = Some(crate::audio::Capture::start_inputs(&want));
+                st.meters_for = want;
+            }
+        }
+    }
+
+    /// Loudness of `input` in Studio's meters (None: not running).
+    pub(crate) fn studio_level(&self, input: &crate::audio::SoundInput) -> Option<f32> {
+        self.x.studio.as_ref().and_then(|s| s.meters.as_ref()).and_then(|m| m.level_of(input))
+    }
+
     /// Studio mode's window body (below the ribbon).
     pub(crate) fn studio_view(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
@@ -336,21 +384,7 @@ impl SnagApp {
                 st.last = Some(done);
             }
         }
-        // Keep the engine drawing the scene as it is now, and the mixer as set.
-        self.settings.studio.apply_mix();
-        if let Some(st) = &mut self.x.studio {
-            if let Some(scene) = self.settings.studio.scene()
-                && let Ok(mut sh) = st.engine.shared.scene.lock()
-                && *sh != *scene
-            {
-                *sh = scene.clone();
-            }
-            let want = (self.settings.audio_source, self.settings.audio_mic.clone());
-            if st.meters_for != want {
-                st.meters = crate::audio::Capture::start(want.0, &want.1).ok();
-                st.meters_for = want;
-            }
-        }
+        self.studio_tick();
         egui::Panel::left("studio-left")
             .exact_size(250.0)
             .resizable(false)
@@ -589,25 +623,7 @@ impl SnagApp {
             }
             ui.add_space(10.0);
             ui.separator();
-            ui.label(RichText::new(t("Sound mixer")).strong().color(Color32::WHITE));
-            let (lv_sys, lv_mic, has_sys, has_mic) = self
-                .x
-                .studio
-                .as_ref()
-                .and_then(|s| s.meters.as_ref())
-                .map(|m| {
-                    let (a, b) = m.levels();
-                    (a, b, m.has_system(), m.has_mic())
-                })
-                .unwrap_or((0.0, 0.0, false, false));
-            let s = &mut self.settings.studio;
-            mixer_row(ui, ph::SPEAKER, t("Computer sound"), lv_sys, has_sys, &mut s.system_volume, &mut s.system_muted);
-            mixer_row(ui, ph::MICROPHONE, t("Microphone"), lv_mic, has_mic, &mut s.mic_volume, &mut s.mic_muted);
-            if !crate::audio::AudioSource::supported() {
-                ui.label(RichText::new(t("Recording sound isn't available on this system yet.")).color(TEXT_DIM));
-            } else if !has_sys && !has_mic {
-                ui.label(RichText::new(t("Sound is off: choose it under Sound in the ribbon.")).color(TEXT_DIM));
-            }
+            self.scene_mixer(ui);
             ui.ctx().request_repaint_after(Duration::from_millis(100));
         });
     }
@@ -735,25 +751,214 @@ impl SnagApp {
     }
 }
 
-fn mixer_row(ui: &mut egui::Ui, icon: &str, name: &str, level: f32, live: bool, volume: &mut f32, muted: &mut bool) {
+/// What a mixer row asks for.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) enum RowAsk {
+    Nothing,
+    Remove,
+    /// Move between "every scene" and "this scene only".
+    Share,
+}
+
+/// An input's icon (muted or not).
+pub(crate) fn sound_icon(input: &crate::audio::SoundInput, muted: bool) -> &'static str {
+    use crate::audio::SoundInput::*;
+    match (input, muted) {
+        (Microphone { .. }, false) => ph::MICROPHONE,
+        (Microphone { .. }, true) => ph::MICROPHONE_SLASH,
+        (File { .. }, false) => ph::WAVEFORM,
+        (_, true) => ph::SPEAKER_SLASH,
+        (Computer, false) => ph::SPEAKER,
+    }
+}
+
+/// One sound in the mixer: mute, name, "every scene" and remove, then the meter and volume.
+fn sound_row(ui: &mut egui::Ui, s: &mut crate::studio::SceneSound, shared: bool, level: Option<f32>) -> RowAsk {
+    let mut ask = RowAsk::Nothing;
     ui.horizontal(|ui| {
-        let mic = if *muted { if icon == ph::MICROPHONE { ph::MICROPHONE_SLASH } else { ph::SPEAKER_SLASH } } else { icon };
-        if look::icon_button(ui, mic, if *muted { t("Muted; click to turn on") } else { t("Click to mute") }).clicked() {
-            *muted = !*muted;
+        if look::icon_button(ui, sound_icon(&s.input, s.muted), if s.muted { t("Muted; click to turn on") } else { t("Click to mute") }).clicked() {
+            s.muted = !s.muted;
         }
+        let name = if s.name.trim().is_empty() { t("Sound").to_string() } else { crate::i18n::tr(&s.name) };
         ui.label(name);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if look::icon_button(ui, ph::TRASH, t("Remove this sound")).clicked() {
+                ask = RowAsk::Remove;
+            }
+            let pin = egui::Button::new(RichText::new(ph::PUSH_PIN).family(look::icons())).selected(shared).frame(shared);
+            if ui.add(pin).on_hover_text(if shared { t("In every scene; click to keep it in this scene only") } else { t("In this scene only; click to put it in every scene") }).clicked() {
+                ask = RowAsk::Share;
+            }
+        });
     });
-    // The meter: green, then yellow, then red near the top.
+    // The meter: green, then yellow, then red near the top; a dash when the input isn't running.
     let (r, _) = ui.allocate_exact_size(vec2(ui.available_width(), 8.0), Sense::hover());
     ui.painter().rect_filled(r, CornerRadius::same(3), Color32::from_gray(40));
-    if live && !*muted {
-        let f = meter_fill(level, *volume);
-        let col = meter_color(f);
-        ui.painter().rect_filled(Rect::from_min_size(r.min, vec2(r.width() * f, r.height())), CornerRadius::same(3), col);
+    match level {
+        Some(level) if !s.muted => {
+            let f = meter_fill(level, s.volume);
+            ui.painter().rect_filled(Rect::from_min_size(r.min, vec2(r.width() * f, r.height())), CornerRadius::same(3), meter_color(f));
+        }
+        None => {
+            ui.painter().line_segment([r.left_center(), r.right_center()], Stroke::new(1.0, Color32::from_rgb(200, 110, 90)));
+        }
+        _ => {}
     }
-    let pct = format!("{:.0}%", *volume * 100.0);
-    ui.add(egui::Slider::new(volume, 0.0..=2.0).show_value(false).text(pct));
+    let pct = format!("{:.0}%", s.volume * 100.0);
+    ui.add(egui::Slider::new(&mut s.volume, 0.0..=2.0).show_value(false).text(pct));
     ui.add_space(4.0);
+    ask
+}
+
+/// The sound inputs the "Add sound" menu offers: the computer sound, each microphone, a file.
+fn add_sound_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<crate::studio::SceneSound> {
+    use crate::audio::SoundInput;
+    use crate::studio::SceneSound;
+    let mut out = None;
+    if !crate::audio::AudioSource::supported() {
+        ui.label(RichText::new(t("Computer sound and microphones work on Windows so far; sound files work everywhere.")).color(TEXT_DIM));
+    }
+    if ui.add_enabled(crate::audio::AudioSource::supported(), egui::Button::new(format!("{}  {}", ph::SPEAKER, t("Computer sound")))).on_hover_text(t("Everything the computer plays")).clicked() {
+        out = Some(SceneSound::new(SoundInput::Computer, "Computer sound"));
+        ui.close();
+    }
+    ui.add_enabled_ui(crate::audio::AudioSource::supported(), |ui| {
+        ui.menu_button(format!("{}  {}", ph::MICROPHONE, t("Microphone")), |ui| {
+            if ui.button(t("The computer's default microphone")).clicked() {
+                out = Some(SceneSound::new(SoundInput::Microphone { id: String::new() }, "Microphone"));
+                ui.close();
+            }
+            let mics = app.x.mics.get(Some(ui.ctx()), crate::audio::microphones).to_vec();
+            for m in mics {
+                if ui.button(&m.name).clicked() {
+                    out = Some(SceneSound::new(SoundInput::Microphone { id: m.id.clone() }, &m.name));
+                    ui.close();
+                }
+            }
+        });
+    });
+    if ui.button(format!("{}  {}", ph::WAVEFORM, t("Sound file (WAV)..."))).on_hover_text(t("Music or a jingle, played over and over")).clicked() {
+        ui.close();
+        if let Some(p) = rfd::FileDialog::new().add_filter(t("WAV sound"), &["wav", "wave"]).pick_file() {
+            let name = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+            out = Some(SceneSound::new(SoundInput::File { path: p.to_string_lossy().to_string() }, &name));
+        }
+    }
+    out
+}
+
+/// Put `s` in the current scene (when there is room and it isn't there yet).
+pub(crate) fn add_sound(app: &mut SnagApp, s: crate::studio::SceneSound) {
+    let st = &mut app.settings.studio;
+    let c = st.current.min(st.scenes.len().saturating_sub(1));
+    if st.scene_sounds(c).iter().any(|x| x.input == s.input) {
+        app.status = t("That sound is in this scene already.").into();
+        return;
+    }
+    if !st.room_for_sound(c) {
+        app.status = tf("A scene has at most {n} sounds.", &[("n", &crate::studio::MAX_SOUNDS.to_string())]);
+        return;
+    }
+    if let Some(scene) = st.scenes.get_mut(c) {
+        scene.sounds.push(s);
+    }
+}
+
+impl SnagApp {
+    /// The current scene's sound: its shared inputs (in every scene), then its own, with
+    /// "Add sound" while there is room.
+    fn scene_mixer(&mut self, ui: &mut egui::Ui) {
+        let c = self.settings.studio.current.min(self.settings.studio.scenes.len().saturating_sub(1));
+        let n = self.settings.studio.scene_sounds(c).len();
+        ui.horizontal(|ui| {
+            ui.label(RichText::new(t("Sound of this scene")).strong().color(Color32::WHITE));
+            ui.label(RichText::new(format!("{n}/{}", crate::studio::MAX_SOUNDS)).color(TEXT_DIM));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let r = look::icon_button(ui, ph::PLUS, t("Add sound"));
+                let mut add = None;
+                egui::Popup::menu(&r).show(|ui| add = add_sound_menu(self, ui));
+                if let Some(s) = add {
+                    add_sound(self, s);
+                }
+            });
+        });
+        let level = |input: &crate::audio::SoundInput| self.studio_level(input);
+        let shared_levels: Vec<Option<f32>> = self.settings.studio.shared_sounds.iter().map(|s| level(&s.input)).collect();
+        let own_levels: Vec<Option<f32>> = self.settings.studio.scenes.get(c).map(|sc| sc.sounds.iter().map(|s| level(&s.input)).collect()).unwrap_or_default();
+        let mut ask: Option<(bool, usize, RowAsk)> = None;
+        let st = &mut self.settings.studio;
+        for (i, s) in st.shared_sounds.iter_mut().enumerate() {
+            let a = sound_row(ui, s, true, shared_levels.get(i).copied().flatten());
+            if a != RowAsk::Nothing {
+                ask = Some((true, i, a));
+            }
+        }
+        if let Some(scene) = st.scenes.get_mut(c) {
+            for (i, s) in scene.sounds.iter_mut().enumerate() {
+                let a = sound_row(ui, s, false, own_levels.get(i).copied().flatten());
+                if a != RowAsk::Nothing {
+                    ask = Some((false, i, a));
+                }
+            }
+        }
+        if let Some((shared, i, a)) = ask
+            && let Err(why) = sound_change(st, c, shared, i, a)
+        {
+            self.status = why;
+        }
+        if n == 0 {
+            ui.label(RichText::new(t("No sound in this scene: add the computer sound, a microphone or a sound file.")).color(TEXT_DIM));
+        }
+        let notes = self.x.studio.as_ref().and_then(|s| s.meters.as_ref()).map(|m| m.notes().to_vec()).unwrap_or_default();
+        for note in notes {
+            ui.label(RichText::new(note).small().color(Color32::from_rgb(240, 160, 110)));
+        }
+    }
+}
+
+/// Remove sound `i` (of the shared list or scene `c`'s own), or move it between them. A sound
+/// put in every scene leaves the scenes' own lists; one kept to this scene only leaves the others.
+pub(crate) fn sound_change(st: &mut crate::studio::StudioSettings, c: usize, shared: bool, i: usize, a: RowAsk) -> Result<(), String> {
+    // Putting a sound in every scene must leave room in each of them.
+    if let (RowAsk::Share, false) = (a, shared)
+        && let Some(s) = st.scenes.get(c).and_then(|sc| sc.sounds.get(i))
+        && !st.scenes.iter().all(|sc| st.shared_sounds.len() + 1 + sc.sounds.iter().filter(|x| x.input != s.input).count() <= crate::studio::MAX_SOUNDS)
+    {
+        return Err(tf("Another scene already has {n} sounds: make room there first.", &[("n", &crate::studio::MAX_SOUNDS.to_string())]));
+    }
+    match (a, shared) {
+        (RowAsk::Remove, true) => {
+            if i < st.shared_sounds.len() {
+                st.shared_sounds.remove(i);
+            }
+        }
+        (RowAsk::Remove, false) => {
+            if let Some(scene) = st.scenes.get_mut(c)
+                && i < scene.sounds.len()
+            {
+                scene.sounds.remove(i);
+            }
+        }
+        (RowAsk::Share, true) => {
+            if i < st.shared_sounds.len() {
+                let s = st.shared_sounds.remove(i);
+                if let Some(scene) = st.scenes.get_mut(c) {
+                    scene.sounds.push(s);
+                }
+            }
+        }
+        (RowAsk::Share, false) => {
+            if let Some(scene) = st.scenes.get_mut(c)
+                && i < scene.sounds.len()
+            {
+                let s = scene.sounds.remove(i);
+                st.shared_sounds.push(s);
+            }
+        }
+        (RowAsk::Nothing, _) => {}
+    }
+    st.tidy_sounds();
+    Ok(())
 }
 
 /// One coordinate of a source being dragged: snapped to the video's near or far edge when
@@ -777,14 +982,14 @@ fn resized(w: f32, h: f32, d: Vec2, free: bool) -> (f32, f32) {
 }
 
 /// How full a mixer meter is (0..=1): the level times the volume on a -60..0 dB scale.
-fn meter_fill(level: f32, volume: f32) -> f32 {
+pub(crate) fn meter_fill(level: f32, volume: f32) -> f32 {
     let l = (level * volume).clamp(0.0, 1.0);
     let db = if l > 0.0 { (20.0 * l.log10()).max(-60.0) } else { -60.0 };
     (db + 60.0) / 60.0
 }
 
 /// Green, then yellow, then red near the top.
-fn meter_color(f: f32) -> Color32 {
+pub(crate) fn meter_color(f: f32) -> Color32 {
     if f > 0.92 {
         Color32::from_rgb(240, 80, 70)
     } else if f > 0.75 {
@@ -807,6 +1012,11 @@ impl StudioUi {
 }
 
 impl StudioUi {
+    /// No source selected (after a scene change).
+    pub fn select_none(&mut self) {
+        self.selected = None;
+    }
+
     pub fn select(&mut self, i: usize) {
         self.selected = Some(i);
     }
@@ -819,7 +1029,7 @@ mod tests {
 
     #[test]
     fn scene_buttons_use_the_shared_scene_rules() {
-        let mut st = crate::studio::StudioSettings { scenes: vec![Scene { name: "A".into(), items: Vec::new() }], current: 0, ..Default::default() };
+        let mut st = crate::studio::StudioSettings { scenes: vec![Scene { sounds: Vec::new(), name: "A".into(), items: Vec::new() }], current: 0, ..Default::default() };
         new_scene(&mut st);
         assert_eq!((st.scenes.len(), st.current, st.scenes[1].name.as_str()), (2, 1, "Scene 2"));
         st.scenes[1].items.push(Item { name: "x".into(), kind: SourceKind::Color { color: [0, 0, 0, 255] }, x: 0.0, y: 0.0, w: 1.0, h: 1.0, visible: true });
@@ -888,7 +1098,7 @@ mod tests {
     fn added_sources_go_into_the_current_scene() {
         let mut a = SnagApp::blank(Settings::default(), false, None);
         let item = |name: &str| Item { name: name.into(), kind: SourceKind::Color { color: [0, 0, 0, 255] }, x: 0.0, y: 0.0, w: 10.0, h: 10.0, visible: true };
-        a.settings.studio.scenes = vec![Scene { name: "A".into(), items: Vec::new() }, Scene { name: "B".into(), items: Vec::new() }];
+        a.settings.studio.scenes = vec![Scene { sounds: Vec::new(), name: "A".into(), items: Vec::new() }, Scene { sounds: Vec::new(), name: "B".into(), items: Vec::new() }];
         a.settings.studio.current = 1;
         add_item(&mut a, item("one"));
         assert!(a.settings.studio.scenes[0].items.is_empty());
@@ -901,6 +1111,54 @@ mod tests {
         a.settings.studio.scenes.clear();
         add_item(&mut a, item("three"));
         assert!(a.settings.studio.scenes.is_empty());
+    }
+
+    /// Adding a sound goes into the current scene, never twice and never past six; sharing
+    /// moves it between "every scene" and "this scene", and refuses when a scene is full.
+    #[test]
+    fn scene_sounds_are_added_shared_and_removed() {
+        use crate::audio::SoundInput;
+        use crate::studio::{MAX_SOUNDS, SceneSound};
+        let mut a = SnagApp::blank(Settings::default(), false, None); // the computer sound is shared
+        let file = |n: usize| SceneSound::new(SoundInput::File { path: format!("/s/{n}.wav") }, "f.wav");
+        add_sound(&mut a, file(1));
+        add_sound(&mut a, file(1));
+        assert!(a.status.contains("already"), "{}", a.status);
+        assert_eq!(a.settings.studio.scene_sounds(0).len(), 2);
+        for n in 2..10 {
+            add_sound(&mut a, file(n));
+        }
+        assert_eq!(a.settings.studio.scene_sounds(0).len(), MAX_SOUNDS);
+        assert!(a.status.contains("at most 6"), "{}", a.status);
+        // A second scene: the shared computer sound is there too.
+        let st = &mut a.settings.studio;
+        let s2 = st.add_scene(Some("Two"));
+        assert_eq!(st.scene_sounds(s2).len(), 1);
+        // Scene 1 is full, so a sound of scene 2 can't go into every scene.
+        st.scenes[s2].sounds.push(file(50));
+        assert!(sound_change(st, s2, false, 0, RowAsk::Share).unwrap_err().contains("make room"));
+        // Make room, then it can; it shows in scene 1 as shared.
+        st.scenes[0].sounds.pop();
+        sound_change(st, s2, false, 0, RowAsk::Share).unwrap();
+        assert_eq!(st.shared_sounds.len(), 2);
+        assert!(st.scene_sounds(0).iter().any(|s| s.input == SoundInput::File { path: "/s/50.wav".into() }));
+        // Back to scene 2 only, then removed.
+        sound_change(st, s2, true, 1, RowAsk::Share).unwrap();
+        assert_eq!(st.shared_sounds.len(), 1);
+        assert_eq!(st.scenes[s2].sounds.len(), 1);
+        sound_change(st, s2, false, 0, RowAsk::Remove).unwrap();
+        sound_change(st, s2, true, 0, RowAsk::Remove).unwrap();
+        assert!(st.scene_sounds(s2).is_empty());
+        assert!(sound_change(st, s2, false, 7, RowAsk::Remove).is_ok(), "a row that is gone changes nothing");
+    }
+
+    #[test]
+    fn every_input_has_an_icon_that_shows_muting() {
+        use crate::audio::SoundInput;
+        assert_eq!(sound_icon(&SoundInput::Computer, false), ph::SPEAKER);
+        assert_eq!(sound_icon(&SoundInput::Computer, true), ph::SPEAKER_SLASH);
+        assert_eq!(sound_icon(&SoundInput::Microphone { id: String::new() }, true), ph::MICROPHONE_SLASH);
+        assert_eq!(sound_icon(&SoundInput::File { path: String::new() }, false), ph::WAVEFORM);
     }
 
     #[test]

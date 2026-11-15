@@ -5,6 +5,7 @@
 mod app;
 mod capture;
 mod hwreport;
+mod wav;
 mod doc;
 mod effects;
 mod export;

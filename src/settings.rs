@@ -902,6 +902,10 @@ impl Settings {
                 s.bindings.push(d);
             }
         }
+        // Studio from before per-scene sound: the old Sound choice becomes its shared sound.
+        let (old, mic) = (s.audio_source, s.audio_mic.clone());
+        s.studio.ready_sounds(old, &mic);
+        s.studio.tidy_sounds();
         s
     }
 

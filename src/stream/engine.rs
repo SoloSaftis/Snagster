@@ -114,18 +114,9 @@ impl SoundSource {
     }
 }
 
-#[cfg(any(windows, test))]
+/// The capture's mix (computer sound and microphones on Windows; sound files everywhere).
 fn capture_feed(c: crate::audio::Capture) -> AudioFeed {
     Box::new(move |n| c.take(n))
-}
-
-/// No sound capture on this system yet (`audio::Capture` only gives silence): stream silence.
-#[cfg(not(any(windows, test)))]
-fn capture_feed(c: crate::audio::Capture) -> AudioFeed {
-    Box::new(move |n| {
-        let _ = &c;
-        vec![0; n * 2]
-    })
 }
 
 pub type VideoFactory = Arc<dyn Fn(&VideoConfig) -> Result<Box<dyn VideoEncoder>, String> + Send + Sync>;

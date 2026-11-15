@@ -95,6 +95,9 @@ pub struct VideoOpts {
     pub audio: crate::audio::AudioSource,
     /// The microphone's id (empty: the default one).
     pub mic: String,
+    /// Studio's sound: every input its scenes use, mixed by the scene shown
+    /// (`audio::set_scene_mix`). Takes the place of `audio` and `mic` when set.
+    pub sound: Option<Vec<crate::audio::SoundInput>>,
     /// Frames made by the caller (Studio mode) instead of the screen; `rect` then gives only
     /// the size.
     pub frames: Option<FrameFeed>,
@@ -103,7 +106,7 @@ pub struct VideoOpts {
 impl VideoOpts {
     /// Plain options for a screen area: no sound, no custom frames.
     pub fn screen(rect: (i32, i32, u32, u32), fps: u32, format: VideoFormat, path: PathBuf) -> VideoOpts {
-        VideoOpts { rect, fps, format, quality: 2, hardware: true, encoder: String::new(), cursor: true, max_s: 0, path, audio: crate::audio::AudioSource::None, mic: String::new(), frames: None }
+        VideoOpts { rect, fps, format, quality: 2, hardware: true, encoder: String::new(), cursor: true, max_s: 0, path, audio: crate::audio::AudioSource::None, mic: String::new(), sound: None, frames: None }
     }
 
     /// The options a screen recording of `rect` gets from the settings (what the window uses):
@@ -123,6 +126,7 @@ impl VideoOpts {
             path: recording_path(&s.video_folder, "Recording", format.ext()),
             audio: s.audio_source,
             mic: s.audio_mic.clone(),
+            sound: None,
             frames: None,
         }
     }
@@ -174,6 +178,12 @@ pub struct VideoDone {
     /// Something the person should know about a recording that worked, e.g. that the sound
     /// was left out because there was nothing to record it from. Empty when all went as asked.
     pub note: String,
+}
+
+/// The note for Studio sound inputs that couldn't start ("" when all did).
+#[cfg(windows)]
+fn studio_sound_note(notes: &[String]) -> String {
+    if notes.is_empty() { String::new() } else { format!("Some sound was left out: {}", notes.join("; ")) }
 }
 
 /// Sound that can't be started doesn't stop the recording: the video is made without it and
@@ -2468,7 +2478,12 @@ mod win {
         let (x, y, w0, h0) = opts.rect;
         // Sound starts first so the devices are ready; what it hears before the first frame
         // is dropped.
-        let sound = if opts.audio != crate::audio::AudioSource::None && opts.format != VideoFormat::Wmv {
+        let sound = if let Some(inputs) = opts.sound.as_ref().filter(|i| !i.is_empty() && opts.format != VideoFormat::Wmv) {
+            // Studio: every input its scenes use; one that can't start is left out and noted.
+            let c = crate::audio::Capture::start_inputs(inputs);
+            done.note = studio_sound_note(c.notes());
+            Some(c).filter(|c| !c.is_silent())
+        } else if opts.audio != crate::audio::AudioSource::None && opts.format != VideoFormat::Wmv {
             let (c, note) = sound_or_note(crate::audio::Capture::start(opts.audio, &opts.mic));
             done.note = note;
             c.filter(|c| !c.is_silent())

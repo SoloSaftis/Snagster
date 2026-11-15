@@ -1,28 +1,32 @@
-//! Sound for recordings: what the computer plays (system sound), a microphone, or both, mixed
-//! to 48 kHz stereo 16-bit samples.
+//! Sound for recordings and streams: what the computer plays, microphones and sound files,
+//! mixed to 48 kHz stereo 16-bit samples.
 //!
-//! Windows: WASAPI in shared mode (loopback for the system sound), with Windows converting each
-//! device's own format to 48 kHz stereo 16-bit. Each source runs on its own thread and keeps to
-//! real time: when the system is silent (loopback sends nothing), silence is filled in so sound
-//! and picture stay in step. Other systems: no sound yet.
+//! A `Capture` has lanes, one per input, each on its own thread, keeping to real time (when an
+//! input is silent, silence is filled in, so sound and picture stay in step). A normal
+//! recording has the computer sound and/or one microphone (`Capture::start`). Studio's scenes
+//! have up to six inputs each (`Capture::start_inputs` with every input any scene uses); the
+//! scene mix (`set_scene_mix`, set from the current scene) says which are heard and how loud,
+//! and a lane fades over `FADE_MS` when the scene changes rather than cutting.
+//!
+//! Windows: WASAPI in shared mode (loopback for the computer sound), Windows converting each
+//! device's format to 48 kHz stereo 16-bit. Sound files (WAV, `wav.rs`) play on every system.
+//! Computer sound and microphones are Windows-only so far.
 
 use serde::{Deserialize, Serialize};
-#[cfg(any(windows, test))]
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-// Sound is captured, queued and mixed only on Windows so far; elsewhere `Capture::start`
-// refuses anything but silence, so the queue and mixing code is built for Windows (and the
-// tests, which check the mixing maths on every system).
-#[cfg(any(windows, test))]
 pub const RATE: u32 = 48_000;
-#[cfg(any(windows, test))]
 pub const CHANNELS: u32 = 2;
 
-/// A mixer (Studio's volume sliders): volume 0..2 as f32 bits and mute, for the system sound
-/// and the microphone.
+/// How long a scene lane takes to fade to a new volume (a scene change, a mute).
+pub const FADE_MS: u32 = 150;
+const FADE_FRAMES: f32 = (RATE * FADE_MS / 1000) as f32;
+
+/// A mixer (Studio's old two sliders): volume 0..2 as f32 bits and mute, for the computer sound
+/// and the microphone of a normal recording.
 struct Mixer {
     gain: [AtomicU32; 2],
     mute: [AtomicBool; 2],
@@ -33,6 +37,7 @@ impl Mixer {
         Mixer { gain: [AtomicU32::new(0x3f80_0000), AtomicU32::new(0x3f80_0000)], mute: [AtomicBool::new(false), AtomicBool::new(false)] }
     }
 
+    #[cfg(test)]
     fn set(&self, system: (f32, bool), mic: (f32, bool)) {
         for (i, (g, m)) in [system, mic].into_iter().enumerate() {
             self.gain[i].store(g.clamp(0.0, 2.0).to_bits(), Ordering::Relaxed);
@@ -40,23 +45,73 @@ impl Mixer {
         }
     }
 
-    /// (volume, muted) of source `i` (0 system, 1 microphone).
-    #[cfg(any(windows, test))]
+    /// (volume, muted) of slot `i` (0 computer sound, 1 microphone).
     fn get(&self, i: usize) -> (f32, bool) {
         (f32::from_bits(self.gain[i].load(Ordering::Relaxed)), self.mute[i].load(Ordering::Relaxed))
     }
 }
 
-/// The mixer every recording uses. Captures hold a reference to it (tests give theirs a
+/// The mixer normal recordings use. Captures hold a reference to it (tests give theirs a
 /// private one, so tests that start Studio or a stream can't change another test's sums).
 static MIXER: Mixer = Mixer::new();
 
-/// Set the mixer: (volume, muted) for the system sound and the microphone.
+/// Set the normal recordings' mixer: (volume, muted) for the computer sound and the microphone
+/// (normal recordings keep it at full volume; tests check it is applied).
+#[cfg(test)]
 pub fn set_mix(system: (f32, bool), mic: (f32, bool)) {
     MIXER.set(system, mic);
 }
 
-/// Which sound goes into a recording.
+/// One input of a Studio scene's sound.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum SoundInput {
+    /// What the computer plays.
+    Computer,
+    /// A microphone, by its device id ("" the computer's default one).
+    Microphone { id: String },
+    /// A WAV file, played over and over.
+    File { path: String },
+}
+
+impl SoundInput {
+    /// Whether this computer can capture it (sound files play everywhere).
+    pub fn supported(&self) -> bool {
+        matches!(self, SoundInput::File { .. }) || AudioSource::supported()
+    }
+}
+
+/// What Studio's current scene wants heard: (input, volume 0..2, muted). Inputs not listed are
+/// silent.
+struct SceneMix {
+    lanes: Mutex<Vec<(SoundInput, f32, bool)>>,
+}
+
+impl SceneMix {
+    const fn new() -> SceneMix {
+        SceneMix { lanes: Mutex::new(Vec::new()) }
+    }
+
+    fn set(&self, lanes: Vec<(SoundInput, f32, bool)>) {
+        if let Ok(mut g) = self.lanes.lock() {
+            *g = lanes.into_iter().map(|(i, v, m)| (i, v.clamp(0.0, 2.0), m)).collect();
+        }
+    }
+
+    /// (volume, muted) for `input`: muted when the scene doesn't have it.
+    fn get(&self, input: &SoundInput) -> (f32, bool) {
+        self.lanes.lock().ok().and_then(|g| g.iter().find(|(i, ..)| i == input).map(|(_, v, m)| (*v, *m))).unwrap_or((0.0, true))
+    }
+}
+
+static SCENE_MIX: SceneMix = SceneMix::new();
+
+/// Set what the current scene wants heard (Studio does this every frame; a stream or recording
+/// of Studio follows it at once, fading).
+pub fn set_scene_mix(lanes: Vec<(SoundInput, f32, bool)>) {
+    SCENE_MIX.set(lanes);
+}
+
+/// Which sound goes into a normal recording.
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum AudioSource {
     /// No sound.
@@ -100,7 +155,7 @@ impl AudioSource {
         }
     }
 
-    /// Whether this computer's Snagster can record sound.
+    /// Whether this computer's Snagster can capture the computer sound and microphones.
     pub fn supported() -> bool {
         cfg!(windows)
     }
@@ -113,35 +168,22 @@ pub struct Device {
     pub name: String,
 }
 
-/// One running sound source: samples waiting to be taken, its loudness and volume.
+/// One running input: samples waiting to be taken, its loudness and volume.
 struct Feed {
-    #[cfg(any(windows, test))]
     queue: Mutex<VecDeque<i16>>,
     /// Loudest sample of the latest chunk, 0..1 (f32 bits).
     peak: AtomicU32,
     /// Volume 0..2 (f32 bits).
-    #[cfg(any(windows, test))]
     gain: AtomicU32,
-    #[cfg(any(windows, test))]
     muted: AtomicBool,
     error: Mutex<Option<String>>,
 }
 
 impl Feed {
     fn new() -> Arc<Feed> {
-        Arc::new(Feed {
-            #[cfg(any(windows, test))]
-            queue: Mutex::new(VecDeque::new()),
-            peak: AtomicU32::new(0),
-            #[cfg(any(windows, test))]
-            gain: AtomicU32::new(1.0f32.to_bits()),
-            #[cfg(any(windows, test))]
-            muted: AtomicBool::new(false),
-            error: Mutex::new(None),
-        })
+        Arc::new(Feed { queue: Mutex::new(VecDeque::new()), peak: AtomicU32::new(0), gain: AtomicU32::new(1.0f32.to_bits()), muted: AtomicBool::new(false), error: Mutex::new(None) })
     }
 
-    #[cfg(any(windows, test))]
     fn push(&self, samples: &[i16]) {
         let peak = samples.iter().map(|s| s.unsigned_abs()).max().unwrap_or(0) as f32 / 32768.0;
         self.peak.store(peak.to_bits(), Ordering::Relaxed);
@@ -163,30 +205,62 @@ impl Feed {
             q.extend(std::iter::repeat_n(0i16, n));
         }
     }
+
+    fn error(&self) -> Option<String> {
+        self.error.lock().ok().and_then(|e| e.clone())
+    }
 }
 
-/// Live sound capture from the chosen sources.
+/// How a lane's volume is set.
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum MixBy {
+    /// A normal recording's slider (0 computer sound, 1 microphone): no fading.
+    Slot(usize),
+    /// The current scene (`set_scene_mix`): fades.
+    Scene,
+}
+
+/// One input of a capture.
+struct Lane {
+    input: SoundInput,
+    feed: Arc<Feed>,
+    mix: MixBy,
+    /// The volume applied at the end of the last take (f32 bits), where the next fade starts.
+    now: AtomicU32,
+}
+
+/// Live sound from the chosen inputs.
 pub struct Capture {
-    system: Option<Arc<Feed>>,
-    mic: Option<Arc<Feed>>,
+    lanes: Vec<Lane>,
     stop: Arc<AtomicBool>,
     threads: Vec<std::thread::JoinHandle<()>>,
-    #[cfg(any(windows, test))]
     mixer: &'static Mixer,
+    scene: &'static SceneMix,
+    /// Inputs that couldn't start, and why (the others still run).
+    notes: Vec<String>,
 }
 
 impl Capture {
-    /// Start capturing (`mic` is a device id, empty for the default microphone).
-    pub fn start(source: AudioSource, mic: &str) -> Result<Capture, String> {
-        let stop = Arc::new(AtomicBool::new(false));
-        let mut cap = Capture {
-            system: None,
-            mic: None,
-            stop: stop.clone(),
-            threads: Vec::new(),
-            #[cfg(any(windows, test))]
-            mixer: &MIXER,
+    fn empty() -> Capture {
+        Capture { lanes: Vec::new(), stop: Arc::new(AtomicBool::new(false)), threads: Vec::new(), mixer: &MIXER, scene: &SCENE_MIX, notes: Vec::new() }
+    }
+
+    fn add(&mut self, input: SoundInput, mix: MixBy) -> Result<(), String> {
+        let feed = Feed::new();
+        let t = match &input {
+            SoundInput::Computer => spawn_device(None, feed.clone(), self.stop.clone())?,
+            SoundInput::Microphone { id } => spawn_device(Some(id.clone()), feed.clone(), self.stop.clone())?,
+            SoundInput::File { path } => spawn_file(path.clone(), feed.clone(), self.stop.clone())?,
         };
+        self.threads.push(t);
+        self.lanes.push(Lane { input, feed, mix, now: AtomicU32::new(0) });
+        Ok(())
+    }
+
+    /// Start capturing for a normal recording (`mic` is a device id, empty for the default
+    /// microphone). Fails when a device can't start.
+    pub fn start(source: AudioSource, mic: &str) -> Result<Capture, String> {
+        let mut cap = Capture::empty();
         if source == AudioSource::None {
             return Ok(cap);
         }
@@ -194,76 +268,137 @@ impl Capture {
             return Err("Recording sound isn't available on this system yet.".into());
         }
         if source.system() {
-            let feed = Feed::new();
-            cap.threads.push(spawn_source(None, feed.clone(), stop.clone())?);
-            cap.system = Some(feed);
+            cap.add(SoundInput::Computer, MixBy::Slot(0))?;
         }
         if source.mic() {
-            let feed = Feed::new();
-            let id = if mic.is_empty() { Some(String::new()) } else { Some(mic.to_string()) };
-            cap.threads.push(spawn_source(id, feed.clone(), stop.clone())?);
-            cap.mic = Some(feed);
+            cap.add(SoundInput::Microphone { id: mic.to_string() }, MixBy::Slot(1))?;
         }
         // Give the devices a moment to start (and report a failure).
         std::thread::sleep(Duration::from_millis(60));
-        for f in [&cap.system, &cap.mic].into_iter().flatten() {
-            if let Some(e) = f.error.lock().ok().and_then(|e| e.clone()) {
-                return Err(e);
-            }
+        if let Some(e) = cap.lanes.iter().find_map(|l| l.feed.error()) {
+            return Err(e);
         }
         Ok(cap)
     }
 
-    #[cfg(any(windows, test))]
-    pub fn is_silent(&self) -> bool {
-        self.system.is_none() && self.mic.is_none()
-    }
-
-    /// Take `frames` stereo frames, mixed (silence where a source has nothing yet).
-    #[cfg(any(windows, test))]
-    pub fn take(&self, frames: usize) -> Vec<i16> {
-        let n = frames * CHANNELS as usize;
-        let mut out = vec![0i32; n];
-        for (i, f) in [&self.system, &self.mic].into_iter().enumerate() {
-            let Some(f) = f else { continue };
-            let (mix_gain, mix_muted) = self.mixer.get(i);
-            let gain = f32::from_bits(f.gain.load(Ordering::Relaxed)) * mix_gain;
-            let muted = f.muted.load(Ordering::Relaxed) || mix_muted;
-            if let Ok(mut q) = f.queue.lock() {
-                let k = n.min(q.len());
-                for (o, s) in out.iter_mut().zip(q.drain(..k)) {
-                    if !muted {
-                        *o += (s as f32 * gain) as i32;
-                    }
-                }
+    /// Start every input Studio's scenes use, mixed by the current scene (`set_scene_mix`).
+    /// An input that can't start (a microphone unplugged, a file gone, computer sound off
+    /// Windows) is left out and noted (`notes`); the others still run.
+    pub fn start_inputs(inputs: &[SoundInput]) -> Capture {
+        let mut cap = Capture::empty();
+        let mut seen: Vec<&SoundInput> = Vec::new();
+        for input in inputs {
+            if seen.contains(&input) {
+                continue;
+            }
+            seen.push(input);
+            if !input.supported() {
+                cap.notes.push(format!("{}: sound from devices isn't available on this system yet", input_label(input)));
+                continue;
+            }
+            if let Err(e) = cap.add(input.clone(), MixBy::Scene) {
+                cap.notes.push(format!("{}: {e}", input_label(input)));
             }
         }
-        out.into_iter().map(|s| s.clamp(i16::MIN as i32, i16::MAX as i32) as i16).collect()
+        if !cap.lanes.is_empty() {
+            std::thread::sleep(Duration::from_millis(60));
+        }
+        let failed: Vec<(usize, String)> = cap.lanes.iter().enumerate().filter_map(|(i, l)| l.feed.error().map(|e| (i, format!("{}: {e}", input_label(&l.input))))).collect();
+        for (i, note) in failed.into_iter().rev() {
+            cap.lanes.remove(i);
+            cap.notes.push(note);
+        }
+        cap
+    }
+
+    /// The inputs that couldn't start, and why.
+    pub fn notes(&self) -> &[String] {
+        &self.notes
+    }
+
+    pub fn is_silent(&self) -> bool {
+        self.lanes.is_empty()
+    }
+
+    /// Take `frames` stereo frames, mixed (silence where an input has nothing yet).
+    pub fn take(&self, frames: usize) -> Vec<i16> {
+        let n = frames * CHANNELS as usize;
+        let mut out = vec![0f32; n];
+        for lane in &self.lanes {
+            let (mix_gain, mix_muted) = match lane.mix {
+                MixBy::Slot(i) => self.mixer.get(i),
+                MixBy::Scene => self.scene.get(&lane.input),
+            };
+            let f = &lane.feed;
+            let target = if mix_muted || f.muted.load(Ordering::Relaxed) { 0.0 } else { f32::from_bits(f.gain.load(Ordering::Relaxed)) * mix_gain };
+            // Scene lanes move to the new volume over FADE_MS; slots jump.
+            let mut g = if lane.mix == MixBy::Scene { f32::from_bits(lane.now.load(Ordering::Relaxed)) } else { target };
+            let step = (target - g) / FADE_FRAMES;
+            if let Ok(mut q) = f.queue.lock() {
+                let k = n.min(q.len());
+                for (i, (o, s)) in out.iter_mut().zip(q.drain(..k)).enumerate() {
+                    if i % CHANNELS as usize == 0 {
+                        g = fade_step(g, target, step);
+                    }
+                    *o += s as f32 * g;
+                }
+            }
+            lane.now.store(if lane.mix == MixBy::Scene { g } else { target }.to_bits(), Ordering::Relaxed);
+        }
+        out.into_iter().map(|s| s.round().clamp(i16::MIN as f32, i16::MAX as f32) as i16).collect()
     }
 
     /// Drop what has been captured so far (after a pause).
     #[cfg(any(windows, test))]
     pub fn discard(&self) {
-        for f in [&self.system, &self.mic].into_iter().flatten() {
-            if let Ok(mut q) = f.queue.lock() {
+        for l in &self.lanes {
+            if let Ok(mut q) = l.feed.queue.lock() {
                 q.clear();
             }
         }
     }
 
-    /// Loudness of (system, microphone), 0..1.
+    #[cfg(test)]
+    fn peak_of(&self, want: impl Fn(&SoundInput) -> bool) -> f32 {
+        self.lanes.iter().find(|l| want(&l.input)).map(|l| f32::from_bits(l.feed.peak.load(Ordering::Relaxed))).unwrap_or(0.0)
+    }
+
+    /// Loudness of (computer sound, microphone), 0..1.
+    #[cfg(test)]
     pub fn levels(&self) -> (f32, f32) {
-        let l = |f: &Option<Arc<Feed>>| f.as_ref().map(|f| f32::from_bits(f.peak.load(Ordering::Relaxed))).unwrap_or(0.0);
-        (l(&self.system), l(&self.mic))
+        (self.peak_of(|i| *i == SoundInput::Computer), self.peak_of(|i| matches!(i, SoundInput::Microphone { .. })))
     }
 
+    /// Loudness of `input`, 0..1, and whether it is running.
+    pub fn level_of(&self, input: &SoundInput) -> Option<f32> {
+        self.lanes.iter().find(|l| l.input == *input).map(|l| f32::from_bits(l.feed.peak.load(Ordering::Relaxed)))
+    }
 
+    #[cfg(test)]
     pub fn has_system(&self) -> bool {
-        self.system.is_some()
+        self.lanes.iter().any(|l| l.input == SoundInput::Computer)
     }
 
+    #[cfg(test)]
     pub fn has_mic(&self) -> bool {
-        self.mic.is_some()
+        self.lanes.iter().any(|l| matches!(l.input, SoundInput::Microphone { .. }))
+    }
+}
+
+/// One fade step from `g` towards `target` by `step`, never past it.
+fn fade_step(g: f32, target: f32, step: f32) -> f32 {
+    let next = g + step;
+    // Lands exactly on the target (adding many small steps drifts a little).
+    if (step >= 0.0 && next >= target - 1e-4) || (step < 0.0 && next <= target + 1e-4) { target } else { next }
+}
+
+/// What an input is called in notes.
+fn input_label(i: &SoundInput) -> String {
+    match i {
+        SoundInput::Computer => "Computer sound".into(),
+        SoundInput::Microphone { id } if id.is_empty() => "Microphone".into(),
+        SoundInput::Microphone { .. } => "A microphone".into(),
+        SoundInput::File { path } => std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| path.clone()),
     }
 }
 
@@ -288,8 +423,45 @@ pub fn microphones() -> Vec<Device> {
     }
 }
 
+/// Play a WAV file into `feed` in real time, over and over, until `stop`.
+fn spawn_file(path: String, feed: Arc<Feed>, stop: Arc<AtomicBool>) -> Result<std::thread::JoinHandle<()>, String> {
+    std::thread::Builder::new()
+        .name("snagster-sound-file".into())
+        .spawn(move || {
+            let samples = match crate::wav::read_48k_stereo(std::path::Path::new(&path)) {
+                Ok(s) if !s.is_empty() => s,
+                Ok(_) => {
+                    *feed.error.lock().unwrap_or_else(|p| p.into_inner()) = Some("the file has no sound in it".into());
+                    return;
+                }
+                Err(e) => {
+                    *feed.error.lock().unwrap_or_else(|p| p.into_inner()) = Some(e);
+                    return;
+                }
+            };
+            let start = std::time::Instant::now();
+            let (mut written, mut at) = (0u64, 0usize);
+            let mut chunk = Vec::new();
+            while !stop.load(Ordering::Relaxed) {
+                let due = (start.elapsed().as_secs_f64() * RATE as f64) as u64;
+                if due > written {
+                    let frames = (due - written) as usize;
+                    chunk.clear();
+                    for _ in 0..frames * CHANNELS as usize {
+                        chunk.push(samples[at]);
+                        at = (at + 1) % samples.len();
+                    }
+                    feed.push(&chunk);
+                    written = due;
+                }
+                std::thread::sleep(Duration::from_millis(10));
+            }
+        })
+        .map_err(|e| e.to_string())
+}
+
 #[cfg(windows)]
-fn spawn_source(mic: Option<String>, feed: Arc<Feed>, stop: Arc<AtomicBool>) -> Result<std::thread::JoinHandle<()>, String> {
+fn spawn_device(mic: Option<String>, feed: Arc<Feed>, stop: Arc<AtomicBool>) -> Result<std::thread::JoinHandle<()>, String> {
     std::thread::Builder::new()
         .name(if mic.is_some() { "snagster-mic".into() } else { "snagster-loopback".into() })
         .spawn(move || {
@@ -303,7 +475,7 @@ fn spawn_source(mic: Option<String>, feed: Arc<Feed>, stop: Arc<AtomicBool>) -> 
 }
 
 #[cfg(not(windows))]
-fn spawn_source(_mic: Option<String>, _feed: Arc<Feed>, _stop: Arc<AtomicBool>) -> Result<std::thread::JoinHandle<()>, String> {
+fn spawn_device(_mic: Option<String>, _feed: Arc<Feed>, _stop: Arc<AtomicBool>) -> Result<std::thread::JoinHandle<()>, String> {
     Err("Recording sound isn't available on this system yet.".into())
 }
 
@@ -450,7 +622,88 @@ mod tests {
     }
 
     fn capture_with(system: Option<Arc<Feed>>, mic: Option<Arc<Feed>>, mixer: &'static Mixer) -> Capture {
-        Capture { system, mic, stop: Arc::new(AtomicBool::new(false)), threads: Vec::new(), mixer }
+        let mut c = Capture::empty();
+        c.mixer = mixer;
+        for (feed, input, slot) in [(system, SoundInput::Computer, 0), (mic, SoundInput::Microphone { id: String::new() }, 1)] {
+            if let Some(feed) = feed {
+                c.lanes.push(Lane { input, feed, mix: MixBy::Slot(slot), now: AtomicU32::new(0) });
+            }
+        }
+        c
+    }
+
+    /// A capture of scene lanes (no devices), with a scene mix of its own.
+    fn scene_capture(lanes: Vec<(SoundInput, Arc<Feed>)>) -> (Capture, &'static SceneMix) {
+        let mix: &'static SceneMix = Box::leak(Box::new(SceneMix::new()));
+        let mut c = Capture::empty();
+        c.scene = mix;
+        for (input, feed) in lanes {
+            c.lanes.push(Lane { input, feed, mix: MixBy::Scene, now: AtomicU32::new(0) });
+        }
+        (c, mix)
+    }
+
+    /// A scene hears only its own inputs; switching scenes fades a lane in or out over
+    /// FADE_MS instead of cutting.
+    #[test]
+    fn the_scene_mix_picks_the_inputs_and_fades_between_scenes() {
+        let (a, b) = (Feed::new(), Feed::new());
+        let mic = SoundInput::Microphone { id: "usb".into() };
+        let (c, mix) = scene_capture(vec![(SoundInput::Computer, a.clone()), (mic.clone(), b.clone())]);
+        let frames = FADE_FRAMES as usize;
+        // Scene 1: only the computer sound, at full volume (fading in from silence).
+        mix.set(vec![(SoundInput::Computer, 1.0, false)]);
+        a.push(&vec![10_000; frames * 2]);
+        b.push(&vec![10_000; frames * 2]);
+        let out = c.take(frames);
+        assert!(out[0] < 200, "it fades in: {}", out[0]);
+        assert_eq!(out[out.len() - 1], 10_000, "and reaches full volume after the fade");
+        assert_eq!(queued(&b), 0, "an input the scene doesn't use is still used up");
+        // Scene 2: only the microphone, at half volume. The computer sound fades out, the
+        // microphone fades in.
+        mix.set(vec![(mic.clone(), 0.5, false)]);
+        a.push(&vec![10_000; frames * 2]);
+        b.push(&vec![10_000; frames * 2]);
+        let out = c.take(frames);
+        assert!(out[0] > 9_000, "no cut: {}", out[0]);
+        assert_eq!(out[out.len() - 1], 5_000);
+        // Muted in the scene: silent (after the fade).
+        mix.set(vec![(mic, 0.5, true)]);
+        b.push(&vec![10_000; frames * 4]);
+        c.take(frames);
+        assert!(c.take(10).iter().all(|s| *s == 0));
+    }
+
+    #[test]
+    fn fading_never_overshoots() {
+        assert_eq!(fade_step(0.9, 1.0, 0.5), 1.0);
+        assert_eq!(fade_step(0.1, 0.0, -0.5), 0.0);
+        assert_eq!(fade_step(0.5, 1.0, 0.25), 0.75);
+        assert_eq!(fade_step(1.0, 1.0, 0.0), 1.0);
+    }
+
+    /// Inputs that can't start are noted, never fatal; the same input twice runs once.
+    #[test]
+    fn inputs_that_cant_start_are_noted_and_the_rest_run() {
+        let dir = std::env::temp_dir().join(format!("snagster-audio-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let tone = dir.join("tone.wav");
+        std::fs::write(&tone, crate::wav::tests::wav_bytes(1, 48_000, 16, &[8_000, -8_000].repeat(2_400))).unwrap();
+        let file = SoundInput::File { path: tone.to_string_lossy().to_string() };
+        let gone = SoundInput::File { path: dir.join("gone.wav").to_string_lossy().to_string() };
+        let c = Capture::start_inputs(&[file.clone(), file.clone(), gone]);
+        assert_eq!(c.lanes.len(), 1, "the file once; the missing one left out");
+        assert!(c.notes().iter().any(|n| n.starts_with("gone.wav: ")), "{:?}", c.notes());
+        assert_eq!(c.level_of(&SoundInput::Computer), None);
+        // The file plays in real time.
+        std::thread::sleep(Duration::from_millis(120));
+        assert!(c.level_of(&file).is_some_and(|l| l > 0.2), "{:?}", c.level_of(&file));
+        drop(c);
+        if !AudioSource::supported() {
+            let c = Capture::start_inputs(&[SoundInput::Computer]);
+            assert!(c.is_silent() && c.notes()[0].contains("isn't available"), "{:?}", c.notes());
+        }
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

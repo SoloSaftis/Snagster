@@ -2128,10 +2128,11 @@ impl SnagApp {
                 self.selected = None;
             }
         }
-        if ctx.input(|i| i.key_pressed(Key::Num0)) {
+        // (Ctrl/Cmd + a number switches Studio scenes, not the zoom.)
+        if ctx.input(|i| i.key_pressed(Key::Num0) && !i.modifiers.command) {
             self.set_zoom(ctx, None);
         }
-        if ctx.input(|i| i.key_pressed(Key::Num1)) {
+        if ctx.input(|i| i.key_pressed(Key::Num1) && !i.modifiers.command) {
             self.set_zoom(ctx, Some(0.0));
         }
         if ctx.input(|i| i.key_pressed(Key::Plus) || i.key_pressed(Key::Equals)) {
@@ -5139,6 +5140,28 @@ impl SnagApp {
 }
 
 impl SnagApp {
+    /// The README pictures' scene sound: a microphone in every scene, music in the first.
+    fn picture_sounds(&mut self) {
+        use crate::audio::SoundInput;
+        use crate::studio::SceneSound;
+        let st = &mut self.settings.studio;
+        st.shared_sounds = vec![SceneSound::new(SoundInput::Computer, "Computer sound"), SceneSound { volume: 1.2, ..SceneSound::new(SoundInput::Microphone { id: String::new() }, "Microphone") }];
+        let music = std::env::temp_dir().join("intro-music.wav");
+        let _ = std::fs::write(&music, crate::wav::tone(2, 330.0));
+        if let Some(s) = st.scenes.first_mut() {
+            s.sounds = vec![SceneSound { volume: 0.6, ..SceneSound::new(SoundInput::File { path: music.to_string_lossy().to_string() }, "intro-music.wav") }];
+        }
+    }
+
+    /// The README pictures' scenes for streaming: an intro, the game and a break.
+    fn picture_scenes(&mut self) {
+        let st = &mut self.settings.studio;
+        let base = st.scenes.first().cloned().unwrap_or_else(|| crate::studio::StudioSettings::default().scenes[0].clone());
+        st.scenes = ["Intro", "Game", "Chat", "Break"].iter().map(|n| crate::studio::Scene { name: n.to_string(), ..base.clone() }).collect();
+        st.current = 1;
+        self.picture_sounds();
+    }
+
     /// Set up a view for `--screenshot --view ...` (README pictures).
     fn show_view(&mut self, ctx: &egui::Context, view: &str) {
         if let Some(code) = view.strip_prefix("lang:") {
@@ -5170,14 +5193,20 @@ impl SnagApp {
                         visible: true,
                     });
                 }
-                self.settings.studio.scenes.push(crate::studio::Scene { name: "Webcam corner".into(), items: Vec::new() });
+                self.settings.studio.scenes.push(crate::studio::Scene { sounds: Vec::new(), name: "Webcam corner".into(), items: Vec::new() });
+                self.picture_sounds();
                 self.switch_tab(ctx, ribbon::RibbonTab::Studio);
                 if let Some(s) = &mut self.x.studio {
                     s.select(1);
                 }
             }
             "record" => self.x.tab = ribbon::RibbonTab::Record,
-            "stream" => self.x.tab = ribbon::RibbonTab::Stream,
+            "stream" => {
+                // Streaming Studio's scenes: scene buttons and the scene's sounds in the band.
+                self.picture_scenes();
+                self.settings.stream.source = crate::stream::Source::Studio;
+                self.x.tab = ribbon::RibbonTab::Stream;
+            }
             "panel-stream" => {
                 self.settings.panel.tab = 3;
                 self.enter_panel(ctx);

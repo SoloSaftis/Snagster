@@ -195,7 +195,15 @@ impl SnagApp {
                 self.x.stream.uses_studio = true;
                 Some(StudioFrames::Running(s.engine_shared(), self.settings.studio.width.max(16), self.settings.studio.height.max(16)))
             }
-            (Source::Studio, None) => Some(StudioFrames::Start(self.settings.studio.clone())),
+            (Source::Studio, None) => {
+                // Studio runs in the window, so the Stream tab's scene buttons and mixer drive
+                // the stream too.
+                let s = super::studio_ui::StudioUi::start(&self.settings, ctx);
+                let shared = s.engine_shared();
+                self.x.studio = Some(s);
+                self.x.stream.uses_studio = true;
+                Some(StudioFrames::Running(shared, self.settings.studio.width.max(16), self.settings.studio.height.max(16)))
+            }
             _ => None,
         };
         let enc = self.x.stream.encoders.clone().unwrap_or_else(|| Encoders::system_picked(&self.settings.video_encoder));
@@ -239,6 +247,10 @@ impl SnagApp {
 
     /// Every frame: the stream's state, and a line in the status bar when it ends or fails.
     pub(crate) fn poll_stream(&mut self, ctx: &egui::Context) {
+        // A stream of Studio follows its scene and mixer from any tab.
+        if self.x.studio.is_some() && self.x.tab != super::ribbon::RibbonTab::Studio {
+            self.studio_tick();
+        }
         let snap = live::snapshot();
         if snap.phase != Phase::Idle {
             ctx.request_repaint_after(Duration::from_millis(500));
@@ -628,6 +640,11 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
             }
         }
     });
+    // Streaming Studio's scenes: switch scenes and mute sounds right here while live.
+    if app.settings.stream.source == Source::Studio {
+        look::group(ui, t("Scenes"), |ui| scene_buttons(app, ui, ctx));
+        look::group(ui, t("Sound"), |ui| sound_buttons(app, ui));
+    }
     look::group(ui, t("Service"), |ui| {
         look::column(ui, |ui| {
             let name = service_name(app.settings.stream.service);
@@ -685,6 +702,103 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
         });
     });
     look::group(ui, t("Status"), |ui| app.stream_status(ui));
+}
+
+/// Ctrl (Cmd on a Mac) + 1..9: the scene to switch to, when one of those was pressed.
+pub(crate) fn scene_key(ctx: &egui::Context) -> Option<usize> {
+    use egui::Key::*;
+    let keys = [Num1, Num2, Num3, Num4, Num5, Num6, Num7, Num8, Num9];
+    ctx.input(|i| if i.modifiers.command { keys.iter().position(|k| i.key_pressed(*k)) } else { None })
+}
+
+/// Switch Studio to scene `i` (the stream and recording follow at once, sound fading).
+pub(crate) fn switch_scene(app: &mut SnagApp, i: usize) {
+    if app.settings.studio.set_current(i).is_ok() {
+        if let Some(s) = &mut app.x.studio {
+            s.select_none();
+        }
+        let name = app.settings.studio.scenes[i].name.clone();
+        app.status = tf("Scene: {name}", &[("name", &name)]);
+    }
+}
+
+/// The Studio scenes as buttons, three to a column ("1 Intro"), and Edit in Studio.
+fn scene_buttons(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
+    if let Some(i) = scene_key(ctx)
+        && i < app.settings.studio.scenes.len()
+    {
+        switch_scene(app, i);
+    }
+    let names: Vec<String> = app.settings.studio.scenes.iter().map(|s| s.name.clone()).collect();
+    let cur = app.settings.studio.current.min(names.len().saturating_sub(1));
+    let all: Vec<usize> = (0..names.len()).collect();
+    let mut pick = None;
+    for chunk in all.chunks(3) {
+        look::column(ui, |ui| {
+            for &i in chunk {
+                let label = format!("{}  {}", i + 1, names[i].chars().take(16).collect::<String>());
+                let tip = if i < 9 { tf("Switch to this scene (Ctrl+{n})", &[("n", &(i + 1).to_string())]) } else { t("Switch to this scene").to_string() };
+                if ui.add(egui::Button::new(label).selected(i == cur).min_size(vec2(112.0, 0.0))).on_hover_text(tip).clicked() {
+                    pick = Some(i);
+                }
+            }
+        });
+    }
+    if let Some(i) = pick {
+        switch_scene(app, i);
+    }
+    look::column(ui, |ui| {
+        if look::small_tool(ui, ph::FILM_SLATE, t("Edit in Studio"), t("Arrange the scenes' sources and sound in Studio"), true).clicked() {
+            app.switch_tab(ctx, super::ribbon::RibbonTab::Studio);
+        }
+    });
+}
+
+/// The current scene's sounds as buttons, three to a column: click to mute or turn on, with
+/// its level under it. (Volumes are set in Studio.)
+fn sound_buttons(app: &mut SnagApp, ui: &mut egui::Ui) {
+    let st = &app.settings.studio;
+    let c = st.current.min(st.scenes.len().saturating_sub(1));
+    let rows: Vec<(bool, usize, crate::studio::SceneSound)> = st
+        .shared_sounds
+        .iter()
+        .enumerate()
+        .map(|(i, s)| (true, i, s.clone()))
+        .chain(st.scenes.get(c).into_iter().flat_map(|sc| sc.sounds.iter().enumerate().map(|(i, s)| (false, i, s.clone()))))
+        .collect();
+    if rows.is_empty() {
+        look::column(ui, |ui| {
+            ui.label(RichText::new(t("No sound in this scene")).color(TEXT_DIM));
+        });
+        return;
+    }
+    let mut flip = None;
+    for chunk in rows.chunks(3) {
+        look::column(ui, |ui| {
+            for (shared, i, s) in chunk {
+                let name = crate::i18n::tr(&s.name).chars().take(14).collect::<String>();
+                let label = format!("{}  {name}", super::studio_ui::sound_icon(&s.input, s.muted));
+                let r = ui.add(egui::Button::new(label).selected(!s.muted).min_size(vec2(118.0, 0.0))).on_hover_text(if s.muted { t("Muted; click to turn on") } else { t("Click to mute (volumes are set in Studio)") });
+                if r.clicked() {
+                    flip = Some((*shared, *i));
+                }
+                // Its level, under the button.
+                if let Some(level) = app.studio_level(&s.input).filter(|_| !s.muted) {
+                    let f = super::studio_ui::meter_fill(level, s.volume);
+                    let y = r.rect.bottom() - 2.0;
+                    ui.painter().line_segment([pos2(r.rect.left() + 3.0, y), pos2(r.rect.left() + 3.0 + (r.rect.width() - 6.0) * f, y)], Stroke::new(2.0, super::studio_ui::meter_color(f)));
+                }
+            }
+        });
+    }
+    if let Some((shared, i)) = flip {
+        let st = &mut app.settings.studio;
+        let s = if shared { st.shared_sounds.get_mut(i) } else { st.scenes.get_mut(c).and_then(|sc| sc.sounds.get_mut(i)) };
+        if let Some(s) = s {
+            s.muted = !s.muted;
+        }
+    }
+    ui.ctx().request_repaint_after(Duration::from_millis(100));
 }
 
 #[cfg(test)]
@@ -747,6 +861,30 @@ mod tests {
         // Switched off, it isn't streamed to.
         a.settings.stream.also[0].on = false;
         assert!(a.live_options().also.is_empty());
+    }
+
+    /// Ctrl (Cmd) + 1..9 picks a scene; a plain number doesn't (the editor zooms with it).
+    #[test]
+    fn ctrl_and_a_number_switches_scenes() {
+        let pressed = |key: egui::Key, command: bool| {
+            let ctx = egui::Context::default();
+            let mods = if command { egui::Modifiers::COMMAND } else { egui::Modifiers::NONE };
+            let raw = egui::RawInput { events: vec![egui::Event::ModifiersChanged(mods), egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers: mods }], ..Default::default() };
+            let mut got = None;
+            let mut out = ctx.run_ui(raw, |ui| got = scene_key(ui.ctx()));
+            out.textures_delta.clear();
+            got
+        };
+        assert_eq!(pressed(egui::Key::Num1, true), Some(0));
+        assert_eq!(pressed(egui::Key::Num9, true), Some(8));
+        assert_eq!(pressed(egui::Key::Num3, false), None, "a plain 3 is the editor's");
+        assert_eq!(pressed(egui::Key::Num0, true), None);
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.settings.studio.add_scene(Some("Game"));
+        switch_scene(&mut a, 1);
+        assert_eq!((a.settings.studio.current, a.status.as_str()), (1, "Scene: Game"));
+        switch_scene(&mut a, 5);
+        assert_eq!(a.settings.studio.current, 1, "no such scene: nothing changes");
     }
 
     #[test]

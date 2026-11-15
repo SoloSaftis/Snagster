@@ -24,8 +24,8 @@ Windows · Mac · Linux · 86 languages · works offline · written in Rust · f
 - **Tidy it up** – crop, cut out, move parts of the picture, borders, shadows, torn edges and more.
 - **Grab text** – copy the text out of any picture or part of the screen (Windows).
 - **Record videos with sound** – MP4 (H.264 or HEVC) or WMV, 1 to 120 frames per second, with the computer's sound, your microphone or both (sound on Windows for now). The graphics chip does the encoding where it can (Intel Quick Sync, AMD or NVIDIA on Windows; VideoToolbox on Mac, checked on an Apple M1; VA-API for Intel and AMD and NVENC for NVIDIA on Linux, new and not yet tried on real hardware), so recording barely touches the processor or the battery. Snagster picks the best encoder by itself, or you choose one in Settings; if it can't start, Snagster quietly uses the best one that works. Videos go to your **Videos/Snagster** folder, pictures to **Pictures/Snagster**.
-- **Studio mode** – a live recording studio: scenes made of screens, windows, screen areas, pictures, text and colours, arranged by dragging, a sound mixer with level meters, and one-click recording.
-- **Go live** – stream the screen, a window, an area or a Studio scene to Twitch, YouTube, Kick, Facebook Live, Restream or your own RTMP server, up to 4K at 60 fps or 1080p at 120 fps where the service takes it. **Multistream** to up to five services at once from one encode, each with its own key and connection, so one slow or failing service never affects the others. A LIVE badge, automatic reconnecting, an encoder that takes over if the graphics chip's stops working, and an optional copy on disk. Your stream keys are kept encrypted (Windows), in the Keychain (Mac) or in a private file (Linux), never in the settings file. New in the next version; not yet tried against the real services.
+- **Studio mode** – a live recording and streaming studio: scenes made of screens, windows, screen areas, pictures, text and colours, arranged by dragging; each scene with its own sound (up to 6 sources: computer sound, microphones, music files) and a mixer with level meters; one-click recording or going live, and scene buttons (Ctrl+1–9) to switch scenes while on air, the sound fading across.
+- **Go live** – stream the screen, a window, an area or a Studio scene to Twitch, YouTube, Kick, Facebook Live, Restream or your own RTMP server, up to 4K at 60 fps or 1080p at 120 fps where the service takes it. **Multistream** to up to five services at once from one encode, each with its own key and connection, so one slow or failing service never affects the others. A LIVE badge, automatic reconnecting, an encoder that takes over if the graphics chip's stops working, and an optional copy on disk. Your stream keys are kept encrypted (Windows), in the Keychain (Mac) or in a private file (Linux), never in the settings file. New in 0.10; not yet tried against the real services.
 - **Record GIFs** that stay small, and step-by-step guides as PDF, Word or web pages.
 - **Library** – every capture is kept, searchable by date, program and tags; works from your OneDrive or Dropbox folder.
 - **Never stops answering** – saving, exporting, opening files and making guides all happen in the background, so the window stays quick even with big captures.
@@ -40,10 +40,10 @@ when you start a live stream).
 
 <div align="center">
 <img src="assets/screenshots/studio.png" alt="Studio mode: scenes and sources on the left, the live picture in the middle, the selected source and the sound mixer on the right" width="900">
-<br><sub>Studio mode: build a scene from screens, windows, pictures and text, then record it.</sub>
+<br><sub>Studio mode: build scenes from screens, windows, pictures and text, each with its own sound, then record or go live.</sub>
 <br><br>
-<img src="assets/screenshots/stream.png" alt="The Stream tab: Go live, the service and stream key, what to stream (whole screen, a window, an area or the Studio scene), options and the live status" width="900">
-<br><sub>The Stream tab: pick a service and what to show, then Go live.</sub>
+<img src="assets/screenshots/stream.png" alt="The Stream tab while streaming Studio: Go live, a button for each scene, the scene's sounds, the service, what to stream and the live status" width="900">
+<br><sub>The Stream tab: switch scenes and mute sounds while you are live.</sub>
 <br><br>
 <img src="assets/screenshots/streaming-settings.png" alt="Streaming settings: Twitch as the main service, YouTube under Also stream to, picture size, frame rate, bitrate, the video encoder choice, sound and reconnecting" width="900">
 <br><sub>Multistreaming: Twitch and YouTube at once, from one encode.</sub>

@@ -483,6 +483,40 @@ impl UiTest {
                 true
             }),
         ));
+        // Per-scene sound: a sound file in this scene (it plays everywhere), shared and back.
+        let tone = test_dir().join("tone.wav");
+        let file = crate::audio::SoundInput::File { path: tone.to_string_lossy().to_string() };
+        let f1 = file.clone();
+        s.push(once("Studio: a sound file in this scene", move |a, _| {
+            std::fs::write(&tone, crate::wav::tone(1, 440.0)).expect("the test sound couldn't be written");
+            let before = a.settings.studio.scene_sounds(0).len();
+            super::studio_ui::add_sound(a, crate::studio::SceneSound::new(f1.clone(), "tone.wav"));
+            assert_eq!(a.settings.studio.scene_sounds(0).len(), before + 1, "{}", a.status);
+            assert!(!a.settings.studio.scene_sounds(1).iter().any(|s| s.input == f1), "only in this scene");
+        }));
+        let f2 = file.clone();
+        s.push((
+            "Studio: the sound file plays in the mixer".to_string(),
+            Box::new(move |a: &mut SnagApp, _: &egui::Context| a.studio_level(&f2).is_some_and(|l| l > 0.1)),
+        ));
+        let f3 = file.clone();
+        s.push(once("Studio: the sound file in every scene, then this one only, then removed", move |a, _| {
+            let st = &mut a.settings.studio;
+            let i = st.scenes[0].sounds.iter().position(|s| s.input == f3).expect("not in the scene");
+            super::studio_ui::sound_change(st, 0, false, i, super::studio_ui::RowAsk::Share).expect("couldn't share it");
+            assert!(st.scene_sounds(1).iter().any(|s| s.input == f3), "the other scene has it now");
+            let j = st.shared_sounds.iter().position(|s| s.input == f3).unwrap();
+            super::studio_ui::sound_change(st, 0, true, j, super::studio_ui::RowAsk::Share).unwrap();
+            let i = st.scenes[0].sounds.iter().position(|s| s.input == f3).unwrap();
+            super::studio_ui::sound_change(st, 0, false, i, super::studio_ui::RowAsk::Remove).unwrap();
+            assert!(!st.scene_sounds(0).iter().any(|s| s.input == f3));
+        }));
+        s.push(once("Studio: Ctrl+2 and Ctrl+1 switch scenes", |a, _| {
+            super::stream_ui::switch_scene(a, 1);
+            assert_eq!(a.settings.studio.current, 1);
+            super::stream_ui::switch_scene(a, 0);
+            assert_eq!(a.settings.studio.current, 0);
+        }));
         s.push(once("Studio: leave", |a, c| {
             a.switch_tab(c, super::ribbon::RibbonTab::Home);
             assert!(a.x.studio.is_none(), "Studio kept running after leaving it");
@@ -578,6 +612,51 @@ impl UiTest {
                 assert!(copy.video_frames >= 10 && copy.path.exists(), "{copy:?}");
                 assert!(a.status.contains(&copy.path.display().to_string()), "{}", a.status);
                 a.leave_panel(c);
+                true
+            }),
+        ));
+        // Streaming the Studio scenes from the Stream tab: scene buttons, switching while live.
+        let (srv, frames_before) = (server.clone(), std::rc::Rc::new(std::cell::Cell::new(0u64)));
+        let fb = frames_before.clone();
+        s.push(once("Stream: go live with the Studio scenes", move |a, c| {
+            a.settings.studio.width = 320;
+            a.settings.studio.height = 180;
+            a.settings.studio.fps = 30;
+            a.settings.stream.source = crate::stream::Source::Studio;
+            a.settings.stream.record_copy = false;
+            a.switch_tab(c, super::ribbon::RibbonTab::Stream);
+            fb.set(srv.borrow().as_ref().map(|t| t.video_messages()).unwrap_or(0));
+            a.start_stream_now(c);
+            assert!(a.x.studio.is_some(), "Studio didn't start for the stream");
+        }));
+        let srv = server.clone();
+        s.push((
+            "Stream: Studio is live; switch scenes while live".to_string(),
+            Box::new(move |a: &mut SnagApp, _: &egui::Context| {
+                let snap = a.x.stream.snap.clone();
+                assert!(snap.error.is_none(), "{:?}", snap.error);
+                let got = srv.borrow().as_ref().map(|t| t.video_messages()).unwrap_or(0);
+                if !snap.live() || got < frames_before.get() + 10 {
+                    return false;
+                }
+                assert_eq!(snap.info.map(|i| (i.width, i.height)), Some((320, 180)));
+                super::stream_ui::switch_scene(a, 1);
+                assert_eq!(a.settings.studio.current, 1);
+                true
+            }),
+        ));
+        s.push(once("Stream: stop the Studio stream", |a, _| {
+            a.stop_stream();
+            assert!(!crate::stream::live::snapshot().on_air());
+        }));
+        s.push((
+            "Stream: the Studio stream ends".to_string(),
+            Box::new(|a: &mut SnagApp, c: &egui::Context| {
+                if a.x.stream.snap.phase != crate::stream::live::Phase::Idle {
+                    return false;
+                }
+                a.settings.stream.source = crate::stream::Source::Screen;
+                a.switch_tab(c, super::ribbon::RibbonTab::Home);
                 true
             }),
         ));
@@ -767,7 +846,7 @@ impl UiTest {
         UiTest { steps: s, at: 0, tries: 0, waiting: None, frames: 0, passed: 0, failed: Vec::new(), dir }
     }
 
-    /// Not run by the test, and why.
+/// Not run by the test, and why.
     pub(crate) const SKIPPED: &'static [&'static str] = &[
         "Capture buttons and hotkeys (they take over the screen; capture itself is tested by --self-test, hotkeys by --hotkey-test)",
         "Copy / Paste / Paste picture (they would replace what is on your clipboard)",

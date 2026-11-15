@@ -1191,7 +1191,7 @@ mod tests {
     #[test]
     fn scenes_are_picked_by_number_or_the_current_one() {
         let mut st = crate::studio::StudioSettings::default();
-        st.scenes.push(crate::studio::Scene { name: "Two".into(), items: Vec::new() });
+        st.scenes.push(crate::studio::Scene { sounds: Vec::new(), name: "Two".into(), items: Vec::new() });
         st.current = 1;
         assert_eq!(scene_index(&json!({}), &st), Ok(1));
         assert_eq!(scene_index(&json!({"scene": 0}), &st), Ok(0));

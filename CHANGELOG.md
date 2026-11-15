@@ -2,10 +2,18 @@
 
 What changed for people using Snagster, per version.
 
-## Unreleased (0.10.0)
+## 0.10.0 — 2026-11-15
 
 New:
 
+- **Studio is the live workspace**: **Go live** sits next to **Record** in Studio, and the Stream
+  tab becomes the control surface while you're on air: a button for each scene (Ctrl+1 to Ctrl+9
+  switch scenes) and the current scene's sounds as buttons with level meters (click to mute).
+- **Sound per scene, up to 6 sources each**: every scene has its own sound (computer sound, any
+  microphone, or a WAV sound file such as intro music, played over and over), plus sounds kept
+  in every scene (your microphone, set up once). Switching scenes fades the sound across instead
+  of cutting. Sound files work on every system; computer sound and microphones are Windows-only
+  for now. Your old Studio sound settings move over by themselves.
 - **One-command hardware report**: `snagster --hw-report` tests the graphics chips, every video
   encoder, recording and streaming on this computer and writes it all to
   `snagster-hw-report.txt` (nothing is sent anywhere). The GitHub "Hardware report" form asks for it.

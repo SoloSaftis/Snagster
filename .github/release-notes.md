@@ -1,6 +1,6 @@
 Capture your screen, mark it up, record it. Everything runs on your own computer.
 
-**New in this version:** a Word-style ribbon with icons and tooltips, 86 languages (picked from your computer), videos with sound (computer sound and microphone), Studio mode for live scene recording, automatic updates, Videos/Snagster and Pictures/Snagster folders, and an MCP server any AI app can use, including local AI over HTTP.
+**New in this version:** go live on several services at once (Twitch, YouTube and more) from one encode, up to 4K at 60 fps; Studio is the live workspace, with scene buttons and per-scene sound (up to 6 sources per scene) while you stream; choose the video encoder (or leave it on Automatic, which falls back by itself); NVIDIA graphics chips on Linux; the window never stops answering while it saves, exports or opens files; and `snagster --hw-report` to test graphics-chip encoding on your computer.
 
 ## Download
 

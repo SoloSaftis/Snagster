@@ -69,6 +69,30 @@ pub struct Scene {
     pub name: String,
     /// Bottom first: later items are drawn over earlier ones.
     pub items: Vec<Item>,
+    /// This scene's own sound (besides `StudioSettings::shared_sounds`).
+    #[serde(default)]
+    pub sounds: Vec<SceneSound>,
+}
+
+/// At most this many sound inputs in a scene, the shared ones included: enough for a game, a
+/// second program, two microphones and music, and a mixer that still fits on one screen.
+pub const MAX_SOUNDS: usize = 6;
+
+/// One sound input of a scene, with its mixer settings.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct SceneSound {
+    pub input: crate::audio::SoundInput,
+    /// What the mixer calls it (the microphone's or the file's name).
+    pub name: String,
+    /// 0..2.
+    pub volume: f32,
+    pub muted: bool,
+}
+
+impl SceneSound {
+    pub fn new(input: crate::audio::SoundInput, name: &str) -> SceneSound {
+        SceneSound { input, name: name.to_string(), volume: 1.0, muted: false }
+    }
 }
 
 /// Studio's saved setup.
@@ -80,6 +104,14 @@ pub struct StudioSettings {
     pub width: u32,
     pub height: u32,
     pub fps: u32,
+    /// Sound in every scene (usually the microphone), set up once.
+    #[serde(default)]
+    pub shared_sounds: Vec<SceneSound>,
+    /// The scenes' sound has been set up (settings from before per-scene sound are moved over
+    /// once by `ready_sounds`).
+    #[serde(default)]
+    pub sounds_ready: bool,
+    /// The old two-slider mixer: read from older settings by `ready_sounds`, no longer used.
     pub system_volume: f32,
     pub system_muted: bool,
     pub mic_volume: f32,
@@ -92,11 +124,14 @@ impl Default for StudioSettings {
             scenes: vec![Scene {
                 name: "Scene 1".into(),
                 items: vec![Item { name: "Screen 1".into(), kind: SourceKind::Display { index: 0 }, x: 0.0, y: 0.0, w: 1920.0, h: 1080.0, visible: true }],
+                sounds: Vec::new(),
             }],
             current: 0,
             width: 1920,
             height: 1080,
             fps: 30,
+            shared_sounds: vec![SceneSound::new(crate::audio::SoundInput::Computer, "Computer sound")],
+            sounds_ready: true,
             system_volume: 1.0,
             system_muted: false,
             mic_volume: 1.0,
@@ -110,21 +145,90 @@ impl StudioSettings {
         self.scenes.get(self.current).or(self.scenes.first())
     }
 
-    /// The mixer as set in Studio: (volume, muted) for the system sound and the microphone.
-    pub fn mix(&self) -> ((f32, bool), (f32, bool)) {
-        ((self.system_volume, self.system_muted), (self.mic_volume, self.mic_muted))
+    /// Settings from before per-scene sound: what the old Sound choice recorded becomes the
+    /// shared sound, with the old sliders' volumes. Done once.
+    pub fn ready_sounds(&mut self, old: crate::audio::AudioSource, old_mic: &str) {
+        if self.sounds_ready {
+            return;
+        }
+        use crate::audio::SoundInput;
+        self.shared_sounds.clear();
+        if old.system() {
+            self.shared_sounds.push(SceneSound { input: SoundInput::Computer, name: "Computer sound".into(), volume: self.system_volume, muted: self.system_muted });
+        }
+        if old.mic() {
+            self.shared_sounds.push(SceneSound { input: SoundInput::Microphone { id: old_mic.to_string() }, name: "Microphone".into(), volume: self.mic_volume, muted: self.mic_muted });
+        }
+        self.sounds_ready = true;
+        self.tidy_sounds();
     }
 
-    /// Hand Studio's mixer to the sound recorder (as the Studio window does every frame).
+    /// Keep the sound lists sane: no input twice in a scene (a scene's own copy of a shared
+    /// input goes), at most `MAX_SOUNDS` in each, volumes 0..2.
+    pub fn tidy_sounds(&mut self) {
+        let mut shared: Vec<SceneSound> = Vec::new();
+        for s in self.shared_sounds.drain(..) {
+            if !shared.iter().any(|x| x.input == s.input) {
+                shared.push(s);
+            }
+        }
+        shared.truncate(MAX_SOUNDS);
+        for s in &mut shared {
+            s.volume = s.volume.clamp(0.0, 2.0);
+        }
+        for scene in &mut self.scenes {
+            let mut own: Vec<SceneSound> = Vec::new();
+            for s in scene.sounds.drain(..) {
+                if !shared.iter().chain(own.iter()).any(|x| x.input == s.input) {
+                    own.push(s);
+                }
+            }
+            own.truncate(MAX_SOUNDS - shared.len());
+            for s in &mut own {
+                s.volume = s.volume.clamp(0.0, 2.0);
+            }
+            scene.sounds = own;
+        }
+        self.shared_sounds = shared;
+    }
+
+    /// Scene `i`'s sound: the shared inputs, then its own.
+    pub fn scene_sounds(&self, i: usize) -> Vec<&SceneSound> {
+        self.shared_sounds.iter().chain(self.scenes.get(i).map(|s| s.sounds.iter()).into_iter().flatten()).collect()
+    }
+
+    /// Whether scene `i` has room for another sound input.
+    pub fn room_for_sound(&self, i: usize) -> bool {
+        self.scene_sounds(i).len() < MAX_SOUNDS
+    }
+
+    /// Every input any scene uses (each once): what a recording or stream of Studio captures.
+    pub fn sound_inputs(&self) -> Vec<crate::audio::SoundInput> {
+        let mut out: Vec<crate::audio::SoundInput> = Vec::new();
+        for s in self.shared_sounds.iter().chain(self.scenes.iter().flat_map(|s| s.sounds.iter())) {
+            if !out.contains(&s.input) {
+                out.push(s.input.clone());
+            }
+        }
+        out
+    }
+
+    /// The current scene's mix: (input, volume, muted) of each of its sounds.
+    pub fn mix(&self) -> Vec<(crate::audio::SoundInput, f32, bool)> {
+        let c = self.current.min(self.scenes.len().saturating_sub(1));
+        self.scene_sounds(c).into_iter().map(|s| (s.input.clone(), s.volume, s.muted)).collect()
+    }
+
+    /// Hand the current scene's mix to the sound mixer (as the Studio window does every
+    /// frame): a recording or stream of Studio hears this scene's sound, fading on a change.
     pub fn apply_mix(&self) {
-        let (system, mic) = self.mix();
-        crate::audio::set_mix(system, mic);
+        crate::audio::set_scene_mix(self.mix());
     }
 
     /// Add an empty scene (named "Scene N" unless given a name); returns its number.
     pub fn add_scene(&mut self, name: Option<&str>) -> usize {
         let name = name.map(str::trim).filter(|n| !n.is_empty()).map(String::from).unwrap_or_else(|| format!("Scene {}", self.scenes.len() + 1));
-        self.scenes.push(Scene { name, items: Vec::new() });
+        self.scenes.push(Scene { name, items: Vec::new(), sounds: Vec::new() });
         self.scenes.len() - 1
     }
 
@@ -166,6 +270,8 @@ pub fn video_opts(s: &crate::settings::Settings) -> crate::video::VideoOpts {
     opts.hardware = s.video_hardware;
     opts.audio = s.audio_source;
     opts.mic = s.audio_mic.clone();
+    // Studio records its scenes' sound, mixed by the scene shown.
+    opts.sound = Some(s.studio.sound_inputs());
     opts
 }
 
@@ -501,6 +607,7 @@ mod tests {
     #[test]
     fn a_colour_scene_draws_without_a_screen() {
         let scene = Scene {
+            sounds: Vec::new(),
             name: "t".into(),
             items: vec![
                 Item { name: "bg".into(), kind: SourceKind::Color { color: [255, 0, 0, 255] }, x: 0.0, y: 0.0, w: 32.0, h: 32.0, visible: true },
@@ -513,9 +620,62 @@ mod tests {
     }
 
     #[test]
-    fn the_mixer_comes_from_the_studio_settings() {
-        let s = StudioSettings { system_volume: 0.5, system_muted: true, mic_volume: 1.5, mic_muted: false, ..Default::default() };
-        assert_eq!(s.mix(), ((0.5, true), (1.5, false)));
+    fn the_mixer_comes_from_the_current_scenes_sound() {
+        use crate::audio::SoundInput;
+        let mic = SoundInput::Microphone { id: String::new() };
+        let music = SoundInput::File { path: "/m/intro.wav".into() };
+        let mut s = StudioSettings { shared_sounds: vec![SceneSound { volume: 0.8, ..SceneSound::new(mic.clone(), "Mic") }], ..Default::default() };
+        s.add_scene(Some("Intro"));
+        s.scenes[1].sounds.push(SceneSound { muted: true, ..SceneSound::new(music.clone(), "intro.wav") });
+        s.current = 0;
+        assert_eq!(s.mix(), vec![(mic.clone(), 0.8, false)], "scene 1: the shared microphone only");
+        s.current = 1;
+        assert_eq!(s.mix(), vec![(mic.clone(), 0.8, false), (music.clone(), 1.0, true)], "scene 2: shared first, then its own");
+        assert_eq!(s.sound_inputs(), vec![mic, music], "every input any scene uses, once");
+        s.current = 99;
+        assert_eq!(s.mix().len(), 2, "a current scene past the end is the last one");
+    }
+
+    /// Settings from before per-scene sound: the old Sound choice and sliders become the shared
+    /// sound, once.
+    #[test]
+    fn old_studio_sound_settings_move_to_the_shared_sound() {
+        use crate::audio::{AudioSource, SoundInput};
+        let old: StudioSettings = serde_json::from_str(r#"{"system_volume":0.5,"system_muted":true,"mic_volume":1.5,"mic_muted":false,"scenes":[{"name":"A","items":[]}]}"#).unwrap();
+        assert!(!old.sounds_ready && old.scenes[0].sounds.is_empty());
+        let mut s = old.clone();
+        s.ready_sounds(AudioSource::Both, "usb-mic");
+        assert_eq!(s.shared_sounds.len(), 2);
+        assert_eq!((s.shared_sounds[0].input.clone(), s.shared_sounds[0].volume, s.shared_sounds[0].muted), (SoundInput::Computer, 0.5, true));
+        assert_eq!((s.shared_sounds[1].input.clone(), s.shared_sounds[1].volume), (SoundInput::Microphone { id: "usb-mic".into() }, 1.5));
+        s.shared_sounds.clear();
+        s.ready_sounds(AudioSource::Both, "x");
+        assert!(s.shared_sounds.is_empty(), "only once");
+        let mut s = old.clone();
+        s.ready_sounds(AudioSource::None, "");
+        assert!(s.shared_sounds.is_empty() && s.sounds_ready, "no sound chosen: none shared");
+        // New settings start with the computer sound shared, already set up.
+        let d = StudioSettings::default();
+        assert!(d.sounds_ready && d.shared_sounds[0].input == SoundInput::Computer);
+    }
+
+    #[test]
+    fn a_scene_has_at_most_six_sounds_and_none_twice() {
+        use crate::audio::SoundInput;
+        let file = |n: u32| SceneSound::new(SoundInput::File { path: format!("/s/{n}.wav") }, "f");
+        let mut s = StudioSettings::default(); // the computer sound shared
+        s.scenes[0].sounds = (0..9).map(file).collect();
+        s.scenes[0].sounds.insert(0, SceneSound { volume: 9.0, ..SceneSound::new(SoundInput::Computer, "again") });
+        s.scenes[0].sounds.push(file(1));
+        s.tidy_sounds();
+        assert_eq!(s.scene_sounds(0).len(), MAX_SOUNDS, "shared included");
+        assert!(!s.scenes[0].sounds.iter().any(|x| x.input == SoundInput::Computer), "a scene's copy of a shared input goes");
+        assert!(!s.room_for_sound(0));
+        s.scenes[0].sounds.pop();
+        assert!(s.room_for_sound(0));
+        s.shared_sounds[0].volume = 7.0;
+        s.tidy_sounds();
+        assert_eq!(s.shared_sounds[0].volume, 2.0, "volumes stay 0..2");
     }
 
     #[test]
@@ -566,7 +726,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("snagster-studio-stop-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         let st = StudioSettings {
-            scenes: vec![Scene { name: "c".into(), items: vec![Item { name: "bg".into(), kind: SourceKind::Color { color: [0, 90, 200, 255] }, x: 0.0, y: 0.0, w: 64.0, h: 64.0, visible: true }] }],
+            scenes: vec![Scene { sounds: Vec::new(), name: "c".into(), items: vec![Item { name: "bg".into(), kind: SourceKind::Color { color: [0, 90, 200, 255] }, x: 0.0, y: 0.0, w: 64.0, h: 64.0, visible: true }] }],
             width: 64,
             height: 64,
             fps: 10,
@@ -620,6 +780,7 @@ mod tests {
     #[test]
     fn every_source_kind_round_trips_through_json() {
         let scene = Scene {
+            sounds: Vec::new(),
             name: "All".into(),
             items: all_kinds()
                 .into_iter()
@@ -635,7 +796,10 @@ mod tests {
 
     #[test]
     fn missing_settings_take_their_defaults() {
-        let s: StudioSettings = serde_json::from_str("{}").unwrap();
+        // Older settings get their sound set up when loaded (`ready_sounds`, with the old
+        // default "computer sound"); then they are the defaults.
+        let mut s: StudioSettings = serde_json::from_str("{}").unwrap();
+        s.ready_sounds(crate::audio::AudioSource::System, "");
         assert_eq!(s, StudioSettings::default());
         let s: StudioSettings = serde_json::from_str(r#"{"fps": 60, "width": 1280}"#).unwrap();
         assert_eq!((s.fps, s.width, s.height), (60, 1280, 1080));
@@ -659,7 +823,7 @@ mod tests {
     #[test]
     fn the_current_scene_falls_back_to_the_first() {
         let mut s = StudioSettings::default();
-        s.scenes.push(Scene { name: "Two".into(), items: Vec::new() });
+        s.scenes.push(Scene { sounds: Vec::new(), name: "Two".into(), items: Vec::new() });
         s.current = 1;
         assert_eq!(s.scene().unwrap().name, "Two");
         s.current = 99;
@@ -670,7 +834,7 @@ mod tests {
 
     #[test]
     fn sources_can_be_added_removed_and_reordered() {
-        let mut scene = Scene { name: "s".into(), items: Vec::new() };
+        let mut scene = Scene { sounds: Vec::new(), name: "s".into(), items: Vec::new() };
         scene.items.push(colour("red", [255, 0, 0, 255], 0.0, 0.0, 8.0, 8.0));
         scene.items.push(colour("blue", [0, 0, 255, 255], 0.0, 0.0, 8.0, 8.0));
         let mut out = RgbaImage::new(8, 8);
@@ -690,14 +854,14 @@ mod tests {
 
     #[test]
     fn sources_are_placed_at_rounded_canvas_positions() {
-        let scene = Scene { name: "s".into(), items: vec![colour("c", [0, 255, 0, 255], 2.4, 3.6, 3.5, 1.2)] };
+        let scene = Scene { sounds: Vec::new(), name: "s".into(), items: vec![colour("c", [0, 255, 0, 255], 2.4, 3.6, 3.5, 1.2)] };
         let mut out = RgbaImage::new(10, 10);
         Compositor::default().draw(&scene, &mut out);
         // x 2.4 -> 2, width 3.5 -> 4 (to x 5); y 3.6 -> 4, height 1.2 -> 1.
         let green: Vec<(u32, u32)> = (0..10).flat_map(|y| (0..10).map(move |x| (x, y))).filter(|&(x, y)| out.get_pixel(x, y).0 == [0, 255, 0, 255]).collect();
         assert_eq!(green, [(2, 4), (3, 4), (4, 4), (5, 4)]);
         // A size of zero still draws one pixel; off-canvas sources are clipped, not a panic.
-        let scene = Scene { name: "s".into(), items: vec![colour("dot", [9, 9, 9, 255], 0.0, 0.0, 0.0, 0.0), colour("off", [1, 1, 1, 255], -50.0, 500.0, 10.0, 10.0)] };
+        let scene = Scene { sounds: Vec::new(), name: "s".into(), items: vec![colour("dot", [9, 9, 9, 255], 0.0, 0.0, 0.0, 0.0), colour("off", [1, 1, 1, 255], -50.0, 500.0, 10.0, 10.0)] };
         Compositor::default().draw(&scene, &mut out);
         assert_eq!(out.get_pixel(0, 0).0, [9, 9, 9, 255]);
         assert_eq!(out.get_pixel(1, 0).0, [0, 0, 0, 255]);
@@ -772,14 +936,14 @@ mod tests {
         let item = |p: &std::path::Path| Item { name: "p".into(), kind: SourceKind::Image { path: p.to_string_lossy().into() }, x: 0.0, y: 0.0, w: 8.0, h: 8.0, visible: true };
         let mut comp = Compositor::default();
         let mut out = RgbaImage::new(8, 8);
-        comp.draw(&Scene { name: "s".into(), items: vec![item(&path)] }, &mut out);
+        comp.draw(&Scene { sounds: Vec::new(), name: "s".into(), items: vec![item(&path)] }, &mut out);
         assert_eq!(out.get_pixel(7, 7).0, [0, 200, 100, 255]);
         // The picture is kept: it still draws after the file is gone.
         std::fs::remove_file(&path).unwrap();
-        comp.draw(&Scene { name: "s".into(), items: vec![item(&path)] }, &mut out);
+        comp.draw(&Scene { sounds: Vec::new(), name: "s".into(), items: vec![item(&path)] }, &mut out);
         assert_eq!(out.get_pixel(3, 3).0, [0, 200, 100, 255]);
         let mut fresh = Compositor::default();
-        fresh.draw(&Scene { name: "s".into(), items: vec![item(&dir.join("missing.png"))] }, &mut out);
+        fresh.draw(&Scene { sounds: Vec::new(), name: "s".into(), items: vec![item(&dir.join("missing.png"))] }, &mut out);
         assert_eq!(out.get_pixel(3, 3).0, [0, 0, 0, 255]);
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -789,13 +953,13 @@ mod tests {
         let item = Item { name: "t".into(), kind: SourceKind::Text { text: "Hello".into(), size: 40.0, color: [255, 255, 255, 255] }, x: 10.0, y: 10.0, w: 30.0, h: 12.0, visible: true };
         let mut out = RgbaImage::new(64, 64);
         let mut comp = Compositor::default();
-        comp.draw(&Scene { name: "s".into(), items: vec![item.clone()] }, &mut out);
+        comp.draw(&Scene { sounds: Vec::new(), name: "s".into(), items: vec![item.clone()] }, &mut out);
         let lit = |x: u32, y: u32| out.get_pixel(x, y).0[..3] != [0, 0, 0];
         assert!((10..40).any(|x| (10..22).any(|y| lit(x, y))), "some text is drawn");
         assert!((0..64).all(|x| (0..64).all(|y| !lit(x, y) || ((10..40).contains(&x) && (10..22).contains(&y)))), "nothing outside its box");
         // Drawn again from the cache, the same.
         let first = out.clone();
-        comp.draw(&Scene { name: "s".into(), items: vec![item] }, &mut out);
+        comp.draw(&Scene { sounds: Vec::new(), name: "s".into(), items: vec![item] }, &mut out);
         assert_eq!(out, first);
         assert_eq!(comp.texts.len(), 1);
     }
@@ -805,13 +969,13 @@ mod tests {
         // A zero-sized screen area is skipped before any screen is touched.
         let item = Item { name: "a".into(), kind: SourceKind::Area { x: 0, y: 0, w: 0, h: 10 }, x: 0.0, y: 0.0, w: 8.0, h: 8.0, visible: true };
         let mut out = RgbaImage::from_pixel(8, 8, image::Rgba([1, 2, 3, 4]));
-        Compositor::default().draw(&Scene { name: "s".into(), items: vec![item] }, &mut out);
+        Compositor::default().draw(&Scene { sounds: Vec::new(), name: "s".into(), items: vec![item] }, &mut out);
         assert!(out.pixels().all(|p| p.0 == [0, 0, 0, 255]));
     }
 
     #[test]
     fn the_engine_feeds_frames_as_bgra_until_stopped() {
-        let scene = Scene { name: "s".into(), items: vec![colour("c", [250, 120, 10, 255], 0.0, 0.0, 16.0, 16.0)] };
+        let scene = Scene { sounds: Vec::new(), name: "s".into(), items: vec![colour("c", [250, 120, 10, 255], 0.0, 0.0, 16.0, 16.0)] };
         let engine = Engine::start(scene, 4, 4, None);
         let t = Instant::now();
         while engine.latest().is_none() && t.elapsed() < Duration::from_secs(10) {
@@ -835,8 +999,8 @@ mod tests {
 
     #[test]
     fn the_engine_follows_scene_changes() {
-        let engine = Engine::start(Scene { name: "s".into(), items: vec![colour("c", [255, 0, 0, 255], 0.0, 0.0, 16.0, 16.0)] }, 16, 16, None);
-        *engine.shared.scene.lock().unwrap() = Scene { name: "s".into(), items: vec![colour("c", [0, 255, 0, 255], 0.0, 0.0, 16.0, 16.0)] };
+        let engine = Engine::start(Scene { sounds: Vec::new(), name: "s".into(), items: vec![colour("c", [255, 0, 0, 255], 0.0, 0.0, 16.0, 16.0)] }, 16, 16, None);
+        *engine.shared.scene.lock().unwrap() = Scene { sounds: Vec::new(), name: "s".into(), items: vec![colour("c", [0, 255, 0, 255], 0.0, 0.0, 16.0, 16.0)] };
         let t = Instant::now();
         let n = engine.shared.frame_no.load(Ordering::Relaxed);
         loop {

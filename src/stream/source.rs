@@ -337,6 +337,7 @@ mod tests {
     #[test]
     fn studio_frames_are_scaled_to_the_stream() {
         let scene = crate::studio::Scene {
+            sounds: Vec::new(),
             name: "t".into(),
             items: vec![crate::studio::Item { name: "c".into(), kind: crate::studio::SourceKind::Color { color: [0, 200, 0, 255] }, x: 0.0, y: 0.0, w: 64.0, h: 64.0, visible: true }],
         };

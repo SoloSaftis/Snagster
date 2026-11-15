@@ -37,6 +37,9 @@ pub struct LiveOptions {
     pub max_reconnects: u32,
     /// More services fed from the same encode (multistreaming).
     pub also: Vec<StreamTarget>,
+    /// Studio's sound (every input its scenes use) when streaming the Studio scene; takes the
+    /// place of `audio` and `mic`.
+    pub sound: Option<Vec<crate::audio::SoundInput>>,
 }
 
 impl LiveOptions {
@@ -46,6 +49,7 @@ impl LiveOptions {
         let st = s.stream.clamped();
         LiveOptions {
             also: st.also_on().map(|a| StreamTarget { service: a.service, url: a.url.clone(), key: also_key(a.id).trim().to_string() }).collect(),
+            sound: (st.source == Source::Studio).then(|| s.studio.sound_inputs()),
             target: StreamTarget { service: st.service, url: st.url.clone(), key: key.trim().to_string() },
             source: st.source.clone(),
             max_height: st.max_height,
@@ -235,7 +239,11 @@ impl Live {
             }
             notice = Some("This computer couldn't start an HEVC encoder, so the stream is H.264.".to_string());
         }
-        let (capture, sound_notice) = sound_for(o.audio, || crate::audio::Capture::start(o.audio, &o.mic));
+        let (capture, sound_notice) = match &o.sound {
+            // Studio: every input its scenes use, mixed by the scene shown.
+            Some(inputs) => studio_sound(crate::audio::Capture::start_inputs(inputs)),
+            None => sound_for(o.audio, || crate::audio::Capture::start(o.audio, &o.mic)),
+        };
         let sound = match capture {
             Some(c) => SoundSource::Capture(c),
             None => SoundSource::Silence,
@@ -351,6 +359,13 @@ fn sound_for<C>(audio: crate::audio::AudioSource, start: impl FnOnce() -> Result
         Ok(c) => (Some(c), None),
         Err(e) => (None, Some(format!("Streaming without sound (a silent audio track): {e}"))),
     }
+}
+
+/// Studio's sound for a stream: the capture when any input runs (with a note for those that
+/// couldn't start), else a silent track and why.
+fn studio_sound(c: crate::audio::Capture) -> (Option<crate::audio::Capture>, Option<String>) {
+    let note = (!c.notes().is_empty()).then(|| format!("Some sound was left out: {}", c.notes().join("; ")));
+    if c.is_silent() { (None, note.or_else(|| Some("Streaming without sound: the scenes have no sound inputs (a silent audio track).".into()))) } else { (Some(c), note) }
 }
 
 fn start_engine(s: &crate::studio::StudioSettings, slot: &mut Option<crate::studio::Engine>) -> (Arc<crate::studio::Shared>, u32, u32) {
@@ -540,7 +555,26 @@ mod tests {
             copy_to: None,
             max_reconnects: 0,
             also: Vec::new(),
+            sound: None,
         }
+    }
+
+    /// A Studio stream hears its scenes' inputs; one that can't start is a note, and a scene
+    /// with no sound still sends a (silent) audio track.
+    #[test]
+    fn studio_streams_take_their_scenes_sound() {
+        let mut s = crate::settings::Settings::default();
+        s.stream.source = Source::Studio;
+        let o = LiveOptions::from_settings(&s, "k", |_| String::new());
+        assert_eq!(o.sound, Some(vec![crate::audio::SoundInput::Computer]), "the default shared computer sound");
+        s.stream.source = Source::Screen;
+        assert_eq!(LiveOptions::from_settings(&s, "k", |_| String::new()).sound, None, "a screen stream uses the stream's own sound choice");
+        let gone = crate::audio::SoundInput::File { path: "/no/such/intro.wav".into() };
+        let (c, note) = studio_sound(crate::audio::Capture::start_inputs(&[gone]));
+        assert!(c.is_none());
+        assert!(note.unwrap().contains("intro.wav"));
+        let (c, note) = studio_sound(crate::audio::Capture::start_inputs(&[]));
+        assert!(c.is_none() && note.unwrap().contains("no sound inputs"));
     }
 
     #[test]
@@ -688,6 +722,7 @@ mod tests {
     fn green_studio() -> crate::studio::StudioSettings {
         let mut s = crate::studio::StudioSettings { width: 64, height: 64, ..Default::default() };
         s.scenes = vec![crate::studio::Scene {
+            sounds: Vec::new(),
             name: "t".into(),
             items: vec![crate::studio::Item { name: "c".into(), kind: crate::studio::SourceKind::Color { color: [0, 200, 0, 255] }, x: 0.0, y: 0.0, w: 64.0, h: 64.0, visible: true }],
         }];

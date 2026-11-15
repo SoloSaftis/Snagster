@@ -3034,6 +3034,7 @@ mod stream_tests {
         s.studio.width = 64;
         s.studio.height = 64;
         s.studio.scenes = vec![crate::studio::Scene {
+            sounds: Vec::new(),
             name: "t".into(),
             items: vec![crate::studio::Item { name: "c".into(), kind: crate::studio::SourceKind::Color { color: [10, 90, 200, 255] }, x: 0.0, y: 0.0, w: 64.0, h: 64.0, visible: true }],
         }];
