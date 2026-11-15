@@ -649,7 +649,7 @@ fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, 
     #[cfg(windows)]
     return win::open_grab(rect, cursor);
     #[cfg(target_os = "linux")]
-    if !x11::is_wayland()
+    if use_x11(x11::is_wayland(), || crate::capture::grab_rect(rect.0, rect.1, rect.2.clamp(2, 16), rect.3.clamp(2, 16)).is_ok())
         && let Ok(g) = x11::X11Grab::open(rect, cursor)
     {
         return Ok(Box::new(g));
@@ -660,6 +660,15 @@ fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, 
     }
     #[cfg(not(windows))]
     return Ok(Box::new(XcapGrab { rect, cursor }));
+}
+
+/// Whether Linux copies the screen through X11 (one connection, shared memory): always on X11.
+/// On Wayland X11 only sees XWayland's windows, so xcap's Wayland way is kept, unless it can't
+/// copy the screen at all (a compositor without the screencopy protocol, e.g. WSLg): then
+/// XWayland's picture is better than none.
+#[cfg(any(target_os = "linux", test))]
+fn use_x11(wayland: bool, xcap_copies: impl FnOnce() -> bool) -> bool {
+    !wayland || !xcap_copies()
 }
 
 /// Wait until `until` (now if it has passed). Notes when the wait ended, so the feed can time
@@ -2901,6 +2910,13 @@ mod soft {
         let mut clock = Clock::new(fps);
         let mut first = true;
         let mut rgba = vec![0u8; (w * h * 4) as usize];
+        // The screen through the best copy here (the same one streaming uses: X11 shared memory
+        // on Linux, CoreGraphics on macOS), not a capture-library grab per picture.
+        let mut grab = if opts.frames.is_none() { Some(super::open_grab((x, y, w, h), opts.cursor)?) } else { None };
+        if let Some(g) = &grab {
+            done.capture = g.name();
+        }
+        let mut frame = Frame::default();
         loop {
             if !first && (stop.load(Ordering::Relaxed) || clock.over(opts.max_s)) {
                 break;
@@ -2924,15 +2940,11 @@ mod soft {
                 for p in rgba.chunks_exact_mut(4) {
                     p.swap(0, 2);
                 }
-            } else {
-                let mut img = crate::capture::grab_rect(x, y, w, h).map_err(|e| crate::capture::grab_error_message(&e, crate::capture::screen_access()))?;
-                if opts.cursor
-                    && let Some(c) = crate::capture::cursor_pos()
-                {
-                    crate::capture::stamp_pointer(&mut img, ((c.0 - x) as f32, (c.1 - y) as f32));
+            } else if let Some(g) = grab.as_mut() {
+                g.grab(Instant::now(), true, &mut frame, Some((w, h))).map_err(|e| crate::capture::grab_error_message(&e, crate::capture::screen_access()))?;
+                if frame.rgba.len() == rgba.len() {
+                    rgba.copy_from_slice(&frame.rgba);
                 }
-                let img = if img.dimensions() != (w, h) { image::imageops::resize(&img, w, h, image::imageops::FilterType::Nearest) } else { img };
-                rgba.copy_from_slice(img.as_raw());
             }
             let (t, _) = clock.stamp(fps);
             for p in enc.encode(&rgba, t / 10, false)? {
@@ -3051,6 +3063,15 @@ mod soft {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// X11 on X11; on Wayland the capture library first, and XWayland only where the library
+    /// can't copy the screen at all (WSLg crashed or failed there before).
+    #[test]
+    fn linux_copies_through_x11_unless_waylands_own_way_works() {
+        assert!(use_x11(false, || panic!("not asked on X11")));
+        assert!(!use_x11(true, || true), "Wayland's own way works: keep it");
+        assert!(use_x11(true, || false), "it can't copy: XWayland is better than nothing");
+    }
 
     fn solid_px(w: u32, h: u32, p: [u8; 4]) -> Vec<u8> {
         (0..w * h).flat_map(|_| p).collect()

@@ -178,8 +178,27 @@ pub struct CaptureResult {
     pub shot: Result<Shot, String>,
 }
 
+/// A call into the screen-capture library that can't take Snagster down. On some Wayland
+/// desktops it panics instead of returning an error (WSLg: "UnsupportedVersion" from its
+/// Wayland part, where the compositor lacks the screencopy protocol); that becomes an error
+/// here, so Snagster says it can't see the screen rather than closing.
+pub(crate) fn guarded<T, E: std::fmt::Display>(f: impl FnOnce() -> Result<T, E>) -> Result<T, String> {
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)) {
+        Ok(r) => r.map_err(|e| e.to_string()),
+        Err(p) => {
+            let why = p.downcast_ref::<String>().cloned().or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
+            Err(format!("the screen library failed ({why})"))
+        }
+    }
+}
+
+/// The screens (none when the screen library can't see them; see `guarded`).
 pub fn monitors() -> Vec<MonitorInfo> {
-    let Ok(all) = xcap::Monitor::all() else { return Vec::new() };
+    guarded(|| Ok::<_, String>(monitors_raw())).unwrap_or_default()
+}
+
+fn monitors_raw() -> Vec<MonitorInfo> {
+    let Ok(all) = guarded(xcap::Monitor::all) else { return Vec::new() };
     all.iter()
         .filter_map(|m| {
             Some(MonitorInfo {
@@ -218,8 +237,12 @@ pub fn list_windows() -> Vec<WindowInfo> {
 
 /// The windows `list_windows` gives, each with its program's process id (0 when unknown).
 fn windows_and_programs() -> Vec<(WindowInfo, u32)> {
+    guarded(|| Ok::<_, String>(windows_and_programs_raw())).unwrap_or_default()
+}
+
+fn windows_and_programs_raw() -> Vec<(WindowInfo, u32)> {
     let me = std::process::id();
-    let Ok(all) = xcap::Window::all() else { return Vec::new() };
+    let Ok(all) = guarded(xcap::Window::all) else { return Vec::new() };
     let mut apps = AppNames::default();
     let mut out = Vec::new();
     for w in all {
@@ -467,7 +490,7 @@ pub fn foreground_info() -> (String, String) {
         if let Some(h) = win::foreground() {
             let id = h as usize as u32;
             let title = win::title_of(h);
-            let app = xcap::Window::all()
+            let app = guarded(xcap::Window::all)
                 .ok()
                 .and_then(|all| all.into_iter().find(|w| w.id().ok() == Some(id)))
                 .and_then(|w| w.app_name().ok())
@@ -486,8 +509,8 @@ fn opaque(mut img: RgbaImage) -> RgbaImage {
 }
 
 fn xcap_monitor_at(x: i32, y: i32) -> Result<xcap::Monitor, String> {
-    xcap::Monitor::from_point(x, y).or_else(|_| {
-        let all = xcap::Monitor::all().map_err(|e| e.to_string())?;
+    guarded(|| xcap::Monitor::from_point(x, y)).or_else(|_| {
+        let all = guarded(xcap::Monitor::all).map_err(|e| e.to_string())?;
         let primary = all.iter().position(|m| m.is_primary().unwrap_or(false)).unwrap_or(0);
         all.into_iter().nth(primary).ok_or_else(|| "no screen found".to_string())
     })
@@ -507,7 +530,7 @@ fn shot(image: RgbaImage, origin: (i32, i32), title: String) -> Shot {
 }
 
 fn grab_monitor(m: &xcap::Monitor) -> Result<Shot, String> {
-    let image = m.capture_image().map_err(|e| e.to_string())?;
+    let image = guarded(|| m.capture_image())?;
     let name = m.friendly_name().or_else(|_| m.name()).unwrap_or_else(|_| "Screen".into());
     let mut s = shot(image, (m.x().unwrap_or(0), m.y().unwrap_or(0)), String::new());
     if s.title.is_empty() {
@@ -518,13 +541,17 @@ fn grab_monitor(m: &xcap::Monitor) -> Result<Shot, String> {
 
 /// Every monitor in one picture, placed by its desktop position.
 pub fn grab_all_screens() -> Result<Shot, String> {
-    let all = xcap::Monitor::all().map_err(|e| e.to_string())?;
+    guarded(grab_all_screens_raw)
+}
+
+fn grab_all_screens_raw() -> Result<Shot, String> {
+    let all = guarded(xcap::Monitor::all).map_err(|e| e.to_string())?;
     if all.is_empty() {
         return Err("no screen found".into());
     }
     let mut parts = Vec::new();
     for m in &all {
-        let img = m.capture_image().map_err(|e| e.to_string())?;
+        let img = guarded(|| m.capture_image())?;
         parts.push((m.x().unwrap_or(0), m.y().unwrap_or(0), img));
     }
     let min_x = parts.iter().map(|p| p.0).min().unwrap();
@@ -550,8 +577,12 @@ pub fn crop_desktop(img: &RgbaImage, origin: (i32, i32), x: i32, y: i32, w: u32,
     Some(image::imageops::crop_imm(img, lx as u32, ly as u32, (rx - lx) as u32, (ry - ly) as u32).to_image())
 }
 
-/// A desktop rectangle, grabbed from the monitor it sits on.
+/// A desktop rectangle, grabbed from the monitor it sits on (see `guarded`).
 pub fn grab_rect(x: i32, y: i32, w: u32, h: u32) -> Result<RgbaImage, String> {
+    guarded(|| grab_rect_raw(x, y, w, h))
+}
+
+fn grab_rect_raw(x: i32, y: i32, w: u32, h: u32) -> Result<RgbaImage, String> {
     let m = xcap_monitor_at(x + w as i32 / 2, y + h as i32 / 2)?;
     let (mx, my) = (m.x().unwrap_or(0), m.y().unwrap_or(0));
     let (mw, mh) = (m.width().unwrap_or(0), m.height().unwrap_or(0));
@@ -582,22 +613,27 @@ fn grab_window(id: u32, title: String, raise: bool) -> Result<Shot, String> {
             return Ok(s);
         }
     }
-    let win = xcap::Window::all()
+    let win = guarded(xcap::Window::all)
         .map_err(|e| e.to_string())?
         .into_iter()
         .find(|w| w.id().ok() == Some(id))
         .ok_or_else(|| "that window has closed".to_string())?;
-    let image = win.capture_image().map_err(|e| e.to_string())?;
+    let image = guarded(|| win.capture_image())?;
     Ok(shot(image, (win.x().unwrap_or(0), win.y().unwrap_or(0)), title))
 }
 
+/// Take the picture `kind` asks for (see `guarded`: the screen library can't take Snagster down).
 pub fn grab(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String> {
+    guarded(|| grab_raw(kind, fallback_at))
+}
+
+fn grab_raw(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String> {
     let at = cursor_pos().unwrap_or(fallback_at);
     match kind {
         CaptureKind::Screen => grab_monitor(&xcap_monitor_at(at.0, at.1)?),
         CaptureKind::AllScreens => grab_all_screens(),
         CaptureKind::Monitor(id) => {
-            let all = xcap::Monitor::all().map_err(|e| e.to_string())?;
+            let all = guarded(xcap::Monitor::all).map_err(|e| e.to_string())?;
             let m = all.into_iter().find(|m| m.id().ok() == Some(*id)).ok_or("that screen is gone")?;
             grab_monitor(&m)
         }
@@ -1063,10 +1099,9 @@ pub fn spawn_step_recorder(stop: Arc<AtomicBool>, tx: Sender<StepEvent>, ctx: ef
                 {
                     let ours = win::window_at(p.0, p.1).map(|h| win::pid_of(h) == me).unwrap_or(false);
                     if !ours
-                        && let Ok(m) = xcap_monitor_at(p.0, p.1)
-                        && let Ok(img) = m.capture_image()
+                        && let Ok((m, img)) = guarded(|| xcap_monitor_at(p.0, p.1).and_then(|m| m.capture_image().map(|i| (m, i)).map_err(|e| e.to_string())))
                     {
-                        let (mx, my) = (m.x().unwrap_or(0), m.y().unwrap_or(0));
+                        let (mx, my) = guarded(|| Ok::<_, String>((m.x().unwrap_or(0), m.y().unwrap_or(0)))).unwrap_or((0, 0));
                         let (title, app) = foreground_info();
                         let _ = tx.send(StepEvent {
                             image: opaque(img),
@@ -1319,6 +1354,16 @@ pub fn stamp_pointer(img: &mut RgbaImage, at: (f32, f32)) {
 mod tests {
     use super::*;
     use image::Rgba;
+
+    /// The screen library panicking (WSLg's Wayland, found by `--hw-report`) used to close
+    /// Snagster; now it is an error like any other.
+    #[test]
+    fn a_panicking_screen_library_is_an_error_not_a_crash() {
+        let r: Result<u32, String> = guarded(|| -> Result<u32, String> { panic!("UnsupportedVersion") });
+        assert_eq!(r, Err("the screen library failed (UnsupportedVersion)".to_string()));
+        assert_eq!(guarded(|| Ok::<_, String>(7)), Ok(7));
+        assert_eq!(guarded(|| Err::<u32, _>("no screen")), Err("no screen".to_string()));
+    }
 
     /// A tall "page" whose every row has its own colour, so rows can be told apart.
     fn page(w: u32, h: u32) -> RgbaImage {

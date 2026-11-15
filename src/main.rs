@@ -4,6 +4,7 @@
 
 mod app;
 mod capture;
+mod hwreport;
 mod doc;
 mod effects;
 mod export;
@@ -180,6 +181,10 @@ fn main() -> eframe::Result {
             // Record short videos in every format and rate, read each back and report.
             video_test(args.next().as_deref() == Some("quick"));
             return Ok(());
+        } else if a == "--hw-report" {
+            // Everything about graphics-chip encoding here, in one file (see hwreport.rs).
+            let ok = hwreport::run(args.next().map(PathBuf::from));
+            std::process::exit(if ok { 0 } else { 1 });
         } else if a == "--stream-test" {
             // Stream the screen into a local test server (127.0.0.1 only) and report the cost.
             let ok = stream_test::run(args.next().as_deref() == Some("quick"));

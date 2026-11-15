@@ -606,6 +606,19 @@ pub fn available() -> Vec<(Codec, EncoderName)> {
     v
 }
 
+/// What the encoders' side of this computer looks like, for `--hw-report`: on Linux every
+/// graphics chip VA-API sees and the NVIDIA driver; elsewhere the system's encoders say it.
+pub fn describe_hardware() -> Vec<String> {
+    #[cfg(target_os = "linux")]
+    {
+        let mut v = linux::describe();
+        v.push(nvenc::describe());
+        v
+    }
+    #[cfg(not(target_os = "linux"))]
+    Vec::new()
+}
+
 /// The graphics vendor named in an encoder's name ("Intel", "AMD", "NVIDIA", "Apple"), or "".
 pub fn vendor_in(name: &str) -> &'static str {
     let n = name.to_ascii_lowercase();

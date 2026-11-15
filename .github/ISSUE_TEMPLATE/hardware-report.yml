@@ -7,18 +7,17 @@ body:
     attributes:
       value: |
         Thank you! Snagster records and streams with the graphics chip (Intel Quick Sync, NVIDIA NVENC,
-        AMD AMF, Apple VideoToolbox, Linux VA-API). Your report shows us whether it really works on yours.
+        AMD AMF, Apple VideoToolbox, Linux VA-API and NVENC). Your report shows us whether it really
+        works on yours.
 
-        Snagster has the tests built in. They record a few seconds of your screen into a temporary
-        file and stream into a small server inside Snagster on your computer; nothing is sent anywhere.
-        Run both in the folder where Snagster is, then paste the two files below:
-        - **Windows** (PowerShell):
-          `Start-Process .\Snagster.exe '--video-test quick' -Wait -NoNewWindow -RedirectStandardOutput video-test.txt`
-          and `Start-Process .\Snagster.exe '--stream-test quick' -Wait -NoNewWindow -RedirectStandardOutput stream-test.txt`
-        - **Mac:** `/Applications/Snagster.app/Contents/MacOS/Snagster --video-test quick > video-test.txt 2>&1`
-          and the same with `--stream-test quick > stream-test.txt`
-        - **Linux:** `./Snagster-linux-x86_64.AppImage --video-test quick > video-test.txt 2>&1`
-          and the same with `--stream-test quick > stream-test.txt`
+        One command tests everything and writes `snagster-hw-report.txt`: your system and graphics
+        chips, every video encoder, and a few seconds of recording and streaming into a small server
+        inside Snagster. Nothing is sent anywhere. Run it in the folder where Snagster is:
+        - **Windows** (PowerShell): `Start-Process .\Snagster.exe --hw-report -Wait`
+        - **Mac:** `/Applications/Snagster.app/Contents/MacOS/Snagster --hw-report`
+        - **Linux:** `./Snagster-linux-x86_64.AppImage --hw-report`
+
+        Then drag `snagster-hw-report.txt` into the box below, or paste what it says.
   - type: dropdown
     id: system
     attributes:
@@ -36,17 +35,10 @@ body:
   - type: textarea
     id: report
     attributes:
-      label: video-test.txt
-      description: Paste the whole file.
-      render: text
+      label: snagster-hw-report.txt
+      description: Drag the file in, or paste it.
     validations:
       required: true
-  - type: textarea
-    id: stream
-    attributes:
-      label: stream-test.txt
-      description: Paste the whole file.
-      render: text
   - type: textarea
     id: notes
     attributes:

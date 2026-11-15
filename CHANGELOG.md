@@ -6,6 +6,18 @@ What changed for people using Snagster, per version.
 
 New:
 
+- **One-command hardware report**: `snagster --hw-report` tests the graphics chips, every video
+  encoder, recording and streaming on this computer and writes it all to
+  `snagster-hw-report.txt` (nothing is sent anywhere). The GitHub "Hardware report" form asks for it.
+- **Linux laptops with two graphics chips** (say Intel plus NVIDIA): Snagster now tries each chip
+  and encodes on the first one that can, instead of giving up on the first one it finds.
+  `SNAGSTER_VAAPI_DEVICE=/dev/dri/renderD129` picks one by hand.
+- **Linux recording is faster and works on more desktops**: it uses the same fast screen copy
+  as streaming (X11 shared memory), and where the Wayland screen copy isn't available (for
+  example WSLg) it records through XWayland instead of failing. macOS recording uses the
+  CoreGraphics copy that streaming uses.
+- **No crash on some Wayland desktops**: the screen-capture library could close Snagster when
+  the desktop lacks a screen-copy feature; now Snagster says it can't see the screen.
 - **NVIDIA graphics chips on Linux**: recording and streaming now use NVIDIA's own encoder
   (NVENC) on Linux, which also brings HEVC (H.265) to Linux. Before, Linux computers with an
   NVIDIA card encoded on the processor. Works with any NVIDIA driver from 2018 on; computers

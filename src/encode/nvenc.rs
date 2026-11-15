@@ -460,6 +460,24 @@ impl Drop for Nvenc {
     }
 }
 
+/// The NVIDIA side for `--hw-report`: the graphics chip and the driver's NVENC version, or why
+/// there is none.
+pub fn describe() -> String {
+    let l = match libs() {
+        Ok(l) => l,
+        Err(e) => return format!("NVENC: {e}"),
+    };
+    match cuda_context(&l) {
+        Ok((ctx, gpu)) => {
+            unsafe {
+                (l.cuda.ctx_destroy)(ctx);
+            }
+            format!("NVENC: {gpu} (driver supports NVENC 8.1 or newer)")
+        }
+        Err(e) => format!("NVENC: {e}"),
+    }
+}
+
 pub fn open_video(cfg: &VideoConfig) -> Result<Box<dyn VideoEncoder>, String> {
     Nvenc::open(cfg).map(|e| Box::new(e) as Box<dyn VideoEncoder>)
 }

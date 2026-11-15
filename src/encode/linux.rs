@@ -368,41 +368,70 @@ impl Va {
 
 /// An initialised VA display on one render node.
 struct Display {
-    va: Va,
+    /// Shared by the displays tried while looking for one that encodes.
+    va: std::sync::Arc<Va>,
     dpy: VADisplay,
     vendor: String,
     _node: File,
 }
 
+/// The render nodes to try, in order: `SNAGSTER_VAAPI_DEVICE` first when it is set (to use one
+/// graphics chip by hand), then every `/dev/dri/renderD*` by number.
+pub(crate) fn render_nodes(chosen: Option<&str>, found: &[String]) -> Vec<String> {
+    let mut nodes: Vec<String> = found.iter().filter(|n| n.starts_with("/dev/dri/renderD")).cloned().collect();
+    nodes.sort_by_key(|n| n.trim_start_matches("/dev/dri/renderD").parse::<u32>().unwrap_or(u32::MAX));
+    if let Some(c) = chosen.map(str::trim).filter(|c| !c.is_empty()) {
+        nodes.retain(|n| n != c);
+        nodes.insert(0, c.to_string());
+    }
+    nodes
+}
+
+fn render_nodes_here() -> Vec<String> {
+    let found: Vec<String> = std::fs::read_dir("/dev/dri").map(|d| d.filter_map(|e| e.ok()).map(|e| e.path().display().to_string()).collect()).unwrap_or_default();
+    render_nodes(std::env::var("SNAGSTER_VAAPI_DEVICE").ok().as_deref(), &found)
+}
+
 impl Display {
+    /// The first graphics chip whose VA-API driver can encode H.264. A laptop often has two (an
+    /// Intel chip and an NVIDIA card, whose VA-API driver only decodes): the first that starts
+    /// is not always one that encodes, so every one is tried.
     fn open() -> Result<Display, String> {
-        let va = Va::load()?;
+        let va = std::sync::Arc::new(Va::load()?);
         let mut last = "no graphics render node (/dev/dri/renderD*)".to_string();
-        for n in 128..136 {
-            let path = format!("/dev/dri/renderD{n}");
-            let Ok(node) = std::fs::OpenOptions::new().read(true).write(true).open(&path) else { continue };
-            unsafe {
-                let dpy = (va.get_display_drm)(node.as_raw_fd());
-                if dpy.is_null() {
-                    continue;
-                }
-                if let Some(f) = va.set_info_callback {
-                    // Keep libva's "VA-API version ..." lines off the terminal.
-                    f(dpy, std::ptr::null_mut(), std::ptr::null_mut());
-                }
-                let (mut major, mut minor) = (0, 0);
-                let s = (va.initialize)(dpy, &mut major, &mut minor);
-                if s != VA_STATUS_SUCCESS {
-                    last = va.check(&format!("vaInitialize on {path}"), s).unwrap_err();
-                    (va.terminate)(dpy);
-                    continue;
-                }
-                let v = (va.vendor)(dpy);
-                let vendor = if v.is_null() { "VA-API".into() } else { CStr::from_ptr(v).to_string_lossy().trim().to_string() };
-                return Ok(Display { va, dpy, vendor, _node: node });
+        for path in render_nodes_here() {
+            match Display::on(&va, &path) {
+                Ok(d) if d.h264_encoder().is_some() => return Ok(d),
+                Ok(d) => last = format!("{} on {path} can't encode H.264", d.vendor),
+                Err(e) => last = e,
             }
         }
         Err(last)
+    }
+
+    /// VA-API on one render node.
+    fn on(va: &std::sync::Arc<Va>, path: &str) -> Result<Display, String> {
+        let node = std::fs::OpenOptions::new().read(true).write(true).open(path).map_err(|e| format!("{path}: {e}"))?;
+        unsafe {
+            let dpy = (va.get_display_drm)(node.as_raw_fd());
+            if dpy.is_null() {
+                return Err(format!("{path}: no VA-API display"));
+            }
+            if let Some(f) = va.set_info_callback {
+                // Keep libva's "VA-API version ..." lines off the terminal.
+                f(dpy, std::ptr::null_mut(), std::ptr::null_mut());
+            }
+            let (mut major, mut minor) = (0, 0);
+            let s = (va.initialize)(dpy, &mut major, &mut minor);
+            if s != VA_STATUS_SUCCESS {
+                let e = va.check(&format!("vaInitialize on {path}"), s).unwrap_err();
+                (va.terminate)(dpy);
+                return Err(e);
+            }
+            let v = (va.vendor)(dpy);
+            let vendor = if v.is_null() { "VA-API".into() } else { CStr::from_ptr(v).to_string_lossy().trim().to_string() };
+            Ok(Display { va: va.clone(), dpy, vendor, _node: node })
+        }
     }
 
     /// The best H.264 profile with an encoding entry point: (profile, VA profile, entry point).
@@ -437,6 +466,25 @@ impl Drop for Display {
             (self.va.terminate)(self.dpy);
         }
     }
+}
+
+/// Every graphics chip VA-API sees and whether it can encode H.264, for `--hw-report`.
+pub fn describe() -> Vec<String> {
+    let va = match Va::load() {
+        Ok(v) => std::sync::Arc::new(v),
+        Err(e) => return vec![format!("VA-API: {e}")],
+    };
+    let nodes = render_nodes_here();
+    if nodes.is_empty() {
+        return vec!["VA-API: no graphics render node (/dev/dri/renderD*)".into()];
+    }
+    nodes
+        .iter()
+        .map(|path| match Display::on(&va, path) {
+            Ok(d) => format!("VA-API {path}: {}, H.264 encoding: {}", d.vendor, if d.h264_encoder().is_some() { "yes" } else { "no" }),
+            Err(e) => format!("VA-API {e}"),
+        })
+        .collect()
 }
 
 pub fn list() -> Vec<(Codec, EncoderName)> {
@@ -484,6 +532,7 @@ impl VaEncoder {
     fn open(cfg: &VideoConfig) -> Result<VaEncoder, String> {
         let d = Display::open()?;
         let (profile, vprofile, entry) = d.h264_encoder().ok_or_else(|| format!("{} can't encode H.264", d.vendor))?;
+        // (`open` only returns a display that can.)
         let va = &d.va;
         unsafe {
             let mut attrs = [
@@ -791,6 +840,17 @@ impl Drop for VaEncoder {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Every graphics chip is tried by number (renderD129 before renderD1000, not only 128..135
+    /// as before), and one chosen by hand comes first.
+    #[test]
+    fn render_nodes_are_tried_in_order_with_a_chosen_one_first() {
+        let found: Vec<String> = ["/dev/dri/renderD129", "/dev/dri/card0", "/dev/dri/renderD128", "/dev/dri/renderD1000", "/dev/dri/by-path"].iter().map(|s| s.to_string()).collect();
+        assert_eq!(render_nodes(None, &found), vec!["/dev/dri/renderD128", "/dev/dri/renderD129", "/dev/dri/renderD1000"]);
+        assert_eq!(render_nodes(Some(" /dev/dri/renderD129 "), &found), vec!["/dev/dri/renderD129", "/dev/dri/renderD128", "/dev/dri/renderD1000"]);
+        assert_eq!(render_nodes(Some(""), &found)[0], "/dev/dri/renderD128", "an empty setting changes nothing");
+        assert_eq!(render_nodes(Some("/dev/dri/renderD200"), &[]), vec!["/dev/dri/renderD200"], "a chosen one is tried even if not listed");
+    }
 
     #[test]
     fn structures_have_libvas_sizes() {
