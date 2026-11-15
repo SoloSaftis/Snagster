@@ -3054,7 +3054,7 @@ mod stream_tests {
 
     #[test]
     fn stream_start_checks_its_arguments_and_never_echoes_the_key() {
-        let _g = crate::stream::live::TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        let _g = crate::stream::live::test_lock();
         let mut w = ws();
         let e = w.call("stream_start", &json!({"service": "custom", "url": "ftp://example.com/live", "key": "sk_mcp_secret_1"})).unwrap_err();
         assert!(e.contains("rtmp") && !e.contains("sk_mcp_secret_1"), "{e}");
@@ -3066,7 +3066,7 @@ mod stream_tests {
 
     #[test]
     fn stream_start_status_and_stop_against_a_local_server() {
-        let _g = crate::stream::live::TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        let _g = crate::stream::live::test_lock();
         let srv = crate::stream::testserver::TestServer::start().unwrap();
         let mut w = ws();
         let t = text_of(w.call("stream_start", &json!({"service": "custom", "url": srv.url(), "key": "sk_mcp_secret_2", "source": "studio", "fps": 15})));
@@ -3090,7 +3090,7 @@ mod stream_tests {
     /// key, and neither key is ever shown back.
     #[test]
     fn stream_start_multistreams_to_every_service_in_also() {
-        let _g = crate::stream::live::TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        let _g = crate::stream::live::test_lock();
         let (a, b) = (crate::stream::testserver::TestServer::start().unwrap(), crate::stream::testserver::TestServer::start().unwrap());
         let mut w = ws();
         // Bad items are refused before anything starts.
@@ -3101,7 +3101,8 @@ mod stream_tests {
         let t = text_of(w.call("stream_start", &json!({"service": "custom", "url": a.url(), "key": "sk_main_secret_3", "source": "studio", "fps": 15, "also": [{"service": "custom", "url": b.url(), "key": "sk_also_secret_4"}]})));
         assert!(!t.contains("sk_main_secret_3") && !t.contains("sk_also_secret_4"), "{t}");
         let start = std::time::Instant::now();
-        while b.video_messages() < 5 && start.elapsed() < std::time::Duration::from_secs(15) {
+        // Both servers, not only the second: on a busy machine the first can be a little behind.
+        while (a.video_messages() < 5 || b.video_messages() < 5) && start.elapsed() < std::time::Duration::from_secs(15) {
             std::thread::sleep(std::time::Duration::from_millis(20));
         }
         assert_eq!((a.publish_name(), b.publish_name()), ("sk_main_secret_3".to_string(), "sk_also_secret_4".to_string()));

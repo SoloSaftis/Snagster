@@ -533,6 +533,16 @@ pub fn wait_idle(d: Duration) -> bool {
 #[cfg(test)]
 pub(crate) static TEST_LOCK: Mutex<()> = Mutex::new(());
 
+/// Take `TEST_LOCK` and start from no stream: a test that failed half-way may have left its
+/// stream running, which would make every later stream test fail too ("already running").
+#[cfg(test)]
+pub(crate) fn test_lock() -> std::sync::MutexGuard<'static, ()> {
+    let g = TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+    end();
+    wait_idle(Duration::from_secs(10));
+    g
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -732,7 +742,7 @@ mod tests {
 
     #[test]
     fn going_live_streams_and_records_a_copy_then_stops_in_the_background() {
-        let _g = TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        let _g = test_lock();
         let srv = TestServer::start().unwrap();
         let path = std::env::temp_dir().join(format!("snagster-live-test-{}.flv", std::process::id()));
         let _ = std::fs::remove_file(&path);
@@ -771,7 +781,7 @@ mod tests {
 
     #[test]
     fn a_failed_start_is_reported_masked() {
-        let _g = TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        let _g = test_lock();
         let mut o = opts("rtmp://127.0.0.1:1/live", "my_secret_key_2");
         o.source = Source::Area(0, 0, 4, 4);
         begin(o, None, crate::stream::tests::fakes(30, 0)).unwrap();
