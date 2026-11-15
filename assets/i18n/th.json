@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "ภาพเดียวกันจะส่งไปยังทุกบริการพร้อมกัน และเข้ารหัสเพียงครั้งเดียว โดยส่งด้วยขนาด อัตราเฟรม และบิตเรตที่ทุกบริการรองรับ",
   "Stream to this service too": "สตรีมไปยังบริการนี้ด้วย",
   "Remove this service and its saved key": "ลบบริการนี้และคีย์ที่บันทึกไว้",
-  "Add a service": "เพิ่มบริการ"
+  "Add a service": "เพิ่มบริการ",
+  "Exporting {n} pictures to {folder}...": "กำลังส่งออกรูปภาพ {n} รูปไปที่ {folder}...",
+  "Working on it...": "กำลังดำเนินการ...",
+  "Couldn't make the picture.": "สร้างรูปภาพไม่ได้",
+  "Opening {path}...": "กำลังเปิด {path}...",
+  "Video encoder": "ตัวเข้ารหัสวิดีโอ",
+  "Automatic (recommended)": "อัตโนมัติ (แนะนำ)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "อัตโนมัติจะใช้ตัวเข้ารหัสที่ดีที่สุดที่ใช้งานได้ หากตัวที่คุณเลือกเริ่มทำงานไม่ได้หรือหยุดทำงาน Snagster จะสลับไปใช้ตัวที่ดีที่สุดที่ใช้งานได้และแจ้งให้ทราบ",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "ตัวเข้ารหัสที่เลือกไม่มีในคอมพิวเตอร์เครื่องนี้ในขณะนี้ จึงใช้อัตโนมัติ",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "ตัวเข้ารหัสที่เลือก {pick} เริ่มทำงานไม่ได้ ({error}) จึงใช้ {used}",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} หยุดทำงาน ({error}); สลับไปใช้ {used}"
  }
 }

@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "E njëjta pamje shkon te çdo shërbim njëkohësisht dhe kodohet vetëm një herë. Dërgohet me madhësinë, shpejtësinë e kuadrove dhe shpejtësinë e biteve që pranojnë të gjitha.",
   "Stream to this service too": "Transmeto edhe te ky shërbim",
   "Remove this service and its saved key": "Hiq këtë shërbim dhe çelësin e tij të ruajtur",
-  "Add a service": "Shto një shërbim"
+  "Add a service": "Shto një shërbim",
+  "Exporting {n} pictures to {folder}...": "Po eksportohen {n} imazhe te {folder}...",
+  "Working on it...": "Po punohet...",
+  "Couldn't make the picture.": "Imazhi nuk u krijua dot.",
+  "Opening {path}...": "Po hapet {path}...",
+  "Video encoder": "Koduesi i videos",
+  "Automatic (recommended)": "Automatike (rekomandohet)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automatike përdor koduesin më të mirë që funksionon. Nëse ai që zgjidhni nuk mund të nisë ose ndalon së funksionuari, Snagster kalon te më i miri që funksionon dhe e njofton.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Koduesi i zgjedhur nuk është tani në këtë kompjuter, prandaj përdoret Automatike.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Koduesi i zgjedhur {pick} nuk mundi të nisë ({error}), prandaj përdoret {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} ndaloi së funksionuari ({error}); u kalua te {used}."
  }
 }

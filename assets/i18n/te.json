@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "ఒకే చిత్రం ఒకేసారి ప్రతి సేవకు వెళ్తుంది, ఒక్కసారి మాత్రమే ఎన్‌కోడ్ అవుతుంది. అన్ని సేవలూ స్వీకరించే పరిమాణం, ఫ్రేమ్ రేట్ మరియు బిట్‌రేట్‌లో దీన్ని పంపుతారు.",
   "Stream to this service too": "ఈ సేవకు కూడా స్ట్రీమ్ చేయండి",
   "Remove this service and its saved key": "ఈ సేవను మరియు దాని సేవ్ చేసిన కీని తీసివేయండి",
-  "Add a service": "సేవను జోడించండి"
+  "Add a service": "సేవను జోడించండి",
+  "Exporting {n} pictures to {folder}...": "{n} చిత్రాలను {folder} కు ఎగుమతి చేస్తోంది...",
+  "Working on it...": "పని జరుగుతోంది...",
+  "Couldn't make the picture.": "చిత్రాన్ని తయారు చేయలేకపోయింది.",
+  "Opening {path}...": "{path} తెరుస్తోంది...",
+  "Video encoder": "వీడియో ఎన్‌కోడర్",
+  "Automatic (recommended)": "ఆటోమేటిక్ (సిఫార్సు చేయబడింది)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "ఆటోమేటిక్ పని చేసే ఉత్తమ ఎన్‌కోడర్‌ను ఉపయోగిస్తుంది. మీరు ఎంచుకున్నది ప్రారంభం కాకపోతే లేదా పని చేయడం ఆపితే, Snagster పని చేసే ఉత్తమమైన దానికి మారి, ఆ విషయం తెలియజేస్తుంది.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "ఎంచుకున్న ఎన్‌కోడర్ ఇప్పుడు ఈ కంప్యూటర్‌లో లేదు, కాబట్టి ఆటోమేటిక్ ఉపయోగించబడుతోంది.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "ఎంచుకున్న ఎన్‌కోడర్ {pick} ప్రారంభం కాలేదు ({error}), కాబట్టి {used} ఉపయోగించబడుతోంది.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} పని చేయడం ఆపింది ({error}); {used}కి మార్చబడింది."
  }
 }

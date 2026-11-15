@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "ಒಂದೇ ಚಿತ್ರವು ಎಲ್ಲಾ ಸೇವೆಗಳಿಗೆ ಏಕಕಾಲದಲ್ಲಿ ಹೋಗುತ್ತದೆ, ಒಮ್ಮೆ ಮಾತ್ರ ಎನ್‌ಕೋಡ್ ಆಗುತ್ತದೆ. ಎಲ್ಲವೂ ಸ್ವೀಕರಿಸುವ ಗಾತ್ರ, ಫ್ರೇಮ್ ದರ ಮತ್ತು ಬಿಟ್‌ರೇಟ್‌ನಲ್ಲಿ ಅದನ್ನು ಕಳುಹಿಸಲಾಗುತ್ತದೆ.",
   "Stream to this service too": "ಈ ಸೇವೆಗೂ ಸ್ಟ್ರೀಮ್ ಮಾಡಿ",
   "Remove this service and its saved key": "ಈ ಸೇವೆ ಮತ್ತು ಅದರ ಉಳಿಸಿದ ಕೀ ತೆಗೆದುಹಾಕಿ",
-  "Add a service": "ಸೇವೆ ಸೇರಿಸಿ"
+  "Add a service": "ಸೇವೆ ಸೇರಿಸಿ",
+  "Exporting {n} pictures to {folder}...": "{n} ಚಿತ್ರಗಳನ್ನು {folder} ಗೆ ರಫ್ತು ಮಾಡಲಾಗುತ್ತಿದೆ...",
+  "Working on it...": "ಕೆಲಸ ನಡೆಯುತ್ತಿದೆ...",
+  "Couldn't make the picture.": "ಚಿತ್ರ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "Opening {path}...": "{path} ತೆರೆಯಲಾಗುತ್ತಿದೆ...",
+  "Video encoder": "ವೀಡಿಯೊ ಎನ್‌ಕೋಡರ್",
+  "Automatic (recommended)": "ಸ್ವಯಂಚಾಲಿತ (ಶಿಫಾರಸು ಮಾಡಲಾಗಿದೆ)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "ಸ್ವಯಂಚಾಲಿತವು ಕೆಲಸ ಮಾಡುವ ಅತ್ಯುತ್ತಮ ಎನ್‌ಕೋಡರ್ ಬಳಸುತ್ತದೆ. ನೀವು ಆರಿಸಿದುದು ಪ್ರಾರಂಭವಾಗದಿದ್ದರೆ ಅಥವಾ ಕೆಲಸ ನಿಲ್ಲಿಸಿದರೆ, Snagster ಕೆಲಸ ಮಾಡುವ ಅತ್ಯುತ್ತಮದಕ್ಕೆ ಬದಲಾಯಿಸುತ್ತದೆ ಮತ್ತು ಅದನ್ನು ತಿಳಿಸುತ್ತದೆ.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "ಆರಿಸಿದ ಎನ್‌ಕೋಡರ್ ಈಗ ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಇಲ್ಲ, ಆದ್ದರಿಂದ ಸ್ವಯಂಚಾಲಿತ ಬಳಸಲಾಗುತ್ತಿದೆ.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "ಆರಿಸಿದ ಎನ್‌ಕೋಡರ್ {pick} ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ ({error}), ಆದ್ದರಿಂದ {used} ಬಳಸಲಾಗುತ್ತಿದೆ.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} ಕೆಲಸ ನಿಲ್ಲಿಸಿತು ({error}); {used} ಗೆ ಬದಲಾಯಿಸಲಾಗಿದೆ."
  }
 }

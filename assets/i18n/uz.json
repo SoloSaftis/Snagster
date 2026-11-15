@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Bir xil tasvir bir vaqtning o‘zida barcha xizmatlarga boradi va faqat bir marta kodlanadi. U hammasi qabul qiladigan o‘lcham, kadr chastotasi va bitreytda yuboriladi.",
   "Stream to this service too": "Bu xizmatga ham translatsiya qilish",
   "Remove this service and its saved key": "Bu xizmatni va uning saqlangan kalitini olib tashlash",
-  "Add a service": "Xizmat qo‘shish"
+  "Add a service": "Xizmat qo‘shish",
+  "Exporting {n} pictures to {folder}...": "{n} ta rasm {folder} jildiga eksport qilinmoqda...",
+  "Working on it...": "Bajarilmoqda...",
+  "Couldn't make the picture.": "Rasmni yaratib bo‘lmadi.",
+  "Opening {path}...": "{path} ochilmoqda...",
+  "Video encoder": "Video kodlagichi",
+  "Automatic (recommended)": "Avtomatik (tavsiya etiladi)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Avtomatik ishlaydigan eng yaxshi kodlagichdan foydalanadi. Siz tanlagani ishga tusha olmasa yoki ishlashdan to‘xtasa, Snagster ishlaydigan eng yaxshisiga o‘tadi va bu haqda aytadi.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Tanlangan kodlagich hozir bu kompyuterda yo‘q, shuning uchun Avtomatik ishlatiladi.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Tanlangan {pick} kodlagichi ishga tusha olmadi ({error}), shuning uchun {used} ishlatiladi.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} ishlashdan to‘xtadi ({error}); {used} ga o‘tildi."
  }
 }

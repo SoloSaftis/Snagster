@@ -142,17 +142,47 @@ unsafe impl Send for D3dTexture {}
 unsafe impl Sync for D3dTexture {}
 
 pub fn open_video(cfg: &VideoConfig, hardware: bool) -> Result<Box<dyn VideoEncoder>, String> {
-    open_on(cfg, hardware, None)
+    open_on(cfg, hardware, None, &Want::Any)
 }
 
 /// A graphics-chip encoder that takes NV12 textures of `dev` (zero-copy).
-pub fn open_video_d3d(cfg: &VideoConfig, dev: &D3dDevice) -> Result<Box<dyn VideoEncoder>, String> {
-    open_on(cfg, true, Some(dev))
+pub fn open_video_d3d(cfg: &VideoConfig, dev: &D3dDevice, want: &Want) -> Result<Box<dyn VideoEncoder>, String> {
+    open_on(cfg, true, Some(dev), want)
 }
 
-fn open_on(cfg: &VideoConfig, hardware: bool, d3d: Option<&D3dDevice>) -> Result<Box<dyn VideoEncoder>, String> {
+/// The encoder `name` (as `list` names it), on the graphics chip or in software, whichever it is.
+pub fn open_named(cfg: &VideoConfig, name: &str) -> Result<Box<dyn VideoEncoder>, String> {
+    let want = Want::Only(name.to_string());
+    open_on(cfg, true, None, &want).or_else(|hw| open_on(cfg, false, None, &want).map_err(|sw| if sw.starts_with("no ") { hw } else { sw }))
+}
+
+/// Which of the registered encoder transforms may be opened.
+pub enum Want {
+    Any,
+    /// Only the one with this name.
+    Only(String),
+    /// Any but these (they failed already).
+    Not(Vec<String>),
+}
+
+impl Want {
+    pub fn allows(&self, name: &str) -> bool {
+        match self {
+            Want::Any => true,
+            Want::Only(n) => n == name,
+            Want::Not(v) => !v.iter().any(|n| n == name),
+        }
+    }
+}
+
+/// Any encoder `avoid` doesn't name, graphics chip first when `hardware`.
+pub fn open_avoiding(cfg: &VideoConfig, hardware: bool, avoid: &[String]) -> Result<Box<dyn VideoEncoder>, String> {
+    open_on(cfg, hardware, None, &Want::Not(avoid.to_vec()))
+}
+
+fn open_on(cfg: &VideoConfig, hardware: bool, d3d: Option<&D3dDevice>, want: &Want) -> Result<Box<dyn VideoEncoder>, String> {
     let mf = Mf::start()?;
-    let list = video_candidates(cfg.codec, hardware);
+    let list: Vec<Candidate> = video_candidates(cfg.codec, hardware).into_iter().filter(|c| want.allows(&c.name)).collect();
     if list.is_empty() {
         return Err(format!("no {} encoder {}", cfg.codec.label(), if hardware { "on the graphics chip" } else { "in software" }));
     }

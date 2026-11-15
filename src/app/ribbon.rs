@@ -69,7 +69,12 @@ pub(crate) struct Extra {
     pub mcp_server: Option<crate::mcp_http::Server>,
     pub mcp_error: Option<String>,
     pub mcp_wanted: Option<(u16, String)>,
-    pub mics: Option<Vec<crate::audio::Device>>,
+    /// Microphones, and this computer's video encoders: both listed on a thread of their own
+    /// (asking the sound system or Media Foundation can take a while).
+    pub mics: crate::app::work::ListCache<crate::audio::Device>,
+    pub encoders: crate::app::work::ListCache<crate::video::EncoderInfo>,
+    /// The encoders the person can choose (`encode::available`).
+    pub pickable: crate::app::work::ListCache<(crate::encode::Codec, crate::encode::EncoderName)>,
     pub stream: crate::app::stream_ui::StreamUi,
     pub access: crate::app::access_ui::AccessUi,
 }
@@ -313,7 +318,7 @@ impl SnagApp {
         }
         ui.separator();
         ui.label(RichText::new(t("Microphone")).strong());
-        let mics = self.x.mics.get_or_insert_with(crate::audio::microphones).clone();
+        let mics = self.x.mics.get(Some(ui.ctx()), crate::audio::microphones).to_vec();
         if ui.radio(self.settings.audio_mic.is_empty(), t("The computer's default microphone")).clicked() {
             self.settings.audio_mic.clear();
         }
@@ -323,7 +328,7 @@ impl SnagApp {
             }
         }
         if ui.small_button(t("Look for microphones again")).clicked() {
-            self.x.mics = None;
+            self.x.mics.expire();
         }
         if self.settings.rec_format == crate::video::VideoFormat::Wmv || self.settings.rec_format == crate::video::VideoFormat::Gif {
             ui.label(RichText::new(t("Sound is recorded into MP4 videos.")).color(TEXT_DIM));
@@ -678,7 +683,7 @@ impl SnagApp {
             });
         });
         look::group(ui, t("Cloud"), |ui| {
-            let clouds = crate::settings::cloud_folders();
+            let clouds = crate::settings::cloud_folders_now(Some(ui.ctx()));
             look::small_menu(ui, ph::CLOUD_UP, t("Save to the cloud"), t("OneDrive, Dropbox, Google Drive or iCloud folders on this computer"), |ui| {
                 if clouds.is_empty() {
                     ui.label(RichText::new(t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(TEXT_DIM));

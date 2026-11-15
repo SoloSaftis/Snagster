@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "همان تصویر همزمان به همه سرویس‌ها می‌رود و فقط یک بار رمزگذاری می‌شود. با اندازه، نرخ فریم و نرخ بیتی فرستاده می‌شود که همه آن‌ها می‌پذیرند.",
   "Stream to this service too": "به این سرویس هم پخش شود",
   "Remove this service and its saved key": "حذف این سرویس و کلید ذخیره‌شده آن",
-  "Add a service": "افزودن سرویس"
+  "Add a service": "افزودن سرویس",
+  "Exporting {n} pictures to {folder}...": "در حال خروجی گرفتن {n} تصویر در {folder}...",
+  "Working on it...": "در حال انجام...",
+  "Couldn't make the picture.": "تصویر ساخته نشد.",
+  "Opening {path}...": "در حال باز کردن {path}...",
+  "Video encoder": "کدگذار ویدیو",
+  "Automatic (recommended)": "خودکار (توصیه‌شده)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "حالت خودکار از بهترین کدگذاری که کار می‌کند استفاده می‌کند. اگر کدگذاری که انتخاب می‌کنید نتواند شروع شود یا از کار بیفتد، Snagster به بهترین کدگذار کارآمد می‌رود و این را اعلام می‌کند.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "کدگذار انتخاب‌شده اکنون روی این رایانه نیست، بنابراین از حالت خودکار استفاده می‌شود.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "کدگذار انتخاب‌شده {pick} نتوانست شروع شود ({error})، بنابراین از {used} استفاده می‌شود.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} از کار افتاد ({error})؛ به {used} تغییر کرد."
  }
 }

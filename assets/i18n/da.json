@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Det samme billede sendes til alle tjenester på én gang og kodes kun én gang. Det sendes i den størrelse, billedhastighed og bithastighed, som alle tjenesterne accepterer.",
   "Stream to this service too": "Stream også til denne tjeneste",
   "Remove this service and its saved key": "Fjern denne tjeneste og dens gemte nøgle",
-  "Add a service": "Tilføj en tjeneste"
+  "Add a service": "Tilføj en tjeneste",
+  "Exporting {n} pictures to {folder}...": "Eksporterer {n} billeder til {folder}...",
+  "Working on it...": "Arbejder på det...",
+  "Couldn't make the picture.": "Kunne ikke lave billedet.",
+  "Opening {path}...": "Åbner {path}...",
+  "Video encoder": "Videokoder",
+  "Automatic (recommended)": "Automatisk (anbefalet)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automatisk bruger den bedste koder, der virker. Hvis den, du vælger, ikke kan starte eller holder op med at virke, skifter Snagster til den bedste, der virker, og siger det.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Den valgte koder findes ikke på denne computer nu, så Automatisk bruges.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Den valgte koder {pick} kunne ikke starte ({error}), så {used} bruges.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} holdt op med at virke ({error}); skiftede til {used}."
  }
 }

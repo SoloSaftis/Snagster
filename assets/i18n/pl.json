@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Ten sam obraz trafia do wszystkich serwisów jednocześnie i jest kodowany tylko raz. Jest wysyłany w rozmiarze, liczbie klatek na sekundę i przepływności, które przyjmują wszystkie.",
   "Stream to this service too": "Transmituj także do tego serwisu",
   "Remove this service and its saved key": "Usuń ten serwis i jego zapisany klucz",
-  "Add a service": "Dodaj serwis"
+  "Add a service": "Dodaj serwis",
+  "Exporting {n} pictures to {folder}...": "Eksportowanie {n} obrazów do {folder}...",
+  "Working on it...": "Trwa praca...",
+  "Couldn't make the picture.": "Nie udało się utworzyć obrazu.",
+  "Opening {path}...": "Otwieranie {path}...",
+  "Video encoder": "Koder wideo",
+  "Automatic (recommended)": "Automatycznie (zalecane)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Tryb automatyczny używa najlepszego działającego kodera. Jeśli wybrany koder nie może się uruchomić lub przestaje działać, Snagster przełącza się na najlepszy działający i informuje o tym.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Wybranego kodera nie ma teraz na tym komputerze, więc używany jest tryb automatyczny.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Nie udało się uruchomić wybranego kodera {pick} ({error}), więc używany jest {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} przestał działać ({error}); przełączono na {used}."
  }
 }

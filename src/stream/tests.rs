@@ -242,7 +242,36 @@ pub(crate) fn fakes(gop: u64, pad: usize) -> Encoders {
             Ok(Box::new(FakeVideo { n: 0, gop, pad }) as Box<dyn VideoEncoder>)
         }),
         audio: Arc::new(|_| Ok(Box::new(FakeAudio::default()) as Box<dyn AudioEncoder>)),
+        fallback: None,
+        pick: String::new(),
+        note: Arc::default(),
     }
+}
+
+/// A fake graphics-chip encoder that stops working after `after` pictures (a driver reset).
+struct Breaks {
+    inner: FakeVideo,
+    after: u64,
+    name: String,
+}
+
+impl VideoEncoder for Breaks {
+    fn encode(&mut self, rgba: &[u8], pts_us: i64, key: bool) -> Result<Vec<VideoPacket>, String> {
+        if self.inner.n >= self.after {
+            return Err("the graphics chip was reset".into());
+        }
+        self.inner.encode(rgba, pts_us, key)
+    }
+    fn finish(&mut self) -> Result<Vec<VideoPacket>, String> {
+        Ok(Vec::new())
+    }
+    fn name(&self) -> EncoderName {
+        EncoderName { name: self.name.clone(), hardware: true }
+    }
+}
+
+fn breaking(after: u64, name: &str) -> Box<dyn VideoEncoder> {
+    Box::new(Breaks { inner: FakeVideo { n: 0, gop: 30, pad: 0 }, after, name: name.into() })
 }
 
 const KEY: &str = "live_secret_4242";
@@ -558,6 +587,9 @@ fn bgra_sources_are_turned_into_rgba() {
             Ok(Box::new(Spy(sn.clone(), FakeVideo { n: 0, gop: 30, pad: 0 })) as Box<dyn VideoEncoder>)
         }),
         audio: fakes(30, 0).audio,
+        fallback: None,
+        pick: String::new(),
+        note: Arc::default(),
     };
     let s = Streamer::start(config(srv.url(), KEY), src, SoundSource::None, enc).unwrap();
     srv.wait("frames", 15, |c| c.first().is_some_and(|c| c.video.len() >= 2));
@@ -676,4 +708,60 @@ fn the_same_service_twice_and_bad_extra_addresses_are_refused_at_once() {
     cfg.also = vec![custom("ftp://127.0.0.1/also_secret_9".into(), "also_secret_9")];
     let e = Streamer::start(cfg, frames, SoundSource::None, fakes(30, 0)).err().unwrap();
     assert!(e.starts_with("Custom server: ") && !e.contains("also_secret_9"), "{e}");
+}
+
+// ---- an encoder that stops working ----
+
+/// The graphics chip's encoder fails in the middle of a stream (a driver reset, a laptop
+/// switching chips): another encoder takes over at a keyframe and the stream goes on, with a
+/// note saying so. It used to end the stream.
+#[test]
+fn a_failing_encoder_is_replaced_and_the_stream_goes_on() {
+    let srv = Server::start(ServerOpts::default());
+    let (frames, _) = grey();
+    let mut enc = fakes(30, 0);
+    enc.video = Arc::new(|_| Ok(breaking(10, "fake chip")));
+    let asked = Arc::new(Mutex::new(Vec::<Vec<String>>::new()));
+    let a = asked.clone();
+    enc.fallback = Some(Arc::new(move |_c, avoid| {
+        a.lock().unwrap().push(avoid.to_vec());
+        Ok(Box::new(FakeVideo { n: 0, gop: 30, pad: 0 }) as Box<dyn VideoEncoder>)
+    }));
+    let s = Streamer::start(config(srv.url(), KEY), frames, SoundSource::None, enc).unwrap();
+    srv.wait("frames after the switch", 15, |c| c.first().is_some_and(|c| c.video.len() >= 30));
+    let st = s.stats();
+    assert_eq!(st.state, State::Live, "{st:?}");
+    assert_eq!(st.video_encoder.as_ref().map(|e| e.name.as_str()), Some("fake video"));
+    assert_eq!(st.notice.as_deref(), Some("fake chip stopped working (the graphics chip was reset); switched to fake video."));
+    assert!(st.error.is_none(), "{:?}", st.error);
+    assert_eq!(*asked.lock().unwrap(), vec![vec!["fake chip".to_string()]], "asked once, avoiding the one that failed");
+    drop(s);
+    // The new encoder started with a keyframe; its frames follow the old ones on the same clock.
+    let g = srv.conns.lock().unwrap();
+    let keys = g[0].video.iter().filter(|v| v.1[0] == 0x17 && v.1[1] == 1).count();
+    assert!(keys >= 2, "a keyframe from each encoder: {keys}");
+    let ts: Vec<u32> = g[0].video[1..].iter().filter(|v| v.1[1] == 1).map(|v| v.0).collect();
+    assert!(ts.windows(2).all(|w| w[1] > w[0]), "timestamps keep going up: {ts:?}");
+}
+
+/// Without another encoder (or when every one fails) the stream stops and says why, as before;
+/// it never tries for ever.
+#[test]
+fn without_a_working_encoder_the_stream_stops_and_says_why() {
+    let (frames, _) = grey();
+    let srv = Server::start(ServerOpts::default());
+    let mut enc = fakes(30, 0);
+    enc.video = Arc::new(|_| Ok(breaking(5, "fake chip")));
+    let n = Arc::new(AtomicU64::new(0));
+    let k = n.clone();
+    // Every replacement fails at once too.
+    enc.fallback = Some(Arc::new(move |_c, _avoid| Ok(breaking(0, &format!("fake chip {}", k.fetch_add(1, Ordering::SeqCst))))));
+    let s = Streamer::start(config(srv.url(), KEY), frames, SoundSource::None, enc).unwrap();
+    let t = Instant::now();
+    while s.stats().error.is_none() && t.elapsed() < Duration::from_secs(15) {
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    let st = s.stop();
+    assert!(st.error.as_deref().is_some_and(|e| e.starts_with("Video encoder: ")), "{st:?}");
+    assert_eq!(n.load(Ordering::SeqCst), 3, "three switches at most");
 }

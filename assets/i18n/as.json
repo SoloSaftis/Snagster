@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "একেটা ছবিয়েই একেলগে প্ৰতিটো সেৱালৈ যায়, এবাৰহে এনক’ড কৰা হয়। আটাইবোৰে গ্ৰহণ কৰা আকাৰ, ফ্ৰেম ৰেট আৰু বিটৰেটত ইয়াক পঠোৱা হয়।",
   "Stream to this service too": "এই সেৱালৈও ষ্ট্ৰীম কৰক",
   "Remove this service and its saved key": "এই সেৱা আৰু ইয়াৰ সংৰক্ষিত কী আঁতৰাওক",
-  "Add a service": "এটা সেৱা যোগ কৰক"
+  "Add a service": "এটা সেৱা যোগ কৰক",
+  "Exporting {n} pictures to {folder}...": "{n}খন ছবি {folder}লৈ এক্সপৰ্ট কৰি আছে...",
+  "Working on it...": "কাম চলি আছে...",
+  "Couldn't make the picture.": "ছবিখন বনাব পৰা নগ'ল।",
+  "Opening {path}...": "{path} খুলি আছে...",
+  "Video encoder": "ভিডিঅ' এনকোডাৰ",
+  "Automatic (recommended)": "স্বয়ংক্ৰিয় (পৰামৰ্শিত)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "স্বয়ংক্ৰিয়ই কাম কৰা আটাইতকৈ ভাল এনকোডাৰটো ব্যৱহাৰ কৰে। আপুনি বাছনি কৰাটো আৰম্ভ হ'ব নোৱাৰিলে বা কাম কৰাটো বন্ধ হ'লে, Snagster-এ কাম কৰা আটাইতকৈ ভালটোলৈ সলনি কৰে আৰু সেই কথা জনায়।",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "বাছনি কৰা এনকোডাৰটো এতিয়া এই কম্পিউটাৰত নাই, গতিকে স্বয়ংক্ৰিয় ব্যৱহাৰ কৰা হৈছে।",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "বাছনি কৰা এনকোডাৰ {pick} আৰম্ভ হ'ব নোৱাৰিলে ({error}), গতিকে {used} ব্যৱহাৰ কৰা হৈছে।",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed}-এ কাম কৰা বন্ধ কৰিলে ({error}); {used}লৈ সলনি কৰা হ'ল।"
  }
 }

@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Бер үк рәсем бөтен хезмәтләргә бер үк вакытта бара һәм бер генә тапкыр кодлана. Ул барысы да кабул итә торган зурлыкта, кадр ешлыгында һәм битрейтта җибәрелә.",
   "Stream to this service too": "Бу хезмәткә дә трансляцияләү",
   "Remove this service and its saved key": "Бу хезмәтне һәм аның сакланган ачкычын бетерү",
-  "Add a service": "Хезмәт өстәү"
+  "Add a service": "Хезмәт өстәү",
+  "Exporting {n} pictures to {folder}...": "{n} рәсем {folder} эченә экспортлана...",
+  "Working on it...": "Эшләнә...",
+  "Couldn't make the picture.": "Рәсемне ясап булмады.",
+  "Opening {path}...": "{path} ачыла...",
+  "Video encoder": "Видео кодлаучысы",
+  "Automatic (recommended)": "Автомат (тәкъдим ителә)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Автомат эшли торган иң яхшы кодлаучыны куллана. Сез сайлаганы башлана алмаса яки эшләүдән туктаса, Snagster эшли торган иң яхшысына күчә һәм бу хакта әйтә.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Сайланган кодлаучы хәзер бу компьютерда юк, шуңа күрә Автомат кулланыла.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Сайланган {pick} кодлаучысы башлана алмады ({error}), шуңа күрә {used} кулланыла.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} эшләүдән туктады ({error}); {used} кодлаучысына күчелде."
  }
 }

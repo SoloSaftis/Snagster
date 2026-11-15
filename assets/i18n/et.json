@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Sama pilt läheb korraga kõigisse teenustesse ja see kodeeritakse ainult üks kord. See saadetakse sellise suuruse, kaadrisageduse ja bitikiirusega, mida kõik teenused vastu võtavad.",
   "Stream to this service too": "Voogedasta ka sellesse teenusesse",
   "Remove this service and its saved key": "Eemalda see teenus ja selle salvestatud võti",
-  "Add a service": "Lisa teenus"
+  "Add a service": "Lisa teenus",
+  "Exporting {n} pictures to {folder}...": "Ekspordin {n} pilti kausta {folder}...",
+  "Working on it...": "Töötan selle kallal...",
+  "Couldn't make the picture.": "Pilti ei saanud luua.",
+  "Opening {path}...": "Avan {path}...",
+  "Video encoder": "Videokodeerija",
+  "Automatic (recommended)": "Automaatne (soovitatav)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automaatne kasutab parimat töötavat kodeerijat. Kui valitud kodeerija ei käivitu või lakkab töötamast, lülitub Snagster parimale töötavale ja annab sellest teada.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Valitud kodeerijat praegu selles arvutis pole, seega kasutatakse automaatset.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Valitud kodeerija {pick} ei käivitunud ({error}), seega kasutatakse kodeerijat {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} lakkas töötamast ({error}); lülitati ümber kodeerijale {used}."
  }
 }

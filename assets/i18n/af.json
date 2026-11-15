@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Dieselfde beeld gaan gelyktydig na elke diens en word net een keer geënkodeer. Dit word gestuur teen die grootte, raamtempo en bitsnelheid wat almal aanvaar.",
   "Stream to this service too": "Stroom ook na hierdie diens",
   "Remove this service and its saved key": "Verwyder hierdie diens en sy gestoorde sleutel",
-  "Add a service": "Voeg ’n diens by"
+  "Add a service": "Voeg ’n diens by",
+  "Exporting {n} pictures to {folder}...": "Voer {n} prente uit na {folder}...",
+  "Working on it...": "Besig daarmee...",
+  "Couldn't make the picture.": "Kon nie die prent maak nie.",
+  "Opening {path}...": "Maak {path} oop...",
+  "Video encoder": "Video-enkodeerder",
+  "Automatic (recommended)": "Outomaties (aanbeveel)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Outomaties gebruik die beste enkodeerder wat werk. As die een wat jy kies nie kan begin nie of ophou werk, skakel Snagster oor na die beste een wat werk en sê so.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Die gekose enkodeerder is nie nou op hierdie rekenaar nie, dus word Outomaties gebruik.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Die gekose enkodeerder {pick} kon nie begin nie ({error}), dus word {used} gebruik.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} het opgehou werk ({error}); oorgeskakel na {used}."
  }
 }

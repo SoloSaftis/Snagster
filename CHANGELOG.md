@@ -6,6 +6,19 @@ What changed for people using Snagster, per version. Developer details are in `D
 
 New:
 
+- **Choose the video encoder**: Settings > Recording or Streaming > "Video encoder" lists the
+  encoders this computer has (Intel Quick Sync, NVIDIA, AMD, Apple's media engine, VA-API,
+  software). *Automatic* stays the default. Choosing one that can't start never stops a
+  recording or stream: Snagster uses the best one that works and says so.
+- **A stream survives its encoder failing**: when the graphics chip's encoder stops working in
+  the middle of a stream (a driver reset, a laptop switching chips), another encoder takes over
+  within a frame and the stream goes on, instead of ending.
+- **More responsive**: exporting several pictures, Word/PDF/web guides, combining pictures,
+  templates, opening and importing files, Print/Email/"Open in another program" and the
+  Recycle Bin now work in the background, so the window never stops answering ("Not
+  responding") while they run. The Share tab no longer checks the cloud folders on every frame
+  (a disconnected network drive could freeze it), "New from template" no longer redraws every
+  picture while the menu is open, and "Start when Windows starts" no longer runs `reg.exe`.
 - **Multistreaming**: go live on several services at once (say Twitch and YouTube) from one
   encode. Settings > Streaming > "Also stream to" takes up to four more services, each with its
   own server and stream key (kept as safely as the main key). The picture is sent at the size,

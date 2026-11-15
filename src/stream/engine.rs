@@ -130,21 +130,54 @@ fn capture_feed(c: crate::audio::Capture) -> AudioFeed {
 
 pub type VideoFactory = Arc<dyn Fn(&VideoConfig) -> Result<Box<dyn VideoEncoder>, String> + Send + Sync>;
 pub type AudioFactory = Arc<dyn Fn(u32) -> Result<Box<dyn AudioEncoder>, String> + Send + Sync>;
+/// Another encoder, any but those named (they failed while streaming).
+pub type FallbackFactory = Arc<dyn Fn(&VideoConfig, &[String]) -> Result<Box<dyn VideoEncoder>, String> + Send + Sync>;
 
 /// How encoders are made (the system's, or fakes in tests).
 #[derive(Clone)]
 pub struct Encoders {
     pub video: VideoFactory,
     pub audio: AudioFactory,
+    /// When the video encoder fails while streaming: another one, so the stream goes on.
+    pub fallback: Option<FallbackFactory>,
     /// These are the system's encoders, so a zero-copy source may open its own on its device
     /// (`with_surfaces`); fakes in the tests take pictures from memory.
     pub zero_copy: bool,
+    /// The encoder the person chose ("" automatic).
+    pub pick: String,
+    /// Set by `video` when the pick couldn't start and another was used (for the status line).
+    pub note: Arc<Mutex<Option<String>>>,
 }
 
 impl Encoders {
     /// This computer's encoders (graphics chip first, then software).
     pub fn system() -> Encoders {
-        Encoders { video: Arc::new(crate::encode::open_video), audio: Arc::new(crate::encode::open_audio), zero_copy: true }
+        Encoders::system_picked("")
+    }
+
+    /// This computer's encoders, `pick` first ("" automatic; see `encode::open_video_picked`).
+    pub fn system_picked(pick: &str) -> Encoders {
+        let note: Arc<Mutex<Option<String>>> = Arc::default();
+        let (n, p) = (note.clone(), pick.trim().to_string());
+        Encoders {
+            video: Arc::new(move |c: &VideoConfig| {
+                let (e, why) = crate::encode::open_video_picked(c, &p)?;
+                if let Ok(mut g) = n.lock() {
+                    *g = why;
+                }
+                Ok(e)
+            }),
+            audio: Arc::new(crate::encode::open_audio),
+            fallback: Some(Arc::new(crate::encode::open_video_avoiding)),
+            zero_copy: true,
+            pick: pick.trim().to_string(),
+            note,
+        }
+    }
+
+    /// What `video` noted about the pick, once.
+    fn take_note(&self) -> Option<String> {
+        self.note.lock().ok().and_then(|mut g| g.take())
     }
 
     /// Video encoders on `dev` for pictures in graphics memory, starting with `first`, already
@@ -152,6 +185,7 @@ impl Encoders {
     #[cfg(zero_copy)]
     pub fn with_surfaces(&self, dev: crate::encode::SurfaceDevice, first: Box<dyn VideoEncoder>, cfg: VideoConfig) -> Encoders {
         let first = Mutex::new(Some(first));
+        let (d, pick) = (dev.clone(), self.pick.clone());
         Encoders {
             video: Arc::new(move |c: &VideoConfig| {
                 if c == &cfg
@@ -159,10 +193,14 @@ impl Encoders {
                 {
                     return Ok(e);
                 }
-                crate::encode::open_video_for_surfaces(c, &dev)
+                crate::encode::open_video_for_surfaces(c, &d, &pick, &[])
             }),
             audio: self.audio.clone(),
+            // Another graphics-chip encoder on the same device (the pictures are there).
+            fallback: Some(Arc::new(move |c: &VideoConfig, avoid: &[String]| crate::encode::open_video_for_surfaces(c, &dev, "", avoid))),
             zero_copy: false,
+            pick: self.pick.clone(),
+            note: self.note.clone(),
         }
     }
 }
@@ -621,6 +659,8 @@ impl Streamer {
         let (w, h, fps) = (vcfg.width, vcfg.height, vcfg.fps);
         let venc = (encoders.video)(&vcfg).map_err(mask_all)?;
         let shared = Arc::new(Shared { outputs, ..Default::default() });
+        // The chosen encoder couldn't start and another one is used: say so.
+        let mut notes: Vec<String> = encoders.take_note().into_iter().collect();
         let mut sound = sound.into_feed();
         let mut aenc = None;
         if sound.is_some() {
@@ -628,9 +668,12 @@ impl Streamer {
                 Ok(a) => aenc = Some(a),
                 Err(e) => {
                     sound = None;
-                    *shared.notice.lock().unwrap_or_else(|p| p.into_inner()) = Some(format!("Streaming without sound: {e}"));
+                    notes.push(format!("Streaming without sound: {e}"));
                 }
             }
+        }
+        if !notes.is_empty() {
+            *shared.notice.lock().unwrap_or_else(|p| p.into_inner()) = Some(notes.join(" "));
         }
         *shared.names.lock().unwrap_or_else(|p| p.into_inner()) = (Some(venc.name()), aenc.as_ref().map(|a| a.name()));
         let asc = aenc.as_ref().map(|a| a.audio_specific_config());
@@ -641,7 +684,8 @@ impl Streamer {
         let mut threads = Vec::new();
         let hook = cfg.on_packet.clone();
         let sh = shared.clone();
-        threads.push(spawn("snagster-stream-video", move || video_thread(sh, frames, venc, w, h, fps, started, pacer, hook)).map_err(|e| e.to_string())?);
+        let swap = Swap { cfg: vcfg.clone(), fallback: encoders.fallback.clone() };
+        threads.push(spawn("snagster-stream-video", move || video_thread(sh, frames, venc, swap, started, pacer, hook)).map_err(|e| e.to_string())?);
         if let (Some(feed), Some(enc)) = (sound, aenc) {
             let sh = shared.clone();
             let hook = cfg.on_packet.clone();
@@ -794,8 +838,34 @@ fn plan_slots(now_us: u64, frame_us: f64, next: u64, catch_up: u64) -> SlotPlan 
     SlotPlan { wait_us: None, emit: first..newest + 1, skipped: first - next }
 }
 
-fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEncoder>, w: u32, h: u32, fps: u32, started: Instant, mut pacer: crate::video::Pacer, hook: Option<PacketHook>) {
+/// How the picture thread replaces a video encoder that stops working.
+struct Swap {
+    cfg: VideoConfig,
+    fallback: Option<FallbackFactory>,
+}
+
+/// At most this many encoder switches in one stream: past that the stream stops, rather than
+/// trying encoders that keep failing for ever.
+const MAX_SWITCHES: usize = 3;
+
+impl Swap {
+    /// Another encoder after `failed` stopped working with `why`: the new one and the note for
+    /// the status line, or None when there is none (or too many have failed already).
+    fn replace(&self, avoid: &mut Vec<String>, failed: &str, why: &str) -> Option<(Box<dyn VideoEncoder>, String)> {
+        avoid.push(failed.to_string());
+        if avoid.len() > MAX_SWITCHES {
+            return None;
+        }
+        let e = (self.fallback.as_ref()?)(&self.cfg, avoid).ok()?;
+        let note = crate::encode::switched_note(failed, why, &e.name().name);
+        Some((e, note))
+    }
+}
+
+fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEncoder>, swap: Swap, started: Instant, mut pacer: crate::video::Pacer, hook: Option<PacketHook>) {
     crate::video::timely_thread();
+    let (w, h, fps) = (swap.cfg.width, swap.cfg.height, swap.cfg.fps);
+    let mut avoid: Vec<String> = Vec::new();
     let mut pic = frames.picture(w, h);
     let frame_us = 1_000_000.0 / fps as f64;
     // The next frame slot to fill: slot n is due at `started + n frames` (fixed deadlines, so
@@ -847,6 +917,19 @@ fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEnco
                     ps.into_iter().for_each(|p| queue_packet(&sh, &hook, Packet::Video(p)))
                 }
                 Err(e) => {
+                    // Another encoder takes over (from the next keyframe); the stream goes on.
+                    let failed = enc.name().name;
+                    if let Some((new, note)) = swap.replace(&mut avoid, &failed, &e) {
+                        enc = new;
+                        if let Ok(mut n) = sh.names.lock() {
+                            n.0 = Some(enc.name());
+                        }
+                        if let Ok(mut n) = sh.notice.lock() {
+                            *n = Some(note);
+                        }
+                        sh.want_key.store(true, Ordering::Relaxed);
+                        continue;
+                    }
                     sh.set_error(format!("Video encoder: {e}"));
                     sh.stop.store(true, Ordering::Relaxed);
                     break 'frames;
@@ -968,6 +1051,14 @@ impl Session {
             Packet::Audio(a) => vec![Out { video: false, frame: false, ts: self.ts(a.pts_us), body: flv::audio_frame(&a.data) }],
             Packet::Video(v) => {
                 let mut out = Vec::new();
+                // A keyframe with other parameter sets (another encoder took over): the player
+                // needs the new decoder configuration before it.
+                if self.header_sent && v.keyframe {
+                    let found = ParamSets::find(self.codec, &v.data);
+                    if found.complete(self.codec) && found != self.params {
+                        self.header_sent = false;
+                    }
+                }
                 if !self.header_sent {
                     if !v.keyframe {
                         return out;
@@ -1237,6 +1328,21 @@ mod tests {
         assert_eq!(p.len(), 1);
         assert_eq!(p[0].ts, 556);
         assert_eq!(s.last_ts, 556);
+    }
+
+    /// After another encoder took over, its first keyframe has other parameter sets: the
+    /// player gets the new decoder configuration first. The same ones again send no header.
+    #[test]
+    fn a_keyframe_with_new_parameter_sets_brings_a_new_header() {
+        let mut s = Session::new(Codec::H264, ParamSets::default());
+        assert_eq!(s.messages(&vid(0, true)).len(), 2, "header and frame");
+        assert_eq!(s.messages(&vid(33, true)).len(), 1, "same parameter sets: just the frame");
+        let other = vec![0, 0, 0, 1, 0x67, 0x64, 0x00, 0x28, 0, 0, 0, 1, 0x68, 0xEE, 0, 0, 0, 1, 0x65, 0xAB];
+        let m = s.messages(&Packet::Video(VideoPacket { data: other, pts_us: 66_000, dts_us: 66_000, keyframe: true }));
+        assert_eq!(m.len(), 2, "a new header, then the frame");
+        assert_eq!(&m[0].body[..2], &[0x17, 0]);
+        assert_eq!(&m[0].body[5..9], &[1, 0x64, 0x00, 0x28], "the new SPS's profile and level");
+        assert_eq!(s.messages(&vid(99, false)).len(), 1);
     }
 
     #[test]

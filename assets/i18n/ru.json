@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Одна и та же картинка идёт во все сервисы одновременно и кодируется только один раз. Она отправляется с размером, частотой кадров и битрейтом, которые принимают все сервисы.",
   "Stream to this service too": "Транслировать и в этот сервис",
   "Remove this service and its saved key": "Удалить этот сервис и его сохранённый ключ",
-  "Add a service": "Добавить сервис"
+  "Add a service": "Добавить сервис",
+  "Exporting {n} pictures to {folder}...": "Экспорт {n} изображений в {folder}...",
+  "Working on it...": "Выполняется...",
+  "Couldn't make the picture.": "Не удалось создать изображение.",
+  "Opening {path}...": "Открытие {path}...",
+  "Video encoder": "Видеокодировщик",
+  "Automatic (recommended)": "Автоматически (рекомендуется)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Автоматический режим использует лучший работающий кодировщик. Если выбранный вами не может запуститься или перестаёт работать, Snagster переключается на лучший работающий и сообщает об этом.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Выбранного кодировщика сейчас нет на этом компьютере, поэтому используется автоматический выбор.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Не удалось запустить выбранный кодировщик {pick} ({error}), поэтому используется {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} перестал работать ({error}); переключено на {used}."
  }
 }

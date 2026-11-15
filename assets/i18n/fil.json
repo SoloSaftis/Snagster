@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Ang parehong larawan ay sabay-sabay na pupunta sa bawat serbisyo, at isang beses lang ine-encode. Ipinapadala ito sa laki, frame rate at bitrate na tinatanggap ng lahat ng ito.",
   "Stream to this service too": "Mag-stream din sa serbisyong ito",
   "Remove this service and its saved key": "Alisin ang serbisyong ito at ang naka-save nitong key",
-  "Add a service": "Magdagdag ng serbisyo"
+  "Add a service": "Magdagdag ng serbisyo",
+  "Exporting {n} pictures to {folder}...": "Ine-export ang {n} larawan sa {folder}...",
+  "Working on it...": "Ginagawa na...",
+  "Couldn't make the picture.": "Hindi magawa ang larawan.",
+  "Opening {path}...": "Binubuksan ang {path}...",
+  "Video encoder": "Video encoder",
+  "Automatic (recommended)": "Awtomatiko (inirerekomenda)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Ginagamit ng Awtomatiko ang pinakamahusay na encoder na gumagana. Kung hindi makapagsimula o huminto sa paggana ang pinili mo, lilipat ang Snagster sa pinakamahusay na gumagana at sasabihin ito.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Wala ngayon sa computer na ito ang napiling encoder, kaya Awtomatiko ang ginagamit.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Hindi makapagsimula ang napiling encoder na {pick} ({error}), kaya {used} ang ginagamit.",
+  "{failed} stopped working ({error}); switched to {used}.": "Huminto sa paggana ang {failed} ({error}); lumipat sa {used}."
  }
 }

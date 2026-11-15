@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "同じ映像を一度だけエンコードし、すべてのサービスへ同時に送ります。すべてのサービスが受け付けるサイズ、フレームレート、ビットレートで送信されます。",
   "Stream to this service too": "このサービスにも配信する",
   "Remove this service and its saved key": "このサービスと保存されたキーを削除",
-  "Add a service": "サービスを追加"
+  "Add a service": "サービスを追加",
+  "Exporting {n} pictures to {folder}...": "{n} 枚の画像を {folder} にエクスポートしています...",
+  "Working on it...": "処理しています...",
+  "Couldn't make the picture.": "画像を作れませんでした。",
+  "Opening {path}...": "{path} を開いています...",
+  "Video encoder": "ビデオエンコーダー",
+  "Automatic (recommended)": "自動（推奨）",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "自動では、動作する最適なエンコーダーを使います。選んだエンコーダーが起動できないか動作しなくなった場合、Snagster は動作する最適なものに切り替え、そのことを表示します。",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "選んだエンコーダーは現在このコンピューターにないため、自動を使います。",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "選んだエンコーダー {pick} を起動できなかったため（{error}）、{used} を使います。",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} が動作しなくなりました（{error}）。{used} に切り替えました。"
  }
 }

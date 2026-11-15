@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "La mateixa imatge va a tots els serveis alhora i es codifica una sola vegada. S’envia amb la mida, la freqüència de fotogrames i la taxa de bits que accepten tots.",
   "Stream to this service too": "Retransmet també a aquest servei",
   "Remove this service and its saved key": "Elimina aquest servei i la seva clau desada",
-  "Add a service": "Afegeix un servei"
+  "Add a service": "Afegeix un servei",
+  "Exporting {n} pictures to {folder}...": "Exportant {n} imatges a {folder}...",
+  "Working on it...": "S'hi està treballant...",
+  "Couldn't make the picture.": "No s'ha pogut fer la imatge.",
+  "Opening {path}...": "Obrint {path}...",
+  "Video encoder": "Codificador de vídeo",
+  "Automatic (recommended)": "Automàtic (recomanat)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automàtic usa el millor codificador que funciona. Si el que trieu no es pot iniciar o deixa de funcionar, Snagster canvia al millor que funciona i ho indica.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "El codificador triat no és en aquest ordinador ara, així que s'usa Automàtic.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "El codificador triat {pick} no s'ha pogut iniciar ({error}), així que s'usa {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} ha deixat de funcionar ({error}); s'ha canviat a {used}."
  }
 }

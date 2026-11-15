@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Ugyanaz a kép egyszerre megy minden szolgáltatásra, és csak egyszer kódolódik. Akkora méretben, képkockasebességgel és bitsebességgel küldjük, amit mindegyik elfogad.",
   "Stream to this service too": "Közvetítés erre a szolgáltatásra is",
   "Remove this service and its saved key": "A szolgáltatás és a mentett kulcsa eltávolítása",
-  "Add a service": "Szolgáltatás hozzáadása"
+  "Add a service": "Szolgáltatás hozzáadása",
+  "Exporting {n} pictures to {folder}...": "{n} kép exportálása ide: {folder}...",
+  "Working on it...": "Folyamatban...",
+  "Couldn't make the picture.": "Nem sikerült elkészíteni a képet.",
+  "Opening {path}...": "Megnyitás: {path}...",
+  "Video encoder": "Videókódoló",
+  "Automatic (recommended)": "Automatikus (ajánlott)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Az Automatikus a legjobb működő kódolót használja. Ha a választott nem tud elindulni vagy leáll, a Snagster átvált a legjobb működőre, és jelzi ezt.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "A választott kódoló most nincs ezen a számítógépen, ezért az Automatikus van használatban.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "A választott kódoló ({pick}) nem tudott elindulni ({error}), ezért a(z) {used} van használatban.",
+  "{failed} stopped working ({error}); switched to {used}.": "A(z) {failed} leállt ({error}); átváltás erre: {used}."
  }
 }

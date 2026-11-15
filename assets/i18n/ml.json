@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "ഒരേ ചിത്രം ഒരേ സമയം എല്ലാ സേവനങ്ങളിലേക്കും പോകുന്നു, ഒരിക്കൽ മാത്രം എൻകോഡ് ചെയ്യുന്നു. എല്ലാ സേവനങ്ങളും സ്വീകരിക്കുന്ന വലുപ്പത്തിലും ഫ്രെയിം റേറ്റിലും ബിറ്റ്റേറ്റിലുമാണ് ഇത് അയയ്ക്കുന്നത്.",
   "Stream to this service too": "ഈ സേവനത്തിലേക്കും സ്ട്രീം ചെയ്യുക",
   "Remove this service and its saved key": "ഈ സേവനവും അതിന്റെ സംരക്ഷിച്ച കീയും നീക്കം ചെയ്യുക",
-  "Add a service": "ഒരു സേവനം ചേർക്കുക"
+  "Add a service": "ഒരു സേവനം ചേർക്കുക",
+  "Exporting {n} pictures to {folder}...": "{n} ചിത്രങ്ങൾ {folder} ലേക്ക് എക്സ്പോർട്ട് ചെയ്യുന്നു...",
+  "Working on it...": "ജോലി നടക്കുന്നു...",
+  "Couldn't make the picture.": "ചിത്രം ഉണ്ടാക്കാനായില്ല.",
+  "Opening {path}...": "{path} തുറക്കുന്നു...",
+  "Video encoder": "വീഡിയോ എൻകോഡർ",
+  "Automatic (recommended)": "സ്വയമേവ (ശുപാർശ ചെയ്യുന്നു)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "സ്വയമേവ, പ്രവർത്തിക്കുന്ന ഏറ്റവും മികച്ച എൻകോഡർ ഉപയോഗിക്കുന്നു. നിങ്ങൾ തിരഞ്ഞെടുത്തത് ആരംഭിക്കാൻ കഴിയാതിരിക്കുകയോ പ്രവർത്തനം നിർത്തുകയോ ചെയ്താൽ, Snagster പ്രവർത്തിക്കുന്ന ഏറ്റവും മികച്ചതിലേക്ക് മാറുകയും അത് അറിയിക്കുകയും ചെയ്യും.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "തിരഞ്ഞെടുത്ത എൻകോഡർ ഇപ്പോൾ ഈ കമ്പ്യൂട്ടറിൽ ഇല്ല, അതിനാൽ സ്വയമേവ ഉപയോഗിക്കുന്നു.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "തിരഞ്ഞെടുത്ത എൻകോഡർ {pick} ആരംഭിക്കാനായില്ല ({error}), അതിനാൽ {used} ഉപയോഗിക്കുന്നു.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} പ്രവർത്തനം നിർത്തി ({error}); {used}-ലേക്ക് മാറി."
  }
 }

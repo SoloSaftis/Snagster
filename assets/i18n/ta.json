@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "ஒரே படம் ஒரே நேரத்தில் எல்லா சேவைகளுக்கும் செல்கிறது, ஒருமுறை மட்டுமே என்கோட் செய்யப்படுகிறது. எல்லா சேவைகளும் ஏற்கும் அளவு, ஃப்ரேம் வீதம் மற்றும் பிட்ரேட்டில் அது அனுப்பப்படுகிறது.",
   "Stream to this service too": "இந்தச் சேவையிலும் ஸ்ட்ரீம் செய்",
   "Remove this service and its saved key": "இந்தச் சேவையையும் சேமித்த விசையையும் அகற்று",
-  "Add a service": "சேவையைச் சேர்"
+  "Add a service": "சேவையைச் சேர்",
+  "Exporting {n} pictures to {folder}...": "{n} படங்களை {folder} இல் ஏற்றுமதி செய்கிறது...",
+  "Working on it...": "வேலை நடக்கிறது...",
+  "Couldn't make the picture.": "படத்தை உருவாக்க முடியவில்லை.",
+  "Opening {path}...": "{path} ஐத் திறக்கிறது...",
+  "Video encoder": "வீடியோ குறியாக்கி",
+  "Automatic (recommended)": "தானியங்கி (பரிந்துரைக்கப்படுகிறது)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "தானியங்கி, செயல்படும் சிறந்த குறியாக்கியைப் பயன்படுத்தும். நீங்கள் தேர்ந்தெடுத்தது தொடங்க முடியாவிட்டால் அல்லது செயல்படுவதை நிறுத்தினால், Snagster செயல்படும் சிறந்ததற்கு மாறி, அதைத் தெரிவிக்கும்.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "தேர்ந்தெடுத்த குறியாக்கி இப்போது இந்தக் கணினியில் இல்லை, எனவே தானியங்கி பயன்படுத்தப்படுகிறது.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "தேர்ந்தெடுத்த குறியாக்கி {pick} தொடங்க முடியவில்லை ({error}), எனவே {used} பயன்படுத்தப்படுகிறது.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} செயல்படுவதை நிறுத்தியது ({error}); {used}க்கு மாற்றப்பட்டது."
  }
 }

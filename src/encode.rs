@@ -172,18 +172,39 @@ pub fn zero_copy_disabled() -> bool {
 /// An encoder that takes `dev`'s surfaces (`VideoEncoder::encode_surface`): on Windows a
 /// graphics-chip Media Foundation encoder given the device through a DXGI device manager; on
 /// macOS VideoToolbox (hardware first). No software fallback: the caller then uses memory.
+///
+/// `pick`: the encoder the person chose ("" automatic): only that one is tried, so a pick
+/// that can't take surfaces (a software encoder on Windows) makes the caller use memory, where
+/// `open_video_picked` falls back and says so. `avoid`: encoders that failed while running.
 #[cfg(zero_copy)]
-pub fn open_video_for_surfaces(cfg: &VideoConfig, dev: &SurfaceDevice) -> Result<Box<dyn VideoEncoder>, String> {
+pub fn open_video_for_surfaces(cfg: &VideoConfig, dev: &SurfaceDevice, pick: &str, avoid: &[String]) -> Result<Box<dyn VideoEncoder>, String> {
     cfg.validate()?;
+    let pick = pick.trim();
     match *dev {
         #[cfg(windows)]
-        SurfaceDevice::D3d11(ref d) => Ok(Box::new(Paced::new(win::open_video_d3d(cfg, d)?, cfg))),
+        SurfaceDevice::D3d11(ref d) => {
+            let want = if pick.is_empty() { win::Want::Not(avoid.to_vec()) } else { win::Want::Only(pick.to_string()) };
+            Ok(Box::new(Paced::new(win::open_video_d3d(cfg, d, &want)?, cfg)))
+        }
         #[cfg(target_os = "macos")]
         SurfaceDevice::CoreVideo => {
-            let e = mac::open_video(cfg, true).or_else(|hw| mac::open_video(cfg, false).map_err(|sw| format!("{hw}; {sw}")))?;
-            Ok(Box::new(Paced::new(e, cfg)))
+            let mut tried = Vec::new();
+            for hardware in [true, false] {
+                match mac::open_video(cfg, hardware) {
+                    Ok(e) if wanted(&e.name().name, pick, avoid) => return Ok(Box::new(Paced::new(e, cfg))),
+                    Ok(e) => tried.push(format!("{}: not wanted", e.name().name)),
+                    Err(e) => tried.push(e),
+                }
+            }
+            Err(tried.join("; "))
         }
     }
+}
+
+/// Whether the encoder `name` may be used: it is the pick (or there is none) and it hasn't
+/// failed already.
+pub fn wanted(name: &str, pick: &str, avoid: &[String]) -> bool {
+    (pick.is_empty() || name == pick) && !avoid.iter().any(|a| a == name)
 }
 
 pub trait AudioEncoder: Send {
@@ -364,6 +385,100 @@ pub fn open_video(cfg: &VideoConfig) -> Result<Box<dyn VideoEncoder>, String> {
     } else {
         format!("No {} encoder could start ({}).", cfg.codec.label(), tried.join("; "))
     })
+}
+
+/// `open_video` with the person's choice: `pick` is an encoder's name as `available` gives it
+/// ("" automatic). A pick that can't start (gone, doesn't make this codec, its driver fails)
+/// never stops the recording or stream: the best encoder that works is used instead, and the
+/// second value says so for the status line.
+pub fn open_video_picked(cfg: &VideoConfig, pick: &str) -> Result<(Box<dyn VideoEncoder>, Option<String>), String> {
+    let pick = pick.trim();
+    if pick.is_empty() {
+        return open_video(cfg).map(|e| (e, None));
+    }
+    match open_named(cfg, pick) {
+        Ok(e) => Ok((e, None)),
+        Err(why) => {
+            let e = open_video(cfg)?;
+            let note = fallback_note(pick, &why, &e.name().name);
+            Ok((e, Some(note)))
+        }
+    }
+}
+
+/// Whether `pick` names a software encoder of this computer (and no graphics-chip one).
+pub fn pick_is_software(pick: &str) -> bool {
+    let pick = pick.trim();
+    if pick.is_empty() {
+        return false;
+    }
+    let here = available();
+    here.iter().any(|(_, n)| n.name == pick && !n.hardware) && !here.iter().any(|(_, n)| n.name == pick && n.hardware)
+}
+
+/// What the status line says when the chosen encoder couldn't start.
+pub fn fallback_note(pick: &str, why: &str, used: &str) -> String {
+    crate::i18n::tf("The chosen encoder {pick} couldn't start ({error}), so {used} is used.", &[("pick", pick), ("error", why), ("used", used)])
+}
+
+/// What the status line says when an encoder stopped working and another took over.
+pub fn switched_note(failed: &str, why: &str, used: &str) -> String {
+    crate::i18n::tf("{failed} stopped working ({error}); switched to {used}.", &[("failed", failed), ("error", why), ("used", used)])
+}
+
+/// The encoder called `name` (as `available` names it), and no other.
+pub fn open_named(cfg: &VideoConfig, name: &str) -> Result<Box<dyn VideoEncoder>, String> {
+    cfg.validate()?;
+    let here = available();
+    if !here.iter().any(|(_, n)| n.name == name) {
+        return Err("it isn't on this computer".into());
+    }
+    if !here.iter().any(|(c, n)| n.name == name && *c == cfg.codec) {
+        return Err(format!("it doesn't make {}", cfg.codec.label()));
+    }
+    let e: Box<dyn VideoEncoder> = if name == soft::NAME {
+        Box::new(soft::OpenH264::open(cfg)?)
+    } else {
+        open_system_named(cfg, name, &here)?
+    };
+    Ok(Box::new(Paced::new(e, cfg)))
+}
+
+#[allow(unused_variables)]
+fn open_system_named(cfg: &VideoConfig, name: &str, here: &[(Codec, EncoderName)]) -> Result<Box<dyn VideoEncoder>, String> {
+    #[cfg(windows)]
+    return win::open_named(cfg, name);
+    #[cfg(target_os = "macos")]
+    {
+        let hardware = here.iter().any(|(_, n)| n.name == name && n.hardware);
+        let e = mac::open_video(cfg, hardware)?;
+        return if e.name().name == name { Ok(e) } else { Err(format!("macOS gave {} instead", e.name().name)) };
+    }
+    #[cfg(target_os = "linux")]
+    return linux::open_video(cfg);
+    #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
+    Err("no system encoders here".into())
+}
+
+/// The best encoder for `cfg` except those named in `avoid` (they failed while running): for
+/// switching encoders without stopping. Each backend's own encoders are skipped by name.
+pub fn open_video_avoiding(cfg: &VideoConfig, avoid: &[String]) -> Result<Box<dyn VideoEncoder>, String> {
+    cfg.validate()?;
+    let mut tried = Vec::new();
+    for b in plan(Os::current(), cfg.codec, cfg.prefer_hardware) {
+        let r = match b {
+            #[cfg(windows)]
+            Backend::MediaFoundationHardware => win::open_avoiding(cfg, true, avoid),
+            #[cfg(windows)]
+            Backend::MediaFoundationSoftware => win::open_avoiding(cfg, false, avoid),
+            _ => open_backend(b, cfg).and_then(|e| if wanted(&e.name().name, "", avoid) { Ok(e) } else { Err("it failed already".into()) }),
+        };
+        match r {
+            Ok(e) => return Ok(Box::new(Paced::new(e, cfg))),
+            Err(e) => tried.push(format!("{}: {e}", b.label())),
+        }
+    }
+    Err(format!("No other {} encoder could start ({}).", cfg.codec.label(), tried.join("; ")))
 }
 
 /// Open one particular backend (no fallback), for `open_video` and tests.
@@ -991,6 +1106,62 @@ mod tests {
 
     pub(crate) fn cfg(w: u32, h: u32) -> VideoConfig {
         VideoConfig { width: w, height: h, fps: 30, bitrate_bps: 2_000_000, keyframe_every_s: 1, codec: Codec::H264, prefer_hardware: false, low_latency: true }
+    }
+
+    /// The person's encoder choice: Snagster's own encoder is on every system, so choosing it
+    /// works everywhere; a choice that isn't there (or doesn't make HEVC) never fails the
+    /// recording: the best encoder that works is used and the note says why.
+    #[test]
+    fn a_chosen_encoder_is_used_and_a_bad_choice_falls_back_with_a_note() {
+        let (e, note) = open_video_picked(&cfg(64, 64), soft::NAME).unwrap();
+        assert_eq!((e.name().name.as_str(), note), (soft::NAME, None));
+        let (e, note) = open_video_picked(&cfg(64, 64), "").unwrap();
+        assert!(note.is_none() && !e.name().name.is_empty(), "automatic says nothing");
+        let (e, note) = open_video_picked(&cfg(64, 64), "  Gone Encoder 9000  ").unwrap();
+        let note = note.expect("the fallback is said");
+        assert_eq!(note, format!("The chosen encoder Gone Encoder 9000 couldn't start (it isn't on this computer), so {} is used.", e.name().name));
+        // OpenH264 makes H.264 only.
+        let hevc = VideoConfig { codec: Codec::Hevc, ..cfg(64, 64) };
+        assert_eq!(open_named(&hevc, soft::NAME).err().unwrap(), "it doesn't make HEVC");
+        assert!(pick_is_software(soft::NAME));
+        assert!(!pick_is_software("") && !pick_is_software("Gone Encoder 9000"));
+        assert!(available().iter().any(|(_, n)| n.name == soft::NAME), "Snagster's own encoder is always offered");
+    }
+
+    /// Every encoder this computer offers opens by its name and is the one asked for, for both
+    /// codecs it makes, and encodes a keyframe. Needs the real graphics chip:
+    /// `cargo test -- --ignored every_offered_encoder`.
+    #[test]
+    #[ignore]
+    fn every_offered_encoder_opens_by_its_name() {
+        for (codec, n) in available() {
+            let c = VideoConfig { width: 640, height: 360, codec, ..cfg(640, 360) };
+            let mut e = open_named(&c, &n.name).unwrap_or_else(|err| panic!("{} ({}): {err}", n.name, codec.label()));
+            assert_eq!(e.name().name, n.name);
+            let mut out = Vec::new();
+            for i in 0..5 {
+                out.extend(e.encode(&vec![90u8; c.rgba_len()], i * c.frame_us(), i == 0).unwrap());
+            }
+            out.extend(e.finish().unwrap());
+            assert!(out.first().is_some_and(|p| p.keyframe), "{}: no keyframe first", n.name);
+            println!("ok  {} {} ({})", codec.label(), n.name, if n.hardware { "graphics chip" } else { "processor" });
+        }
+    }
+
+    #[test]
+    fn switching_encoders_skips_those_that_failed() {
+        assert!(wanted("A", "", &[]));
+        assert!(!wanted("A", "", &["A".to_string()]));
+        assert!(wanted("A", "A", &[]) && !wanted("B", "A", &[]));
+        // Everything here failed already: nothing left, and it says so.
+        let all: Vec<String> = available().into_iter().map(|(_, n)| n.name).collect();
+        let e = open_video_avoiding(&cfg(64, 64), &all).err().expect("every encoder was avoided");
+        assert!(e.starts_with("No other H.264 encoder could start"), "{e}");
+        // With only the processor's encoders left it still works.
+        let hw: Vec<String> = available().into_iter().filter(|(_, n)| n.hardware).map(|(_, n)| n.name).collect();
+        let e = open_video_avoiding(&cfg(64, 64), &hw).unwrap();
+        assert!(!hw.contains(&e.name().name), "{}", e.name().name);
+        assert_eq!(switched_note("Chip", "reset", "OpenH264"), "Chip stopped working (reset); switched to OpenH264.");
     }
 
     #[test]

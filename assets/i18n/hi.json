@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "एक ही तस्वीर एक साथ हर सेवा पर जाती है और सिर्फ़ एक बार एनकोड होती है। इसे उस आकार, फ़्रेम रेट और बिटरेट पर भेजा जाता है जिसे सभी सेवाएँ लेती हैं।",
   "Stream to this service too": "इस सेवा पर भी स्ट्रीम करें",
   "Remove this service and its saved key": "यह सेवा और इसकी सहेजी गई की हटाएँ",
-  "Add a service": "सेवा जोड़ें"
+  "Add a service": "सेवा जोड़ें",
+  "Exporting {n} pictures to {folder}...": "{n} चित्र {folder} में निर्यात हो रहे हैं...",
+  "Working on it...": "काम चल रहा है...",
+  "Couldn't make the picture.": "चित्र नहीं बन सका।",
+  "Opening {path}...": "{path} खोला जा रहा है...",
+  "Video encoder": "वीडियो एन्कोडर",
+  "Automatic (recommended)": "स्वचालित (अनुशंसित)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "स्वचालित वह सबसे अच्छा एन्कोडर उपयोग करता है जो काम करता है। अगर आपका चुना हुआ शुरू नहीं हो पाता या काम करना बंद कर देता है, तो Snagster काम करने वाले सबसे अच्छे पर बदल जाता है और यह बताता है।",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "चुना गया एन्कोडर अभी इस कंप्यूटर पर नहीं है, इसलिए स्वचालित उपयोग हो रहा है।",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "चुना गया एन्कोडर {pick} शुरू नहीं हो सका ({error}), इसलिए {used} उपयोग हो रहा है।",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} ने काम करना बंद कर दिया ({error}); {used} पर बदला गया।"
  }
 }

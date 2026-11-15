@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.",
   "Stream to this service too": "Stream to this service too",
   "Remove this service and its saved key": "Remove this service and its saved key",
-  "Add a service": "Add a service"
+  "Add a service": "Add a service",
+  "Exporting {n} pictures to {folder}...": "Exporting {n} pictures to {folder}...",
+  "Working on it...": "Working on it...",
+  "Couldn't make the picture.": "Couldn't make the picture.",
+  "Opening {path}...": "Opening {path}...",
+  "Video encoder": "Video encoder",
+  "Automatic (recommended)": "Automatic (recommended)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "The chosen encoder isn't on this computer now, so Automatic is used.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "The chosen encoder {pick} couldn't start ({error}), so {used} is used.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} stopped working ({error}); switched to {used}."
  }
 }

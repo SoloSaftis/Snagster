@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "同一画面只编码一次，并同时发送到每个平台。会以所有平台都能接受的尺寸、帧率和码率发送。",
   "Stream to this service too": "也推流到这个平台",
   "Remove this service and its saved key": "移除这个平台及其已保存的密钥",
-  "Add a service": "添加平台"
+  "Add a service": "添加平台",
+  "Exporting {n} pictures to {folder}...": "正在将 {n} 张图片导出到 {folder}...",
+  "Working on it...": "正在处理...",
+  "Couldn't make the picture.": "无法生成图片。",
+  "Opening {path}...": "正在打开 {path}...",
+  "Video encoder": "视频编码器",
+  "Automatic (recommended)": "自动（推荐）",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "“自动”会使用可用的最佳编码器。如果您选择的编码器无法启动或停止工作，Snagster 会切换到可用的最佳编码器并给出提示。",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "所选编码器目前不在这台计算机上，因此使用“自动”。",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "所选编码器 {pick} 无法启动（{error}），因此使用 {used}。",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} 已停止工作（{error}）；已切换到 {used}。"
  }
 }

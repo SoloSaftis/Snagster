@@ -327,7 +327,7 @@ pub fn zero_copy(hardware: bool, rect: (i32, i32, u32, u32), title: Option<Strin
 pub fn zero_copy_encoders(g: Grabber, want: crate::encode::FrameFormat, cfg: &StreamConfig, encoders: &Encoders) -> Result<(Grabber, Encoders), String> {
     let dev = g.device().filter(|d| d.format() == want).ok_or("the grabber's pictures aren't what the encoder takes")?;
     let v = super::engine::video_config(cfg)?;
-    let enc = crate::encode::open_video_for_surfaces(&v, &dev)?;
+    let enc = crate::encode::open_video_for_surfaces(&v, &dev, &encoders.pick, &[])?;
     Ok((g, encoders.with_surfaces(dev, enc, v)))
 }
 

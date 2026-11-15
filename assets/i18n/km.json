@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "រូបភាពដដែលទៅកាន់សេវាកម្មនីមួយៗក្នុងពេលតែមួយ ហើយត្រូវបានអ៊ិនកូដតែម្ដងប៉ុណ្ណោះ។ វាត្រូវបានផ្ញើក្នុងទំហំ អត្រាហ្វ្រេម និងអត្រាប៊ីតដែលសេវាកម្មទាំងអស់ទទួលយក។",
   "Stream to this service too": "ផ្សាយទៅសេវាកម្មនេះផងដែរ",
   "Remove this service and its saved key": "លុបសេវាកម្មនេះ និងកូនសោដែលបានរក្សាទុករបស់វា",
-  "Add a service": "បន្ថែមសេវាកម្ម"
+  "Add a service": "បន្ថែមសេវាកម្ម",
+  "Exporting {n} pictures to {folder}...": "កំពុងនាំចេញរូបភាព {n} ទៅ {folder}...",
+  "Working on it...": "កំពុងដំណើរការ...",
+  "Couldn't make the picture.": "មិនអាចបង្កើតរូបភាពបានទេ។",
+  "Opening {path}...": "កំពុងបើក {path}...",
+  "Video encoder": "ឧបករណ៍អ៊ិនកូដវីដេអូ",
+  "Automatic (recommended)": "ស្វ័យប្រវត្តិ (បានណែនាំ)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "ស្វ័យប្រវត្តិប្រើឧបករណ៍អ៊ិនកូដល្អបំផុតដែលដំណើរការ។ ប្រសិនបើឧបករណ៍ដែលអ្នកជ្រើសរើសមិនអាចចាប់ផ្ដើម ឬឈប់ដំណើរការ Snagster នឹងប្ដូរទៅឧបករណ៍ល្អបំផុតដែលដំណើរការ ហើយប្រាប់អ្នក។",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "ឧបករណ៍អ៊ិនកូដដែលបានជ្រើសរើសមិនមាននៅលើកុំព្យូទ័រនេះទេឥឡូវនេះ ដូច្នេះប្រើស្វ័យប្រវត្តិ។",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "ឧបករណ៍អ៊ិនកូដដែលបានជ្រើសរើស {pick} មិនអាចចាប់ផ្ដើមបានទេ ({error}) ដូច្នេះប្រើ {used}។",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} បានឈប់ដំណើរការ ({error}); បានប្ដូរទៅ {used}។"
  }
 }

@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "एकूच चित्र एकाच वेळार दर एका सेवेक वता आनी फकत एकदांच एनकोड जाता. सगळ्या सेवा घेतात त्या आकारान, फ्रेम रेटान आनी बिटरेटान तें धाडटात.",
   "Stream to this service too": "ह्या सेवेकूय स्ट्रीम करात",
   "Remove this service and its saved key": "ही सेवा आनी तिची सांबाळिल्ली की काडून उडयात",
-  "Add a service": "सेवा जोडात"
+  "Add a service": "सेवा जोडात",
+  "Exporting {n} pictures to {folder}...": "{n} चित्रां {folder} हांगा एक्स्पोर्ट करता...",
+  "Working on it...": "काम चालू आसा...",
+  "Couldn't make the picture.": "चित्र करूंक जालें ना.",
+  "Opening {path}...": "{path} उगडटा...",
+  "Video encoder": "व्हिडिओ एन्कोडर",
+  "Automatic (recommended)": "आपसूक (शिफारस केल्लें)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "आपसूक काम करपी सगळ्यांत बरो एन्कोडर वापरता. तुमी वेंचिल्लो सुरू जावंक शकना वा काम करपाचो बंद जाता जाल्यार, Snagster काम करपी सगळ्यांत बऱ्या एन्कोडराचेर बदलता आनी तें सांगता.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "वेंचिल्लो एन्कोडर आतां ह्या कॉम्प्युटराचेर ना, देखून आपसूक वापरता.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "वेंचिल्लो एन्कोडर {pick} सुरू जावंक शकलो ना ({error}), देखून {used} वापरता.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} काम करपाचो बंद जालो ({error}); {used} चेर बदलले."
  }
 }

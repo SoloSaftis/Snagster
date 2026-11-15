@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Dat selwecht Bild geet gläichzäiteg un all Service a gëtt nëmmen eemol kodéiert. Et gëtt an der Gréisst, der Bildrat an der Bitrat geschéckt, déi se all unhuelen.",
   "Stream to this service too": "Och op dëse Service streamen",
   "Remove this service and its saved key": "Dëse Service a säi gespäicherte Schlëssel ewechhuelen",
-  "Add a service": "E Service derbäisetzen"
+  "Add a service": "E Service derbäisetzen",
+  "Exporting {n} pictures to {folder}...": "{n} Biller ginn an {folder} exportéiert...",
+  "Working on it...": "Gëtt gemaach...",
+  "Couldn't make the picture.": "Konnt d'Bild net maachen.",
+  "Opening {path}...": "{path} gëtt opgemaach...",
+  "Video encoder": "Video-Encoder",
+  "Automatic (recommended)": "Automatesch (recommandéiert)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automatesch benotzt de beschten Encoder, deen funktionéiert. Wann deen, deen Dir auswielt, net starte kann oder ophält ze funktionéieren, wiesselt Snagster op de beschten, deen funktionéiert, a seet et.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "De gewielten Encoder ass grad net op dësem Computer, dofir gëtt Automatesch benotzt.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "De gewielten Encoder {pick} konnt net starten ({error}), dofir gëtt {used} benotzt.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} huet opgehalen ze funktionéieren ({error}); op {used} gewiesselt."
  }
 }

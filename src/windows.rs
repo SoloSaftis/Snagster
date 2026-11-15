@@ -140,9 +140,9 @@ impl SnagApp {
                         ui.checkbox(&mut s.scroll_from_top, crate::i18n::t("Scroll to the top first"));
                     }
                     SettingsTab::Recording => {
-                        if self.encoders.is_none() {
-                            self.encoders = Some(crate::video::encoders());
-                        }
+                        let encoders = self.x.encoders.get(Some(ui.ctx()), crate::video::encoders).to_vec();
+                        let encoders_known = self.x.encoders.loaded();
+                        let pickable = self.x.pickable.get(Some(ui.ctx()), crate::encode::available).to_vec();
                         let s = &mut self.settings;
                         ui.label(RichText::new(crate::i18n::t("Record as")).strong());
                         egui::ComboBox::from_id_salt("rec-format").width(240.0).selected_text(s.rec_format.label()).show_ui(ui, |ui| {
@@ -172,6 +172,7 @@ impl SnagApp {
                                 }
                             });
                         ui.checkbox(&mut s.video_hardware, crate::i18n::t("Use the graphics chip to encode (Intel, AMD or NVIDIA)"));
+                        encoder_picker(ui, "rec-encoder", &mut s.video_encoder, &pickable);
                         ui.horizontal(|ui| {
                             ui.label(crate::i18n::t("Videos go to"));
                             ui.add(egui::TextEdit::singleline(&mut s.video_folder).desired_width(300.0));
@@ -189,7 +190,7 @@ impl SnagApp {
                                     ui.radio_value(&mut s.audio_source, v, crate::i18n::t(v.label()));
                                 }
                             });
-                            let mics = self.x.mics.get_or_insert_with(crate::audio::microphones);
+                            let mics = self.x.mics.get(Some(ui.ctx()), crate::audio::microphones).to_vec();
                             let shown = mics.iter().find(|m| m.id == s.audio_mic).map(|m| m.name.clone()).unwrap_or_else(|| crate::i18n::t("The computer's default microphone").to_string());
                             egui::ComboBox::from_label(crate::i18n::t("Microphone")).selected_text(shown).show_ui(ui, |ui| {
                                 ui.selectable_value(&mut s.audio_mic, String::new(), crate::i18n::t("The computer's default microphone"));
@@ -211,7 +212,7 @@ impl SnagApp {
                             ))
                             .color(TEXT_DIM),
                         );
-                        if let Some(list) = &self.encoders {
+                        if let Some(list) = encoders_known.then_some(&encoders) {
                             let hw: Vec<String> = list.iter().filter(|e| e.hardware).map(|e| format!("{} ({})", e.name, e.codec)).collect();
                             let text = if hw.is_empty() {
                                 "No graphics-chip encoder was found, so videos use the processor.".to_string()
@@ -328,7 +329,7 @@ impl SnagApp {
         });
         ui.label(RichText::new(crate::i18n::t("Keep the library in a cloud folder to have it on every computer:")).color(TEXT_DIM));
         ui.horizontal_wrapped(|ui| {
-            let clouds = crate::settings::cloud_folders();
+            let clouds = crate::settings::cloud_folders_now(Some(ui.ctx()));
             if clouds.is_empty() {
                 ui.label(RichText::new(crate::i18n::t("No OneDrive, Dropbox, Google Drive, Box or iCloud folder was found.")).color(TEXT_DIM));
             }
@@ -1454,25 +1455,42 @@ impl SnagApp {
         }
     }
 
+    /// Save the picked pictures into `folder` on the job queue: encoding many big pictures takes
+    /// seconds, and the window must keep answering meanwhile (it used to stop answering). Each
+    /// gets a file name of its own, also when two pictures have the same title.
     pub(crate) fn export_many(&mut self, pick: &[bool], folder: &std::path::Path, format: ImageFormat) {
-        let mut ok = 0;
-        let mut last_err = None;
+        let mut items = Vec::new();
         for (i, p) in pick.iter().enumerate() {
             if !*p || i >= self.entries.len() {
                 continue;
             }
             let title = self.entries[i].name.clone();
             let base = self.settings.file_name(&title);
-            let path = crate::settings::unique_path(folder, &base, format.ext());
-            match export::save_doc(&self.entries[i].doc, &title, &path, &self.settings) {
-                Ok(()) => ok += 1,
-                Err(e) => last_err = Some(e),
-            }
+            let path = crate::app::work::free_path(folder.join(format!("{base}.{}", format.ext())), &self.saving);
+            self.saving.insert(path.clone());
+            items.push((self.entries[i].doc.clone(), title, path));
         }
-        self.status = match last_err {
-            None => format!("Exported {ok} pictures to {}", folder.display()),
-            Some(e) => format!("Exported {ok}; some failed: {e}"),
-        };
+        let (settings, folder) = (self.settings.clone(), folder.to_path_buf());
+        self.status = crate::i18n::tf("Exporting {n} pictures to {folder}...", &[("n", &items.len().to_string()), ("folder", &folder.display().to_string())]);
+        self.jobs.queue(move || {
+            let (mut ok, mut last_err, mut paths) = (0, None, Vec::new());
+            for (doc, title, path) in items {
+                match export::save_doc(&doc, &title, &path, &settings) {
+                    Ok(()) => ok += 1,
+                    Err(e) => last_err = Some(e),
+                }
+                paths.push(path);
+            }
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| {
+                for p in &paths {
+                    app.saving.remove(p);
+                }
+                app.status = match last_err {
+                    None => format!("Exported {ok} pictures to {}", folder.display()),
+                    Some(e) => format!("Exported {ok}; some failed: {e}"),
+                };
+            })
+        });
     }
 
     pub(crate) fn import_presets(&mut self) {
@@ -1505,27 +1523,112 @@ impl SnagApp {
     }
 }
 
+/// The encoders to offer: each name once, in `available`'s order (graphics chip first).
+pub(crate) fn encoder_choices(list: &[(crate::encode::Codec, crate::encode::EncoderName)]) -> Vec<crate::encode::EncoderName> {
+    let mut out: Vec<crate::encode::EncoderName> = Vec::new();
+    for (_, n) in list {
+        if !out.iter().any(|o| o.name == n.name) {
+            out.push(n.clone());
+        }
+    }
+    out
+}
+
+/// The video encoder choice (recording and streaming share it): Automatic, then this
+/// computer's encoders. A choice that is gone, or can't start, falls back by itself.
+pub(crate) fn encoder_picker(ui: &mut egui::Ui, salt: &str, pick: &mut String, list: &[(crate::encode::Codec, crate::encode::EncoderName)]) {
+    use crate::i18n::t;
+    let auto = t("Automatic (recommended)");
+    let choices = encoder_choices(list);
+    ui.horizontal(|ui| {
+        ui.label(t("Video encoder"));
+        let shown = if pick.is_empty() { auto.to_string() } else { pick.clone() };
+        egui::ComboBox::from_id_salt(salt).width(320.0).selected_text(shown).show_ui(ui, |ui| {
+            ui.selectable_value(pick, String::new(), auto);
+            for n in &choices {
+                let kind = if n.hardware { t("graphics chip") } else { t("processor") };
+                ui.selectable_value(pick, n.name.clone(), format!("{} ({kind})", n.name));
+            }
+        });
+    })
+    .response
+    .on_hover_text(t("Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so."));
+    if !pick.is_empty() && !list.is_empty() && !choices.iter().any(|n| n.name == *pick) {
+        ui.label(RichText::new(t("The chosen encoder isn't on this computer now, so Automatic is used.")).color(TEXT_DIM));
+    }
+}
+
+/// Where Windows keeps what starts when you sign in (under HKEY_CURRENT_USER).
+#[cfg(windows)]
+const RUN_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
+
+/// Text values under HKEY_CURRENT_USER through the registry API (microseconds; no `reg.exe`).
+#[cfg(windows)]
+mod registry {
+    use windows::Win32::Foundation::{ERROR_FILE_NOT_FOUND, ERROR_SUCCESS};
+    use windows::Win32::System::Registry::{HKEY_CURRENT_USER, REG_SZ, RRF_RT_REG_SZ, RegDeleteKeyValueW, RegGetValueW, RegSetKeyValueW};
+    use windows::core::HSTRING;
+
+    pub fn get(key: &str, name: &str) -> Option<String> {
+        let (k, n) = (HSTRING::from(key), HSTRING::from(name));
+        let mut bytes = 0u32;
+        unsafe {
+            if RegGetValueW(HKEY_CURRENT_USER, &k, &n, RRF_RT_REG_SZ, None, None, Some(&mut bytes)) != ERROR_SUCCESS {
+                return None;
+            }
+            let mut buf = vec![0u16; (bytes as usize).div_ceil(2).max(1)];
+            if RegGetValueW(HKEY_CURRENT_USER, &k, &n, RRF_RT_REG_SZ, None, Some(buf.as_mut_ptr().cast()), Some(&mut bytes)) != ERROR_SUCCESS {
+                return None;
+            }
+            let len = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
+            Some(String::from_utf16_lossy(&buf[..len]))
+        }
+    }
+
+    pub fn set(key: &str, name: &str, value: &str) -> Result<(), String> {
+        let data: Vec<u16> = value.encode_utf16().chain(std::iter::once(0)).collect();
+        let r = unsafe { RegSetKeyValueW(HKEY_CURRENT_USER, &HSTRING::from(key), &HSTRING::from(name), REG_SZ.0, Some(data.as_ptr().cast()), (data.len() * 2) as u32) };
+        r.ok().map_err(|e| e.to_string())
+    }
+
+    /// Remove a value; one that isn't there is fine.
+    pub fn delete(key: &str, name: &str) -> Result<(), String> {
+        let r = unsafe { RegDeleteKeyValueW(HKEY_CURRENT_USER, &HSTRING::from(key), &HSTRING::from(name)) };
+        if r == ERROR_SUCCESS || r == ERROR_FILE_NOT_FOUND { Ok(()) } else { r.ok().map_err(|e| e.to_string()) }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        /// In a key of its own (never the real Run key), removed afterwards.
+        #[test]
+        fn values_are_written_read_back_and_removed() {
+            let key = format!(r"Software\Snagster-test-{}", std::process::id());
+            assert_eq!(super::get(&key, "v"), None);
+            super::set(&key, "v", "\"C:\\Program Files\\Snagster æøå\\Snagster.exe\"").unwrap();
+            assert_eq!(super::get(&key, "v").as_deref(), Some("\"C:\\Program Files\\Snagster æøå\\Snagster.exe\""));
+            super::delete(&key, "v").unwrap();
+            assert_eq!(super::get(&key, "v"), None);
+            super::delete(&key, "v").expect("removing what isn't there is fine");
+            unsafe {
+                let _ = windows::Win32::System::Registry::RegDeleteKeyW(super::HKEY_CURRENT_USER, &super::HSTRING::from(key.as_str()));
+            }
+        }
+    }
+}
+
 /// Start Snagster when Windows starts (the Run key in the registry).
 pub fn set_run_at_startup(on: bool) -> Result<(), String> {
     #[cfg(windows)]
     {
-        let key = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run";
+        // Straight through the registry API: it used to start `reg.exe` (twice) and wait for it
+        // on the window's thread.
         // The entry from before the rename.
-        let _ = std::process::Command::new("reg").args(["delete", key, "/v", "Snag", "/f"]).output();
-        let out = if on {
-            let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-            std::process::Command::new("reg")
-                .args(["add", key, "/v", "Snagster", "/t", "REG_SZ", "/f", "/d"])
-                .arg(format!("\"{}\"", exe.display()))
-                .output()
-        } else {
-            std::process::Command::new("reg").args(["delete", key, "/v", "Snagster", "/f"]).output()
+        let _ = registry::delete(RUN_KEY, "Snag");
+        if !on {
+            return registry::delete(RUN_KEY, "Snagster");
         }
-        .map_err(|e| e.to_string())?;
-        if out.status.success() || !on {
-            return Ok(());
-        }
-        return Err(String::from_utf8_lossy(&out.stderr).trim().to_string());
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        return registry::set(RUN_KEY, "Snagster", &format!("\"{}\"", exe.display()));
     }
     #[cfg(not(windows))]
     {
@@ -1574,11 +1677,7 @@ fn autostart_file() -> Option<PathBuf> {
 pub fn runs_at_startup() -> bool {
     #[cfg(windows)]
     {
-        std::process::Command::new("reg")
-            .args(["query", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run", "/v", "Snagster"])
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false)
+        registry::get(RUN_KEY, "Snagster").is_some()
     }
     #[cfg(not(windows))]
     {

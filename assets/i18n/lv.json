@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Tas pats attēls vienlaikus tiek sūtīts uz visiem servisiem un tiek kodēts tikai vienreiz. Tas tiek sūtīts tādā izmērā, kadru ātrumā un bitu pārraides ātrumā, ko pieņem visi servisi.",
   "Stream to this service too": "Straumēt arī uz šo servisu",
   "Remove this service and its saved key": "Noņemt šo servisu un tā saglabāto atslēgu",
-  "Add a service": "Pievienot servisu"
+  "Add a service": "Pievienot servisu",
+  "Exporting {n} pictures to {folder}...": "Notiek {n} attēlu eksportēšana uz {folder}...",
+  "Working on it...": "Notiek apstrāde...",
+  "Couldn't make the picture.": "Neizdevās izveidot attēlu.",
+  "Opening {path}...": "Notiek {path} atvēršana...",
+  "Video encoder": "Video kodētājs",
+  "Automatic (recommended)": "Automātiski (ieteicams)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automātiskais režīms izmanto labāko kodētāju, kas darbojas. Ja jūsu izvēlētais nevar sākt darbu vai pārstāj darboties, Snagster pārslēdzas uz labāko, kas darbojas, un par to paziņo.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Izvēlētā kodētāja šobrīd šajā datorā nav, tāpēc tiek izmantots automātiskais režīms.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Izvēlēto kodētāju {pick} neizdevās palaist ({error}), tāpēc tiek izmantots {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} pārstāja darboties ({error}); pārslēgts uz {used}."
  }
 }

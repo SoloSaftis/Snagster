@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Sama kuva lähtee kaikkiin palveluihin yhtä aikaa, ja se koodataan vain kerran. Se lähetetään koossa, kuvataajuudella ja bittinopeudella, jotka kaikki palvelut hyväksyvät.",
   "Stream to this service too": "Lähetä myös tähän palveluun",
   "Remove this service and its saved key": "Poista tämä palvelu ja sen tallennettu avain",
-  "Add a service": "Lisää palvelu"
+  "Add a service": "Lisää palvelu",
+  "Exporting {n} pictures to {folder}...": "Viedään {n} kuvaa kansioon {folder}...",
+  "Working on it...": "Työn alla...",
+  "Couldn't make the picture.": "Kuvan tekeminen epäonnistui.",
+  "Opening {path}...": "Avataan {path}...",
+  "Video encoder": "Videon koodaaja",
+  "Automatic (recommended)": "Automaattinen (suositus)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automaattinen käyttää parasta toimivaa koodaajaa. Jos valitsemasi koodaaja ei käynnisty tai lakkaa toimimasta, Snagster vaihtaa parhaaseen toimivaan ja kertoo siitä.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Valittua koodaajaa ei nyt ole tässä tietokoneessa, joten käytetään automaattista.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Valittu koodaaja {pick} ei käynnistynyt ({error}), joten käytetään koodaajaa {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} lakkasi toimimasta ({error}); vaihdettiin koodaajaan {used}."
  }
 }

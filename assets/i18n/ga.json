@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Téann an pictiúr céanna chuig gach seirbhís ag an am céanna, ionchódaithe uair amháin. Seoltar é ag an méid, an ráta fráma agus an ráta giotán a ghlacann siad go léir.",
   "Stream to this service too": "Sruthaigh chuig an tseirbhís seo freisin",
   "Remove this service and its saved key": "Bain an tseirbhís seo agus a heochair shábháilte",
-  "Add a service": "Cuir seirbhís leis"
+  "Add a service": "Cuir seirbhís leis",
+  "Exporting {n} pictures to {folder}...": "{n} pictiúr á n-easpórtáil go {folder}...",
+  "Working on it...": "Á dhéanamh...",
+  "Couldn't make the picture.": "Níorbh fhéidir an pictiúr a dhéanamh.",
+  "Opening {path}...": "{path} á oscailt...",
+  "Video encoder": "Códóir físe",
+  "Automatic (recommended)": "Uathoibríoch (molta)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Úsáideann Uathoibríoch an códóir is fearr a oibríonn. Mura féidir leis an gceann a roghnaíonn tú tosú nó má stopann sé ag obair, aistríonn Snagster go dtí an ceann is fearr a oibríonn agus deir sé é sin.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Níl an códóir roghnaithe ar an ríomhaire seo anois, mar sin úsáidtear Uathoibríoch.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Níorbh fhéidir leis an gcódóir roghnaithe {pick} tosú ({error}), mar sin úsáidtear {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "Stop {failed} ag obair ({error}); aistríodh go {used}."
  }
 }

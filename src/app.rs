@@ -344,7 +344,7 @@ pub struct SnagApp {
     /// Library adds, saves and copies after a capture (and other slow work), in order.
     pub(crate) jobs: work::Jobs<Apply>,
     /// Files that a background save is still writing.
-    saving: std::collections::HashSet<PathBuf>,
+    pub(crate) saving: std::collections::HashSet<PathBuf>,
     mcp_debounce: work::Debounce<Option<(u16, String)>>,
     textures_swept: Instant,
     overlay: Option<Overlay>,
@@ -367,7 +367,7 @@ pub struct SnagApp {
     video_rx: Receiver<crate::video::VideoDone>,
     pub(crate) job_pause: Option<Arc<AtomicBool>>,
     pub(crate) videos: Vec<crate::video::VideoDone>,
-    pub(crate) encoders: Option<Vec<crate::video::EncoderInfo>>,
+
     pub(crate) gif_editor: Option<GifEditor>,
     pub(crate) gif_open: bool,
     pub(crate) mini: Option<Mini>,
@@ -439,6 +439,8 @@ impl SnagApp {
         let check_run = screenshot.is_some() || UI_TEST.load(Ordering::Relaxed);
         let settings = Settings::load(check_run);
         fonts::start_scan(cc.egui_ctx.clone());
+        // Start looking for cloud folders now, so the Share tab has them when it opens.
+        crate::settings::cloud_folders_now(Some(&cc.egui_ctx));
         let mut app = Self::blank(settings, !check_run, screenshot);
         if check_run {
             let mut second = Doc::new(sample::sample_image(1));
@@ -532,7 +534,7 @@ impl SnagApp {
             video_rx,
             job_pause: None,
             videos: Vec::new(),
-            encoders: None,
+
             gif_editor: None,
             gif_open: false,
             mini: None,
@@ -1420,34 +1422,31 @@ impl SnagApp {
 
     // ---------- files and clipboard ----------
 
+    /// Open a picture or a Snagster project. The file is read and decoded on the job queue (a
+    /// big picture, a tall scrolling capture or a file on a cloud drive takes a while, and the
+    /// window must keep answering); several opened at once arrive in the order asked.
     pub(crate) fn open_path(&mut self, p: &std::path::Path) {
-        if p.is_file() {
-            self.remember_file(p);
-        }
-        let ext = p.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
-        if ext == "snag" {
-            match export::load_project(p) {
-                Ok((name, d)) => {
-                    self.add_entry(if name.is_empty() { "Project".into() } else { name }, d);
-                    if let Some(e) = self.entry() {
-                        e.path = Some(p.to_path_buf());
-                    }
-                    self.status = crate::i18n::tf("Opened project {path}", &[("path", &p.display().to_string())]);
-                }
-                Err(e) => self.status = crate::i18n::tf("Couldn't open {path}: {error}", &[("path", &p.display().to_string()), ("error", &e.to_string())]),
-            }
-            return;
-        }
-        match image::open(p) {
-            Ok(img) => {
-                let name = p.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "Picture".into());
-                self.add_entry(name, Doc::new(img.to_rgba8()));
+        let p = p.to_path_buf();
+        self.status = crate::i18n::tf("Opening {path}...", &[("path", &p.display().to_string())]);
+        self.jobs.queue(move || {
+            let r = read_picture_file(&p);
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| app.opened(&p, r))
+        });
+    }
+
+    /// A file read by `open_path` arrived.
+    fn opened(&mut self, p: &std::path::Path, r: Result<(String, Doc, bool), String>) {
+        match r {
+            Ok((name, d, project)) => {
+                self.remember_file(p);
+                self.add_entry(name, d);
                 if let Some(e) = self.entry() {
                     e.path = Some(p.to_path_buf());
                 }
-                self.status = crate::i18n::tf("Opened {path}", &[("path", &p.display().to_string())]);
+                let path = p.display().to_string();
+                self.status = if project { crate::i18n::tf("Opened project {path}", &[("path", &path)]) } else { crate::i18n::tf("Opened {path}", &[("path", &path)]) };
             }
-            Err(e) => self.status = crate::i18n::tf("Couldn't open {path}: {error}", &[("path", &p.display().to_string()), ("error", &e.to_string())]),
+            Err(e) => self.status = crate::i18n::tf("Couldn't open {path}: {error}", &[("path", &p.display().to_string()), ("error", &e)]),
         }
     }
 
@@ -1610,13 +1609,11 @@ impl SnagApp {
 
     /// Open the picture in the computer's default program for its file type.
     pub(crate) fn open_externally(&mut self) {
-        self.commit_text();
-        let Some(i) = self.current else { return };
         let path = std::env::temp_dir().join(format!("snag-share-{}.png", chrono::Local::now().format("%H%M%S")));
-        if let Err(e) = export::save_doc(&self.entries[i].doc, &self.entries[i].name, &path, &self.settings) {
-            self.status = crate::i18n::tf("Couldn't prepare the file: {error}", &[("error", &e.to_string())]);
-            return;
-        }
+        self.with_picture_file(path, |app, path| app.open_file_externally(&path));
+    }
+
+    fn open_file_externally(&mut self, path: &std::path::Path) {
         #[cfg(windows)]
         let r = std::process::Command::new("cmd").args(["/C", "start", ""]).arg(&path).spawn();
         #[cfg(target_os = "macos")]
@@ -1630,28 +1627,66 @@ impl SnagApp {
 
     /// The pictures for a guide: the recorded steps, or else everything in Recent.
     pub(crate) fn guide_items(&self) -> Vec<(String, RgbaImage)> {
+        drawn(self.guide_docs())
+    }
+
+    /// The guide's pictures with their names, not drawn yet: copies to draw on the job queue.
+    pub(crate) fn guide_docs(&self) -> Vec<(String, Doc)> {
         let idx: Vec<usize> = if self.guide.iter().all(|i| *i < self.entries.len()) && !self.guide.is_empty() {
             self.guide.clone()
         } else {
             (0..self.entries.len()).collect()
         };
-        idx.into_iter().map(|i| (self.entries[i].name.clone(), render::compose(&self.entries[i].doc))).collect()
+        idx.into_iter().map(|i| (self.entries[i].name.clone(), self.entries[i].doc.clone())).collect()
+    }
+
+    /// Make a new picture on the job queue and add it to Recent as `name` when it is done:
+    /// drawing many pictures and laying them out takes seconds, and the window must keep
+    /// answering. `make` gives the picture and the status line to show.
+    pub(crate) fn make_picture(&mut self, name: &'static str, make: impl FnOnce() -> Option<(RgbaImage, String)> + Send + 'static) {
+        self.status = crate::i18n::t("Working on it...").into();
+        self.jobs.queue(move || {
+            let r = make();
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| match r {
+                Some((img, status)) => {
+                    let n = app.next_name(name);
+                    app.add_entry(n, Doc::new(img));
+                    app.status = status;
+                }
+                None => app.status = crate::i18n::t("Couldn't make the picture.").into(),
+            })
+        });
+    }
+
+    /// Write a file on the job queue, then `then` with it; the status line says where, or why not.
+    fn write_in_background(&mut self, path: PathBuf, make: impl FnOnce(&std::path::Path) -> Result<(), String> + Send + 'static, then: fn(&mut SnagApp, &std::path::Path)) {
+        self.status = crate::i18n::t("Working on it...").into();
+        self.jobs.queue(move || {
+            let r = make(&path);
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| match r {
+                Ok(()) => {
+                    app.status = crate::i18n::tf("Saved {path}", &[("path", &path.display().to_string())]);
+                    then(app, &path);
+                }
+                Err(e) => app.status = crate::i18n::tf("Couldn't save: {error}", &[("error", &e)]),
+            })
+        });
     }
 
     pub(crate) fn export_guide(&mut self, format: &str) {
         self.commit_text();
-        let items = self.guide_items();
-        if items.is_empty() {
+        let docs = self.guide_docs();
+        if docs.is_empty() {
             self.status = "There's nothing to put in a guide yet.".into();
             return;
         }
         let title = self.guide_title.clone();
         if format == "page" {
-            if let Some(img) = effects::guide_page(&title, &items, 1200) {
-                let name = self.next_name("Guide");
-                self.add_entry(name, Doc::new(img));
-                self.status = crate::i18n::tf("Made a one-page guide from {count} pictures.", &[("count", &items.len().to_string())]);
-            }
+            self.make_picture("Guide", move || {
+                let items = drawn(docs);
+                let img = effects::guide_page(&title, &items, 1200)?;
+                Some((img, crate::i18n::tf("Made a one-page guide from {count} pictures.", &[("count", &items.len().to_string())])))
+            });
             return;
         }
         let ext = if format == "pdf" { "pdf" } else { "html" };
@@ -1662,16 +1697,21 @@ impl SnagApp {
         else {
             return;
         };
-        let result = if ext == "pdf" {
-            let pages: Vec<(Option<String>, RgbaImage)> = items.into_iter().map(|(c, i)| (Some(c), i)).collect();
-            export::pdf(&pages, true, self.settings.jpeg_quality).and_then(|b| std::fs::write(&path, b).map_err(|e| e.to_string()))
-        } else {
-            export::html_guide(&title, &items).and_then(|s| std::fs::write(&path, s).map_err(|e| e.to_string()))
-        };
-        self.status = match result {
-            Ok(()) => crate::i18n::tf("Saved the guide to {path}", &[("path", &path.display().to_string())]),
-            Err(e) => crate::i18n::tf("Couldn't save the guide: {error}", &[("error", &e.to_string())]),
-        };
+        let quality = self.settings.jpeg_quality;
+        let pdf = ext == "pdf";
+        self.write_in_background(
+            path,
+            move |path| {
+                let items = drawn(docs);
+                if pdf {
+                    let pages: Vec<(Option<String>, RgbaImage)> = items.into_iter().map(|(c, i)| (Some(c), i)).collect();
+                    export::pdf(&pages, true, quality).and_then(|b| std::fs::write(path, b).map_err(|e| e.to_string()))
+                } else {
+                    export::html_guide(&title, &items).and_then(|s| std::fs::write(path, s).map_err(|e| e.to_string()))
+                }
+            },
+            |_, _| {},
+        );
     }
 
     // ---------- editing ----------
@@ -1774,13 +1814,12 @@ impl SnagApp {
             self.status = "Combining needs at least two pictures in Recent.".into();
             return;
         }
-        let imgs: Vec<RgbaImage> = self.entries.iter().map(|e| render::compose(&e.doc)).collect();
-        if let Some(out) = effects::combine(&imgs, vertical, 16) {
-            let name = self.next_name("Combined");
-            let n = imgs.len();
-            self.add_entry(name, Doc::new(out));
-            self.status = crate::i18n::tf("Combined {count} pictures.", &[("count", &n.to_string())]);
-        }
+        let docs: Vec<Doc> = self.entries.iter().map(|e| e.doc.clone()).collect();
+        self.make_picture("Combined", move || {
+            let imgs: Vec<RgbaImage> = docs.iter().map(render::compose).collect();
+            let out = effects::combine(&imgs, vertical, 16)?;
+            Some((out, crate::i18n::tf("Combined {count} pictures.", &[("count", &imgs.len().to_string())])))
+        });
     }
 
     fn duplicate(&mut self) {
@@ -2643,7 +2682,7 @@ impl SnagApp {
         }
         ui.separator();
         ui.label(RichText::new(crate::i18n::t("Cloud folders (point the library or save folder here to sync):")).color(TEXT_DIM));
-        let clouds = crate::settings::cloud_folders();
+        let clouds = crate::settings::cloud_folders_now(Some(ui.ctx()));
         if clouds.is_empty() {
             ui.label(RichText::new(crate::i18n::t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(TEXT_DIM));
         }
@@ -3977,6 +4016,63 @@ fn clipboard_picture() -> Option<RgbaImage> {
 }
 
 /// The start of a temporary file's name: letters and digits only.
+/// A picture file or a Snagster project, read and decoded: its name, the picture, and whether
+/// it was a project. Slow for big files; `open_path` runs it on the job queue.
+fn read_picture_file(p: &std::path::Path) -> Result<(String, Doc, bool), String> {
+    let ext = p.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    if ext == "snag" {
+        let (name, d) = export::load_project(p).map_err(|e| e.to_string())?;
+        return Ok((if name.is_empty() { "Project".into() } else { name }, d, true));
+    }
+    let img = image::open(p).map_err(|e| e.to_string())?;
+    let name = p.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "Picture".into());
+    Ok((name, Doc::new(img.to_rgba8()), false))
+}
+
+/// Pictures drawn with their marks (for work on the job queue).
+fn drawn(items: Vec<(String, Doc)>) -> Vec<(String, RgbaImage)> {
+    items.into_iter().map(|(n, d)| (n, render::compose(&d))).collect()
+}
+
+/// The layouts of File > New from template.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Template {
+    SideBySide,
+    Grid2,
+    Grid3,
+    BeforeAfter,
+    Gallery,
+}
+
+impl Template {
+    /// The new picture's name in Recent.
+    fn name(self) -> &'static str {
+        match self {
+            Template::SideBySide => "Side by side",
+            Template::Grid2 | Template::Grid3 => "Grid",
+            Template::BeforeAfter => "Before and after",
+            Template::Gallery => "Gallery",
+        }
+    }
+
+    /// The layout of `imgs` (None: too few pictures).
+    fn make(self, imgs: &[RgbaImage]) -> Option<RgbaImage> {
+        let n = imgs.len();
+        match self {
+            Template::SideBySide => effects::grid(imgs, n as u32, 24, &[]),
+            Template::Grid2 => effects::grid(imgs, 2, 24, &[]),
+            Template::Grid3 => effects::grid(imgs, 3, 24, &[]),
+            Template::BeforeAfter if n >= 2 => effects::grid(&imgs[n - 2..], 2, 24, &["Before", "After"]),
+            Template::BeforeAfter => None,
+            Template::Gallery => {
+                let labels: Vec<String> = (1..=n).map(|i| format!("{i}.")).collect();
+                let refs: Vec<&str> = labels.iter().map(|s| s.as_str()).collect();
+                effects::grid(imgs, 3, 24, &refs)
+            }
+        }
+    }
+}
+
 fn temp_base(name: &str) -> String {
     name.chars().map(|c| if c.is_alphanumeric() { c } else { '_' }).collect()
 }
@@ -4574,7 +4670,7 @@ impl SnagApp {
             PanelShare::Pin => self.pin_current(),
             PanelShare::OpenWith => self.open_externally(),
             PanelShare::Cloud => {
-                if let (Some((_, folder)), Some(i)) = (crate::settings::cloud_folders().into_iter().next(), self.current) {
+                if let (Some((_, folder)), Some(i)) = (crate::settings::cloud_folders_now(None).into_iter().next(), self.current) {
                     let title = self.entries[i].name.clone();
                     let base = self.settings.file_name(&title);
                     let path = crate::settings::unique_path(&folder.join("Snagster"), &base, self.settings.format.ext());
@@ -4684,32 +4780,70 @@ impl SnagApp {
 
     pub(crate) fn recycle_current(&mut self) {
         let Some(i) = self.current else { return };
-        if let Some(p) = self.entries[i].path.clone() {
-            if let Err(e) = trash::delete(&p) {
-                self.status = crate::i18n::tf("Couldn't move it to the Recycle Bin: {error}", &[("error", &e.to_string())]);
-                return;
-            }
-            let s = p.display().to_string();
-            self.settings.recent_files.retain(|f| *f != s);
-            self.lib_loaded = false;
-            self.status = crate::i18n::tf("Moved {path} to the Recycle Bin.", &[("path", &p.display().to_string())]);
-        } else {
+        let Some(p) = self.entries[i].path.clone() else {
             self.status = "Removed from Recent (it was never saved).".into();
-        }
-        self.remove_current();
+            self.remove_current();
+            return;
+        };
+        // The shell's Recycle Bin can take seconds (a file on a cloud or network drive): on the
+        // job queue, and the picture leaves Recent only once its file has gone.
+        let id = self.entries[i].id;
+        self.jobs.queue(move || {
+            let r = trash::delete(&p).map_err(|e| e.to_string());
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| app.recycled(id, &p, r))
+        });
     }
 
-    fn temp_png(&mut self) -> Option<PathBuf> {
+    fn recycled(&mut self, id: u64, p: &std::path::Path, r: Result<(), String>) {
+        if let Err(e) = r {
+            self.status = crate::i18n::tf("Couldn't move it to the Recycle Bin: {error}", &[("error", &e)]);
+            return;
+        }
+        let s = p.display().to_string();
+        self.settings.recent_files.retain(|f| *f != s);
+        self.lib_loaded = false;
+        self.status = crate::i18n::tf("Moved {path} to the Recycle Bin.", &[("path", &s)]);
+        if let Some(i) = self.entries.iter().position(|e| e.id == id) {
+            let keep = self.current.filter(|&c| c != i).map(|c| self.entries[c].id);
+            self.current = Some(i);
+            self.remove_current();
+            // Still on the picture that was open, when it wasn't the one removed.
+            if let Some(k) = keep {
+                self.current = self.entries.iter().position(|e| e.id == k);
+            }
+        }
+    }
+
+    /// Write the current picture to `path` on the job queue (a big picture takes a while to
+    /// encode, and the window must not stop answering meanwhile), then `after` with the file on
+    /// the window's thread; the status line says why when it can't be written.
+    fn with_picture_file(&mut self, path: PathBuf, after: impl FnOnce(&mut SnagApp, PathBuf) + Send + 'static) {
         self.commit_text();
-        let i = self.current?;
-        let base = temp_base(&self.entries[i].name);
+        let Some(e) = self.current.and_then(|i| self.entries.get(i)) else { return };
+        let (doc, name, settings) = (e.doc.clone(), e.name.clone(), self.settings.clone());
+        self.jobs.queue(move || {
+            let r = export::save_doc(&doc, &name, &path, &settings);
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| match r {
+                Ok(()) => after(app, path),
+                Err(e) => app.status = crate::i18n::tf("Couldn't prepare the file: {error}", &[("error", &e.to_string())]),
+            })
+        });
+    }
+
+    /// The current picture as a PNG in the temp folder, then `after` with it (see
+    /// `with_picture_file`).
+    fn with_temp_png(&mut self, after: impl FnOnce(&mut SnagApp, PathBuf) + Send + 'static) {
+        let Some(e) = self.current.and_then(|i| self.entries.get(i)) else { return };
+        let base = temp_base(&e.name);
         let path = std::env::temp_dir().join(format!("{base}_{}.png", chrono::Local::now().format("%H%M%S")));
-        export::save_doc(&self.entries[i].doc, &self.entries[i].name, &path, &self.settings).ok()?;
-        Some(path)
+        self.with_picture_file(path, after);
     }
 
     pub(crate) fn print(&mut self) {
-        let Some(path) = self.temp_png() else { return };
+        self.with_temp_png(|app, path| app.print_file(&path));
+    }
+
+    fn print_file(&mut self, path: &std::path::Path) {
         #[cfg(windows)]
         let r = std::process::Command::new("powershell")
             .args(["-NoProfile", "-WindowStyle", "Hidden", "-Command"])
@@ -4726,7 +4860,10 @@ impl SnagApp {
     /// Start an email with the picture attached (Outlook), or open the mail program and
     /// show the file so it can be dragged in.
     pub(crate) fn email(&mut self) {
-        let Some(path) = self.temp_png() else { return };
+        self.with_temp_png(|app, path| app.email_file(path));
+    }
+
+    fn email_file(&mut self, path: PathBuf) {
         #[cfg(windows)]
         {
             let candidates = [
@@ -4749,8 +4886,8 @@ impl SnagApp {
     /// A Word document with the pictures (the recorded steps, or all of Recent), opened.
     pub(crate) fn export_word(&mut self) {
         self.commit_text();
-        let items = self.guide_items();
-        if items.is_empty() {
+        let docs = self.guide_docs();
+        if docs.is_empty() {
             return;
         }
         let Some(path) = rfd::FileDialog::new()
@@ -4760,14 +4897,11 @@ impl SnagApp {
         else {
             return;
         };
-        match export::docx(&self.guide_title, &items, &path) {
-            Ok(()) => {
-                self.status = crate::i18n::tf("Saved {path}", &[("path", &path.display().to_string())]);
-                #[cfg(windows)]
-                let _ = std::process::Command::new("cmd").args(["/C", "start", ""]).arg(&path).spawn();
-            }
-            Err(e) => self.status = crate::i18n::tf("Couldn't make the Word document: {error}", &[("error", &e.to_string())]),
-        }
+        let title = self.guide_title.clone();
+        self.write_in_background(path, move |path| export::docx(&title, &drawn(docs), path).map_err(|e| e.to_string()), |_, _path| {
+            #[cfg(windows)]
+            let _ = std::process::Command::new("cmd").args(["/C", "start", ""]).arg(_path).spawn();
+        });
     }
 
     /// Replace the picture with `f(picture)`, marks flattened first (undo brings them back).
@@ -4787,35 +4921,35 @@ impl SnagApp {
     fn template_menu(&mut self, ui: &mut egui::Ui) {
         let n = self.entries.len();
         ui.label(RichText::new(format!("Made from the {n} pictures in Recent")).color(TEXT_DIM));
-        let imgs: Vec<RgbaImage> = self.entries.iter().map(|e| render::compose(&e.doc)).collect();
-        let mut made: Option<(String, RgbaImage)> = None;
+        // Nothing is drawn until one is picked (this used to draw every picture on every frame
+        // while the menu was open), and then on the job queue.
         if item_on(ui, n >= 1, "Step-by-step guide (one page)", "") {
-            let items = self.guide_items();
-            made = effects::guide_page(&self.guide_title, &items, 1200).map(|i| ("Guide".into(), i));
+            self.export_guide("page");
         }
-        if item_on(ui, n >= 2, "Side by side", "") {
-            made = effects::grid(&imgs, n as u32, 24, &[]).map(|i| ("Side by side".into(), i));
+        let mut pick = None;
+        for (t, need, label) in [
+            (Template::SideBySide, 2, "Side by side"),
+            (Template::Grid2, 2, "Grid, 2 across"),
+            (Template::Grid3, 3, "Grid, 3 across"),
+            (Template::BeforeAfter, 2, "Before and after (last two)"),
+            (Template::Gallery, 2, "Numbered gallery"),
+        ] {
+            if item_on(ui, n >= need, label, "") {
+                pick = Some(t);
+            }
         }
-        if item_on(ui, n >= 2, "Grid, 2 across", "") {
-            made = effects::grid(&imgs, 2, 24, &[]).map(|i| ("Grid".into(), i));
+        if let Some(t) = pick {
+            self.make_template(t);
         }
-        if item_on(ui, n >= 3, "Grid, 3 across", "") {
-            made = effects::grid(&imgs, 3, 24, &[]).map(|i| ("Grid".into(), i));
-        }
-        if item_on(ui, n >= 2, "Before and after (last two)", "") {
-            let two = imgs[imgs.len() - 2..].to_vec();
-            made = effects::grid(&two, 2, 24, &["Before", "After"]).map(|i| ("Before and after".into(), i));
-        }
-        if item_on(ui, n >= 2, "Numbered gallery", "") {
-            let labels: Vec<String> = (1..=n).map(|i| format!("{i}.")).collect();
-            let refs: Vec<&str> = labels.iter().map(|s| s.as_str()).collect();
-            made = effects::grid(&imgs, 3, 24, &refs).map(|i| ("Gallery".into(), i));
-        }
-        if let Some((name, img)) = made {
-            let name = self.next_name(&name);
-            self.add_entry(name, Doc::new(img));
-            self.status = "Made from a template. Mark it up like any picture.".into();
-        }
+    }
+
+    /// A picture made from everything in Recent, on the job queue.
+    pub(crate) fn make_template(&mut self, t: Template) {
+        let docs: Vec<Doc> = self.entries.iter().map(|e| e.doc.clone()).collect();
+        self.make_picture(t.name(), move || {
+            let imgs: Vec<RgbaImage> = docs.iter().map(render::compose).collect();
+            Some((t.make(&imgs)?, "Made from a template. Mark it up like any picture.".to_string()))
+        });
     }
 
     /// Per-tool options in the side panel for the new choices, and Quick Styles.
@@ -5052,6 +5186,9 @@ impl SnagApp {
                 self.x.tab = ribbon::RibbonTab::Stream;
                 self.settings_open = true;
                 self.settings_tab = SettingsTab::Streaming;
+                // Multistreaming in the picture: YouTube alongside Twitch (no real keys).
+                let id = self.settings.stream.new_also_id();
+                self.settings.stream.also = vec![crate::settings::ExtraService { id, service: crate::stream::Service::YouTube, url: String::new(), on: true }];
             }
             "settings-ai" => {
                 self.settings_open = true;
@@ -5702,6 +5839,136 @@ mod tests {
         let files = std::fs::read_dir(&dir).unwrap().count();
         assert_eq!(files, 2, "the second save didn't overwrite the first");
         assert!(a.settings.recent_files.first().is_some_and(|f| *f == p.display().to_string()));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Exporting many pictures used to encode them all on the window's thread, so the window
+    /// stopped answering ("Not responding") for as long as it took. Now the call returns at once
+    /// and the files arrive from the job queue, one name each even for equal titles.
+    #[test]
+    fn exporting_several_pictures_never_holds_up_the_window() {
+        let dir = temp("exportmany");
+        let mut a = app();
+        // Big pictures with the same title: slow to encode, and clashing names.
+        for _ in 0..4 {
+            a.add_entry("Same".into(), Doc::new(RgbaImage::from_fn(2400, 1600, |x, y| image::Rgba([(x % 251) as u8, (y % 241) as u8, ((x ^ y) % 239) as u8, 255]))));
+        }
+        let pick = vec![true; a.entries.len()];
+        let t = std::time::Instant::now();
+        a.export_many(&pick, &dir, crate::settings::ImageFormat::Png);
+        let took = t.elapsed();
+        assert!(a.status.starts_with("Exporting 5 pictures"), "{}", a.status);
+        // A second export meanwhile doesn't pick the names still being written.
+        a.export_many(&[false, true], &dir, crate::settings::ImageFormat::Png);
+        assert!(took < Duration::from_millis(300), "the window waited {took:?}");
+        settle(&mut a);
+        assert_eq!(a.status, format!("Exported 1 pictures to {}", dir.display()));
+        let mut names: Vec<String> = std::fs::read_dir(&dir).unwrap().map(|e| e.unwrap().file_name().to_string_lossy().to_string()).collect();
+        names.sort();
+        assert_eq!(names.len(), 6, "{names:?}");
+        assert!(a.saving.is_empty(), "every name is free again");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Combining, templates and the one-page guide used to draw every picture in Recent on the
+    /// window's thread (the template menu even did it on every frame it was open).
+    #[test]
+    fn pictures_made_from_recent_are_made_off_the_window_thread() {
+        let mut a = app();
+        a.add_entry("Two".into(), Doc::new(RgbaImage::from_pixel(120, 80, image::Rgba([0, 0, 255, 255]))));
+        let n = a.entries.len();
+        a.combine(true);
+        a.export_guide("page");
+        a.make_template(Template::BeforeAfter);
+        assert_eq!(a.entries.len(), n, "nothing was made on the window's thread");
+        assert_eq!(a.status, "Working on it...");
+        settle(&mut a);
+        assert_eq!(a.entries.len(), n + 3);
+        let names: Vec<&str> = a.entries[n..].iter().map(|e| e.name.as_str()).collect();
+        assert!(names[0].starts_with("Combined") && names[1].starts_with("Guide") && names[2].starts_with("Before and after"), "{names:?}");
+        // Combined top to bottom: as tall as both with a gap, as wide as the wider.
+        let (w, h) = a.entries[n].doc.image.dimensions();
+        assert!(w >= 200 && h >= 180, "{w} x {h}");
+        assert_eq!(a.status, "Made from a template. Mark it up like any picture.");
+    }
+
+    /// Opening used to decode the file on the window's thread. Now it arrives from the job
+    /// queue, several in the order asked, and a broken file says why.
+    #[test]
+    fn opened_files_are_read_off_the_window_thread_and_arrive_in_order() {
+        let dir = temp("open");
+        let mut a = app();
+        let (one, two, bad) = (dir.join("one.png"), dir.join("two.png"), dir.join("bad.png"));
+        RgbaImage::from_pixel(30, 20, image::Rgba([1, 2, 3, 255])).save(&one).unwrap();
+        RgbaImage::from_pixel(40, 10, image::Rgba([4, 5, 6, 255])).save(&two).unwrap();
+        std::fs::write(&bad, b"not a picture").unwrap();
+        let n = a.entries.len();
+        a.open_path(&one);
+        a.open_path(&two);
+        assert_eq!(a.entries.len(), n, "read on the window's thread");
+        assert!(a.status.starts_with("Opening "), "{}", a.status);
+        settle(&mut a);
+        assert_eq!(a.entries.len(), n + 2);
+        assert_eq!((a.entries[n].name.as_str(), a.entries[n + 1].name.as_str()), ("one", "two"));
+        assert_eq!(a.entries[n + 1].doc.image.dimensions(), (40, 10));
+        assert_eq!(a.entries[n + 1].path.as_deref(), Some(two.as_path()));
+        a.open_path(&bad);
+        settle(&mut a);
+        assert_eq!(a.entries.len(), n + 2);
+        assert!(a.status.starts_with("Couldn't open"), "{}", a.status);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Moving to the Recycle Bin runs on the job queue now: the picture leaves Recent only when
+    /// its file went, found by id (another picture may be open by then), and stays when it failed.
+    #[test]
+    fn a_recycled_picture_leaves_recent_only_once_its_file_has_gone() {
+        let mut a = app();
+        a.add_entry("Second".into(), Doc::new(RgbaImage::new(8, 8)));
+        a.add_entry("Third".into(), Doc::new(RgbaImage::new(8, 8)));
+        let (first, third) = (a.entries[0].id, a.entries[2].id);
+        a.current = Some(2);
+        let p = std::path::Path::new("C:/x/test.png");
+        a.recycled(first, p, Err("in use".into()));
+        assert_eq!(a.entries.len(), 3, "kept when the file couldn't go");
+        assert!(a.status.contains("in use"), "{}", a.status);
+        a.recycled(first, p, Ok(()));
+        assert_eq!(a.entries.len(), 2);
+        assert_eq!(a.current.map(|c| a.entries[c].id), Some(third), "the open picture stays open");
+        assert!(a.status.starts_with("Moved "), "{}", a.status);
+        a.recycled(first, p, Ok(()));
+        assert_eq!(a.entries.len(), 2, "an id that is gone removes nothing");
+    }
+
+    #[test]
+    fn every_template_lays_out_the_pictures_or_says_too_few() {
+        let imgs: Vec<RgbaImage> = (0..3).map(|i| RgbaImage::from_pixel(50 + i * 10, 40, image::Rgba([255, 0, 0, 255]))).collect();
+        for t in [Template::SideBySide, Template::Grid2, Template::Grid3, Template::BeforeAfter, Template::Gallery] {
+            let out = t.make(&imgs).unwrap_or_else(|| panic!("{t:?} made nothing"));
+            assert!(out.width() >= 60 && out.height() >= 40, "{t:?}: {:?}", out.dimensions());
+            assert!(!t.name().is_empty());
+        }
+        let side = Template::SideBySide.make(&imgs).unwrap();
+        let grid = Template::Grid2.make(&imgs).unwrap();
+        assert!(side.width() > grid.width() && side.height() < grid.height(), "side by side is one row");
+        assert!(Template::BeforeAfter.make(&imgs[..1]).is_none(), "before and after needs two");
+    }
+
+    #[test]
+    fn a_picture_for_another_program_is_written_off_the_window_thread() {
+        let dir = temp("picfile");
+        let mut a = app();
+        let got = std::sync::Arc::new(std::sync::Mutex::new(None));
+        let g = got.clone();
+        a.with_picture_file(dir.join("share.png"), move |_, p| *g.lock().unwrap() = Some(p));
+        settle(&mut a);
+        let p = got.lock().unwrap().clone().expect("the program was not started with the file");
+        assert!(p.exists());
+        // A file that can't be written says so, and nothing is started.
+        std::fs::write(dir.join("file"), b"x").unwrap();
+        a.with_picture_file(dir.join("file").join("in.png"), |_, _| panic!("started without a file"));
+        settle(&mut a);
+        assert!(a.status.starts_with("Couldn't prepare the file"), "{}", a.status);
         let _ = std::fs::remove_dir_all(&dir);
     }
 

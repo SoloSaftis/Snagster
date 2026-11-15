@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Նույն պատկերը միաժամանակ գնում է բոլոր ծառայություններին և կոդավորվում է միայն մեկ անգամ։ Այն ուղարկվում է այն չափով, կադրերի հաճախականությամբ և բիթրեյթով, որոնք ընդունում են բոլորը։",
   "Stream to this service too": "Հեռարձակել նաև այս ծառայությանը",
   "Remove this service and its saved key": "Հեռացնել այս ծառայությունը և դրա պահված բանալին",
-  "Add a service": "Ավելացնել ծառայություն"
+  "Add a service": "Ավելացնել ծառայություն",
+  "Exporting {n} pictures to {folder}...": "{n} պատկեր արտահանվում է {folder}...",
+  "Working on it...": "Աշխատում ենք...",
+  "Couldn't make the picture.": "Չհաջողվեց ստեղծել պատկերը։",
+  "Opening {path}...": "Բացվում է {path}...",
+  "Video encoder": "Տեսանյութի կոդավորիչ",
+  "Automatic (recommended)": "Ավտոմատ (խորհուրդ է տրվում)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Ավտոմատը օգտագործում է լավագույն աշխատող կոդավորիչը։ Եթե ձեր ընտրածը չի կարողանում մեկնարկել կամ դադարում է աշխատել, Snagster-ը անցնում է լավագույն աշխատողին և հայտնում այդ մասին։",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Ընտրված կոդավորիչը հիմա այս համակարգչում չէ, ուստի օգտագործվում է Ավտոմատը։",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Ընտրված կոդավորիչ {pick}-ը չկարողացավ մեկնարկել ({error}), ուստի օգտագործվում է {used}-ը։",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed}-ը դադարեց աշխատել ({error}); անցում {used}-ին։"
  }
 }

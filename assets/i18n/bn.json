@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "একই ছবি একসাথে প্রতিটি সার্ভিসে যায়, একবারই এনকোড হয়। সবগুলো যে আকার, ফ্রেম রেট ও বিটরেট নেয় সেভাবেই পাঠানো হয়।",
   "Stream to this service too": "এই সার্ভিসেও স্ট্রিম করুন",
   "Remove this service and its saved key": "এই সার্ভিস ও এর সংরক্ষিত কী সরান",
-  "Add a service": "একটি সার্ভিস যোগ করুন"
+  "Add a service": "একটি সার্ভিস যোগ করুন",
+  "Exporting {n} pictures to {folder}...": "{n}টি ছবি {folder}-এ এক্সপোর্ট করা হচ্ছে...",
+  "Working on it...": "কাজ চলছে...",
+  "Couldn't make the picture.": "ছবিটি বানানো যায়নি।",
+  "Opening {path}...": "{path} খোলা হচ্ছে...",
+  "Video encoder": "ভিডিও এনকোডার",
+  "Automatic (recommended)": "স্বয়ংক্রিয় (প্রস্তাবিত)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "স্বয়ংক্রিয় মোড কাজ করে এমন সেরা এনকোডার ব্যবহার করে। আপনার বেছে নেওয়াটি চালু না হলে বা কাজ করা বন্ধ করলে, Snagster কাজ করে এমন সেরাটিতে চলে যায় এবং তা জানিয়ে দেয়।",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "বেছে নেওয়া এনকোডারটি এখন এই কম্পিউটারে নেই, তাই স্বয়ংক্রিয় ব্যবহার করা হচ্ছে।",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "বেছে নেওয়া এনকোডার {pick} চালু হতে পারেনি ({error}), তাই {used} ব্যবহার করা হচ্ছে।",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} কাজ করা বন্ধ করেছে ({error}); {used}-এ বদলানো হয়েছে।"
  }
 }

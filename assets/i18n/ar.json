@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "تُرسَل الصورة نفسها إلى كل الخدمات في آن واحد، وتُرمَّز مرة واحدة فقط. وتُرسَل بالحجم ومعدل الإطارات ومعدل البت الذي تقبله جميعها.",
   "Stream to this service too": "البث إلى هذه الخدمة أيضًا",
   "Remove this service and its saved key": "إزالة هذه الخدمة ومفتاحها المحفوظ",
-  "Add a service": "إضافة خدمة"
+  "Add a service": "إضافة خدمة",
+  "Exporting {n} pictures to {folder}...": "جارٍ تصدير {n} صور إلى {folder}...",
+  "Working on it...": "جارٍ العمل على ذلك...",
+  "Couldn't make the picture.": "تعذر إنشاء الصورة.",
+  "Opening {path}...": "جارٍ فتح {path}...",
+  "Video encoder": "مرمّز الفيديو",
+  "Automatic (recommended)": "تلقائي (موصى به)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "يستخدم الوضع التلقائي أفضل مرمّز يعمل. إذا تعذّر بدء المرمّز الذي تختاره أو توقف عن العمل، ينتقل Snagster إلى أفضل مرمّز يعمل ويُعلمك بذلك.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "المرمّز المختار غير موجود على هذا الحاسوب الآن، لذا يُستخدم الوضع التلقائي.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "تعذّر بدء المرمّز المختار {pick} ({error})، لذا يُستخدم {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "توقف {failed} عن العمل ({error})؛ تم التبديل إلى {used}."
  }
 }

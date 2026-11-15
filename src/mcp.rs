@@ -270,7 +270,7 @@ fn base_tools() -> Vec<Tool> {
             ),
             edits: false,
         },
-        Tool { name: "list_video_encoders", description: "The video encoders this computer has (graphics-chip and software) for H.264, HEVC and WMV.", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "list_video_encoders", description: "The video encoders this computer has (graphics-chip and software) for H.264, HEVC and WMV. To use one for recording and streaming: set_setting video_encoder to its name (\"\" automatic: the best that works; a choice that can't start falls back by itself).", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "library_search", description: "Search Snagster's capture library by title, program, tag or date.", schema: obj(json!({"query": s("Words to find; empty lists everything."), "limit": n("Default 20.")}), &[]), edits: false },
     ]
 }

@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Ka haere te pikitia kotahi ki ia ratonga i te wā kotahi, kotahi anake te whakawaehere. Ka tukuna i te rahi, te auau anga me te auau pāpaka e whakaaetia ana e rātou katoa.",
   "Stream to this service too": "Me rere hoki ki tēnei ratonga",
   "Remove this service and its saved key": "Tangohia tēnei ratonga me tōna kī kua tiakina",
-  "Add a service": "Tāpiri ratonga"
+  "Add a service": "Tāpiri ratonga",
+  "Exporting {n} pictures to {folder}...": "E kaweake ana i ngā whakaahua {n} ki {folder}...",
+  "Working on it...": "E mahi ana...",
+  "Couldn't make the picture.": "Kāore i taea te hanga i te whakaahua.",
+  "Opening {path}...": "E whakatuwhera ana i {path}...",
+  "Video encoder": "Kaiwhakawaehere ataata",
+  "Automatic (recommended)": "Aunoa (e taunakitia ana)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Ka whakamahi a Aunoa i te kaiwhakawaehere pai rawa e mahi ana. Ki te kore e taea e te mea i kōwhiria e koe te tīmata, ki te mutu rānei tana mahi, ka huri a Snagster ki te mea pai rawa e mahi ana, ā, ka kōrero mai.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Kāore te kaiwhakawaehere i kōwhiria i runga i tēnei rorohiko ināianei, nō reira ka whakamahia a Aunoa.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Kāore i taea e te kaiwhakawaehere i kōwhiria, a {pick}, te tīmata ({error}), nō reira ka whakamahia a {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "Kua mutu te mahi a {failed} ({error}); kua huri ki {used}."
  }
 }

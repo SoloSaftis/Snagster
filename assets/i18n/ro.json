@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Aceeași imagine merge la toate serviciile deodată și este codificată o singură dată. Este trimisă la dimensiunea, rata de cadre și rata de biți pe care le acceptă toate.",
   "Stream to this service too": "Transmite și pe acest serviciu",
   "Remove this service and its saved key": "Elimină acest serviciu și cheia lui salvată",
-  "Add a service": "Adaugă un serviciu"
+  "Add a service": "Adaugă un serviciu",
+  "Exporting {n} pictures to {folder}...": "Se exportă {n} imagini în {folder}...",
+  "Working on it...": "Se lucrează...",
+  "Couldn't make the picture.": "Nu s-a putut crea imaginea.",
+  "Opening {path}...": "Se deschide {path}...",
+  "Video encoder": "Codificator video",
+  "Automatic (recommended)": "Automat (recomandat)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automat folosește cel mai bun codificator care funcționează. Dacă cel ales nu poate porni sau nu mai funcționează, Snagster trece la cel mai bun care funcționează și anunță acest lucru.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Codificatorul ales nu este acum pe acest computer, așa că se folosește Automat.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Codificatorul ales {pick} nu a putut porni ({error}), așa că se folosește {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} nu mai funcționează ({error}); s-a trecut la {used}."
  }
 }

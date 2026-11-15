@@ -295,7 +295,7 @@ impl Workspace {
             })?;
         }
         let studio = (o.source == Source::Studio).then(|| StudioFrames::Start(s.studio.clone()));
-        live::begin(o, studio, crate::stream::Encoders::system()).map_err(|e| mask_keys(&e))?;
+        live::begin(o, studio, crate::stream::Encoders::system_picked(&s.video_encoder)).map_err(|e| mask_keys(&e))?;
         let stop = self.stop.clone();
         let cancelled = self.ticking(Some(15.0), "Going live", || {
             let t = std::time::Instant::now();

@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Ista slika gre hkrati na vse storitve in se kodira samo enkrat. Pošlje se v velikosti, hitrosti sličic in bitni hitrosti, ki jih sprejmejo vse.",
   "Stream to this service too": "Pretakaj tudi na to storitev",
   "Remove this service and its saved key": "Odstrani to storitev in njen shranjeni ključ",
-  "Add a service": "Dodaj storitev"
+  "Add a service": "Dodaj storitev",
+  "Exporting {n} pictures to {folder}...": "Izvažanje {n} slik v {folder}...",
+  "Working on it...": "Delo poteka...",
+  "Couldn't make the picture.": "Slike ni bilo mogoče ustvariti.",
+  "Opening {path}...": "Odpiranje {path}...",
+  "Video encoder": "Video kodirnik",
+  "Automatic (recommended)": "Samodejno (priporočeno)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Samodejno uporabi najboljši kodirnik, ki deluje. Če izbranega ni mogoče zagnati ali preneha delovati, Snagster preklopi na najboljšega, ki deluje, in to sporoči.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Izbranega kodirnika zdaj ni v tem računalniku, zato se uporablja Samodejno.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Izbranega kodirnika {pick} ni bilo mogoče zagnati ({error}), zato se uporablja {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} je prenehal delovati ({error}); preklopljeno na {used}."
  }
 }

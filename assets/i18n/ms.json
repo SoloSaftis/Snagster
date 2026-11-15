@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Gambar yang sama dihantar ke setiap perkhidmatan serentak dan dikodkan sekali sahaja. Ia dihantar pada saiz, kadar bingkai dan kadar bit yang diterima oleh semuanya.",
   "Stream to this service too": "Strim ke perkhidmatan ini juga",
   "Remove this service and its saved key": "Alih keluar perkhidmatan ini dan kunci yang disimpan",
-  "Add a service": "Tambah perkhidmatan"
+  "Add a service": "Tambah perkhidmatan",
+  "Exporting {n} pictures to {folder}...": "Mengeksport {n} gambar ke {folder}...",
+  "Working on it...": "Sedang diusahakan...",
+  "Couldn't make the picture.": "Tidak dapat membuat gambar.",
+  "Opening {path}...": "Membuka {path}...",
+  "Video encoder": "Pengekod video",
+  "Automatic (recommended)": "Automatik (disyorkan)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automatik menggunakan pengekod terbaik yang berfungsi. Jika yang anda pilih tidak dapat bermula atau berhenti berfungsi, Snagster bertukar kepada yang terbaik yang berfungsi dan memberitahu anda.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Pengekod yang dipilih tiada pada komputer ini sekarang, jadi Automatik digunakan.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Pengekod yang dipilih {pick} tidak dapat bermula ({error}), jadi {used} digunakan.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} berhenti berfungsi ({error}); bertukar kepada {used}."
  }
 }

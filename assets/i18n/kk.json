@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Бір сурет барлық қызметке бірден жіберіледі және тек бір рет кодталады. Ол барлығы қабылдайтын өлшеммен, кадр жиілігімен және битрейтпен жіберіледі.",
   "Stream to this service too": "Осы қызметке де тарату",
   "Remove this service and its saved key": "Осы қызметті және оның сақталған кілтін жою",
-  "Add a service": "Қызмет қосу"
+  "Add a service": "Қызмет қосу",
+  "Exporting {n} pictures to {folder}...": "{n} сурет {folder} ішіне экспортталуда...",
+  "Working on it...": "Орындалуда...",
+  "Couldn't make the picture.": "Суретті жасау мүмкін болмады.",
+  "Opening {path}...": "{path} ашылуда...",
+  "Video encoder": "Бейне кодтауышы",
+  "Automatic (recommended)": "Автоматты (ұсынылады)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Автоматты режим жұмыс істейтін ең жақсы кодтауышты пайдаланады. Таңдағаныңыз іске қосылмаса немесе жұмысын тоқтатса, Snagster жұмыс істейтін ең жақсысына ауысады және бұл туралы хабарлайды.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Таңдалған кодтауыш қазір бұл компьютерде жоқ, сондықтан Автоматты пайдаланылады.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Таңдалған {pick} кодтауышы іске қосылмады ({error}), сондықтан {used} пайдаланылады.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} жұмысын тоқтатты ({error}); {used} кодтауышына ауысты."
  }
 }

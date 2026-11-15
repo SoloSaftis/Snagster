@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Mae’r un llun yn mynd i bob gwasanaeth ar unwaith, wedi’i amgodio unwaith. Caiff ei anfon ar y maint, y gyfradd ffrâm a’r gyfradd didau y mae pob un ohonynt yn eu derbyn.",
   "Stream to this service too": "Ffrydio i’r gwasanaeth hwn hefyd",
   "Remove this service and its saved key": "Tynnu’r gwasanaeth hwn a’i allwedd sydd wedi’i chadw",
-  "Add a service": "Ychwanegu gwasanaeth"
+  "Add a service": "Ychwanegu gwasanaeth",
+  "Exporting {n} pictures to {folder}...": "Yn allforio {n} llun i {folder}...",
+  "Working on it...": "Wrthi...",
+  "Couldn't make the picture.": "Methu gwneud y llun.",
+  "Opening {path}...": "Yn agor {path}...",
+  "Video encoder": "Amgodiwr fideo",
+  "Automatic (recommended)": "Awtomatig (argymhellir)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Mae Awtomatig yn defnyddio'r amgodiwr gorau sy'n gweithio. Os na all yr un a ddewiswch ddechrau neu os yw'n stopio gweithio, mae Snagster yn newid i'r gorau sy'n gweithio ac yn dweud hynny.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Nid yw'r amgodiwr a ddewiswyd ar y cyfrifiadur hwn nawr, felly defnyddir Awtomatig.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Methodd yr amgodiwr a ddewiswyd {pick} ddechrau ({error}), felly defnyddir {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "Stopiodd {failed} weithio ({error}); newidiwyd i {used}."
  }
 }

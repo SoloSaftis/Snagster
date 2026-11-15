@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Tas pats vaizdas vienu metu siunčiamas į visas paslaugas ir užkoduojamas tik kartą. Jis siunčiamas tokiu dydžiu, kadrų dažniu ir bitų sparta, kuriuos priima visos paslaugos.",
   "Stream to this service too": "Transliuoti ir į šią paslaugą",
   "Remove this service and its saved key": "Pašalinti šią paslaugą ir jos išsaugotą raktą",
-  "Add a service": "Pridėti paslaugą"
+  "Add a service": "Pridėti paslaugą",
+  "Exporting {n} pictures to {folder}...": "Eksportuojama {n} paveikslėlių į {folder}...",
+  "Working on it...": "Vykdoma...",
+  "Couldn't make the picture.": "Nepavyko sukurti paveikslėlio.",
+  "Opening {path}...": "Atidaroma {path}...",
+  "Video encoder": "Vaizdo kodavimo priemonė",
+  "Automatic (recommended)": "Automatiškai (rekomenduojama)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automatinis režimas naudoja geriausią veikiančią kodavimo priemonę. Jei pasirinktoji negali pasileisti arba nustoja veikti, Snagster persijungia į geriausią veikiančią ir apie tai praneša.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Pasirinktos kodavimo priemonės dabar šiame kompiuteryje nėra, todėl naudojamas automatinis režimas.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Pasirinkta kodavimo priemonė {pick} negalėjo pasileisti ({error}), todėl naudojama {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} nustojo veikti ({error}); persijungta į {used}."
  }
 }

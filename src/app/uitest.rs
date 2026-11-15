@@ -154,13 +154,21 @@ impl UiTest {
             a.add_entry("Blank".into(), Doc::new(image::RgbaImage::from_pixel(400, 300, image::Rgba([255, 255, 255, 255]))));
             assert_eq!(a.entries.len(), n + 1);
         }));
-        s.push(once("File: templates and one-page guide", |a, _| {
-            let n = a.entries.len();
+        // Made on the job queue: the window keeps answering, the pictures arrive after.
+        let before = std::rc::Rc::new(std::cell::Cell::new(0));
+        let b = before.clone();
+        s.push(once("File: templates and one-page guide (in the background)", move |a, _| {
+            b.set(a.entries.len());
             a.export_guide("page");
             a.combine(false);
             a.combine(true);
-            assert_eq!(a.entries.len(), n + 3);
+            a.make_template(crate::app::Template::Gallery);
+            assert_eq!(a.entries.len(), b.get(), "they were made on the window's thread");
         }));
+        s.push((
+            "File: the made pictures arrive".to_string(),
+            Box::new(move |a: &mut SnagApp, _: &egui::Context| a.entries.len() == before.get() + 4),
+        ));
         s.push(once("Edit: duplicate and remove picture", |a, _| {
             let n = a.entries.len();
             a.duplicate();
@@ -253,18 +261,40 @@ impl UiTest {
             a.save_to(i, p.clone());
             assert!(p.exists());
         }));
-        s.push(once("File: export several pictures", |a, _| {
+        s.push(once("File: export several pictures (in the background)", |a, _| {
             let dir = test_dir().join("export");
             let pick = vec![true; a.entries.len()];
             a.export_many(&pick, &dir, crate::settings::ImageFormat::Png);
-            assert!(std::fs::read_dir(&dir).map(|d| d.count()).unwrap_or(0) >= 2);
+            assert!(a.status.starts_with("Exporting"), "{}", a.status);
         }));
-        s.push(once("File: open the saved project again", |a, _| {
+        s.push((
+            "File: the exported pictures arrive".to_string(),
+            Box::new(|a: &mut SnagApp, _: &egui::Context| {
+                if !a.status.starts_with("Exported") {
+                    return false;
+                }
+                assert!(!a.status.contains("failed"), "{}", a.status);
+                std::fs::read_dir(test_dir().join("export")).map(|d| d.count()).unwrap_or(0) >= 2
+            }),
+        ));
+        let before = std::rc::Rc::new(std::cell::Cell::new(0));
+        let b = before.clone();
+        s.push(once("File: open the saved project again (read in the background)", move |a, _| {
             let p = test_dir().join("test.snag");
-            let n = a.entries.len();
+            b.set(a.entries.len());
             a.open_path(&p);
-            assert_eq!(a.entries.len(), n + 1);
+            assert_eq!(a.entries.len(), b.get(), "it was read on the window's thread");
         }));
+        s.push((
+            "File: the project arrives".to_string(),
+            Box::new(move |a: &mut SnagApp, _: &egui::Context| {
+                if a.entries.len() < before.get() + 1 {
+                    return false;
+                }
+                assert!(a.status.starts_with("Opened project"), "{}", a.status);
+                true
+            }),
+        ));
         // After-capture work runs on the job queue and comes back to the window.
         s.push(once("File: quick save on the job queue (start)", |a, _| {
             if let Some(e) = a.entry() {
@@ -761,7 +791,13 @@ impl SnagApp {
             if t.at < t.steps.len() {
                 let (name, f) = &t.steps[t.at];
                 let name = name.clone();
+                let started = std::time::Instant::now();
                 let r = catch_unwind(AssertUnwindSafe(|| f(self, ctx)));
+                // A step that holds up its frame: says which one, so a slow-frame line in the
+                // log can be told apart from the window's own work.
+                if started.elapsed() >= super::work::SLOW_FRAME {
+                    println!("  slow  {name}: the step itself took {:.1} s", started.elapsed().as_secs_f64());
+                }
                 match r {
                     Ok(true) => {
                         println!("  ok    {name}");

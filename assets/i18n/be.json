@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Адна і тая ж карцінка ідзе ва ўсе сэрвісы адначасова і кадуецца толькі адзін раз. Яна адпраўляецца з памерам, частатой кадраў і бітрэйтам, якія прымаюць усе яны.",
   "Stream to this service too": "Трансляваць і ў гэты сэрвіс",
   "Remove this service and its saved key": "Выдаліць гэты сэрвіс і яго захаваны ключ",
-  "Add a service": "Дадаць сэрвіс"
+  "Add a service": "Дадаць сэрвіс",
+  "Exporting {n} pictures to {folder}...": "Экспарт {n} відарысаў у {folder}...",
+  "Working on it...": "Працуем над гэтым...",
+  "Couldn't make the picture.": "Не ўдалося зрабіць відарыс.",
+  "Opening {path}...": "Адкрыццё {path}...",
+  "Video encoder": "Відэакадавальнік",
+  "Automatic (recommended)": "Аўтаматычна (рэкамендуецца)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Аўтаматычны рэжым выкарыстоўвае найлепшы кадавальнік, які працуе. Калі выбраны вамі не можа запусціцца або перастае працаваць, Snagster пераключаецца на найлепшы працоўны і паведамляе пра гэта.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Выбранага кадавальніка зараз няма на гэтым камп'ютары, таму выкарыстоўваецца аўтаматычны выбар.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Не ўдалося запусціць выбраны кадавальнік {pick} ({error}), таму выкарыстоўваецца {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} перастаў працаваць ({error}); пераключана на {used}."
  }
 }

@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Η ίδια εικόνα πηγαίνει σε όλες τις υπηρεσίες ταυτόχρονα και κωδικοποιείται μία φορά. Στέλνεται στο μέγεθος, τον ρυθμό καρέ και τον ρυθμό bit που δέχονται όλες.",
   "Stream to this service too": "Μετάδοση και σε αυτή την υπηρεσία",
   "Remove this service and its saved key": "Αφαίρεση αυτής της υπηρεσίας και του αποθηκευμένου κλειδιού της",
-  "Add a service": "Προσθήκη υπηρεσίας"
+  "Add a service": "Προσθήκη υπηρεσίας",
+  "Exporting {n} pictures to {folder}...": "Εξαγωγή {n} εικόνων στο {folder}...",
+  "Working on it...": "Γίνεται επεξεργασία...",
+  "Couldn't make the picture.": "Δεν ήταν δυνατή η δημιουργία της εικόνας.",
+  "Opening {path}...": "Άνοιγμα του {path}...",
+  "Video encoder": "Κωδικοποιητής βίντεο",
+  "Automatic (recommended)": "Αυτόματο (συνιστάται)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Το Αυτόματο χρησιμοποιεί τον καλύτερο κωδικοποιητή που λειτουργεί. Αν αυτός που επιλέγετε δεν μπορεί να ξεκινήσει ή σταματήσει να λειτουργεί, το Snagster αλλάζει στον καλύτερο που λειτουργεί και το αναφέρει.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Ο επιλεγμένος κωδικοποιητής δεν υπάρχει τώρα σε αυτόν τον υπολογιστή, οπότε χρησιμοποιείται το Αυτόματο.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Ο επιλεγμένος κωδικοποιητής {pick} δεν μπόρεσε να ξεκινήσει ({error}), οπότε χρησιμοποιείται ο {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "Ο {failed} σταμάτησε να λειτουργεί ({error})· έγινε αλλαγή στον {used}."
  }
 }

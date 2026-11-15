@@ -84,6 +84,8 @@ pub struct VideoOpts {
     pub quality: u8,
     /// Use the graphics chip's encoder when there is one.
     pub hardware: bool,
+    /// The chosen encoder's name ("" automatic, see `encode::open_video_picked`).
+    pub encoder: String,
     /// Draw the mouse pointer.
     pub cursor: bool,
     /// Stop by itself after this many seconds (0: only when told).
@@ -101,7 +103,7 @@ pub struct VideoOpts {
 impl VideoOpts {
     /// Plain options for a screen area: no sound, no custom frames.
     pub fn screen(rect: (i32, i32, u32, u32), fps: u32, format: VideoFormat, path: PathBuf) -> VideoOpts {
-        VideoOpts { rect, fps, format, quality: 2, hardware: true, cursor: true, max_s: 0, path, audio: crate::audio::AudioSource::None, mic: String::new(), frames: None }
+        VideoOpts { rect, fps, format, quality: 2, hardware: true, encoder: String::new(), cursor: true, max_s: 0, path, audio: crate::audio::AudioSource::None, mic: String::new(), frames: None }
     }
 
     /// The options a screen recording of `rect` gets from the settings (what the window uses):
@@ -115,6 +117,7 @@ impl VideoOpts {
             format,
             quality: s.video_quality.clamp(1, 4),
             hardware: s.video_hardware,
+            encoder: s.video_encoder.clone(),
             cursor: s.gif_cursor,
             max_s: s.video_max_s,
             path: recording_path(&s.video_folder, "Recording", format.ext()),
@@ -1948,6 +1951,13 @@ mod win {
         }
     }
 
+    /// Whether to try the graphics chip: Media Foundation's file writer picks the encoder
+    /// itself (the screen's graphics chip), so a chosen software encoder means "not the
+    /// graphics chip" here; any other choice, or automatic, tries it first.
+    fn hardware_for(opts: &VideoOpts) -> bool {
+        opts.hardware && !crate::encode::pick_is_software(&opts.encoder)
+    }
+
     fn make_writer(opts: &VideoOpts, w: u32, h: u32, gpu: Option<&ID3D11Device>, hardware: bool, sound: bool) -> R<Writer> {
         unsafe {
             let mut attrs = None;
@@ -2467,7 +2477,7 @@ mod win {
             done.width = w;
             done.height = h;
             let mut last_err = String::new();
-            let tries: &[bool] = if opts.hardware { &[true, false] } else { &[false] };
+            let tries: &[bool] = if hardware_for(opts) { &[true, false] } else { &[false] };
             for &hw in tries {
                 let _ = std::fs::remove_file(&opts.path);
                 let wr = match make_writer(opts, w, h, None, hw, sound.is_some()) {
@@ -2530,10 +2540,10 @@ mod win {
         // (use the graphics chip to copy, use a hardware encoder)
         let mut tries: Vec<(bool, bool)> = Vec::new();
         let gpu_ok = screen.is_some() && opts.format != VideoFormat::Wmv;
-        if opts.hardware && gpu_ok {
+        if hardware_for(opts) && gpu_ok {
             tries.push((true, true));
         }
-        if opts.hardware && opts.format != VideoFormat::Wmv {
+        if hardware_for(opts) && opts.format != VideoFormat::Wmv {
             tries.push((false, true));
         }
         tries.push((false, false));
@@ -2878,7 +2888,10 @@ mod soft {
             prefer_hardware: opts.hardware,
             low_latency: true,
         };
-        let mut enc = crate::encode::open_video(&cfg)?;
+        let (mut enc, fell_back) = crate::encode::open_video_picked(&cfg, &opts.encoder)?;
+        if let Some(n) = fell_back {
+            done.note = if done.note.is_empty() { n } else { format!("{} {n}", done.note) };
+        }
         let name = enc.name();
         done.encoder = name.name;
         done.hardware = name.hardware;

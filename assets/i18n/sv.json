@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Samma bild går till alla tjänster samtidigt och kodas bara en gång. Den skickas i den storlek, bildfrekvens och bithastighet som alla tar emot.",
   "Stream to this service too": "Strömma även till den här tjänsten",
   "Remove this service and its saved key": "Ta bort den här tjänsten och dess sparade nyckel",
-  "Add a service": "Lägg till en tjänst"
+  "Add a service": "Lägg till en tjänst",
+  "Exporting {n} pictures to {folder}...": "Exporterar {n} bilder till {folder}...",
+  "Working on it...": "Arbetar på det...",
+  "Couldn't make the picture.": "Kunde inte skapa bilden.",
+  "Opening {path}...": "Öppnar {path}...",
+  "Video encoder": "Videokodare",
+  "Automatic (recommended)": "Automatiskt (rekommenderas)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automatiskt använder den bästa kodaren som fungerar. Om den du väljer inte kan starta eller slutar fungera byter Snagster till den bästa som fungerar och säger det.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Den valda kodaren finns inte på den här datorn nu, så Automatiskt används.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Den valda kodaren {pick} kunde inte starta ({error}), så {used} används.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} slutade fungera ({error}); bytte till {used}."
  }
 }

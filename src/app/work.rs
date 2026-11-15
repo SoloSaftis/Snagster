@@ -147,6 +147,14 @@ pub(crate) struct ListCache<T: Send + 'static> {
     loaded: bool,
 }
 
+/// A list made again every ten minutes at most (microphones, encoders): devices come and go
+/// rarely, and a button can ask for a new look (`expire`).
+impl<T: Send + 'static> Default for ListCache<T> {
+    fn default() -> Self {
+        Self::new(Duration::from_secs(600))
+    }
+}
+
 impl<T: Send + 'static> ListCache<T> {
     pub fn new(every: Duration) -> Self {
         Self { items: Vec::new(), fetched: None, rx: None, every, loaded: false }

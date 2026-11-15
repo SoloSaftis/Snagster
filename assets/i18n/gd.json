@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Thèid an aon dealbh gu gach seirbheis aig an aon àm, air a chòdachadh aon turas. Thèid a chur aig a’ mheud, an reat fhrèaman agus an reat bhiotan a ghabhas iad uile.",
   "Stream to this service too": "Sruthaich gun t-seirbheis seo cuideachd",
   "Remove this service and its saved key": "Thoir air falbh an t-seirbheis seo is an iuchair a chaidh a shàbhaladh dhi",
-  "Add a service": "Cuir seirbheis ris"
+  "Add a service": "Cuir seirbheis ris",
+  "Exporting {n} pictures to {folder}...": "Ag às-phortadh {n} dealbh gu {folder}...",
+  "Working on it...": "Ga dhèanamh...",
+  "Couldn't make the picture.": "Cha b' urrainn dhuinn an dealbh a dhèanamh.",
+  "Opening {path}...": "A' fosgladh {path}...",
+  "Video encoder": "Còdaichear video",
+  "Automatic (recommended)": "Fèin-obrachail (air a mholadh)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Cleachdaidh Fèin-obrachail an còdaichear as fheàrr a tha ag obair. Mura tèid leis an fhear a thaghas tu tòiseachadh no ma stadas e ag obair, leumaidh Snagster dhan fhear as fheàrr a tha ag obair is innsidh e sin.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Chan eil an còdaichear a thagh thu air a' choimpiutair seo an-dràsta, mar sin thèid Fèin-obrachail a chleachdadh.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Cha b' urrainn dhan chòdaichear a thagh thu, {pick}, tòiseachadh ({error}), mar sin thèid {used} a chleachdadh.",
+  "{failed} stopped working ({error}); switched to {used}.": "Sguir {failed} a dh'obair ({error}); chaidh leum gu {used}."
  }
 }

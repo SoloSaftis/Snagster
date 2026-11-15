@@ -475,6 +475,9 @@ pub struct Settings {
     pub video_fps: u32,
     pub video_quality: u8,
     pub video_hardware: bool,
+    /// The video encoder chosen for recording and streaming, by its name (`encode::available`);
+    /// empty: automatic (the best that works). One that can't start falls back by itself.
+    pub video_encoder: String,
     pub video_max_s: u32,
     /// Where videos and GIF recordings go (Videos/Snagster).
     pub video_folder: String,
@@ -601,6 +604,7 @@ impl Default for Settings {
             video_fps: 30,
             video_quality: 2,
             video_hardware: true,
+            video_encoder: String::new(),
             video_max_s: 0,
             video_folder: videos().join("Snagster").to_string_lossy().to_string(),
             audio_source: crate::audio::AudioSource::System,
@@ -799,7 +803,48 @@ pub fn videos() -> PathBuf {
     crate::userdirs::videos().unwrap_or_else(|| home().join(if cfg!(target_os = "macos") { "Movies" } else { "Videos" }))
 }
 
-/// Folders that sync to the cloud, when the person has them.
+/// The cloud folders as last found, never waiting: the window asks every frame, and looking
+/// can take seconds (`G:` may be a network drive that is gone, and each check then waits for
+/// it), so they are looked for on a thread of their own at most once a minute. Empty until
+/// the first look is done; `repaint` is asked to draw again when it is.
+pub fn cloud_folders_now(repaint: Option<&egui::Context>) -> Vec<(String, PathBuf)> {
+    static CACHE: std::sync::Mutex<CloudCache> = std::sync::Mutex::new(CloudCache { found: Vec::new(), looked: None, looking: false });
+    cached_look(&CACHE, std::time::Instant::now(), repaint.cloned(), cloud_folders)
+}
+
+pub(crate) struct CloudCache {
+    found: Vec<(String, PathBuf)>,
+    looked: Option<std::time::Instant>,
+    looking: bool,
+}
+
+/// What `cache` holds now, starting a look on its own thread with `look` when the last one is a
+/// minute old (or there was none) and none is under way.
+pub(crate) fn cached_look(cache: &'static std::sync::Mutex<CloudCache>, now: std::time::Instant, repaint: Option<egui::Context>, look: fn() -> Vec<(String, PathBuf)>) -> Vec<(String, PathBuf)> {
+    let mut c = cache.lock().unwrap_or_else(|p| p.into_inner());
+    let due = c.looked.is_none_or(|t| now.saturating_duration_since(t) >= std::time::Duration::from_secs(60));
+    if due && !c.looking {
+        c.looking = true;
+        c.looked = Some(now);
+        let started = std::thread::Builder::new().name("snagster-cloud-folders".into()).spawn(move || {
+            let found = look();
+            let mut c = cache.lock().unwrap_or_else(|p| p.into_inner());
+            c.found = found;
+            c.looking = false;
+            drop(c);
+            if let Some(r) = repaint {
+                r.request_repaint();
+            }
+        });
+        if started.is_err() {
+            c.looking = false;
+        }
+    }
+    c.found.clone()
+}
+
+/// Folders that sync to the cloud, when the person has them. Slow when a drive doesn't
+/// answer: the window uses `cloud_folders_now`.
 pub fn cloud_folders() -> Vec<(String, PathBuf)> {
     let mut out = Vec::new();
     for var in ["OneDrive", "OneDriveConsumer", "OneDriveCommercial"] {
@@ -1175,6 +1220,37 @@ mod tests {
         let _ = std::fs::remove_dir_all(&d);
         std::fs::create_dir_all(&d).unwrap();
         d
+    }
+
+    /// A drive that doesn't answer used to hold up every frame of the Share tab. The cache
+    /// answers at once, looks once a minute on its own thread, and never twice at a time.
+    #[test]
+    fn cloud_folders_are_looked_for_in_the_background_and_never_waited_for() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        static CACHE: std::sync::Mutex<CloudCache> = std::sync::Mutex::new(CloudCache { found: Vec::new(), looked: None, looking: false });
+        static LOOKS: AtomicUsize = AtomicUsize::new(0);
+        fn slow_look() -> Vec<(String, PathBuf)> {
+            LOOKS.fetch_add(1, Ordering::SeqCst);
+            std::thread::sleep(std::time::Duration::from_millis(400));
+            vec![("Dropbox".into(), PathBuf::from("/d"))]
+        }
+        let t0 = std::time::Instant::now();
+        assert!(cached_look(&CACHE, t0, None, slow_look).is_empty(), "nothing yet, and no waiting");
+        assert!(cached_look(&CACHE, t0, None, slow_look).is_empty());
+        assert!(t0.elapsed() < std::time::Duration::from_millis(200), "it waited {:?}", t0.elapsed());
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while cached_look(&CACHE, t0, None, slow_look).is_empty() && std::time::Instant::now() < until {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        assert_eq!(cached_look(&CACHE, t0, None, slow_look), vec![("Dropbox".to_string(), PathBuf::from("/d"))]);
+        assert_eq!(LOOKS.load(Ordering::SeqCst), 1, "one look, however often it is asked");
+        // A minute later it looks again (and still answers with the last list meanwhile).
+        assert_eq!(cached_look(&CACHE, t0 + std::time::Duration::from_secs(61), None, slow_look).len(), 1);
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while LOOKS.load(Ordering::SeqCst) < 2 && std::time::Instant::now() < until {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        assert_eq!(LOOKS.load(Ordering::SeqCst), 2);
     }
 
     #[test]

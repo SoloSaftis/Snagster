@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Ten istý obraz ide do všetkých služieb naraz a kóduje sa iba raz. Posiela sa vo veľkosti, snímkovej frekvencii a dátovom toku, ktoré prijímajú všetky.",
   "Stream to this service too": "Streamovať aj na túto službu",
   "Remove this service and its saved key": "Odstrániť túto službu a jej uložený kľúč",
-  "Add a service": "Pridať službu"
+  "Add a service": "Pridať službu",
+  "Exporting {n} pictures to {folder}...": "Exportujem {n} obrázkov do {folder}...",
+  "Working on it...": "Pracujem na tom...",
+  "Couldn't make the picture.": "Obrázok sa nepodarilo vytvoriť.",
+  "Opening {path}...": "Otváram {path}...",
+  "Video encoder": "Kodér videa",
+  "Automatic (recommended)": "Automaticky (odporúčané)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automatický režim použije najlepší kodér, ktorý funguje. Ak vybraný kodér nemožno spustiť alebo prestane fungovať, Snagster prepne na najlepší funkčný a oznámi to.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "Vybraný kodér teraz v tomto počítači nie je, preto sa použije Automaticky.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "Vybraný kodér {pick} sa nepodarilo spustiť ({error}), preto sa použije {used}.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} prestal fungovať ({error}); prepnuté na {used}."
  }
 }

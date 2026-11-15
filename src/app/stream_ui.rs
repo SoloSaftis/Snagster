@@ -198,7 +198,7 @@ impl SnagApp {
             (Source::Studio, None) => Some(StudioFrames::Start(self.settings.studio.clone())),
             _ => None,
         };
-        let enc = self.x.stream.encoders.clone().unwrap_or_else(Encoders::system);
+        let enc = self.x.stream.encoders.clone().unwrap_or_else(|| Encoders::system_picked(&self.settings.video_encoder));
         let service = services_named(o.target.service, o.also.iter().map(|t| t.service));
         match live::begin(o, studio, enc) {
             Ok(()) => self.status = tf("Going live on {service}...", &[("service", &service)]),
@@ -445,6 +445,7 @@ impl SnagApp {
         ui.add_space(6.0);
         self.also_section(ui);
         ui.add_space(6.0);
+        let pickable = self.x.pickable.get(Some(ui.ctx()), crate::encode::available).to_vec();
         let s = &mut self.settings.stream;
         let p = s.service.preset();
         ui.label(RichText::new(t("Picture")).strong());
@@ -480,6 +481,8 @@ impl SnagApp {
             ui.label(RichText::new(t("(services ask for 2 s)")).color(TEXT_DIM));
         });
         ui.checkbox(&mut s.hardware, t("Use the graphics chip to encode (Intel, AMD or NVIDIA)"));
+        crate::windows::encoder_picker(ui, "stream-encoder", &mut self.settings.video_encoder, &pickable);
+        let s = &mut self.settings.stream;
         ui.checkbox(&mut s.hevc, t("Send HEVC (H.265) where the service takes it")).on_hover_text(t("YouTube and custom servers take HEVC over Enhanced RTMP; other services, and computers without an HEVC encoder, get H.264."));
         ui.checkbox(&mut s.cursor, t("Show the mouse pointer"));
         ui.add_space(4.0);

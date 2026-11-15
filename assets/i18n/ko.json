@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "같은 화면을 한 번만 인코딩해 모든 서비스에 동시에 보냅니다. 모든 서비스가 받을 수 있는 크기, 프레임 속도, 비트레이트로 전송됩니다.",
   "Stream to this service too": "이 서비스에도 송출",
   "Remove this service and its saved key": "이 서비스와 저장된 키 삭제",
-  "Add a service": "서비스 추가"
+  "Add a service": "서비스 추가",
+  "Exporting {n} pictures to {folder}...": "사진 {n}장을 {folder}(으)로 내보내는 중...",
+  "Working on it...": "작업 중...",
+  "Couldn't make the picture.": "사진을 만들 수 없습니다.",
+  "Opening {path}...": "{path} 여는 중...",
+  "Video encoder": "비디오 인코더",
+  "Automatic (recommended)": "자동(권장)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "자동은 작동하는 가장 좋은 인코더를 사용합니다. 선택한 인코더가 시작되지 않거나 작동을 멈추면 Snagster가 작동하는 가장 좋은 인코더로 전환하고 알려 줍니다.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "선택한 인코더가 현재 이 컴퓨터에 없으므로 자동을 사용합니다.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "선택한 인코더 {pick}을(를) 시작할 수 없어({error}) {used}을(를) 사용합니다.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed}이(가) 작동을 멈췄습니다({error}). {used}(으)로 전환했습니다."
  }
 }

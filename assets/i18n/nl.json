@@ -913,6 +913,16 @@
   "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Hetzelfde beeld gaat tegelijk naar elke dienst en wordt maar één keer gecodeerd. Het wordt verzonden met de grootte, framesnelheid en bitrate die ze allemaal accepteren.",
   "Stream to this service too": "Ook naar deze dienst streamen",
   "Remove this service and its saved key": "Deze dienst en de opgeslagen sleutel verwijderen",
-  "Add a service": "Dienst toevoegen"
+  "Add a service": "Dienst toevoegen",
+  "Exporting {n} pictures to {folder}...": "{n} afbeeldingen exporteren naar {folder}...",
+  "Working on it...": "Bezig...",
+  "Couldn't make the picture.": "Kan de afbeelding niet maken.",
+  "Opening {path}...": "{path} openen...",
+  "Video encoder": "Video-encoder",
+  "Automatic (recommended)": "Automatisch (aanbevolen)",
+  "Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so.": "Automatisch gebruikt de beste encoder die werkt. Als de gekozen encoder niet kan starten of stopt met werken, schakelt Snagster over naar de beste die werkt en meldt dat.",
+  "The chosen encoder isn't on this computer now, so Automatic is used.": "De gekozen encoder is nu niet op deze computer, dus wordt Automatisch gebruikt.",
+  "The chosen encoder {pick} couldn't start ({error}), so {used} is used.": "De gekozen encoder {pick} kon niet starten ({error}), dus wordt {used} gebruikt.",
+  "{failed} stopped working ({error}); switched to {used}.": "{failed} werkt niet meer ({error}); overgeschakeld naar {used}."
  }
 }
