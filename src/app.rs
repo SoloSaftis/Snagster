@@ -350,6 +350,14 @@ pub struct SnagApp {
     textures_swept: Instant,
     overlay: Option<Overlay>,
     restore_pos: Option<Pos2>,
+    /// The window is hidden to the tray (closed to the tray, started there, or hidden after a
+    /// capture): egui can't tell, so Snagster keeps track itself.
+    in_tray: bool,
+    /// The capture overlay was opened from the tray, so it goes back there afterwards.
+    overlay_from_tray: bool,
+    /// The capture started while the window was minimized or in the tray (not hidden by the
+    /// capture itself): cancelling puts it back out of the way instead of opening the editor.
+    started_away: bool,
     pub(crate) last_region: Option<(i32, i32, u32, u32)>,
     pending_preset: Option<usize>,
     // background jobs
@@ -525,6 +533,9 @@ impl SnagApp {
             textures_swept: Instant::now(),
             overlay: None,
             restore_pos: None,
+            in_tray: false,
+            overlay_from_tray: false,
+            started_away: false,
             last_region: None,
             pending_preset: None,
             scroll_rx: None,
@@ -742,8 +753,10 @@ impl SnagApp {
         let outer = ctx.input(|i| i.viewport().outer_rect);
         self.restore_pos = outer.map(|r| pos2(r.min.x * ppp, r.min.y * ppp));
         let at = outer.map(|r| ((r.center().x * ppp) as i32, (r.center().y * ppp) as i32)).unwrap_or((0, 0));
-        let minimized = ctx.input(|i| i.viewport().minimized).unwrap_or(false);
+        // Hidden to the tray counts as out of the way too (no minimizing, no settle time).
+        let minimized = ctx.input(|i| i.viewport().minimized).unwrap_or(false) || self.in_tray;
         self.hidden_for_capture = minimized;
+        self.started_away = minimized;
         let mut delay = 60;
         if self.settings.hide_window && !minimized {
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
@@ -756,8 +769,20 @@ impl SnagApp {
         self.capturing = Some(kind);
     }
 
-    pub(crate) fn show_window(&mut self, ctx: &egui::Context) {
+    /// Hide the window to the tray (it keeps running there).
+    pub(crate) fn hide_to_tray(&mut self, ctx: &egui::Context) {
+        self.in_tray = true;
+        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+    }
+
+    /// Make the window visible again (after the tray).
+    pub(crate) fn unhide(&mut self, ctx: &egui::Context) {
+        self.in_tray = false;
         ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+    }
+
+    pub(crate) fn show_window(&mut self, ctx: &egui::Context) {
+        self.unhide(ctx);
         ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
         ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
     }
@@ -782,18 +807,18 @@ impl SnagApp {
                         ov.read_controls(ctx);
                     }
                     self.overlay = Some(ov);
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
-                    ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(at));
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
-                    ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+                    self.overlay_from_tray = self.in_tray;
+                    self.in_tray = false;
+                    for cmd in overlay_show_commands(at) {
+                        ctx.send_viewport_cmd(cmd);
+                    }
                 }
                 Ok(shot) => {
                     let show = !self.quiet_capture && (!self.hidden_for_capture || self.settings.after_show_editor);
                     if show {
                         self.show_window(ctx);
                     } else if self.tray.is_some() {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+                        self.hide_to_tray(ctx);
                     }
                     let title = match &res.kind {
                         CaptureKind::Window(_, t) => t.clone(),
@@ -829,6 +854,8 @@ impl SnagApp {
         }
         if show_editor {
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+        } else if std::mem::take(&mut self.overlay_from_tray) && self.tray.is_some() {
+            self.hide_to_tray(ctx);
         } else {
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
         }
@@ -903,7 +930,7 @@ impl SnagApp {
             Outcome::Cancel => {
                 self.pending_preset = None;
                 self.status = "Capture cancelled.".into();
-                self.leave_overlay(&ctx, true);
+                self.leave_overlay(&ctx, !self.started_away);
             }
             Outcome::Color(c) => {
                 let hex = format!("#{:02X}{:02X}{:02X}", c[0], c[1], c[2]);
@@ -3864,7 +3891,7 @@ impl SnagApp {
                     crate::settings::StartMode::Panel => self.enter_panel(ctx),
                     crate::settings::StartMode::Tray => {
                         if self.tray.is_some() {
-                            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+                            self.hide_to_tray(ctx);
                         }
                     }
                 }
@@ -3877,7 +3904,7 @@ impl SnagApp {
             if self.panel_open {
                 self.leave_panel(ctx);
             }
-            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+            self.hide_to_tray(ctx);
             self.status = "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.".into();
         }
         // Closing for good ends a stream cleanly (it is unpublished, not cut off).
@@ -3887,7 +3914,7 @@ impl SnagApp {
         self.poll_stream(ctx);
         // Snagster opened again: this one comes forward (and opens the file asked for).
         for ask in crate::instance::take() {
-            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+            self.unhide(ctx);
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
             if let crate::instance::Ask::Open(p) = ask {
@@ -4694,7 +4721,7 @@ impl SnagApp {
             .find(|m| at.0 >= m.x && at.1 >= m.y && at.0 < m.x + m.width as i32 && at.1 < m.y + m.height as i32)
             .or_else(|| mons.iter().find(|m| m.primary))
             .or(mons.first());
-        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+        self.unhide(ctx);
         ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
         ctx.send_viewport_cmd(egui::ViewportCommand::MinInnerSize(vec2(300.0, 150.0)));
         ctx.send_viewport_cmd(egui::ViewportCommand::Decorations(false));
@@ -4734,7 +4761,7 @@ impl SnagApp {
     pub(crate) fn hide_panel(&mut self, ctx: &egui::Context) {
         self.leave_panel(ctx);
         if self.tray.is_some() {
-            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+            self.hide_to_tray(ctx);
         } else {
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
         }
@@ -5341,8 +5368,28 @@ impl SnagApp {
     }
 }
 
+/// What brings up the full-screen capture overlay, from a window that is shown, minimized or
+/// hidden to the tray. Visible(true) comes first: without it a window hidden to the tray went
+/// full screen but stayed invisible, holding the keyboard (Print Screen seemed to freeze).
+pub(crate) fn overlay_show_commands(at: Pos2) -> Vec<egui::ViewportCommand> {
+    use egui::ViewportCommand as C;
+    vec![C::Visible(true), C::Minimized(false), C::OuterPosition(at), C::Fullscreen(true), C::WindowLevel(egui::WindowLevel::AlwaysOnTop), C::Focus]
+}
+
 #[cfg(test)]
 mod tests {
+    /// Print Screen while Snagster was closed to the tray: the overlay must be made visible
+    /// before it goes full screen and takes the keyboard.
+    #[test]
+    fn the_capture_overlay_is_made_visible_first() {
+        use egui::ViewportCommand as C;
+        let cmds = super::overlay_show_commands(egui::pos2(0.0, 0.0));
+        assert_eq!(cmds.first(), Some(&C::Visible(true)));
+        let at = |c: &C| cmds.iter().position(|x| x == c).unwrap();
+        assert!(at(&C::Visible(true)) < at(&C::Fullscreen(true)));
+        assert!(at(&C::Fullscreen(true)) < at(&C::Focus), "focus last, on the visible full-screen window");
+    }
+
     use super::*;
 
     #[test]

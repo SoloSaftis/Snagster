@@ -81,11 +81,21 @@ fn legacy_snagster_dir(os: Os, env: &dyn Fn(&str) -> Option<OsString>) -> Option
     }
 }
 
+/// A folder of its own for Snagster's settings when `SNAGSTER_HOME` names one (an absolute
+/// path): a second Snagster for testing, with its own settings, lock file and crash log, that
+/// leaves the person's own Snagster alone.
+fn home_override(env: &dyn Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
+    abs(env("SNAGSTER_HOME"))
+}
+
 /// Snagster's own folder (settings.json, crash.log, the stream key file, the font cache).
 /// The first call in a run brings over the folder an older Snagster used.
 pub fn snagster_dir() -> Option<PathBuf> {
     static DIR: std::sync::OnceLock<Option<PathBuf>> = std::sync::OnceLock::new();
     DIR.get_or_init(|| {
+        if let Some(own) = home_override(&env) {
+            return Some(own);
+        }
         let dir = config_dir()?.join("Snagster");
         if let Some(old) = legacy_snagster_dir(OS, &env)
             && let Err(e) = migrate(&old, &dir)
@@ -262,6 +272,14 @@ mod known {
 mod tests {
     use super::*;
     use std::collections::HashMap;
+
+    #[test]
+    fn snagster_home_gives_a_test_copy_its_own_folder() {
+        let dir = if cfg!(windows) { "C:\\snag-test" } else { "/tmp/snag-test" };
+        assert_eq!(home_override(&vars(&[("SNAGSTER_HOME", dir)])), Some(PathBuf::from(dir)));
+        assert_eq!(home_override(&vars(&[("SNAGSTER_HOME", "relative/dir")])), None, "only an absolute path");
+        assert_eq!(home_override(&vars(&[])), None);
+    }
 
     fn vars(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<OsString> + use<> {
         let m: HashMap<String, OsString> = pairs.iter().map(|(k, v)| (k.to_string(), OsString::from(v))).collect();
