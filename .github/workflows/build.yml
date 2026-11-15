@@ -106,7 +106,10 @@ jobs:
           path: dist/Snagster-windows-x64-portable.zip
 
   linux:
-    runs-on: ubuntu-latest
+    # Built on the oldest supported Ubuntu, so the download runs on every Linux with glibc 2.35 or
+    # newer (Ubuntu 22.04+, Debian 12+, Fedora 36+, RHEL 10). ubuntu-latest (26.04, glibc 2.43)
+    # made a program that wouldn't start on Ubuntu 24.04 or Debian.
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -132,6 +135,11 @@ jobs:
           appstreamcli validate --no-net --explain assets/linux/io.github.SoloSaftis.Snagster.metainfo.xml
       - name: Build
         run: cargo build --release --locked
+      - name: The program runs on glibc 2.35 (Ubuntu 22.04) and newer
+        run: |
+          need=$(objdump -T target/release/snagster | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1)
+          echo "newest glibc symbol needed: $need"
+          [ "$(printf '%s\nGLIBC_2.35\n' "$need" | sort -V | tail -1)" = GLIBC_2.35 ]
       - name: Unit tests
         run: cargo test --release --locked
       - uses: actions/setup-node@v4
