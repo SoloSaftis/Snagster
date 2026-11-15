@@ -958,6 +958,7 @@
   "Resize image": "ปรับขนาดรูปภาพ",
   "Canvas size and color": "ขนาดและสีของผืนผ้าใบ",
   "Export pictures": "ส่งออกรูปภาพ",
-  "What's new in Snagster": "มีอะไรใหม่ใน Snagster"
+  "What's new in Snagster": "มีอะไรใหม่ใน Snagster",
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster เวอร์ชันใหม่มาทาง {who} อัปเดตได้ที่นั่น เช่น ในศูนย์ซอฟต์แวร์ของคุณ"
  }
 }

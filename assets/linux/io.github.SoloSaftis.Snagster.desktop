@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Snagster
+GenericName=Screen Capture
+Comment=Capture your screen, mark it up, record it
+Exec=snagster %F
+Icon=io.github.SoloSaftis.Snagster
+Terminal=false
+Categories=Graphics;
+Keywords=screenshot;screen;capture;record;recorder;video;annotate;stream;
+MimeType=image/png;image/jpeg;image/bmp;image/gif;image/webp;image/tiff;
+StartupNotify=true
+StartupWMClass=io.github.SoloSaftis.Snagster

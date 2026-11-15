@@ -16,6 +16,11 @@ pub(crate) struct UpdateUi {
     install_rx: Option<Receiver<Result<PathBuf, String>>>,
     progress: Option<Arc<AtomicU32>>,
     pub message: Option<String>,
+    /// A check was asked for while a package system installs the updates (see `managed`).
+    managed_asked: bool,
+    /// Tests: act as if this package system installed Snagster.
+    #[cfg(test)]
+    pub test_managed: Option<&'static str>,
 }
 
 impl UpdateUi {
@@ -27,8 +32,24 @@ impl UpdateUi {
         self.found.as_ref().filter(|r| crate::update::is_newer(&r.version, env!("CARGO_PKG_VERSION")))
     }
 
-    /// Ask GitHub in the background.
+    /// The package system that installs new versions (Flatpak, Snap), or `None` when Snagster
+    /// updates itself.
+    pub fn managed(&self) -> Option<&'static str> {
+        #[cfg(test)]
+        if self.test_managed.is_some() {
+            return self.test_managed;
+        }
+        crate::update::managed_by()
+    }
+
+    /// Ask GitHub in the background (not when a package system installs the updates: then
+    /// the person is told where updates come from).
     pub fn check(&mut self, ctx: &egui::Context, asked: bool) {
+        if self.managed().is_some() {
+            self.managed_asked |= asked;
+            ctx.request_repaint();
+            return;
+        }
         if self.check_rx.is_some() {
             return;
         }
@@ -43,9 +64,20 @@ impl UpdateUi {
     }
 }
 
+/// Where new versions come from when a package system installed Snagster.
+pub(crate) fn managed_note(who: &str) -> String {
+    tf("New versions of Snagster come through {who}. Update it there, for example in your software center.", &[("who", who)])
+}
+
 impl SnagApp {
     /// Once a day at start (unless turned off), and the answers to checks.
     pub(crate) fn poll_updates(&mut self, ctx: &egui::Context) {
+        if let Some(who) = self.x.update.managed() {
+            if std::mem::take(&mut self.x.update.managed_asked) {
+                self.status = managed_note(who);
+            }
+            return;
+        }
         let now = chrono::Utc::now().timestamp();
         if self.persist && self.settings.update_check && now - self.settings.update_checked_at > 24 * 3600 && !UI_TEST.load(Ordering::Relaxed) {
             self.settings.update_checked_at = now;
@@ -232,6 +264,23 @@ mod tests {
         assert_eq!(quiet.status, before);
         let asked = answered(Err("offline".into()), true);
         assert!(asked.status.contains("offline"));
+    }
+
+    #[test]
+    fn inside_flatpak_snagster_never_asks_github_and_says_where_updates_come_from() {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.x.update.test_managed = Some("Flatpak");
+        a.persist = true;
+        a.settings.update_check = true;
+        a.settings.update_checked_at = 0;
+        let ctx = egui::Context::default();
+        a.poll_updates(&ctx);
+        assert!(!a.x.update.checking());
+        assert_eq!(a.settings.update_checked_at, 0, "no daily check inside a Flatpak");
+        a.x.update.check(&ctx, true);
+        assert!(!a.x.update.checking(), "the button doesn't reach for GitHub either");
+        a.poll_updates(&ctx);
+        assert_eq!(a.status, managed_note("Flatpak"));
     }
 
     #[test]

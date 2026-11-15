@@ -18,6 +18,8 @@ mod emoji;
 mod fonts;
 mod hotkeys;
 mod overlay;
+#[cfg(target_os = "linux")]
+mod portal;
 mod panel;
 mod tray;
 mod settings;
@@ -40,6 +42,10 @@ mod testalloc;
 
 use eframe::egui;
 use std::path::PathBuf;
+
+/// Snagster's name on Linux desktops: the window's app id, the menu entry, the store listing
+/// and the icon all use it (assets/linux).
+pub const APP_ID: &str = "io.github.SoloSaftis.Snagster";
 
 /// The window icon: a blue tile with white viewfinder corners and a dot.
 pub fn icon() -> egui::IconData {
@@ -397,6 +403,9 @@ fn main() -> eframe::Result {
 
     let mut viewport = egui::ViewportBuilder::default()
         .with_title("Snagster")
+        // Linux desktops match the window to its menu entry and icon by this name
+        // (assets/linux/io.github.SoloSaftis.Snagster.desktop).
+        .with_app_id(APP_ID)
         .with_inner_size([1280.0, 800.0])
         .with_min_inner_size([900.0, 560.0])
         .with_icon(icon());
@@ -762,5 +771,40 @@ mod main_tests {
         append_log_line(&p, "fresh\n", 10);
         assert_eq!(std::fs::read_to_string(&p).unwrap(), "fresh\n", "a full log starts again");
         let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
+#[cfg(test)]
+mod linux_files_tests {
+    use super::APP_ID;
+
+    const DESKTOP: &str = include_str!("../assets/linux/io.github.SoloSaftis.Snagster.desktop");
+    const METAINFO: &str = include_str!("../assets/linux/io.github.SoloSaftis.Snagster.metainfo.xml");
+    const ICON: &[u8] = include_bytes!("../assets/linux/io.github.SoloSaftis.Snagster.png");
+
+    /// The menu entry, the store listing, the icon and the window all carry the same name, so
+    /// Linux desktops (and Flathub) tie them together.
+    #[test]
+    fn the_linux_files_use_snagsters_app_id() {
+        assert!(DESKTOP.lines().any(|l| l == format!("Icon={APP_ID}")));
+        assert!(DESKTOP.lines().any(|l| l == format!("StartupWMClass={APP_ID}")));
+        assert!(DESKTOP.lines().any(|l| l.starts_with("Exec=snagster")));
+        assert!(METAINFO.contains(&format!("<id>{APP_ID}</id>")));
+        assert!(METAINFO.contains(&format!(r#"<launchable type="desktop-id">{APP_ID}.desktop</launchable>"#)));
+        assert!(METAINFO.contains(&format!(r#"<icon type="stock">{APP_ID}</icon>"#)));
+    }
+
+    /// Releases keep the store listing current: its newest release is this version.
+    #[test]
+    fn the_store_listing_names_this_version_first() {
+        let first = METAINFO.split("<release version=\"").nth(1).and_then(|r| r.split('"').next());
+        assert_eq!(first, Some(env!("CARGO_PKG_VERSION")), "add this version to the top of <releases> in the metainfo file");
+    }
+
+    /// Flathub wants an icon of at least 256 by 256 pixels.
+    #[test]
+    fn the_linux_icon_is_256_pixels() {
+        let img = image::load_from_memory(ICON).unwrap();
+        assert_eq!((img.width(), img.height()), (256, 256));
     }
 }

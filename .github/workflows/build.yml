@@ -124,7 +124,12 @@ jobs:
             libxcb1-dev libxcb-randr0-dev libxcb-shm0-dev libxcb-xfixes0-dev libxcb-shape0-dev \
             libdbus-1-dev libfuse2 \
             libva2 libva-drm2 \
-            nasm
+            nasm \
+            desktop-file-utils appstream
+      - name: Linux menu entry and store listing are valid (what Flathub checks)
+        run: |
+          desktop-file-validate assets/linux/io.github.SoloSaftis.Snagster.desktop
+          appstreamcli validate --no-net --explain assets/linux/io.github.SoloSaftis.Snagster.metainfo.xml
       - name: Build
         run: cargo build --release --locked
       - name: Unit tests
@@ -154,15 +159,9 @@ jobs:
           cp target/release/snagster "$stage/Snagster"
           cp assets/snagster-256.png "$stage/snagster.png"
           cp README.md LICENSE-MIT LICENSE-APACHE "$stage/"
-          cat > "$stage/snagster.desktop" <<'DESKTOP'
-          [Desktop Entry]
-          Type=Application
-          Name=Snagster
-          Comment=Capture your screen, mark it up, share it
-          Exec=Snagster
-          Icon=snagster
-          Categories=Graphics;Utility;
-          DESKTOP
+          # The menu entry from assets/linux, with this package's program and icon names.
+          sed -e 's/^Exec=snagster/Exec=Snagster/' -e 's/^Icon=.*/Icon=snagster/' \
+            assets/linux/io.github.SoloSaftis.Snagster.desktop > "$stage/snagster.desktop"
           tar -C dist -czf dist/Snagster-linux-x86_64-portable.tar.gz Snagster
           appdir=dist/Snagster.AppDir
           mkdir -p "$appdir/usr/bin"

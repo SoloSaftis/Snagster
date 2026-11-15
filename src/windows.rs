@@ -1860,18 +1860,22 @@ impl SnagApp {
         ui.add_space(10.0);
         ui.label(RichText::new(t("Updates")).strong());
         ui.label(tf("This is Snagster {v}.", &[("v", env!("CARGO_PKG_VERSION"))]));
-        ui.checkbox(&mut self.settings.update_check, t("Look for a new version on GitHub when Snagster starts (once a day)"));
-        ui.horizontal(|ui| {
-            let checking = self.x.update.checking();
-            if ui.add_enabled(!checking, egui::Button::new(if checking { t("Checking...") } else { t("Check now") })).clicked() {
-                self.x.update.check(ui.ctx(), true);
-            }
-            if let Some(r) = self.x.update.available().cloned()
-                && ui.button(tf("Install {v}", &[("v", &r.version)])).clicked()
-            {
-                self.x.update.dialog = true;
-            }
-        });
+        if let Some(who) = self.x.update.managed() {
+            ui.label(RichText::new(crate::app::updates_ui::managed_note(who)).color(TEXT_DIM));
+        } else {
+            ui.checkbox(&mut self.settings.update_check, t("Look for a new version on GitHub when Snagster starts (once a day)"));
+            ui.horizontal(|ui| {
+                let checking = self.x.update.checking();
+                if ui.add_enabled(!checking, egui::Button::new(if checking { t("Checking...") } else { t("Check now") })).clicked() {
+                    self.x.update.check(ui.ctx(), true);
+                }
+                if let Some(r) = self.x.update.available().cloned()
+                    && ui.button(tf("Install {v}", &[("v", &r.version)])).clicked()
+                {
+                    self.x.update.dialog = true;
+                }
+            });
+        }
         if !self.settings.update_skip.is_empty() {
             ui.horizontal(|ui| {
                 ui.label(RichText::new(tf("Skipping version {v}.", &[("v", &self.settings.update_skip)])).color(TEXT_DIM));

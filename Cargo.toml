@@ -80,6 +80,12 @@ libloading = "0.8"
 # shared-memory segment (MIT/Apache-2.0).
 x11rb = { version = "0.13", features = ["shm"] }
 libc = "0.2"
+# The desktop's portals (Screenshot, ScreenCast) and PipeWire for the screen share: how Snagster
+# sees the screen on Wayland and inside a Flatpak. The same versions and features xcap already
+# brings (ashpd MIT, pipewire MIT, pollster Apache-2.0/MIT), so nothing new in the tree.
+ashpd = { version = "0.14", default-features = false, features = ["async-io", "pipewire", "screencast", "screenshot"] }
+pipewire = "0.10"
+pollster = "1"
 
 [target."cfg(target_os = \"macos\")".dependencies]
 winit = "0.30"

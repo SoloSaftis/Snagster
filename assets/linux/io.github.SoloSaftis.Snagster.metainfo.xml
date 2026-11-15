@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.SoloSaftis.Snagster</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT OR Apache-2.0</project_license>
+  <name>Snagster</name>
+  <summary>Capture your screen, mark it up, record it</summary>
+  <developer id="io.github.solosaftis">
+    <name>SoloSaftis</name>
+  </developer>
+  <description>
+    <p>
+      Snagster takes screenshots and screen recordings, lets you mark them up, and saves or
+      shares them. Everything runs on your own computer.
+    </p>
+    <ul>
+      <li>Capture a screen, a window or any area, with a timer if you like</li>
+      <li>Arrows, text, highlights, blur, steps and shapes that stay editable</li>
+      <li>Record the screen with sound to MP4 or GIF</li>
+      <li>Studio: scenes with several sources, and live streaming to several services at once</li>
+      <li>Read the text in a picture, and a library of everything you took</li>
+      <li>In 85 languages</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.SoloSaftis.Snagster.desktop</launchable>
+  <icon type="stock">io.github.SoloSaftis.Snagster</icon>
+  <url type="homepage">https://github.com/SoloSaftis/Snagster</url>
+  <url type="bugtracker">https://github.com/SoloSaftis/Snagster/issues</url>
+  <url type="vcs-browser">https://github.com/SoloSaftis/Snagster</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Mark up a capture</caption>
+      <image>https://raw.githubusercontent.com/SoloSaftis/Snagster/main/assets/screenshots/snagster.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Choose what to capture</caption>
+      <image>https://raw.githubusercontent.com/SoloSaftis/Snagster/main/assets/screenshots/capture-panel.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Studio, the live workspace</caption>
+      <image>https://raw.githubusercontent.com/SoloSaftis/Snagster/main/assets/screenshots/studio.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Go live on several services at once</caption>
+      <image>https://raw.githubusercontent.com/SoloSaftis/Snagster/main/assets/screenshots/stream.png</image>
+    </screenshot>
+  </screenshots>
+  <categories>
+    <category>Graphics</category>
+  </categories>
+  <keywords>
+    <keyword>screenshot</keyword>
+    <keyword>screen recorder</keyword>
+    <keyword>annotate</keyword>
+    <keyword>streaming</keyword>
+  </keywords>
+  <provides>
+    <binary>snagster</binary>
+  </provides>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.10.1" date="2026-11-15">
+      <description>
+        <ul>
+          <li>Recent lists the pictures and videos you took before</li>
+          <li>Capture a window from a list</li>
+          <li>One Snagster at a time</li>
+          <li>Settings and dialogs open in their own centered windows</li>
+          <li>Choose which graphics card encodes</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.10.0" date="2026-11-15">
+      <description>
+        <ul>
+          <li>Go live on several services at once from one encode</li>
+          <li>Studio is the live workspace, with per-scene sound</li>
+          <li>Choose the video encoder</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+</component>

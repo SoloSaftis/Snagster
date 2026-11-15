@@ -582,7 +582,26 @@ pub fn grab_rect(x: i32, y: i32, w: u32, h: u32) -> Result<RgbaImage, String> {
     guarded(|| grab_rect_raw(x, y, w, h))
 }
 
+/// Whether the screens can be listed directly (Linux: not in a sandbox without X11, nor on a
+/// Wayland desktop xcap can't read). When they can't, pictures come from the Screenshot portal.
+#[cfg(target_os = "linux")]
+fn screens_listable() -> bool {
+    guarded(xcap::Monitor::all).is_ok_and(|all| !all.is_empty())
+}
+
+/// The whole desktop through the desktop's Screenshot portal (Linux, see `crate::portal`).
+#[cfg(target_os = "linux")]
+fn portal_shot() -> Result<Shot, String> {
+    let image = crate::portal::screenshot()?;
+    Ok(shot(image, (0, 0), "Screen".into()))
+}
+
 fn grab_rect_raw(x: i32, y: i32, w: u32, h: u32) -> Result<RgbaImage, String> {
+    #[cfg(target_os = "linux")]
+    if !screens_listable() {
+        let all = portal_shot()?;
+        return crop_desktop(&all.image, all.origin, x, y, w, h).ok_or_else(|| "that area is off screen".to_string());
+    }
     let m = xcap_monitor_at(x + w as i32 / 2, y + h as i32 / 2)?;
     let (mx, my) = (m.x().unwrap_or(0), m.y().unwrap_or(0));
     let (mw, mh) = (m.width().unwrap_or(0), m.height().unwrap_or(0));
@@ -628,6 +647,10 @@ pub fn grab(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String>
 }
 
 fn grab_raw(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String> {
+    #[cfg(target_os = "linux")]
+    if !screens_listable() {
+        return portal_shot();
+    }
     let at = cursor_pos().unwrap_or(fallback_at);
     match kind {
         CaptureKind::Screen => grab_monitor(&xcap_monitor_at(at.0, at.1)?),

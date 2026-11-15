@@ -653,11 +653,21 @@ trait Grab {
 }
 
 /// The best way to copy `rect` on this system: Desktop Duplication (or GDI) on Windows; on
-/// Linux one X connection with shared memory (X11; Wayland keeps xcap's way); on macOS
-/// `CGDisplayCreateImageForRect`; xcap where those can't be had.
+/// Linux one X connection with shared memory on X11, and on Wayland (and in a Flatpak) a screen
+/// share through the desktop's ScreenCast portal (xcap's way, then XWayland, when the desktop has
+/// none); on macOS `CGDisplayCreateImageForRect`; xcap where those can't be had.
 fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, String> {
     #[cfg(windows)]
     return win::open_grab(rect, cursor);
+    #[cfg(target_os = "linux")]
+    if use_portal(x11::is_wayland(), crate::update::managed_by() == Some("Flatpak")) {
+        match PortalGrab::open(rect, cursor) {
+            Ok(g) => return Ok(Box::new(g)),
+            // In a sandbox the portal is the only way in: say why it failed.
+            Err(e) if crate::update::managed_by() == Some("Flatpak") && !x11::reachable() => return Err(e),
+            Err(_) => {}
+        }
+    }
     #[cfg(target_os = "linux")]
     if use_x11(x11::is_wayland(), || crate::capture::grab_rect(rect.0, rect.1, rect.2.clamp(2, 16), rect.3.clamp(2, 16)).is_ok())
         && let Ok(g) = x11::X11Grab::open(rect, cursor)
@@ -679,6 +689,84 @@ fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, 
 #[cfg(any(target_os = "linux", test))]
 fn use_x11(wayland: bool, xcap_copies: impl FnOnce() -> bool) -> bool {
     !wayland || !xcap_copies()
+}
+
+/// Whether Linux records through the ScreenCast portal first: on Wayland (where reading the
+/// screen directly isn't allowed and xcap's way is one slow screenshot per picture) and inside
+/// a Flatpak (where the sandbox only lets the portal in).
+#[cfg(any(target_os = "linux", test))]
+fn use_portal(wayland: bool, flatpak: bool) -> bool {
+    wayland || flatpak
+}
+
+/// Linux on Wayland or in a Flatpak: the pictures of a screen share (`crate::portal::Cast`),
+/// cut to the recorded area. The desktop asks the person which screen to share when it opens.
+#[cfg(target_os = "linux")]
+struct PortalGrab {
+    cast: crate::portal::Cast,
+    rect: (i32, i32, u32, u32),
+    /// The newest whole picture of the shared screen, and its number and size.
+    buf: Vec<u8>,
+    seen: u64,
+    size: (u32, u32),
+}
+
+#[cfg(target_os = "linux")]
+impl PortalGrab {
+    fn open(rect: (i32, i32, u32, u32), cursor: bool) -> Result<PortalGrab, String> {
+        let cast = crate::portal::Cast::start(cursor)?;
+        let mut g = PortalGrab { cast, rect, buf: Vec::new(), seen: 0, size: (0, 0) };
+        // The first picture, so a recording never starts black (the share may take a moment).
+        let until = Instant::now() + Duration::from_secs(5);
+        while g.seen == 0 {
+            g.take()?;
+            if g.seen == 0 {
+                if Instant::now() > until {
+                    return Err("the screen share sent no picture".into());
+                }
+                std::thread::sleep(Duration::from_millis(10));
+            }
+        }
+        Ok(g)
+    }
+
+    /// Take the newest picture if there is one; Ok(true) when it is new.
+    fn take(&mut self) -> Result<bool, String> {
+        match self.cast.newer_than(self.seen, &mut self.buf)? {
+            Some((w, h, n)) => {
+                self.size = (w, h);
+                self.seen = n;
+                Ok(true)
+            }
+            None => Ok(false),
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl Grab for PortalGrab {
+    fn grab(&mut self, until: Instant, force: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String> {
+        sleep_until(until);
+        let new = self.take()?;
+        if !new && !force {
+            return Ok(false);
+        }
+        let (bw, bh) = self.size;
+        let (left, top, w, h) = crate::portal::crop_in_buffer(self.rect, self.cast.origin, self.cast.logical, (bw, bh)).unwrap_or((0, 0, bw, bh));
+        let start = (top as usize * bw as usize + left as usize) * 4;
+        let px = Pixels { data: &self.buf[start..], width: w, height: h, stride: bw as usize * 4, bgra: false };
+        fit_into(&px, out, fit.unwrap_or((w, h)));
+        Ok(true)
+    }
+
+    fn retarget(&mut self, rect: (i32, i32, u32, u32)) -> bool {
+        self.rect = rect;
+        true
+    }
+
+    fn name(&self) -> &'static str {
+        "screen share (portal)"
+    }
 }
 
 /// Wait until `until` (now if it has passed). Notes when the wait ended, so the feed can time
@@ -1033,6 +1121,11 @@ mod x11 {
     pub fn is_wayland() -> bool {
         let var = |k: &str| std::env::var_os(k).unwrap_or_default().to_string_lossy().to_lowercase();
         var("XDG_SESSION_TYPE") == "wayland" || var("WAYLAND_DISPLAY").contains("wayland")
+    }
+
+    /// An X server Snagster may talk to (a sandbox without the X11 socket has none).
+    pub fn reachable() -> bool {
+        std::env::var_os("DISPLAY").is_some_and(|d| !d.is_empty())
     }
 
     /// A System V shared-memory segment attached here and by the X server.
@@ -3083,6 +3176,9 @@ mod tests {
     /// can't copy the screen at all (WSLg crashed or failed there before).
     #[test]
     fn linux_copies_through_x11_unless_waylands_own_way_works() {
+        assert!(!use_portal(false, false), "plain X11 copies directly");
+        assert!(use_portal(true, false), "Wayland shares the screen through the portal");
+        assert!(use_portal(false, true), "a Flatpak only gets the screen through the portal");
         assert!(use_x11(false, || panic!("not asked on X11")));
         assert!(!use_x11(true, || true), "Wayland's own way works: keep it");
         assert!(use_x11(true, || false), "it can't copy: XWayland is better than nothing");

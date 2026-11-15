@@ -3539,6 +3539,7 @@ version = "0.10.1"
 dependencies = [
  "ab_glyph",
  "arboard",
+ "ashpd",
  "base64 0.22.1",
  "chrono",
  "eframe",
@@ -3552,6 +3553,8 @@ dependencies = [
  "mp4",
  "openh264",
  "openh264-sys2",
+ "pipewire",
+ "pollster",
  "regex",
  "rfd",
  "ring",

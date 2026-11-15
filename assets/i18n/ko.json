@@ -958,6 +958,7 @@
   "Resize image": "이미지 크기 조정",
   "Canvas size and color": "캔버스 크기 및 색상",
   "Export pictures": "사진 내보내기",
-  "What's new in Snagster": "Snagster 새 소식"
+  "What's new in Snagster": "Snagster 새 소식",
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster의 새 버전은 {who}을(를) 통해 제공됩니다. 소프트웨어 센터 등 그곳에서 업데이트하세요."
  }
 }

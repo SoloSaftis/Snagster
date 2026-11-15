@@ -2,6 +2,19 @@
 
 What changed for people using Snagster, per version.
 
+## Unreleased
+
+New:
+
+- **Linux: works on Wayland and inside a Flatpak**: recording and live streaming share the
+  screen through the desktop's own screen-sharing dialog (you pick the screen), and still
+  captures use the desktop's screenshot service when the screens can't be read directly.
+- **Linux menu entry and store listing**: a desktop entry, AppStream information and icon
+  under the name `io.github.SoloSaftis.Snagster`, checked in every build.
+- **Updates in a Flatpak** come from Flatpak (your software center); Snagster doesn't download
+  them itself there.
+- `docs/AI.md` lists which parts of Snagster are AI-generated and to what extent.
+
 ## 0.10.1 — 2026-11-15
 
 New:

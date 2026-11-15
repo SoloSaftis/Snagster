@@ -138,6 +138,11 @@ Linux needs a few development packages first (on Ubuntu:
 `sudo apt install pkg-config clang libclang-dev libpipewire-0.3-dev libspa-0.2-dev libwayland-dev libxkbcommon-dev libgbm-dev libegl1-mesa-dev libgl1-mesa-dev libdrm-dev libxcb1-dev libxcb-randr0-dev libxcb-shm0-dev libxcb-xfixes0-dev libxcb-shape0-dev libdbus-1-dev nasm`).
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
+## How it's made
+
+Snagster is written with an AI coding assistant (Claude). [`docs/AI.md`](docs/AI.md) lists which
+parts are AI-generated and to what extent.
+
 ## Licence
 
 [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option. A contribution you submit is

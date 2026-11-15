@@ -1,0 +1,3 @@
+# Linux desktop files must keep plain line feeds (desktop-file-validate refuses CR).
+assets/linux/*.desktop text eol=lf
+assets/linux/*.xml text eol=lf

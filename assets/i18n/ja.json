@@ -958,6 +958,7 @@
   "Resize image": "画像のサイズ変更",
   "Canvas size and color": "キャンバスのサイズと色",
   "Export pictures": "画像を書き出す",
-  "What's new in Snagster": "Snagster の新機能"
+  "What's new in Snagster": "Snagster の新機能",
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster の新しいバージョンは {who} から届きます。ソフトウェアセンターなど、そちらで更新してください。"
  }
 }
