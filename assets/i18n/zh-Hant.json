@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "無法製作 Word 文件：{error}",
   "{what}: now {width} x {height}.": "{what}：現為 {width} x {height}。",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "發生問題，已略過（{message}）。詳細資訊見 crash.log（說明 > 問題報告）。",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "此系統尚不支援選單擷取：請開啟選單，改為擷取區域。"
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "此系統尚不支援選單擷取：請開啟選單，改為擷取區域。",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster 需要錄製螢幕的權限：系統設定 > 隱私權與安全性 > 螢幕錄製，開啟 Snagster 後重新啟動它。",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster 看不到螢幕：它需要已登入的桌面，而不只是遠端 Shell。請在 Mac 的螢幕上（或透過螢幕共享）登入，然後在那裡啟動 Snagster。",
+  "Open Screen Recording settings": "打開螢幕錄製設定",
+  "Screen Recording permission": "螢幕錄製權限",
+  "Close": "關閉"
  }
 }

@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Word ডকুমেণ্টটো বনাব পৰা নগ'ল: {error}",
   "{what}: now {width} x {height}.": "{what}: এতিয়া {width} x {height}।",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "কিবা ভুল হ'ল আৰু এৰি যোৱা হ'ল ({message})। বিৱৰণ crash.log ত আছে (সহায় > সমস্যাৰ প্ৰতিবেদন)।",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "এই ছিষ্টেমত মেনু কেপচাৰ এতিয়াও উপলব্ধ নহয়: তাৰ সলনি মেনুখন খুলি এটা ক্ষেত্ৰ কেপচাৰ কৰক।"
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "এই ছিষ্টেমত মেনু কেপচাৰ এতিয়াও উপলব্ধ নহয়: তাৰ সলনি মেনুখন খুলি এটা ক্ষেত্ৰ কেপচাৰ কৰক।",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "স্ক্ৰীণ ৰেকৰ্ড কৰিবলৈ Snagster-ক অনুমতি লাগে: চিষ্টেম ছেটিংছ > গোপনীয়তা আৰু সুৰক্ষা > স্ক্ৰীণ ৰেকৰ্ডিং, তাৰ পিছত Snagster অন কৰি পুনৰ আৰম্ভ কৰক।",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster-এ কোনো স্ক্ৰীণ দেখা নাপায়: ইয়াক লগ-ইন কৰা ডেস্কটপ লাগে, কেৱল দূৰৱৰ্তী শ্বেল নহয়। Mac-ৰ স্ক্ৰীণত (বা স্ক্ৰীণ শ্বেয়াৰিঙেৰে) লগ-ইন কৰি তাতেই Snagster আৰম্ভ কৰক।",
+  "Open Screen Recording settings": "স্ক্ৰীণ ৰেকৰ্ডিং ছেটিংছ খোলক",
+  "Screen Recording permission": "স্ক্ৰীণ ৰেকৰ্ডিঙৰ অনুমতি",
+  "Close": "বন্ধ কৰক"
  }
 }

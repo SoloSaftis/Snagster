@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Word دستاویز نہیں بن سکی: {error}",
   "{what}: now {width} x {height}.": "{what}: اب {width} x {height}۔",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "کچھ غلط ہوا اور اسے چھوڑ دیا گیا ({message})۔ تفصیلات crash.log میں ہیں (مدد > مسائل کی رپورٹس)۔",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "اس سسٹم پر مینو کیپچر ابھی دستیاب نہیں: مینو کھولیں اور اس کے بجائے کوئی حصہ کیپچر کریں۔"
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "اس سسٹم پر مینو کیپچر ابھی دستیاب نہیں: مینو کھولیں اور اس کے بجائے کوئی حصہ کیپچر کریں۔",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "اسکرین ریکارڈ کرنے کے لیے Snagster کو اجازت درکار ہے: سسٹم سیٹنگز > رازداری اور سیکیورٹی > اسکرین ریکارڈنگ، پھر Snagster کو آن کریں اور اسے دوبارہ شروع کریں۔",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster کو کوئی اسکرین نظر نہیں آتی: اسے لاگ اِن شدہ ڈیسک ٹاپ چاہیے، صرف ریموٹ شیل نہیں۔ Mac کی اسکرین پر (یا اسکرین شیئرنگ سے) لاگ اِن کریں اور وہیں Snagster شروع کریں۔",
+  "Open Screen Recording settings": "اسکرین ریکارڈنگ سیٹنگز کھولیں",
+  "Screen Recording permission": "اسکرین ریکارڈنگ کی اجازت",
+  "Close": "بند کریں"
  }
 }

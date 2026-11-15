@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Dokument Word sa nepodarilo vytvoriť: {error}",
   "{what}: now {width} x {height}.": "{what}: teraz {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "Niečo sa pokazilo a bolo preskočené ({message}). Podrobnosti sú v crash.log (Pomocník > Hlásenia problémov).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Zachytenie ponuky zatiaľ nie je v tomto systéme dostupné: otvorte ponuku a namiesto toho zachyťte oblasť."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Zachytenie ponuky zatiaľ nie je v tomto systéme dostupné: otvorte ponuku a namiesto toho zachyťte oblasť.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster potrebuje povolenie na nahrávanie obrazovky: Systémové nastavenia > Súkromie a bezpečnosť > Nahrávanie obrazovky, potom zapnite Snagster a spustite ho znova.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster nevidí žiadnu obrazovku: potrebuje plochu s prihláseným používateľom, nie iba vzdialený terminál. Prihláste sa na obrazovke Macu (alebo cez Zdieľanie obrazovky) a spustite Snagster tam.",
+  "Open Screen Recording settings": "Otvoriť nastavenia nahrávania obrazovky",
+  "Screen Recording permission": "Povolenie na nahrávanie obrazovky",
+  "Close": "Zavrieť"
  }
 }

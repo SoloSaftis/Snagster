@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Neizdevās izveidot Word dokumentu: {error}",
   "{what}: now {width} x {height}.": "{what}: tagad {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "Kaut kas nogāja greizi un tika izlaists ({message}). Sīkāka informācija ir crash.log (Palīdzība > Problēmu ziņojumi).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Izvēlņu tveršana šajā sistēmā vēl nav pieejama: atveriet izvēlni un tā vietā tveriet apgabalu."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Izvēlņu tveršana šajā sistēmā vēl nav pieejama: atveriet izvēlni un tā vietā tveriet apgabalu.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster vajag atļauju ierakstīt ekrānu: Sistēmas iestatījumi > Privātums un drošība > Ekrāna ierakstīšana, pēc tam ieslēdziet Snagster un restartējiet to.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster neredz ekrānu: tam vajag darbvirsmu ar pieteikušos lietotāju, ne tikai attālu čaulu. Piesakieties Mac ekrānā (vai ar ekrāna koplietošanu) un palaidiet Snagster tur.",
+  "Open Screen Recording settings": "Atvērt ekrāna ierakstīšanas iestatījumus",
+  "Screen Recording permission": "Ekrāna ierakstīšanas atļauja",
+  "Close": "Aizvērt"
  }
 }

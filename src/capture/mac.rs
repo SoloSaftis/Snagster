@@ -57,6 +57,18 @@ mod sys {
         pub fn CFRetain(value: Ref) -> Ref;
         pub fn CFRelease(value: Ref);
     }
+
+    unsafe extern "C" {
+        fn dlsym(handle: *mut std::ffi::c_void, symbol: *const c_char) -> *mut std::ffi::c_void;
+    }
+
+    /// A system function looked up while running (null where this macOS doesn't have it), for
+    /// the ones newer than the oldest macOS Snagster starts on.
+    pub fn lookup(name: &std::ffi::CStr) -> Ref {
+        // RTLD_DEFAULT: every library already loaded (CoreGraphics is, see above).
+        const RTLD_DEFAULT: *mut std::ffi::c_void = -2isize as *mut std::ffi::c_void;
+        unsafe { dlsym(RTLD_DEFAULT, name.as_ptr()) as Ref }
+    }
 }
 
 /// Stand-ins with the same signatures, for the tests on other systems: nothing is there.
@@ -115,6 +127,9 @@ mod sys {
         value
     }
     pub unsafe fn CFRelease(_value: Ref) {}
+    pub fn lookup(_name: &std::ffi::CStr) -> Ref {
+        null()
+    }
 }
 
 /// A Core Foundation object this code owns (released when dropped).
@@ -234,6 +249,44 @@ impl Tree for Ax {
     }
 }
 
+/// Call a system function `fn() -> bool` by name; `None` where this macOS doesn't have it.
+fn call_bool(name: &std::ffi::CStr) -> Option<bool> {
+    let f = sys::lookup(name);
+    if f.is_null() {
+        return None;
+    }
+    // SAFETY: the functions named here take nothing and return a C `bool`.
+    let f: unsafe extern "C" fn() -> bool = unsafe { std::mem::transmute::<Ref, unsafe extern "C" fn() -> bool>(f) };
+    Some(unsafe { f() })
+}
+
+/// Whether this program runs inside a logged-in desktop (a window server session).
+/// `CGSessionCopyCurrentDictionary` answers nothing from a remote shell or before anyone logs in.
+fn desktop_session() -> bool {
+    let f = sys::lookup(c"CGSessionCopyCurrentDictionary");
+    if f.is_null() {
+        return true;
+    }
+    // SAFETY: CGSessionCopyCurrentDictionary takes nothing and returns a dictionary we own (or null).
+    let f: unsafe extern "C" fn() -> Ref = unsafe { std::mem::transmute::<Ref, unsafe extern "C" fn() -> Ref>(f) };
+    let d = unsafe { f() };
+    let there = !d.is_null();
+    drop(Cf(d));
+    there
+}
+
+/// Whether Snagster may record the screen: a desktop and the Screen Recording permission
+/// (`CGPreflightScreenCaptureAccess`, macOS 10.15 and newer; never shows anything).
+pub fn screen_access() -> super::ScreenAccess {
+    super::access_from(desktop_session(), call_bool(c"CGPreflightScreenCaptureAccess"))
+}
+
+/// Show macOS's own Screen Recording prompt (`CGRequestScreenCaptureAccess`; macOS shows it
+/// once per program, later calls only answer). `None` before macOS 10.15.
+pub fn request_screen_access() -> Option<bool> {
+    call_bool(c"CGRequestScreenCaptureAccess")
+}
+
 /// Turn the mouse wheel at `at` (points): positive `notches` scroll down (or right).
 pub fn wheel(at: (f64, f64), horizontal: bool, notches: i32) {
     let p = CGPoint { x: at.0, y: at.1 };
@@ -272,5 +325,20 @@ mod tests {
         assert!(list(null(), "AXChildren").is_empty());
         wheel((10.0, 10.0), false, 3);
         wheel((10.0, 10.0), true, -3);
+    }
+
+    #[test]
+    fn screen_access_without_the_system() {
+        if cfg!(target_os = "macos") {
+            // The real answer depends on the machine; asking must not crash.
+            let _ = screen_access();
+            return;
+        }
+        // The stand-ins have none of the functions: like a macOS too old to ask.
+        assert!(sys::lookup(c"CGPreflightScreenCaptureAccess").is_null());
+        assert_eq!(call_bool(c"CGPreflightScreenCaptureAccess"), None);
+        assert_eq!(request_screen_access(), None);
+        assert!(desktop_session());
+        assert_eq!(screen_access(), crate::capture::ScreenAccess::Granted);
     }
 }

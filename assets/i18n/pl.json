@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Nie udało się utworzyć dokumentu Word: {error}",
   "{what}: now {width} x {height}.": "{what}: teraz {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "Coś poszło nie tak i zostało pominięte ({message}). Szczegóły są w crash.log (Pomoc > Zgłoszenia problemów).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Przechwytywanie menu nie jest jeszcze dostępne w tym systemie: otwórz menu i zamiast tego przechwyć obszar."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Przechwytywanie menu nie jest jeszcze dostępne w tym systemie: otwórz menu i zamiast tego przechwyć obszar.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster potrzebuje uprawnienia do nagrywania ekranu: Ustawienia systemowe > Prywatność i ochrona > Nagrywanie ekranu, następnie włącz Snagster i uruchom go ponownie.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster nie widzi ekranu: potrzebuje pulpitu z zalogowanym użytkownikiem, a nie tylko zdalnej powłoki. Zaloguj się na ekranie Maca (lub przez Udostępnianie ekranu) i uruchom tam Snagster.",
+  "Open Screen Recording settings": "Otwórz ustawienia nagrywania ekranu",
+  "Screen Recording permission": "Uprawnienie do nagrywania ekranu",
+  "Close": "Zamknij"
  }
 }

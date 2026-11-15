@@ -686,6 +686,33 @@ impl UiTest {
                 assert!(a.overlay.is_none());
             }
         }));
+        s.push(once("Screen Recording permission: a failed capture says what to do (made-up macOS answer)", |a, c| {
+            use crate::capture::{CaptureResult, ScreenAccess};
+            let saved = std::mem::take(&mut a.x.access);
+            a.x.access.fake = Some(ScreenAccess::NotGranted);
+            a.ask_screen_access_once();
+            assert!(a.x.access.asked, "macOS's prompt wasn't asked for");
+            // A grab fails the way macOS says it without the permission.
+            let fail = |a: &mut SnagApp| {
+                a.cap_tx.send(CaptureResult { kind: CaptureKind::Screen, shot: Err("Failed to copy data".into()) }).unwrap();
+                a.poll_capture(c);
+            };
+            fail(a);
+            let need = crate::i18n::t(crate::capture::SCREEN_ACCESS_NEEDED);
+            assert!(a.status.contains(need), "{}", a.status);
+            assert!(!a.status.contains("Failed to copy data"), "{}", a.status);
+            assert_eq!(a.x.access.open, Some(ScreenAccess::NotGranted), "no window the first time");
+            assert!(a.x.access.status_line.as_deref().is_some_and(|l| a.status.contains(l)), "no settings button in the status line");
+            // Closed: the next failure only says it in the status line.
+            a.x.access.open = None;
+            fail(a);
+            assert!(a.status.contains(need));
+            assert!(a.x.access.open.is_none(), "the window came back");
+            // The check runs (--video-test, --stream-test) skip instead of failing.
+            assert_eq!(crate::capture::check_skip(a.screen_access()), Some(crate::capture::NO_ACCESS_SKIP));
+            a.x.access = saved;
+            a.status.clear();
+        }));
         s.push(once("scrolling capture: the settings reach the capture", |a, _| {
             a.settings.scroll_notches = 5;
             a.settings.scroll_max_height = 9000;

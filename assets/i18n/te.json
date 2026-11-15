@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Word డాక్యుమెంట్‌ను తయారు చేయలేకపోయింది: {error}",
   "{what}: now {width} x {height}.": "{what}: ఇప్పుడు {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "ఏదో తప్పు జరిగి దాటవేయబడింది ({message}). వివరాలు crash.logలో ఉన్నాయి (సహాయం > సమస్య నివేదికలు).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "ఈ సిస్టమ్‌లో మెనూ క్యాప్చర్ ఇంకా అందుబాటులో లేదు: మెనూను తెరిచి బదులుగా ఒక ప్రాంతాన్ని క్యాప్చర్ చేయండి."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "ఈ సిస్టమ్‌లో మెనూ క్యాప్చర్ ఇంకా అందుబాటులో లేదు: మెనూను తెరిచి బదులుగా ఒక ప్రాంతాన్ని క్యాప్చర్ చేయండి.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "స్క్రీన్‌ను రికార్డ్ చేయడానికి Snagster‌కు అనుమతి కావాలి: సిస్టమ్ సెట్టింగ్‌లు > గోప్యత & భద్రత > స్క్రీన్ రికార్డింగ్, తర్వాత Snagster‌ను ఆన్ చేసి దాన్ని మళ్లీ ప్రారంభించండి.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster‌కు ఏ స్క్రీనూ కనిపించడం లేదు: దీనికి లాగిన్ అయిన డెస్క్‌టాప్ కావాలి, రిమోట్ షెల్ ఒక్కటే చాలదు. Mac స్క్రీన్‌పై (లేదా స్క్రీన్ షేరింగ్‌తో) లాగిన్ అయి అక్కడ Snagster‌ను ప్రారంభించండి.",
+  "Open Screen Recording settings": "స్క్రీన్ రికార్డింగ్ సెట్టింగ్‌లను తెరువు",
+  "Screen Recording permission": "స్క్రీన్ రికార్డింగ్ అనుమతి",
+  "Close": "మూసివేయి"
  }
 }

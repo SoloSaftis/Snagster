@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Không tạo được tài liệu Word: {error}",
   "{what}: now {width} x {height}.": "{what}: giờ là {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "Đã xảy ra lỗi và đã bỏ qua ({message}). Chi tiết trong crash.log (Trợ giúp > Báo cáo sự cố).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Hệ thống này chưa hỗ trợ chụp menu: hãy mở menu rồi chụp một vùng."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Hệ thống này chưa hỗ trợ chụp menu: hãy mở menu rồi chụp một vùng.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster cần quyền ghi màn hình: Cài đặt hệ thống > Quyền riêng tư & Bảo mật > Ghi màn hình, sau đó bật Snagster và khởi động lại ứng dụng.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster không thấy màn hình nào: ứng dụng cần một màn hình nền đã đăng nhập, không chỉ một shell từ xa. Hãy đăng nhập trên màn hình của Mac (hoặc bằng Chia sẻ màn hình) và mở Snagster ở đó.",
+  "Open Screen Recording settings": "Mở cài đặt Ghi màn hình",
+  "Screen Recording permission": "Quyền ghi màn hình",
+  "Close": "Đóng"
  }
 }

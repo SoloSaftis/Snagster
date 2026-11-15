@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Kunde inte skapa Word-dokumentet: {error}",
   "{what}: now {width} x {height}.": "{what}: nu {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "Något gick fel och hoppades över ({message}). Detaljer finns i crash.log (Hjälp > Problemrapporter).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Menyfångst finns inte än på det här systemet: öppna menyn och fånga ett område i stället."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Menyfångst finns inte än på det här systemet: öppna menyn och fånga ett område i stället.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster behöver tillstånd att spela in skärmen: Systeminställningar > Integritet och säkerhet > Skärminspelning, slå sedan på Snagster och starta om det.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster ser ingen skärm: det behöver ett skrivbord med en inloggad användare, inte bara ett fjärrskal. Logga in på Macens skärm (eller med Skärmdelning) och starta Snagster där.",
+  "Open Screen Recording settings": "Öppna inställningar för skärminspelning",
+  "Screen Recording permission": "Tillstånd för skärminspelning",
+  "Close": "Stäng"
  }
 }

@@ -656,6 +656,101 @@ pub fn menus_supported() -> bool {
 /// What the Menu capture says where it isn't available (translated in the window).
 pub const MENUS_UNAVAILABLE: &str = "Menu capture isn't available on this system yet: open the menu and capture an area instead.";
 
+// ---------- permission to see the screen ----------
+
+/// Whether Snagster may take pictures of the screen. Only macOS asks: there the person turns
+/// Snagster on under System Settings > Privacy & Security > Screen Recording, and a program run
+/// without a logged-in desktop (only a remote shell) has no screen at all. Windows and Linux
+/// are always `Granted` (on Wayland the system's own sharing dialog asks while capturing).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ScreenAccess {
+    #[default]
+    Granted,
+    /// macOS: the Screen Recording permission is off.
+    NotGranted,
+    /// macOS: no window server session (a remote shell, or nobody logged in).
+    NoDesktop,
+}
+
+impl ScreenAccess {
+    pub fn granted(self) -> bool {
+        self == ScreenAccess::Granted
+    }
+}
+
+/// What a grab says on macOS when Snagster may not record the screen (translated in the window).
+pub const SCREEN_ACCESS_NEEDED: &str =
+    "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.";
+/// What a grab says on macOS without a logged-in desktop (translated in the window).
+pub const NO_DESKTOP: &str = "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.";
+/// What `--video-test` and `--stream-test` print instead of FAIL when the screen can't be seen.
+pub const NO_ACCESS_SKIP: &str = "skipped: no screen access (Screen Recording permission or no desktop)";
+/// The Screen Recording page of macOS's System Settings.
+pub const SCREEN_SETTINGS_URL: &str = "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture";
+
+/// The answer from what macOS says: whether there is a desktop session, and what
+/// `CGPreflightScreenCaptureAccess` says (`None`: macOS older than 10.15, which doesn't ask).
+pub fn access_from(desktop: bool, preflight: Option<bool>) -> ScreenAccess {
+    match (desktop, preflight) {
+        (false, _) => ScreenAccess::NoDesktop,
+        (true, Some(false)) => ScreenAccess::NotGranted,
+        (true, _) => ScreenAccess::Granted,
+    }
+}
+
+/// Whether Snagster may take pictures of the screen now (asks the system; never shows anything).
+pub fn screen_access() -> ScreenAccess {
+    #[cfg(target_os = "macos")]
+    {
+        mac::screen_access()
+    }
+    // Windows and Linux don't ask: like a macOS too old to have the permission.
+    #[cfg(not(target_os = "macos"))]
+    {
+        access_from(true, None)
+    }
+}
+
+/// What a check run (`--video-test`, `--stream-test`) prints instead of a failure when the
+/// screen can't be seen: [`NO_ACCESS_SKIP`], or `None` when it can and a failure is real.
+pub fn check_skip(access: ScreenAccess) -> Option<&'static str> {
+    if access.granted() { None } else { Some(NO_ACCESS_SKIP) }
+}
+
+/// macOS: show the system's own "Snagster would like to record this computer's screen" prompt
+/// (`CGRequestScreenCaptureAccess`; macOS shows it once, later calls only answer). True when
+/// access is granted. Other systems: true.
+pub fn request_screen_access() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        mac::request_screen_access().unwrap_or(true)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        true
+    }
+}
+
+/// Open the Screen Recording page of System Settings (macOS only).
+pub fn open_screen_settings() -> Result<(), String> {
+    if cfg!(target_os = "macos") {
+        std::process::Command::new("open").arg(SCREEN_SETTINGS_URL).spawn().map(|_| ()).map_err(|e| e.to_string())
+    } else {
+        Err("not available on this system".into())
+    }
+}
+
+/// The message for a failed grab, recording or stream: the system's own words (`raw`, such as
+/// macOS's "Failed to copy data") unless Snagster may not see the screen, which gets a clear,
+/// translated message saying what to do. `access` is [`screen_access`] at the time of the error.
+pub fn grab_error_message(raw: &str, access: ScreenAccess) -> String {
+    match access {
+        ScreenAccess::Granted => raw.to_string(),
+        ScreenAccess::NotGranted => crate::i18n::t(SCREEN_ACCESS_NEEDED).to_string(),
+        ScreenAccess::NoDesktop => crate::i18n::t(NO_DESKTOP).to_string(),
+    }
+}
+
 /// Wait `delay_ms`, grab, and send the result back; the UI thread restores the window.
 pub fn spawn(kind: CaptureKind, delay_ms: u64, at: (i32, i32), ctx: eframe::egui::Context, tx: Sender<CaptureResult>) {
     std::thread::spawn(move || {
@@ -1481,5 +1576,49 @@ mod tests {
         let mut img = blank.clone();
         stamp_pointer(&mut img, (-5.0, 5.0));
         assert_ne!(img, blank);
+    }
+
+    #[test]
+    fn screen_access_from_what_macos_says() {
+        assert_eq!(access_from(true, Some(true)), ScreenAccess::Granted);
+        assert_eq!(access_from(true, Some(false)), ScreenAccess::NotGranted);
+        // macOS before 10.15 has no Screen Recording permission.
+        assert_eq!(access_from(true, None), ScreenAccess::Granted);
+        // No desktop wins: a remote shell can't record even with the permission.
+        assert_eq!(access_from(false, Some(true)), ScreenAccess::NoDesktop);
+        assert_eq!(access_from(false, Some(false)), ScreenAccess::NoDesktop);
+        assert_eq!(access_from(false, None), ScreenAccess::NoDesktop);
+        assert!(ScreenAccess::Granted.granted() && !ScreenAccess::NotGranted.granted() && !ScreenAccess::NoDesktop.granted());
+        assert_eq!(ScreenAccess::default(), ScreenAccess::Granted);
+    }
+
+    #[test]
+    fn grab_errors_say_what_to_do() {
+        let raw = "Failed to copy data";
+        // Allowed: the system's own words stay (something else went wrong).
+        assert_eq!(grab_error_message(raw, ScreenAccess::Granted), raw);
+        assert_eq!(grab_error_message("", ScreenAccess::Granted), "");
+        let need = grab_error_message(raw, ScreenAccess::NotGranted);
+        assert_eq!(need, crate::i18n::t(SCREEN_ACCESS_NEEDED));
+        assert!(!need.contains(raw));
+        assert_eq!(grab_error_message(raw, ScreenAccess::NoDesktop), crate::i18n::t(NO_DESKTOP));
+        // Mapping a message twice (the recorder and the window) gives the same message.
+        assert_eq!(grab_error_message(&need, ScreenAccess::NotGranted), need);
+        assert_ne!(SCREEN_ACCESS_NEEDED, NO_DESKTOP);
+        assert!(NO_ACCESS_SKIP.starts_with("skipped: no screen access"));
+        assert_eq!(check_skip(ScreenAccess::Granted), None);
+        assert_eq!(check_skip(ScreenAccess::NotGranted), Some(NO_ACCESS_SKIP));
+        assert_eq!(check_skip(ScreenAccess::NoDesktop), Some(NO_ACCESS_SKIP));
+        assert!(SCREEN_SETTINGS_URL.starts_with("x-apple.systempreferences:") && SCREEN_SETTINGS_URL.ends_with("Privacy_ScreenCapture"));
+    }
+
+    #[test]
+    fn screen_access_elsewhere_is_always_granted() {
+        if cfg!(target_os = "macos") {
+            return;
+        }
+        assert_eq!(screen_access(), ScreenAccess::Granted);
+        assert!(request_screen_access());
+        assert!(open_screen_settings().is_err());
     }
 }

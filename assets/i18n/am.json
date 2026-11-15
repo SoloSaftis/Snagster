@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "የWord ሰነዱን መሥራት አልተቻለም፦ {error}",
   "{what}: now {width} x {height}.": "{what}፦ አሁን {width} x {height}።",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "የሆነ ችግር ተፈጥሮ ታልፏል ({message})። ዝርዝሮቹ በcrash.log ውስጥ አሉ (እገዛ > የችግር ሪፖርቶች)።",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "የምናሌ ቀረጻ በዚህ ስርዓት ላይ ገና አይገኝም፦ በምትኩ ምናሌውን ከፍተው አካባቢ ይቅረጹ።"
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "የምናሌ ቀረጻ በዚህ ስርዓት ላይ ገና አይገኝም፦ በምትኩ ምናሌውን ከፍተው አካባቢ ይቅረጹ።",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster ማያ ገጹን ለመቅዳት ፈቃድ ያስፈልገዋል፦ የስርዓት ቅንብሮች > ግላዊነት እና ደህንነት > የማያ ገጽ ቀረጻ፣ ከዚያ Snagsterን ያብሩና እንደገና ያስጀምሩት።",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster ማያ ገጽ ማየት አይችልም፦ የገባ ዴስክቶፕ ያስፈልገዋል፣ የሩቅ ሼል ብቻ አይበቃም። በMac ማያ ገጽ ላይ (ወይም በማያ ገጽ ማጋራት) ይግቡና Snagsterን እዚያ ያስጀምሩ።",
+  "Open Screen Recording settings": "የማያ ገጽ ቀረጻ ቅንብሮችን ክፈት",
+  "Screen Recording permission": "የማያ ገጽ ቀረጻ ፈቃድ",
+  "Close": "ዝጋ"
  }
 }

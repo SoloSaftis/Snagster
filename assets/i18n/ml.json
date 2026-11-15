@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Word ഡോക്യുമെന്റ് ഉണ്ടാക്കാനായില്ല: {error}",
   "{what}: now {width} x {height}.": "{what}: ഇപ്പോൾ {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "എന്തോ പിശക് സംഭവിച്ചു, അത് ഒഴിവാക്കി ({message}). വിശദാംശങ്ങൾ crash.log-ൽ ഉണ്ട് (സഹായം > പ്രശ്ന റിപ്പോർട്ടുകൾ).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "ഈ സിസ്റ്റത്തിൽ മെനു ക്യാപ്ചർ ഇതുവരെ ലഭ്യമല്ല: മെനു തുറന്ന് പകരം ഒരു ഭാഗം ക്യാപ്ചർ ചെയ്യുക."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "ഈ സിസ്റ്റത്തിൽ മെനു ക്യാപ്ചർ ഇതുവരെ ലഭ്യമല്ല: മെനു തുറന്ന് പകരം ഒരു ഭാഗം ക്യാപ്ചർ ചെയ്യുക.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "സ്ക്രീൻ റെക്കോർഡ് ചെയ്യാൻ Snagster-ന് അനുമതി വേണം: സിസ്റ്റം ക്രമീകരണങ്ങൾ > സ്വകാര്യതയും സുരക്ഷയും > സ്ക്രീൻ റെക്കോർഡിംഗ്, തുടർന്ന് Snagster ഓണാക്കി അത് പുനരാരംഭിക്കുക.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster-ന് ഒരു സ്ക്രീനും കാണാനാകുന്നില്ല: ഇതിന് ലോഗിൻ ചെയ്ത ഡെസ്ക്ടോപ്പ് വേണം, റിമോട്ട് ഷെൽ മാത്രം പോരാ. Mac-ന്റെ സ്ക്രീനിൽ (അല്ലെങ്കിൽ സ്ക്രീൻ ഷെയറിംഗ് വഴി) ലോഗിൻ ചെയ്ത് അവിടെ Snagster ആരംഭിക്കുക.",
+  "Open Screen Recording settings": "സ്ക്രീൻ റെക്കോർഡിംഗ് ക്രമീകരണങ്ങൾ തുറക്കുക",
+  "Screen Recording permission": "സ്ക്രീൻ റെക്കോർഡിംഗ് അനുമതി",
+  "Close": "അടയ്ക്കുക"
  }
 }

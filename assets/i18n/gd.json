@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Cha b' urrainn dhuinn an sgrìobhainn Word a dhèanamh: {error}",
   "{what}: now {width} x {height}.": "{what}: {width} x {height} a-nis.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "Chaidh rudeigin ceàrr agus chaidh a leum ({message}). Tha am mion-fhiosrachadh ann an crash.log (Cobhair > Aithisgean dhuilgheadasan).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Chan eil glacadh clàir-taice ri fhaighinn air an t-siostam seo fhathast: fosgail an clàr-taice agus glac raon na àite."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Chan eil glacadh clàir-taice ri fhaighinn air an t-siostam seo fhathast: fosgail an clàr-taice agus glac raon na àite.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Feumaidh Snagster cead airson an sgrìn a chlàradh: Roghainnean an t-siostaim > Prìobhaideachd ⁊ tèarainteachd > Clàradh na sgrìn, an uairsin cuir Snagster air is ath-thòisich e.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Chan fhaic Snagster sgrìn: feumaidh e deasg air a bheil cuideigin air clàradh a-steach, chan e slige chèin a-mhàin. Clàraich a-steach air sgrìn a' Mhac (no le co-roinneadh na sgrìn) is tòisich Snagster an sin.",
+  "Open Screen Recording settings": "Fosgail roghainnean clàradh na sgrìn",
+  "Screen Recording permission": "Cead clàradh na sgrìn",
+  "Close": "Dùin"
  }
 }

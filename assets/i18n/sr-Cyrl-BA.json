@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Прављење Word документа није успјело: {error}",
   "{what}: now {width} x {height}.": "{what}: сада {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "Нешто је пошло наопако и прескочено је ({message}). Детаљи су у crash.log (Помоћ > Извештаји о проблемима).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Снимање менија још није доступно на овом систему: отворите мени и умјесто тога снимите област."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Снимање менија још није доступно на овом систему: отворите мени и умјесто тога снимите област.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster-у треба дозвола за снимање екрана: Системска подешавања > Приватност и безбједност > Снимање екрана, затим укључите Snagster и поново га покрените.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster не види екран: треба му радна површина са пријављеним корисником, а не само удаљена љуска. Пријавите се на екрану Mac-а (или преко Дијељења екрана) и тамо покрените Snagster.",
+  "Open Screen Recording settings": "Отвори подешавања снимања екрана",
+  "Screen Recording permission": "Дозвола за снимање екрана",
+  "Close": "Затвори"
  }
 }

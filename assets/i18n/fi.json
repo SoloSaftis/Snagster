@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Word-asiakirjan tekeminen epäonnistui: {error}",
   "{what}: now {width} x {height}.": "{what}: nyt {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "Jokin meni pieleen ja ohitettiin ({message}). Tiedot ovat tiedostossa crash.log (Ohje > Ongelmaraportit).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Valikon kaappaus ei ole vielä käytettävissä tässä järjestelmässä: avaa valikko ja kaappaa sen sijaan alue."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Valikon kaappaus ei ole vielä käytettävissä tässä järjestelmässä: avaa valikko ja kaappaa sen sijaan alue.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster tarvitsee luvan näytön tallentamiseen: Järjestelmäasetukset > Tietosuoja ja turvallisuus > Näytön tallennus, laita Snagster päälle ja käynnistä se uudelleen.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster ei näe näyttöä: se tarvitsee kirjautuneen työpöydän, ei pelkkää etäkomentotulkkia. Kirjaudu sisään Macin näytöllä (tai näytön jakamisella) ja käynnistä Snagster siellä.",
+  "Open Screen Recording settings": "Avaa näytön tallennuksen asetukset",
+  "Screen Recording permission": "Näytön tallennuksen lupa",
+  "Close": "Sulje"
  }
 }

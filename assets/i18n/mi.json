@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Kāore i taea te hanga i te tuhinga Word: {error}",
   "{what}: now {width} x {height}.": "{what}: ināianei {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "I hē tētahi mea, ā, i peka atu ({message}). Kei crash.log ngā taipitopito (Āwhina > Ngā pūrongo raruraru).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Kāore anō te hopu tahua i te wātea i tēnei pūnaha: whakatuwherahia te tahua, ā, hopukina he wāhi hei utu."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Kāore anō te hopu tahua i te wātea i tēnei pūnaha: whakatuwherahia te tahua, ā, hopukina he wāhi hei utu.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Me whai whakaaetanga a Snagster ki te hopu i te mata: Ngā Tautuhinga Pūnaha > Tūmataitinga me te Haumarutanga > Hopu Mata, kātahi ka whakakā i a Snagster, ka tīmata anō.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Kāore a Snagster e kite i tētahi mata: me whai papamahi kua takiuru, kaua ko tētahi anga mamao anake. Takiuru ki te mata o te Mac (mā te Tiritiri Mata rānei) ka tīmata i a Snagster ki reira.",
+  "Open Screen Recording settings": "Whakatuwherahia ngā tautuhinga Hopu Mata",
+  "Screen Recording permission": "Whakaaetanga Hopu Mata",
+  "Close": "Katia"
  }
 }

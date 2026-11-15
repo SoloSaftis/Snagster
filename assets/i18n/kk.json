@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Word құжатын жасау мүмкін болмады: {error}",
   "{what}: now {width} x {height}.": "{what}: енді {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "Бірдеңе дұрыс болмай, өткізіп жіберілді ({message}). Толығырақ crash.log ішінде (Анықтама > Мәселелер туралы есептер).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Бұл жүйеде мәзірді түсіру әлі қолжетімді емес: оның орнына мәзірді ашып, аймақты түсіріңіз."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Бұл жүйеде мәзірді түсіру әлі қолжетімді емес: оның орнына мәзірді ашып, аймақты түсіріңіз.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster экранды жазу үшін рұқсат қажет: Жүйе параметрлері > Құпиялылық және қауіпсіздік > Экранды жазу, содан кейін Snagster-ді қосып, оны қайта іске қосыңыз.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster экранды көре алмайды: оған тек қашықтағы қабықша емес, жүйеге кірген жұмыс үстелі қажет. Mac экранында (немесе Экранды бөлісу арқылы) кіріп, Snagster-ді сол жерде іске қосыңыз.",
+  "Open Screen Recording settings": "Экранды жазу параметрлерін ашу",
+  "Screen Recording permission": "Экранды жазуға рұқсат",
+  "Close": "Жабу"
  }
 }

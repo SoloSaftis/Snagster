@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Word დოკუმენტის შექმნა ვერ მოხერხდა: {error}",
   "{what}: now {width} x {height}.": "{what}: ახლა {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "რაღაც შეცდომა მოხდა და გამოტოვებულია ({message}). დეტალები crash.log-შია (დახმარება > პრობლემების ანგარიშები).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "მენიუს გადაღება ამ სისტემაზე ჯერ მიუწვდომელია: ამის ნაცვლად გახსენით მენიუ და გადაიღეთ არე."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "მენიუს გადაღება ამ სისტემაზე ჯერ მიუწვდომელია: ამის ნაცვლად გახსენით მენიუ და გადაიღეთ არე.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Snagster-ს ეკრანის ჩაწერის ნებართვა სჭირდება: სისტემის პარამეტრები > კონფიდენციალურობა და უსაფრთხოება > ეკრანის ჩაწერა, შემდეგ ჩართეთ Snagster და გადატვირთეთ.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster ეკრანს ვერ ხედავს: მას სჭირდება სისტემაში შესული სამუშაო მაგიდა და არა მხოლოდ დისტანციური გარსი. შედით Mac-ის ეკრანზე (ან ეკრანის გაზიარებით) და იქ გაუშვით Snagster.",
+  "Open Screen Recording settings": "ეკრანის ჩაწერის პარამეტრების გახსნა",
+  "Screen Recording permission": "ეკრანის ჩაწერის ნებართვა",
+  "Close": "დახურვა"
  }
 }

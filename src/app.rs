@@ -38,6 +38,7 @@ pub static UI_TEST: AtomicBool = AtomicBool::new(false);
 pub static SCREENSHOT_VIEW: Mutex<String> = Mutex::new(String::new());
 
 mod uitest;
+pub(crate) mod access_ui;
 pub(crate) mod work;
 pub(crate) mod ribbon;
 pub(crate) mod studio_ui;
@@ -725,6 +726,7 @@ impl SnagApp {
             return;
         }
         self.commit_text();
+        self.ask_screen_access_once();
         let ppp = ctx.input(|i| i.viewport().native_pixels_per_point).unwrap_or(1.0);
         let outer = ctx.input(|i| i.viewport().outer_rect);
         self.restore_pos = outer.map(|r| pos2(r.min.x * ppp, r.min.y * ppp));
@@ -800,7 +802,7 @@ impl SnagApp {
                 Err(e) => {
                     self.show_window(ctx);
                     self.pending_preset = None;
-                    self.status = crate::i18n::tf("Capture failed: {error}", &[("error", &e)]);
+                    self.status = self.grab_failed("Capture failed: {error}", &e);
                 }
             }
         }
@@ -1189,7 +1191,7 @@ impl SnagApp {
             self.leave_mini(ctx);
             match r {
                 Ok(img) => self.finish_capture(img, "Scrolling capture", "", "Scrolling", None),
-                Err(e) => self.status = crate::i18n::tf("Scrolling capture failed: {error}", &[("error", &e)]),
+                Err(e) => self.status = self.grab_failed("Scrolling capture failed: {error}", &e),
             }
         }
         while let Ok(done) = self.gif_rx.try_recv() {
@@ -1203,7 +1205,7 @@ impl SnagApp {
                     self.recordings.insert(0, Recording { path: done.path.clone(), frames: done.frames, seconds: done.seconds });
                     self.open_gif(ctx, done.path);
                 }
-                Err(e) => self.status = crate::i18n::tf("Recording failed: {error}", &[("error", &e)]),
+                Err(e) => self.status = self.grab_failed("Recording failed: {error}", &e),
             }
         }
         while let Ok(done) = self.video_rx.try_recv() {
@@ -1227,7 +1229,7 @@ impl SnagApp {
                     self.videos.insert(0, done);
                 }
                 Err(e) => {
-                    self.status = crate::i18n::tf("Video recording failed: {error}", &[("error", e)]);
+                    self.status = self.grab_failed("Video recording failed: {error}", e);
                     if done.frames > 0 {
                         self.videos.insert(0, done);
                     }
@@ -3051,6 +3053,7 @@ impl SnagApp {
                     }
                 });
                 ui.add(egui::Label::new(RichText::new(crate::i18n::tr(&self.status)).color(TEXT_DIM).size(12.5)).wrap());
+                self.screen_access_link(ui);
             });
             ui.separator();
             let mut switch = None;
@@ -3806,6 +3809,7 @@ impl SnagApp {
             egui::CentralPanel::default().frame(Self::panel_frame()).show(ui, |ui| self.panel_ui(ui));
             self.settings_window(&ctx);
             self.stream_confirm_window(&ctx);
+        self.screen_access_window(&ctx);
             return;
         }
         if self.mini.is_some() {
@@ -3827,6 +3831,7 @@ impl SnagApp {
         self.language_window(&ctx);
         self.update_window(&ctx);
         self.stream_confirm_window(&ctx);
+        self.screen_access_window(&ctx);
         if self.x.tab == ribbon::RibbonTab::Studio {
             self.studio_view(ui);
             self.dialog_window(&ctx);

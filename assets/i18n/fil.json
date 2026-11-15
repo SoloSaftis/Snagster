@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Hindi magawa ang Word document: {error}",
   "{what}: now {width} x {height}.": "{what}: {width} x {height} na ngayon.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "May nagkaproblema at nilaktawan ito ({message}). Nasa crash.log ang mga detalye (Tulong > Mga ulat ng problema).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Hindi pa available ang pagkuha ng menu sa system na ito: buksan ang menu at kumuha na lang ng area."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "Hindi pa available ang pagkuha ng menu sa system na ito: buksan ang menu at kumuha na lang ng area.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "Kailangan ng Snagster ng pahintulot na i-record ang screen: System Settings > Privacy & Security > Screen Recording, pagkatapos ay i-on ang Snagster at i-restart ito.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Walang makitang screen ang Snagster: kailangan nito ng desktop na naka-log in, hindi lang remote shell. Mag-log in sa screen ng Mac (o gamit ang Screen Sharing) at doon simulan ang Snagster.",
+  "Open Screen Recording settings": "Buksan ang settings ng Screen Recording",
+  "Screen Recording permission": "Pahintulot sa Screen Recording",
+  "Close": "Isara"
  }
 }

@@ -110,6 +110,7 @@ impl SnagApp {
         if self.x.stream.snap.phase != Phase::Idle || live::snapshot().phase != Phase::Idle {
             return;
         }
+        self.ask_screen_access_once();
         let target = self.stream_target();
         if let Err(e) = target.endpoint() {
             self.status = tf("Can't go live yet: {e}", &[("e", &mask(&e, &target.key))]);
@@ -189,14 +190,18 @@ impl SnagApp {
             ctx.request_repaint_after(Duration::from_millis(500));
         }
         if snap.error.is_some() && snap.error != self.x.stream.snap.error {
-            self.status = tf("Couldn't go live: {e}", &[("e", snap.error.as_deref().unwrap_or_default())]);
+            let e = self.grab_failed("{error}", snap.error.as_deref().unwrap_or_default());
+            self.status = tf("Couldn't go live: {e}", &[("e", &e)]);
         }
         if let Some(end) = &snap.last
             && Some(end) != self.x.stream.snap.last.as_ref()
         {
             let s = &end.stats;
             let mut line = match &s.error {
-                Some(e) if s.state == State::Failed => tf("The stream stopped: {e}", &[("e", e)]),
+                Some(e) if s.state == State::Failed => {
+                    let e = self.grab_failed("{error}", e);
+                    tf("The stream stopped: {e}", &[("e", &e)])
+                }
                 _ => tf("The stream ended after {time}: {frames} frames sent, {dropped} dropped.", &[
                     ("time", &clock(s.uptime_s)),
                     ("frames", &s.frames_sent.to_string()),

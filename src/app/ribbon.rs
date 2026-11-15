@@ -71,6 +71,7 @@ pub(crate) struct Extra {
     pub mcp_wanted: Option<(u16, String)>,
     pub mics: Option<Vec<crate::audio::Device>>,
     pub stream: crate::app::stream_ui::StreamUi,
+    pub access: crate::app::access_ui::AccessUi,
 }
 
 fn kbd(s: &Settings, a: Action) -> String {

@@ -903,6 +903,11 @@
   "Couldn't make the Word document: {error}": "Word ஆவணத்தை உருவாக்க முடியவில்லை: {error}",
   "{what}: now {width} x {height}.": "{what}: இப்போது {width} x {height}.",
   "Something went wrong and was skipped ({message}). Details are in crash.log (Help > Problem reports).": "ஏதோ தவறு நடந்து தவிர்க்கப்பட்டது ({message}). விவரங்கள் crash.log இல் உள்ளன (உதவி > சிக்கல் அறிக்கைகள்).",
-  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "இந்த அமைப்பில் மெனு பிடிப்பு இன்னும் இல்லை: மெனுவைத் திறந்து அதற்குப் பதிலாக ஒரு பகுதியைப் பிடிக்கவும்."
+  "Menu capture isn't available on this system yet: open the menu and capture an area instead.": "இந்த அமைப்பில் மெனு பிடிப்பு இன்னும் இல்லை: மெனுவைத் திறந்து அதற்குப் பதிலாக ஒரு பகுதியைப் பிடிக்கவும்.",
+  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.": "திரையைப் பதிவுசெய்ய Snagster-க்கு அனுமதி தேவை: சிஸ்டம் அமைப்புகள் > தனியுரிமை & பாதுகாப்பு > திரைப் பதிவு, பின்னர் Snagster-ஐ இயக்கி அதை மீண்டும் தொடங்கவும்.",
+  "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster-க்கு எந்தத் திரையும் தெரியவில்லை: இதற்கு உள்நுழைந்த டெஸ்க்டாப் தேவை, தொலை ஷெல் மட்டும் போதாது. Mac-இன் திரையில் (அல்லது திரைப் பகிர்வு மூலம்) உள்நுழைந்து அங்கே Snagster-ஐத் தொடங்கவும்.",
+  "Open Screen Recording settings": "திரைப் பதிவு அமைப்புகளைத் திற",
+  "Screen Recording permission": "திரைப் பதிவு அனுமதி",
+  "Close": "மூடு"
  }
 }
