@@ -2,7 +2,7 @@
 
 What changed for people using Snagster, per version.
 
-## Unreleased
+## 0.10.2 — 2026-11-15
 
 New:
 

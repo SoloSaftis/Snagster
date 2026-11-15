@@ -66,6 +66,15 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.10.2" date="2026-11-15">
+      <description>
+        <ul>
+          <li>Works on Wayland and inside a Flatpak: recording and streaming use the desktop's screen sharing</li>
+          <li>A menu entry and store listing for Linux</li>
+          <li>Inside a Flatpak, updates come from Flatpak</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.10.1" date="2026-11-15">
       <description>
         <ul>
