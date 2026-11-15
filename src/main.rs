@@ -808,3 +808,33 @@ mod linux_files_tests {
         assert_eq!((img.width(), img.height()), (256, 256));
     }
 }
+
+#[cfg(test)]
+mod readme_tests {
+    /// The files the README links to (relative links), with any `#part` cut off.
+    fn local_links(md: &str) -> Vec<String> {
+        md.split("](")
+            .skip(1)
+            .filter_map(|rest| rest.split(')').next())
+            .map(|l| l.split('#').next().unwrap_or("").trim().to_string())
+            .filter(|l| !l.is_empty() && !l.contains("://") && !l.starts_with("mailto:"))
+            .collect()
+    }
+
+    #[test]
+    fn links_are_found_in_text() {
+        let md = "see [a](docs/x.md), [b](https://e.com/y), [c](#top), [d](AI.md#flathub) and [e](mailto:a@b)";
+        assert_eq!(local_links(md), vec!["docs/x.md".to_string(), "AI.md".to_string()]);
+    }
+
+    /// Every file the README links to is in the repository. Run in CI's clean checkout this also
+    /// catches links to files `.gitignore` keeps out of the public repository (they exist only
+    /// in a working folder).
+    #[test]
+    fn every_readme_link_points_to_a_file() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        for link in local_links(include_str!("../README.md")) {
+            assert!(root.join(&link).exists(), "README links to {link}, which isn't in the repository");
+        }
+    }
+}

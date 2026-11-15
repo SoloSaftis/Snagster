@@ -13,7 +13,7 @@ New:
   under the name `io.github.SoloSaftis.Snagster`, checked in every build.
 - **Updates in a Flatpak** come from Flatpak (your software center); Snagster doesn't download
   them itself there.
-- `docs/AI.md` lists which parts of Snagster are AI-generated and to what extent.
+- `AI-DISCLOSURE.md` lists which parts of Snagster are AI-generated and to what extent.
 
 ## 0.10.1 — 2026-11-15
 

@@ -141,7 +141,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 ## How it's made
 
-Snagster is written with an AI coding assistant (Claude). [`docs/AI.md`](docs/AI.md) lists which
+Snagster is written with an AI coding assistant (Claude). [`AI-DISCLOSURE.md`](AI-DISCLOSURE.md) lists which
 parts are AI-generated and to what extent.
 
 ## Licence
