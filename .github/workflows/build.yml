@@ -151,6 +151,11 @@ jobs:
           set -o pipefail
           xvfb-run -a -s "-screen 0 1920x1080x24" ./target/release/snagster --stream-test quick | tee stream-test.txt
           grep -q "^stream test: all passed" stream-test.txt
+      - name: Portal test (screenshot and recording through real desktop portals on a headless sway)
+        timeout-minutes: 8
+        run: |
+          sudo apt-get install -y --no-install-recommends sway xdg-desktop-portal xdg-desktop-portal-wlr pipewire wireplumber dbus dbus-user-session
+          dbus-run-session -- sh scripts/portal-test.sh target/release/snagster
       - name: Package (AppImage and portable tar.gz)
         run: |
           set -euo pipefail
