@@ -75,6 +75,115 @@ pub trait VideoEncoder: Send {
     fn dropped(&self) -> u64 {
         0
     }
+    /// Encode a picture that is already in graphics memory in the encoder's input format (see
+    /// `Surface`): no copy through the processor. Only encoders opened with
+    /// `open_video_for_surfaces` take them.
+    #[cfg(zero_copy)]
+    fn encode_surface(&mut self, surface: &Surface, pts_us: i64, force_keyframe: bool) -> Result<Vec<VideoPacket>, String> {
+        let _ = (surface, pts_us, force_keyframe);
+        Err("this encoder takes pictures from memory only".into())
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Zero-copy: pictures that stay on the graphics chip from the screen copy to the encoder
+// ---------------------------------------------------------------------------------------------
+
+/// How pictures travel from the source to the encoder.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FrameFormat {
+    /// RGBA in memory, converted to NV12 by the processor (`rgba_to_nv12`): every system.
+    Rgba,
+    /// Windows: an NV12 Direct3D 11 texture made by the graphics chip's video processor from
+    /// the Desktop Duplication texture, handed to the Media Foundation encoder as a DXGI surface.
+    D3d11Nv12,
+    /// macOS: an IOSurface-backed CVPixelBuffer in NV12 video range ('420v') from the display
+    /// stream, handed straight to VideoToolbox.
+    PixelBuffer,
+}
+
+/// A picture in graphics memory, already NV12 at the stream's size.
+#[cfg(zero_copy)]
+#[derive(Clone)]
+pub enum Surface {
+    #[cfg(windows)]
+    D3d11(win::D3dTexture),
+    #[cfg(target_os = "macos")]
+    PixelBuffer(mac::PixelBuffer),
+}
+
+/// Where a source's surfaces live, so the encoder can be opened on the same device.
+#[cfg(zero_copy)]
+#[derive(Clone)]
+pub enum SurfaceDevice {
+    #[cfg(windows)]
+    D3d11(win::D3dDevice),
+    /// VideoToolbox takes any CVPixelBuffer: nothing to share.
+    #[cfg(target_os = "macos")]
+    CoreVideo,
+}
+
+#[cfg(zero_copy)]
+impl SurfaceDevice {
+    pub fn format(&self) -> FrameFormat {
+        match *self {
+            #[cfg(windows)]
+            SurfaceDevice::D3d11(_) => FrameFormat::D3d11Nv12,
+            #[cfg(target_os = "macos")]
+            SurfaceDevice::CoreVideo => FrameFormat::PixelBuffer,
+        }
+    }
+}
+
+/// The first of the formats a source `offers` (best first) that the encoder `accepts`.
+pub fn negotiate(offers: &[FrameFormat], accepts: &[FrameFormat]) -> Option<FrameFormat> {
+    offers.iter().find(|f| accepts.contains(f)).copied()
+}
+
+/// The formats a source on `os` can offer, best first. Zero-copy only where the system has
+/// it: Windows when the graphics chip encodes (Media Foundation's software encoders want
+/// memory), macOS always (VideoToolbox's software encoder takes pixel buffers too); never when
+/// `disabled` (`SNAGSTER_ZERO_COPY=0`, for measuring the difference).
+pub fn source_formats(os: Os, prefer_hardware: bool, disabled: bool) -> Vec<FrameFormat> {
+    let mut v = Vec::new();
+    if !disabled {
+        match os {
+            Os::Windows if prefer_hardware => v.push(FrameFormat::D3d11Nv12),
+            Os::Mac => v.push(FrameFormat::PixelBuffer),
+            _ => {}
+        }
+    }
+    v.push(FrameFormat::Rgba);
+    v
+}
+
+/// The formats encoders opened on a device whose surfaces are `device` take: those, and memory.
+pub fn encoder_formats(device: Option<FrameFormat>) -> Vec<FrameFormat> {
+    let mut v: Vec<FrameFormat> = device.into_iter().collect();
+    v.push(FrameFormat::Rgba);
+    v
+}
+
+/// `SNAGSTER_ZERO_COPY=0` turns zero-copy off (to compare it with the copying path).
+pub fn zero_copy_disabled() -> bool {
+    std::env::var("SNAGSTER_ZERO_COPY").is_ok_and(|v| v.trim() == "0")
+}
+
+/// An encoder that takes `dev`'s surfaces (`VideoEncoder::encode_surface`): on Windows a
+/// graphics-chip Media Foundation encoder given the device through a DXGI device manager; on
+/// macOS VideoToolbox (hardware first). No software fallback: the caller then uses memory.
+#[cfg(zero_copy)]
+pub fn open_video_for_surfaces(cfg: &VideoConfig, dev: &SurfaceDevice) -> Result<Box<dyn VideoEncoder>, String> {
+    cfg.validate()?;
+    match *dev {
+        #[cfg(windows)]
+        SurfaceDevice::D3d11(ref d) => Ok(Box::new(Paced::new(win::open_video_d3d(cfg, d)?, cfg))),
+        #[cfg(target_os = "macos")]
+        SurfaceDevice::CoreVideo => {
+            let e = mac::open_video(cfg, true).or_else(|hw| mac::open_video(cfg, false).map_err(|sw| format!("{hw}; {sw}")))?;
+            Ok(Box::new(Paced::new(e, cfg)))
+        }
+    }
 }
 
 pub trait AudioEncoder: Send {
@@ -97,9 +206,13 @@ mod soft;
 
 #[cfg(windows)]
 mod win;
+#[cfg(windows)]
+pub use win::{D3dDevice, D3dTexture};
 
 #[cfg(target_os = "macos")]
 mod mac;
+#[cfg(target_os = "macos")]
+pub use mac::PixelBuffer;
 
 #[cfg(target_os = "linux")]
 mod linux;
@@ -405,6 +518,40 @@ pub fn speed(b: Backend, w: u32, h: u32, frames: u32) -> Result<(EncoderName, f6
     Ok((e.name(), frames as f64 / secs))
 }
 
+/// `test_picture` drawn once and then moved by copying rows: each frame is the first one
+/// scrolled 2 rows up and 4 pixels left per frame number, at the speed of a memory copy, so a
+/// 4K test stream isn't held up by drawing its own pictures.
+pub struct MovingPicture {
+    base: Vec<u8>,
+    w: u32,
+    h: u32,
+}
+
+impl MovingPicture {
+    pub fn new(w: u32, h: u32) -> MovingPicture {
+        let mut base = vec![0u8; w as usize * h as usize * 4];
+        test_picture(&mut base, w, h, 0);
+        MovingPicture { base, w, h }
+    }
+
+    /// Frame `n` into `out` (`w * h * 4` bytes).
+    pub fn frame(&self, n: u32, out: &mut [u8]) {
+        let (w, h) = (self.w as usize, self.h as usize);
+        if w == 0 || h == 0 || out.len() < w * h * 4 {
+            return;
+        }
+        let dy = (n as usize * 2) % h;
+        let dx = ((n as usize * 4) % w) * 4;
+        let row = w * 4;
+        for (y, o) in out.chunks_exact_mut(row).take(h).enumerate() {
+            let src = &self.base[((y + dy) % h) * row..][..row];
+            let (a, b) = o.split_at_mut(row - dx);
+            a.copy_from_slice(&src[dx..]);
+            b.copy_from_slice(&src[..dx]);
+        }
+    }
+}
+
 /// A moving picture with edges and gradients (something for an encoder to work on).
 pub fn test_picture(rgba: &mut [u8], w: u32, h: u32, n: u32) {
     for y in 0..h {
@@ -439,6 +586,21 @@ impl Paced {
         Paced { inner, cadence: Cadence::new(cfg), sets: ParamSets::default(), codec: cfg.codec, rgba_len: cfg.rgba_len(), last_pts: None }
     }
 
+    /// The time stamp and keyframe decision for the next picture. Encoders refuse time going
+    /// backwards or standing still, so such frames are nudged forward.
+    fn stamp(&mut self, pts_us: i64, force_keyframe: bool) -> (i64, bool) {
+        let pts = match self.last_pts {
+            Some(l) if pts_us <= l => l + 1,
+            _ => pts_us,
+        };
+        self.last_pts = Some(pts);
+        let key = self.cadence.due(pts) || force_keyframe;
+        if key {
+            self.cadence.forced(pts);
+        }
+        (pts, key)
+    }
+
     fn after(&mut self, mut packets: Vec<VideoPacket>) -> Vec<VideoPacket> {
         for p in &mut packets {
             self.sets.complete(self.codec, p);
@@ -455,17 +617,15 @@ impl VideoEncoder for Paced {
         if rgba.len() != self.rgba_len {
             return Err(format!("a picture of {} bytes was given, the encoder takes {}", rgba.len(), self.rgba_len));
         }
-        // Encoders refuse time going backwards or standing still; nudge such frames forward.
-        let pts = match self.last_pts {
-            Some(l) if pts_us <= l => l + 1,
-            _ => pts_us,
-        };
-        self.last_pts = Some(pts);
-        let key = self.cadence.due(pts) || force_keyframe;
-        if key {
-            self.cadence.forced(pts);
-        }
+        let (pts, key) = self.stamp(pts_us, force_keyframe);
         let p = self.inner.encode(rgba, pts, key)?;
+        Ok(self.after(p))
+    }
+
+    #[cfg(zero_copy)]
+    fn encode_surface(&mut self, surface: &Surface, pts_us: i64, force_keyframe: bool) -> Result<Vec<VideoPacket>, String> {
+        let (pts, key) = self.stamp(pts_us, force_keyframe);
+        let p = self.inner.encode_surface(surface, pts, key)?;
         Ok(self.after(p))
     }
 
@@ -678,8 +838,8 @@ pub fn rgba_to_i420(rgba: &[u8], w: u32, h: u32, y: &mut [u8], u: &mut [u8], v: 
     });
 }
 
-/// A contiguous NV12 picture of `w` × `h` (for the tests).
-#[cfg(test)]
+/// A contiguous NV12 picture of `w` × `h` (for the tests and the graphics-chip conversion check).
+#[cfg(any(test, windows))]
 pub fn nv12(rgba: &[u8], w: u32, h: u32, out: &mut Vec<u8>) {
     let ys = (w * h) as usize;
     out.resize(ys + ys / 2, 0);
@@ -1130,6 +1290,41 @@ mod tests {
         assert_eq!(vendor_in("NVIDIA H.264 Encoder MFT"), "NVIDIA");
         assert_eq!(vendor_in("VideoToolbox H.264 (Apple media engine)"), "Apple");
         assert_eq!(vendor_in("OpenH264 (software)"), "");
+    }
+
+    #[test]
+    fn zero_copy_is_negotiated_where_source_and_encoder_share_a_format() {
+        use FrameFormat::*;
+        assert_eq!(source_formats(Os::Windows, true, false), vec![D3d11Nv12, Rgba]);
+        assert_eq!(source_formats(Os::Windows, false, false), vec![Rgba], "Media Foundation's software encoders want memory");
+        assert_eq!(source_formats(Os::Mac, false, false), vec![PixelBuffer, Rgba], "VideoToolbox's software encoder takes pixel buffers too");
+        assert_eq!(source_formats(Os::Linux, true, false), vec![Rgba], "Linux copies through memory");
+        assert_eq!(source_formats(Os::Windows, true, true), vec![Rgba], "SNAGSTER_ZERO_COPY=0");
+        assert_eq!(encoder_formats(Some(D3d11Nv12)), vec![D3d11Nv12, Rgba]);
+        assert_eq!(encoder_formats(None), vec![Rgba]);
+        assert_eq!(negotiate(&source_formats(Os::Windows, true, false), &encoder_formats(Some(D3d11Nv12))), Some(D3d11Nv12));
+        assert_eq!(negotiate(&source_formats(Os::Windows, true, false), &encoder_formats(None)), Some(Rgba), "an encoder in memory only");
+        assert_eq!(negotiate(&source_formats(Os::Mac, true, false), &encoder_formats(Some(D3d11Nv12))), Some(Rgba), "formats that don't match");
+        assert_eq!(negotiate(&[D3d11Nv12], &[Rgba]), None);
+    }
+
+    #[test]
+    fn the_moving_picture_scrolls_two_rows_and_four_pixels_a_frame() {
+        let (w, h) = (64u32, 32u32);
+        let m = MovingPicture::new(w, h);
+        let mut base = vec![0u8; (w * h * 4) as usize];
+        test_picture(&mut base, w, h, 0);
+        let mut out = vec![0u8; base.len()];
+        m.frame(0, &mut out);
+        assert_eq!(out, base);
+        let px = |b: &[u8], x: u32, y: u32| b[((y * w + x) * 4) as usize..][..4].to_vec();
+        for n in [1u32, 5, 17, 40] {
+            m.frame(n, &mut out);
+            for (x, y) in [(0, 0), (63, 31), (10, 20), (60, 3)] {
+                assert_eq!(px(&out, x, y), px(&base, (x + n * 4) % w, (y + n * 2) % h), "frame {n} at {x},{y}");
+            }
+        }
+        m.frame(3, &mut [0u8; 8]);
     }
 
     #[test]

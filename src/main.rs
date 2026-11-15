@@ -31,6 +31,7 @@ mod sample;
 mod aac;
 mod encode;
 mod stream;
+mod stream_test;
 #[cfg(test)]
 mod testalloc;
 
@@ -181,7 +182,7 @@ fn main() -> eframe::Result {
             return Ok(());
         } else if a == "--stream-test" {
             // Stream the screen into a local test server (127.0.0.1 only) and report the cost.
-            let ok = stream_test(args.next().as_deref() == Some("quick"));
+            let ok = stream_test::run(args.next().as_deref() == Some("quick"));
             std::process::exit(if ok { 0 } else { 1 });
         } else if a == "--record-bench" {
             // 50 frames of 1280 x 720: a typing-sized change in each, then full-screen changes.
@@ -458,11 +459,18 @@ fn video_test(quick: bool) {
         }
     }
     let mut failed = encoders_failed;
+    // Without screen access (macOS without the permission or a logged-in desktop) the
+    // recordings are skipped, not failed; the encoder checks above still count.
+    let access = capture::screen_access();
     for (format, fps, hardware, sound) in cases {
         if sound != A::None && !A::supported() {
             continue;
         }
         if !format.available() {
+            continue;
+        }
+        if let Some(skip) = capture::check_skip(access) {
+            println!("{skip}: {} {fps} fps", format.label());
             continue;
         }
         let secs = if fps == 1 { 5 } else { 3 };
@@ -535,170 +543,6 @@ fn video_test(quick: bool) {
         }
     }
     println!("{}", if failed == 0 { "video test: all passed".to_string() } else { format!("video test: {failed} failed") });
-}
-
-/// A stream size `height` pixels tall in the screen's proportions (even numbers).
-fn stream_size(sw: u32, sh: u32, height: u32) -> (u32, u32) {
-    let h = height.min(sh.max(2));
-    let w = (sw as u64 * h as u64 / sh.max(1) as u64) as u32;
-    (w.max(2) & !1, h.max(2) & !1)
-}
-
-/// `--stream-test [quick]`: stream the whole screen into Snagster's own test RTMP server on
-/// 127.0.0.1 (nothing leaves the computer) with the best encoder here, and report the frame
-/// rate that reached the server and the processor time used. Where the screen can't be copied
-/// (a Mac without the permission), a moving test picture goes out instead. True: all passed.
-fn stream_test(quick: bool) -> bool {
-    use stream::engine::{FrameSource, SoundSource, StreamConfig, Streamer};
-    use stream::{Encoders, Service, State, StreamTarget};
-    let (mx, my, sw, sh) = capture::monitor_under_cursor().unwrap_or((0, 0, 1280, 720));
-    println!("Screen {sw}x{sh} at {mx},{my}");
-    // A system whose sleeps run long can't keep a frame rate: how long a 5 ms sleep takes on a
-    // plain thread, and on a timely one while the stream's activity is held (what streaming uses).
-    let plain = video::measured_sleep_ms(5, 20);
-    let (timely, paced, mode) = std::thread::spawn(|| {
-        let _a = video::TimelyActivity::begin("Stream test");
-        video::timely_thread();
-        let slept = video::measured_sleep_ms(5, 20);
-        // What the stream's threads really do: `Pacer` learns the overrun and allows for it.
-        let mut p = video::Pacer::calibrated();
-        let t = std::time::Instant::now();
-        for _ in 0..20 {
-            p.wait_until(std::time::Instant::now() + std::time::Duration::from_millis(5));
-        }
-        (slept, t.elapsed().as_secs_f64() * 1000.0 / 20.0, p.mode())
-    })
-    .join()
-    .unwrap_or((0.0, 0.0, String::new()));
-    println!("A 5 ms sleep takes {plain:.1} ms ({timely:.1} ms on a streaming thread); a paced 5 ms wait takes {paced:.1} ms; pacing: {mode}");
-    // (height, frame rate, seconds, copy every frame even when the screen doesn't change: the cost
-    // of a screen that changes all the time)
-    let cases: &[(u32, u32, u64, bool)] = if quick { &[(720, 30, 3, true)] } else { &[(1080, 30, 6, false), (1080, 30, 6, true), (1440, 60, 6, false), (1440, 60, 6, true)] };
-    let mut failed = 0;
-    // OpenH264's speed shows whether its assembly was built (nasm installed where it was compiled).
-    let mut openh264_fps = 0.0;
-    match encode::speed(encode::Backend::OpenH264, 1920, 1080, if quick { 60 } else { 150 }) {
-        Ok((_, f)) => {
-            println!("OpenH264 1920x1080 encode speed: {f:.0} fps");
-            openh264_fps = f;
-        }
-        Err(e) => {
-            println!("FAIL OpenH264: {e}");
-            failed += 1;
-        }
-    }
-    for &(height, fps, secs, every_frame) in cases {
-        let srv = match stream::testserver::TestServer::start() {
-            Ok(s) => s,
-            Err(e) => {
-                println!("FAIL no local test server: {e}");
-                failed += 1;
-                continue;
-            }
-        };
-        let (w, h) = stream_size(sw, sh, height);
-        let target = StreamTarget { service: Service::Custom, url: srv.url(), key: "stream-test".into() };
-        let cfg = StreamConfig::for_target(target, w, h, fps, encode::Codec::H264);
-        let (w, h, fps) = (cfg.width, cfg.height, cfg.fps);
-        // The graphics chip's encoder alone at this size (nothing else running), to tell a slow
-        // encoder from a slow copy or network.
-        if let Some(&b) = encode::plan(encode::Os::current(), encode::Codec::H264, true).first().filter(|b| b.hardware()) {
-            match encode::speed(b, w, h, 60) {
-                Ok((_, f)) => println!("{} {w}x{h} encode speed: {f:.0} fps", b.label()),
-                Err(e) => println!("     {} {w}x{h}: {e}", b.label()),
-            }
-        }
-        let opts =video::FeedOptions { fps, cursor: true, fit: Some((w, h)), every_frame };
-        let grabber = stream::source::Grabber::open((mx, my, sw, sh), None, opts);
-        let t = std::time::Instant::now();
-        while !grabber.ready() && t.elapsed() < std::time::Duration::from_secs(3) {
-            std::thread::sleep(std::time::Duration::from_millis(10));
-        }
-        let grabber_used = grabber.ready();
-        let (frames, what) = if grabber_used {
-            (grabber.frames(), format!("screen (copied by {}{})", grabber.method(), if every_frame { ", every frame" } else { ", when it changes" }))
-        } else {
-            let n = std::sync::atomic::AtomicU32::new(0);
-            let f: stream::engine::RgbaFeed = std::sync::Arc::new(move |buf: &mut [u8]| {
-                encode::test_picture(buf, w, h, n.fetch_add(1, std::sync::atomic::Ordering::Relaxed));
-                true
-            });
-            (FrameSource::Rgba(f), format!("test picture (the screen couldn't be copied: {})", grabber.error().unwrap_or_default()))
-        };
-        let s = match Streamer::start(cfg, frames, SoundSource::None, Encoders::system()) {
-            Ok(s) => s,
-            Err(e) => {
-                println!("FAIL {w}x{h} {fps} fps: {e}");
-                failed += 1;
-                continue;
-            }
-        };
-        // Wait until live, then count what arrives for `secs` seconds.
-        let t = std::time::Instant::now();
-        while s.stats().state != State::Live && t.elapsed() < std::time::Duration::from_secs(10) {
-            std::thread::sleep(std::time::Duration::from_millis(10));
-        }
-        std::thread::sleep(std::time::Duration::from_millis(500));
-        let (v0, g0, c0, t0) = (srv.video_messages(), grabber.captured(), cpu_seconds(), std::time::Instant::now());
-        let (timing0, grabs0) = (s.stats().timing, grabber.grab_time());
-        std::thread::sleep(std::time::Duration::from_secs(secs));
-        let (v1, g1, c1, wall) = (srv.video_messages(), grabber.captured(), cpu_seconds(), t0.elapsed().as_secs_f64());
-        let (timing1, grabs1) = (s.stats().timing, grabber.grab_time());
-        let copied = (g1 - g0) as f64 / wall;
-        let stats = s.stop();
-        drop(grabber);
-        let got = (v1 - v0) as f64 / wall;
-        let cpu = 100.0 * (c1 - c0) / wall;
-        let hardware = stats.video_encoder.as_ref().is_some_and(|e| e.hardware);
-        // OpenH264's measured 1080p speed, scaled to this size.
-        let software_fps = openh264_fps * (1920.0 * 1080.0) / (w as f64 * h as f64);
-        let want = wanted_fps(fps, hardware, software_fps);
-        let want_copies = wanted_copies(fps, every_frame && grabber_used);
-        let ok = got >= want && copied >= want_copies && stats.error.is_none() && stats.state != State::Failed;
-        if !ok {
-            failed += 1;
-        }
-        println!(
-            "{} {w}x{h} {fps} fps of the {what}: {copied:.1} new pictures a second (want {want_copies:.0}+), {got:.1} fps reached the server (want {want:.0}+), {} dropped, CPU {cpu:.1}% of one core, encoder {}{}",
-            if ok { "ok  " } else { "FAIL" },
-            stats.frames_dropped,
-            stats.video_encoder.map(|e| e.name).unwrap_or_default(),
-            stats.error.map(|e| format!(", error: {e}")).unwrap_or_default()
-        );
-        // Where the time went, so a slow run says which step is slow.
-        if grabber_used {
-            println!("     screen copy: {}", grab_summary(grabs1.0 - grabs0.0, grabs1.1 - grabs0.1, wall));
-        }
-        println!("     stream: {}", timing1.since(&timing0).summary(wall));
-    }
-    println!("{}", if failed == 0 { "stream test: all passed".to_string() } else { format!("stream test: {failed} failed") });
-    failed == 0
-}
-
-/// The frame rate that must reach the server. 90 % of the stream's wherever the encoder can
-/// do it: always for a graphics-chip encoder, and for the software one (OpenH264) when it
-/// encodes this size at least 1.5 times as fast as needed (`software_fps`, measured on this
-/// machine just before). Only a machine too slow for OpenH264 at this size gets 50 %, so
-/// the test still catches a stream that stalls without failing for a small CPU.
-fn wanted_fps(fps: u32, hardware: bool, software_fps: f64) -> f64 {
-    let fps = fps as f64;
-    if hardware || software_fps >= 1.5 * fps { 0.9 * fps } else { 0.5 * fps }
-}
-
-/// New pictures a second the screen copy must make when it copies every frame: 80 % of the
-/// stream's. Every system's copy manages far more on the CI machines (Windows Desktop
-/// Duplication, Linux X11 shared memory 4.5 ms a grab, the Mac display copy about 22 ms), so
-/// this catches a copy that has become slow (xcap's X11 path made 3 a second) while leaving
-/// room for a virtual machine's hiccups. A screen copied only when it changes: no minimum.
-fn wanted_copies(fps: u32, every_frame: bool) -> f64 {
-    if every_frame { 0.8 * fps as f64 } else { 0.0 }
-}
-
-/// `grabs` screen copies that took `us` microseconds in all over `secs` seconds, for a person.
-fn grab_summary(grabs: u64, us: u64, secs: f64) -> String {
-    let each = if grabs == 0 { 0.0 } else { us as f64 / grabs as f64 / 1000.0 };
-    let most = if each > 0.0 { 1000.0 / each } else { 0.0 };
-    format!("{:.1} grabs a second, {each:.2} ms each (at most {most:.0} a second)", grabs as f64 / secs.max(1e-6))
 }
 
 /// Where crash reports go: Snagster's settings folder (crash.log, newest last, kept small).
@@ -868,23 +712,6 @@ mod main_tests {
         // The centre dot and a bracket corner are white.
         assert_eq!(px(32, 32), [255, 255, 255, 255]);
         assert_eq!(px(13, 13), [255, 255, 255, 255]);
-    }
-
-    #[test]
-    fn stream_test_wants_the_full_rate_wherever_the_encoder_can_do_it() {
-        assert_eq!(wanted_fps(30, true, 0.0), 27.0, "graphics chip");
-        assert_eq!(wanted_fps(30, false, 342.0), 27.0, "OpenH264 with room to spare");
-        assert_eq!(wanted_fps(30, false, 45.0), 27.0, "exactly 1.5 times");
-        assert_eq!(wanted_fps(60, false, 80.0), 30.0, "a machine too slow for OpenH264 at this size");
-        assert_eq!(wanted_copies(30, true), 24.0);
-        assert_eq!(wanted_copies(30, false), 0.0, "copied only when the screen changes");
-    }
-
-    #[test]
-    fn grab_summary_gives_rate_and_time_per_grab() {
-        assert_eq!(grab_summary(60, 300_000, 2.0), "30.0 grabs a second, 5.00 ms each (at most 200 a second)");
-        assert_eq!(grab_summary(0, 0, 1.0), "0.0 grabs a second, 0.00 ms each (at most 0 a second)");
-        assert_eq!(grab_summary(3, 900_000, 0.0), "3000000.0 grabs a second, 300.00 ms each (at most 3 a second)", "no division by zero");
     }
 
     #[test]

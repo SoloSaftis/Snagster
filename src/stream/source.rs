@@ -77,11 +77,62 @@ fn window_rect(title: &str) -> Option<(i32, i32, u32, u32)> {
     crate::capture::list_windows().into_iter().find(|w| w.label.to_lowercase().contains(&low)).map(|w| (w.x, w.y, w.width, w.height))
 }
 
+/// Where a grabber's pictures are: in memory (`ScreenFeed`), or in graphics memory already in
+/// the encoder's format (`SurfaceFeed`, zero-copy).
+#[derive(Clone)]
+enum Feed {
+    Memory(Arc<crate::video::ScreenFeed>),
+    #[cfg(zero_copy)]
+    Surfaces(Arc<crate::video::SurfaceFeed>),
+}
+
+impl Feed {
+    fn frames(&self) -> u64 {
+        match self {
+            Feed::Memory(f) => f.frames(),
+            #[cfg(zero_copy)]
+            Feed::Surfaces(f) => f.frames(),
+        }
+    }
+
+    fn grab_time(&self) -> (u64, u64) {
+        match self {
+            Feed::Memory(f) => f.grab_time(),
+            #[cfg(zero_copy)]
+            Feed::Surfaces(f) => f.grab_time(),
+        }
+    }
+
+    fn method(&self) -> &'static str {
+        match self {
+            Feed::Memory(f) => f.method(),
+            #[cfg(zero_copy)]
+            Feed::Surfaces(f) => f.method(),
+        }
+    }
+
+    fn error(&self) -> Option<String> {
+        match self {
+            Feed::Memory(f) => f.error(),
+            #[cfg(zero_copy)]
+            Feed::Surfaces(f) => f.error(),
+        }
+    }
+
+    fn move_to(&self, r: (i32, i32, u32, u32)) {
+        match self {
+            Feed::Memory(f) => f.move_to(r),
+            #[cfg(zero_copy)]
+            Feed::Surfaces(f) => f.move_to(r),
+        }
+    }
+}
+
 /// A screen, window or area copied by `video::ScreenFeed` (Desktop Duplication on Windows) at
-/// the stream's size, and for a window a thread that follows it when it moves. Stops when
-/// dropped.
+/// the stream's size, or by `video::SurfaceFeed` into graphics memory (zero-copy), and for a
+/// window a thread that follows it when it moves. Stops when dropped.
 pub struct Grabber {
-    feed: Option<Arc<crate::video::ScreenFeed>>,
+    feed: Option<Feed>,
     error: Option<String>,
     stop: Arc<AtomicBool>,
     follow: Option<std::thread::JoinHandle<()>>,
@@ -96,11 +147,30 @@ impl Grabber {
 
     /// `start` with all the feed's options (`every_frame` for measuring).
     pub fn open(rect: (i32, i32, u32, u32), window: Option<String>, o: crate::video::FeedOptions) -> Grabber {
-        let stop = Arc::new(AtomicBool::new(false));
         let (feed, error) = match crate::video::screen_feed(rect, o) {
-            Ok(f) => (Some(Arc::new(f)), None),
+            Ok(f) => (Some(Feed::Memory(Arc::new(f))), None),
             Err(e) => (None, Some(e)),
         };
+        Grabber::with(feed, error, window)
+    }
+
+    /// Copy into graphics memory, NV12 at `w` × `h`, for an encoder on the same device (see
+    /// `video::surface_feed`); fails when that can't start here (the caller then uses `start`).
+    #[cfg(zero_copy)]
+    pub fn start_surfaces(rect: (i32, i32, u32, u32), window: Option<String>, o: crate::video::FeedOptions) -> Result<Grabber, String> {
+        let f = crate::video::surface_feed(rect, o)?;
+        Ok(Grabber::with(Some(Feed::Surfaces(Arc::new(f))), None, window))
+    }
+
+    /// The moving test picture in graphics memory (`video::test_surface_feed`, `--stream-test`).
+    #[cfg(windows)]
+    pub fn test_surfaces(w: u32, h: u32, fps: u32) -> Result<Grabber, String> {
+        let f = crate::video::test_surface_feed(w, h, fps)?;
+        Ok(Grabber::with(Some(Feed::Surfaces(Arc::new(f))), None, None))
+    }
+
+    fn with(feed: Option<Feed>, error: Option<String>, window: Option<String>) -> Grabber {
+        let stop = Arc::new(AtomicBool::new(false));
         let follow = match (&feed, window) {
             (Some(f), Some(title)) => {
                 let (f, s) = (f.clone(), stop.clone());
@@ -125,9 +195,27 @@ impl Grabber {
         Grabber { feed, error, stop, follow }
     }
 
+    /// The device a zero-copy grabber's pictures live on (None: they are in memory).
+    #[cfg(zero_copy)]
+    pub fn device(&self) -> Option<crate::encode::SurfaceDevice> {
+        match &self.feed {
+            Some(Feed::Surfaces(f)) => Some(f.device()),
+            _ => None,
+        }
+    }
+
     /// The stream's picture source: the newest copy (black until the first one).
     pub fn frames(&self) -> FrameSource {
-        let (feed, stop) = (self.feed.clone(), self.stop.clone());
+        let stop = self.stop.clone();
+        #[cfg(zero_copy)]
+        if let Some(Feed::Surfaces(f)) = &self.feed {
+            let f = f.clone();
+            return FrameSource::Surfaces(Arc::new(move || if stop.load(Ordering::Relaxed) { None } else { Some(f.latest()) }));
+        }
+        let feed = match &self.feed {
+            Some(Feed::Memory(f)) => Some(f.clone()),
+            _ => None,
+        };
         FrameSource::Rgba(Arc::new(move |buf: &mut [u8]| {
             if stop.load(Ordering::Relaxed) {
                 return false;
@@ -165,7 +253,8 @@ impl Grabber {
 
     /// Why nothing could be copied, or what went wrong last.
     pub fn error(&self) -> Option<String> {
-        self.error.clone().or_else(|| self.feed.as_ref().and_then(|f| f.error()))
+        // A copy that fails because Snagster may not see the screen says so plainly (macOS).
+        self.error.clone().or_else(|| self.feed.as_ref().and_then(|f| f.error())).map(|e| crate::capture::grab_error_message(&e, crate::capture::screen_access()))
     }
 }
 

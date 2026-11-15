@@ -22,13 +22,59 @@ pub enum FrameSource {
     #[cfg(test)]
     Bgra(crate::video::FrameFeed),
     Rgba(RgbaFeed),
+    /// Pictures in graphics memory, already NV12 at the stream's size (zero-copy); the encoder
+    /// must have been opened for them (`encode::open_video_for_surfaces`).
+    #[cfg(zero_copy)]
+    Surfaces(SurfaceFeedFn),
+}
+
+/// The newest picture in graphics memory: None when the source has ended, Some(None) before
+/// the first picture.
+#[cfg(zero_copy)]
+pub type SurfaceFeedFn = Arc<dyn Fn() -> Option<Option<crate::encode::Surface>> + Send + Sync>;
+
+/// The picture the video thread hands the encoder next.
+enum Picture {
+    Memory(Vec<u8>),
+    #[cfg(zero_copy)]
+    Surface(Option<crate::encode::Surface>),
 }
 
 impl FrameSource {
+    /// Where this source's pictures go: an RGBA buffer, or a surface.
+    fn picture(&self, w: u32, h: u32) -> Picture {
+        match self {
+            #[cfg(zero_copy)]
+            FrameSource::Surfaces(_) => Picture::Surface(None),
+            _ => Picture::Memory(vec![0u8; w as usize * h as usize * 4]),
+        }
+    }
+
+    /// Bring `p` up to date; false: the source has ended.
+    fn take(&self, p: &mut Picture) -> bool {
+        match (self, p) {
+            #[cfg(zero_copy)]
+            (FrameSource::Surfaces(f), Picture::Surface(s)) => match f() {
+                None => false,
+                Some(new) => {
+                    if new.is_some() {
+                        *s = new;
+                    }
+                    true
+                }
+            },
+            (_, Picture::Memory(buf)) => self.fill(buf),
+            #[cfg(zero_copy)]
+            _ => false,
+        }
+    }
+
     /// Fill `rgba`; false: the source has ended.
     fn fill(&self, rgba: &mut [u8]) -> bool {
         match self {
             FrameSource::Rgba(f) => f(rgba),
+            #[cfg(zero_copy)]
+            FrameSource::Surfaces(_) => false,
             #[cfg(test)]
             FrameSource::Bgra(f) => {
                 let go = f(rgba);
@@ -90,12 +136,34 @@ pub type AudioFactory = Arc<dyn Fn(u32) -> Result<Box<dyn AudioEncoder>, String>
 pub struct Encoders {
     pub video: VideoFactory,
     pub audio: AudioFactory,
+    /// These are the system's encoders, so a zero-copy source may open its own on its device
+    /// (`with_surfaces`); fakes in the tests take pictures from memory.
+    pub zero_copy: bool,
 }
 
 impl Encoders {
     /// This computer's encoders (graphics chip first, then software).
     pub fn system() -> Encoders {
-        Encoders { video: Arc::new(crate::encode::open_video), audio: Arc::new(crate::encode::open_audio) }
+        Encoders { video: Arc::new(crate::encode::open_video), audio: Arc::new(crate::encode::open_audio), zero_copy: true }
+    }
+
+    /// Video encoders on `dev` for pictures in graphics memory, starting with `first`, already
+    /// opened for `cfg` (so checking that zero-copy works doesn't cost a second encoder).
+    #[cfg(zero_copy)]
+    pub fn with_surfaces(&self, dev: crate::encode::SurfaceDevice, first: Box<dyn VideoEncoder>, cfg: VideoConfig) -> Encoders {
+        let first = Mutex::new(Some(first));
+        Encoders {
+            video: Arc::new(move |c: &VideoConfig| {
+                if c == &cfg
+                    && let Some(e) = first.lock().ok().and_then(|mut f| f.take())
+                {
+                    return Ok(e);
+                }
+                crate::encode::open_video_for_surfaces(c, &dev)
+            }),
+            audio: self.audio.clone(),
+            zero_copy: false,
+        }
     }
 }
 
@@ -545,7 +613,7 @@ fn plan_slots(now_us: u64, frame_us: f64, next: u64, catch_up: u64) -> SlotPlan 
 
 fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEncoder>, w: u32, h: u32, fps: u32, started: Instant, mut pacer: crate::video::Pacer, hook: Option<PacketHook>) {
     crate::video::timely_thread();
-    let mut buf = vec![0u8; w as usize * h as usize * 4];
+    let mut pic = frames.picture(w, h);
     let frame_us = 1_000_000.0 / fps as f64;
     // The next frame slot to fill: slot n is due at `started + n frames` (fixed deadlines, so
     // nothing drifts however the waits go).
@@ -563,7 +631,7 @@ fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEnco
         }
         sh.timing.late.fetch_add(plan.skipped, Ordering::Relaxed);
         let t = Instant::now();
-        if !frames.fill(&mut buf) {
+        if !frames.take(&mut pic) {
             sh.stop.store(true, Ordering::Relaxed);
             break;
         }
@@ -572,9 +640,20 @@ fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEnco
         // so the service sees a steady frame rate).
         for slot in plan.emit.clone() {
             let pts = (slot as f64 * frame_us) as i64;
+            #[cfg(zero_copy)]
+            if matches!(pic, Picture::Surface(None)) {
+                // No picture in graphics memory yet: nothing to send for this slot.
+                continue;
+            }
             let key = sh.want_key.swap(false, Ordering::Relaxed);
             let t = Instant::now();
-            let r = enc.encode(&buf, pts, key);
+            let r = match &pic {
+                Picture::Memory(buf) => enc.encode(buf, pts, key),
+                #[cfg(zero_copy)]
+                Picture::Surface(Some(s)) => enc.encode_surface(s, pts, key),
+                #[cfg(zero_copy)]
+                Picture::Surface(None) => continue,
+            };
             let took = add_us(&sh.timing.encode_us, t);
             sh.timing.encode_max_us.fetch_max(took, Ordering::Relaxed);
             sh.timing.frames_in.fetch_add(1, Ordering::Relaxed);

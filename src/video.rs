@@ -960,7 +960,7 @@ impl Grab for XcapGrab {
     fn grab(&mut self, until: Instant, _force: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String> {
         sleep_until(until);
         let (x, y, w, h) = self.rect;
-        let mut img = crate::capture::grab_rect(x, y, w, h)?;
+        let mut img = crate::capture::grab_rect(x, y, w, h).map_err(|e| crate::capture::grab_error_message(&e, crate::capture::screen_access()))?;
         if self.cursor
             && let Some(c) = crate::capture::cursor_pos()
         {
@@ -1345,7 +1345,7 @@ pub struct ScreenFeed {
 
 /// A feed of `rect` (desktop pixels, physical): see `ScreenFeed::start`.
 pub fn screen_feed(rect: (i32, i32, u32, u32), o: FeedOptions) -> Result<ScreenFeed, String> {
-    ScreenFeed::start(rect, o)
+    ScreenFeed::start(rect, o).map_err(|e| crate::capture::grab_error_message(&e, crate::capture::screen_access()))
 }
 
 impl ScreenFeed {
@@ -1417,6 +1417,210 @@ impl Drop for ScreenFeed {
             let _ = t.join();
         }
     }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Zero-copy screen feeds: pictures that stay in graphics memory, already NV12 at the stream's
+// size, for an encoder on the same device (Windows: `gpu`, Direct3D 11; macOS: `display`,
+// CGDisplayStream IOSurfaces).
+// ---------------------------------------------------------------------------------------------
+
+#[cfg(windows)]
+mod gpu;
+#[cfg(target_os = "macos")]
+mod display;
+
+/// What a zero-copy feed's thread (or callback) shares with its readers.
+#[cfg(zero_copy)]
+#[derive(Default)]
+struct SurfaceShared {
+    latest: std::sync::Mutex<Option<crate::encode::Surface>>,
+    count: std::sync::atomic::AtomicU64,
+    grabs: std::sync::atomic::AtomicU64,
+    grab_us: std::sync::atomic::AtomicU64,
+    error: std::sync::Mutex<Option<String>>,
+    moved: std::sync::Mutex<Option<(i32, i32, u32, u32)>>,
+    stop: AtomicBool,
+}
+
+#[cfg(zero_copy)]
+impl SurfaceShared {
+    /// A new picture, made in the time since `began`.
+    fn publish(&self, s: crate::encode::Surface, began: Instant) {
+        *self.latest.lock().unwrap_or_else(|p| p.into_inner()) = Some(s);
+        self.count.fetch_add(1, Ordering::Relaxed);
+        self.grabs.fetch_add(1, Ordering::Relaxed);
+        self.grab_us.fetch_add(began.elapsed().as_micros() as u64, Ordering::Relaxed);
+    }
+
+    fn set_error(&self, e: String) {
+        *self.error.lock().unwrap_or_else(|p| p.into_inner()) = Some(e);
+    }
+}
+
+/// A screen area copied into graphics memory at the stream's size, in the encoder's input
+/// format: no picture passes through the processor (zero-copy). Stops when dropped.
+#[cfg(zero_copy)]
+pub struct SurfaceFeed {
+    sh: Arc<SurfaceShared>,
+    device: crate::encode::SurfaceDevice,
+    method: &'static str,
+    /// Stops the copying (joins the thread, or stops the display stream).
+    end: Option<Box<dyn FnOnce() + Send + Sync>>,
+}
+
+#[cfg(zero_copy)]
+impl SurfaceFeed {
+    fn new(sh: Arc<SurfaceShared>, device: crate::encode::SurfaceDevice, method: &'static str, end: Box<dyn FnOnce() + Send + Sync>) -> SurfaceFeed {
+        SurfaceFeed { sh, device, method, end: Some(end) }
+    }
+
+    /// The newest picture (None until the first).
+    pub fn latest(&self) -> Option<crate::encode::Surface> {
+        self.sh.latest.lock().ok().and_then(|l| l.clone())
+    }
+
+    /// Pictures made so far.
+    pub fn frames(&self) -> u64 {
+        self.sh.count.load(Ordering::Relaxed)
+    }
+
+    /// The device the pictures live on (to open the encoder there).
+    pub fn device(&self) -> crate::encode::SurfaceDevice {
+        self.device.clone()
+    }
+
+    /// Pictures made and the microseconds that took in all.
+    pub fn grab_time(&self) -> (u64, u64) {
+        (self.sh.grabs.load(Ordering::Relaxed), self.sh.grab_us.load(Ordering::Relaxed))
+    }
+
+    pub fn method(&self) -> &'static str {
+        self.method
+    }
+
+    pub fn error(&self) -> Option<String> {
+        self.sh.error.lock().ok().and_then(|e| e.clone())
+    }
+
+    /// Copy from here on (a window that moved; the same size only).
+    pub fn move_to(&self, rect: (i32, i32, u32, u32)) {
+        *self.sh.moved.lock().unwrap_or_else(|p| p.into_inner()) = Some(rect);
+    }
+}
+
+#[cfg(zero_copy)]
+impl Drop for SurfaceFeed {
+    fn drop(&mut self) {
+        self.sh.stop.store(true, Ordering::Relaxed);
+        if let Some(end) = self.end.take() {
+            end();
+        }
+    }
+}
+
+/// A zero-copy feed of `rect` brought to `o.fit` at `o.fps` (Windows: Desktop Duplication and
+/// the video processor; macOS: a display stream). Waits up to 2 s for the first picture; fails
+/// when any part can't start, and the caller then copies through memory (`screen_feed`).
+#[cfg(zero_copy)]
+pub fn surface_feed(rect: (i32, i32, u32, u32), o: FeedOptions) -> Result<SurfaceFeed, String> {
+    if rect.2 < 2 || rect.3 < 2 {
+        return Err("The area to copy is too small.".into());
+    }
+    let access = |e: String| crate::capture::grab_error_message(&e, crate::capture::screen_access());
+    #[cfg(windows)]
+    let f = gpu::start(rect, o).map_err(access)?;
+    #[cfg(target_os = "macos")]
+    let f = display::start(rect, o).map_err(access)?;
+    first_surface(f).map_err(access)
+}
+
+/// `f` once it has made its first picture (2 s at most), else why not.
+#[cfg(zero_copy)]
+fn first_surface(f: SurfaceFeed) -> Result<SurfaceFeed, String> {
+    let t = Instant::now();
+    while f.frames() == 0 && t.elapsed() < Duration::from_secs(2) {
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    if f.frames() == 0 {
+        return Err(f.error().unwrap_or_else(|| "no picture came from the zero-copy screen copy".into()));
+    }
+    Ok(f)
+}
+
+/// A moving test picture of `w` × `h` uploaded to the graphics chip and converted there,
+/// through the same encoder path as the zero-copy screen copy (`--stream-test`).
+#[cfg(windows)]
+pub fn test_surface_feed(w: u32, h: u32, fps: u32) -> Result<SurfaceFeed, String> {
+    first_surface(gpu::test_feed(w, h, fps)?)
+}
+
+/// The graphics chip's BGRA → NV12 conversion against `encode::rgba_to_nv12` (largest Y and
+/// U/V differences at the centres of solid patches, and the adapter), for `--stream-test`.
+#[cfg(windows)]
+pub fn gpu_conversion_check() -> Result<(u8, u8, String), String> {
+    gpu::conversion_check()
+}
+
+/// Where the picture goes in the video processor's output (left, top, right, bottom): in
+/// proportion and centred, as `fit_into` does on the processor.
+#[cfg(any(windows, test))]
+fn dest_rect(input: (u32, u32), output: (u32, u32)) -> (i32, i32, i32, i32) {
+    let (x, y, w, h) = fit_rect(input.0, input.1, output.0, output.1);
+    (x as i32, y as i32, (x + w) as i32, (y + h) as i32)
+}
+
+/// `D3D11_VIDEO_PROCESSOR_NOMINAL_RANGE`: 16-235 and 0-255.
+#[cfg(any(windows, test))]
+const NOMINAL_16_235: u32 = 1;
+#[cfg(any(windows, test))]
+const NOMINAL_0_255: u32 = 2;
+
+/// The bits of `D3D11_VIDEO_PROCESSOR_COLOR_SPACE` (for drivers without
+/// `ID3D11VideoContext1`): Usage (bit 0, 0 playback), RGB_Range (bit 1, 0 full 0-255, 1 limited),
+/// YCbCr_Matrix (bit 2, 1 BT.709), YCbCr_xvYCC (bit 3, 0), Nominal_Range (bits 4-5).
+#[cfg(any(windows, test))]
+fn colour_space_bits(rgb_limited: bool, bt709: bool, nominal: u32) -> u32 {
+    (rgb_limited as u32) << 1 | (bt709 as u32) << 2 | (nominal & 3) << 4
+}
+
+/// Where the planes of a mapped NV12 texture start: Y at 0, the interleaved U/V rows right after
+/// the `h` rows of Y, both `pitch` bytes a row.
+#[cfg(any(windows, test))]
+fn nv12_planes(pitch: usize, h: usize) -> (usize, usize) {
+    (0, pitch * h)
+}
+
+/// The conversion check's picture: 8 × 4 patches of 32 × 32 pixels in solid colours.
+#[cfg(any(windows, test))]
+const CHECK_W: u32 = 256;
+#[cfg(any(windows, test))]
+const CHECK_H: u32 = 128;
+
+#[cfg(any(windows, test))]
+const CHECK_COLOURS: [[u8; 3]; 32] = [
+    [0, 0, 0], [255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0], [0, 255, 255], [255, 0, 255],
+    [128, 128, 128], [64, 64, 64], [192, 192, 192], [16, 16, 16], [235, 235, 235], [200, 100, 50], [50, 100, 200], [100, 200, 50],
+    [30, 60, 90], [90, 60, 30], [250, 128, 114], [70, 130, 180], [255, 215, 0], [138, 43, 226], [46, 139, 87], [210, 105, 30],
+    [240, 248, 255], [139, 0, 0], [0, 0, 128], [0, 100, 0], [255, 165, 0], [75, 0, 130], [173, 216, 230], [244, 164, 96],
+];
+
+#[cfg(any(windows, test))]
+fn colour_check_picture() -> Vec<u8> {
+    let mut v = Vec::with_capacity((CHECK_W * CHECK_H * 4) as usize);
+    for y in 0..CHECK_H {
+        for x in 0..CHECK_W {
+            let c = CHECK_COLOURS[((y / 32) * 8 + x / 32) as usize];
+            v.extend_from_slice(&[c[0], c[1], c[2], 255]);
+        }
+    }
+    v
+}
+
+/// The centre of every patch (an even pixel, so its 2 × 2 chroma block is inside the patch).
+#[cfg(any(windows, test))]
+fn check_points() -> Vec<(usize, usize)> {
+    (0..4).flat_map(|py| (0..8).map(move |px| (px * 32 + 16, py * 32 + 16))).collect()
 }
 
 /// Makes the grabber for an area (`open_grab`, or a fake in the tests).
@@ -1524,7 +1728,7 @@ mod win {
         }
     }
 
-    fn per_monitor_dpi() {
+    pub(super) fn per_monitor_dpi() {
         unsafe {
             use windows_sys::Win32::UI::HiDpi::{DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetThreadDpiAwarenessContext};
             SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -1560,15 +1764,15 @@ mod win {
     }
 
     /// The area to record, on one display, with the device that owns that display.
-    struct Screen {
-        adapter: IDXGIAdapter1,
-        output: IDXGIOutput1,
+    pub(super) struct Screen {
+        pub(super) adapter: IDXGIAdapter1,
+        pub(super) output: IDXGIOutput1,
         /// Area relative to the display's top-left corner.
-        local: (u32, u32),
+        pub(super) local: (u32, u32),
     }
 
     /// The display holding most of the area (DXGI coordinates are physical pixels).
-    fn find_screen(x: i32, y: i32, w: u32, h: u32) -> R<Option<Screen>> {
+    pub(super) fn find_screen(x: i32, y: i32, w: u32, h: u32) -> R<Option<Screen>> {
         unsafe {
             let factory: IDXGIFactory1 = CreateDXGIFactory1()?;
             let mut best: Option<(i64, Screen)> = None;
@@ -1604,7 +1808,7 @@ mod win {
         }
     }
 
-    fn device(adapter: &IDXGIAdapter1) -> R<(ID3D11Device, ID3D11DeviceContext)> {
+    pub(super) fn device(adapter: &IDXGIAdapter1) -> R<(ID3D11Device, ID3D11DeviceContext)> {
         unsafe {
             let mut dev = None;
             let mut ctx = None;
@@ -1629,7 +1833,7 @@ mod win {
         }
     }
 
-    fn texture(dev: &ID3D11Device, w: u32, h: u32, gdi: bool) -> R<ID3D11Texture2D> {
+    pub(super) fn texture(dev: &ID3D11Device, w: u32, h: u32, gdi: bool) -> R<ID3D11Texture2D> {
         let desc = D3D11_TEXTURE2D_DESC {
             Width: w,
             Height: h,
@@ -1648,16 +1852,16 @@ mod win {
     }
 
     /// Where to draw the pointer, in the area's pixels, and which pointer.
-    struct Pointer {
+    pub(super) struct Pointer {
         hotspots: std::collections::HashMap<isize, (i32, i32)>,
     }
     impl Pointer {
-        fn new() -> Pointer {
+        pub(super) fn new() -> Pointer {
             Pointer { hotspots: Default::default() }
         }
 
         /// Draw the current pointer onto a device context showing the area at (ox, oy).
-        fn draw(&mut self, hdc: *mut core::ffi::c_void, ox: i32, oy: i32) {
+        pub(super) fn draw(&mut self, hdc: *mut core::ffi::c_void, ox: i32, oy: i32) {
             use windows_sys::Win32::Graphics::Gdi::DeleteObject;
             use windows_sys::Win32::UI::WindowsAndMessaging::{CURSOR_SHOWING, CURSORINFO, DI_NORMAL, DrawIconEx, GetCursorInfo, GetIconInfo, ICONINFO};
             unsafe {
@@ -1848,25 +2052,25 @@ mod win {
 
     // ---- graphics-chip path: Desktop Duplication → texture → encoder ----
 
-    struct Dup {
-        dev: ID3D11Device,
-        ctx: ID3D11DeviceContext,
+    pub(super) struct Dup {
+        pub(super) dev: ID3D11Device,
+        pub(super) ctx: ID3D11DeviceContext,
         dup: IDXGIOutputDuplication,
         output: IDXGIOutput1,
         /// Latest picture of the area.
-        latest: ID3D11Texture2D,
-        local: (u32, u32),
-        w: u32,
-        h: u32,
+        pub(super) latest: ID3D11Texture2D,
+        pub(super) local: (u32, u32),
+        pub(super) w: u32,
+        pub(super) h: u32,
         /// The screen changed since this was last cleared (the screen feed skips copies of an
         /// unchanged screen).
-        fresh: bool,
+        pub(super) fresh: bool,
         /// The pointer moved or changed shape since this was last cleared.
-        mouse: bool,
+        pub(super) mouse: bool,
     }
 
     impl Dup {
-        fn new(screen: &Screen, w: u32, h: u32) -> R<Dup> {
+        pub(super) fn new(screen: &Screen, w: u32, h: u32) -> R<Dup> {
             let (dev, ctx) = device(&screen.adapter)?;
             let dup = unsafe { screen.output.DuplicateOutput(&dev)? };
             let latest = texture(&dev, w, h, false)?;
@@ -1875,7 +2079,7 @@ mod win {
 
         /// Take screen updates until `until`; returns false when the duplication was lost and
         /// couldn't be made again.
-        fn pump(&mut self, until: Instant) -> bool {
+        pub(super) fn pump(&mut self, until: Instant) -> bool {
             loop {
                 let now = Instant::now();
                 let ms = until.saturating_duration_since(now).as_millis() as u32;
@@ -2025,12 +2229,12 @@ mod win {
     // ---- the screen feed (live streaming): Desktop Duplication → staging texture → memory ----
 
     /// `rect` clipped to the display `s` shows: left, top, width, height.
-    fn clip_to(s: &Screen, rect: (i32, i32, u32, u32)) -> Option<(RECT, (i32, i32, u32, u32))> {
+    pub(super) fn clip_to(s: &Screen, rect: (i32, i32, u32, u32)) -> Option<(RECT, (i32, i32, u32, u32))> {
         let r = unsafe { s.output.GetDesc() }.ok()?.DesktopCoordinates;
         clip_rect(r, rect).map(|c| (r, c))
     }
 
-    fn clip_rect(r: RECT, (x, y, w, h): (i32, i32, u32, u32)) -> Option<(i32, i32, u32, u32)> {
+    pub(super) fn clip_rect(r: RECT, (x, y, w, h): (i32, i32, u32, u32)) -> Option<(i32, i32, u32, u32)> {
         let (gx, gy) = (x.max(r.left), y.max(r.top));
         let (gr, gb) = ((x + w as i32).min(r.right), (y + h as i32).min(r.bottom));
         (gr - gx >= 2 && gb - gy >= 2).then(|| (gx, gy, (gr - gx) as u32, (gb - gy) as u32))
@@ -2707,7 +2911,7 @@ mod soft {
                     p.swap(0, 2);
                 }
             } else {
-                let mut img = crate::capture::grab_rect(x, y, w, h)?;
+                let mut img = crate::capture::grab_rect(x, y, w, h).map_err(|e| crate::capture::grab_error_message(&e, crate::capture::screen_access()))?;
                 if opts.cursor
                     && let Some(c) = crate::capture::cursor_pos()
                 {
@@ -3031,6 +3235,34 @@ mod tests {
         crate::studio::blit_scaled(&mut want, &img, x as i64, y as i64, w, h, false);
         let worst = out.rgba.iter().zip(want.as_raw()).enumerate().filter(|(i, _)| i % 4 != 3).map(|(_, (a, b))| (*a as i32 - *b as i32).abs()).max().unwrap();
         assert!(worst <= 2, "off by {worst}");
+    }
+
+    #[test]
+    fn the_graphics_chip_conversion_parameters() {
+        // Letterboxing on the video processor matches `fit_into`.
+        assert_eq!(dest_rect((2560, 1600), (2560, 1600)), (0, 0, 2560, 1600));
+        assert_eq!(dest_rect((2560, 1600), (1920, 1080)), (96, 0, 1824, 1080), "bars left and right");
+        assert_eq!(dest_rect((1920, 1080), (1280, 720)), (0, 0, 1280, 720));
+        assert_eq!(dest_rect((1000, 2000), (1280, 720)), (460, 0, 820, 720));
+        // Full-range RGB in, BT.709 studio range out.
+        assert_eq!(colour_space_bits(false, true, NOMINAL_0_255), 0b10_0100);
+        assert_eq!(colour_space_bits(false, true, NOMINAL_16_235), 0b01_0100);
+        assert_eq!(colour_space_bits(true, false, 0), 0b10);
+        assert_eq!(colour_space_bits(false, false, 7), 0b11_0000, "two bits of range only");
+        assert_eq!(nv12_planes(4096, 2160), (0, 4096 * 2160));
+        // The check picture: solid 32 x 32 patches, every centre an even pixel inside its patch.
+        let p = colour_check_picture();
+        assert_eq!(p.len(), (CHECK_W * CHECK_H * 4) as usize);
+        let pts = check_points();
+        assert_eq!(pts.len(), CHECK_COLOURS.len());
+        for (i, &(x, y)) in pts.iter().enumerate() {
+            assert!(x % 2 == 0 && y % 2 == 0);
+            let at = (y * CHECK_W as usize + x) * 4;
+            assert_eq!(&p[at..at + 3], &CHECK_COLOURS[i]);
+            // The whole 2 x 2 block has the patch's colour.
+            let next = ((y + 1) * CHECK_W as usize + x + 1) * 4;
+            assert_eq!(&p[next..next + 3], &CHECK_COLOURS[i]);
+        }
     }
 
     #[test]

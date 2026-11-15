@@ -4,7 +4,9 @@
 //! VideoToolbox hands frames back on its own thread in AVCC form (length-prefixed NAL units, the
 //! parameter sets kept in the format description); they are turned into Annex-B here, with the
 //! parameter sets in front of every keyframe. Real-time mode and no frame reordering keep it
-//! low-latency (no B-frames). Written from Apple's VideoToolbox, Core Media, Core Video and Audio
+//! low-latency (no B-frames). Pictures come either as RGBA (converted into a pixel buffer from
+//! the session's pool) or, zero-copy, as IOSurface-backed pixel buffers from the display stream
+//! (`PixelBuffer`, `video::display`), which go to the session as they are. Written from Apple's VideoToolbox, Core Media, Core Video and Audio
 //! Toolbox reference documentation; the declarations below are Apple's C interfaces.
 
 use super::*;
@@ -124,6 +126,64 @@ unsafe extern "C" {
     fn CVPixelBufferUnlockBaseAddress(pb: CVPixelBufferRef, flags: u64) -> i32;
     fn CVPixelBufferGetBaseAddressOfPlane(pb: CVPixelBufferRef, plane: usize) -> *mut c_void;
     fn CVPixelBufferGetBytesPerRowOfPlane(pb: CVPixelBufferRef, plane: usize) -> usize;
+    fn CVPixelBufferCreateWithIOSurface(a: CFAllocatorRef, surface: *mut c_void, attrs: *const c_void, out: *mut CVPixelBufferRef) -> i32;
+}
+
+#[link(name = "IOSurface", kind = "framework")]
+unsafe extern "C" {
+    fn IOSurfaceIncrementUseCount(s: *mut c_void);
+    fn IOSurfaceDecrementUseCount(s: *mut c_void);
+}
+
+#[link(name = "CoreFoundation", kind = "framework")]
+unsafe extern "C" {
+    fn CFRetain(cf: CFTypeRef) -> CFTypeRef;
+}
+
+/// A CVPixelBuffer around one of the display stream's IOSurfaces (NV12 video range, the
+/// stream's size). The surface's use count is raised while it is held, so the display stream
+/// doesn't draw the next picture into it while the encoder still reads it.
+#[derive(Clone)]
+pub struct PixelBuffer(std::sync::Arc<Held>);
+
+struct Held {
+    pb: CVPixelBufferRef,
+    surface: *mut c_void,
+}
+
+// Core Video buffers and IOSurfaces are reference-counted and may be used from any thread.
+unsafe impl Send for Held {}
+unsafe impl Sync for Held {}
+
+impl PixelBuffer {
+    /// Wrap `surface` (an IOSurfaceRef handed to the display stream's handler).
+    ///
+    /// # Safety
+    /// `surface` must be a valid IOSurfaceRef.
+    pub unsafe fn from_iosurface(surface: *mut c_void) -> Option<PixelBuffer> {
+        if surface.is_null() {
+            return None;
+        }
+        unsafe {
+            let mut pb: CVPixelBufferRef = std::ptr::null_mut();
+            if CVPixelBufferCreateWithIOSurface(std::ptr::null(), surface, std::ptr::null(), &mut pb) != 0 || pb.is_null() {
+                return None;
+            }
+            CFRetain(surface);
+            IOSurfaceIncrementUseCount(surface);
+            Some(PixelBuffer(std::sync::Arc::new(Held { pb, surface })))
+        }
+    }
+}
+
+impl Drop for Held {
+    fn drop(&mut self) {
+        unsafe {
+            CFRelease(self.pb);
+            IOSurfaceDecrementUseCount(self.surface);
+            CFRelease(self.surface);
+        }
+    }
 }
 
 #[link(name = "CoreMedia", kind = "framework")]
@@ -359,6 +419,30 @@ impl Vt {
         }
     }
 
+    /// Hand one pixel buffer to the session (it keeps its own reference while it works).
+    unsafe fn submit(&self, pb: CVPixelBufferRef, pts_us: i64, force_keyframe: bool) -> Result<(), String> {
+        unsafe {
+            let props = force_keyframe.then(|| {
+                let d = Dict::new();
+                d.set(kVTEncodeFrameOptionKey_ForceKeyFrame, bool_ref(true));
+                d
+            });
+            let s = VTCompressionSessionEncodeFrame(
+                self.session,
+                pb,
+                micros(pts_us),
+                micros(self.cfg.frame_us()),
+                props.as_ref().map_or(std::ptr::null(), |d| d.0 as *const c_void),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+            );
+            if s != 0 {
+                return Err(format!("VideoToolbox refused a picture (error {s})"));
+            }
+        }
+        Ok(())
+    }
+
     fn drain(&self) -> Result<Vec<VideoPacket>, String> {
         let got = std::mem::take(&mut *self.shared.out.lock().map_err(|_| "encoder queue poisoned")?);
         got.into_iter().collect()
@@ -389,25 +473,16 @@ impl VideoEncoder for Vt {
             let uv = std::slice::from_raw_parts_mut(CVPixelBufferGetBaseAddressOfPlane(pb, 1) as *mut u8, uvs * h as usize / 2);
             rgba_to_nv12(rgba, w, h, y, ys, uv, uvs);
             CVPixelBufferUnlockBaseAddress(pb, 0);
-            let props = force_keyframe.then(|| {
-                let d = Dict::new();
-                d.set(kVTEncodeFrameOptionKey_ForceKeyFrame, bool_ref(true));
-                d
-            });
-            let s = VTCompressionSessionEncodeFrame(
-                self.session,
-                pb,
-                micros(pts_us),
-                micros(self.cfg.frame_us()),
-                props.as_ref().map_or(std::ptr::null(), |d| d.0 as *const c_void),
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
-            );
+            let r = self.submit(pb, pts_us, force_keyframe);
             CFRelease(pb);
-            if s != 0 {
-                return Err(format!("VideoToolbox refused a picture (error {s})"));
-            }
+            r?;
         }
+        self.drain()
+    }
+
+    fn encode_surface(&mut self, surface: &Surface, pts_us: i64, force_keyframe: bool) -> Result<Vec<VideoPacket>, String> {
+        let Surface::PixelBuffer(p) = surface;
+        unsafe { self.submit(p.0.pb, pts_us, force_keyframe)? };
         self.drain()
     }
 

@@ -5,6 +5,12 @@
 fn main() {
     println!("cargo:rerun-if-changed=assets/snagster.ico");
     println!("cargo:rerun-if-changed=build.rs");
+    // `cfg(zero_copy)`: the systems where screen copies can go to the encoder without passing
+    // through memory (Windows: Direct3D 11 textures; macOS: IOSurface pixel buffers).
+    println!("cargo::rustc-check-cfg=cfg(zero_copy)");
+    if matches!(std::env::var("CARGO_CFG_TARGET_OS").as_deref(), Ok("windows" | "macos")) {
+        println!("cargo::rustc-cfg=zero_copy");
+    }
     // The target, not the computer building it: cross-builds for Windows still get the icon.
     #[cfg(windows)]
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {

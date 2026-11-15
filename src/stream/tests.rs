@@ -236,6 +236,7 @@ impl AudioEncoder for FakeAudio {
 
 pub(crate) fn fakes(gop: u64, pad: usize) -> Encoders {
     Encoders {
+        zero_copy: false,
         video: Arc::new(move |c| {
             assert!(c.low_latency);
             Ok(Box::new(FakeVideo { n: 0, gop, pad }) as Box<dyn VideoEncoder>)
@@ -539,6 +540,7 @@ fn bgra_sources_are_turned_into_rgba() {
     let seen = Arc::new(Mutex::new(Vec::new()));
     let sn = seen.clone();
     let enc = Encoders {
+        zero_copy: false,
         video: Arc::new(move |_| {
             struct Spy(Arc<Mutex<Vec<u8>>>, FakeVideo);
             impl VideoEncoder for Spy {

@@ -156,10 +156,22 @@ impl Live {
             Source::Area(x, y, w, h) => (Some((*x, *y, *w, *h)), None),
             Source::Studio => (None, None),
         };
+        let mut encoders = encoders;
+        // The encoder is already open (zero-copy found it works): no second one to check HEVC.
+        let mut opened = false;
         let (frames, cfg): (FrameSource, StreamConfig) = match rect {
             Some(r) => {
                 let cfg = plan(&o, r.2, r.3);
-                let g = Grabber::start(r, title, cfg.width, cfg.height, cfg.fps, o.cursor);
+                // Zero-copy first where this system has it; the copy through memory otherwise.
+                let feed = crate::video::FeedOptions { fps: cfg.fps, cursor: o.cursor, fit: Some((cfg.width, cfg.height)), every_frame: false };
+                let g = match zero_copy(o.hardware, r, title.clone(), feed, &cfg, &encoders) {
+                    Ok((g, e)) => {
+                        encoders = e;
+                        opened = true;
+                        g
+                    }
+                    Err(_) => Grabber::start(r, title, cfg.width, cfg.height, cfg.fps, o.cursor),
+                };
                 // The first picture, so the stream doesn't start black.
                 let t = Instant::now();
                 while !g.ready() && t.elapsed() < Duration::from_secs(2) {
@@ -186,7 +198,7 @@ impl Live {
         };
         let mut cfg = cfg;
         // A computer that has no HEVC encoder after all streams H.264 rather than not at all.
-        if cfg.codec == Codec::Hevc && super::engine::video_config(&cfg).and_then(|v| (encoders.video)(&v)).is_err() {
+        if !opened && cfg.codec == Codec::Hevc && super::engine::video_config(&cfg).and_then(|v| (encoders.video)(&v)).is_err() {
             cfg.codec = Codec::H264;
             if o.kbps == 0 {
                 cfg.video_kbps = o.target.service.preset().recommended_kbps(cfg.width, cfg.height, cfg.fps, Codec::H264);
@@ -250,6 +262,44 @@ impl Live {
         let copy = copy.map(Recorder::finish);
         Ended { info, stats, copy }
     }
+}
+
+/// Whether this stream's pictures can stay in graphics memory from the screen copy to the
+/// encoder: the formats this system's sources offer (`encode::source_formats`: Windows with
+/// the graphics chip encoding, macOS; never with `SNAGSTER_ZERO_COPY=0`) against what
+/// encoders take, for the system's own encoders only (fakes in the tests take memory).
+pub fn zero_copy_format(hardware: bool, system_encoders: bool) -> Option<crate::encode::FrameFormat> {
+    use crate::encode::{FrameFormat, Os, encoder_formats, negotiate, source_formats, zero_copy_disabled};
+    if !system_encoders {
+        return None;
+    }
+    let offers = source_formats(Os::current(), hardware, zero_copy_disabled());
+    let found = offers.iter().find(|&&f| f != FrameFormat::Rgba).copied()?;
+    negotiate(&offers, &encoder_formats(Some(found))).filter(|&f| f != FrameFormat::Rgba)
+}
+
+/// A zero-copy grabber of `rect` (`feed`: at the stream's size and rate) and encoders opened
+/// on its device, when both start here; else why not (the caller copies through memory).
+#[cfg(zero_copy)]
+pub fn zero_copy(hardware: bool, rect: (i32, i32, u32, u32), title: Option<String>, feed: crate::video::FeedOptions, cfg: &StreamConfig, encoders: &Encoders) -> Result<(Grabber, Encoders), String> {
+    let want = zero_copy_format(hardware, encoders.zero_copy).ok_or("no zero-copy here")?;
+    let g = Grabber::start_surfaces(rect, title, feed)?;
+    zero_copy_encoders(g, want, cfg, encoders)
+}
+
+/// Encoders on `g`'s device for `cfg`, the first one opened now.
+#[cfg(zero_copy)]
+pub fn zero_copy_encoders(g: Grabber, want: crate::encode::FrameFormat, cfg: &StreamConfig, encoders: &Encoders) -> Result<(Grabber, Encoders), String> {
+    let dev = g.device().filter(|d| d.format() == want).ok_or("the grabber's pictures aren't what the encoder takes")?;
+    let v = super::engine::video_config(cfg)?;
+    let enc = crate::encode::open_video_for_surfaces(&v, &dev)?;
+    Ok((g, encoders.with_surfaces(dev, enc, v)))
+}
+
+#[cfg(not(zero_copy))]
+pub fn zero_copy(hardware: bool, _rect: (i32, i32, u32, u32), _title: Option<String>, _feed: crate::video::FeedOptions, _cfg: &StreamConfig, encoders: &Encoders) -> Result<(Grabber, Encoders), String> {
+    let _ = zero_copy_format(hardware, encoders.zero_copy);
+    Err("no zero-copy on this system".into())
 }
 
 /// Where a stream's sound comes from: the chosen capture, else a silent track. Services expect
@@ -474,6 +524,24 @@ mod tests {
         o.hevc = false;
         assert_eq!(plan(&o, 1280, 720).codec, Codec::H264);
         assert_eq!(hevc_encoder_here(true), !cfg!(all(unix, not(target_os = "macos"))), "Windows and macOS have HEVC encoders, Linux not yet");
+    }
+
+    #[test]
+    fn zero_copy_only_with_the_systems_encoders_where_the_system_has_it() {
+        use crate::encode::FrameFormat;
+        assert_eq!(zero_copy_format(true, false), None, "fake encoders take memory");
+        if crate::encode::zero_copy_disabled() {
+            return;
+        }
+        let want = if cfg!(windows) {
+            Some(FrameFormat::D3d11Nv12)
+        } else if cfg!(target_os = "macos") {
+            Some(FrameFormat::PixelBuffer)
+        } else {
+            None
+        };
+        assert_eq!(zero_copy_format(true, true), want);
+        assert_eq!(zero_copy_format(false, true), if cfg!(windows) { None } else { want }, "Windows: only when the graphics chip encodes");
     }
 
     #[test]

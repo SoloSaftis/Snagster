@@ -4,7 +4,10 @@
 //! Hardware transforms (Intel Quick Sync, NVIDIA NVENC, AMD AMF) are asynchronous: they say when
 //! they want a picture (`METransformNeedInput`) and when a frame is ready (`METransformHaveOutput`)
 //! through their event queue. Microsoft's software encoders are synchronous: put a picture in,
-//! take frames out until they need more. Pictures go in as NV12 in system memory.
+//! take frames out until they need more. Pictures go in as NV12 in system memory, or, for the
+//! zero-copy path (`open_video_d3d`), as NV12 Direct3D 11 textures: the transform is given the
+//! capture's device through a DXGI device manager (`MFT_MESSAGE_SET_D3D_MANAGER`, only for
+//! transforms that say `MF_SA_D3D11_AWARE`) and each picture arrives as a DXGI surface buffer.
 //!
 //! Written from the Media Foundation documentation ("Basic MFT Processing Model", "Asynchronous
 //! MFTs", "H.264 Video Encoder", "AAC Encoder", "Codec API properties").
@@ -122,7 +125,32 @@ pub fn list() -> Vec<(Codec, EncoderName)> {
     v
 }
 
+/// A Direct3D 11 device shared by a zero-copy screen copy and the encoder.
+#[derive(Clone)]
+pub struct D3dDevice(pub windows::Win32::Graphics::Direct3D11::ID3D11Device);
+
+/// An NV12 texture on that device, one picture at the stream's size.
+#[derive(Clone)]
+pub struct D3dTexture(pub windows::Win32::Graphics::Direct3D11::ID3D11Texture2D);
+
+// Direct3D 11 devices are free-threaded, and Snagster's are made multithread-protected
+// (`video::win::device`); a texture is written by the copy before it is handed on and only read
+// after.
+unsafe impl Send for D3dDevice {}
+unsafe impl Sync for D3dDevice {}
+unsafe impl Send for D3dTexture {}
+unsafe impl Sync for D3dTexture {}
+
 pub fn open_video(cfg: &VideoConfig, hardware: bool) -> Result<Box<dyn VideoEncoder>, String> {
+    open_on(cfg, hardware, None)
+}
+
+/// A graphics-chip encoder that takes NV12 textures of `dev` (zero-copy).
+pub fn open_video_d3d(cfg: &VideoConfig, dev: &D3dDevice) -> Result<Box<dyn VideoEncoder>, String> {
+    open_on(cfg, true, Some(dev))
+}
+
+fn open_on(cfg: &VideoConfig, hardware: bool, d3d: Option<&D3dDevice>) -> Result<Box<dyn VideoEncoder>, String> {
     let mf = Mf::start()?;
     let list = video_candidates(cfg.codec, hardware);
     if list.is_empty() {
@@ -131,7 +159,7 @@ pub fn open_video(cfg: &VideoConfig, hardware: bool) -> Result<Box<dyn VideoEnco
     let mut tried = Vec::new();
     for c in list {
         let name = c.name.clone();
-        match MfVideo::open(c, cfg) {
+        match MfVideo::open(c, cfg, d3d) {
             Ok(e) => {
                 drop(mf);
                 return Ok(Box::new(e));
@@ -265,6 +293,8 @@ struct MfVideo {
     cfg: VideoConfig,
     name: String,
     hardware: bool,
+    /// The zero-copy path: the device manager the transform was given (kept alive with it).
+    manager: Option<IMFDXGIDeviceManager>,
     _mf: Mf,
 }
 
@@ -273,7 +303,7 @@ struct MfVideo {
 unsafe impl Send for MfVideo {}
 
 impl MfVideo {
-    fn open(c: Candidate, cfg: &VideoConfig) -> Result<MfVideo, String> {
+    fn open(c: Candidate, cfg: &VideoConfig, d3d: Option<&D3dDevice>) -> Result<MfVideo, String> {
         let mf = Mf::start()?;
         unsafe {
             let t: IMFTransform = c.activate.ActivateObject().map_err(err)?;
@@ -287,6 +317,23 @@ impl MfVideo {
                     let _ = a.SetUINT32(&MF_LOW_LATENCY, 1);
                 }
             }
+            // Zero-copy: give the transform the capture's device before the media types are
+            // set, so it takes its pictures as textures of that device.
+            let manager = match d3d {
+                Some(dev) => {
+                    let aware = attrs.as_ref().is_some_and(|a| a.GetUINT32(&MF_SA_D3D11_AWARE).unwrap_or(0) != 0);
+                    if !aware {
+                        return Err("this encoder doesn't take Direct3D 11 textures".into());
+                    }
+                    let (mut token, mut m) = (0u32, None);
+                    MFCreateDXGIDeviceManager(&mut token, &mut m).map_err(err)?;
+                    let m: IMFDXGIDeviceManager = m.ok_or("no DXGI device manager")?;
+                    m.ResetDevice(&dev.0, token).map_err(err)?;
+                    t.ProcessMessage(MFT_MESSAGE_SET_D3D_MANAGER, m.as_raw() as usize).map_err(|e| format!("the encoder won't use the screen copy's device: {}", err(e)))?;
+                    Some(m)
+                }
+                None => None,
+            };
             let api: Option<ICodecAPI> = t.cast().ok();
             let settings = |api: &Option<ICodecAPI>| {
                 let mode = if cfg.low_latency { eAVEncCommonRateControlMode_CBR } else { eAVEncCommonRateControlMode_UnconstrainedVBR };
@@ -348,7 +395,7 @@ impl MfVideo {
             let events = if is_async { Some(t.cast::<IMFMediaEventGenerator>().map_err(err)?) } else { None };
             start_streaming(&t).map_err(err)?;
             let alloc = output_alloc(&t, w * h).map_err(err)?;
-            Ok(MfVideo { t, events, api, need_input: 0, alloc, cfg: cfg.clone(), name: c.name, hardware: c.hardware, _mf: mf })
+            Ok(MfVideo { t, events, api, need_input: 0, alloc, cfg: cfg.clone(), name: c.name, hardware: c.hardware, manager, _mf: mf })
         }
     }
 
@@ -434,10 +481,23 @@ fn colours(t: &IMFMediaType) {
     }
 }
 
-impl VideoEncoder for MfVideo {
-    fn encode(&mut self, rgba: &[u8], pts_us: i64, force_keyframe: bool) -> Result<Vec<VideoPacket>, String> {
-        com_here();
-        let sample = nv12_sample(rgba, self.cfg.width, self.cfg.height, pts_us * 10, self.cfg.frame_us() * 10).map_err(err)?;
+/// A sample holding one NV12 texture as a DXGI surface buffer (no copy).
+fn texture_sample(tex: &windows::Win32::Graphics::Direct3D11::ID3D11Texture2D, time_100ns: i64, dur_100ns: i64) -> R<IMFSample> {
+    unsafe {
+        let buf = MFCreateDXGISurfaceBuffer(&windows::Win32::Graphics::Direct3D11::ID3D11Texture2D::IID, tex, 0, false)?;
+        let len = buf.cast::<IMF2DBuffer>()?.GetContiguousLength()?;
+        buf.SetCurrentLength(len)?;
+        let s = MFCreateSample()?;
+        s.AddBuffer(&buf)?;
+        s.SetSampleTime(time_100ns)?;
+        s.SetSampleDuration(dur_100ns)?;
+        Ok(s)
+    }
+}
+
+impl MfVideo {
+    /// Hand one picture to the transform and take what comes out.
+    fn submit(&mut self, sample: IMFSample, force_keyframe: bool) -> Result<Vec<VideoPacket>, String> {
         if force_keyframe {
             set_codec(&self.api, &CODECAPI_AVEncVideoForceKeyFrame, VARIANT::from(1u32));
         }
@@ -457,6 +517,24 @@ impl VideoEncoder for MfVideo {
             while self.take(&mut out).map_err(err)? {}
         }
         Ok(out)
+    }
+}
+
+impl VideoEncoder for MfVideo {
+    fn encode(&mut self, rgba: &[u8], pts_us: i64, force_keyframe: bool) -> Result<Vec<VideoPacket>, String> {
+        com_here();
+        let sample = nv12_sample(rgba, self.cfg.width, self.cfg.height, pts_us * 10, self.cfg.frame_us() * 10).map_err(err)?;
+        self.submit(sample, force_keyframe)
+    }
+
+    fn encode_surface(&mut self, surface: &Surface, pts_us: i64, force_keyframe: bool) -> Result<Vec<VideoPacket>, String> {
+        com_here();
+        if self.manager.is_none() {
+            return Err("this encoder was opened for pictures in memory".into());
+        }
+        let Surface::D3d11(t) = surface;
+        let sample = texture_sample(&t.0, pts_us * 10, self.cfg.frame_us() * 10).map_err(err)?;
+        self.submit(sample, force_keyframe)
     }
 
     fn finish(&mut self) -> Result<Vec<VideoPacket>, String> {
