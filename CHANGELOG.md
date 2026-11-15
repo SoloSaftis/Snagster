@@ -14,6 +14,13 @@ New:
   first time each run, and Stop is instant. It reconnects by itself when the connection drops.
   Optionally saves a copy of exactly what was streamed (FLV) in the recordings folder. Sound is
   streamed on Windows only for now. Not yet tried against the real services.
+- **4K and 120 fps streams**: YouTube up to 3840 × 2160 at 60 fps (with YouTube's recommended
+  bitrates, and HEVC by itself at 4K where the computer can encode it); custom servers up to 4K
+  at 60 fps or 1440p at 120 fps. Settings > Streaming only offers what the service takes.
+- **Streaming uses far less processor time** on Windows with a graphics-chip encoder and on
+  macOS: the screen's pictures stay on the graphics chip from the copy to the encoder
+  (about 4 % of one core instead of 114 % at 1080p30 on an Intel laptop, 18 % instead of 212 %
+  at 1080p120). Other computers copy as before.
 - **The stream key stays private**: encrypted for your Windows account, in the macOS Keychain,
   or in a file only you can read on Linux. It is never in the settings file and never shown in
   messages.

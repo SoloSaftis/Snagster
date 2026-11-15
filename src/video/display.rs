@@ -242,9 +242,17 @@ pub(super) fn start(rect: (i32, i32, u32, u32), o: FeedOptions) -> Result<Surfac
         let ticker = o.every_frame.then(|| {
             let (sh, every) = (sh.clone(), Duration::from_nanos(1_000_000_000 / o.fps.clamp(1, 240) as u64));
             std::thread::spawn(move || {
+                // Fixed deadlines and the pacer: the CI Mac's sleeps overrun by tens of ms.
+                timely_thread();
+                let mut pacer = Pacer::calibrated();
+                let mut next = Instant::now();
                 let mut last = sh.count.load(Ordering::Relaxed);
                 while !sh.stop.load(Ordering::Relaxed) {
-                    std::thread::sleep(every);
+                    next += every;
+                    if next < Instant::now() {
+                        next = Instant::now();
+                    }
+                    pacer.wait_until(next);
                     let now = sh.count.load(Ordering::Relaxed);
                     if now == last
                         && let Some(s) = sh.latest.lock().ok().and_then(|l| l.clone())
