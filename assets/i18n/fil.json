@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Hanggang {n} tunog lang ang isang eksena.",
   "Sound of this scene": "Tunog ng eksenang ito",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Walang tunog sa eksenang ito: idagdag ang tunog ng computer, isang mikropono o isang sound file.",
-  "Another scene already has {n} sounds: make room there first.": "May {n} tunog na ang isa pang eksena: magbakante muna roon."
+  "Another scene already has {n} sounds: make room there first.": "May {n} tunog na ang isa pang eksena: magbakante muna roon.",
+  "Earlier": "Nakaraan",
+  "Play this video": "I-play ang video na ito",
+  "Open this picture": "Buksan ang larawang ito",
+  "Pick a window from the list, or click one on the screen": "Pumili ng window mula sa listahan, o mag-click ng isa sa screen",
+  "Click a window on the screen": "Mag-click ng window sa screen",
+  "Allow more than one Snagster at a time": "Payagan ang higit sa isang Snagster nang sabay-sabay",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Naka-off: ang muling pagbubukas ng Snagster ay maglalabas sa harap ng tumatakbo na (at bubuksan doon ang file na pinili mo).",
+  "New image": "Bagong larawan",
+  "Resize image": "Baguhin ang laki ng larawan",
+  "Canvas size and color": "Laki at kulay ng canvas",
+  "Export pictures": "I-export ang mga larawan",
+  "What's new in Snagster": "Ano ang bago sa Snagster"
  }
 }

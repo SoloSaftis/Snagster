@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Bidh {n} fuaimean aig sealladh air a' char as motha.",
   "Sound of this scene": "Fuaim an t-seallaidh seo",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Chan eil fuaim san t-sealladh seo: cuir fuaim a' choimpiutair, micreofon no faidhle fuaime ris.",
-  "Another scene already has {n} sounds: make room there first.": "Tha {n} fuaimean aig sealladh eile mu thràth: dèan àite an sin an toiseach."
+  "Another scene already has {n} sounds: make room there first.": "Tha {n} fuaimean aig sealladh eile mu thràth: dèan àite an sin an toiseach.",
+  "Earlier": "Na bu tràithe",
+  "Play this video": "Cluich am video seo",
+  "Open this picture": "Fosgail an dealbh seo",
+  "Pick a window from the list, or click one on the screen": "Tagh uinneag on liosta no briog air fear air an sgrìn",
+  "Click a window on the screen": "Briog air uinneag air an sgrìn",
+  "Allow more than one Snagster at a time": "Leig barrachd air aon Snagster aig an aon àm",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Dheth: ma dh'fhosglas tu Snagster a-rithist, thèid am fear a tha a' ruith a thoirt gu aghaidh (agus thèid am faidhle a thagh thu fhosgladh an sin).",
+  "New image": "Dealbh ùr",
+  "Resize image": "Atharraich meud an deilbh",
+  "Canvas size and color": "Meud is dath a' chanabhais",
+  "Export pictures": "Às-phortaich dealbhan",
+  "What's new in Snagster": "Dè tha ùr ann an Snagster"
  }
 }

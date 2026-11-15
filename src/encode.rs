@@ -466,7 +466,7 @@ fn open_system_named(cfg: &VideoConfig, name: &str, here: &[(Codec, EncoderName)
         return if e.name().name == name { Ok(e) } else { Err(format!("macOS gave {} instead", e.name().name)) };
     }
     #[cfg(target_os = "linux")]
-    return if nvenc::list().iter().any(|(_, n)| n.name == name) { nvenc::open_video(cfg) } else { linux::open_video(cfg) };
+    return if nvenc::list().iter().any(|(_, n)| n.name == name) { nvenc::open_video(cfg) } else { linux::open_named(cfg, name) };
     #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
     Err("no system encoders here".into())
 }

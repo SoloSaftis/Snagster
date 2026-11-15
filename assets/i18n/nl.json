@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Een scène heeft hoogstens {n} geluiden.",
   "Sound of this scene": "Geluid van deze scène",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Geen geluid in deze scène: voeg het computergeluid, een microfoon of een geluidsbestand toe.",
-  "Another scene already has {n} sounds: make room there first.": "Een andere scène heeft al {n} geluiden: maak daar eerst ruimte."
+  "Another scene already has {n} sounds: make room there first.": "Een andere scène heeft al {n} geluiden: maak daar eerst ruimte.",
+  "Earlier": "Eerder",
+  "Play this video": "Deze video afspelen",
+  "Open this picture": "Deze afbeelding openen",
+  "Pick a window from the list, or click one on the screen": "Kies een venster uit de lijst of klik er een aan op het scherm",
+  "Click a window on the screen": "Klik op een venster op het scherm",
+  "Allow more than one Snagster at a time": "Meer dan één Snagster tegelijk toestaan",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Uit: als je Snagster opnieuw opent, komt de actieve Snagster naar voren (en wordt het gekozen bestand daar geopend).",
+  "New image": "Nieuwe afbeelding",
+  "Resize image": "Afbeelding vergroten/verkleinen",
+  "Canvas size and color": "Canvasgrootte en -kleur",
+  "Export pictures": "Afbeeldingen exporteren",
+  "What's new in Snagster": "Nieuw in Snagster"
  }
 }

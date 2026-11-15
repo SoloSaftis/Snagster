@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "એક દૃશ્યમાં વધુમાં વધુ {n} અવાજ હોય છે.",
   "Sound of this scene": "આ દૃશ્યનો અવાજ",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "આ દૃશ્યમાં કોઈ અવાજ નથી: કમ્પ્યુટરનો અવાજ, માઇક્રોફોન અથવા સાઉન્ડ ફાઇલ ઉમેરો.",
-  "Another scene already has {n} sounds: make room there first.": "બીજા દૃશ્યમાં પહેલેથી {n} અવાજ છે: પહેલાં ત્યાં જગ્યા કરો."
+  "Another scene already has {n} sounds: make room there first.": "બીજા દૃશ્યમાં પહેલેથી {n} અવાજ છે: પહેલાં ત્યાં જગ્યા કરો.",
+  "Earlier": "અગાઉનું",
+  "Play this video": "આ વિડિઓ ચલાવો",
+  "Open this picture": "આ ચિત્ર ખોલો",
+  "Pick a window from the list, or click one on the screen": "સૂચિમાંથી વિન્ડો પસંદ કરો, અથવા સ્ક્રીન પર કોઈ એક પર ક્લિક કરો",
+  "Click a window on the screen": "સ્ક્રીન પર વિન્ડો પર ક્લિક કરો",
+  "Allow more than one Snagster at a time": "એક સમયે એક કરતાં વધુ Snagster ને મંજૂરી આપો",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "બંધ: Snagster ફરીથી ખોલવાથી ચાલી રહેલું Snagster આગળ આવે છે (અને તમે પસંદ કરેલી ફાઇલ ત્યાં ખુલે છે).",
+  "New image": "નવું ચિત્ર",
+  "Resize image": "ચિત્રનું કદ બદલો",
+  "Canvas size and color": "કેનવાસનું કદ અને રંગ",
+  "Export pictures": "ચિત્રો નિકાસ કરો",
+  "What's new in Snagster": "Snagster માં નવું શું છે"
  }
 }

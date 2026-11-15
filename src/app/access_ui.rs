@@ -81,12 +81,8 @@ impl SnagApp {
     pub(crate) fn screen_access_window(&mut self, ctx: &egui::Context) {
         let Some(access) = self.x.access.open else { return };
         let (mut settings, mut close) = (false, false);
-        egui::Window::new(t("Screen Recording permission"))
-            .id(egui::Id::unique("screen-access"))
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-            .show(ctx, |ui| {
+        let mut open = true;
+        crate::windows::own_window(ctx, crate::windows::Win { key: "screen-access", title: t("Screen Recording permission"), size: vec2(420.0, 200.0), resizable: false }, &mut open, |ui| {
                 ui.set_max_width(380.0);
                 ui.label(crate::capture::grab_error_message("", access));
                 ui.add_space(6.0);
@@ -105,7 +101,7 @@ impl SnagApp {
             self.open_screen_settings();
             close = true;
         }
-        if close || ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+        if close || !open || ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
             self.x.access.open = None;
         }
     }

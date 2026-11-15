@@ -5,6 +5,7 @@
 mod app;
 mod capture;
 mod hwreport;
+mod instance;
 mod wav;
 mod doc;
 mod effects;
@@ -123,6 +124,7 @@ fn main() -> eframe::Result {
     let mut args = all.into_iter();
     let mut screenshot: Option<PathBuf> = None;
     let mut open: Option<PathBuf> = None;
+    let mut new_window = false;
     while let Some(a) = args.next() {
         if a == "--ui-test" {
             app::UI_TEST.store(true, std::sync::atomic::Ordering::Relaxed);
@@ -380,9 +382,17 @@ fn main() -> eframe::Result {
                 eprintln!("couldn't save {out}: {e}");
             }
             return Ok(());
+        } else if a == "--new-window" {
+            // Another Snagster even when one is running.
+            new_window = true;
         } else if !a.starts_with("--") {
             open = Some(PathBuf::from(a));
         }
+    }
+    // One Snagster at a time: a running one comes forward (and opens the file) instead.
+    let quiet_run = screenshot.is_some() || app::UI_TEST.load(std::sync::atomic::Ordering::Relaxed);
+    if !quiet_run && !new_window && !s0.allow_many && instance::claim(open.as_deref()) == instance::Claim::Handed {
+        return Ok(());
     }
 
     let mut viewport = egui::ViewportBuilder::default()
@@ -403,7 +413,7 @@ fn main() -> eframe::Result {
     }
 
     #[allow(unused_mut)]
-    let mut options = eframe::NativeOptions { viewport, ..Default::default() };
+    let mut options = eframe::NativeOptions { viewport, centered: true, ..Default::default() };
     #[cfg(target_os = "macos")]
     if screenshot.is_some() {
         options.event_loop_builder = Some(Box::new(|b| {

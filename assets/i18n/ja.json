@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "1 つのシーンに入れられる音声は最大 {n} 個です。",
   "Sound of this scene": "このシーンの音声",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "このシーンには音声がありません。コンピューターの音声、マイク、または音声ファイルを追加してください。",
-  "Another scene already has {n} sounds: make room there first.": "別のシーンにすでに {n} 個の音声があります。先にそちらで空きを作ってください。"
+  "Another scene already has {n} sounds: make room there first.": "別のシーンにすでに {n} 個の音声があります。先にそちらで空きを作ってください。",
+  "Earlier": "以前",
+  "Play this video": "この動画を再生",
+  "Open this picture": "この画像を開く",
+  "Pick a window from the list, or click one on the screen": "一覧からウィンドウを選ぶか、画面上のウィンドウをクリックします",
+  "Click a window on the screen": "画面上のウィンドウをクリック",
+  "Allow more than one Snagster at a time": "複数の Snagster の同時起動を許可する",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "オフ: Snagster をもう一度開くと、実行中の Snagster が前面に表示されます (選択したファイルもそこで開きます)。",
+  "New image": "新しい画像",
+  "Resize image": "画像のサイズ変更",
+  "Canvas size and color": "キャンバスのサイズと色",
+  "Export pictures": "画像を書き出す",
+  "What's new in Snagster": "Snagster の新機能"
  }
 }

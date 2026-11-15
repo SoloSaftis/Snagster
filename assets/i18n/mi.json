@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Ko te nui rawa o ngā oro i tētahi whakaaturanga ko {n}.",
   "Sound of this scene": "Te oro o tēnei whakaaturanga",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Kāore he oro i tēnei whakaaturanga: tāpirihia te oro rorohiko, he hopūoro, he kōnae oro rānei.",
-  "Another scene already has {n} sounds: make room there first.": "Kua {n} kē ngā oro i tētahi atu whakaaturanga: me whakawātea i reira i te tuatahi."
+  "Another scene already has {n} sounds: make room there first.": "Kua {n} kē ngā oro i tētahi atu whakaaturanga: me whakawātea i reira i te tuatahi.",
+  "Earlier": "I mua",
+  "Play this video": "Whakatangihia tēnei ataata",
+  "Open this picture": "Whakatuwheratia tēnei pikitia",
+  "Pick a window from the list, or click one on the screen": "Tīpakohia he matapihi i te rārangi, pāwhiria rānei tētahi i te mata",
+  "Click a window on the screen": "Pāwhiria tētahi matapihi i te mata",
+  "Allow more than one Snagster at a time": "Whakaaetia ētahi Snagster neke atu i te kotahi i te wā kotahi",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Weto: ina whakatuwheratia anō a Snagster, ka puta whakamua te mea e rere ana (ka tuwhera hoki te kōnae i tīpakohia e koe ki reira).",
+  "New image": "Whakaahua hou",
+  "Resize image": "Whakarerekē rahi whakaahua",
+  "Canvas size and color": "Te rahi me te tae o te kānawhi",
+  "Export pictures": "Kaweake pikitia",
+  "What's new in Snagster": "He aha te hou i Snagster"
  }
 }

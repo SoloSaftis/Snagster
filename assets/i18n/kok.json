@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "एका दृश्यांत चडांत चड {n} आवाज आसतात.",
   "Sound of this scene": "ह्या दृश्याचो आवाज",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "ह्या दृश्यांत आवाज ना: कॉम्प्युटराचो आवाज, एक मायक्रोफोन वा एक आवाज फायल जोडात.",
-  "Another scene already has {n} sounds: make room there first.": "दुसऱ्या दृश्यांत आदींच {n} आवाज आसात: पयलीं थंय जागो करात."
+  "Another scene already has {n} sounds: make room there first.": "दुसऱ्या दृश्यांत आदींच {n} आवाज आसात: पयलीं थंय जागो करात.",
+  "Earlier": "आदीं",
+  "Play this video": "हो व्हिडिओ चलयात",
+  "Open this picture": "ही प्रतिमा उगडात",
+  "Pick a window from the list, or click one on the screen": "यादींतल्यान विंडो वेंचात वा स्क्रीनार विंडोचेर क्लिक करात",
+  "Click a window on the screen": "स्क्रीनार विंडोचेर क्लिक करात",
+  "Allow more than one Snagster at a time": "एकाच वेळार एकापेक्षा चड Snagster चालू करपाक दिवचें",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "बंद: Snagster परत उगडलो जल्यार चालू आशिल्लो Snagster मुखार येता (आनी तुमी वेंचिल्ली फायल थंय उगडटा).",
+  "New image": "नवी प्रतिमा",
+  "Resize image": "प्रतिमेचो आकार बदलात",
+  "Canvas size and color": "कॅनव्हासाचो आकार आनी रंग",
+  "Export pictures": "प्रतिमा निर्यात करात",
+  "What's new in Snagster": "Snagster हांतूं नवें कितें"
  }
 }

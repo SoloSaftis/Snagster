@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Бер сәхнәдә иң күбе {n} тавыш була.",
   "Sound of this scene": "Бу сәхнәнең тавышы",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Бу сәхнәдә тавыш юк: компьютер тавышын, микрофонны яки тавыш файлын өстәгез.",
-  "Another scene already has {n} sounds: make room there first.": "Башка сәхнәдә инде {n} тавыш бар: башта анда урын бушатыгыз."
+  "Another scene already has {n} sounds: make room there first.": "Башка сәхнәдә инде {n} тавыш бар: башта анда урын бушатыгыз.",
+  "Earlier": "Элегрәкләр",
+  "Play this video": "Бу видеоны уйнату",
+  "Open this picture": "Бу рәсемне ачу",
+  "Pick a window from the list, or click one on the screen": "Исемлектән тәрәзә сайлагыз яки экранда берсенә басыгыз",
+  "Click a window on the screen": "Экрандагы тәрәзәгә басыгыз",
+  "Allow more than one Snagster at a time": "Бер үк вакытта берничә Snagster эшләтергә рөхсәт итү",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Сүндерелгән: Snagster'ны кабат ачканда эшләп торганы алгы планга чыгарыла (һәм сез сайлаган файл шунда ачыла).",
+  "New image": "Яңа рәсем",
+  "Resize image": "Рәсем зурлыгын үзгәртү",
+  "Canvas size and color": "Полотно зурлыгы һәм төсе",
+  "Export pictures": "Рәсемнәрне экспортлау",
+  "What's new in Snagster": "Snagster'да нәрсә яңа"
  }
 }

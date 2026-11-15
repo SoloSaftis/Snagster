@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "หนึ่งฉากมีเสียงได้มากที่สุด {n} รายการ",
   "Sound of this scene": "เสียงของฉากนี้",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "ไม่มีเสียงในฉากนี้: เพิ่มเสียงของคอมพิวเตอร์ ไมโครโฟน หรือไฟล์เสียง",
-  "Another scene already has {n} sounds: make room there first.": "อีกฉากหนึ่งมีเสียงอยู่แล้ว {n} รายการ: ให้เว้นที่ในฉากนั้นก่อน"
+  "Another scene already has {n} sounds: make room there first.": "อีกฉากหนึ่งมีเสียงอยู่แล้ว {n} รายการ: ให้เว้นที่ในฉากนั้นก่อน",
+  "Earlier": "ก่อนหน้านี้",
+  "Play this video": "เล่นวิดีโอนี้",
+  "Open this picture": "เปิดรูปภาพนี้",
+  "Pick a window from the list, or click one on the screen": "เลือกหน้าต่างจากรายการ หรือคลิกหน้าต่างบนหน้าจอ",
+  "Click a window on the screen": "คลิกหน้าต่างบนหน้าจอ",
+  "Allow more than one Snagster at a time": "อนุญาตให้เปิด Snagster มากกว่าหนึ่งหน้าต่างพร้อมกัน",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "ปิด: การเปิด Snagster อีกครั้งจะนำหน้าต่างที่กำลังทำงานอยู่มาไว้ด้านหน้า (และเปิดไฟล์ที่คุณเลือกในหน้าต่างนั้น)",
+  "New image": "รูปภาพใหม่",
+  "Resize image": "ปรับขนาดรูปภาพ",
+  "Canvas size and color": "ขนาดและสีของผืนผ้าใบ",
+  "Export pictures": "ส่งออกรูปภาพ",
+  "What's new in Snagster": "มีอะไรใหม่ใน Snagster"
  }
 }

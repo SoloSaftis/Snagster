@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Бір сахнада ең көбі {n} дыбыс болады.",
   "Sound of this scene": "Осы сахнаның дыбысы",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Бұл сахнада дыбыс жоқ: компьютер дыбысын, микрофонды немесе дыбыс файлын қосыңыз.",
-  "Another scene already has {n} sounds: make room there first.": "Басқа сахнада {n} дыбыс бар: алдымен сол жерде орын босатыңыз."
+  "Another scene already has {n} sounds: make room there first.": "Басқа сахнада {n} дыбыс бар: алдымен сол жерде орын босатыңыз.",
+  "Earlier": "Бұрынғылар",
+  "Play this video": "Бұл бейнені ойнату",
+  "Open this picture": "Бұл суретті ашу",
+  "Pick a window from the list, or click one on the screen": "Тізімнен терезені таңдаңыз немесе экрандағы терезені басыңыз",
+  "Click a window on the screen": "Экрандағы терезені басыңыз",
+  "Allow more than one Snagster at a time": "Бір мезгілде бірнеше Snagster іске қосуға рұқсат ету",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Өшірулі: Snagster қайта ашылғанда, жұмыс істеп тұрғаны алдыңғы қатарға шығады (және таңдаған файл сонда ашылады).",
+  "New image": "Жаңа сурет",
+  "Resize image": "Сурет өлшемін өзгерту",
+  "Canvas size and color": "Кенеп өлшемі мен түсі",
+  "Export pictures": "Суреттерді экспорттау",
+  "What's new in Snagster": "Snagster-дегі жаңалықтар"
  }
 }

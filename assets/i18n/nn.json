@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Ein scene har høgst {n} lydar.",
   "Sound of this scene": "Lyd i denne scenen",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Ingen lyd i denne scenen: legg til datalyden, ein mikrofon eller ei lydfil.",
-  "Another scene already has {n} sounds: make room there first.": "Ein annan scene har alt {n} lydar: gjer plass der først."
+  "Another scene already has {n} sounds: make room there first.": "Ein annan scene har alt {n} lydar: gjer plass der først.",
+  "Earlier": "Tidlegare",
+  "Play this video": "Spel av denne videoen",
+  "Open this picture": "Opne dette biletet",
+  "Pick a window from the list, or click one on the screen": "Vel eit vindauge frå lista, eller klikk på eit på skjermen",
+  "Click a window on the screen": "Klikk på eit vindauge på skjermen",
+  "Allow more than one Snagster at a time": "Tillat fleire Snagster samtidig",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Av: Når du opnar Snagster éin gong til, kjem den køyrande Snagster fram (og fila du valde blir opna der).",
+  "New image": "Nytt bilete",
+  "Resize image": "Endre storleik på biletet",
+  "Canvas size and color": "Storleik og farge på lerretet",
+  "Export pictures": "Eksporter bilete",
+  "What's new in Snagster": "Kva er nytt i Snagster"
  }
 }

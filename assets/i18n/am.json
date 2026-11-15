@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "አንድ ትዕይንት ቢበዛ {n} ድምፆች አሉት።",
   "Sound of this scene": "የዚህ ትዕይንት ድምፅ",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "በዚህ ትዕይንት ውስጥ ድምፅ የለም፦ የኮምፒውተር ድምፅ፣ ማይክሮፎን ወይም የድምፅ ፋይል ያክሉ።",
-  "Another scene already has {n} sounds: make room there first.": "ሌላ ትዕይንት አስቀድሞ {n} ድምፆች አሉት፦ መጀመሪያ እዚያ ቦታ ያስለቅቁ።"
+  "Another scene already has {n} sounds: make room there first.": "ሌላ ትዕይንት አስቀድሞ {n} ድምፆች አሉት፦ መጀመሪያ እዚያ ቦታ ያስለቅቁ።",
+  "Earlier": "ቀደም ያሉ",
+  "Play this video": "ይህን ቪዲዮ አጫውት",
+  "Open this picture": "ይህን ሥዕል ክፈት",
+  "Pick a window from the list, or click one on the screen": "ከዝርዝሩ መስኮት ይምረጡ ወይም በማያ ገጹ ላይ አንዱን ጠቅ ያድርጉ",
+  "Click a window on the screen": "በማያ ገጹ ላይ መስኮት ጠቅ ያድርጉ",
+  "Allow more than one Snagster at a time": "ከአንድ በላይ Snagster በአንድ ጊዜ ፍቀድ",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "ጠፍቷል፡ Snagsterን እንደገና መክፈት እየሰራ ያለውን ወደ ፊት ያመጣል (እና የመረጡትን ፋይል እዚያ ይከፍታል)።",
+  "New image": "አዲስ ምስል",
+  "Resize image": "የምስል መጠን ቀይር",
+  "Canvas size and color": "የሸራ መጠን እና ቀለም",
+  "Export pictures": "ሥዕሎችን ላክ",
+  "What's new in Snagster": "በSnagster ውስጥ ምን አዲስ አለ"
  }
 }

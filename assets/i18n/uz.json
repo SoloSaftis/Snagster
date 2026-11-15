@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Bir sahnada ko‘pi bilan {n} ta ovoz bo‘ladi.",
   "Sound of this scene": "Shu sahnaning ovozi",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Bu sahnada ovoz yo‘q: kompyuter ovozi, mikrofon yoki ovoz faylini qo‘shing.",
-  "Another scene already has {n} sounds: make room there first.": "Boshqa sahnada allaqachon {n} ta ovoz bor: avval u yerda joy bo‘shating."
+  "Another scene already has {n} sounds: make room there first.": "Boshqa sahnada allaqachon {n} ta ovoz bor: avval u yerda joy bo‘shating.",
+  "Earlier": "Avvalgilar",
+  "Play this video": "Bu videoni ijro etish",
+  "Open this picture": "Bu rasmni ochish",
+  "Pick a window from the list, or click one on the screen": "Roʻyxatdan oynani tanlang yoki ekrandagi biriga bosing",
+  "Click a window on the screen": "Ekrandagi oynaga bosing",
+  "Allow more than one Snagster at a time": "Bir vaqtda bir nechta Snagster ishlashiga ruxsat berish",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Oʻchiq: Snagster qayta ochilganda ishlayotgani oldinga chiqariladi (va tanlagan faylingiz shu yerda ochiladi).",
+  "New image": "Yangi rasm",
+  "Resize image": "Rasm oʻlchamini oʻzgartirish",
+  "Canvas size and color": "Tuval oʻlchami va rangi",
+  "Export pictures": "Rasmlarni eksport qilish",
+  "What's new in Snagster": "Snagster’da yangiliklar"
  }
 }

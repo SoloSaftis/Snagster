@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Scena może mieć najwyżej {n} dźwięków.",
   "Sound of this scene": "Dźwięk tej sceny",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Brak dźwięku w tej scenie: dodaj dźwięk komputera, mikrofon lub plik dźwiękowy.",
-  "Another scene already has {n} sounds: make room there first.": "Inna scena ma już {n} dźwięków: najpierw zrób tam miejsce."
+  "Another scene already has {n} sounds: make room there first.": "Inna scena ma już {n} dźwięków: najpierw zrób tam miejsce.",
+  "Earlier": "Wcześniejsze",
+  "Play this video": "Odtwórz ten film",
+  "Open this picture": "Otwórz ten obraz",
+  "Pick a window from the list, or click one on the screen": "Wybierz okno z listy lub kliknij je na ekranie",
+  "Click a window on the screen": "Kliknij okno na ekranie",
+  "Allow more than one Snagster at a time": "Zezwalaj na wiele wystąpień Snagster jednocześnie",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Wyłączone: ponowne otwarcie Snagster przenosi uruchomioną aplikację na wierzch (i otwiera w niej wybrany plik).",
+  "New image": "Nowy obraz",
+  "Resize image": "Zmień rozmiar obrazu",
+  "Canvas size and color": "Rozmiar i kolor kanwy",
+  "Export pictures": "Eksportuj obrazy",
+  "What's new in Snagster": "Co nowego w Snagster"
  }
 }

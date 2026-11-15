@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Satu babak mempunyai paling banyak {n} bunyi.",
   "Sound of this scene": "Bunyi babak ini",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Tiada bunyi dalam babak ini: tambah bunyi komputer, mikrofon atau fail bunyi.",
-  "Another scene already has {n} sounds: make room there first.": "Babak lain sudah mempunyai {n} bunyi: kosongkan ruang di sana dahulu."
+  "Another scene already has {n} sounds: make room there first.": "Babak lain sudah mempunyai {n} bunyi: kosongkan ruang di sana dahulu.",
+  "Earlier": "Terdahulu",
+  "Play this video": "Mainkan video ini",
+  "Open this picture": "Buka gambar ini",
+  "Pick a window from the list, or click one on the screen": "Pilih tetingkap daripada senarai, atau klik satu pada skrin",
+  "Click a window on the screen": "Klik tetingkap pada skrin",
+  "Allow more than one Snagster at a time": "Benarkan lebih daripada satu Snagster serentak",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Mati: membuka Snagster sekali lagi akan membawa Snagster yang sedang berjalan ke hadapan (dan membuka fail yang anda pilih di sana).",
+  "New image": "Imej baharu",
+  "Resize image": "Ubah saiz imej",
+  "Canvas size and color": "Saiz dan warna kanvas",
+  "Export pictures": "Eksport gambar",
+  "What's new in Snagster": "Apa yang baharu dalam Snagster"
  }
 }

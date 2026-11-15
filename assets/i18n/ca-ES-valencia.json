@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Una escena té com a màxim {n} sons.",
   "Sound of this scene": "So d'esta escena",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "No hi ha so en esta escena: afegiu el so de l'ordinador, un micròfon o un fitxer de so.",
-  "Another scene already has {n} sounds: make room there first.": "Una altra escena ja té {n} sons: primer feu-hi lloc."
+  "Another scene already has {n} sounds: make room there first.": "Una altra escena ja té {n} sons: primer feu-hi lloc.",
+  "Earlier": "Anteriors",
+  "Play this video": "Reprodueix este vídeo",
+  "Open this picture": "Obri esta imatge",
+  "Pick a window from the list, or click one on the screen": "Trieu una finestra de la llista o feu clic en una a la pantalla",
+  "Click a window on the screen": "Feu clic en una finestra de la pantalla",
+  "Allow more than one Snagster at a time": "Permet més d'un Snagster alhora",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Desactivat: si torneu a obrir Snagster, el que s'està executant passa al primer pla (i hi obri el fitxer que heu triat).",
+  "New image": "Imatge nova",
+  "Resize image": "Canvia la mida de la imatge",
+  "Canvas size and color": "Mida i color del llenç",
+  "Export pictures": "Exporta les imatges",
+  "What's new in Snagster": "Novetats de Snagster"
  }
 }

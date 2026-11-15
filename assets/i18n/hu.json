@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Egy jelenetben legfeljebb {n} hang lehet.",
   "Sound of this scene": "A jelenet hangja",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Ebben a jelenetben nincs hang: adj hozzá a számítógép hangját, egy mikrofont vagy egy hangfájlt.",
-  "Another scene already has {n} sounds: make room there first.": "Egy másik jelenetben már {n} hang van: előbb ott csinálj helyet."
+  "Another scene already has {n} sounds: make room there first.": "Egy másik jelenetben már {n} hang van: előbb ott csinálj helyet.",
+  "Earlier": "Korábbiak",
+  "Play this video": "Videó lejátszása",
+  "Open this picture": "Kép megnyitása",
+  "Pick a window from the list, or click one on the screen": "Válasszon ablakot a listából, vagy kattintson egyre a képernyőn",
+  "Click a window on the screen": "Kattintson egy ablakra a képernyőn",
+  "Allow more than one Snagster at a time": "Több Snagster egyidejű futtatásának engedélyezése",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Kikapcsolva: a Snagster ismételt megnyitása a már futó példányt hozza előtérbe (és abban nyitja meg a kiválasztott fájlt).",
+  "New image": "Új kép",
+  "Resize image": "Kép átméretezése",
+  "Canvas size and color": "Vászon mérete és színe",
+  "Export pictures": "Képek exportálása",
+  "What's new in Snagster": "A Snagster újdonságai"
  }
 }

@@ -483,6 +483,23 @@ impl UiTest {
                 true
             }),
         ));
+        // Recent shows pictures and videos taken earlier (read from the folders on a worker).
+        let earlier = test_dir().join("earlier");
+        s.push((
+            "Recent: earlier pictures and videos from the folders".to_string(),
+            Box::new(move |a: &mut SnagApp, c: &egui::Context| {
+                let shot = earlier.join("earlier-shot.png");
+                if !shot.exists() {
+                    std::fs::create_dir_all(&earlier).expect("the test folder couldn't be made");
+                    image::RgbaImage::from_pixel(40, 30, image::Rgba([200, 40, 40, 255])).save(&shot).expect("the test picture couldn't be written");
+                    std::fs::write(earlier.join("earlier-clip.mp4"), b"not really a video").unwrap();
+                    a.earlier.expire();
+                }
+                a.earlier.poll(c, vec![earlier.clone()]);
+                let names: Vec<String> = a.earlier.items.iter().map(|i| i.name()).collect();
+                names.contains(&"earlier-shot".to_string()) && names.contains(&"earlier-clip".to_string()) && a.earlier.thumbs.contains_key(&shot)
+            }),
+        ));
         // Per-scene sound: a sound file in this scene (it plays everywhere), shared and back.
         let tone = test_dir().join("tone.wav");
         let file = crate::audio::SoundInput::File { path: tone.to_string_lossy().to_string() };

@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Eszena batek gehienez {n} soinu ditu.",
   "Sound of this scene": "Eszena honen soinua",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Ez dago soinurik eszena honetan: gehitu ordenagailuaren soinua, mikrofono bat edo soinu-fitxategi bat.",
-  "Another scene already has {n} sounds: make room there first.": "Beste eszena batek {n} soinu ditu jada: egin lekua han lehenik."
+  "Another scene already has {n} sounds: make room there first.": "Beste eszena batek {n} soinu ditu jada: egin lekua han lehenik.",
+  "Earlier": "Lehenagokoak",
+  "Play this video": "Erreproduzitu bideo hau",
+  "Open this picture": "Ireki irudi hau",
+  "Pick a window from the list, or click one on the screen": "Aukeratu leiho bat zerrendatik edo egin klik pantailako batean",
+  "Click a window on the screen": "Egin klik pantailako leiho batean",
+  "Allow more than one Snagster at a time": "Onartu Snagster bat baino gehiago aldi berean",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Desaktibatuta: Snagster berriro irekitzen baduzu, martxan dagoena aurrera ekartzen da (eta hautatu duzun fitxategia irekitzen du bertan).",
+  "New image": "Irudi berria",
+  "Resize image": "Aldatu irudiaren tamaina",
+  "Canvas size and color": "Oihalaren tamaina eta kolorea",
+  "Export pictures": "Esportatu irudiak",
+  "What's new in Snagster": "Zer berri Snagster-en"
  }
 }

@@ -39,6 +39,7 @@ pub static SCREENSHOT_VIEW: Mutex<String> = Mutex::new(String::new());
 
 mod uitest;
 pub(crate) mod access_ui;
+pub(crate) mod earlier;
 pub(crate) mod work;
 pub(crate) mod ribbon;
 pub(crate) mod studio_ui;
@@ -367,6 +368,8 @@ pub struct SnagApp {
     video_rx: Receiver<crate::video::VideoDone>,
     pub(crate) job_pause: Option<Arc<AtomicBool>>,
     pub(crate) videos: Vec<crate::video::VideoDone>,
+    /// Pictures and videos already on this computer, for the Recent strip's "Earlier".
+    pub(crate) earlier: earlier::Earlier,
 
     pub(crate) gif_editor: Option<GifEditor>,
     pub(crate) gif_open: bool,
@@ -439,6 +442,11 @@ impl SnagApp {
         let check_run = screenshot.is_some() || UI_TEST.load(Ordering::Relaxed);
         let settings = Settings::load(check_run);
         fonts::start_scan(cc.egui_ctx.clone());
+        crate::instance::set_wake(&cc.egui_ctx);
+        // Check runs (button test, README pictures) keep every box inside the one window they look at.
+        if screenshot.is_some() || UI_TEST.load(Ordering::Relaxed) {
+            cc.egui_ctx.set_embed_viewports(true);
+        }
         // Start looking for cloud folders now, so the Share tab has them when it opens.
         crate::settings::cloud_folders_now(Some(&cc.egui_ctx));
         let mut app = Self::blank(settings, !check_run, screenshot);
@@ -534,6 +542,7 @@ impl SnagApp {
             video_rx,
             job_pause: None,
             videos: Vec::new(),
+            earlier: Default::default(),
 
             gif_editor: None,
             gif_open: false,
@@ -1229,11 +1238,13 @@ impl SnagApp {
                         self.status = format!("{} {}.", self.status, recording_note(&done.note));
                     }
                     self.videos.insert(0, done);
+                    self.earlier.expire();
                 }
                 Err(e) => {
                     self.status = self.grab_failed("Video recording failed: {error}", e);
                     if done.frames > 0 {
                         self.videos.insert(0, done);
+                    self.earlier.expire();
                     }
                 }
             }
@@ -1577,6 +1588,7 @@ impl SnagApp {
 
     fn saved(&mut self, id: u64, path: PathBuf, r: Result<(), String>) {
         self.saving.remove(&path);
+        self.earlier.expire();
         match r {
             Ok(()) => {
                 if let Some(e) = self.entries.iter_mut().find(|e| e.id == id) {
@@ -2310,21 +2322,9 @@ impl SnagApp {
             }
         });
         ui.menu_button(crate::i18n::t("Window list"), |ui| {
-            let ctx = ui.ctx().clone();
-            self.win_cache.get(Some(&ctx), capture::list_windows);
-            if !self.win_cache.loaded() {
-                ui.spinner();
-            } else if self.win_cache.items().is_empty() {
-                ui.label(RichText::new(crate::i18n::t("No windows found")).color(TEXT_DIM));
+            if let Some(k) = self.window_list(ui) {
+                pick = Some(k);
             }
-            egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
-                for w in self.win_cache.items() {
-                    if ui.button(&w.label).clicked() {
-                        pick = Some(CaptureKind::Window(w.id, w.label.clone()));
-                        ui.close();
-                    }
-                }
-            });
         });
         ui.menu_button(crate::i18n::t("Presets"), |ui| {
             let mut run = None;
@@ -3099,10 +3099,18 @@ impl SnagApp {
             let mut switch = None;
             let mut remove = None;
             let mut pin = None;
+            let mut open_earlier = None;
             let ctx = ui.ctx().clone();
+            // Earlier pictures and videos on this computer (read on a worker, every minute).
+            if self.persist {
+                let s = &self.settings;
+                let mut folders = vec![PathBuf::from(&s.library_folder), PathBuf::from(&s.save_folder), PathBuf::from(&s.video_folder)];
+                folders.dedup();
+                self.earlier.poll(&ctx, folders);
+            }
             egui::ScrollArea::horizontal().show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    if self.entries.is_empty() {
+                    if self.entries.is_empty() && self.earlier.items.is_empty() {
                         ui.label(RichText::new(crate::i18n::t("Your captures show up here.")).color(TEXT_DIM));
                     }
                     for i in (0..self.entries.len()).rev() {
@@ -3148,8 +3156,16 @@ impl SnagApp {
                             }
                         });
                     }
+                    open_earlier = self.earlier_tiles(ui);
                 });
             });
+            if let Some(item) = open_earlier {
+                match self.entries.iter().position(|e| e.path.as_deref() == Some(item.path.as_path())) {
+                    Some(i) => switch = Some(i),
+                    None if item.video => self.open_file(&item.path),
+                    None => self.open_path(&item.path),
+                }
+            }
             if let Some(i) = switch.or(pin) {
                 self.commit_text();
                 self.current = Some(i);
@@ -3166,6 +3182,60 @@ impl SnagApp {
                 self.remove_current();
             }
         });
+    }
+
+    /// The Recent strip's "Earlier": pictures and videos already on this computer that aren't
+    /// in this session's list. The one clicked, if any.
+    fn earlier_tiles(&mut self, ui: &mut egui::Ui) -> Option<earlier::EarlierItem> {
+        let open: Vec<PathBuf> = self.entries.iter().filter_map(|e| e.path.clone()).collect();
+        let items: Vec<earlier::EarlierItem> = self.earlier.items.iter().filter(|i| !open.contains(&i.path)).cloned().collect();
+        if items.is_empty() {
+            return None;
+        }
+        ui.separator();
+        ui.label(RichText::new(crate::i18n::t("Earlier")).color(TEXT_DIM).size(12.0));
+        let mut pick = None;
+        for it in items {
+            let (rect, resp) = ui.allocate_exact_size(vec2(124.0, 84.0), Sense::click());
+            if !ui.is_rect_visible(rect) {
+                continue;
+            }
+            let p = ui.painter();
+            p.rect_filled(rect, CornerRadius::same(8), BG_DARK);
+            let area = Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(116.0, 58.0));
+            match self.earlier.thumbs.get(&it.path) {
+                Some(tex) => {
+                    let size = tex.size_vec2();
+                    let s = (area.width() / size.x).min(area.height() / size.y);
+                    p.image(tex.id(), Rect::from_center_size(area.center(), size * s), Rect::from_min_max(Pos2::ZERO, pos2(1.0, 1.0)), Color32::WHITE);
+                }
+                None => {
+                    let icon = if it.video { crate::look::ph::FILM_STRIP } else { crate::look::ph::IMAGE };
+                    p.text(area.center(), Align2::CENTER_CENTER, icon, FontId::new(26.0, crate::look::icons()), TEXT_DIM);
+                }
+            }
+            if it.video {
+                let ext = it.path.extension().map(|e| e.to_string_lossy().to_uppercase()).unwrap_or_default();
+                p.text(area.right_top() + vec2(-4.0, 4.0), Align2::RIGHT_TOP, ext, FontId::proportional(10.5), Color32::from_rgb(240, 200, 120));
+            }
+            if resp.hovered() {
+                p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, TEXT_DIM), StrokeKind::Inside);
+            }
+            let name: String = it.name().chars().take(18).collect();
+            p.text(pos2(rect.center().x, rect.bottom() - 10.0), Align2::CENTER_CENTER, name, FontId::proportional(11.5), Color32::from_rgb(170, 175, 190));
+            let tip = if it.video { crate::i18n::t("Play this video") } else { crate::i18n::t("Open this picture") };
+            let resp = resp.on_hover_text(format!("{tip}\n{}", it.path.display()));
+            if resp.clicked() {
+                pick = Some(it.clone());
+            }
+            resp.context_menu(|ui| {
+                if ui.button(crate::i18n::t("Show in folder")).clicked() {
+                    self.open_folder(&it.path);
+                    ui.close();
+                }
+            });
+        }
+        pick
     }
 
     fn welcome(&mut self, ui: &mut egui::Ui) {
@@ -3815,6 +3885,15 @@ impl SnagApp {
             crate::stream::live::wait_idle(Duration::from_secs(5));
         }
         self.poll_stream(ctx);
+        // Snagster opened again: this one comes forward (and opens the file asked for).
+        for ask in crate::instance::take() {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+            ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+            if let crate::instance::Ask::Open(p) = ask {
+                self.open_path(&p);
+            }
+        }
         self.poll_capture(ctx);
         self.poll_jobs(ctx);
         self.poll_timers(ctx);
@@ -5139,7 +5218,38 @@ impl SnagApp {
     }
 }
 
+/// A window's line in the window list: its title (at most 60 characters) and, when known
+/// and not already in the title, its program.
+pub(crate) fn window_line(w: &capture::WindowInfo) -> String {
+    let mut title: String = w.label.chars().take(60).collect();
+    if w.label.chars().count() > 60 {
+        title.push('…');
+    }
+    if w.app.is_empty() || w.label.to_lowercase().contains(&w.app.to_lowercase()) { title } else { format!("{title}  ·  {}", w.app) }
+}
+
 impl SnagApp {
+    /// The open windows to capture, newest list kept by `win_cache`: the one picked, if any.
+    pub(crate) fn window_list(&mut self, ui: &mut egui::Ui) -> Option<CaptureKind> {
+        let ctx = ui.ctx().clone();
+        self.win_cache.get(Some(&ctx), capture::list_windows);
+        if !self.win_cache.loaded() {
+            ui.spinner();
+        } else if self.win_cache.items().is_empty() {
+            ui.label(RichText::new(crate::i18n::t("No windows found")).color(TEXT_DIM));
+        }
+        let mut pick = None;
+        egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
+            for w in self.win_cache.items() {
+                if ui.button(window_line(w)).on_hover_text(format!("{} x {}", w.width, w.height)).clicked() {
+                    pick = Some(CaptureKind::Window(w.id, w.label.clone()));
+                    ui.close();
+                }
+            }
+        });
+        pick
+    }
+
     /// The README pictures' scene sound: a microphone in every scene, music in the first.
     fn picture_sounds(&mut self) {
         use crate::audio::SoundInput;

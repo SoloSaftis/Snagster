@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "بىر كۆرۈنۈشتە ئەڭ كۆپ بولغاندا {n} ئاۋاز بولىدۇ.",
   "Sound of this scene": "بۇ كۆرۈنۈشنىڭ ئاۋازى",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "بۇ كۆرۈنۈشتە ئاۋاز يوق: كومپيۇتېر ئاۋازى، مىكروفون ياكى ئاۋاز ھۆججىتى قوشۇڭ.",
-  "Another scene already has {n} sounds: make room there first.": "باشقا بىر كۆرۈنۈشتە ئاللىقاچان {n} ئاۋاز بار: ئالدى بىلەن ئۇ يەردە ئورۇن بوشىتىڭ."
+  "Another scene already has {n} sounds: make room there first.": "باشقا بىر كۆرۈنۈشتە ئاللىقاچان {n} ئاۋاز بار: ئالدى بىلەن ئۇ يەردە ئورۇن بوشىتىڭ.",
+  "Earlier": "ئىلگىرىكىلەر",
+  "Play this video": "بۇ سىنئالغۇنى قويۇش",
+  "Open this picture": "بۇ رەسىمنى ئېچىش",
+  "Pick a window from the list, or click one on the screen": "تىزىملىكتىن كۆزنەك تاللاڭ ياكى ئېكراندىكى بىرىنى چېكىڭ",
+  "Click a window on the screen": "ئېكراندىكى بىر كۆزنەكنى چېكىڭ",
+  "Allow more than one Snagster at a time": "بىر ۋاقىتتا بىردىن ئارتۇق Snagster ئىجرا قىلىشقا يول قويۇش",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "تاقاق: Snagster نى قايتا ئاچسىڭىز، ئىجرا بولۇۋاتقىنى ئالدىغا چىقىدۇ (ھەمدە تاللىغان ھۆججىتىڭىز شۇ يەردە ئېچىلىدۇ).",
+  "New image": "يېڭى رەسىم",
+  "Resize image": "رەسىم چوڭلۇقىنى تەڭشەش",
+  "Canvas size and color": "سۇپا چوڭلۇقى ۋە رەڭگى",
+  "Export pictures": "رەسىملەرنى چىقىرىش",
+  "What's new in Snagster": "Snagster دىكى يېڭىلىقلار"
  }
 }

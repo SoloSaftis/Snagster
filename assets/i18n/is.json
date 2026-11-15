@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Sena hefur í mesta lagi {n} hljóð.",
   "Sound of this scene": "Hljóð þessarar senu",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Ekkert hljóð í þessari senu: bættu við hljóði tölvunnar, hljóðnema eða hljóðskrá.",
-  "Another scene already has {n} sounds: make room there first.": "Önnur sena hefur þegar {n} hljóð: búðu fyrst til pláss þar."
+  "Another scene already has {n} sounds: make room there first.": "Önnur sena hefur þegar {n} hljóð: búðu fyrst til pláss þar.",
+  "Earlier": "Eldra",
+  "Play this video": "Spila þetta myndskeið",
+  "Open this picture": "Opna þessa mynd",
+  "Pick a window from the list, or click one on the screen": "Veldu glugga af listanum eða smelltu á einn á skjánum",
+  "Click a window on the screen": "Smelltu á glugga á skjánum",
+  "Allow more than one Snagster at a time": "Leyfa fleiri en eitt Snagster í einu",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Slökkt: þegar Snagster er opnað aftur er það sem er í gangi fært fremst (og skráin sem þú valdir opnuð þar).",
+  "New image": "Ný mynd",
+  "Resize image": "Breyta stærð myndar",
+  "Canvas size and color": "Stærð og litur myndflatar",
+  "Export pictures": "Flytja út myndir",
+  "What's new in Snagster": "Nýjungar í Snagster"
  }
 }

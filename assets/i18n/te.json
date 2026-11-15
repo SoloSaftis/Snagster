@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "ఒక సన్నివేశంలో గరిష్ఠంగా {n} ధ్వనులు ఉంటాయి.",
   "Sound of this scene": "ఈ సన్నివేశం యొక్క ధ్వని",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "ఈ సన్నివేశంలో ధ్వని లేదు: కంప్యూటర్ ధ్వని, ఒక మైక్రోఫోన్ లేదా ఒక ధ్వని ఫైల్‌ను జోడించండి.",
-  "Another scene already has {n} sounds: make room there first.": "మరో సన్నివేశంలో ఇప్పటికే {n} ధ్వనులు ఉన్నాయి: ముందుగా అక్కడ చోటు చేయండి."
+  "Another scene already has {n} sounds: make room there first.": "మరో సన్నివేశంలో ఇప్పటికే {n} ధ్వనులు ఉన్నాయి: ముందుగా అక్కడ చోటు చేయండి.",
+  "Earlier": "ఇంతకు ముందివి",
+  "Play this video": "ఈ వీడియోను ప్లే చేయండి",
+  "Open this picture": "ఈ చిత్రాన్ని తెరవండి",
+  "Pick a window from the list, or click one on the screen": "జాబితా నుండి ఒక విండోను ఎంచుకోండి లేదా స్క్రీన్‌పై ఒకదానిపై క్లిక్ చేయండి",
+  "Click a window on the screen": "స్క్రీన్‌పై ఒక విండోపై క్లిక్ చేయండి",
+  "Allow more than one Snagster at a time": "ఒకేసారి ఒకటి కంటే ఎక్కువ Snagster లను అనుమతించండి",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "ఆఫ్: Snagster ను మళ్లీ తెరిస్తే నడుస్తున్నది ముందుకు వస్తుంది (మీరు ఎంచుకున్న ఫైల్ అక్కడ తెరుచుకుంటుంది).",
+  "New image": "కొత్త చిత్రం",
+  "Resize image": "చిత్రం పరిమాణం మార్చండి",
+  "Canvas size and color": "కాన్వాస్ పరిమాణం మరియు రంగు",
+  "Export pictures": "చిత్రాలను ఎగుమతి చేయండి",
+  "What's new in Snagster": "Snagster లో కొత్తవి"
  }
 }

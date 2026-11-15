@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "هر صحنه حداکثر {n} صدا دارد.",
   "Sound of this scene": "صدای این صحنه",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "این صحنه صدایی ندارد: صدای رایانه، یک میکروفون یا یک فایل صوتی اضافه کنید.",
-  "Another scene already has {n} sounds: make room there first.": "صحنه دیگری از قبل {n} صدا دارد: اول آنجا جا باز کنید."
+  "Another scene already has {n} sounds: make room there first.": "صحنه دیگری از قبل {n} صدا دارد: اول آنجا جا باز کنید.",
+  "Earlier": "قبلی",
+  "Play this video": "پخش این ویدیو",
+  "Open this picture": "باز کردن این تصویر",
+  "Pick a window from the list, or click one on the screen": "یک پنجره را از فهرست انتخاب کنید یا روی یکی از پنجره‌ها در صفحه کلیک کنید",
+  "Click a window on the screen": "روی یک پنجره در صفحه کلیک کنید",
+  "Allow more than one Snagster at a time": "اجازه دادن به اجرای چند Snagster به‌طور هم‌زمان",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "خاموش: باز کردن دوبارهٔ Snagster، نسخهٔ در حال اجرا را به جلو می‌آورد (و فایلی را که انتخاب کرده‌اید در آن باز می‌کند).",
+  "New image": "تصویر جدید",
+  "Resize image": "تغییر اندازهٔ تصویر",
+  "Canvas size and color": "اندازه و رنگ بوم",
+  "Export pictures": "صادر کردن تصویرها",
+  "What's new in Snagster": "تازه‌های Snagster"
  }
 }

@@ -12,6 +12,91 @@ use eframe::egui::{self, Color32, CornerRadius, Key, PointerButton, Pos2, Rect, 
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
+/// How a settings box or dialog opens: its own window on the desktop, centered on Snagster's.
+pub(crate) struct Win<'a> {
+    /// Stays the same while the box is open (the window's identity).
+    pub key: &'a str,
+    pub title: &'a str,
+    pub size: egui::Vec2,
+    pub resizable: bool,
+}
+
+/// Where a `size` box goes so it sits in the middle of `parent` (Snagster's window), kept on the
+/// `monitor` (its top-left at 0,0) when that is known.
+pub(crate) fn centered_on(parent: Rect, size: egui::Vec2, monitor: Option<egui::Vec2>) -> Pos2 {
+    let mut p = parent.center() - size / 2.0;
+    if let Some(m) = monitor {
+        p.x = p.x.min(m.x - size.x).max(0.0);
+        p.y = p.y.min(m.y - size.y).max(0.0);
+    }
+    p
+}
+
+/// Show a settings box or dialog in a window of its own (not inside Snagster's window), opened
+/// in the middle of Snagster's window. Closing it (its X or Escape) sets `open` to false. Check
+/// runs and systems without extra windows show it inside the main window as before.
+pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: impl FnOnce(&mut egui::Ui) -> R) -> Option<R> {
+    if !*open {
+        ctx.data_mut(|d| d.remove::<Pos2>(egui::Id::unique(("own-window-at", w.key))));
+        return None;
+    }
+    if ctx.embed_viewports() {
+        let r = egui::Window::new(w.title)
+            .id(egui::Id::unique(("own-window", w.key)))
+            .open(open)
+            .collapsible(false)
+            .resizable(w.resizable)
+            .default_size(w.size)
+            .pivot(egui::Align2::CENTER_CENTER)
+            .default_pos(ctx.content_rect().center())
+            .show(ctx, add);
+        return r.and_then(|r| r.inner);
+    }
+    // Where it opens is worked out once, so moving Snagster's window later doesn't drag it along.
+    let at_id = egui::Id::unique(("own-window-at", w.key));
+    let at = ctx.data(|d| d.get_temp::<Pos2>(at_id)).unwrap_or_else(|| {
+        let (outer, monitor) = ctx.input(|i| (i.viewport().outer_rect, i.viewport().monitor_size));
+        let parent = outer.unwrap_or_else(|| ctx.content_rect());
+        let p = centered_on(parent, w.size, monitor);
+        ctx.data_mut(|d| d.insert_temp(at_id, p));
+        p
+    });
+    let mut builder = egui::ViewportBuilder::default()
+        .with_title(w.title)
+        .with_inner_size(w.size)
+        .with_min_inner_size(vec2(260.0, 120.0))
+        .with_resizable(w.resizable)
+        .with_maximize_button(w.resizable)
+        .with_minimize_button(w.resizable)
+        .with_position(at);
+    static ICON: std::sync::OnceLock<std::sync::Arc<egui::IconData>> = std::sync::OnceLock::new();
+    builder = builder.with_icon(ICON.get_or_init(|| std::sync::Arc::new(crate::icon())).clone());
+    let mut add = Some(add);
+    let (out, close) = ctx.show_viewport_immediate(egui::ViewportId::from_hash_of(("own-window", w.key)), builder, |ui, _class| {
+        let panel = egui::CentralPanel::default().show(ui, |ui| {
+            let r = ui.scope(|ui| add.take().map(|f| f(ui)));
+            (r.inner, r.response.rect.height())
+        });
+        let (out, used) = panel.inner;
+        // A box that can't be resized grows or shrinks to what it holds.
+        if !w.resizable {
+            let want = (used + 16.0).max(80.0).ceil();
+            let have = ui.ctx().input(|i| i.viewport().inner_rect.map(|r| r.height()));
+            if have.is_some_and(|h| (h - want).abs() > 2.0) {
+                let width = ui.ctx().input(|i| i.viewport().inner_rect.map_or(w.size.x, |r| r.width()));
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::InnerSize(vec2(width, want)));
+            }
+        }
+        let close = ui.ctx().input(|i| i.viewport().close_requested() || i.key_pressed(Key::Escape));
+        (out, close)
+    });
+    if close {
+        *open = false;
+        ctx.data_mut(|d| d.remove::<Pos2>(at_id));
+    }
+    out
+}
+
 /// Modifier boxes and a key list for one hotkey.
 fn combo_editor(ui: &mut egui::Ui, id: String, c: &mut Combo) -> bool {
     let before = c.clone();
@@ -45,13 +130,7 @@ impl SnagApp {
         let mut open = self.settings_open;
         let mut reset = false;
         let mut run_preset = None;
-        egui::Window::new(crate::i18n::t("Settings"))
-            .open(&mut open)
-            .resizable(true)
-            .collapsible(false)
-            .default_width(640.0)
-            .default_height(520.0)
-            .show(ctx, |ui| {
+        own_window(ctx, Win { key: "settings", title: crate::i18n::t("Settings"), size: vec2(720.0, 600.0), resizable: true }, &mut open, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for (tab, label) in [
                         (SettingsTab::AfterCapture, crate::i18n::t("After capture")),
@@ -99,6 +178,8 @@ impl SnagApp {
                                 Err(e) => self.status = format!("Couldn't change that: {e}"),
                             }
                         }
+                        ui.checkbox(&mut self.settings.allow_many, crate::i18n::t("Allow more than one Snagster at a time"))
+                            .on_hover_text(crate::i18n::t("Off: opening Snagster again brings the running one to the front (and opens the file you chose there)."));
                         let s = &mut self.settings;
                         ui.horizontal(|ui| {
                             ui.label(crate::i18n::t("Menu capture waits"));
@@ -600,7 +681,7 @@ impl SnagApp {
     pub(crate) fn help_windows(&mut self, ctx: &egui::Context) {
         let mut open = self.shortcuts_open;
         let s = self.settings.clone();
-        egui::Window::new(crate::i18n::t("Keyboard shortcuts")).open(&mut open).resizable(true).collapsible(false).default_height(520.0).show(ctx, |ui| {
+        own_window(ctx, Win { key: "shortcuts", title: crate::i18n::t("Keyboard shortcuts"), size: vec2(560.0, 560.0), resizable: true }, &mut open, |ui| {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.label(RichText::new(crate::i18n::t("Anywhere (global hotkeys, change them in Settings > Hotkeys)")).strong());
                 egui::Grid::new("gk").striped(true).spacing(vec2(16.0, 4.0)).show(ui, |ui| {
@@ -641,7 +722,7 @@ impl SnagApp {
         });
         self.shortcuts_open = open;
         let mut open = self.about_open;
-        egui::Window::new(crate::i18n::t("About Snagster")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
+        own_window(ctx, Win { key: "about", title: crate::i18n::t("About Snagster"), size: vec2(420.0, 300.0), resizable: false }, &mut open, |ui| {
             ui.horizontal(|ui| {
                 logo(ui, 40.0);
                 ui.vertical(|ui| {
@@ -665,7 +746,7 @@ impl SnagApp {
     pub(crate) fn text_window(&mut self, ctx: &egui::Context) {
         let Some(mut text) = self.grabbed_text.take() else { return };
         let mut open = true;
-        egui::Window::new(crate::i18n::t("Grabbed text")).open(&mut open).default_width(520.0).show(ctx, |ui| {
+        own_window(ctx, Win { key: "grabbed-text", title: crate::i18n::t("Grabbed text"), size: vec2(560.0, 460.0), resizable: true }, &mut open, |ui| {
             ui.label(RichText::new(crate::i18n::t("Already copied. Edit it here if you like, then copy again.")).color(TEXT_DIM));
             egui::ScrollArea::vertical().max_height(360.0).show(ui, |ui| {
                 ui.add(egui::TextEdit::multiline(&mut text).desired_width(f32::INFINITY).desired_rows(12));
@@ -685,7 +766,7 @@ impl SnagApp {
         let mut set_schedule = None;
         let mut stop_interval = false;
         let mut cancel_schedule = false;
-        egui::Window::new(crate::i18n::t("Timer")).open(&mut open).resizable(false).collapsible(false).show(ctx, |ui| {
+        own_window(ctx, Win { key: "timer", title: crate::i18n::t("Timer"), size: vec2(420.0, 360.0), resizable: false }, &mut open, |ui| {
             let s = &mut self.settings;
             ui.label(RichText::new(crate::i18n::t("Countdown")).strong());
             ui.horizontal(|ui| {
@@ -849,7 +930,7 @@ impl SnagApp {
         let mut delete_item = None;
         let mut show_item = None;
         let mut save_tags = None;
-        egui::Window::new(crate::i18n::t("Library")).open(&mut open).default_size([860.0, 600.0]).show(ctx, |ui| {
+        own_window(ctx, Win { key: "library", title: crate::i18n::t("Library"), size: vec2(900.0, 640.0), resizable: true }, &mut open, |ui| {
             ui.horizontal(|ui| {
                 ui.label(crate::i18n::t("Search"));
                 ui.add(egui::TextEdit::singleline(&mut self.lib_query).hint_text("title, program, tag, date (2026-11)").desired_width(260.0));
@@ -1020,7 +1101,7 @@ impl SnagApp {
         let mut save_trim = false;
         let mut append = false;
         let mut slideshow = false;
-        egui::Window::new(crate::i18n::t("GIF recordings")).open(&mut open).default_size([700.0, 560.0]).show(ctx, |ui| {
+        own_window(ctx, Win { key: "gifs", title: crate::i18n::t("GIF recordings"), size: vec2(740.0, 600.0), resizable: true }, &mut open, |ui| {
             ui.horizontal(|ui| {
                 if ui.button(crate::i18n::t("Open a GIF...")).clicked()
                     && let Some(p) = rfd::FileDialog::new().add_filter("GIF", &["gif"]).pick_file()
@@ -1291,16 +1372,16 @@ impl SnagApp {
         let mut open = true;
         let mut done = false;
         let title = match &d {
-            Dialog::NewImage { .. } => "New image",
-            Dialog::Resize { .. } => "Resize image",
-            Dialog::Canvas { .. } => "Canvas size and color",
-            Dialog::Rename(_) => "Rename",
-            Dialog::Export { .. } => "Export pictures",
-            Dialog::GettingStarted => "Getting started",
-            Dialog::WhatsNew => "What's new in Snagster",
+            Dialog::NewImage { .. } => crate::i18n::t("New image"),
+            Dialog::Resize { .. } => crate::i18n::t("Resize image"),
+            Dialog::Canvas { .. } => crate::i18n::t("Canvas size and color"),
+            Dialog::Rename(_) => crate::i18n::t("Rename"),
+            Dialog::Export { .. } => crate::i18n::t("Export pictures"),
+            Dialog::GettingStarted => crate::i18n::t("Getting started"),
+            Dialog::WhatsNew => crate::i18n::t("What's new in Snagster"),
         };
         let mut action: Option<Box<dyn FnOnce(&mut SnagApp)>> = None;
-        egui::Window::new(title).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| match &mut d {
+        own_window(ctx, Win { key: "dialog", title, size: vec2(440.0, 220.0), resizable: false }, &mut open, |ui| match &mut d {
             Dialog::NewImage { w, h, color } => {
                 ui.horizontal(|ui| {
                     ui.label(crate::i18n::t("Width"));
@@ -1811,6 +1892,43 @@ impl SnagApp {
 mod tests {
     use super::*;
     use std::path::Path;
+
+    /// A box opens in the middle of Snagster's window, but never off the screen.
+    #[test]
+    fn boxes_open_in_the_middle_of_the_window_and_on_the_screen() {
+        let main = Rect::from_min_size(pos2(100.0, 50.0), vec2(1280.0, 800.0));
+        assert_eq!(centered_on(main, vec2(400.0, 200.0), None), pos2(540.0, 350.0));
+        assert_eq!(centered_on(main, vec2(400.0, 200.0), Some(vec2(1920.0, 1080.0))), pos2(540.0, 350.0));
+        // Snagster pushed far to the right: the box stays on the monitor.
+        let right = Rect::from_min_size(pos2(1700.0, 900.0), vec2(600.0, 400.0));
+        assert_eq!(centered_on(right, vec2(700.0, 600.0), Some(vec2(1920.0, 1080.0))), pos2(1220.0, 480.0));
+        // A box bigger than the monitor starts at its corner.
+        assert_eq!(centered_on(main, vec2(3000.0, 2000.0), Some(vec2(1920.0, 1080.0))), pos2(0.0, 0.0));
+    }
+
+    /// In check runs (no extra windows) a box shows inside the main window, and its content runs.
+    #[test]
+    fn a_box_shows_inside_the_window_when_windows_are_embedded() {
+        let ctx = egui::Context::default();
+        ctx.set_embed_viewports(true);
+        let mut open = true;
+        let mut ran = false;
+        let mut out = ctx.run_ui(Default::default(), |ui| {
+            let r = own_window(ui.ctx(), Win { key: "t", title: "Test", size: vec2(300.0, 200.0), resizable: false }, &mut open, |ui| {
+                ui.label("hello");
+                ran = true;
+                7
+            });
+            assert_eq!(r, Some(7));
+        });
+        out.textures_delta.clear();
+        assert!(ran && open);
+        let mut closed = false;
+        let mut out = ctx.run_ui(Default::default(), |ui| {
+            assert_eq!(own_window(ui.ctx(), Win { key: "t", title: "Test", size: vec2(300.0, 200.0), resizable: false }, &mut closed, |_| 1), None);
+        });
+        out.textures_delta.clear();
+    }
 
     #[test]
     fn new_image_dialog_starts_white_720p() {

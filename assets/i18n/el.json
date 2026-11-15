@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Μια σκηνή έχει το πολύ {n} ήχους.",
   "Sound of this scene": "Ήχος αυτής της σκηνής",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Δεν υπάρχει ήχος σε αυτή τη σκηνή: προσθέστε τον ήχο του υπολογιστή, ένα μικρόφωνο ή ένα αρχείο ήχου.",
-  "Another scene already has {n} sounds: make room there first.": "Μια άλλη σκηνή έχει ήδη {n} ήχους: κάντε πρώτα χώρο εκεί."
+  "Another scene already has {n} sounds: make room there first.": "Μια άλλη σκηνή έχει ήδη {n} ήχους: κάντε πρώτα χώρο εκεί.",
+  "Earlier": "Παλαιότερα",
+  "Play this video": "Αναπαραγωγή αυτού του βίντεο",
+  "Open this picture": "Άνοιγμα αυτής της εικόνας",
+  "Pick a window from the list, or click one on the screen": "Επιλέξτε ένα παράθυρο από τη λίστα ή κάντε κλικ σε ένα στην οθόνη",
+  "Click a window on the screen": "Κάντε κλικ σε ένα παράθυρο στην οθόνη",
+  "Allow more than one Snagster at a time": "Να επιτρέπονται περισσότερα από ένα Snagster ταυτόχρονα",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Ανενεργό: Αν ανοίξετε ξανά το Snagster, το ανοιχτό παράθυρο μεταφέρεται μπροστά (και ανοίγει εκεί το αρχείο που επιλέξατε).",
+  "New image": "Νέα εικόνα",
+  "Resize image": "Αλλαγή μεγέθους εικόνας",
+  "Canvas size and color": "Μέγεθος και χρώμα καμβά",
+  "Export pictures": "Εξαγωγή εικόνων",
+  "What's new in Snagster": "Τι νέο υπάρχει στο Snagster"
  }
 }

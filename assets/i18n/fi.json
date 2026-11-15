@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Kohtauksessa on enintään {n} ääntä.",
   "Sound of this scene": "Tämän kohtauksen ääni",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Tässä kohtauksessa ei ole ääntä: lisää tietokoneen ääni, mikrofoni tai äänitiedosto.",
-  "Another scene already has {n} sounds: make room there first.": "Toisessa kohtauksessa on jo {n} ääntä: tee sinne ensin tilaa."
+  "Another scene already has {n} sounds: make room there first.": "Toisessa kohtauksessa on jo {n} ääntä: tee sinne ensin tilaa.",
+  "Earlier": "Aiemmat",
+  "Play this video": "Toista tämä video",
+  "Open this picture": "Avaa tämä kuva",
+  "Pick a window from the list, or click one on the screen": "Valitse ikkuna luettelosta tai napsauta jotakin näytöllä",
+  "Click a window on the screen": "Napsauta ikkunaa näytöllä",
+  "Allow more than one Snagster at a time": "Salli useampi kuin yksi Snagster samanaikaisesti",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Pois: kun Snagster avataan uudelleen, käynnissä oleva Snagster tuodaan etualalle (ja valitsemasi tiedosto avataan siinä).",
+  "New image": "Uusi kuva",
+  "Resize image": "Muuta kuvan kokoa",
+  "Canvas size and color": "Kankaan koko ja väri",
+  "Export pictures": "Vie kuvat",
+  "What's new in Snagster": "Snagsterin uudet ominaisuudet"
  }
 }

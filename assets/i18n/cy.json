@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Mae gan olygfa {n} sain ar y mwyaf.",
   "Sound of this scene": "Sain yr olygfa hon",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Dim sain yn yr olygfa hon: ychwanegwch sain y cyfrifiadur, meicroffon neu ffeil sain.",
-  "Another scene already has {n} sounds: make room there first.": "Mae gan olygfa arall {n} sain yn barod: gwnewch le yno yn gyntaf."
+  "Another scene already has {n} sounds: make room there first.": "Mae gan olygfa arall {n} sain yn barod: gwnewch le yno yn gyntaf.",
+  "Earlier": "Cynharach",
+  "Play this video": "Chwarae'r fideo hwn",
+  "Open this picture": "Agor y llun hwn",
+  "Pick a window from the list, or click one on the screen": "Dewiswch ffenestr o'r rhestr, neu cliciwch ar un ar y sgrin",
+  "Click a window on the screen": "Cliciwch ar ffenestr ar y sgrin",
+  "Allow more than one Snagster at a time": "Caniatáu mwy nag un Snagster ar y tro",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "I ffwrdd: mae agor Snagster eto yn dod â'r un sy'n rhedeg i'r blaen (ac yn agor y ffeil a ddewisoch yno).",
+  "New image": "Delwedd newydd",
+  "Resize image": "Newid maint y ddelwedd",
+  "Canvas size and color": "Maint a lliw'r cynfas",
+  "Export pictures": "Allforio lluniau",
+  "What's new in Snagster": "Beth sy'n newydd yn Snagster"
  }
 }

@@ -2,6 +2,24 @@
 
 What changed for people using Snagster, per version.
 
+## 0.10.1 — 2026-11-15
+
+New:
+
+- **Recent shows what you took before**: the strip of recent captures now also lists the
+  pictures and videos already on your computer (library, save folder, videos folder), newest
+  first, not only this session's. Click one to open it.
+- **Capture a window from a list**: the Window button opens a list of the open windows to pick
+  from (or click one on the screen, as before).
+- **One Snagster at a time**: opening Snagster again (Start menu, Dock, a file you double-click)
+  brings the running one to the front instead of starting another; a file goes to it. Switch on
+  "Allow more than one Snagster at a time" in Settings if you want more.
+- **Settings and dialogs in their own windows**: Settings, the Library, GIF recordings, the
+  timer, the language list and every dialog open as separate windows, centered on Snagster's.
+  Snagster itself opens in the middle of the screen.
+- **Choose the graphics card for encoding**: with two graphics cards of the same maker, each
+  card's encoder gets the card's name in the encoder list (Windows); on Linux each graphics chip
+  that can encode (Intel, AMD, NVIDIA) is listed on its own.
 ## 0.10.0 — 2026-11-15
 
 New:

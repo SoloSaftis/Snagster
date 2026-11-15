@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "এটা দৃশ্যত বেছি হলে {n} টা শব্দ থাকে।",
   "Sound of this scene": "এই দৃশ্যৰ শব্দ",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "এই দৃশ্যত কোনো শব্দ নাই: কম্পিউটাৰৰ শব্দ, এটা মাইক্ৰ’ফোন বা এটা শব্দ ফাইল যোগ কৰক।",
-  "Another scene already has {n} sounds: make room there first.": "আন এটা দৃশ্যত ইতিমধ্যে {n} টা শব্দ আছে: প্ৰথমে তাত ঠাই উলিয়াওক।"
+  "Another scene already has {n} sounds: make room there first.": "আন এটা দৃশ্যত ইতিমধ্যে {n} টা শব্দ আছে: প্ৰথমে তাত ঠাই উলিয়াওক।",
+  "Earlier": "আগৰ",
+  "Play this video": "এই ভিডিঅ' প্লে কৰক",
+  "Open this picture": "এই ছবিখন খোলক",
+  "Pick a window from the list, or click one on the screen": "তালিকাৰ পৰা এটা উইণ্ড' বাছনি কৰক, বা স্ক্ৰীনত এটাত ক্লিক কৰক",
+  "Click a window on the screen": "স্ক্ৰীনত এটা উইণ্ড'ত ক্লিক কৰক",
+  "Allow more than one Snagster at a time": "একে সময়তে এটাতকৈ অধিক Snagster অনুমতি দিয়ক",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "অফ: Snagster পুনৰ খুলিলে চলি থকাটো সন্মুখলৈ আহে (আৰু আপুনি বাছনি কৰা ফাইল তাত খোলে)।",
+  "New image": "নতুন ছবি",
+  "Resize image": "ছবিৰ আকাৰ সলনি কৰক",
+  "Canvas size and color": "কেনভাছৰ আকাৰ আৰু ৰং",
+  "Export pictures": "ছবি ৰপ্তানি কৰক",
+  "What's new in Snagster": "Snagster ত কি নতুন"
  }
 }

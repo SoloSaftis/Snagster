@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "一个场景最多有 {n} 个声音。",
   "Sound of this scene": "此场景的声音",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "此场景没有声音：请添加计算机声音、麦克风或声音文件。",
-  "Another scene already has {n} sounds: make room there first.": "另一个场景已有 {n} 个声音：请先在那里腾出位置。"
+  "Another scene already has {n} sounds: make room there first.": "另一个场景已有 {n} 个声音：请先在那里腾出位置。",
+  "Earlier": "以前",
+  "Play this video": "播放此视频",
+  "Open this picture": "打开此图片",
+  "Pick a window from the list, or click one on the screen": "从列表中选择窗口，或在屏幕上单击窗口",
+  "Click a window on the screen": "在屏幕上单击窗口",
+  "Allow more than one Snagster at a time": "允许同时运行多个 Snagster",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "关闭：再次打开 Snagster 时，会将正在运行的窗口置于前台（并在其中打开你选择的文件）。",
+  "New image": "新建图片",
+  "Resize image": "调整图片大小",
+  "Canvas size and color": "画布大小和颜色",
+  "Export pictures": "导出图片",
+  "What's new in Snagster": "Snagster 新增功能"
  }
 }

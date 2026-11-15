@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Xena jista' jkollha mhux aktar minn {n} ħsejjes.",
   "Sound of this scene": "Ħoss ta' din ix-xena",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "M'hemmx ħoss f'din ix-xena: żid il-ħoss tal-kompjuter, mikrofonu jew fajl tal-ħoss.",
-  "Another scene already has {n} sounds: make room there first.": "Xena oħra diġà għandha {n} ħsejjes: l-ewwel agħmel spazju hemmhekk."
+  "Another scene already has {n} sounds: make room there first.": "Xena oħra diġà għandha {n} ħsejjes: l-ewwel agħmel spazju hemmhekk.",
+  "Earlier": "Qabel",
+  "Play this video": "Ħaddem dan il-vidjo",
+  "Open this picture": "Iftaħ din l-istampa",
+  "Pick a window from the list, or click one on the screen": "Agħżel tieqa mil-lista, jew ikklikkja waħda fuq l-iskrin",
+  "Click a window on the screen": "Ikklikkja tieqa fuq l-iskrin",
+  "Allow more than one Snagster at a time": "Ħalli aktar minn Snagster wieħed fl-istess ħin",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Mhux attiv: meta tiftaħ Snagster mill-ġdid, dak li qed jaħdem jiġi quddiem (u l-fajl li għażilt jinfetaħ hemm).",
+  "New image": "Immaġni ġdida",
+  "Resize image": "Biddel id-daqs tal-immaġni",
+  "Canvas size and color": "Daqs u kulur tal-kanvas",
+  "Export pictures": "Esporta stampi",
+  "What's new in Snagster": "X'hemm ġdid fi Snagster"
  }
 }

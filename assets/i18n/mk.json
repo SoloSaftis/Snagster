@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Една сцена има најмногу {n} звуци.",
   "Sound of this scene": "Звук на оваа сцена",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Нема звук во оваа сцена: додајте го звукот од компјутерот, микрофон или звучна датотека.",
-  "Another scene already has {n} sounds: make room there first.": "Друга сцена веќе има {n} звуци: прво направете место таму."
+  "Another scene already has {n} sounds: make room there first.": "Друга сцена веќе има {n} звуци: прво направете место таму.",
+  "Earlier": "Претходно",
+  "Play this video": "Пушти го видеово",
+  "Open this picture": "Отвори ја сликава",
+  "Pick a window from the list, or click one on the screen": "Изберете прозорец од списокот или кликнете на еден на екранот",
+  "Click a window on the screen": "Кликнете на прозорец на екранот",
+  "Allow more than one Snagster at a time": "Дозволи повеќе Snagster истовремено",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Исклучено: при повторно отворање на Snagster, активниот Snagster се носи напред (и таму се отвора изберената датотека).",
+  "New image": "Нова слика",
+  "Resize image": "Промени големина на слика",
+  "Canvas size and color": "Големина и боја на платното",
+  "Export pictures": "Извези слики",
+  "What's new in Snagster": "Што е ново во Snagster"
  }
 }

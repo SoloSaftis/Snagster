@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Scenoje gali būti daugiausia {n} garsų.",
   "Sound of this scene": "Šios scenos garsas",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Šioje scenoje nėra garso: pridėkite kompiuterio garsą, mikrofoną arba garso failą.",
-  "Another scene already has {n} sounds: make room there first.": "Kitoje scenoje jau yra {n} garsų: pirmiausia ten atlaisvinkite vietos."
+  "Another scene already has {n} sounds: make room there first.": "Kitoje scenoje jau yra {n} garsų: pirmiausia ten atlaisvinkite vietos.",
+  "Earlier": "Anksčiau",
+  "Play this video": "Paleisti šį vaizdo įrašą",
+  "Open this picture": "Atidaryti šį paveikslėlį",
+  "Pick a window from the list, or click one on the screen": "Pasirinkite langą iš sąrašo arba spustelėkite jį ekrane",
+  "Click a window on the screen": "Spustelėkite langą ekrane",
+  "Allow more than one Snagster at a time": "Leisti kelias „Snagster“ kopijas vienu metu",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Išjungta: dar kartą atidarius „Snagster“, veikianti programa iškeliama į priekį (ir joje atidaromas pasirinktas failas).",
+  "New image": "Naujas paveikslėlis",
+  "Resize image": "Keisti paveikslėlio dydį",
+  "Canvas size and color": "Drobės dydis ir spalva",
+  "Export pictures": "Eksportuoti paveikslėlius",
+  "What's new in Snagster": "Kas naujo programoje „Snagster“"
  }
 }

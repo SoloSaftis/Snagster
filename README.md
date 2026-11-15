@@ -18,7 +18,7 @@ Windows · Mac · Linux · 86 languages · works offline · written in Rust · f
 
 ## What it does
 
-- **Capture anything** – press Print Screen, then drag an area or click a window, button or menu. While you select, the window, button or panel under the pointer lights up: click to take it, turn the mouse wheel for the bigger part around it. Or the whole screen, all screens, a fixed size, or fun shapes: circle, lasso, star, heart.
+- **Capture anything** – press Print Screen, then drag an area or click a window, button or menu (or pick a window from a list). While you select, the window, button or panel under the pointer lights up: click to take it, turn the mouse wheel for the bigger part around it. Or the whole screen, all screens, a fixed size, or fun shapes: circle, lasso, star, heart.
 - **Long pages** – scrolling capture scrolls by itself, keeps sticky headers once and stops at the end of the page, stitching a whole web page or document into one picture (sideways too).
 - **Mark it up** – arrows, boxes, text in any of your fonts, speech bubbles, numbered steps, 1,300+ color emojis, highlighter, spotlight, magnifier, blur and smart redact for private details.
 - **Tidy it up** – crop, cut out, move parts of the picture, borders, shadows, torn edges and more.
@@ -29,6 +29,7 @@ Windows · Mac · Linux · 86 languages · works offline · written in Rust · f
 - **Record GIFs** that stay small, and step-by-step guides as PDF, Word or web pages.
 - **Library** – every capture is kept, searchable by date, program and tags; works from your OneDrive or Dropbox folder.
 - **Never stops answering** – saving, exporting, opening files and making guides all happen in the background, so the window stays quick even with big captures.
+- **Everything you took, at hand** – the Recent strip lists this session's captures and the pictures and videos already on your computer, newest first. Settings and dialogs open in their own windows, and opening Snagster again brings the running one to the front (more than one at a time is a setting).
 - **Your language** – 86 languages, picked automatically from your computer and changeable at any time; right-to-left languages read right to left.
 - **A ribbon like Word's** – tabs for Home, Capture, Record, Studio, Stream, Edit, Image, Share, View and Help, every tool with an icon and an explanation when you point at it.
 - **Keeps itself up to date** – Snagster checks for a new version once a day (you can turn it off) and installs it with one click.

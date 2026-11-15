@@ -1,6 +1,6 @@
 Capture your screen, mark it up, record it. Everything runs on your own computer.
 
-**New in this version:** go live on several services at once (Twitch, YouTube and more) from one encode, up to 4K at 60 fps; Studio is the live workspace, with scene buttons and per-scene sound (up to 6 sources per scene) while you stream; choose the video encoder (or leave it on Automatic, which falls back by itself); NVIDIA graphics chips on Linux; the window never stops answering while it saves, exports or opens files; and `snagster --hw-report` to test graphics-chip encoding on your computer.
+**New in this version:** Recent lists the pictures and videos you took before; capture a window from a list; one Snagster at a time; Settings and dialogs in their own centered windows; choose which graphics card encodes. **New in 0.10:** go live on several services at once (Twitch, YouTube and more) from one encode, up to 4K at 60 fps; Studio is the live workspace, with scene buttons and per-scene sound (up to 6 sources per scene) while you stream; choose the video encoder (or leave it on Automatic, which falls back by itself); NVIDIA graphics chips on Linux; the window never stops answering while it saves, exports or opens files; and `snagster --hw-report` to test graphics-chip encoding on your computer.
 
 ## Download
 

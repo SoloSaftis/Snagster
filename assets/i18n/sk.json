@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Scéna môže mať najviac {n} zvukov.",
   "Sound of this scene": "Zvuk tejto scény",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "V tejto scéne nie je žiadny zvuk: pridajte zvuk počítača, mikrofón alebo zvukový súbor.",
-  "Another scene already has {n} sounds: make room there first.": "Iná scéna už má {n} zvukov: najprv tam uvoľnite miesto."
+  "Another scene already has {n} sounds: make room there first.": "Iná scéna už má {n} zvukov: najprv tam uvoľnite miesto.",
+  "Earlier": "Staršie",
+  "Play this video": "Prehrať toto video",
+  "Open this picture": "Otvoriť tento obrázok",
+  "Pick a window from the list, or click one on the screen": "Vyberte okno zo zoznamu alebo kliknite na niektoré na obrazovke",
+  "Click a window on the screen": "Kliknite na okno na obrazovke",
+  "Allow more than one Snagster at a time": "Povoliť viac inštancií Snagster naraz",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Vypnuté: pri opätovnom otvorení Snagster sa zobrazí už spustená inštancia (a otvorí sa vybraný súbor).",
+  "New image": "Nový obrázok",
+  "Resize image": "Zmeniť veľkosť obrázka",
+  "Canvas size and color": "Veľkosť a farba plátna",
+  "Export pictures": "Exportovať obrázky",
+  "What's new in Snagster": "Čo je nové v Snagster"
  }
 }

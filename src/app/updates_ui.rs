@@ -105,13 +105,7 @@ impl SnagApp {
             return;
         };
         let mut open = true;
-        egui::Window::new(t("A new Snagster"))
-            .id(egui::Id::unique("update-window"))
-            .open(&mut open)
-            .collapsible(false)
-            .resizable(false)
-            .default_width(460.0)
-            .show(ctx, |ui| {
+        crate::windows::own_window(ctx, crate::windows::Win { key: "update", title: t("A new Snagster"), size: vec2(480.0, 320.0), resizable: false }, &mut open, |ui| {
                 ui.label(RichText::new(tf("Snagster {new} is out. You have {old}.", &[("new", &rel.version), ("old", env!("CARGO_PKG_VERSION"))])).size(15.0).strong());
                 ui.add_space(6.0);
                 if !rel.notes.trim().is_empty() {

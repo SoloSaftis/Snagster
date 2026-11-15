@@ -372,6 +372,8 @@ struct Display {
     va: std::sync::Arc<Va>,
     dpy: VADisplay,
     vendor: String,
+    /// The render node (`/dev/dri/renderD128`), so a graphics chip can be picked by name.
+    node_path: String,
     _node: File,
 }
 
@@ -430,7 +432,7 @@ impl Display {
             }
             let v = (va.vendor)(dpy);
             let vendor = if v.is_null() { "VA-API".into() } else { CStr::from_ptr(v).to_string_lossy().trim().to_string() };
-            Ok(Display { va: va.clone(), dpy, vendor, _node: node })
+            Ok(Display { va: va.clone(), dpy, vendor, node_path: path.to_string(), _node: node })
         }
     }
 
@@ -455,8 +457,10 @@ impl Display {
         }
     }
 
+    /// The encoder's name: the driver and the render node, so two graphics chips (say Intel
+    /// and AMD) are two choices in Settings.
     fn name(&self) -> String {
-        format!("VA-API H.264 ({})", self.vendor)
+        encoder_name(&self.vendor, &self.node_path)
     }
 }
 
@@ -487,18 +491,42 @@ pub fn describe() -> Vec<String> {
         .collect()
 }
 
+/// "VA-API H.264 (driver, renderD128)": the name a VA-API encoder is listed and picked by.
+pub(crate) fn encoder_name(vendor: &str, node: &str) -> String {
+    let node = std::path::Path::new(node).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| node.to_string());
+    format!("VA-API H.264 ({vendor}, {node})")
+}
+
+/// One H.264 encoder for each graphics chip whose VA-API driver can encode.
 pub fn list() -> Vec<(Codec, EncoderName)> {
-    match Display::open() {
-        Ok(d) if d.h264_encoder().is_some() => vec![(Codec::H264, EncoderName { name: d.name(), hardware: true })],
-        _ => Vec::new(),
-    }
+    let Ok(va) = Va::load().map(std::sync::Arc::new) else { return Vec::new() };
+    render_nodes_here()
+        .iter()
+        .filter_map(|p| Display::on(&va, p).ok())
+        .filter(|d| d.h264_encoder().is_some())
+        .map(|d| (Codec::H264, EncoderName { name: d.name(), hardware: true }))
+        .collect()
 }
 
 pub fn open_video(cfg: &VideoConfig) -> Result<Box<dyn VideoEncoder>, String> {
     if cfg.codec != Codec::H264 {
         return Err("VA-API encoding here makes H.264 only".into());
     }
-    VaEncoder::open(cfg).map(|e| Box::new(e) as Box<dyn VideoEncoder>)
+    VaEncoder::open(cfg, Display::open()?).map(|e| Box::new(e) as Box<dyn VideoEncoder>)
+}
+
+/// The VA-API encoder called `name` (`list`), on exactly that graphics chip.
+pub fn open_named(cfg: &VideoConfig, name: &str) -> Result<Box<dyn VideoEncoder>, String> {
+    if cfg.codec != Codec::H264 {
+        return Err("VA-API encoding here makes H.264 only".into());
+    }
+    let va = std::sync::Arc::new(Va::load()?);
+    let d = render_nodes_here()
+        .iter()
+        .filter_map(|p| Display::on(&va, p).ok())
+        .find(|d| d.name() == name)
+        .ok_or_else(|| format!("{name} isn't on this computer"))?;
+    VaEncoder::open(cfg, d).map(|e| Box::new(e) as Box<dyn VideoEncoder>)
 }
 
 struct VaEncoder {
@@ -529,8 +557,7 @@ unsafe impl Send for VaEncoder {}
 const LOG2_MAX_FRAME_NUM: u32 = 8;
 
 impl VaEncoder {
-    fn open(cfg: &VideoConfig) -> Result<VaEncoder, String> {
-        let d = Display::open()?;
+    fn open(cfg: &VideoConfig, d: Display) -> Result<VaEncoder, String> {
         let (profile, vprofile, entry) = d.h264_encoder().ok_or_else(|| format!("{} can't encode H.264", d.vendor))?;
         // (`open` only returns a display that can.)
         let va = &d.va;
@@ -840,6 +867,12 @@ impl Drop for VaEncoder {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn each_graphics_chip_has_its_own_name() {
+        assert_eq!(encoder_name("Intel iHD driver 24.1", "/dev/dri/renderD128"), "VA-API H.264 (Intel iHD driver 24.1, renderD128)");
+        assert_ne!(encoder_name("Mesa Gallium (radeonsi)", "/dev/dri/renderD128"), encoder_name("Mesa Gallium (radeonsi)", "/dev/dri/renderD129"));
+    }
 
     /// Every graphics chip is tried by number (renderD129 before renderD1000, not only 128..135
     /// as before), and one chosen by hand comes first.

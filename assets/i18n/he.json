@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "בסצנה יש לכל היותר {n} צלילים.",
   "Sound of this scene": "הצליל של הסצנה הזו",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "אין צליל בסצנה הזו: הוסיפו את צליל המחשב, מיקרופון או קובץ צליל.",
-  "Another scene already has {n} sounds: make room there first.": "בסצנה אחרת כבר יש {n} צלילים: פנו שם מקום קודם."
+  "Another scene already has {n} sounds: make room there first.": "בסצנה אחרת כבר יש {n} צלילים: פנו שם מקום קודם.",
+  "Earlier": "קודמים",
+  "Play this video": "הפעל סרטון זה",
+  "Open this picture": "פתח תמונה זו",
+  "Pick a window from the list, or click one on the screen": "בחר חלון מהרשימה, או לחץ על אחד במסך",
+  "Click a window on the screen": "לחץ על חלון במסך",
+  "Allow more than one Snagster at a time": "אפשר יותר מ-Snagster אחד בו-זמנית",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "כבוי: פתיחת Snagster שוב מעבירה את זה שרץ לחזית (ופותחת בו את הקובץ שבחרת).",
+  "New image": "תמונה חדשה",
+  "Resize image": "שינוי גודל תמונה",
+  "Canvas size and color": "גודל וצבע של הקנבס",
+  "Export pictures": "ייצוא תמונות",
+  "What's new in Snagster": "מה חדש ב-Snagster"
  }
 }

@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Bíonn {n} fhuaim ar a mhéad i radharc.",
   "Sound of this scene": "Fuaim an radhairc seo",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Níl aon fhuaim sa radharc seo: cuir fuaim an ríomhaire, micreafón nó comhad fuaime leis.",
-  "Another scene already has {n} sounds: make room there first.": "Tá {n} fhuaim i radharc eile cheana: déan spás ansin ar dtús."
+  "Another scene already has {n} sounds: make room there first.": "Tá {n} fhuaim i radharc eile cheana: déan spás ansin ar dtús.",
+  "Earlier": "Níos luaithe",
+  "Play this video": "Seinn an físeán seo",
+  "Open this picture": "Oscail an pictiúr seo",
+  "Pick a window from the list, or click one on the screen": "Roghnaigh fuinneog ón liosta, nó cliceáil ar cheann ar an scáileán",
+  "Click a window on the screen": "Cliceáil fuinneog ar an scáileán",
+  "Allow more than one Snagster at a time": "Lig níos mó ná Snagster amháin ag an am",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "As: nuair a osclaítear Snagster arís, tugtar an ceann atá ag rith chun tosaigh (agus osclaítear an comhad a roghnaigh tú ann).",
+  "New image": "Íomhá nua",
+  "Resize image": "Athraigh méid na híomhá",
+  "Canvas size and color": "Méid agus dath an chanbháis",
+  "Export pictures": "Easpórtáil pictiúir",
+  "What's new in Snagster": "Cad atá nua i Snagster"
  }
 }

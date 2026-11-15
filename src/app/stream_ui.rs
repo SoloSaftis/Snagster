@@ -305,12 +305,8 @@ impl SnagApp {
         let st = &self.settings.stream;
         let service = services_named(st.service, st.also_on().map(|a| a.service));
         let source = t(self.settings.stream.source.label());
-        egui::Window::new(t("Go live?"))
-            .id(egui::Id::unique("stream-confirm"))
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-            .show(ctx, |ui| {
+        let mut open = true;
+        crate::windows::own_window(ctx, crate::windows::Win { key: "stream-confirm", title: t("Go live?"), size: vec2(400.0, 160.0), resizable: false }, &mut open, |ui| {
                 ui.set_max_width(360.0);
                 ui.label(tf("Everyone watching on {service} will see this from now on: {source}.", &[("service", &service), ("source", source)]));
                 ui.label(RichText::new(t("Snagster asks once each time it starts.")).color(TEXT_DIM));
@@ -328,7 +324,7 @@ impl SnagApp {
             self.x.stream.confirmed = true;
             self.x.stream.confirm_open = false;
             self.start_stream_now(ctx);
-        } else if cancel || ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+        } else if cancel || !open || ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
             self.x.stream.confirm_open = false;
         }
     }

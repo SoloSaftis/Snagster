@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Տեսարանը կարող է ունենալ առավելագույնը {n} ձայն։",
   "Sound of this scene": "Այս տեսարանի ձայնը",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Այս տեսարանում ձայն չկա. ավելացրեք համակարգչի ձայնը, խոսափող կամ ձայնային ֆայլ։",
-  "Another scene already has {n} sounds: make room there first.": "Մեկ այլ տեսարան արդեն ունի {n} ձայն. նախ տեղ բացեք այնտեղ։"
+  "Another scene already has {n} sounds: make room there first.": "Մեկ այլ տեսարան արդեն ունի {n} ձայն. նախ տեղ բացեք այնտեղ։",
+  "Earlier": "Նախորդ",
+  "Play this video": "Նվագարկել այս տեսանյութը",
+  "Open this picture": "Բացել այս նկարը",
+  "Pick a window from the list, or click one on the screen": "Ընտրեք պատուհան ցանկից կամ սեղմեք մեկի վրա էկրանին",
+  "Click a window on the screen": "Սեղմեք պատուհանի վրա էկրանին",
+  "Allow more than one Snagster at a time": "Թույլատրել միաժամանակ մեկից ավելի Snagster",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Անջատված է. Snagster-ը նորից բացելիս արդեն աշխատողը դուրս է գալիս առաջին պլան (և ձեր ընտրած ֆայլը բացվում է դրանում).",
+  "New image": "Նոր պատկեր",
+  "Resize image": "Փոխել պատկերի չափը",
+  "Canvas size and color": "Կտավի չափը և գույնը",
+  "Export pictures": "Արտահանել նկարները",
+  "What's new in Snagster": "Ի՞նչ նոր է Snagster-ում"
  }
 }

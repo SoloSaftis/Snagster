@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "O scenă are cel mult {n} sunete.",
   "Sound of this scene": "Sunetul acestei scene",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Niciun sunet în această scenă: adaugă sunetul computerului, un microfon sau un fișier de sunet.",
-  "Another scene already has {n} sounds: make room there first.": "Altă scenă are deja {n} sunete: fă mai întâi loc acolo."
+  "Another scene already has {n} sounds: make room there first.": "Altă scenă are deja {n} sunete: fă mai întâi loc acolo.",
+  "Earlier": "Anterioare",
+  "Play this video": "Redă acest videoclip",
+  "Open this picture": "Deschide această imagine",
+  "Pick a window from the list, or click one on the screen": "Alege o fereastră din listă sau fă clic pe una de pe ecran",
+  "Click a window on the screen": "Fă clic pe o fereastră de pe ecran",
+  "Allow more than one Snagster at a time": "Permite mai multe instanțe Snagster simultan",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Dezactivat: la deschiderea din nou a Snagster, se aduce în față instanța care rulează (și se deschide fișierul ales).",
+  "New image": "Imagine nouă",
+  "Resize image": "Redimensionează imaginea",
+  "Canvas size and color": "Dimensiunea și culoarea pânzei",
+  "Export pictures": "Exportă imaginile",
+  "What's new in Snagster": "Noutăți în Snagster"
  }
 }

@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Stseenis on kuni {n} heli.",
   "Sound of this scene": "Selle stseeni heli",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Selles stseenis pole heli: lisa arvuti heli, mikrofon või helifail.",
-  "Another scene already has {n} sounds: make room there first.": "Teises stseenis on juba {n} heli: tee seal kõigepealt ruumi."
+  "Another scene already has {n} sounds: make room there first.": "Teises stseenis on juba {n} heli: tee seal kõigepealt ruumi.",
+  "Earlier": "Varasemad",
+  "Play this video": "Esita see video",
+  "Open this picture": "Ava see pilt",
+  "Pick a window from the list, or click one on the screen": "Valige loendist aken või klõpsake ekraanil ühel",
+  "Click a window on the screen": "Klõpsake ekraanil aknal",
+  "Allow more than one Snagster at a time": "Luba korraga mitu Snagsteri eksemplari",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Väljas: Snagsteri uuesti avamisel tuuakse töötav eksemplar esiplaanile (ja avatakse seal valitud fail).",
+  "New image": "Uus pilt",
+  "Resize image": "Muuda pildi suurust",
+  "Canvas size and color": "Lõuendi suurus ja värv",
+  "Export pictures": "Ekspordi pildid",
+  "What's new in Snagster": "Mis on Snagsteris uut"
  }
 }

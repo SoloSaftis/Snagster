@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Një skenë ka të shumtën {n} zëra.",
   "Sound of this scene": "Zëri i kësaj skene",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Nuk ka zë në këtë skenë: shto zërin e kompjuterit, një mikrofon ose një skedar zanor.",
-  "Another scene already has {n} sounds: make room there first.": "Një skenë tjetër ka tashmë {n} zëra: liro vend atje më parë."
+  "Another scene already has {n} sounds: make room there first.": "Një skenë tjetër ka tashmë {n} zëra: liro vend atje më parë.",
+  "Earlier": "Më herët",
+  "Play this video": "Luaj këtë video",
+  "Open this picture": "Hap këtë figurë",
+  "Pick a window from the list, or click one on the screen": "Zgjidh një dritare nga lista ose kliko një në ekran",
+  "Click a window on the screen": "Kliko një dritare në ekran",
+  "Allow more than one Snagster at a time": "Lejo më shumë se një Snagster në të njëjtën kohë",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Joaktiv: kur hap përsëri Snagster, shfaqet ai që po funksionon (dhe hapet skedari që zgjodhe).",
+  "New image": "Figurë e re",
+  "Resize image": "Ndrysho përmasat e figurës",
+  "Canvas size and color": "Madhësia dhe ngjyra e kanavacës",
+  "Export pictures": "Eksporto figurat",
+  "What's new in Snagster": "Çfarë të re ka në Snagster"
  }
 }

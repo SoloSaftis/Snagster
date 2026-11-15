@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "一個場景最多有 {n} 個聲音。",
   "Sound of this scene": "此場景的聲音",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "此場景沒有聲音：請新增電腦音效、麥克風或聲音檔案。",
-  "Another scene already has {n} sounds: make room there first.": "另一個場景已有 {n} 個聲音：請先在那裡騰出位置。"
+  "Another scene already has {n} sounds: make room there first.": "另一個場景已有 {n} 個聲音：請先在那裡騰出位置。",
+  "Earlier": "先前",
+  "Play this video": "播放此影片",
+  "Open this picture": "開啟此圖片",
+  "Pick a window from the list, or click one on the screen": "從清單中選擇視窗，或在螢幕上按一下視窗",
+  "Click a window on the screen": "在螢幕上按一下視窗",
+  "Allow more than one Snagster at a time": "允許同時執行多個 Snagster",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "關閉：再次開啟 Snagster 時，會將執行中的視窗帶到前景（並在其中開啟您選擇的檔案）。",
+  "New image": "新增圖片",
+  "Resize image": "調整圖片大小",
+  "Canvas size and color": "畫布大小與顏色",
+  "Export pictures": "匯出圖片",
+  "What's new in Snagster": "Snagster 的新功能"
  }
 }

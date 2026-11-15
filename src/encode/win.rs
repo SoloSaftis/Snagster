@@ -108,7 +108,70 @@ fn video_candidates(codec: Codec, hardware: bool) -> Vec<Candidate> {
     let flags = if hardware { MFT_ENUM_FLAG_HARDWARE | MFT_ENUM_FLAG_SORTANDFILTER } else { MFT_ENUM_FLAG_SYNCMFT | MFT_ENUM_FLAG_ASYNCMFT | MFT_ENUM_FLAG_SORTANDFILTER };
     let out = MFT_REGISTER_TYPE_INFO { guidMajorType: MFMediaType_Video, guidSubtype: video_subtype(codec) };
     let fallback = format!("Windows {} encoder{}", codec.label(), if hardware { " (graphics chip)" } else { " (software)" });
-    enumerate(MFT_CATEGORY_VIDEO_ENCODER, flags, None, Some(out), &fallback)
+    let mut v = enumerate(MFT_CATEGORY_VIDEO_ENCODER, flags, None, Some(out), &fallback);
+    if hardware {
+        // Two graphics cards of the same maker register encoders with the same name: each gets
+        // its card's name so the person can choose between them.
+        let cards = adapter_names();
+        let found: Vec<(String, Option<String>)> = v.iter().map(|c| (c.name.clone(), adapter_luid(&c.activate).and_then(|l| cards.iter().find(|(id, _)| *id == l).map(|(_, n)| n.clone())))).collect();
+        for (c, name) in v.iter_mut().zip(distinct_names(&found)) {
+            c.name = name;
+        }
+    }
+    v
+}
+
+/// Names that tell encoders apart: one that appears more than once gets its graphics card's
+/// name ("NVIDIA H.264 Encoder MFT (NVIDIA GeForce RTX 3060)"), and still-equal ones a number.
+/// A name that appears once is left as it is (so a choice saved earlier still matches).
+pub(crate) fn distinct_names(found: &[(String, Option<String>)]) -> Vec<String> {
+    let count = |n: &str| found.iter().filter(|(m, _)| m == n).count();
+    let mut out: Vec<String> = found
+        .iter()
+        .map(|(n, card)| match card {
+            Some(card) if count(n) > 1 => format!("{n} ({card})"),
+            _ => n.clone(),
+        })
+        .collect();
+    for i in 0..out.len() {
+        let same = out[..i].iter().filter(|m| **m == out[i]).count();
+        if same > 0 {
+            out[i] = format!("{} ({})", out[i], same + 1);
+        }
+    }
+    out
+}
+
+/// The graphics card a hardware encoder transform belongs to (its adapter's LUID).
+fn adapter_luid(a: &IMFActivate) -> Option<u64> {
+    let x = a.cast::<IMFAttributes>().ok()?;
+    unsafe {
+        let mut b = [0u8; 8];
+        let mut got = 0u32;
+        if x.GetBlob(&MFT_ENUM_ADAPTER_LUID, &mut b, Some(&mut got)).is_ok() && got == 8 {
+            return Some(u64::from_le_bytes(b));
+        }
+        x.GetUINT64(&MFT_ENUM_ADAPTER_LUID).ok()
+    }
+}
+
+/// This computer's graphics cards: LUID and name.
+fn adapter_names() -> Vec<(u64, String)> {
+    use windows::Win32::Graphics::Dxgi::{CreateDXGIFactory1, IDXGIFactory1};
+    let mut v = Vec::new();
+    unsafe {
+        let Ok(f) = CreateDXGIFactory1::<IDXGIFactory1>() else { return v };
+        let mut i = 0;
+        while let Ok(a) = f.EnumAdapters1(i) {
+            i += 1;
+            if let Ok(d) = a.GetDesc1() {
+                let luid = ((d.AdapterLuid.HighPart as u32 as u64) << 32) | d.AdapterLuid.LowPart as u64;
+                let len = d.Description.iter().position(|&c| c == 0).unwrap_or(d.Description.len());
+                v.push((luid, String::from_utf16_lossy(&d.Description[..len]).trim().to_string()));
+            }
+        }
+    }
+    v
 }
 
 /// The video encoders Media Foundation offers, graphics chip first.
@@ -755,6 +818,18 @@ impl AudioEncoder for MfAac {
 mod tests {
     use super::*;
 
+    /// One card per maker: names stay as they are. Two cards of one maker: each gets its
+    /// card's name; still the same (or no card known): a number.
+    #[test]
+    fn two_cards_of_one_maker_get_names_of_their_own() {
+        let s = |n: &str, c: Option<&str>| (n.to_string(), c.map(str::to_string));
+        let one = [s("Intel Quick Sync H.264", Some("Intel Arc")), s("NVIDIA H.264 Encoder MFT", Some("RTX 3060")), s("AMDh264Encoder", Some("Radeon RX 7600"))];
+        assert_eq!(distinct_names(&one), vec!["Intel Quick Sync H.264", "NVIDIA H.264 Encoder MFT", "AMDh264Encoder"]);
+        let two = [s("NVIDIA H.264 Encoder MFT", Some("RTX 3060")), s("NVIDIA H.264 Encoder MFT", Some("RTX 4090")), s("AMDh264Encoder", None)];
+        assert_eq!(distinct_names(&two), vec!["NVIDIA H.264 Encoder MFT (RTX 3060)", "NVIDIA H.264 Encoder MFT (RTX 4090)", "AMDh264Encoder"]);
+        let same = [s("X", Some("Card")), s("X", Some("Card")), s("X", None)];
+        assert_eq!(distinct_names(&same), vec!["X (Card)", "X (Card) (2)", "X"]);
+    }
     #[test]
     fn aac_rates_round_to_what_the_encoder_offers() {
         assert_eq!(aac_bytes_per_second(160_000), 20_000);

@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Ainā var būt ne vairāk kā {n} skaņas.",
   "Sound of this scene": "Šīs ainas skaņa",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Šajā ainā nav skaņas: pievienojiet datora skaņu, mikrofonu vai skaņas failu.",
-  "Another scene already has {n} sounds: make room there first.": "Citā ainā jau ir {n} skaņas: vispirms atbrīvojiet tur vietu."
+  "Another scene already has {n} sounds: make room there first.": "Citā ainā jau ir {n} skaņas: vispirms atbrīvojiet tur vietu.",
+  "Earlier": "Agrāk",
+  "Play this video": "Atskaņot šo videoklipu",
+  "Open this picture": "Atvērt šo attēlu",
+  "Pick a window from the list, or click one on the screen": "Izvēlieties logu no saraksta vai noklikšķiniet uz tā ekrānā",
+  "Click a window on the screen": "Noklikšķiniet uz loga ekrānā",
+  "Allow more than one Snagster at a time": "Atļaut vairākus Snagster vienlaikus",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Izslēgts: atkārtoti atverot Snagster, darbojošais Snagster tiek parādīts priekšplānā (un tajā tiek atvērts izvēlētais fails).",
+  "New image": "Jauns attēls",
+  "Resize image": "Mainīt attēla izmēru",
+  "Canvas size and color": "Audekla izmērs un krāsa",
+  "Export pictures": "Eksportēt attēlus",
+  "What's new in Snagster": "Kas jauns programmā Snagster"
  }
 }

@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Eng Szen huet héchstens {n} Téin.",
   "Sound of this scene": "Toun vun dëser Szen",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Keen Toun an dëser Szen: de Computerton, e Mikro oder eng Tounfichier derbäisetzen.",
-  "Another scene already has {n} sounds: make room there first.": "Eng aner Szen huet schonn {n} Téin: maach do fir d'éischt Plaz."
+  "Another scene already has {n} sounds: make room there first.": "Eng aner Szen huet schonn {n} Téin: maach do fir d'éischt Plaz.",
+  "Earlier": "Virdrun",
+  "Play this video": "Dëse Video ofspillen",
+  "Open this picture": "Dëst Bild opmaachen",
+  "Pick a window from the list, or click one on the screen": "Wielt e Fënster aus der Lëscht oder klickt op ee um Bildschierm",
+  "Click a window on the screen": "Op e Fënster um Bildschierm klicken",
+  "Allow more than one Snagster at a time": "Méi wéi ee Snagster gläichzäiteg erlaben",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Aus: Wann Dir Snagster nach eng Kéier opmaacht, kënnt dee lafende Snagster no vir (an d'Datei, déi Dir gewielt hutt, gëtt do opgemaach).",
+  "New image": "Neit Bild",
+  "Resize image": "Bildgréisst änneren",
+  "Canvas size and color": "Gréisst a Faarf vun der Leinwand",
+  "Export pictures": "Biller exportéieren",
+  "What's new in Snagster": "Wat ass nei am Snagster"
  }
 }

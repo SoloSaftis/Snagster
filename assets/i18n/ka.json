@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "სცენას შეიძლება ჰქონდეს მაქსიმუმ {n} ხმა.",
   "Sound of this scene": "ამ სცენის ხმა",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "ამ სცენაში ხმა არ არის: დაამატეთ კომპიუტერის ხმა, მიკროფონი ან ხმოვანი ფაილი.",
-  "Another scene already has {n} sounds: make room there first.": "სხვა სცენას უკვე აქვს {n} ხმა: ჯერ იქ გამოათავისუფლეთ ადგილი."
+  "Another scene already has {n} sounds: make room there first.": "სხვა სცენას უკვე აქვს {n} ხმა: ჯერ იქ გამოათავისუფლეთ ადგილი.",
+  "Earlier": "ადრინდელი",
+  "Play this video": "ამ ვიდეოს დაკვრა",
+  "Open this picture": "ამ სურათის გახსნა",
+  "Pick a window from the list, or click one on the screen": "აირჩიეთ ფანჯარა სიიდან ან დააწკაპუნეთ ეკრანზე",
+  "Click a window on the screen": "დააწკაპუნეთ ფანჯარაზე ეკრანზე",
+  "Allow more than one Snagster at a time": "ერთზე მეტი Snagster-ის დაშვება ერთდროულად",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "გამორთულია: Snagster-ის ხელახლა გახსნისას გაშვებული წინ გამოდის (და იქ იხსნება თქვენ მიერ არჩეული ფაილი).",
+  "New image": "ახალი სურათი",
+  "Resize image": "სურათის ზომის შეცვლა",
+  "Canvas size and color": "ტილოს ზომა და ფერი",
+  "Export pictures": "სურათების ექსპორტი",
+  "What's new in Snagster": "რა სიახლეა Snagster-ში"
  }
 }

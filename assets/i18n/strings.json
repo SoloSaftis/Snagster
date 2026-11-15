@@ -942,5 +942,17 @@
  "A scene has at most {n} sounds.",
  "Sound of this scene",
  "No sound in this scene: add the computer sound, a microphone or a sound file.",
- "Another scene already has {n} sounds: make room there first."
+ "Another scene already has {n} sounds: make room there first.",
+ "Earlier",
+ "Play this video",
+ "Open this picture",
+ "Pick a window from the list, or click one on the screen",
+ "Click a window on the screen",
+ "Allow more than one Snagster at a time",
+ "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).",
+ "New image",
+ "Resize image",
+ "Canvas size and color",
+ "Export pictures",
+ "What's new in Snagster"
 ]

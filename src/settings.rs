@@ -550,6 +550,8 @@ pub struct Settings {
     // Round 5
     pub override_hotkeys: bool,
     pub start_mode: StartMode,
+    /// Opening Snagster again starts another copy instead of bringing the running one forward.
+    pub allow_many: bool,
     pub blur_mode: BlurMode,
     pub arrow_heads: u8,
     pub text_outline: bool,
@@ -658,6 +660,7 @@ impl Default for Settings {
             panel: PanelSettings::default(),
             override_hotkeys: true,
             start_mode: StartMode::Editor,
+            allow_many: false,
             blur_mode: BlurMode::Pixelate,
             arrow_heads: 1,
             text_outline: true,

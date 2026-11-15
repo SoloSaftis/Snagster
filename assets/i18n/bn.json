@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "একটি সিনে সর্বোচ্চ {n}টি শব্দ থাকে।",
   "Sound of this scene": "এই সিনের শব্দ",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "এই সিনে কোনো শব্দ নেই: কম্পিউটারের শব্দ, একটি মাইক্রোফোন বা একটি সাউন্ড ফাইল যোগ করুন।",
-  "Another scene already has {n} sounds: make room there first.": "আরেকটি সিনে আগেই {n}টি শব্দ আছে: আগে সেখানে জায়গা করুন।"
+  "Another scene already has {n} sounds: make room there first.": "আরেকটি সিনে আগেই {n}টি শব্দ আছে: আগে সেখানে জায়গা করুন।",
+  "Earlier": "আগের",
+  "Play this video": "এই ভিডিওটি চালান",
+  "Open this picture": "এই ছবিটি খুলুন",
+  "Pick a window from the list, or click one on the screen": "তালিকা থেকে একটি উইন্ডো বেছে নিন, অথবা স্ক্রিনে একটিতে ক্লিক করুন",
+  "Click a window on the screen": "স্ক্রিনে একটি উইন্ডোতে ক্লিক করুন",
+  "Allow more than one Snagster at a time": "একসঙ্গে একাধিক Snagster চালানোর অনুমতি দিন",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "বন্ধ: আবার Snagster খুললে চলমানটি সামনে চলে আসে (এবং আপনার বেছে নেওয়া ফাইলটি সেখানে খোলে)।",
+  "New image": "নতুন ছবি",
+  "Resize image": "ছবির আকার পরিবর্তন করুন",
+  "Canvas size and color": "ক্যানভাসের আকার ও রং",
+  "Export pictures": "ছবি এক্সপোর্ট করুন",
+  "What's new in Snagster": "Snagster-এ নতুন কী আছে"
  }
 }

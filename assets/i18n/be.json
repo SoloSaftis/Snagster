@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "У сцэне можа быць не больш за {n} гукаў.",
   "Sound of this scene": "Гук гэтай сцэны",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "У гэтай сцэне няма гуку: дадайце гук камп'ютара, мікрафон або гукавы файл.",
-  "Another scene already has {n} sounds: make room there first.": "У іншай сцэне ўжо {n} гукаў: спачатку вызваліце там месца."
+  "Another scene already has {n} sounds: make room there first.": "У іншай сцэне ўжо {n} гукаў: спачатку вызваліце там месца.",
+  "Earlier": "Раней",
+  "Play this video": "Прайграць відэа",
+  "Open this picture": "Адкрыць малюнак",
+  "Pick a window from the list, or click one on the screen": "Выберыце акно са спісу або пстрыкніце яго на экране",
+  "Click a window on the screen": "Пстрыкніце акно на экране",
+  "Allow more than one Snagster at a time": "Дазволіць некалькі копій Snagster адначасова",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Выключана: пры паўторным адкрыцці Snagster паказваецца ўжо запушчаная копія (і ў ёй адкрываецца абраны вамі файл).",
+  "New image": "Новы відарыс",
+  "Resize image": "Змяніць памер відарыса",
+  "Canvas size and color": "Памер і колер палатна",
+  "Export pictures": "Экспартаваць малюнкі",
+  "What's new in Snagster": "Што новага ў Snagster"
  }
 }

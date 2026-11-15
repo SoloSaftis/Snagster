@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "ஒரு காட்சியில் அதிகபட்சம் {n} ஒலிகள் இருக்கும்.",
   "Sound of this scene": "இந்தக் காட்சியின் ஒலி",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "இந்தக் காட்சியில் ஒலி இல்லை: கணினி ஒலி, ஒரு மைக்ரோஃபோன் அல்லது ஒரு ஒலிக் கோப்பைச் சேர்க்கவும்.",
-  "Another scene already has {n} sounds: make room there first.": "வேறொரு காட்சியில் ஏற்கெனவே {n} ஒலிகள் உள்ளன: முதலில் அங்கே இடம் ஒதுக்கவும்."
+  "Another scene already has {n} sounds: make room there first.": "வேறொரு காட்சியில் ஏற்கெனவே {n} ஒலிகள் உள்ளன: முதலில் அங்கே இடம் ஒதுக்கவும்.",
+  "Earlier": "முந்தையவை",
+  "Play this video": "இந்த வீடியோவை இயக்கு",
+  "Open this picture": "இந்தப் படத்தைத் திற",
+  "Pick a window from the list, or click one on the screen": "பட்டியலிலிருந்து ஒரு சாளரத்தைத் தேர்ந்தெடுக்கவும் அல்லது திரையில் ஒன்றைக் கிளிக் செய்யவும்",
+  "Click a window on the screen": "திரையில் ஒரு சாளரத்தைக் கிளிக் செய்யவும்",
+  "Allow more than one Snagster at a time": "ஒரே நேரத்தில் ஒன்றுக்கு மேற்பட்ட Snagster ஐ அனுமதி",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "முடக்கம்: Snagster ஐ மீண்டும் திறந்தால் இயங்கும் சாளரம் முன்னுக்கு வரும் (நீங்கள் தேர்ந்தெடுத்த கோப்பும் அங்கே திறக்கும்).",
+  "New image": "புதிய படம்",
+  "Resize image": "படத்தின் அளவை மாற்று",
+  "Canvas size and color": "கேன்வாஸ் அளவும் நிறமும்",
+  "Export pictures": "படங்களை ஏற்றுமதி செய்",
+  "What's new in Snagster": "Snagster இல் புதியவை"
  }
 }

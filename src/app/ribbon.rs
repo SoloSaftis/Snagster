@@ -183,12 +183,40 @@ impl SnagApp {
         }
     }
 
+    /// Window: a list of the open windows to pick from (as ShareX has), and "click a window on
+    /// the screen" first. The Window hotkey still lets you click one.
+    fn window_tool(&mut self, ui: &mut egui::Ui, ctx: &egui::Context, big: bool) {
+        let tip = format!("{}{}", t("Pick a window from the list, or click one on the screen"), kbd(&self.settings, Action::Window));
+        let (mut click, mut pick) = (false, None);
+        let body = |ui: &mut egui::Ui| {
+            ui.set_min_width(320.0);
+            if ui.button(format!("{}  {}", ph::CURSOR_CLICK, t("Click a window on the screen"))).clicked() {
+                click = true;
+                ui.close();
+            }
+            ui.separator();
+            pick = self.window_list(ui);
+        };
+        if big {
+            look::big_menu(ui, ph::APP_WINDOW, t("Window"), &tip, body);
+        } else {
+            look::small_menu(ui, ph::APP_WINDOW, t("Window"), &tip, body);
+        }
+        if click {
+            self.do_action(ctx, Action::Window);
+        } else if let Some(k) = pick
+            && self.capturing.is_none()
+        {
+            self.start_capture(ctx, k);
+        }
+    }
+
     fn band_home(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         look::group(ui, t("Capture"), |ui| {
             self.capture_tool(ui, ctx, true, ph::CAMERA, Action::AllInOne, t("Capture"), t("Drag an area, or click a window, button or menu; then capture, scroll, record or grab text"));
             self.capture_tool(ui, ctx, true, ph::SELECTION, Action::Area, t("Area"), t("Drag a rectangle to capture"));
             look::column(ui, |ui| {
-                self.capture_tool(ui, ctx, false, ph::APP_WINDOW, Action::Window, t("Window"), t("Click a window to capture it"));
+                self.window_tool(ui, ctx, false);
                 self.capture_tool(ui, ctx, false, ph::MONITOR, Action::Screen, t("Screen"), t("Capture the screen the mouse is on"));
                 self.capture_tool(ui, ctx, false, ph::SCROLL, Action::Scrolling, t("Scrolling"), t("Capture a whole long page by scrolling it"));
             });
@@ -339,7 +367,7 @@ impl SnagApp {
         look::group(ui, t("Capture"), |ui| {
             self.capture_tool(ui, ctx, true, ph::CAMERA, Action::AllInOne, t("All-in-one"), t("Drag an area, or click a window, button or menu"));
             self.capture_tool(ui, ctx, true, ph::SELECTION, Action::Area, t("Area"), t("Drag a rectangle to capture"));
-            self.capture_tool(ui, ctx, true, ph::APP_WINDOW, Action::Window, t("Window"), t("Click a window to capture it"));
+            self.window_tool(ui, ctx, true);
             self.capture_tool(ui, ctx, true, ph::MONITOR, Action::Screen, t("Screen"), t("Capture the screen the mouse is on"));
             look::column(ui, |ui| {
                 self.capture_tool(ui, ctx, false, ph::SQUARES_FOUR, Action::AllScreens, t("All screens"), t("Every screen in one picture"));
@@ -817,12 +845,7 @@ impl SnagApp {
         self.x.all_scripts = true;
         let mut open = true;
         let current = crate::i18n::current();
-        egui::Window::new(t("Language"))
-            .id(egui::Id::unique("language-window"))
-            .open(&mut open)
-            .collapsible(false)
-            .default_size(vec2(420.0, 560.0))
-            .show(ctx, |ui| {
+        crate::windows::own_window(ctx, crate::windows::Win { key: "language", title: t("Language"), size: vec2(440.0, 600.0), resizable: true }, &mut open, |ui| {
                 ui.horizontal(|ui| {
                     ui.label(RichText::new(look::ph::GLOBE).family(look::icons()).size(16.0));
                     ui.add(egui::TextEdit::singleline(&mut self.x.lang_query).hint_text(t("Find a language")).desired_width(f32::INFINITY));

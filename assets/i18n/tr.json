@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Bir sahnede en fazla {n} ses olur.",
   "Sound of this scene": "Bu sahnenin sesi",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Bu sahnede ses yok: bilgisayar sesini, bir mikrofonu veya bir ses dosyasını ekleyin.",
-  "Another scene already has {n} sounds: make room there first.": "Başka bir sahnede zaten {n} ses var: önce orada yer açın."
+  "Another scene already has {n} sounds: make room there first.": "Başka bir sahnede zaten {n} ses var: önce orada yer açın.",
+  "Earlier": "Önceki",
+  "Play this video": "Bu videoyu oynat",
+  "Open this picture": "Bu resmi aç",
+  "Pick a window from the list, or click one on the screen": "Listeden bir pencere seçin veya ekranda birine tıklayın",
+  "Click a window on the screen": "Ekranda bir pencereye tıklayın",
+  "Allow more than one Snagster at a time": "Aynı anda birden fazla Snagster'a izin ver",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Kapalı: Snagster'ı yeniden açmak çalışan Snagster'ı öne getirir (ve seçtiğiniz dosyayı orada açar).",
+  "New image": "Yeni resim",
+  "Resize image": "Resmi yeniden boyutlandır",
+  "Canvas size and color": "Tuval boyutu ve rengi",
+  "Export pictures": "Resimleri dışa aktar",
+  "What's new in Snagster": "Snagster'da yenilikler"
  }
 }

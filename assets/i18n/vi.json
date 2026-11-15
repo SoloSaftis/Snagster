@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Một cảnh có tối đa {n} âm thanh.",
   "Sound of this scene": "Âm thanh của cảnh này",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Cảnh này không có âm thanh: hãy thêm âm thanh máy tính, một micro hoặc một tệp âm thanh.",
-  "Another scene already has {n} sounds: make room there first.": "Một cảnh khác đã có {n} âm thanh: hãy bớt chỗ ở đó trước."
+  "Another scene already has {n} sounds: make room there first.": "Một cảnh khác đã có {n} âm thanh: hãy bớt chỗ ở đó trước.",
+  "Earlier": "Trước đây",
+  "Play this video": "Phát video này",
+  "Open this picture": "Mở hình ảnh này",
+  "Pick a window from the list, or click one on the screen": "Chọn một cửa sổ từ danh sách hoặc nhấp vào một cửa sổ trên màn hình",
+  "Click a window on the screen": "Nhấp vào một cửa sổ trên màn hình",
+  "Allow more than one Snagster at a time": "Cho phép chạy nhiều Snagster cùng lúc",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Tắt: mở Snagster lần nữa sẽ đưa Snagster đang chạy lên trước (và mở tệp bạn đã chọn tại đó).",
+  "New image": "Hình ảnh mới",
+  "Resize image": "Đổi kích thước hình ảnh",
+  "Canvas size and color": "Kích thước và màu canvas",
+  "Export pictures": "Xuất hình ảnh",
+  "What's new in Snagster": "Có gì mới trong Snagster"
  }
 }

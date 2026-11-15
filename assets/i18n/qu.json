@@ -946,6 +946,18 @@
   "A scene has at most {n} sounds.": "Huk escenapiqa aswanqa {n} uyarinakunallam kan.",
   "Sound of this scene": "Kay escenap uyarinan",
   "No sound in this scene: add the computer sound, a microphone or a sound file.": "Kay escenapiqa manam uyarina kanchu: computadorap uyarinanta, huk micrófonota utaq huk uyarina archivota yapay.",
-  "Another scene already has {n} sounds: make room there first.": "Huk escenapiqa {n} uyarinakunañam kan: ñawpaqta chaypi kitita kichay."
+  "Another scene already has {n} sounds: make room there first.": "Huk escenapiqa {n} uyarinakunañam kan: ñawpaqta chaypi kitita kichay.",
+  "Earlier": "Ñawpaqpi",
+  "Play this video": "Kay videuta ruwachiy",
+  "Open this picture": "Kay llimp'ita kichay",
+  "Pick a window from the list, or click one on the screen": "Willay ruraymanta ventanata akllay, icha pantallapi ñit'iy",
+  "Click a window on the screen": "Pantallapi ventanata ñit'iy",
+  "Allow more than one Snagster at a time": "Huk kutillapi astawan Snagsterta saqiy",
+  "Off: opening Snagster again brings the running one to the front (and opens the file you chose there).": "Wañuchisqa: Snagsterta musuqmanta kichaptiykiqa, puriqmi ñawpaqman hamun (akllasqayki willakuqtaq chaypi kichakun).",
+  "New image": "Musuq llimp'i",
+  "Resize image": "Llimp'i sayayninta tikray",
+  "Canvas size and color": "Lienzo sayay hinaspa color",
+  "Export pictures": "Llimp'ikunata hawaman apay",
+  "What's new in Snagster": "Snagsterpi imachus musuq"
  }
 }
