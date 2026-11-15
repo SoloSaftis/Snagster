@@ -140,24 +140,22 @@ impl std::fmt::Debug for StreamConfig {
 }
 
 impl StreamConfig {
-    /// Settings for a service: its recommended bitrate, keyframes every 2 s, the size and frame
-    /// rate brought within what it takes, HEVC only where it takes HEVC.
+    /// Settings for a service: its recommended bitrate for the size, frame rate and codec,
+    /// keyframes every 2 s, the size and frame rate brought within what it takes (its largest
+    /// picture, its highest frame rate and its pixel rate: 4K at 60 at most), HEVC only where it
+    /// takes HEVC.
     pub fn for_target(target: StreamTarget, width: u32, height: u32, fps: u32, codec: Codec) -> StreamConfig {
         let p = target.service.preset();
-        let (mut w, mut h) = (width.max(2), height.max(2));
-        if w > p.max_width || h > p.max_height {
-            let s = (p.max_width as f64 / w as f64).min(p.max_height as f64 / h as f64);
-            w = ((w as f64 * s) as u32).max(2);
-            h = ((h as f64 * s) as u32).max(2);
-        }
-        let (w, h) = (w & !1, h & !1);
+        let (w, h) = p.fit_size(width, height);
+        let fps = p.fps_for(w, h, fps);
+        let codec = if p.hevc { codec } else { Codec::H264 };
         StreamConfig {
             width: w,
             height: h,
-            fps: fps.clamp(1, p.max_fps),
-            video_kbps: p.max_video_kbps.min(recommended_kbps(w, h, fps)),
+            fps,
+            video_kbps: p.recommended_kbps(w, h, fps, codec),
             audio_kbps: p.audio_kbps,
-            codec: if p.hevc { codec } else { Codec::H264 },
+            codec,
             hardware: true,
             keyframe_s: p.keyframe_s,
             max_reconnects: 5,
@@ -994,6 +992,21 @@ mod tests {
         let c = StreamConfig::for_target(t, 1281, 721, 30, Codec::Hevc);
         assert_eq!((c.width, c.height, c.codec), (1280, 720, Codec::Hevc));
         assert!(!format!("{c:?}").contains("\"k\""));
+        assert_eq!(c.video_kbps, 6000, "YouTube's 720p HEVC row");
+        // YouTube: 4K60, 50 Mbit/s H.264 or 35 HEVC; 120 fps comes down to 60.
+        let yt = |w, h, fps, codec| StreamConfig::for_target(StreamTarget { service: Service::YouTube, url: String::new(), key: "k".into() }, w, h, fps, codec);
+        let c = yt(3840, 2160, 60, Codec::H264);
+        assert_eq!((c.width, c.height, c.fps, c.video_kbps), (3840, 2160, 60, 50_000));
+        assert_eq!(yt(3840, 2160, 120, Codec::Hevc).fps, 60);
+        assert_eq!(yt(3840, 2160, 60, Codec::Hevc).video_kbps, 35_000);
+        assert_eq!(yt(1920, 1080, 120, Codec::H264).fps, 60);
+        // A custom server: 1080p and 1440p at 120 fps, 4K at 60.
+        let cu = |w, h, fps| StreamConfig::for_target(StreamTarget { service: Service::Custom, url: "rtmp://h/app".into(), key: "k".into() }, w, h, fps, Codec::H264);
+        assert_eq!((cu(1920, 1080, 120).fps, cu(1920, 1080, 120).video_kbps), (120, 24_000));
+        assert_eq!(cu(2560, 1440, 120).fps, 120);
+        let c = cu(3840, 2160, 120);
+        assert_eq!((c.width, c.height, c.fps), (3840, 2160, 60), "4K caps at 60 fps (the pixel rate)");
+        assert_eq!(cu(7680, 4320, 30).height, 2160);
         assert_eq!(recommended_kbps(1920, 1080, 30), 6220);
         assert_eq!(recommended_kbps(16, 16, 1), 500);
     }

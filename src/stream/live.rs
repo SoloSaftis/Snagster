@@ -87,7 +87,10 @@ pub fn plan(o: &LiveOptions, sw: u32, sh: u32) -> StreamConfig {
         h = o.max_height;
     }
     let p = o.target.service.preset();
-    let codec = pick_codec(o.hevc, p.hevc, hevc_encoder_here(o.hardware));
+    // HEVC when asked for, or by itself where the service prefers it at this size (YouTube 4K).
+    let fitted = p.fit_size(w, h).1;
+    let want_hevc = o.hevc || (p.hevc_from_height > 0 && fitted >= p.hevc_from_height);
+    let codec = pick_codec(want_hevc, p.hevc, hevc_encoder_here(o.hardware));
     let mut c = StreamConfig::for_target(o.target.clone(), w, h, o.fps, codec);
     if o.kbps > 0 {
         c.video_kbps = o.kbps.clamp(300, p.max_video_kbps);
@@ -185,6 +188,9 @@ impl Live {
         // A computer that has no HEVC encoder after all streams H.264 rather than not at all.
         if cfg.codec == Codec::Hevc && super::engine::video_config(&cfg).and_then(|v| (encoders.video)(&v)).is_err() {
             cfg.codec = Codec::H264;
+            if o.kbps == 0 {
+                cfg.video_kbps = o.target.service.preset().recommended_kbps(cfg.width, cfg.height, cfg.fps, Codec::H264);
+            }
             notice = Some("This computer couldn't start an HEVC encoder, so the stream is H.264.".to_string());
         }
         let (capture, sound_notice) = sound_for(o.audio, || crate::audio::Capture::start(o.audio, &o.mic));
@@ -499,7 +505,22 @@ mod tests {
         // A small odd source stays its size, made even.
         let c = plan(&opts("rtmp://h/live", "k"), 641, 481);
         assert_eq!((c.width, c.height), (640, 480));
-        assert_eq!(c.video_kbps, crate::stream::engine::recommended_kbps(640, 480, 30));
+        assert_eq!(c.video_kbps, 4000, "the custom table's 480p row");
+        // 4K: a custom server at 60 fps at most; YouTube with HEVC by itself where it can.
+        let mut o = opts("rtmp://h/live", "k");
+        o.fps = 120;
+        let c = plan(&o, 3840, 2160);
+        assert_eq!((c.width, c.height, c.fps, c.codec), (3840, 2160, 60, Codec::H264));
+        assert_eq!(plan(&o, 1920, 1080).fps, 120);
+        o.target.service = Service::YouTube;
+        o.fps = 60;
+        let here = hevc_encoder_here(o.hardware);
+        let c = plan(&o, 3840, 2160);
+        assert_eq!(c.codec, if here { Codec::Hevc } else { Codec::H264 }, "YouTube prefers HEVC at 4K");
+        assert_eq!(c.video_kbps, if here { 35_000 } else { 50_000 });
+        assert_eq!(plan(&o, 2560, 1440).codec, Codec::H264, "below 4K only when asked for");
+        o.max_height = 1080;
+        assert_eq!(plan(&o, 3840, 2160).codec, Codec::H264);
     }
 
     #[test]

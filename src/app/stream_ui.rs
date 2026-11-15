@@ -391,7 +391,7 @@ impl SnagApp {
             let shown = if s.max_height == 0 { t("The source's size").to_string() } else { format!("{}p", s.max_height) };
             egui::ComboBox::from_id_salt("stream-size").selected_text(shown).show_ui(ui, |ui| {
                 ui.selectable_value(&mut s.max_height, 0, t("The source's size"));
-                for h in [2160, 1440, 1080, 720, 480, 360] {
+                for h in crate::stream::services::HEIGHTS {
                     if h <= p.max_height {
                         ui.selectable_value(&mut s.max_height, h, format!("{h}p"));
                     }
@@ -399,8 +399,9 @@ impl SnagApp {
             });
             ui.label(t("Frames per second"));
             egui::ComboBox::from_id_salt("stream-fps").selected_text(s.fps.to_string()).show_ui(ui, |ui| {
-                for f in [24, 25, 30, 50, 60, 120] {
-                    if f <= p.max_fps {
+                // Only the rates the service takes at the chosen size (4K: up to 60).
+                for f in crate::stream::services::FRAME_RATES {
+                    if p.offers(s.max_height, f) {
                         ui.selectable_value(&mut s.fps, f, f.to_string());
                     }
                 }

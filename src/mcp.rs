@@ -324,7 +324,7 @@ fn output_schema(name: &str) -> Option<Value> {
         "app_info" => json!({"type": "object", "properties": {"version": st, "system": st, "architecture": st, "features": {"type": "object"}, "folders": {"type": "object"}}, "required": ["version", "system"]}),
         "studio_scenes" => json!({"type": "object", "properties": {"scenes": {"type": "array", "items": {"type": "object"}}, "current": num, "width": num, "height": num, "fps": num}, "required": ["scenes", "current"]}),
         "library_tag" => json!({"type": "object", "properties": {"path": st, "title": st, "tags": strings}, "required": ["path", "title", "tags"]}),
-        "stream_services" => items(props(json!({"service": st, "name": st, "url": st, "key_help": st, "max_width": num, "max_height": num, "max_fps": num, "max_video_kbps": num, "keyframe_s": num, "audio_kbps": num, "hevc": bo}))),
+        "stream_services" => items(props(json!({"service": st, "name": st, "url": st, "key_help": st, "max_width": num, "max_height": num, "max_fps": num, "max_video_kbps": num, "max_pixel_rate": num, "keyframe_s": num, "audio_kbps": num, "hevc": bo}))),
         "stream_status" => json!({"type": "object", "properties": {"phase": st, "live": bo, "state": st, "uptime_s": num, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num, "service": st, "address": st, "source": st, "width": num, "height": num, "fps": num}, "required": ["phase", "live"]}),
         _ => return None,
     })

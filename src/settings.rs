@@ -729,6 +729,11 @@ impl StreamSettings {
         let mut s = self.clone();
         s.max_height = if s.max_height == 0 { 0 } else { s.max_height.clamp(144, p.max_height) };
         s.fps = s.fps.clamp(1, p.max_fps);
+        // A size chosen: no faster than the service takes at that size (4K at 60 at most).
+        if s.max_height > 0 && !p.offers(s.max_height, s.fps) {
+            let h = s.max_height.min(p.max_height);
+            s.fps = p.fps_for((h * 16 / 9) & !1, h, s.fps);
+        }
         s.kbps = if s.kbps == 0 { 0 } else { s.kbps.clamp(300, p.max_video_kbps) };
         s.keyframe_s = s.keyframe_s.clamp(1, 4);
         s.reconnects = s.reconnects.min(50);
@@ -1293,6 +1298,13 @@ mod tests {
         assert_eq!((s.max_height, s.fps, s.kbps, s.keyframe_s, s.reconnects), (1080, 60, 6000, 4, 50));
         let s = StreamSettings { service: crate::stream::Service::Custom, max_height: 0, kbps: 0, fps: 0, keyframe_s: 0, ..Default::default() }.clamped();
         assert_eq!((s.max_height, s.kbps, s.fps, s.keyframe_s), (0, 0, 1, 1), "0 keeps meaning the source size and the recommended bitrate");
+        let custom = |max_height, fps| StreamSettings { service: crate::stream::Service::Custom, max_height, fps, ..Default::default() }.clamped();
+        assert_eq!(custom(2160, 120).fps, 60, "4K at 60 at most");
+        assert_eq!(custom(1440, 120).fps, 120);
+        assert_eq!(custom(1080, 120).fps, 120);
+        assert_eq!(custom(0, 120).fps, 120, "the source's size: decided when going live");
+        let yt = StreamSettings { service: crate::stream::Service::YouTube, max_height: 2160, fps: 120, kbps: 60_000, ..Default::default() }.clamped();
+        assert_eq!((yt.max_height, yt.fps, yt.kbps), (2160, 60, 51_000));
         assert_eq!(StreamSettings { kbps: 10, ..Default::default() }.clamped().kbps, 300);
     }
 

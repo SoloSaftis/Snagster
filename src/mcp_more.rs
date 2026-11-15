@@ -934,7 +934,7 @@ impl Workspace {
                         json!({
                             "service": format!("{:?}", p.service).to_lowercase(), "name": p.name, "url": p.url, "key_help": p.key_help,
                             "max_width": p.max_width, "max_height": p.max_height, "max_fps": p.max_fps, "max_video_kbps": p.max_video_kbps,
-                            "keyframe_s": p.keyframe_s, "audio_kbps": p.audio_kbps, "hevc": p.hevc
+                            "max_pixel_rate": p.max_pixel_rate, "keyframe_s": p.keyframe_s, "audio_kbps": p.audio_kbps, "hevc": p.hevc
                         })
                     })
                     .collect();
