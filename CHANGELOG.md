@@ -2,6 +2,19 @@
 
 What changed for people using Snagster, per version.
 
+## 0.10.3 — 2026-11-15
+
+Fixed:
+
+- **Print Screen while Snagster is in the tray**: the capture opened full screen but stayed
+  invisible, so the screen seemed frozen. It now shows, and cancelling puts Snagster back in the
+  tray (or minimized) where it was.
+- **"Couldn't move the old version aside: Access is denied (os error 5)"** when updating: an
+  update started from a copy still running under its old name now works.
+- **The Linux download runs on Ubuntu 24.04, Debian 13 and other current systems**: 0.10.1 and
+  0.10.2 were built on Ubuntu 26.04 and wouldn't start on systems older than that. Linux is now
+  built on Ubuntu 24.04 (needs glibc 2.39 or newer), checked in every build.
+
 ## 0.10.2 — 2026-11-15
 
 New:

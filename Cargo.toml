@@ -1,6 +1,6 @@
 [package]
 name = "snagster"
-version = "0.10.2"
+version = "0.10.3"
 edition = "2024"
 # let-chains and other newer Rust: older compilers stop with a clear message.
 rust-version = "1.88"

@@ -66,6 +66,15 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.10.3" date="2026-11-15">
+      <description>
+        <ul>
+          <li>Print Screen works while Snagster is in the tray</li>
+          <li>Updating works when an older copy is still running</li>
+          <li>The Linux download runs on Ubuntu 24.04, Debian 13 and other current systems</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.10.2" date="2026-11-15">
       <description>
         <ul>
