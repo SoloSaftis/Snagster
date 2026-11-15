@@ -1453,6 +1453,7 @@ impl SurfaceShared {
         self.grab_us.fetch_add(began.elapsed().as_micros() as u64, Ordering::Relaxed);
     }
 
+    #[cfg(windows)]
     fn set_error(&self, e: String) {
         *self.error.lock().unwrap_or_else(|p| p.into_inner()) = Some(e);
     }
@@ -3161,6 +3162,9 @@ mod tests {
     #[test]
     fn shared_memory_segments_are_whole_pages_big_enough_for_the_picture() {
         assert_eq!(shm_segment_bytes(1920, 1080), 1920 * 1080 * 4);
+        // A 4K screen: 33 MB, far below Linux's default SHMMAX (unlimited since 3.16) and
+        // SHMALL; a system that refuses it gets plain GetImage copies instead.
+        assert_eq!(shm_segment_bytes(3840, 2160), 33_177_600);
         assert_eq!(shm_segment_bytes(1, 1), 4096);
         assert_eq!(shm_segment_bytes(0, 0), 4096, "never empty");
         let odd = shm_segment_bytes(1279, 719);
@@ -3366,7 +3370,7 @@ mod tests {
         let mut src = vec![0u8; (sw * sh * 4) as usize];
         crate::encode::test_picture(&mut src, sw, sh, 1);
         let px = Pixels { data: &src, width: sw, height: sh, stride: sw as usize * 4, bgra: true };
-        for size in [(1728, 1080), (2304, 1440), (2560, 1600)] {
+        for size in [(1728, 1080), (2304, 1440), (2560, 1600), (3840, 2160)] {
             let mut out = Frame::default();
             fit_into(&px, &mut out, size);
             let runs = 100;

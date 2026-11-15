@@ -1173,7 +1173,14 @@ mod tests {
     #[test]
     #[ignore]
     fn conversion_speed() {
-        let (w, h) = (1920u32, 1080u32);
+        // 1080p and 4K: the processor's share of every picture on the paths without zero-copy
+        // (Linux, software encoders, test pictures).
+        for (w, h) in [(1920u32, 1080u32), (3840, 2160)] {
+            conversion_speed_at(w, h);
+        }
+    }
+
+    fn conversion_speed_at(w: u32, h: u32) {
         let mut img = vec![0u8; (w * h * 4) as usize];
         test_picture(&mut img, w, h, 3);
         let mut n = Vec::new();
@@ -1190,7 +1197,7 @@ mod tests {
             rgba_to_i420(std::hint::black_box(&img), w, h, &mut y, &mut u, &mut v);
         }
         let i4 = t.elapsed().as_secs_f64() * 1000.0 / runs as f64;
-        println!("1920x1080 RGBA to NV12: {nv:.2} ms, to I420: {i4:.2} ms");
+        println!("{w}x{h} RGBA to NV12: {nv:.2} ms, to I420: {i4:.2} ms");
     }
 
     #[test]
