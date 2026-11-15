@@ -143,7 +143,9 @@ pub struct Encoders {
     /// These are the system's encoders, so a zero-copy source may open its own on its device
     /// (`with_surfaces`); fakes in the tests take pictures from memory.
     pub zero_copy: bool,
-    /// The encoder the person chose ("" automatic).
+    /// The encoder the person chose ("" automatic), for the zero-copy encoders opened on the
+    /// screen copy's device (memory encoders get it inside `video`).
+    #[cfg(zero_copy)]
     pub pick: String,
     /// Set by `video` when the pick couldn't start and another was used (for the status line).
     pub note: Arc<Mutex<Option<String>>>,
@@ -170,6 +172,7 @@ impl Encoders {
             audio: Arc::new(crate::encode::open_audio),
             fallback: Some(Arc::new(crate::encode::open_video_avoiding)),
             zero_copy: true,
+            #[cfg(zero_copy)]
             pick: pick.trim().to_string(),
             note,
         }

@@ -406,7 +406,9 @@ pub fn open_video_picked(cfg: &VideoConfig, pick: &str) -> Result<(Box<dyn Video
     }
 }
 
-/// Whether `pick` names a software encoder of this computer (and no graphics-chip one).
+/// Whether `pick` names a software encoder of this computer (and no graphics-chip one). Only
+/// Windows recording needs it (Media Foundation's file writer picks the encoder itself).
+#[cfg(any(windows, test))]
 pub fn pick_is_software(pick: &str) -> bool {
     let pick = pick.trim();
     if pick.is_empty() {

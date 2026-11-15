@@ -243,6 +243,7 @@ pub(crate) fn fakes(gop: u64, pad: usize) -> Encoders {
         }),
         audio: Arc::new(|_| Ok(Box::new(FakeAudio::default()) as Box<dyn AudioEncoder>)),
         fallback: None,
+        #[cfg(zero_copy)]
         pick: String::new(),
         note: Arc::default(),
     }
@@ -588,6 +589,7 @@ fn bgra_sources_are_turned_into_rgba() {
         }),
         audio: fakes(30, 0).audio,
         fallback: None,
+        #[cfg(zero_copy)]
         pick: String::new(),
         note: Arc::default(),
     };
