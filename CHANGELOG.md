@@ -6,6 +6,12 @@ What changed for people using Snagster, per version. Developer details are in `D
 
 New:
 
+- **Multistreaming**: go live on several services at once (say Twitch and YouTube) from one
+  encode. Settings > Streaming > "Also stream to" takes up to four more services, each with its
+  own server and stream key (kept as safely as the main key). The picture is sent at the size,
+  frame rate and bitrate every chosen service takes. Each service connects, reconnects and drops
+  frames on its own, so one slow or failing service doesn't affect the others, and the Stream tab
+  shows how each one is doing. AI apps can multistream too (`stream_start` with `also`).
 - **Live streaming** to Twitch, YouTube, Kick, Facebook Live, Restream or any RTMP/RTMPS server:
   the whole screen, a window (followed when it moves), an area or the Studio scene. A Stream tab
   in the ribbon and in the capture panel, a red LIVE badge with bitrate, dropped frames and

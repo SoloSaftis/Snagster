@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster bir ekran göremiyor: yalnızca uzak bir kabuk değil, oturum açılmış bir masaüstü gerekiyor. Mac'in ekranında (veya Ekran Paylaşma ile) oturum açın ve Snagster'ı orada başlatın.",
   "Open Screen Recording settings": "Ekran Kaydı ayarlarını aç",
   "Screen Recording permission": "Ekran Kaydı izni",
-  "Close": "Kapat"
+  "Close": "Kapat",
+  "Also stream to": "Şuralarda da yayınla",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Aynı görüntü tek seferde kodlanır ve aynı anda her hizmete gider. Hepsinin kabul ettiği boyut, kare hızı ve bit hızında gönderilir.",
+  "Stream to this service too": "Bu hizmette de yayınla",
+  "Remove this service and its saved key": "Bu hizmeti ve kayıtlı anahtarını kaldır",
+  "Add a service": "Hizmet ekle"
  }
 }

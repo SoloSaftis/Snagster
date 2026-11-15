@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster ئېكراننى كۆرەلمەيدۇ: ئۇنىڭغا يىراقتىكى shell لا ئەمەس، كىرگەن ئۈستەل يۈزى كېرەك. Mac نىڭ ئېكرانىدا (ياكى ئېكران ئورتاقلىشىش ئارقىلىق) كىرىپ، Snagster نى شۇ يەردە قوزغىتىڭ.",
   "Open Screen Recording settings": "ئېكران خاتىرىلەش تەڭشەكلىرىنى ئېچىش",
   "Screen Recording permission": "ئېكران خاتىرىلەش ئىجازىتى",
-  "Close": "تاقاش"
+  "Close": "تاقاش",
+  "Also stream to": "بۇلارغىمۇ ئېقىتىش",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "ئوخشاش رەسىم بىرلا ۋاقىتتا ھەممە مۇلازىمەتكە بارىدۇ ۋە پەقەت بىر قېتىملا كودلىنىدۇ. ئۇ ھەممىسى قوبۇل قىلىدىغان چوڭلۇق، كادىر سۈرئىتى ۋە بىت سۈرئىتىدە ئەۋەتىلىدۇ.",
+  "Stream to this service too": "بۇ مۇلازىمەتكىمۇ ئېقىتىش",
+  "Remove this service and its saved key": "بۇ مۇلازىمەت ۋە ئۇنىڭ ساقلانغان ئاچقۇچىنى ئۆچۈرۈش",
+  "Add a service": "مۇلازىمەت قوشۇش"
  }
 }

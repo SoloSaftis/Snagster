@@ -700,6 +700,31 @@ pub struct StreamSettings {
     pub cursor: bool,
     /// Also write what is streamed to an FLV file in the recordings folder.
     pub record_copy: bool,
+    /// More services streamed to at the same time, from the same encode (multistreaming).
+    /// Their keys are kept like the main one (`keystore::load_for(id)`).
+    pub also: Vec<ExtraService>,
+}
+
+/// At most this many services besides the main one.
+pub const MAX_ALSO: usize = 4;
+
+/// A service streamed to besides the main one.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ExtraService {
+    /// Names its stream key in the key store (1 and up, never reused while in the list).
+    pub id: u32,
+    pub service: crate::stream::Service,
+    /// The server address; empty: the service's usual one.
+    pub url: String,
+    /// Streamed to when going live (off: kept in the list for later).
+    pub on: bool,
+}
+
+impl Default for ExtraService {
+    fn default() -> Self {
+        ExtraService { id: 0, service: crate::stream::Service::YouTube, url: String::new(), on: true }
+    }
 }
 
 impl Default for StreamSettings {
@@ -718,6 +743,7 @@ impl Default for StreamSettings {
             reconnects: 5,
             cursor: true,
             record_copy: false,
+            also: Vec::new(),
         }
     }
 }
@@ -737,7 +763,30 @@ impl StreamSettings {
         s.kbps = if s.kbps == 0 { 0 } else { s.kbps.clamp(300, p.max_video_kbps) };
         s.keyframe_s = s.keyframe_s.clamp(1, 4);
         s.reconnects = s.reconnects.min(50);
+        s.also.truncate(MAX_ALSO);
+        // Every extra service a key name of its own (a hand-edited file may repeat one or leave it 0).
+        let mut seen = Vec::new();
+        for i in 0..s.also.len() {
+            if s.also[i].id == 0 || seen.contains(&s.also[i].id) {
+                s.also[i].id = s.free_id_besides(&seen);
+            }
+            seen.push(s.also[i].id);
+        }
         s
+    }
+
+    /// An id for a new extra service that none in the list has.
+    pub fn new_also_id(&self) -> u32 {
+        self.free_id_besides(&[])
+    }
+
+    fn free_id_besides(&self, taken: &[u32]) -> u32 {
+        (1..).find(|id| !taken.contains(id) && !self.also.iter().any(|a| a.id == *id)).unwrap_or(1)
+    }
+
+    /// The extra services that are on.
+    pub fn also_on(&self) -> impl Iterator<Item = &ExtraService> {
+        self.also.iter().filter(|a| a.on)
     }
 }
 
@@ -1129,6 +1178,29 @@ mod tests {
     }
 
     #[test]
+    fn extra_stream_services_get_ids_of_their_own_and_old_files_load_without_them() {
+        let mut s = StreamSettings::default();
+        assert!(s.also.is_empty());
+        let x = |id| ExtraService { id, ..Default::default() };
+        s.also = vec![x(0), x(2), x(2), x(5), x(1), x(9)];
+        let c = s.clamped();
+        assert_eq!(c.also.len(), MAX_ALSO);
+        let ids: Vec<u32> = c.also.iter().map(|a| a.id).collect();
+        assert!(ids.iter().all(|&i| i > 0), "{ids:?}");
+        assert_eq!(ids.iter().collect::<HashSet<_>>().len(), ids.len(), "no id twice: {ids:?}");
+        assert_eq!(ids[1], 2, "ids that were fine are kept (their keys are saved under them)");
+        let mut c = c;
+        assert!(!c.also.iter().any(|a| a.id == c.new_also_id()));
+        c.also[1].on = false;
+        assert_eq!(c.also_on().count(), MAX_ALSO - 1);
+        // Settings saved before multistreaming have no "also".
+        let old: StreamSettings = serde_json::from_str(r#"{"fps":60}"#).unwrap();
+        assert_eq!((old.fps, old.also.len()), (60, 0));
+        let back: StreamSettings = serde_json::from_str(&serde_json::to_string(&c).unwrap()).unwrap();
+        assert_eq!(back, c);
+    }
+
+    #[test]
     fn defaults_are_sensible() {
         let s = Settings::default();
         assert!(s.after_show_editor && s.after_library);
@@ -1278,6 +1350,7 @@ mod tests {
             reconnects: 3,
             cursor: false,
             record_copy: true,
+            also: vec![ExtraService { id: 1, service: crate::stream::Service::Kick, url: String::new(), on: true }],
         };
         let text = serde_json::to_string_pretty(&s).unwrap();
         assert_eq!(Settings::from_saved(Some(&text)), s);

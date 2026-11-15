@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster nie widzi ekranu: potrzebuje pulpitu z zalogowanym użytkownikiem, a nie tylko zdalnej powłoki. Zaloguj się na ekranie Maca (lub przez Udostępnianie ekranu) i uruchom tam Snagster.",
   "Open Screen Recording settings": "Otwórz ustawienia nagrywania ekranu",
   "Screen Recording permission": "Uprawnienie do nagrywania ekranu",
-  "Close": "Zamknij"
+  "Close": "Zamknij",
+  "Also stream to": "Transmituj także do",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Ten sam obraz trafia do wszystkich serwisów jednocześnie i jest kodowany tylko raz. Jest wysyłany w rozmiarze, liczbie klatek na sekundę i przepływności, które przyjmują wszystkie.",
+  "Stream to this service too": "Transmituj także do tego serwisu",
+  "Remove this service and its saved key": "Usuń ten serwis i jego zapisany klucz",
+  "Add a service": "Dodaj serwis"
  }
 }

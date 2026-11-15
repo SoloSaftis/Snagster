@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Ní fheiceann Snagster scáileán: teastaíonn deasc a bhfuil duine logáilte isteach air, ní blaosc cianda amháin. Logáil isteach ar scáileán an Mac (nó le Comhroinnt Scáileáin) agus tosaigh Snagster ansin.",
   "Open Screen Recording settings": "Oscail socruithe Taifeadta Scáileáin",
   "Screen Recording permission": "Cead Taifeadta Scáileáin",
-  "Close": "Dún"
+  "Close": "Dún",
+  "Also stream to": "Sruthaigh chuig na seirbhísí seo freisin",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Téann an pictiúr céanna chuig gach seirbhís ag an am céanna, ionchódaithe uair amháin. Seoltar é ag an méid, an ráta fráma agus an ráta giotán a ghlacann siad go léir.",
+  "Stream to this service too": "Sruthaigh chuig an tseirbhís seo freisin",
+  "Remove this service and its saved key": "Bain an tseirbhís seo agus a heochair shábháilte",
+  "Add a service": "Cuir seirbhís leis"
  }
 }

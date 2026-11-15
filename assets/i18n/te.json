@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster‌కు ఏ స్క్రీనూ కనిపించడం లేదు: దీనికి లాగిన్ అయిన డెస్క్‌టాప్ కావాలి, రిమోట్ షెల్ ఒక్కటే చాలదు. Mac స్క్రీన్‌పై (లేదా స్క్రీన్ షేరింగ్‌తో) లాగిన్ అయి అక్కడ Snagster‌ను ప్రారంభించండి.",
   "Open Screen Recording settings": "స్క్రీన్ రికార్డింగ్ సెట్టింగ్‌లను తెరువు",
   "Screen Recording permission": "స్క్రీన్ రికార్డింగ్ అనుమతి",
-  "Close": "మూసివేయి"
+  "Close": "మూసివేయి",
+  "Also stream to": "వీటికి కూడా స్ట్రీమ్ చేయండి",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "ఒకే చిత్రం ఒకేసారి ప్రతి సేవకు వెళ్తుంది, ఒక్కసారి మాత్రమే ఎన్‌కోడ్ అవుతుంది. అన్ని సేవలూ స్వీకరించే పరిమాణం, ఫ్రేమ్ రేట్ మరియు బిట్‌రేట్‌లో దీన్ని పంపుతారు.",
+  "Stream to this service too": "ఈ సేవకు కూడా స్ట్రీమ్ చేయండి",
+  "Remove this service and its saved key": "ఈ సేవను మరియు దాని సేవ్ చేసిన కీని తీసివేయండి",
+  "Add a service": "సేవను జోడించండి"
  }
 }

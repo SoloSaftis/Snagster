@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster kan nie 'n skerm sien nie: dit het 'n aangemelde lessenaar nodig, nie net 'n afgeleë dop nie. Meld aan op die Mac se skerm (of met Skermdeling) en begin Snagster daar.",
   "Open Screen Recording settings": "Maak Skermopname-instellings oop",
   "Screen Recording permission": "Skermopname-toestemming",
-  "Close": "Maak toe"
+  "Close": "Maak toe",
+  "Also stream to": "Stroom ook na",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Dieselfde beeld gaan gelyktydig na elke diens en word net een keer geënkodeer. Dit word gestuur teen die grootte, raamtempo en bitsnelheid wat almal aanvaar.",
+  "Stream to this service too": "Stroom ook na hierdie diens",
+  "Remove this service and its saved key": "Verwyder hierdie diens en sy gestoorde sleutel",
+  "Add a service": "Voeg ’n diens by"
  }
 }

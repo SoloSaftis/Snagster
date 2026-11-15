@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster tidak dapat melihat skrin: ia memerlukan desktop yang telah dilog masuk, bukan hanya shell jauh. Log masuk pada skrin Mac (atau dengan Perkongsian Skrin) dan mulakan Snagster di sana.",
   "Open Screen Recording settings": "Buka seting Rakaman Skrin",
   "Screen Recording permission": "Kebenaran Rakaman Skrin",
-  "Close": "Tutup"
+  "Close": "Tutup",
+  "Also stream to": "Strim juga ke",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Gambar yang sama dihantar ke setiap perkhidmatan serentak dan dikodkan sekali sahaja. Ia dihantar pada saiz, kadar bingkai dan kadar bit yang diterima oleh semuanya.",
+  "Stream to this service too": "Strim ke perkhidmatan ini juga",
+  "Remove this service and its saved key": "Alih keluar perkhidmatan ini dan kunci yang disimpan",
+  "Add a service": "Tambah perkhidmatan"
  }
 }

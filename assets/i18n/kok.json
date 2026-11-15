@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster क स्क्रीन दिसना: ताका लॉग-इन केल्लो डेस्कटॉप जाय, फकत रिमोट शेल न्हय. Mac च्या स्क्रीनाचेर (वा स्क्रीन शेअरिंगान) लॉग-इन करात आनी थंयच Snagster सुरू करात.",
   "Open Screen Recording settings": "स्क्रीन रेकॉर्डिंग सेटिंग्स उगडात",
   "Screen Recording permission": "स्क्रीन रेकॉर्डिंगाची परवानगी",
-  "Close": "बंद करात"
+  "Close": "बंद करात",
+  "Also stream to": "हांकां लेगीत स्ट्रीम करात",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "एकूच चित्र एकाच वेळार दर एका सेवेक वता आनी फकत एकदांच एनकोड जाता. सगळ्या सेवा घेतात त्या आकारान, फ्रेम रेटान आनी बिटरेटान तें धाडटात.",
+  "Stream to this service too": "ह्या सेवेकूय स्ट्रीम करात",
+  "Remove this service and its saved key": "ही सेवा आनी तिची सांबाळिल्ली की काडून उडयात",
+  "Add a service": "सेवा जोडात"
  }
 }

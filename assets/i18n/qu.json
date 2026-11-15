@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster-qa manam pantallata rikunchu: yaykusqa escritoriota munan, manam karumanta shell-llatachu. Mac-pa pantallanpi (utaq Pantalla rakinakuywan) yaykuy, hinaspa chaypi Snagster-ta qallariy.",
   "Open Screen Recording settings": "Pantalla grabaypa churanakuyninta kichay",
   "Screen Recording permission": "Pantalla grabanapaq permiso",
-  "Close": "Wichq'ay"
+  "Close": "Wichq'ay",
+  "Also stream to": "Kaykunamanpas stream ruray",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Kikin siq’isqa llapan service-kunaman huk kutillapi rin, huk kutillam encodekun. Llapanku chaskisqan hatun kayninwan, frame rate-ninwan, bitrate-ninwan ima kachakun.",
+  "Stream to this service too": "Kay service-manpas stream ruray",
+  "Remove this service and its saved key": "Kay service-ta waqaychasqa llaventinta qichuy",
+  "Add a service": "Huk service-ta yapay"
  }
 }

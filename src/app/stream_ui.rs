@@ -29,11 +29,20 @@ pub(crate) struct StreamUi {
     pub encoders: Option<Encoders>,
     /// The stream shows the Studio window's scene: Studio stays open while it runs.
     pub uses_studio: bool,
+    /// The extra services' keys by id (read from the key store when first needed), and what
+    /// their key boxes show.
+    also_keys: std::collections::HashMap<u32, String>,
+    also_edit: std::collections::HashMap<u32, String>,
 }
 
 /// A service's name as shown (only "Custom server" is ours to translate).
 pub(crate) fn service_name(s: Service) -> &'static str {
     if s == Service::Custom { t("Custom server") } else { s.preset().name }
+}
+
+/// "Twitch" or, when multistreaming, "Twitch + YouTube + Kick".
+pub(crate) fn services_named(main: Service, also: impl Iterator<Item = Service>) -> String {
+    std::iter::once(main).chain(also).map(service_name).collect::<Vec<_>>().join(" + ")
 }
 
 /// `h:mm:ss` or `m:ss`.
@@ -56,6 +65,17 @@ pub(crate) fn state_label(snap: &Snapshot) -> &'static str {
         (Phase::Running, Some(State::Reconnecting)) => t("Reconnecting..."),
         (Phase::Running, Some(State::Failed)) => t("The connection failed"),
         (Phase::Stopping, _) | (Phase::Running, Some(State::Stopping | State::Stopped)) => t("Stopping..."),
+    }
+}
+
+/// One service's state in a word for the band, and whether it is a warning.
+pub(crate) fn output_word(s: State) -> (&'static str, bool) {
+    match s {
+        State::Connecting => (t("Connecting..."), false),
+        State::Live => (t("Live"), false),
+        State::Reconnecting => (t("Reconnecting..."), true),
+        State::Stopping | State::Stopped => (t("Stopping..."), false),
+        State::Failed => (t("The connection failed"), true),
     }
 }
 
@@ -99,6 +119,31 @@ impl SnagApp {
         self.x.stream.key = Some(key);
     }
 
+    /// An extra service's stream key (from the key store the first time).
+    pub(crate) fn also_key(&mut self, id: u32) -> String {
+        let persist = self.persist;
+        self.x.stream.also_keys.entry(id).or_insert_with(|| if persist { keystore::load_for(id).unwrap_or_default() } else { String::new() }).clone()
+    }
+
+    /// Keep an extra service's key (in memory only during check runs).
+    pub(crate) fn set_also_key(&mut self, id: u32, key: &str) {
+        let key = key.trim().to_string();
+        if self.persist
+            && let Err(e) = keystore::save_for(id, &key)
+        {
+            self.status = mask(&e, &key);
+        }
+        self.x.stream.also_keys.insert(id, key);
+    }
+
+    /// The options for going live now: the settings, the main key and the extra services' keys.
+    pub(crate) fn live_options(&mut self) -> LiveOptions {
+        let key = self.stream_key();
+        let ids: Vec<u32> = self.settings.stream.also_on().map(|a| a.id).collect();
+        let keys: std::collections::HashMap<u32, String> = ids.into_iter().map(|id| (id, self.also_key(id))).collect();
+        LiveOptions::from_settings(&self.settings, &key, |id| keys.get(&id).cloned().unwrap_or_default())
+    }
+
     /// Where the stream goes, with the key (for checks; never shown).
     fn stream_target(&mut self) -> StreamTarget {
         let key = self.stream_key();
@@ -118,6 +163,15 @@ impl SnagApp {
             self.settings_tab = SettingsTab::Streaming;
             return;
         }
+        for t in self.live_options().also {
+            if let Err(e) = t.endpoint() {
+                let e = format!("{}: {}", service_name(t.service), mask(&e, &t.key));
+                self.status = tf("Can't go live yet: {e}", &[("e", &e)]);
+                self.settings_open = true;
+                self.settings_tab = SettingsTab::Streaming;
+                return;
+            }
+        }
         if let Source::Area(_, _, w, h) = self.settings.stream.source
             && (w < 16 || h < 16)
         {
@@ -133,8 +187,8 @@ impl SnagApp {
 
     /// Start at once (after the confirmation).
     pub(crate) fn start_stream_now(&mut self, ctx: &egui::Context) {
-        let key = self.stream_key();
-        let o = LiveOptions::from_settings(&self.settings, &key);
+        let o = self.live_options();
+        let keys: Vec<String> = std::iter::once(&o.target).chain(&o.also).map(|t| t.key.clone()).collect();
         self.x.stream.uses_studio = false;
         let studio = match (&o.source, &self.x.studio) {
             (Source::Studio, Some(s)) => {
@@ -145,10 +199,10 @@ impl SnagApp {
             _ => None,
         };
         let enc = self.x.stream.encoders.clone().unwrap_or_else(Encoders::system);
-        let service = service_name(o.target.service);
+        let service = services_named(o.target.service, o.also.iter().map(|t| t.service));
         match live::begin(o, studio, enc) {
-            Ok(()) => self.status = tf("Going live on {service}...", &[("service", service)]),
-            Err(e) => self.status = mask(&e, &key),
+            Ok(()) => self.status = tf("Going live on {service}...", &[("service", &service)]),
+            Err(e) => self.status = keys.iter().fold(e, |e, k| mask(&e, k)),
         }
         ctx.request_repaint();
     }
@@ -236,7 +290,8 @@ impl SnagApp {
             return;
         }
         let (mut go, mut cancel) = (false, false);
-        let service = service_name(self.settings.stream.service);
+        let st = &self.settings.stream;
+        let service = services_named(st.service, st.also_on().map(|a| a.service));
         let source = t(self.settings.stream.source.label());
         egui::Window::new(t("Go live?"))
             .id(egui::Id::unique("stream-confirm"))
@@ -245,7 +300,7 @@ impl SnagApp {
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
             .show(ctx, |ui| {
                 ui.set_max_width(360.0);
-                ui.label(tf("Everyone watching on {service} will see this from now on: {source}.", &[("service", service), ("source", source)]));
+                ui.label(tf("Everyone watching on {service} will see this from now on: {source}.", &[("service", &service), ("source", source)]));
                 ui.label(RichText::new(t("Snagster asks once each time it starts.")).color(TEXT_DIM));
                 ui.add_space(6.0);
                 ui.horizontal(|ui| {
@@ -388,6 +443,8 @@ impl SnagApp {
         }
         ui.label(RichText::new(t(keystore::how_kept())).color(TEXT_DIM));
         ui.add_space(6.0);
+        self.also_section(ui);
+        ui.add_space(6.0);
         let s = &mut self.settings.stream;
         let p = s.service.preset();
         ui.label(RichText::new(t("Picture")).strong());
@@ -447,6 +504,70 @@ impl SnagApp {
         *s = s.clamped();
     }
 
+    /// "Also stream to": more services fed from the same encode, each with its own server and
+    /// key (kept like the main key).
+    fn also_section(&mut self, ui: &mut egui::Ui) {
+        ui.label(RichText::new(t("Also stream to")).strong());
+        ui.label(RichText::new(t("The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.")).color(TEXT_DIM));
+        let mut remove = None;
+        let n = self.settings.stream.also.len();
+        for i in 0..n {
+            let a = self.settings.stream.also[i].clone();
+            ui.push_id(("also", a.id), |ui| {
+                ui.horizontal(|ui| {
+                    let mut on = a.on;
+                    if ui.checkbox(&mut on, "").on_hover_text(t("Stream to this service too")).changed() {
+                        self.settings.stream.also[i].on = on;
+                    }
+                    egui::ComboBox::from_id_salt("also-service").width(150.0).selected_text(service_name(a.service)).show_ui(ui, |ui| {
+                        for p in PRESETS {
+                            if ui.selectable_label(a.service == p.service, service_name(p.service)).clicked() && a.service != p.service {
+                                self.settings.stream.also[i].service = p.service;
+                                self.settings.stream.also[i].url.clear();
+                            }
+                        }
+                    });
+                    let p = self.settings.stream.also[i].service.preset();
+                    let mut u = if a.url.is_empty() { p.url.to_string() } else { a.url.clone() };
+                    if ui.add(egui::TextEdit::singleline(&mut u).hint_text("rtmp://... / rtmps://...").desired_width(200.0)).on_hover_text(t("Server")).changed() {
+                        self.settings.stream.also[i].url = if u.trim() == p.url { String::new() } else { u };
+                    }
+                    if !self.x.stream.also_edit.contains_key(&a.id) {
+                        let k = self.also_key(a.id);
+                        self.x.stream.also_edit.insert(a.id, k);
+                    }
+                    let show = self.x.stream.show_key;
+                    let mut save = None;
+                    if let Some(edit) = self.x.stream.also_edit.get_mut(&a.id) {
+                        let r = ui.add(egui::TextEdit::singleline(edit).password(!show).desired_width(150.0).hint_text(t("Stream key")));
+                        if r.lost_focus() || (r.changed() && edit.trim().is_empty()) {
+                            save = Some(edit.clone());
+                        }
+                    }
+                    if let Some(k) = save
+                        && Some(k.trim()) != self.x.stream.also_keys.get(&a.id).map(String::as_str)
+                    {
+                        self.set_also_key(a.id, &k);
+                    }
+                    if look::icon_button(ui, ph::TRASH, t("Remove this service and its saved key")).clicked() {
+                        remove = Some(i);
+                    }
+                });
+            });
+        }
+        if let Some(i) = remove {
+            let a = self.settings.stream.also.remove(i);
+            self.set_also_key(a.id, "");
+            self.x.stream.also_edit.remove(&a.id);
+        }
+        if self.settings.stream.also.len() < crate::settings::MAX_ALSO && ui.button(format!("{} {}", ph::PLUS, t("Add a service"))).clicked() {
+            let id = self.settings.stream.new_also_id();
+            // A different service from the main one to start with.
+            let service = if self.settings.stream.service == Service::YouTube { Service::Twitch } else { Service::YouTube };
+            self.settings.stream.also.push(crate::settings::ExtraService { id, service, url: String::new(), on: true });
+        }
+    }
+
     /// The live numbers for the band.
     fn stream_status(&mut self, ui: &mut egui::Ui) {
         let snap = self.x.stream.snap.clone();
@@ -462,13 +583,24 @@ impl SnagApp {
                     ui.label(RichText::new(tf("{w} x {h}, {fps} fps, {rate}", &[("w", &i.width.to_string()), ("h", &i.height.to_string()), ("fps", &format!("{:.0}", s.fps)), ("rate", &rate(s.bitrate_bps))])).size(11.5).color(TEXT_DIM));
                     let enc = s.video_encoder.as_ref().map(|e| format!("{} ({})", e.name, if e.hardware { t("graphics chip") } else { t("processor") })).unwrap_or_default();
                     ui.label(RichText::new(tf("{dropped} dropped frames · {enc}", &[("dropped", &s.frames_dropped.to_string()), ("enc", &enc)])).size(11.5).color(TEXT_DIM));
-                    if let Some(e) = s.error.as_ref().or(s.notice.as_ref()) {
+                    if s.outputs.len() > 1 {
+                        // One short line per service when multistreaming.
+                        for o in &s.outputs {
+                            let (word, warn) = output_word(o.state);
+                            let line = format!("{}: {} · {}", o.service, word, rate(o.bitrate_bps));
+                            let r = ui.label(RichText::new(line).size(11.5).color(if warn { Color32::from_rgb(240, 160, 110) } else { TEXT_DIM }));
+                            if let Some(e) = &o.error {
+                                r.on_hover_text(e);
+                            }
+                        }
+                    } else if let Some(e) = s.error.as_ref().or(s.notice.as_ref()) {
                         ui.label(RichText::new(e).size(11.5).color(Color32::from_rgb(240, 160, 110)));
                     }
                 }
                 _ => {
                     let target = self.settings.stream.clone();
-                    let where_to = if self.x.stream.snap.phase == Phase::Idle { tf("To {service}, {source}", &[("service", service_name(target.service)), ("source", t(target.source.label()))]) } else { String::new() };
+                    let names = services_named(target.service, target.also_on().map(|a| a.service));
+                    let where_to = if self.x.stream.snap.phase == Phase::Idle { tf("To {service}, {source}", &[("service", &names), ("source", t(target.source.label()))]) } else { String::new() };
                     ui.label(RichText::new(where_to).size(11.5).color(TEXT_DIM));
                 }
             }
@@ -487,7 +619,7 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
             }
         } else {
             let st = &app.settings.stream;
-            let tip = tf("Start streaming to {service}: {source}, {fps} fps", &[("service", service_name(st.service)), ("source", t(st.source.label())), ("fps", &st.fps.to_string())]);
+            let tip = tf("Start streaming to {service}: {source}, {fps} fps", &[("service", &services_named(st.service, st.also_on().map(|a| a.service))), ("source", t(st.source.label())), ("fps", &st.fps.to_string())]);
             if look::big_tool(ui, ph::BROADCAST, t("Go live"), &tip, idle, false).clicked() {
                 app.go_live(ctx);
             }
@@ -583,6 +715,35 @@ mod tests {
         s.phase = Phase::Stopping;
         assert_eq!(state_label(&s), "Stopping...");
         assert!(!s.on_air());
+    }
+
+    #[test]
+    fn several_services_are_named_together() {
+        assert_eq!(services_named(Service::Twitch, std::iter::empty()), "Twitch");
+        assert_eq!(services_named(Service::Twitch, [Service::YouTube, Service::Custom].into_iter()), "Twitch + YouTube + Custom server");
+        assert_eq!(output_word(State::Failed), ("The connection failed", true));
+        assert_eq!(output_word(State::Live), ("Live", false));
+    }
+
+    #[test]
+    fn an_extra_service_without_a_key_stops_going_live_and_opens_the_settings() {
+        let ctx = egui::Context::default();
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.set_stream_key("live_abc");
+        let id = a.settings.stream.new_also_id();
+        a.settings.stream.also.push(crate::settings::ExtraService { id, service: Service::YouTube, url: String::new(), on: true });
+        a.go_live(&ctx);
+        assert!(a.status.starts_with("Can't go live yet: YouTube: "), "{}", a.status);
+        assert!(a.settings_open && !a.x.stream.confirm_open);
+        // Its key, kept apart from the main one (in memory in check runs).
+        a.set_also_key(id, " yt_key ");
+        assert_eq!((a.also_key(id), a.stream_key()), ("yt_key".to_string(), "live_abc".to_string()));
+        assert_eq!(a.live_options().also[0].key, "yt_key");
+        a.go_live(&ctx);
+        assert!(a.x.stream.confirm_open, "with every key it asks first");
+        // Switched off, it isn't streamed to.
+        a.settings.stream.also[0].on = false;
+        assert!(a.live_options().also.is_empty());
     }
 
     #[test]

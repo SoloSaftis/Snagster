@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster neredz ekrānu: tam vajag darbvirsmu ar pieteikušos lietotāju, ne tikai attālu čaulu. Piesakieties Mac ekrānā (vai ar ekrāna koplietošanu) un palaidiet Snagster tur.",
   "Open Screen Recording settings": "Atvērt ekrāna ierakstīšanas iestatījumus",
   "Screen Recording permission": "Ekrāna ierakstīšanas atļauja",
-  "Close": "Aizvērt"
+  "Close": "Aizvērt",
+  "Also stream to": "Straumēt arī uz",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Tas pats attēls vienlaikus tiek sūtīts uz visiem servisiem un tiek kodēts tikai vienreiz. Tas tiek sūtīts tādā izmērā, kadru ātrumā un bitu pārraides ātrumā, ko pieņem visi servisi.",
+  "Stream to this service too": "Straumēt arī uz šo servisu",
+  "Remove this service and its saved key": "Noņemt šo servisu un tā saglabāto atslēgu",
+  "Add a service": "Pievienot servisu"
  }
 }

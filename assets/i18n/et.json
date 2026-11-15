@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster ei näe ekraani: see vajab sisselogitud töölauda, mitte ainult kaugkesta. Logige sisse Maci ekraanil (või ekraani jagamisega) ja käivitage Snagster seal.",
   "Open Screen Recording settings": "Ava ekraanisalvestuse sätted",
   "Screen Recording permission": "Ekraanisalvestuse luba",
-  "Close": "Sulge"
+  "Close": "Sulge",
+  "Also stream to": "Voogedasta ka",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Sama pilt läheb korraga kõigisse teenustesse ja see kodeeritakse ainult üks kord. See saadetakse sellise suuruse, kaadrisageduse ja bitikiirusega, mida kõik teenused vastu võtavad.",
+  "Stream to this service too": "Voogedasta ka sellesse teenusesse",
+  "Remove this service and its saved key": "Eemalda see teenus ja selle salvestatud võti",
+  "Add a service": "Lisa teenus"
  }
 }

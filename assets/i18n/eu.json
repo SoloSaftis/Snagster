@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster-ek ez du pantailarik ikusten: saioa hasita duen mahaigain bat behar du, ez urruneko shell bat soilik. Hasi saioa Mac-aren pantailan (edo Pantaila partekatzearekin) eta abiarazi Snagster han.",
   "Open Screen Recording settings": "Ireki Pantaila-grabaketaren ezarpenak",
   "Screen Recording permission": "Pantaila grabatzeko baimena",
-  "Close": "Itxi"
+  "Close": "Itxi",
+  "Also stream to": "Transmititu hauetara ere",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Irudi bera zerbitzu guztietara doa aldi berean, behin bakarrik kodetuta. Guztiek onartzen duten tamainan, fotograma-abiaduran eta bit-tasan bidaltzen da.",
+  "Stream to this service too": "Transmititu zerbitzu honetara ere",
+  "Remove this service and its saved key": "Kendu zerbitzu hau eta gordetako gakoa",
+  "Add a service": "Gehitu zerbitzu bat"
  }
 }

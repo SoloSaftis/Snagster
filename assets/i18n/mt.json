@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster ma jarax skrin: għandu bżonn desktop b'xi ħadd illoggjat, mhux biss shell remot. Illoggja fuq l-iskrin tal-Mac (jew bi Qsim tal-Iskrin) u ibda Snagster hemmhekk.",
   "Open Screen Recording settings": "Iftaħ is-settings tar-Recording tal-Iskrin",
   "Screen Recording permission": "Permess għar-Recording tal-Iskrin",
-  "Close": "Agħlaq"
+  "Close": "Agħlaq",
+  "Also stream to": "Ixxandar ukoll lil",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "L-istess stampa tmur għand kull servizz f’daqqa, ikkodifikata darba biss. Tintbagħat bid-daqs, ir-rata tal-frejms u r-rata tal-bits li jaċċettaw ilkoll.",
+  "Stream to this service too": "Ixxandar ukoll lil dan is-servizz",
+  "Remove this service and its saved key": "Neħħi dan is-servizz u ċ-ċavetta salvata tiegħu",
+  "Add a service": "Żid servizz"
  }
 }

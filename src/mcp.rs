@@ -325,7 +325,7 @@ fn output_schema(name: &str) -> Option<Value> {
         "studio_scenes" => json!({"type": "object", "properties": {"scenes": {"type": "array", "items": {"type": "object"}}, "current": num, "width": num, "height": num, "fps": num}, "required": ["scenes", "current"]}),
         "library_tag" => json!({"type": "object", "properties": {"path": st, "title": st, "tags": strings}, "required": ["path", "title", "tags"]}),
         "stream_services" => items(props(json!({"service": st, "name": st, "url": st, "key_help": st, "max_width": num, "max_height": num, "max_fps": num, "max_video_kbps": num, "max_pixel_rate": num, "keyframe_s": num, "audio_kbps": num, "hevc": bo}))),
-        "stream_status" => json!({"type": "object", "properties": {"phase": st, "live": bo, "state": st, "uptime_s": num, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num, "service": st, "address": st, "source": st, "width": num, "height": num, "fps": num}, "required": ["phase", "live"]}),
+        "stream_status" => json!({"type": "object", "properties": {"phase": st, "live": bo, "state": st, "uptime_s": num, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num, "service": st, "address": st, "source": st, "width": num, "height": num, "fps": num, "also": {"type": "array", "items": st}, "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "address": st, "state": st, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num}}}}, "required": ["phase", "live"]}),
         _ => return None,
     })
 }
@@ -3083,6 +3083,34 @@ mod stream_tests {
         assert_eq!(text_of(w.call("stream_stop", &json!({}))), "Nothing is being streamed.");
         w.call("stream_status", &json!({})).unwrap();
         assert_eq!(w.structured.clone().unwrap()["phase"], "idle");
+    }
+
+    /// Multistreaming from an AI app: two local servers get the same stream, each with its own
+    /// key, and neither key is ever shown back.
+    #[test]
+    fn stream_start_multistreams_to_every_service_in_also() {
+        let _g = crate::stream::live::TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        let (a, b) = (crate::stream::testserver::TestServer::start().unwrap(), crate::stream::testserver::TestServer::start().unwrap());
+        let mut w = ws();
+        // Bad items are refused before anything starts.
+        assert!(w.call("stream_start", &json!({"service": "custom", "url": a.url(), "key": "k1", "also": [{"service": "myspace"}]})).unwrap_err().contains("service"));
+        let e = w.call("stream_start", &json!({"service": "custom", "url": a.url(), "key": "k1", "also": [{"service": "custom", "url": "ftp://x/live", "key": "sk_also_secret_0"}]})).unwrap_err();
+        assert!(e.starts_with("Custom server: ") && !e.contains("sk_also_secret_0"), "{e}");
+        assert_eq!(crate::stream::live::snapshot().phase, crate::stream::live::Phase::Idle);
+        let t = text_of(w.call("stream_start", &json!({"service": "custom", "url": a.url(), "key": "sk_main_secret_3", "source": "studio", "fps": 15, "also": [{"service": "custom", "url": b.url(), "key": "sk_also_secret_4"}]})));
+        assert!(!t.contains("sk_main_secret_3") && !t.contains("sk_also_secret_4"), "{t}");
+        let start = std::time::Instant::now();
+        while b.video_messages() < 5 && start.elapsed() < std::time::Duration::from_secs(15) {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        assert_eq!((a.publish_name(), b.publish_name()), ("sk_main_secret_3".to_string(), "sk_also_secret_4".to_string()));
+        assert!(a.video_messages() >= 5 && b.video_messages() >= 5);
+        w.call("stream_status", &json!({})).unwrap();
+        let st = w.structured.clone().unwrap();
+        assert_eq!(st["outputs"].as_array().map(Vec::len), Some(2), "{st}");
+        assert_eq!(st["also"], json!(["Custom server"]));
+        assert!(!st.to_string().contains("secret"), "{st}");
+        assert!(text_of(w.call("stream_stop", &json!({}))).starts_with("The stream stopped"));
     }
 
     /// Whatever an AI app sends, the answer is a JSON-RPC reply (or nothing for a

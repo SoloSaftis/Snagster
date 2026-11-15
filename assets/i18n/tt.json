@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster экранны күрми: аңа ерак shell кына түгел, кергән эш өстәле кирәк. Mac экранында (яки Экранны уртаклашу аша) керегез һәм Snagster-ны шунда башлагыз.",
   "Open Screen Recording settings": "Экранны язу көйләүләрен ачу",
   "Screen Recording permission": "Экранны язуга рөхсәт",
-  "Close": "Ябу"
+  "Close": "Ябу",
+  "Also stream to": "Шулай ук монда да трансляцияләү",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Бер үк рәсем бөтен хезмәтләргә бер үк вакытта бара һәм бер генә тапкыр кодлана. Ул барысы да кабул итә торган зурлыкта, кадр ешлыгында һәм битрейтта җибәрелә.",
+  "Stream to this service too": "Бу хезмәткә дә трансляцияләү",
+  "Remove this service and its saved key": "Бу хезмәтне һәм аның сакланган ачкычын бетерү",
+  "Add a service": "Хезмәт өстәү"
  }
 }

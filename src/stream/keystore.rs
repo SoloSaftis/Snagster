@@ -18,39 +18,53 @@ pub fn how_kept() -> &'static str {
     }
 }
 
-/// The saved key, if there is one.
+/// The saved key of the main service, if there is one.
 pub fn load() -> Option<String> {
-    imp::load().filter(|k| !k.trim().is_empty())
+    load_for(0)
 }
 
-/// Keep `key` (an empty key forgets the saved one).
+/// Keep the main service's `key` (an empty key forgets the saved one).
 pub fn save(key: &str) -> Result<(), String> {
-    if key.trim().is_empty() {
-        return forget();
-    }
-    imp::save(key.trim())
+    save_for(0, key)
 }
 
-pub fn forget() -> Result<(), String> {
-    imp::forget()
+/// The saved key of a service: 0 is the main one, others are the extra services streamed to at
+/// the same time (`settings::ExtraService::id`); each is kept on its own.
+pub fn load_for(slot: u32) -> Option<String> {
+    imp::load(&name(slot)).filter(|k| !k.trim().is_empty())
+}
+
+pub fn save_for(slot: u32, key: &str) -> Result<(), String> {
+    if key.trim().is_empty() {
+        return forget_for(slot);
+    }
+    imp::save(&name(slot), key.trim())
+}
+
+pub fn forget_for(slot: u32) -> Result<(), String> {
+    imp::forget(&name(slot))
+}
+
+/// The Keychain account, or the file's name without `.bin`, of a key.
+fn name(slot: u32) -> String {
+    if slot == 0 { "stream-key".into() } else { format!("stream-key-{slot}") }
 }
 
 #[cfg(target_os = "macos")]
 mod imp {
     use security_framework::passwords::{delete_generic_password, get_generic_password, set_generic_password};
     const SERVICE: &str = "Snagster";
-    const ACCOUNT: &str = "stream-key";
 
-    pub fn load() -> Option<String> {
-        get_generic_password(SERVICE, ACCOUNT).ok().and_then(|b| String::from_utf8(b).ok())
+    pub fn load(account: &str) -> Option<String> {
+        get_generic_password(SERVICE, account).ok().and_then(|b| String::from_utf8(b).ok())
     }
 
-    pub fn save(key: &str) -> Result<(), String> {
-        set_generic_password(SERVICE, ACCOUNT, key.as_bytes()).map_err(|e| format!("Couldn't keep the stream key in the Keychain: {e}"))
+    pub fn save(account: &str, key: &str) -> Result<(), String> {
+        set_generic_password(SERVICE, account, key.as_bytes()).map_err(|e| format!("Couldn't keep the stream key in the Keychain: {e}"))
     }
 
-    pub fn forget() -> Result<(), String> {
-        match delete_generic_password(SERVICE, ACCOUNT) {
+    pub fn forget(account: &str) -> Result<(), String> {
+        match delete_generic_password(SERVICE, account) {
             Ok(()) => Ok(()),
             // Nothing saved (errSecItemNotFound).
             Err(e) if e.code() == -25300 => Ok(()),
@@ -63,20 +77,20 @@ mod imp {
 mod imp {
     use std::path::{Path, PathBuf};
 
-    fn path() -> Option<PathBuf> {
-        Some(crate::settings::settings_path()?.parent()?.join("stream-key.bin"))
+    fn path(name: &str) -> Option<PathBuf> {
+        Some(crate::settings::settings_path()?.parent()?.join(format!("{name}.bin")))
     }
 
-    pub fn load() -> Option<String> {
-        load_from(&path()?)
+    pub fn load(name: &str) -> Option<String> {
+        load_from(&path(name)?)
     }
 
-    pub fn save(key: &str) -> Result<(), String> {
-        save_to(&path().ok_or("There's no folder for Snagster's settings")?, key)
+    pub fn save(name: &str, key: &str) -> Result<(), String> {
+        save_to(&path(name).ok_or("There's no folder for Snagster's settings")?, key)
     }
 
-    pub fn forget() -> Result<(), String> {
-        match path() {
+    pub fn forget(name: &str) -> Result<(), String> {
+        match path(name) {
             Some(p) if p.exists() => std::fs::remove_file(&p).map_err(|e| format!("Couldn't remove the stream key: {e}")),
             _ => Ok(()),
         }
@@ -212,6 +226,13 @@ mod tests {
             assert_eq!(unprotect(&p).unwrap(), data);
         }
         assert!(unprotect(b"").is_err());
+    }
+
+    #[test]
+    fn every_service_has_its_own_key_name_and_the_main_one_keeps_the_old_name() {
+        assert_eq!(name(0), "stream-key", "keys saved before multistreaming still load");
+        assert_eq!(name(3), "stream-key-3");
+        assert_ne!(name(1), name(2));
     }
 
     #[test]

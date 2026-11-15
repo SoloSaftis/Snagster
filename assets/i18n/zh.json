@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster 看不到屏幕：它需要一个已登录的桌面，而不只是远程 Shell。请在 Mac 的屏幕上（或通过屏幕共享）登录，然后在那里启动 Snagster。",
   "Open Screen Recording settings": "打开录屏设置",
   "Screen Recording permission": "录屏权限",
-  "Close": "关闭"
+  "Close": "关闭",
+  "Also stream to": "同时推流到",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "同一画面只编码一次，并同时发送到每个平台。会以所有平台都能接受的尺寸、帧率和码率发送。",
+  "Stream to this service too": "也推流到这个平台",
+  "Remove this service and its saved key": "移除这个平台及其已保存的密钥",
+  "Add a service": "添加平台"
  }
 }

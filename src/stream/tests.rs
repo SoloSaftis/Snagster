@@ -564,3 +564,116 @@ fn bgra_sources_are_turned_into_rgba() {
     drop(s);
     assert_eq!(*seen.lock().unwrap(), vec![3, 2, 1, 255]);
 }
+
+// ---- multistreaming ----
+
+fn custom(url: String, key: &str) -> StreamTarget {
+    StreamTarget { service: Service::Custom, url, key: key.into() }
+}
+
+/// One encode, two services: both get the whole stream (headers, frames, sound), each with its
+/// own key and connection, and the numbers are kept for each.
+#[test]
+fn multistreaming_sends_the_same_encode_to_every_service() {
+    let a = Server::start(ServerOpts { expected_key: Some(KEY.into()), ..Default::default() });
+    let b = Server::start(ServerOpts { expected_key: Some("second_key_77".into()), ..Default::default() });
+    let (frames, _) = grey();
+    let made = Arc::new(AtomicU64::new(0));
+    let mut enc = fakes(30, 0);
+    let (m, inner) = (made.clone(), enc.video.clone());
+    // Counts the encoders opened: one for both services.
+    enc.video = Arc::new(move |c| {
+        m.fetch_add(1, Ordering::Relaxed);
+        inner(c)
+    });
+    let mut cfg = config(a.url(), KEY);
+    cfg.also = vec![custom(b.url(), "second_key_77")];
+    let s = Streamer::start(cfg, frames, silence(), enc).unwrap();
+    for srv in [&a, &b] {
+        srv.wait("15 frames and sound", 15, |c| c.first().is_some_and(|c| c.video.len() >= 15 && c.audio.len() >= 5));
+    }
+    let st = s.stats();
+    assert_eq!(made.load(Ordering::Relaxed), 1, "encoded once");
+    assert_eq!(st.state, State::Live);
+    assert_eq!(st.outputs.len(), 2);
+    assert!(st.outputs.iter().all(|o| o.state == State::Live && o.frames_sent > 0 && o.service == "Custom server"), "{:?}", st.outputs);
+    assert!(!format!("{st:?}").contains("second_key_77") && !format!("{st:?}").contains(KEY));
+    let last = s.stop();
+    assert_eq!(last.state, State::Stopped);
+    assert!(last.outputs.iter().all(|o| o.state == State::Stopped && o.bytes_sent > 0));
+    assert_eq!(last.bytes_sent, last.outputs.iter().map(|o| o.bytes_sent).sum::<u64>());
+    for (srv, key) in [(&a, KEY), (&b, "second_key_77")] {
+        srv.wait("deleteStream", 10, |c| c.first().is_some_and(|c| c.commands.iter().any(|x| x == "deleteStream")));
+        let g = srv.conns.lock().unwrap();
+        assert_eq!(g[0].publish_name, key);
+        assert_eq!(&g[0].video[0].1[..2], &[0x17, 0], "each starts with its own sequence header");
+        assert_eq!(&g[0].audio[0].1, &[0xAF, 0, 0x11, 0x90]);
+        let ts: Vec<u32> = g[0].video[1..].iter().filter(|v| v.1[1] == 1).map(|v| v.0).collect();
+        assert_frame_spacing(&ts);
+    }
+}
+
+/// A service that refuses the stream is given up on alone: the other stays live, and the error
+/// names the service without either key.
+#[test]
+fn one_service_failing_leaves_the_others_live() {
+    let good = Server::start(ServerOpts::default());
+    let bad = Server::start(ServerOpts { expected_key: Some("the_right_one".into()), ..Default::default() });
+    let (frames, _) = grey();
+    let mut cfg = config(good.url(), KEY);
+    cfg.max_reconnects = 0;
+    cfg.also = vec![custom(bad.url(), "wrong_key_55")];
+    let s = Streamer::start(cfg, frames, SoundSource::None, fakes(30, 0)).unwrap();
+    let t = Instant::now();
+    while s.stats().outputs[1].state != State::Failed && t.elapsed() < Duration::from_secs(10) {
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    let before = good.conns.lock().unwrap().first().map(|c| c.video.len()).unwrap_or(0);
+    good.wait("frames after the other failed", 15, |c| c.first().is_some_and(|c| c.video.len() >= before + 10));
+    let st = s.stats();
+    assert_eq!(st.state, State::Live, "{st:?}");
+    assert_eq!((st.outputs[0].state, st.outputs[1].state), (State::Live, State::Failed));
+    let e = st.error.unwrap();
+    assert!(e.starts_with("Custom server: ") && e.contains("BadName"), "{e}");
+    assert!(!e.contains("wrong_key_55") && !e.contains(KEY), "{e}");
+    assert!(st.outputs[0].error.is_none());
+    assert_eq!(s.stop().state, State::Stopped, "the stream as a whole didn't fail");
+}
+
+/// A service on a slow network drops its own frames; the others get every one.
+#[test]
+fn a_slow_service_never_holds_up_the_others() {
+    let fast = Server::start(ServerOpts::default());
+    let slow = Server::start(ServerOpts { stall: true, ..Default::default() });
+    let (frames, _) = grey();
+    let mut cfg = config(slow.url(), KEY);
+    cfg.max_queue_ms = 300;
+    cfg.write_timeout = Duration::from_secs(60);
+    cfg.also = vec![custom(fast.url(), "fast_key")];
+    let s = Streamer::start(cfg, frames, SoundSource::None, fakes(30, 200_000)).unwrap();
+    slow.wait("publishing", 10, |c| c.first().is_some_and(|c| !c.publish_name.is_empty()));
+    let t = Instant::now();
+    while s.stats().outputs[0].frames_dropped < 10 && t.elapsed() < Duration::from_secs(20) {
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    let st = s.stats();
+    assert!(st.outputs[0].frames_dropped >= 10, "{:?}", st.outputs);
+    assert_eq!(st.outputs[1].frames_dropped, 0, "{:?}", st.outputs);
+    fast.wait("frames on the fast one", 15, |c| c.first().is_some_and(|c| c.video.len() >= 20));
+    let t = Instant::now();
+    drop(s);
+    assert!(t.elapsed() < Duration::from_secs(8), "{:?}", t.elapsed());
+}
+
+#[test]
+fn the_same_service_twice_and_bad_extra_addresses_are_refused_at_once() {
+    let (frames, _) = grey();
+    let mut cfg = config("rtmp://127.0.0.1:1/live".into(), KEY);
+    cfg.also = vec![custom("rtmp://127.0.0.1:1/live".into(), KEY)];
+    let e = Streamer::start(cfg, frames.clone(), SoundSource::None, fakes(30, 0)).err().unwrap();
+    assert!(e.contains("twice") && !e.contains(KEY), "{e}");
+    let mut cfg = config("rtmp://127.0.0.1:1/live".into(), KEY);
+    cfg.also = vec![custom("ftp://127.0.0.1/also_secret_9".into(), "also_secret_9")];
+    let e = Streamer::start(cfg, frames, SoundSource::None, fakes(30, 0)).err().unwrap();
+    assert!(e.starts_with("Custom server: ") && !e.contains("also_secret_9"), "{e}");
+}

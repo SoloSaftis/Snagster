@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "A Snagster nem lát képernyőt: bejelentkezett asztal kell neki, nem csak egy távoli parancsértelmező. Jelentkezzen be a Mac képernyőjén (vagy Képernyőmegosztással), és ott indítsa el a Snagstert.",
   "Open Screen Recording settings": "Képernyőfelvétel beállításainak megnyitása",
   "Screen Recording permission": "Képernyőfelvételi engedély",
-  "Close": "Bezárás"
+  "Close": "Bezárás",
+  "Also stream to": "Közvetítés ide is",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Ugyanaz a kép egyszerre megy minden szolgáltatásra, és csak egyszer kódolódik. Akkora méretben, képkockasebességgel és bitsebességgel küldjük, amit mindegyik elfogad.",
+  "Stream to this service too": "Közvetítés erre a szolgáltatásra is",
+  "Remove this service and its saved key": "A szolgáltatás és a mentett kulcsa eltávolítása",
+  "Add a service": "Szolgáltatás hozzáadása"
  }
 }

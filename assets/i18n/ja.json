@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster から画面が見えません: リモートシェルだけでなく、ログインしたデスクトップが必要です。Mac の画面で (または画面共有で) ログインし、そこで Snagster を起動してください。",
   "Open Screen Recording settings": "画面収録の設定を開く",
   "Screen Recording permission": "画面収録の許可",
-  "Close": "閉じる"
+  "Close": "閉じる",
+  "Also stream to": "同時配信先",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "同じ映像を一度だけエンコードし、すべてのサービスへ同時に送ります。すべてのサービスが受け付けるサイズ、フレームレート、ビットレートで送信されます。",
+  "Stream to this service too": "このサービスにも配信する",
+  "Remove this service and its saved key": "このサービスと保存されたキーを削除",
+  "Add a service": "サービスを追加"
  }
 }

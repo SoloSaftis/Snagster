@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster gesäit keen Ecran: et brauch en ageloggte Schreifdësch, net nëmmen eng Shell op Distanz. Loggt Iech um Ecran vum Mac an (oder mat Ecran-Deelen) a start Snagster do.",
   "Open Screen Recording settings": "Astellunge fir d'Ecranopnam opmaachen",
   "Screen Recording permission": "Erlaabnis fir d'Ecranopnam",
-  "Close": "Zoumaachen"
+  "Close": "Zoumaachen",
+  "Also stream to": "Och streamen op",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Dat selwecht Bild geet gläichzäiteg un all Service a gëtt nëmmen eemol kodéiert. Et gëtt an der Gréisst, der Bildrat an der Bitrat geschéckt, déi se all unhuelen.",
+  "Stream to this service too": "Och op dëse Service streamen",
+  "Remove this service and its saved key": "Dëse Service a säi gespäicherte Schlëssel ewechhuelen",
+  "Add a service": "E Service derbäisetzen"
  }
 }

@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.",
   "Open Screen Recording settings": "Open Screen Recording settings",
   "Screen Recording permission": "Screen Recording permission",
-  "Close": "Close"
+  "Close": "Close",
+  "Also stream to": "Also stream to",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.",
+  "Stream to this service too": "Stream to this service too",
+  "Remove this service and its saved key": "Remove this service and its saved key",
+  "Add a service": "Add a service"
  }
 }

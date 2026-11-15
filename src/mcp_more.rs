@@ -212,13 +212,23 @@ pub(super) fn tools() -> Vec<Tool> {
                     "bitrate": n("Video bitrate in kbit/s (0: recommended; the service's limit applies)."),
                     "max_height": n("The tallest picture sent, e.g. 720 (0: the source's size)."),
                     "audio": {"type": "string", "enum": ["none", "system", "microphone", "both"], "description": "Sound to stream (Windows); default: the setting."},
-                    "record_copy": b("Also save what is streamed as an FLV file in the recordings folder.")
+                    "record_copy": b("Also save what is streamed as an FLV file in the recordings folder."),
+                    "also": {
+                        "type": "array",
+                        "maxItems": 4,
+                        "description": "Multistream: more services to send the same stream to at once (encoded once; the picture is fitted to what every service takes). Default: the extra services switched on in Settings > Streaming, with their saved keys. [] streams to the main service only.",
+                        "items": {"type": "object", "properties": {
+                            "service": {"type": "string", "enum": ["twitch", "youtube", "kick", "facebook", "restream", "custom"]},
+                            "url": s("Server address; default: the service's usual one (or the one saved for this service)."),
+                            "key": s("Stream key; default: the one saved for this service in the settings. Secret: never repeated.")
+                        }, "required": ["service"]}
+                    }
                 }),
                 &[],
             ),
             edits: false,
         },
-        Tool { name: "stream_status", description: "Whether Snagster is live, and how it goes: state, time on the air, bitrate, frames sent and dropped, reconnects, encoder, and the last error (the key masked).", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "stream_status", description: "Whether Snagster is live, and how it goes: state, time on the air, bitrate, frames sent and dropped, reconnects, encoder, and the last error (the key masked); when multistreaming, outputs lists each service with its own state, bitrate, frames and error.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "stream_stop", description: "End the live stream (the last packets are sent and the stream is closed); returns its final numbers and the copy's file when one was recorded.", schema: obj(json!({}), &[]), edits: false },
     ]
 }
@@ -266,14 +276,26 @@ impl Workspace {
             Some(k) => k.trim().to_string(),
             None => crate::stream::keystore::load().unwrap_or_default(),
         };
-        let o = LiveOptions::from_settings(&s, &key);
-        // Check the address and the key before anything starts (no network yet).
+        let saved_key = |id: u32| crate::stream::keystore::load_for(id).unwrap_or_default();
+        let mut o = LiveOptions::from_settings(&s, &key, saved_key);
+        if let Some(list) = a.get("also") {
+            o.also = also_arg(list, &s.stream.also, &saved_key)?;
+        }
+        let keys: Vec<String> = std::iter::once(&o.target).chain(&o.also).map(|t| t.key.clone()).collect();
+        let mask_keys = |e: &str| keys.iter().fold(e.to_string(), |e, k| mask(&e, k));
+        // Check the addresses and the keys before anything starts (no network yet).
         o.target.endpoint().map_err(|e| {
             let e = mask(&e, &key);
             if key.is_empty() { format!("{e} (no stream key is saved: add it in Snagster's Settings > Streaming, or pass key)") } else { e }
         })?;
+        for t in &o.also {
+            t.endpoint().map_err(|e| {
+                let e = format!("{}: {}", t.service.preset().name, mask(&e, &t.key));
+                if t.key.is_empty() { format!("{e} (no key is saved for it: add it under Also stream to in Settings > Streaming, or pass also[].key)") } else { e }
+            })?;
+        }
         let studio = (o.source == Source::Studio).then(|| StudioFrames::Start(s.studio.clone()));
-        live::begin(o, studio, crate::stream::Encoders::system()).map_err(|e| mask(&e, &key))?;
+        live::begin(o, studio, crate::stream::Encoders::system()).map_err(|e| mask_keys(&e))?;
         let stop = self.stop.clone();
         let cancelled = self.ticking(Some(15.0), "Going live", || {
             let t = std::time::Instant::now();
@@ -296,20 +318,47 @@ impl Workspace {
         let snap = live::snapshot();
         let v = stream_json(&snap);
         if snap.phase == Phase::Idle {
-            return Err(format!("Couldn't go live: {}", snap.error.as_deref().map(|e| mask(e, &key)).unwrap_or_else(|| "it stopped at once".into())));
+            return Err(format!("Couldn't go live: {}", snap.error.as_deref().map(mask_keys).unwrap_or_else(|| "it stopped at once".into())));
         }
         if let Some(e) = snap.stats.as_ref().filter(|s| s.state == crate::stream::State::Failed).and_then(|s| s.error.clone()) {
             live::end();
-            return Err(format!("Couldn't go live: {}", mask(&e, &key)));
+            return Err(format!("Couldn't go live: {}", mask_keys(&e)));
         }
-        let line = match &snap.info {
-            Some(i) if snap.live() => format!("Live on {} ({}): {}, {} x {} at {} fps, {} kbit/s. Stop it with stream_stop.", i.service, i.address, i.source, i.width, i.height, i.fps, i.kbps),
-            Some(i) => format!("Still connecting to {} ({}); check with stream_status.", i.service, i.address),
+        let mut line = match &snap.info {
+            Some(i) if snap.live() && i.also.is_empty() => format!("Live on {} ({}): {}, {} x {} at {} fps, {} kbit/s. Stop it with stream_stop.", i.service, i.address, i.source, i.width, i.height, i.fps, i.kbps),
+            Some(i) if snap.live() => format!("Live on {}: {}, {} x {} at {} fps, {} kbit/s. Stop it with stream_stop.", i.services(), i.source, i.width, i.height, i.fps, i.kbps),
+            Some(i) => format!("Still connecting to {} ({}); check with stream_status.", i.services(), i.address),
             None => "Still starting; check with stream_status.".to_string(),
         };
+        // A service that isn't live (yet) when multistreaming.
+        if let Some(st) = snap.stats.as_ref().filter(|s| s.outputs.len() > 1) {
+            for out in st.outputs.iter().filter(|o| o.state != crate::stream::State::Live) {
+                line.push_str(&format!(" {}: {:?}{}.", out.service, out.state, out.error.as_ref().map(|e| format!(" ({e})")).unwrap_or_default()));
+            }
+        }
         self.structured = Some(v);
-        Ok(vec![text(mask(&line, &key))])
+        Ok(vec![text(mask_keys(&line))])
     }
+}
+
+/// stream_start's `also`: the services to multistream to, each key given or the one saved for
+/// that service (the first extra service of the settings with the same service).
+fn also_arg(list: &Value, saved: &[crate::settings::ExtraService], saved_key: &dyn Fn(u32) -> String) -> Result<Vec<crate::stream::StreamTarget>, String> {
+    use crate::stream::{Service, StreamTarget};
+    let items = list.as_array().ok_or("also is a list of {service, url, key}")?;
+    if items.len() > crate::settings::MAX_ALSO {
+        return Err(format!("also takes at most {} services", crate::settings::MAX_ALSO));
+    }
+    items
+        .iter()
+        .map(|it| {
+            let service = it.get("service").and_then(Value::as_str).and_then(Service::parse).ok_or("each also item needs service: twitch, youtube, kick, facebook, restream or custom")?;
+            let known = saved.iter().find(|x| x.service == service);
+            let url = it.get("url").and_then(Value::as_str).map(|u| u.trim().to_string()).or_else(|| known.map(|k| k.url.clone())).unwrap_or_default();
+            let key = it.get("key").and_then(Value::as_str).map(|k| k.trim().to_string()).or_else(|| known.map(|k| saved_key(k.id))).unwrap_or_default();
+            Ok(StreamTarget { service, url, key })
+        })
+        .collect()
 }
 
 /// The stream's state as JSON (no secret in it).
@@ -330,6 +379,7 @@ fn stream_json(s: &crate::stream::live::Snapshot) -> Value {
         v["height"] = json!(i.height);
         v["fps"] = json!(i.fps);
         v["video_kbps"] = json!(i.kbps);
+        v["also"] = json!(i.also);
         v["copy"] = json!(i.copy.as_ref().map(|p| p.display().to_string()));
     }
     if let Some(st) = &s.stats {
@@ -342,6 +392,16 @@ fn stream_json(s: &crate::stream::live::Snapshot) -> Value {
         v["queue_ms"] = json!(st.queue_ms);
         v["encoder"] = json!(st.video_encoder.as_ref().map(|e| format!("{} ({})", e.name, if e.hardware { "graphics chip" } else { "processor" })));
         v["notice"] = json!(st.notice);
+        v["outputs"] = json!(st.outputs.iter().map(|o| json!({
+            "service": o.service,
+            "address": o.address,
+            "state": format!("{:?}", o.state).to_lowercase(),
+            "bitrate_bps": o.bitrate_bps,
+            "frames_sent": o.frames_sent,
+            "frames_dropped": o.frames_dropped,
+            "reconnects": o.reconnects,
+            "error": o.error,
+        })).collect::<Vec<_>>());
         if st.error.is_some() {
             v["error"] = json!(st.error);
         }

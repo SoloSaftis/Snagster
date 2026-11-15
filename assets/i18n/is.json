@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster sér engan skjá: það þarf innskráð skjáborð, ekki bara fjarskel. Skráðu þig inn á skjá Mac-tölvunnar (eða með skjádeilingu) og ræstu Snagster þar.",
   "Open Screen Recording settings": "Opna stillingar skjáupptöku",
   "Screen Recording permission": "Heimild til skjáupptöku",
-  "Close": "Loka"
+  "Close": "Loka",
+  "Also stream to": "Streyma líka til",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Sama myndin fer til allra þjónustanna í einu og er aðeins kóðuð einu sinni. Hún er send í þeirri stærð, rammatíðni og bitahraða sem þær taka allar við.",
+  "Stream to this service too": "Streyma líka til þessarar þjónustu",
+  "Remove this service and its saved key": "Fjarlægja þessa þjónustu og vistaðan lykil hennar",
+  "Add a service": "Bæta við þjónustu"
  }
 }

@@ -35,13 +35,17 @@ pub struct LiveOptions {
     /// Write what is streamed to this FLV file too.
     pub copy_to: Option<PathBuf>,
     pub max_reconnects: u32,
+    /// More services fed from the same encode (multistreaming).
+    pub also: Vec<StreamTarget>,
 }
 
 impl LiveOptions {
-    /// The options the settings give, with this stream key.
-    pub fn from_settings(s: &crate::settings::Settings, key: &str) -> LiveOptions {
+    /// The options the settings give, with this stream key and the extra services that are on
+    /// with theirs (`also_key` gives an extra service's key by its id).
+    pub fn from_settings(s: &crate::settings::Settings, key: &str, also_key: impl Fn(u32) -> String) -> LiveOptions {
         let st = s.stream.clamped();
         LiveOptions {
+            also: st.also_on().map(|a| StreamTarget { service: a.service, url: a.url.clone(), key: also_key(a.id).trim().to_string() }).collect(),
             target: StreamTarget { service: st.service, url: st.url.clone(), key: key.trim().to_string() },
             source: st.source.clone(),
             max_height: st.max_height,
@@ -87,14 +91,16 @@ pub fn plan(o: &LiveOptions, sw: u32, sh: u32) -> StreamConfig {
         h = o.max_height;
     }
     let p = o.target.service.preset();
-    // HEVC when asked for, or by itself where the service prefers it at this size (YouTube 4K).
+    // HEVC when asked for, or by itself where the service prefers it at this size (YouTube 4K),
+    // and only when every service takes it (one encode feeds them all).
     let fitted = p.fit_size(w, h).1;
     let want_hevc = o.hevc || (p.hevc_from_height > 0 && fitted >= p.hevc_from_height);
-    let codec = pick_codec(want_hevc, p.hevc, hevc_encoder_here(o.hardware));
+    let all_take_hevc = p.hevc && o.also.iter().all(|t| t.service.preset().hevc);
+    let codec = pick_codec(want_hevc, all_take_hevc, hevc_encoder_here(o.hardware));
     let mut c = StreamConfig::for_target(o.target.clone(), w, h, o.fps, codec);
-    if o.kbps > 0 {
-        c.video_kbps = o.kbps.clamp(300, p.max_video_kbps);
-    }
+    c.also = o.also.clone();
+    c.fit_all();
+    c.video_kbps = if o.kbps > 0 { o.kbps.clamp(300, c.targets().map(|t| t.service.preset().max_video_kbps).min().unwrap_or(p.max_video_kbps)) } else { c.recommended_for_all() };
     c.hardware = o.hardware;
     c.keyframe_s = o.keyframe_s.clamp(1, 4);
     c.max_reconnects = o.max_reconnects;
@@ -115,6 +121,20 @@ pub struct Info {
     pub copy: Option<PathBuf>,
     /// Something to know, e.g. going out without sound.
     pub notice: Option<String>,
+    /// The other services streamed to at the same time (names).
+    pub also: Vec<&'static str>,
+}
+
+impl Info {
+    /// "Twitch", or "Twitch, YouTube and Kick" when multistreaming.
+    pub fn services(&self) -> String {
+        let mut all = vec![self.service];
+        all.extend(&self.also);
+        match all.len() {
+            1 => all[0].to_string(),
+            n => format!("{} and {}", all[..n - 1].join(", "), all[n - 1]),
+        }
+    }
 }
 
 /// A running stream with its capture, compositor and copy.
@@ -125,7 +145,12 @@ pub struct Live {
     _engine: Option<crate::studio::Engine>,
     copy: Option<Recorder>,
     pub info: Info,
-    key: String,
+    /// Every service's key, masked out of what is shown.
+    keys: Vec<String>,
+}
+
+fn mask_all(e: &str, keys: &[String]) -> String {
+    keys.iter().fold(e.to_string(), |e, k| mask(&e, k))
 }
 
 /// How a stream ended.
@@ -138,9 +163,12 @@ pub struct Ended {
 
 impl Live {
     pub fn start(o: LiveOptions, studio: Option<StudioFrames>, encoders: Encoders) -> Result<Live, String> {
-        let key = o.target.key.clone();
-        let masked = |e: String| mask(&e, &key);
+        let keys: Vec<String> = std::iter::once(&o.target).chain(&o.also).map(|t| t.key.clone()).collect();
+        let masked = |e: String| mask_all(&e, &keys);
         o.target.endpoint().map_err(masked)?;
+        for t in &o.also {
+            t.endpoint().map_err(|e| format!("{}: {e}", t.service.preset().name)).map_err(masked)?;
+        }
         let mut grabber = None;
         let mut engine = None;
         let mut notice = None;
@@ -201,7 +229,7 @@ impl Live {
         if !opened && cfg.codec == Codec::Hevc && super::engine::video_config(&cfg).and_then(|v| (encoders.video)(&v)).is_err() {
             cfg.codec = Codec::H264;
             if o.kbps == 0 {
-                cfg.video_kbps = o.target.service.preset().recommended_kbps(cfg.width, cfg.height, cfg.fps, Codec::H264);
+                cfg.video_kbps = cfg.recommended_for_all();
             }
             notice = Some("This computer couldn't start an HEVC encoder, so the stream is H.264.".to_string());
         }
@@ -234,15 +262,19 @@ impl Live {
             kbps: cfg.video_kbps,
             copy: o.copy_to.clone(),
             notice,
+            also: o.also.iter().map(|t| t.service.preset().name).collect(),
         };
         let streamer = Streamer::start(cfg, frames, sound, encoders).map_err(masked)?;
-        Ok(Live { streamer, _grabber: grabber, _engine: engine, copy, info, key })
+        Ok(Live { streamer, _grabber: grabber, _engine: engine, copy, info, keys })
     }
 
     /// Never waits.
     pub fn stats(&self) -> Stats {
         let mut s = self.streamer.stats();
-        s.error = s.error.map(|e| mask(&e, &self.key));
+        s.error = s.error.map(|e| mask_all(&e, &self.keys));
+        for o in &mut s.outputs {
+            o.error = o.error.take().map(|e| mask_all(&e, &self.keys));
+        }
         if s.notice.is_none() {
             s.notice = self.info.notice.clone();
         }
@@ -251,9 +283,12 @@ impl Live {
 
     /// Stop and wait for the end (a few seconds at most): run it off the window's thread.
     pub fn stop(self) -> Ended {
-        let Live { streamer, _grabber, _engine, copy, info, key } = self;
+        let Live { streamer, _grabber, _engine, copy, info, keys } = self;
         let mut stats = streamer.stop();
-        stats.error = stats.error.map(|e| mask(&e, &key));
+        stats.error = stats.error.map(|e| mask_all(&e, &keys));
+        for o in &mut stats.outputs {
+            o.error = o.error.take().map(|e| mask_all(&e, &keys));
+        }
         if stats.notice.is_none() {
             stats.notice = info.notice.clone();
         }
@@ -502,6 +537,7 @@ mod tests {
             cursor: false,
             copy_to: None,
             max_reconnects: 0,
+            also: Vec::new(),
         }
     }
 
@@ -592,12 +628,43 @@ mod tests {
     }
 
     #[test]
+    fn multistreaming_plans_one_picture_every_service_takes() {
+        let mut o = opts("rtmp://h/live", "k");
+        o.fps = 120;
+        o.hevc = true;
+        o.also = vec![StreamTarget { service: Service::Twitch, url: String::new(), key: "t".into() }];
+        let c = plan(&o, 3840, 2160);
+        assert_eq!((c.width, c.height, c.fps, c.codec, c.video_kbps), (1920, 1080, 60, Codec::H264, 6000), "Twitch's limits for both");
+        assert_eq!(c.also.len(), 1);
+        o.kbps = 9000;
+        assert_eq!(plan(&o, 3840, 2160).video_kbps, 6000, "a chosen bitrate no service refuses");
+        let info = Info { service: "Twitch", address: String::new(), source: String::new(), width: 0, height: 0, fps: 0, kbps: 0, copy: None, notice: None, also: vec![] };
+        assert_eq!(info.services(), "Twitch");
+        assert_eq!(Info { also: vec!["YouTube", "Kick"], ..info }.services(), "Twitch, YouTube and Kick");
+    }
+
+    #[test]
+    fn the_settings_give_the_extra_services_that_are_on_with_their_own_keys() {
+        use crate::settings::ExtraService;
+        let mut s = crate::settings::Settings::default();
+        s.stream.also = vec![
+            ExtraService { id: 1, service: Service::YouTube, url: String::new(), on: true },
+            ExtraService { id: 2, service: Service::Kick, url: String::new(), on: false },
+            ExtraService { id: 3, service: Service::Custom, url: "rtmp://x/live".into(), on: true },
+        ];
+        let o = LiveOptions::from_settings(&s, "main", |id| format!(" key{id} "));
+        let got: Vec<(Service, String)> = o.also.iter().map(|t| (t.service, t.key.clone())).collect();
+        assert_eq!(got, vec![(Service::YouTube, "key1".to_string()), (Service::Custom, "key3".to_string())]);
+        assert!(!format!("{o:?}").contains("key1"));
+    }
+
+    #[test]
     fn options_come_from_the_settings_without_the_key_in_them() {
         let mut s = crate::settings::Settings::default();
         s.stream.service = Service::YouTube;
         s.stream.fps = 500;
         s.stream.record_copy = true;
-        let o = LiveOptions::from_settings(&s, " abc-123 ");
+        let o = LiveOptions::from_settings(&s, " abc-123 ", |_| String::new());
         assert_eq!(o.target.key, "abc-123");
         assert_eq!(o.fps, 60, "clamped to the service");
         assert!(o.copy_to.as_ref().is_some_and(|p| p.extension().is_some_and(|e| e == "flv")));
@@ -673,5 +740,13 @@ mod tests {
         assert!(wait_idle(Duration::from_secs(10)));
         let e = snapshot().error.unwrap();
         assert!(e.contains("area") && !e.contains("my_secret_key_2"), "{e}");
+    }
+
+    #[test]
+    fn an_extra_service_with_a_bad_address_stops_the_start_naming_it_without_keys() {
+        let mut o = opts("rtmp://127.0.0.1:1/live", "main_key_8");
+        o.also = vec![StreamTarget { service: Service::Kick, url: "http://kick/also_key_8".into(), key: "also_key_8".into() }];
+        let e = Live::start(o, None, crate::stream::engine::Encoders::system()).err().unwrap();
+        assert!(e.starts_with("Kick: ") && !e.contains("also_key_8"), "{e}");
     }
 }

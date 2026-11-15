@@ -463,9 +463,16 @@ impl UiTest {
             a.switch_tab(c, super::ribbon::RibbonTab::Stream);
             assert_eq!(a.x.tab, super::ribbon::RibbonTab::Stream);
         }));
-        let srv = server.clone();
-        s.push(once("Stream: the Settings page, pointed at a local test server", move |a, _| {
+        // A second server: the stream goes to both at once (multistreaming).
+        let server2: std::rc::Rc<std::cell::RefCell<Option<crate::stream::testserver::TestServer>>> = Default::default();
+        let (srv, srv2) = (server.clone(), server2.clone());
+        s.push(once("Stream: the Settings page, pointed at two local test servers", move |a, _| {
             let t = crate::stream::testserver::TestServer::start().expect("no local test server");
+            let t2 = crate::stream::testserver::TestServer::start().expect("no second local test server");
+            let id = a.settings.stream.new_also_id();
+            a.settings.stream.also = vec![crate::settings::ExtraService { id, service: crate::stream::Service::Custom, url: t2.url(), on: true }];
+            a.set_also_key(id, "ui_test_second_key");
+            *srv2.borrow_mut() = Some(t2);
             a.settings_open = true;
             a.settings_tab = SettingsTab::Streaming;
             let st = &mut a.settings.stream;
@@ -499,9 +506,9 @@ impl UiTest {
             a.start_stream_now(c);
             assert!(crate::stream::live::snapshot().phase != crate::stream::live::Phase::Idle, "{}", a.status);
         }));
-        let srv = server.clone();
+        let (srv, srv2) = (server.clone(), server2.clone());
         s.push((
-            "Stream: live at the local server".to_string(),
+            "Stream: live at both local servers".to_string(),
             Box::new(move |a: &mut SnagApp, _: &egui::Context| {
                 let snap = a.x.stream.snap.clone();
                 assert!(snap.error.is_none(), "{:?}", snap.error);
@@ -509,12 +516,16 @@ impl UiTest {
                     assert!(st.state != crate::stream::State::Failed, "{:?}", st.error);
                 }
                 let got = srv.borrow().as_ref().map(|t| t.video_messages()).unwrap_or(0);
-                if !snap.live() || got < 10 {
+                let got2 = srv2.borrow().as_ref().map(|t| t.video_messages()).unwrap_or(0);
+                if !snap.live() || got < 10 || got2 < 10 {
                     return false;
                 }
                 assert_eq!(srv.borrow().as_ref().unwrap().publish_name(), "ui_test_stream_key");
+                assert_eq!(srv2.borrow().as_ref().unwrap().publish_name(), "ui_test_second_key");
+                assert_eq!(snap.stats.as_ref().map(|s| s.outputs.len()), Some(2));
                 let i = snap.info.unwrap();
                 assert_eq!((i.width, i.height), (320, 240));
+                assert_eq!(i.also, vec!["Custom server"]);
                 assert!(!i.address.contains("ui_test_stream_key"));
                 true
             }),

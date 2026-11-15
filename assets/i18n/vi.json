@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster không thấy màn hình nào: ứng dụng cần một màn hình nền đã đăng nhập, không chỉ một shell từ xa. Hãy đăng nhập trên màn hình của Mac (hoặc bằng Chia sẻ màn hình) và mở Snagster ở đó.",
   "Open Screen Recording settings": "Mở cài đặt Ghi màn hình",
   "Screen Recording permission": "Quyền ghi màn hình",
-  "Close": "Đóng"
+  "Close": "Đóng",
+  "Also stream to": "Phát luồng đồng thời tới",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Cùng một hình ảnh được gửi tới mọi dịch vụ cùng lúc và chỉ mã hóa một lần. Hình ảnh được gửi ở kích thước, tốc độ khung hình và tốc độ bit mà tất cả các dịch vụ đều nhận.",
+  "Stream to this service too": "Phát luồng tới cả dịch vụ này",
+  "Remove this service and its saved key": "Xóa dịch vụ này và khóa đã lưu của nó",
+  "Add a service": "Thêm dịch vụ"
  }
 }

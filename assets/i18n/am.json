@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Snagster ማያ ገጽ ማየት አይችልም፦ የገባ ዴስክቶፕ ያስፈልገዋል፣ የሩቅ ሼል ብቻ አይበቃም። በMac ማያ ገጽ ላይ (ወይም በማያ ገጽ ማጋራት) ይግቡና Snagsterን እዚያ ያስጀምሩ።",
   "Open Screen Recording settings": "የማያ ገጽ ቀረጻ ቅንብሮችን ክፈት",
   "Screen Recording permission": "የማያ ገጽ ቀረጻ ፈቃድ",
-  "Close": "ዝጋ"
+  "Close": "ዝጋ",
+  "Also stream to": "እንዲሁም ወደዚህ ዥረት ያድርጉ",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "ተመሳሳዩ ምስል በአንድ ጊዜ ወደ ሁሉም አገልግሎቶች ይሄዳል፣ አንድ ጊዜ ብቻ ይመሰጠራል። ሁሉም በሚቀበሉት መጠን፣ የፍሬም ፍጥነት እና የቢት ፍጥነት ይላካል።",
+  "Stream to this service too": "ወደዚህ አገልግሎትም ዥረት ያድርጉ",
+  "Remove this service and its saved key": "ይህን አገልግሎት እና የተቀመጠውን ቁልፍ ያስወግዱ",
+  "Add a service": "አገልግሎት ያክሉ"
  }
 }

@@ -194,12 +194,16 @@ pub struct StreamConfig {
     /// First wait before reconnecting; doubles each try up to 30 s.
     pub backoff: Duration,
     pub on_packet: Option<PacketHook>,
+    /// More services fed from the same encode (multistreaming): each gets its own connection,
+    /// queue, reconnects and numbers, and one that fails leaves the others live.
+    pub also: Vec<StreamTarget>,
 }
 
 impl std::fmt::Debug for StreamConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("StreamConfig")
             .field("target", &self.target)
+            .field("also", &self.also)
             .field("size", &(self.width, self.height, self.fps))
             .field("kbps", &(self.video_kbps, self.audio_kbps))
             .field("codec", &self.codec)
@@ -233,7 +237,37 @@ impl StreamConfig {
             backoff: Duration::from_secs(1),
             on_packet: None,
             target,
+            also: Vec::new(),
         }
+    }
+
+    /// Every service this stream goes to, the main one first.
+    pub fn targets(&self) -> impl Iterator<Item = &StreamTarget> {
+        std::iter::once(&self.target).chain(&self.also)
+    }
+
+    /// Bring the picture within what every service takes, since one encode feeds them all: the
+    /// smallest size and frame rate any of them takes, H.264 unless all take HEVC, and a
+    /// bitrate none of them refuses. (Size and rate only ever come down, so the main service's
+    /// limits still hold.)
+    pub fn fit_all(&mut self) {
+        let presets: Vec<_> = self.targets().map(|t| t.service.preset()).collect();
+        for p in &presets {
+            (self.width, self.height) = p.fit_size(self.width, self.height);
+        }
+        for p in &presets {
+            self.fps = p.fps_for(self.width, self.height, self.fps);
+            if !p.hevc {
+                self.codec = Codec::H264;
+            }
+            self.video_kbps = self.video_kbps.min(p.max_video_kbps);
+            self.audio_kbps = self.audio_kbps.min(p.audio_kbps);
+        }
+    }
+
+    /// The bitrate every service recommends or takes for this picture: the lowest of them.
+    pub fn recommended_for_all(&self) -> u32 {
+        self.targets().map(|t| t.service.preset().recommended_kbps(self.width, self.height, self.fps, self.codec)).min().unwrap_or(500)
     }
 }
 
@@ -285,6 +319,68 @@ pub struct Stats {
     pub audio_encoder: Option<EncoderName>,
     /// Where the picture and network threads spend their time (for `--stream-test`).
     pub timing: Timing,
+    /// Each service on its own, the main one first (one entry when not multistreaming). The
+    /// numbers above add them up: live while any is live, failed only when all have failed.
+    pub outputs: Vec<OutputStats>,
+}
+
+/// One service of a stream.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct OutputStats {
+    /// The service's name ("Twitch").
+    pub service: String,
+    /// The server address with the key masked.
+    pub address: String,
+    pub state: State,
+    pub bitrate_bps: u64,
+    pub fps: f32,
+    pub frames_sent: u64,
+    pub frames_dropped: u64,
+    pub bytes_sent: u64,
+    pub queue_ms: u32,
+    pub reconnects: u32,
+    pub error: Option<String>,
+}
+
+/// The state of a stream going to several services: live while any of them is live (one that
+/// failed doesn't take the others down), failed only when every one has failed.
+pub fn overall_state(states: &[State]) -> State {
+    let any = |s: State| states.contains(&s);
+    if states.is_empty() || states.iter().all(|&s| s == State::Failed) {
+        State::Failed
+    } else if any(State::Live) {
+        State::Live
+    } else if any(State::Reconnecting) {
+        State::Reconnecting
+    } else if any(State::Connecting) {
+        State::Connecting
+    } else if any(State::Stopping) {
+        State::Stopping
+    } else {
+        State::Stopped
+    }
+}
+
+/// The numbers of the whole stream from its services' (see `Stats::outputs`).
+fn add_up(outs: &[OutputStats]) -> (State, u64, f32, u64, u64, u64, u32, u32, Option<String>) {
+    let states: Vec<State> = outs.iter().map(|o| o.state).collect();
+    let error = if outs.len() == 1 {
+        outs[0].error.clone()
+    } else {
+        // Name the service when there are several.
+        outs.iter().find_map(|o| o.error.as_ref().map(|e| format!("{}: {e}", o.service)))
+    };
+    (
+        overall_state(&states),
+        outs.iter().map(|o| o.bitrate_bps).sum(),
+        outs.iter().map(|o| o.fps).fold(0.0, f32::max),
+        outs.iter().map(|o| o.frames_sent).max().unwrap_or(0),
+        outs.iter().map(|o| o.frames_dropped).max().unwrap_or(0),
+        outs.iter().map(|o| o.bytes_sent).sum(),
+        outs.iter().map(|o| o.queue_ms).max().unwrap_or(0),
+        outs.iter().map(|o| o.reconnects).sum(),
+        error,
+    )
 }
 
 /// Running totals of the picture and network threads' work, so a slow stream shows which step
@@ -383,12 +479,15 @@ fn add_us(a: &AtomicU64, since: Instant) -> u64 {
     us
 }
 
+/// One service's connection: its own queue (a slow one drops its own frames and never holds up
+/// the others), state, reconnects and numbers.
 #[derive(Default)]
-struct Shared {
+struct Output {
+    service: String,
+    address: String,
+    /// Masked out of this connection's errors.
+    key: String,
     state: AtomicU8,
-    stop: AtomicBool,
-    /// The picture thread should make the next frame a keyframe.
-    want_key: AtomicBool,
     bitrate: AtomicU64,
     fps_x100: AtomicU32,
     frames_sent: AtomicU64,
@@ -396,25 +495,23 @@ struct Shared {
     bytes_sent: AtomicU64,
     queue_ms: AtomicU32,
     reconnects: AtomicU32,
-    live_since_ms: AtomicU64,
     error: Mutex<Option<String>>,
-    notice: Mutex<Option<String>>,
-    names: Mutex<(Option<EncoderName>, Option<EncoderName>)>,
     queue: Mutex<Option<SendQueue>>,
     wake: Condvar,
-    /// Give up sending at once (stopping took too long).
-    abort: Arc<AtomicBool>,
-    timing: TimingCounters,
 }
 
-impl Shared {
+impl Output {
+    fn state(&self) -> State {
+        State::from_u8(self.state.load(Ordering::Relaxed))
+    }
+
     fn set_state(&self, s: State) {
         self.state.store(s as u8, Ordering::Relaxed);
     }
 
     fn set_error(&self, e: String) {
         if let Ok(mut g) = self.error.lock() {
-            *g = Some(e);
+            *g = Some(mask(&e, &self.key));
         }
     }
 
@@ -424,13 +521,67 @@ impl Shared {
         self.wake.notify_all();
         r
     }
+
+    fn stats(&self) -> OutputStats {
+        let g = |a: &AtomicU64| a.load(Ordering::Relaxed);
+        OutputStats {
+            service: self.service.clone(),
+            address: self.address.clone(),
+            state: self.state(),
+            bitrate_bps: g(&self.bitrate),
+            fps: self.fps_x100.load(Ordering::Relaxed) as f32 / 100.0,
+            frames_sent: g(&self.frames_sent),
+            frames_dropped: g(&self.frames_dropped),
+            bytes_sent: g(&self.bytes_sent),
+            queue_ms: self.queue_ms.load(Ordering::Relaxed),
+            reconnects: self.reconnects.load(Ordering::Relaxed),
+            error: self.error.try_lock().ok().and_then(|e| e.clone()),
+        }
+    }
+}
+
+#[derive(Default)]
+struct Shared {
+    stop: AtomicBool,
+    /// Stopping or stopped by `Streamer::stop` (0: not yet).
+    ending: AtomicU8,
+    /// The picture thread should make the next frame a keyframe.
+    want_key: AtomicBool,
+    /// When the first service went live (ms since the start, + 1; 0: not yet).
+    live_since_ms: AtomicU64,
+    /// What stopped the encoders (every service then ends).
+    error: Mutex<Option<String>>,
+    notice: Mutex<Option<String>>,
+    names: Mutex<(Option<EncoderName>, Option<EncoderName>)>,
+    outputs: Vec<Output>,
+    /// Give up sending at once (stopping took too long).
+    abort: Arc<AtomicBool>,
+    timing: TimingCounters,
+}
+
+impl Shared {
+    fn set_error(&self, e: String) {
+        if let Ok(mut g) = self.error.lock() {
+            let e = self.outputs.iter().fold(e, |e, o| mask(&e, &o.key));
+            *g = Some(e);
+        }
+    }
+
+    /// Every service's queue.
+    fn each_queue(&self, mut f: impl FnMut(&Output, &mut SendQueue)) {
+        for o in &self.outputs {
+            o.with_queue(|q| f(o, q));
+        }
+    }
 }
 
 /// A running stream. Dropping it stops it.
 pub struct Streamer {
     shared: Arc<Shared>,
     started: Instant,
+    /// The encoders' threads, then one network thread per service.
     threads: Vec<JoinHandle<()>>,
+    net_threads: Vec<JoinHandle<()>>,
     /// Keeps macOS from napping Snagster or stretching its timers while streaming.
     _timely: crate::video::TimelyActivity,
 }
@@ -454,12 +605,22 @@ impl Streamer {
     /// Check the address, open the encoders and start streaming in the background. Errors (bad
     /// address, no video encoder) come back at once; connection problems show in `stats`.
     pub fn start(cfg: StreamConfig, frames: FrameSource, sound: SoundSource, encoders: Encoders) -> Result<Streamer, String> {
-        let key = cfg.target.key.clone();
-        let ep = cfg.target.endpoint()?;
+        let keys: Vec<String> = cfg.targets().map(|t| t.key.clone()).collect();
+        let mask_all = |e: String| keys.iter().fold(e, |e, k| mask(&e, k));
+        let mut outputs = Vec::new();
+        let mut endpoints = Vec::new();
+        for (i, t) in cfg.targets().enumerate() {
+            let ep = t.endpoint().map_err(|e| if i == 0 { e } else { format!("{}: {e}", t.service.preset().name) }).map_err(mask_all)?;
+            if endpoints.iter().any(|e: &Endpoint| e.tc_url == ep.tc_url && e.stream == ep.stream) {
+                return Err(format!("{} is in the list twice.", t.service.preset().name));
+            }
+            endpoints.push(ep);
+            outputs.push(Output { service: t.service.preset().name.to_string(), address: t.display(), key: t.key.clone(), queue: Mutex::new(Some(SendQueue::new(cfg.max_queue_ms))), ..Default::default() });
+        }
         let vcfg = video_config(&cfg)?;
         let (w, h, fps) = (vcfg.width, vcfg.height, vcfg.fps);
-        let venc = (encoders.video)(&vcfg).map_err(|e| mask(&e, &key))?;
-        let shared = Arc::new(Shared::default());
+        let venc = (encoders.video)(&vcfg).map_err(mask_all)?;
+        let shared = Arc::new(Shared { outputs, ..Default::default() });
         let mut sound = sound.into_feed();
         let mut aenc = None;
         if sound.is_some() {
@@ -473,7 +634,6 @@ impl Streamer {
         }
         *shared.names.lock().unwrap_or_else(|p| p.into_inner()) = (Some(venc.name()), aenc.as_ref().map(|a| a.name()));
         let asc = aenc.as_ref().map(|a| a.audio_specific_config());
-        *shared.queue.lock().unwrap_or_else(|p| p.into_inner()) = Some(SendQueue::new(cfg.max_queue_ms));
         let meta = Meta { width: w, height: h, fps, video_kbps: cfg.video_kbps, codec: cfg.codec, audio_kbps: asc.as_ref().map(|_| cfg.audio_kbps) };
         // How this machine's sleeps behave, found before the clock starts (it takes a few ms).
         let pacer = crate::video::Pacer::calibrated();
@@ -487,10 +647,13 @@ impl Streamer {
             let hook = cfg.on_packet.clone();
             threads.push(spawn("snagster-stream-audio", move || audio_thread(sh, feed, enc, started, hook)).map_err(|e| e.to_string())?);
         }
-        let sh = shared.clone();
-        let net = NetCfg { ep, codec: cfg.codec, meta, asc, max_reconnects: cfg.max_reconnects, connect_timeout: cfg.connect_timeout, write_timeout: cfg.write_timeout, backoff: cfg.backoff };
-        threads.push(spawn("snagster-stream-net", move || net_thread(sh, net, started)).map_err(|e| e.to_string())?);
-        Ok(Streamer { shared, started, threads, _timely: crate::video::TimelyActivity::begin("Live streaming") })
+        let mut net_threads = Vec::new();
+        for (i, ep) in endpoints.into_iter().enumerate() {
+            let sh = shared.clone();
+            let net = NetCfg { ep, codec: cfg.codec, meta: meta.clone(), asc: asc.clone(), max_reconnects: cfg.max_reconnects, connect_timeout: cfg.connect_timeout, write_timeout: cfg.write_timeout, backoff: cfg.backoff };
+            net_threads.push(spawn(&format!("snagster-stream-net-{i}"), move || net_thread(sh, i, net, started)).map_err(|e| e.to_string())?);
+        }
+        Ok(Streamer { shared, started, threads, net_threads, _timely: crate::video::TimelyActivity::begin("Live streaming") })
     }
 
     /// Where the stream stands; never waits on the stream's threads.
@@ -498,21 +661,28 @@ impl Streamer {
         let s = &self.shared;
         let live = s.live_since_ms.load(Ordering::Relaxed);
         let names = s.names.try_lock().map(|n| n.clone()).unwrap_or_default();
+        let outputs: Vec<OutputStats> = s.outputs.iter().map(Output::stats).collect();
+        let (mut state, bitrate_bps, fps, frames_sent, frames_dropped, bytes_sent, queue_ms, reconnects, out_error) = add_up(&outputs);
+        let ending = s.ending.load(Ordering::Relaxed);
+        if ending != 0 && state != State::Failed {
+            state = State::from_u8(ending);
+        }
         Stats {
-            state: State::from_u8(s.state.load(Ordering::Relaxed)),
-            bitrate_bps: s.bitrate.load(Ordering::Relaxed),
-            fps: s.fps_x100.load(Ordering::Relaxed) as f32 / 100.0,
-            frames_sent: s.frames_sent.load(Ordering::Relaxed),
-            frames_dropped: s.frames_dropped.load(Ordering::Relaxed),
-            bytes_sent: s.bytes_sent.load(Ordering::Relaxed),
-            queue_ms: s.queue_ms.load(Ordering::Relaxed),
+            state,
+            bitrate_bps,
+            fps,
+            frames_sent,
+            frames_dropped,
+            bytes_sent,
+            queue_ms,
             uptime_s: if live == 0 { 0.0 } else { (self.started.elapsed().as_millis() as u64).saturating_sub(live - 1) as f64 / 1000.0 },
-            reconnects: s.reconnects.load(Ordering::Relaxed),
-            error: s.error.try_lock().ok().and_then(|e| e.clone()),
+            reconnects,
+            error: s.error.try_lock().ok().and_then(|e| e.clone()).or(out_error),
             notice: s.notice.try_lock().ok().and_then(|e| e.clone()),
             video_encoder: names.0,
             audio_encoder: names.1,
             timing: s.timing.snapshot(),
+            outputs,
         }
     }
 
@@ -530,34 +700,40 @@ impl Streamer {
     }
 
     fn shutdown(&mut self) {
-        let failed = State::from_u8(self.shared.state.load(Ordering::Relaxed)) == State::Failed;
-        if !failed {
-            self.shared.set_state(State::Stopping);
+        let sh = &self.shared;
+        sh.ending.store(State::Stopping as u8, Ordering::Relaxed);
+        for o in &sh.outputs {
+            if o.state() != State::Failed {
+                o.set_state(State::Stopping);
+            }
         }
-        self.shared.stop.store(true, Ordering::Relaxed);
-        self.shared.wake.notify_all();
-        // The network thread is last: it sends what the encoders still hand over.
-        let net = self.threads.pop();
+        sh.stop.store(true, Ordering::Relaxed);
+        sh.each_queue(|_, _| {});
+        // The network threads are last: they send what the encoders still hand over (all of
+        // them at once, within one wait).
         for t in self.threads.drain(..) {
             let _ = t.join();
         }
-        if let Some(net) = net {
-            let t = Instant::now();
-            while !net.is_finished() && t.elapsed() < STOP_WAIT {
-                std::thread::sleep(Duration::from_millis(10));
+        let t = Instant::now();
+        while self.net_threads.iter().any(|n| !n.is_finished()) && t.elapsed() < STOP_WAIT {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        sh.abort.store(true, Ordering::Relaxed);
+        for n in self.net_threads.drain(..) {
+            let _ = n.join();
+        }
+        for o in &sh.outputs {
+            if o.state() != State::Failed {
+                o.set_state(State::Stopped);
             }
-            self.shared.abort.store(true, Ordering::Relaxed);
-            let _ = net.join();
         }
-        if !failed {
-            self.shared.set_state(State::Stopped);
-        }
+        sh.ending.store(State::Stopped as u8, Ordering::Relaxed);
     }
 }
 
 impl Drop for Streamer {
     fn drop(&mut self) {
-        if !self.threads.is_empty() {
+        if !self.threads.is_empty() || !self.net_threads.is_empty() {
             self.shutdown();
         }
     }
@@ -570,18 +746,25 @@ fn spawn(name: &str, f: impl FnOnce() + Send + 'static) -> std::io::Result<JoinH
     std::thread::Builder::new().name(name.into()).spawn(f)
 }
 
+/// Hand a packet to the hook and to every service's queue (the last one gets it without a copy).
 fn queue_packet(sh: &Shared, hook: &Option<PacketHook>, p: Packet) {
     if let Some(h) = hook {
         h(&p);
     }
-    sh.with_queue(|q| match p {
-        Packet::Video(v) => {
-            if !q.push_video(v) {
-                sh.frames_dropped.fetch_add(1, Ordering::Relaxed);
+    let mut p = Some(p);
+    let n = sh.outputs.len();
+    for (i, o) in sh.outputs.iter().enumerate() {
+        let one = if i + 1 == n { p.take() } else { p.clone() };
+        let Some(one) = one else { break };
+        o.with_queue(|q| match one {
+            Packet::Video(v) => {
+                if !q.push_video(v) {
+                    o.frames_dropped.fetch_add(1, Ordering::Relaxed);
+                }
             }
-        }
-        Packet::Audio(a) => q.push_audio(a),
-    });
+            Packet::Audio(a) => q.push_audio(a),
+        });
+    }
 }
 
 /// At most this many due frame slots are filled at once when the picture thread wakes late;
@@ -675,7 +858,7 @@ fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEnco
     if let Ok(ps) = enc.finish() {
         ps.into_iter().for_each(|p| queue_packet(&sh, &hook, Packet::Video(p)));
     }
-    sh.with_queue(|q| q.ended = true);
+    sh.each_queue(|_, q| q.ended = true);
 }
 
 fn audio_thread(sh: Arc<Shared>, mut feed: AudioFeed, mut enc: Box<dyn AudioEncoder>, started: Instant, hook: Option<PacketHook>) {
@@ -725,10 +908,10 @@ fn sleep_unless_stopped(sh: &Shared, d: Duration) {
 }
 
 /// Wait at most `d` for a packet.
-fn next_packet(sh: &Shared, d: Duration) -> (Option<Packet>, bool, u32) {
-    let Ok(mut g) = sh.queue.lock() else { return (None, true, 0) };
+fn next_packet(o: &Output, d: Duration) -> (Option<Packet>, bool, u32) {
+    let Ok(mut g) = o.queue.lock() else { return (None, true, 0) };
     if g.as_ref().is_some_and(|q| q.len() == 0 && !q.ended) {
-        match sh.wake.wait_timeout(g, d) {
+        match o.wake.wait_timeout(g, d) {
             Ok((g2, _)) => g = g2,
             Err(_) => return (None, true, 0),
         }
@@ -826,12 +1009,16 @@ fn backoff_wait(backoff: Duration, tries: u32) -> Duration {
 
 /// After a connection failed (or broke): false when giving up (stopping, or out of tries: the
 /// state is then Failed); else waits the backoff and counts the try.
-fn retry_after_failure(sh: &Shared, cfg: &NetCfg, tries: &mut u32) -> bool {
+fn retry_after_failure(sh: &Shared, o: &Output, cfg: &NetCfg, tries: &mut u32) -> bool {
     if sh.stop.load(Ordering::Relaxed) {
         return false;
     }
     if *tries >= cfg.max_reconnects {
-        sh.set_state(State::Failed);
+        o.set_state(State::Failed);
+        // Nobody sends this queue any more: let it go.
+        if let Ok(mut q) = o.queue.lock() {
+            *q = None;
+        }
         return false;
     }
     sleep_unless_stopped(sh, backoff_wait(cfg.backoff, *tries));
@@ -839,7 +1026,10 @@ fn retry_after_failure(sh: &Shared, cfg: &NetCfg, tries: &mut u32) -> bool {
     !sh.stop.load(Ordering::Relaxed)
 }
 
-fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
+/// One service's connection: connect, send its queue, reconnect when it drops, until the
+/// stream stops or this service is given up on (the others carry on either way).
+fn net_thread(sh: Arc<Shared>, idx: usize, cfg: NetCfg, started: Instant) {
+    let o = &sh.outputs[idx];
     let mut tries: u32 = 0;
     let mut params = ParamSets::default();
     let mut first = true;
@@ -848,30 +1038,30 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
         if sh.stop.load(Ordering::Relaxed) {
             break;
         }
-        sh.set_state(if first { State::Connecting } else { State::Reconnecting });
+        o.set_state(if first { State::Connecting } else { State::Reconnecting });
         let mut c = match Client::connect(&cfg.ep, cfg.connect_timeout) {
             Ok(c) => c,
             Err(e) => {
-                sh.set_error(e);
-                if retry_after_failure(&sh, &cfg, &mut tries) {
+                o.set_error(e);
+                if retry_after_failure(&sh, o, &cfg, &mut tries) {
                     continue;
                 }
                 break;
             }
         };
         if !first {
-            sh.reconnects.fetch_add(1, Ordering::Relaxed);
+            o.reconnects.fetch_add(1, Ordering::Relaxed);
         }
         c.abort = Some(sh.abort.clone());
         c.stall = cfg.write_timeout;
         first = false;
         // `tries` is reset only once this connection has carried pictures for a while: a server
         // that takes the connection and then drops it at once must not be retried forever.
-        if let Ok(mut e) = sh.error.lock() {
+        if let Ok(mut e) = o.error.lock() {
             *e = None;
         }
         // Start this connection fresh: a keyframe soon, nothing stale.
-        sh.with_queue(|q| q.restart());
+        o.with_queue(|q| q.restart());
         sh.want_key.store(true, Ordering::Relaxed);
         let mut s = Session::new(cfg.codec, params.clone());
         let mut setup = c.send_metadata(flv::metadata(&cfg.meta));
@@ -879,14 +1069,14 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
             setup = c.send_audio(0, flv::audio_sequence_header(asc));
         }
         if let Err(e) = setup {
-            sh.set_error(e);
-            if retry_after_failure(&sh, &cfg, &mut tries) {
+            o.set_error(e);
+            if retry_after_failure(&sh, o, &cfg, &mut tries) {
                 continue;
             }
             break;
         }
 
-        sh.set_state(if sh.stop.load(Ordering::Relaxed) { State::Stopping } else { State::Live });
+        o.set_state(if sh.stop.load(Ordering::Relaxed) { State::Stopping } else { State::Live });
         let _ = sh.live_since_ms.compare_exchange(0, started.elapsed().as_millis() as u64 + 1, Ordering::Relaxed, Ordering::Relaxed);
         let mut last_poll = Instant::now();
         let mut window = (Instant::now(), c.sent, 0u64);
@@ -898,8 +1088,8 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
                     break;
                 }
             }
-            let (p, ended, queued) = next_packet(&sh, Duration::from_millis(20));
-            sh.queue_ms.store(queued, Ordering::Relaxed);
+            let (p, ended, queued) = next_packet(o, Duration::from_millis(20));
+            o.queue_ms.store(queued, Ordering::Relaxed);
             let mut r = Ok(());
             if let Some(p) = &p {
                 for m in s.messages(p) {
@@ -911,7 +1101,7 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
                         break;
                     }
                     if m.frame {
-                        sh.frames_sent.fetch_add(1, Ordering::Relaxed);
+                        o.frames_sent.fetch_add(1, Ordering::Relaxed);
                         window.2 += 1;
                         frames_here += 1;
                     }
@@ -927,17 +1117,18 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
             let dt = window.0.elapsed();
             if dt >= Duration::from_secs(1) {
                 let bytes = c.sent - window.1;
-                sh.bitrate.store((bytes as f64 * 8.0 / dt.as_secs_f64()) as u64, Ordering::Relaxed);
-                sh.fps_x100.store((window.2 as f64 * 100.0 / dt.as_secs_f64()) as u32, Ordering::Relaxed);
-                sh.bytes_sent.fetch_add(bytes, Ordering::Relaxed);
+                o.bitrate.store((bytes as f64 * 8.0 / dt.as_secs_f64()) as u64, Ordering::Relaxed);
+                o.fps_x100.store((window.2 as f64 * 100.0 / dt.as_secs_f64()) as u32, Ordering::Relaxed);
+                o.bytes_sent.fetch_add(bytes, Ordering::Relaxed);
                 window = (Instant::now(), c.sent, 0);
             }
             if let Err(e) = r {
-                sh.bytes_sent.fetch_add(c.sent - window.1, Ordering::Relaxed);
-                sh.set_error(e);
+                o.bytes_sent.fetch_add(c.sent - window.1, Ordering::Relaxed);
+                o.set_error(e);
                 params = s.params.clone();
-                sh.bitrate.store(0, Ordering::Relaxed);
-                if retry_after_failure(&sh, &cfg, &mut tries) {
+                o.bitrate.store(0, Ordering::Relaxed);
+                o.fps_x100.store(0, Ordering::Relaxed);
+                if retry_after_failure(&sh, o, &cfg, &mut tries) {
                     continue 'connect;
                 }
                 break 'connect;
@@ -946,15 +1137,15 @@ fn net_thread(sh: Arc<Shared>, cfg: NetCfg, started: Instant) {
                 break;
             }
         }
-        sh.bytes_sent.fetch_add(c.sent - window.1, Ordering::Relaxed);
+        o.bytes_sent.fetch_add(c.sent - window.1, Ordering::Relaxed);
         if s.header_sent {
             let _ = c.send_video(s.last_ts, flv::video_end(cfg.codec));
         }
         c.close();
         break;
     }
-    sh.bitrate.store(0, Ordering::Relaxed);
-    sh.fps_x100.store(0, Ordering::Relaxed);
+    o.bitrate.store(0, Ordering::Relaxed);
+    o.fps_x100.store(0, Ordering::Relaxed);
 }
 
 #[cfg(test)]

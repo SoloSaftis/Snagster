@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Nid yw Snagster yn gallu gweld sgrin: mae angen bwrdd gwaith wedi mewngofnodi arno, nid cragen bell yn unig. Mewngofnodwch ar sgrin y Mac (neu drwy Rannu Sgrin) a dechrau Snagster yno.",
   "Open Screen Recording settings": "Agor gosodiadau Recordio Sgrin",
   "Screen Recording permission": "Caniatâd Recordio Sgrin",
-  "Close": "Cau"
+  "Close": "Cau",
+  "Also stream to": "Ffrydio hefyd i",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Mae’r un llun yn mynd i bob gwasanaeth ar unwaith, wedi’i amgodio unwaith. Caiff ei anfon ar y maint, y gyfradd ffrâm a’r gyfradd didau y mae pob un ohonynt yn eu derbyn.",
+  "Stream to this service too": "Ffrydio i’r gwasanaeth hwn hefyd",
+  "Remove this service and its saved key": "Tynnu’r gwasanaeth hwn a’i allwedd sydd wedi’i chadw",
+  "Add a service": "Ychwanegu gwasanaeth"
  }
 }

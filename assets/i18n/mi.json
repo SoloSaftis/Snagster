@@ -908,6 +908,11 @@
   "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.": "Kāore a Snagster e kite i tētahi mata: me whai papamahi kua takiuru, kaua ko tētahi anga mamao anake. Takiuru ki te mata o te Mac (mā te Tiritiri Mata rānei) ka tīmata i a Snagster ki reira.",
   "Open Screen Recording settings": "Whakatuwherahia ngā tautuhinga Hopu Mata",
   "Screen Recording permission": "Whakaaetanga Hopu Mata",
-  "Close": "Katia"
+  "Close": "Katia",
+  "Also stream to": "Me rere hoki ki",
+  "The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.": "Ka haere te pikitia kotahi ki ia ratonga i te wā kotahi, kotahi anake te whakawaehere. Ka tukuna i te rahi, te auau anga me te auau pāpaka e whakaaetia ana e rātou katoa.",
+  "Stream to this service too": "Me rere hoki ki tēnei ratonga",
+  "Remove this service and its saved key": "Tangohia tēnei ratonga me tōna kī kua tiakina",
+  "Add a service": "Tāpiri ratonga"
  }
 }
