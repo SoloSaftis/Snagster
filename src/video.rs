@@ -716,19 +716,22 @@ impl Pacer {
 
     const MOST: Duration = Duration::from_millis(60);
 
-    /// A pacer that starts from how much three 1 ms sleeps overrun here (it keeps learning).
+    /// A pacer that starts from how much 5 ms sleeps overrun here (it keeps learning).
     pub fn calibrated() -> Pacer {
-        // The smallest overrun of five 1 ms sleeps: one stalled sleep on a busy machine doesn't
-        // make it coarse; a timer that is coarse overruns every time.
-        let least = (0..5)
+        // The middle overrun of five 5 ms sleeps (about a frame's wait). Not the smallest: a
+        // real Mac running Snagster with no window in front let very short sleeps through on
+        // time yet stretched 5 ms ones to 32 ms (macOS gathers a background program's timers),
+        // and the smallest made it look precise. One stalled sleep doesn't move the middle.
+        let mut overruns: Vec<Duration> = (0..5)
             .map(|_| {
                 let t = Instant::now();
-                std::thread::sleep(Duration::from_millis(1));
-                t.elapsed().saturating_sub(Duration::from_millis(1))
+                std::thread::sleep(Duration::from_millis(5));
+                t.elapsed().saturating_sub(Duration::from_millis(5))
             })
-            .min()
-            .unwrap_or_default();
-        Pacer { overshoot: least.min(Self::MOST), coarse: least >= COARSE }
+            .collect();
+        overruns.sort();
+        let middle = overruns[overruns.len() / 2].min(Self::MOST);
+        Pacer { overshoot: middle, coarse: coarse_after(false, middle) }
     }
 
     /// How it waits, for a person: plain sleeps, or sleeps cut short and finished by yielding.
@@ -739,6 +742,14 @@ impl Pacer {
 
 /// Sleeps overrunning by less than this are taken as precise.
 const COARSE: Duration = Duration::from_millis(2);
+
+/// Whether to pace as on a coarse timer, given the current overrun estimate. Switches to coarse
+/// at 2 ms and back only below 1 ms, so an estimate near the line doesn't flip every frame. The
+/// timer can change while Snagster runs (macOS gathers timers once its window goes behind
+/// others), so this is asked after every sleep, not only at the start.
+fn coarse_after(coarse: bool, overshoot: Duration) -> bool {
+    if coarse { overshoot >= COARSE / 2 } else { overshoot >= COARSE }
+}
 
 fn pacer_mode(overshoot: Duration) -> String {
     if overshoot < COARSE {
@@ -757,6 +768,9 @@ impl Pacer {
                 std::thread::sleep(until - now);
                 now = Instant::now();
             }
+            // Keep learning: if sleeps start overrunning, switch to cutting them short.
+            self.learn(now.saturating_duration_since(until));
+            self.coarse = coarse_after(false, self.overshoot);
             return;
         }
         loop {
@@ -766,6 +780,7 @@ impl Pacer {
                 Wait::Sleep(d) => {
                     std::thread::sleep(d);
                     self.learn(now.elapsed().saturating_sub(d));
+                    self.coarse = coarse_after(true, self.overshoot);
                 }
                 Wait::Yield => std::thread::yield_now(),
             }
@@ -2871,6 +2886,22 @@ mod tests {
         }
         assert_eq!(next_wait(ms(33), r.overshoot), Wait::Yield);
         assert!(matches!(next_wait(ms(33), ms(25)), Wait::Sleep(_)));
+    }
+
+    #[test]
+    fn the_pacer_switches_to_coarse_when_sleeps_start_overrunning_and_back_with_slack() {
+        let ms = |n| Duration::from_millis(n);
+        // Starts precise (as on a Mac whose window is in front)...
+        let mut p = Pacer::default();
+        assert!(!coarse_after(false, p.overshoot));
+        // ...then the window goes behind others and 5 ms sleeps take 32 ms (seen on a real Mac).
+        p.learn(ms(27));
+        assert!(coarse_after(false, p.overshoot), "{:?}", p.overshoot);
+        // Near the line it stays where it is (no flipping every frame).
+        assert!(coarse_after(true, Duration::from_micros(1500)));
+        assert!(!coarse_after(false, Duration::from_micros(1500)));
+        // Back to plain sleeps once the overrun is well under a millisecond.
+        assert!(!coarse_after(true, Duration::from_micros(400)));
     }
 
     #[test]
