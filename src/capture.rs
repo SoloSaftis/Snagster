@@ -582,6 +582,24 @@ pub fn grab_rect(x: i32, y: i32, w: u32, h: u32) -> Result<RgbaImage, String> {
     guarded(|| grab_rect_raw(x, y, w, h))
 }
 
+/// The captures a whole-desktop picture from the Screenshot portal can stand in for: a screen,
+/// all screens, and the ones picked on a frozen picture of the screen. Windows, menus and the
+/// last area keep their own way (and their own "not available" messages).
+#[cfg(any(target_os = "linux", test))]
+fn portal_covers(kind: &CaptureKind) -> bool {
+    matches!(
+        kind,
+        CaptureKind::Screen
+            | CaptureKind::AllScreens
+            | CaptureKind::Monitor(_)
+            | CaptureKind::Pick(..)
+            | CaptureKind::WindowPick
+            | CaptureKind::Fixed(..)
+            | CaptureKind::ColorPicker
+            | CaptureKind::Ruler
+    )
+}
+
 /// Whether the screens can be listed directly (Linux: not in a sandbox without X11, nor on a
 /// Wayland desktop xcap can't read). When they can't, pictures come from the Screenshot portal.
 #[cfg(target_os = "linux")]
@@ -648,7 +666,7 @@ pub fn grab(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String>
 
 fn grab_raw(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String> {
     #[cfg(target_os = "linux")]
-    if !screens_listable() {
+    if portal_covers(kind) && !screens_listable() {
         return portal_shot();
     }
     let at = cursor_pos().unwrap_or(fallback_at);
@@ -1416,6 +1434,20 @@ mod tests {
             assert!(eframe::egui::Key::from_name(s.key()).is_some(), "{s:?}");
             assert!(!s.label().is_empty());
         }
+    }
+
+    #[test]
+    fn the_screenshot_portal_stands_in_only_for_whole_screen_pictures() {
+        assert!(portal_covers(&CaptureKind::Screen));
+        assert!(portal_covers(&CaptureKind::AllScreens));
+        assert!(portal_covers(&CaptureKind::Monitor(3)));
+        assert!(portal_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture)));
+        assert!(portal_covers(&CaptureKind::ColorPicker));
+        // These keep their own way, and their own message where they can't work.
+        assert!(!portal_covers(&CaptureKind::Menus));
+        assert!(!portal_covers(&CaptureKind::Window(1, "x".into())));
+        assert!(!portal_covers(&CaptureKind::ActiveWindow));
+        assert!(!portal_covers(&CaptureKind::LastRegion(0, 0, 10, 10)));
     }
 
     #[test]
