@@ -78,9 +78,11 @@ pub fn pick_codec(want_hevc: bool, service_takes_hevc: bool, hevc_encoder: bool)
     if want_hevc && service_takes_hevc && hevc_encoder { Codec::Hevc } else { Codec::H264 }
 }
 
-/// Whether this system has an HEVC encoder at all (Linux has none yet).
+/// Whether this system has an HEVC encoder at all. On Linux only NVIDIA's NVENC makes HEVC, so
+/// there it depends on the graphics chip (looked for once, `encode::available`).
 fn hevc_encoder_here(hardware: bool) -> bool {
-    !crate::encode::plan(crate::encode::Os::current(), Codec::Hevc, hardware).is_empty()
+    use crate::encode::{Os, available, plan};
+    !plan(Os::current(), Codec::Hevc, hardware).is_empty() && (Os::current() != Os::Linux || available().iter().any(|(c, _)| *c == Codec::Hevc))
 }
 
 /// The stream's size and rate for a source of `sw` × `sh` (pure, so it can be tested).
@@ -559,7 +561,8 @@ mod tests {
         o.target.service = Service::Custom;
         o.hevc = false;
         assert_eq!(plan(&o, 1280, 720).codec, Codec::H264);
-        assert_eq!(hevc_encoder_here(true), !cfg!(all(unix, not(target_os = "macos"))), "Windows and macOS have HEVC encoders, Linux not yet");
+        let linux_nvidia = cfg!(target_os = "linux") && crate::encode::available().iter().any(|(c, _)| *c == Codec::Hevc);
+        assert_eq!(hevc_encoder_here(true), !cfg!(target_os = "linux") || linux_nvidia, "Windows and macOS have HEVC encoders; Linux only with NVIDIA");
     }
 
     #[test]

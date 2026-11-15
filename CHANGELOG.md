@@ -6,6 +6,10 @@ What changed for people using Snagster, per version.
 
 New:
 
+- **NVIDIA graphics chips on Linux**: recording and streaming now use NVIDIA's own encoder
+  (NVENC) on Linux, which also brings HEVC (H.265) to Linux. Before, Linux computers with an
+  NVIDIA card encoded on the processor. Works with any NVIDIA driver from 2018 on; computers
+  without one are not affected. Not yet tried on a real NVIDIA card.
 - **Choose the video encoder**: Settings > Recording or Streaming > "Video encoder" lists the
   encoders this computer has (Intel Quick Sync, NVIDIA, AMD, Apple's media engine, VA-API,
   software). *Automatic* stays the default. Choosing one that can't start never stops a

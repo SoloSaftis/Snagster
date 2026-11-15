@@ -237,6 +237,11 @@ pub use mac::PixelBuffer;
 
 #[cfg(target_os = "linux")]
 mod linux;
+/// NVIDIA's NVENC on Linux (VA-API can't encode on NVIDIA there).
+#[cfg(target_os = "linux")]
+mod nvenc;
+#[cfg(target_os = "linux")]
+mod nvenc_sys;
 
 /// Sound sample rate and channels the AAC encoders take (the same as `audio::Capture` gives).
 pub const AUDIO_RATE: u32 = 48_000;
@@ -302,8 +307,10 @@ pub enum Backend {
     VideoToolboxHardware,
     /// macOS: VideoToolbox's software encoder.
     VideoToolboxSoftware,
-    /// Linux: VA-API (Intel, AMD, and NVIDIA where its VA-API driver is installed).
+    /// Linux: VA-API (Intel, AMD).
     VaApi,
+    /// Linux: NVIDIA's NVENC (NVIDIA's VA-API driver only decodes).
+    Nvenc,
     /// Cisco's OpenH264, built into Snagster: works everywhere, H.264 only.
     OpenH264,
 }
@@ -316,12 +323,13 @@ impl Backend {
             Backend::VideoToolboxHardware => "VideoToolbox (graphics chip)",
             Backend::VideoToolboxSoftware => "VideoToolbox (software)",
             Backend::VaApi => "VA-API (graphics chip)",
+            Backend::Nvenc => "NVIDIA NVENC (graphics chip)",
             Backend::OpenH264 => "OpenH264 (software)",
         }
     }
 
     pub fn hardware(self) -> bool {
-        matches!(self, Backend::MediaFoundationHardware | Backend::VideoToolboxHardware | Backend::VaApi)
+        matches!(self, Backend::MediaFoundationHardware | Backend::VideoToolboxHardware | Backend::VaApi | Backend::Nvenc)
     }
 }
 
@@ -354,7 +362,8 @@ pub fn plan(os: Os, codec: Codec, prefer_hardware: bool) -> Vec<Backend> {
     let (hardware, software): (&[Backend], &[Backend]) = match (os, codec) {
         (Os::Windows, _) => (&[Backend::MediaFoundationHardware], &[Backend::MediaFoundationSoftware]),
         (Os::Mac, _) => (&[Backend::VideoToolboxHardware], &[Backend::VideoToolboxSoftware]),
-        (Os::Linux, Codec::H264) => (&[Backend::VaApi], &[]),
+        (Os::Linux, Codec::H264) => (&[Backend::VaApi, Backend::Nvenc], &[]),
+        (Os::Linux, Codec::Hevc) => (&[Backend::Nvenc], &[]),
         _ => (&[], &[]),
     };
     let mut v = Vec::new();
@@ -457,7 +466,7 @@ fn open_system_named(cfg: &VideoConfig, name: &str, here: &[(Codec, EncoderName)
         return if e.name().name == name { Ok(e) } else { Err(format!("macOS gave {} instead", e.name().name)) };
     }
     #[cfg(target_os = "linux")]
-    return linux::open_video(cfg);
+    return if nvenc::list().iter().any(|(_, n)| n.name == name) { nvenc::open_video(cfg) } else { linux::open_video(cfg) };
     #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
     Err("no system encoders here".into())
 }
@@ -498,6 +507,8 @@ pub fn open_backend(b: Backend, cfg: &VideoConfig) -> Result<Box<dyn VideoEncode
         Backend::VideoToolboxSoftware => mac::open_video(cfg, false),
         #[cfg(target_os = "linux")]
         Backend::VaApi => linux::open_video(cfg),
+        #[cfg(target_os = "linux")]
+        Backend::Nvenc => nvenc::open_video(cfg),
         #[allow(unreachable_patterns)]
         _ => Err("not on this system".into()),
     }
@@ -575,7 +586,11 @@ pub fn available() -> Vec<(Codec, EncoderName)> {
     #[cfg(target_os = "macos")]
     let mut v = mac::list();
     #[cfg(target_os = "linux")]
-    let mut v = linux::list();
+    let mut v = {
+        let mut v = linux::list();
+        v.extend(nvenc::list());
+        v
+    };
     #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
     let mut v = Vec::new();
     v.push((Codec::H264, EncoderName { name: soft::NAME.into(), hardware: false }));
@@ -1190,9 +1205,11 @@ mod tests {
         assert_eq!(plan(Os::Windows, Codec::Hevc, true), vec![MediaFoundationHardware, MediaFoundationSoftware], "OpenH264 makes no HEVC");
         assert_eq!(plan(Os::Mac, Codec::H264, true), vec![VideoToolboxHardware, VideoToolboxSoftware, OpenH264]);
         assert_eq!(plan(Os::Mac, Codec::Hevc, false), vec![VideoToolboxSoftware]);
-        assert_eq!(plan(Os::Linux, Codec::H264, true), vec![VaApi, OpenH264]);
+        assert_eq!(plan(Os::Linux, Codec::H264, true), vec![VaApi, Nvenc, OpenH264], "VA-API (Intel, AMD), then NVIDIA");
         assert_eq!(plan(Os::Linux, Codec::H264, false), vec![OpenH264]);
-        assert!(plan(Os::Linux, Codec::Hevc, true).is_empty(), "no HEVC encoder on Linux yet");
+        assert_eq!(plan(Os::Linux, Codec::Hevc, true), vec![Nvenc], "HEVC on Linux: NVIDIA only");
+        assert!(plan(Os::Linux, Codec::Hevc, false).is_empty());
+        assert!(Nvenc.hardware() && Nvenc.label().contains("NVENC"));
         assert_eq!(plan(Os::Other, Codec::H264, true), vec![OpenH264]);
         for os in [Os::Windows, Os::Mac, Os::Linux, Os::Other] {
             for hw in [true, false] {
