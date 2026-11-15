@@ -19,7 +19,20 @@ rm -rf "$H/out" "$H/t"; mkdir -p "$H/t"
 for f in gnome-helper.py gnome-session.sh; do
   curl -fsSL -o "$H/t/$f" "https://raw.githubusercontent.com/SoloSaftis/Snagster/$REF/tests/desktop/$f"
 done
-if [ ! -x "$H/Snagster/Snagster" ] || [ "$(cat "$H/tag" 2>/dev/null)" != "$TAG" ]; then
+if [ "$TAG" = build ]; then
+  # Build this commit here (the machine's own glibc), instead of a release download.
+  if [ "$(cat "$H/tag" 2>/dev/null)" != "build-$REF" ]; then
+    apt-get install -y -q --no-install-recommends build-essential pkg-config clang libclang-dev git nasm \
+      libpipewire-0.3-dev libspa-0.2-dev libwayland-dev libxkbcommon-dev libgbm-dev libegl1-mesa-dev \
+      libgl1-mesa-dev libdrm-dev libxcb1-dev libxcb-randr0-dev libxcb-shm0-dev libxcb-xfixes0-dev \
+      libxcb-shape0-dev libdbus-1-dev > /root/apt-build.log 2>&1
+    [ -x /root/.cargo/bin/cargo ] || curl -fsSL https://sh.rustup.rs | sh -s -- -y -q --profile minimal > /root/rustup.log 2>&1
+    rm -rf /root/src; git clone -q https://github.com/SoloSaftis/Snagster.git /root/src
+    git -C /root/src checkout -q "$REF"
+    (cd /root/src && /root/.cargo/bin/cargo build -q --locked) > /root/build.log 2>&1 || { tail -30 /root/build.log; exit 1; }
+    mkdir -p "$H/Snagster"; cp /root/src/target/debug/snagster "$H/Snagster/Snagster"; echo "build-$REF" > "$H/tag"
+  fi
+elif [ ! -x "$H/Snagster/Snagster" ] || [ "$(cat "$H/tag" 2>/dev/null)" != "$TAG" ]; then
   curl -fsSL -o "$H/s.tgz" "https://github.com/SoloSaftis/Snagster/releases/download/$TAG/Snagster-linux-x86_64-portable.tar.gz"
   rm -rf "$H/Snagster"; tar -C "$H" -xzf "$H/s.tgz"; echo "$TAG" > "$H/tag"
 fi
