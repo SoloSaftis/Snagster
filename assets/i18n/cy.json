@@ -959,6 +959,8 @@
   "Canvas size and color": "Maint a lliw'r cynfas",
   "Export pictures": "Allforio lluniau",
   "What's new in Snagster": "Beth sy'n newydd yn Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Mae fersiynau newydd o Snagster yn dod drwy {who}. Diweddarwch ef yno, er enghraifft yn eich canolfan feddalwedd."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Mae fersiynau newydd o Snagster yn dod drwy {who}. Diweddarwch ef yno, er enghraifft yn eich canolfan feddalwedd.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Nid yw cipio wrth sgrolio ar gael ar benbyrddau Wayland eto: ciplun o'r rhan weladwy yn lle hynny.",
+  "Start Snagster when you log in": "Dechrau Snagster pan fyddwch yn mewngofnodi"
  }
 }

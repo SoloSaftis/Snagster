@@ -959,6 +959,8 @@
   "Canvas size and color": "Laki at kulay ng canvas",
   "Export pictures": "I-export ang mga larawan",
   "What's new in Snagster": "Ano ang bago sa Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Ang mga bagong bersyon ng Snagster ay dumarating sa pamamagitan ng {who}. I-update ito roon, halimbawa sa iyong software center."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Ang mga bagong bersyon ng Snagster ay dumarating sa pamamagitan ng {who}. I-update ito roon, halimbawa sa iyong software center.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Hindi pa available ang scrolling capture sa mga Wayland desktop: kunan na lang ang nakikitang bahagi.",
+  "Start Snagster when you log in": "Simulan ang Snagster kapag nag-log in ka"
  }
 }

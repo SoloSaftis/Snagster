@@ -959,6 +959,8 @@
   "Canvas size and color": "Vászon mérete és színe",
   "Export pictures": "Képek exportálása",
   "What's new in Snagster": "A Snagster újdonságai",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "A Snagster új verziói a(z) {who} révén érkeznek. Ott frissítse, például a szoftverközpontban."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "A Snagster új verziói a(z) {who} révén érkeznek. Ott frissítse, például a szoftverközpontban.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "A görgetős rögzítés még nem érhető el Wayland asztalokon: rögzítse helyette a látható részt.",
+  "Start Snagster when you log in": "A Snagster indítása bejelentkezéskor"
  }
 }

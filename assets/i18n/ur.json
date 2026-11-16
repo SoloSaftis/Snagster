@@ -959,6 +959,8 @@
   "Canvas size and color": "کینوس کا سائز اور رنگ",
   "Export pictures": "تصاویر برآمد کریں",
   "What's new in Snagster": "Snagster میں نیا کیا ہے",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster کے نئے ورژن {who} کے ذریعے آتے ہیں۔ اسے وہیں اپ ڈیٹ کریں، مثلاً اپنے سافٹ ویئر سینٹر میں۔"
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster کے نئے ورژن {who} کے ذریعے آتے ہیں۔ اسے وہیں اپ ڈیٹ کریں، مثلاً اپنے سافٹ ویئر سینٹر میں۔",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Wayland ڈیسک ٹاپ پر اسکرولنگ کیپچر ابھی دستیاب نہیں: اس کے بجائے نظر آنے والا حصہ کیپچر کریں۔",
+  "Start Snagster when you log in": "لاگ ان پر Snagster شروع کریں"
  }
 }

@@ -959,6 +959,8 @@
   "Canvas size and color": "Tuval oʻlchami va rangi",
   "Export pictures": "Rasmlarni eksport qilish",
   "What's new in Snagster": "Snagster’da yangiliklar",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagsterning yangi versiyalari {who} orqali keladi. Uni o‘sha yerda yangilang, masalan, dasturlar markazida."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagsterning yangi versiyalari {who} orqali keladi. Uni o‘sha yerda yangilang, masalan, dasturlar markazida.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Aylantirib suratga olish Wayland ish stollarida hali mavjud emas: o‘rniga ko‘rinadigan qismini suratga oling.",
+  "Start Snagster when you log in": "Tizimga kirganda Snagster’ni ishga tushirish"
  }
 }

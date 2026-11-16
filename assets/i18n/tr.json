@@ -959,6 +959,8 @@
   "Canvas size and color": "Tuval boyutu ve rengi",
   "Export pictures": "Resimleri dışa aktar",
   "What's new in Snagster": "Snagster'da yenilikler",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster'ın yeni sürümleri {who} üzerinden gelir. Onu orada güncelleyin, örneğin yazılım merkezinizde."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster'ın yeni sürümleri {who} üzerinden gelir. Onu orada güncelleyin, örneğin yazılım merkezinizde.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Kaydırmalı yakalama Wayland masaüstlerinde henüz kullanılamıyor: bunun yerine görünen kısmı yakalayın.",
+  "Start Snagster when you log in": "Oturum açtığınızda Snagster’ı başlat"
  }
 }

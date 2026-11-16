@@ -959,6 +959,8 @@
   "Canvas size and color": "Drobės dydis ir spalva",
   "Export pictures": "Eksportuoti paveikslėlius",
   "What's new in Snagster": "Kas naujo programoje „Snagster“",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Naujos Snagster versijos ateina per {who}. Atnaujinkite ją ten, pavyzdžiui, programinės įrangos centre."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Naujos Snagster versijos ateina per {who}. Atnaujinkite ją ten, pavyzdžiui, programinės įrangos centre.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Slenkamoji fiksacija Wayland darbalaukiuose dar neprieinama: vietoj to užfiksuokite matomą dalį.",
+  "Start Snagster when you log in": "Paleisti Snagster prisijungus"
  }
 }

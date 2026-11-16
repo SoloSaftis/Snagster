@@ -959,6 +959,8 @@
   "Canvas size and color": "Méid agus dath an chanbháis",
   "Export pictures": "Easpórtáil pictiúir",
   "What's new in Snagster": "Cad atá nua i Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Tagann leaganacha nua de Snagster trí {who}. Nuashonraigh ansin é, mar shampla i do lárionad bogearraí."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Tagann leaganacha nua de Snagster trí {who}. Nuashonraigh ansin é, mar shampla i do lárionad bogearraí.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Níl gabháil scrollaithe ar fáil ar dheasca Wayland fós: gabh an chuid infheicthe ina ionad.",
+  "Start Snagster when you log in": "Tosaigh Snagster nuair a logálann tú isteach"
  }
 }

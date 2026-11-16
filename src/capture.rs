@@ -714,7 +714,23 @@ fn desktop_screenshot_budget() -> Result<(), String> {
 pub(crate) fn desktop_tool_covers(kind: &CaptureKind) -> bool {
     // Only plain pictures: picking an area to record, scroll, read or combine needs Snagster's
     // own overlay (the desktop's tool gives back a picture, not an area).
-    matches!(kind, CaptureKind::Screen | CaptureKind::AllScreens | CaptureKind::Monitor(_) | CaptureKind::Pick(_, PickPurpose::Capture) | CaptureKind::WindowPick)
+    // (A circle, freehand or polygon cut needs the overlay too: the desktop's tool cuts rectangles.)
+    matches!(kind, CaptureKind::Screen | CaptureKind::AllScreens | CaptureKind::Monitor(_) | CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture) | CaptureKind::WindowPick)
+}
+
+/// Whether scrolling capture can work here: it turns other windows' scroll wheels and takes a
+/// picture after each turn, and a Wayland desktop allows neither (xdotool needs X11, and every
+/// picture is a desktop screenshot).
+pub fn scrolling_supported() -> bool {
+    !desktop_screenshots_only()
+}
+
+/// What scrolling capture says where it isn't available (translated in the window).
+pub const SCROLL_UNAVAILABLE: &str = "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.";
+
+/// Whether `kind` is a scrolling capture (automatic or by hand).
+pub fn is_scrolling(kind: &CaptureKind) -> bool {
+    matches!(kind, CaptureKind::Pick(_, PickPurpose::Scrolling { .. } | PickPurpose::ManualScroll))
 }
 
 /// Take the picture `kind` asks for (see `guarded`: the screen library can't take Snagster down).
@@ -1541,6 +1557,12 @@ mod tests {
         assert!(!desktop_tool_covers(&CaptureKind::Menus));
         // The color picker and the ruler need Snagster's own overlay.
         assert!(!desktop_tool_covers(&CaptureKind::ColorPicker));
+        // So does a cut that isn't a rectangle.
+        assert!(!desktop_tool_covers(&CaptureKind::Pick(CutShape::Ellipse, PickPurpose::Capture)));
+        assert!(!desktop_tool_covers(&CaptureKind::Pick(CutShape::Freehand, PickPurpose::Capture)));
+        assert!(is_scrolling(&CaptureKind::Pick(CutShape::Rect, PickPurpose::Scrolling { horizontal: true })));
+        assert!(is_scrolling(&CaptureKind::Pick(CutShape::Rect, PickPurpose::ManualScroll)));
+        assert!(!is_scrolling(&CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture)));
     }
 
     #[test]

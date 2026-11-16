@@ -959,6 +959,8 @@
   "Canvas size and color": "Полотно зурлыгы һәм төсе",
   "Export pictures": "Рәсемнәрне экспортлау",
   "What's new in Snagster": "Snagster'да нәрсә яңа",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster-ның яңа версияләре {who} аша килә. Аны шунда яңартыгыз, мәсәлән, программалар үзәгендә."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster-ның яңа версияләре {who} аша килә. Аны шунда яңартыгыз, мәсәлән, программалар үзәгендә.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Әйләндереп төшерү Wayland эш өстәлләрендә әлегә юк: аның урынына күренгән өлешне төшерегез.",
+  "Start Snagster when you log in": "Кергәндә Snagster-ны җибәрү"
  }
 }

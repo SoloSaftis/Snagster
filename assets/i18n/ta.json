@@ -959,6 +959,8 @@
   "Canvas size and color": "கேன்வாஸ் அளவும் நிறமும்",
   "Export pictures": "படங்களை ஏற்றுமதி செய்",
   "What's new in Snagster": "Snagster இல் புதியவை",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster இன் புதிய பதிப்புகள் {who} வழியாக வருகின்றன. அதை அங்கேயே புதுப்பிக்கவும், உதாரணமாக உங்கள் மென்பொருள் மையத்தில்."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster இன் புதிய பதிப்புகள் {who} வழியாக வருகின்றன. அதை அங்கேயே புதுப்பிக்கவும், உதாரணமாக உங்கள் மென்பொருள் மையத்தில்.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Wayland டெஸ்க்டாப்களில் உருட்டும் பிடிப்பு இன்னும் கிடைக்கவில்லை: அதற்குப் பதிலாகத் தெரியும் பகுதியைப் பிடிக்கவும்.",
+  "Start Snagster when you log in": "உள்நுழையும்போது Snagster ஐத் தொடங்கு"
  }
 }

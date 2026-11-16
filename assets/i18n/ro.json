@@ -959,6 +959,8 @@
   "Canvas size and color": "Dimensiunea și culoarea pânzei",
   "Export pictures": "Exportă imaginile",
   "What's new in Snagster": "Noutăți în Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Versiunile noi ale Snagster vin prin {who}. Actualizați-l de acolo, de exemplu din centrul de software."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Versiunile noi ale Snagster vin prin {who}. Actualizați-l de acolo, de exemplu din centrul de software.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Captura cu derulare nu este încă disponibilă pe desktopurile Wayland: capturați în schimb partea vizibilă.",
+  "Start Snagster when you log in": "Pornește Snagster la autentificare"
  }
 }

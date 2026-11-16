@@ -959,6 +959,8 @@
   "Canvas size and color": "Stærð og litur myndflatar",
   "Export pictures": "Flytja út myndir",
   "What's new in Snagster": "Nýjungar í Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Nýjar útgáfur af Snagster koma í gegnum {who}. Uppfærðu það þar, til dæmis í hugbúnaðarmiðstöðinni."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Nýjar útgáfur af Snagster koma í gegnum {who}. Uppfærðu það þar, til dæmis í hugbúnaðarmiðstöðinni.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Skrunmyndataka er ekki enn í boði á Wayland-skjáborðum: taktu frekar mynd af sýnilega hlutanum.",
+  "Start Snagster when you log in": "Ræsa Snagster við innskráningu"
  }
 }

@@ -959,6 +959,8 @@
   "Canvas size and color": "Velikost in barva platna",
   "Export pictures": "Izvozi slike",
   "What's new in Snagster": "Novosti v programu Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Nove različice Snagsterja prihajajo prek {who}. Posodobite ga tam, na primer v središču za programsko opremo."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Nove različice Snagsterja prihajajo prek {who}. Posodobite ga tam, na primer v središču za programsko opremo.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Zajem z drsenjem na namizjih Wayland še ni na voljo: namesto tega zajemite vidni del.",
+  "Start Snagster when you log in": "Zaženi Snagster ob prijavi"
  }
 }

@@ -959,6 +959,8 @@
   "Canvas size and color": "ขนาดและสีของผืนผ้าใบ",
   "Export pictures": "ส่งออกรูปภาพ",
   "What's new in Snagster": "มีอะไรใหม่ใน Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster เวอร์ชันใหม่มาทาง {who} อัปเดตได้ที่นั่น เช่น ในศูนย์ซอฟต์แวร์ของคุณ"
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster เวอร์ชันใหม่มาทาง {who} อัปเดตได้ที่นั่น เช่น ในศูนย์ซอฟต์แวร์ของคุณ",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "การจับภาพแบบเลื่อนยังใช้ไม่ได้บนเดสก์ท็อป Wayland: ให้จับภาพส่วนที่มองเห็นแทน",
+  "Start Snagster when you log in": "เริ่ม Snagster เมื่อลงชื่อเข้าใช้"
  }
 }

@@ -959,6 +959,8 @@
   "Canvas size and color": "Storleik og farge på lerretet",
   "Export pictures": "Eksporter bilete",
   "What's new in Snagster": "Kva er nytt i Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Nye versjonar av Snagster kjem gjennom {who}. Oppdater han der, til dømes i programvaresenteret ditt."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Nye versjonar av Snagster kjem gjennom {who}. Oppdater han der, til dømes i programvaresenteret ditt.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Rullande opptak er ikkje tilgjengeleg på Wayland-skrivebord enno: ta opp den synlege delen i staden.",
+  "Start Snagster when you log in": "Start Snagster når du loggar inn"
  }
 }

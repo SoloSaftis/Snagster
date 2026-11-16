@@ -760,6 +760,10 @@ impl SnagApp {
         if self.capturing.is_some() || self.overlay.is_some() || self.mini.is_some() {
             return;
         }
+        if capture::is_scrolling(&kind) && !capture::scrolling_supported() {
+            self.status = crate::i18n::t(capture::SCROLL_UNAVAILABLE).into();
+            return;
+        }
         self.commit_text();
         self.ask_screen_access_once();
         let ppp = ctx.input(|i| i.viewport().native_pixels_per_point).unwrap_or(1.0);

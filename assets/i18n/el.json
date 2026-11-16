@@ -959,6 +959,8 @@
   "Canvas size and color": "Μέγεθος και χρώμα καμβά",
   "Export pictures": "Εξαγωγή εικόνων",
   "What's new in Snagster": "Τι νέο υπάρχει στο Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Οι νέες εκδόσεις του Snagster έρχονται μέσω {who}. Ενημερώστε το από εκεί, για παράδειγμα στο κέντρο λογισμικού."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Οι νέες εκδόσεις του Snagster έρχονται μέσω {who}. Ενημερώστε το από εκεί, για παράδειγμα στο κέντρο λογισμικού.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Η λήψη με κύλιση δεν είναι ακόμη διαθέσιμη σε επιφάνειες εργασίας Wayland: κάντε λήψη του ορατού τμήματος.",
+  "Start Snagster when you log in": "Εκκίνηση του Snagster κατά τη σύνδεση"
  }
 }

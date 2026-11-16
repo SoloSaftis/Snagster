@@ -955,5 +955,7 @@
  "Canvas size and color",
  "Export pictures",
  "What's new in Snagster",
- "New versions of Snagster come through {who}. Update it there, for example in your software center."
+ "New versions of Snagster come through {who}. Update it there, for example in your software center.",
+ "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.",
+ "Start Snagster when you log in"
 ]

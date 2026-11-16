@@ -959,6 +959,8 @@
   "Canvas size and color": "ტილოს ზომა და ფერი",
   "Export pictures": "სურათების ექსპორტი",
   "What's new in Snagster": "რა სიახლეა Snagster-ში",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster-ის ახალი ვერსიები {who}-ის მეშვეობით მოდის. განაახლეთ იქ, მაგალითად პროგრამების ცენტრში."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster-ის ახალი ვერსიები {who}-ის მეშვეობით მოდის. განაახლეთ იქ, მაგალითად პროგრამების ცენტრში.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "გადახვევით გადაღება Wayland-ის სამუშაო მაგიდებზე ჯერ ხელმისაწვდომი არ არის: ამის ნაცვლად გადაიღეთ ხილული ნაწილი.",
+  "Start Snagster when you log in": "Snagster-ის გაშვება შესვლისას"
  }
 }

@@ -959,6 +959,8 @@
   "Canvas size and color": "కాన్వాస్ పరిమాణం మరియు రంగు",
   "Export pictures": "చిత్రాలను ఎగుమతి చేయండి",
   "What's new in Snagster": "Snagster లో కొత్తవి",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster కొత్త వెర్షన్‌లు {who} ద్వారా వస్తాయి. దాన్ని అక్కడే అప్‌డేట్ చేయండి, ఉదాహరణకు మీ సాఫ్ట్‌వేర్ సెంటర్‌లో."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster కొత్త వెర్షన్‌లు {who} ద్వారా వస్తాయి. దాన్ని అక్కడే అప్‌డేట్ చేయండి, ఉదాహరణకు మీ సాఫ్ట్‌వేర్ సెంటర్‌లో.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Wayland డెస్క్‌టాప్‌లలో స్క్రోలింగ్ క్యాప్చర్ ఇంకా అందుబాటులో లేదు: బదులుగా కనిపించే భాగాన్ని క్యాప్చర్ చేయండి.",
+  "Start Snagster when you log in": "లాగిన్ అయినప్పుడు Snagster ను ప్రారంభించు"
  }
 }

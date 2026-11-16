@@ -959,6 +959,8 @@
   "Canvas size and color": "キャンバスのサイズと色",
   "Export pictures": "画像を書き出す",
   "What's new in Snagster": "Snagster の新機能",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster の新しいバージョンは {who} から届きます。ソフトウェアセンターなど、そちらで更新してください。"
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster の新しいバージョンは {who} から届きます。ソフトウェアセンターなど、そちらで更新してください。",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "スクロールキャプチャは Wayland のデスクトップではまだ使えません。代わりに見えている部分をキャプチャしてください。",
+  "Start Snagster when you log in": "ログイン時に Snagster を起動"
  }
 }

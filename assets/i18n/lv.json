@@ -959,6 +959,8 @@
   "Canvas size and color": "Audekla izmērs un krāsa",
   "Export pictures": "Eksportēt attēlus",
   "What's new in Snagster": "Kas jauns programmā Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Jaunas Snagster versijas tiek piegādātas caur {who}. Atjauniniet to tur, piemēram, programmatūras centrā."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Jaunas Snagster versijas tiek piegādātas caur {who}. Atjauniniet to tur, piemēram, programmatūras centrā.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Ritināmā tveršana Wayland darbvirsmās vēl nav pieejama: tās vietā tveriet redzamo daļu.",
+  "Start Snagster when you log in": "Palaist Snagster, kad piesakāties"
  }
 }

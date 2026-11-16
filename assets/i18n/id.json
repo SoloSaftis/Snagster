@@ -959,6 +959,8 @@
   "Canvas size and color": "Ukuran dan warna kanvas",
   "Export pictures": "Ekspor gambar",
   "What's new in Snagster": "Yang baru di Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Versi baru Snagster datang melalui {who}. Perbarui di sana, misalnya di pusat perangkat lunak Anda."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Versi baru Snagster datang melalui {who}. Perbarui di sana, misalnya di pusat perangkat lunak Anda.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Tangkapan bergulir belum tersedia di desktop Wayland: tangkap bagian yang terlihat saja.",
+  "Start Snagster when you log in": "Mulai Snagster saat Anda masuk"
  }
 }

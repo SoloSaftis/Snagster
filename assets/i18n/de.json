@@ -959,6 +959,8 @@
   "Canvas size and color": "Arbeitsflächengröße und -farbe",
   "Export pictures": "Bilder exportieren",
   "What's new in Snagster": "Neu in Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Neue Versionen von Snagster kommen über {who}. Aktualisiere es dort, zum Beispiel in deiner Softwareverwaltung."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Neue Versionen von Snagster kommen über {who}. Aktualisiere es dort, zum Beispiel in deiner Softwareverwaltung.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Scrollende Aufnahme ist auf Wayland-Desktops noch nicht verfügbar: Nimm stattdessen den sichtbaren Teil auf.",
+  "Start Snagster when you log in": "Snagster beim Anmelden starten"
  }
 }

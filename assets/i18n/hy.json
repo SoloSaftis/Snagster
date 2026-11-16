@@ -959,6 +959,8 @@
   "Canvas size and color": "Կտավի չափը և գույնը",
   "Export pictures": "Արտահանել նկարները",
   "What's new in Snagster": "Ի՞նչ նոր է Snagster-ում",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster-ի նոր տարբերակները գալիս են {who}-ի միջոցով։ Թարմացրեք այն այնտեղ, օրինակ՝ ծրագրերի կենտրոնում։"
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster-ի նոր տարբերակները գալիս են {who}-ի միջոցով։ Թարմացրեք այն այնտեղ, օրինակ՝ ծրագրերի կենտրոնում։",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Ոլորումով նկարահանումը դեռ հասանելի չէ Wayland աշխատասեղաններին․ փոխարենը նկարեք տեսանելի մասը։",
+  "Start Snagster when you log in": "Գործարկել Snagster-ը մուտք գործելիս"
  }
 }

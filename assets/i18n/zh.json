@@ -959,6 +959,8 @@
   "Canvas size and color": "画布大小和颜色",
   "Export pictures": "导出图片",
   "What's new in Snagster": "Snagster 新增功能",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster 的新版本通过 {who} 提供。请在那里更新，例如在软件中心。"
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster 的新版本通过 {who} 提供。请在那里更新，例如在软件中心。",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Wayland 桌面暂不支持滚动截图：请改为截取可见部分。",
+  "Start Snagster when you log in": "登录时启动 Snagster"
  }
 }

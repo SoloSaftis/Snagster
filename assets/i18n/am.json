@@ -959,6 +959,8 @@
   "Canvas size and color": "የሸራ መጠን እና ቀለም",
   "Export pictures": "ሥዕሎችን ላክ",
   "What's new in Snagster": "በSnagster ውስጥ ምን አዲስ አለ",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "አዲስ የSnagster ስሪቶች በ{who} በኩል ይመጣሉ። እዚያ ያዘምኑት፣ ለምሳሌ በሶፍትዌር ማዕከልዎ ውስጥ።"
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "አዲስ የSnagster ስሪቶች በ{who} በኩል ይመጣሉ። እዚያ ያዘምኑት፣ ለምሳሌ በሶፍትዌር ማዕከልዎ ውስጥ።",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "የማሸብለል ቀረጻ በWayland ዴስክቶፖች ላይ ገና አይገኝም፦ በምትኩ የሚታየውን ክፍል ይቅረጹ።",
+  "Start Snagster when you log in": "ሲገቡ Snagsterን ያስጀምሩ"
  }
 }

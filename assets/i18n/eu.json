@@ -959,6 +959,8 @@
   "Canvas size and color": "Oihalaren tamaina eta kolorea",
   "Export pictures": "Esportatu irudiak",
   "What's new in Snagster": "Zer berri Snagster-en",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster-en bertsio berriak {who} bidez iristen dira. Egunera ezazu han, adibidez zure software-zentroan."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster-en bertsio berriak {who} bidez iristen dira. Egunera ezazu han, adibidez zure software-zentroan.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Korritze bidezko kaptura ez dago oraindik erabilgarri Wayland mahaigainetan: kapturatu ikusten den zatia.",
+  "Start Snagster when you log in": "Abiarazi Snagster saioa hastean"
  }
 }

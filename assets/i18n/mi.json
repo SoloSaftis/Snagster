@@ -959,6 +959,8 @@
   "Canvas size and color": "Te rahi me te tae o te kānawhi",
   "Export pictures": "Kaweake pikitia",
   "What's new in Snagster": "He aha te hou i Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Ka puta mai ngā putanga hou o Snagster mā {who}. Whakahoutia ki reira, hei tauira i tō pokapū pūmanawa."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Ka puta mai ngā putanga hou o Snagster mā {who}. Whakahoutia ki reira, hei tauira i tō pokapū pūmanawa.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Kāore anō te hopu panuku kia wātea i ngā papamahi Wayland: hopukina te wāhanga e kitea ana hei utu.",
+  "Start Snagster when you log in": "Tīmatahia a Snagster ina takiuru koe"
  }
 }

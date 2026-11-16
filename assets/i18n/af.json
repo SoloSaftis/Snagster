@@ -959,6 +959,8 @@
   "Canvas size and color": "Doekgrootte en kleur",
   "Export pictures": "Voer prente uit",
   "What's new in Snagster": "Wat is nuut in Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Nuwe weergawes van Snagster kom deur {who}. Werk dit daar by, byvoorbeeld in jou sagtewaresentrum."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Nuwe weergawes van Snagster kom deur {who}. Werk dit daar by, byvoorbeeld in jou sagtewaresentrum.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Rollende opname is nog nie op Wayland-werkskerms beskikbaar nie: neem eerder die sigbare deel vas.",
+  "Start Snagster when you log in": "Begin Snagster wanneer jy aanmeld"
  }
 }

@@ -172,7 +172,8 @@ impl SnagApp {
                             }
                         });
                         let mut on = *self.run_at_startup.get_or_insert_with(runs_at_startup);
-                        if ui.checkbox(&mut on, crate::i18n::t("Start Snagster when Windows starts")).changed() {
+                        let label = if cfg!(windows) { crate::i18n::t("Start Snagster when Windows starts") } else { crate::i18n::t("Start Snagster when you log in") };
+                        if ui.checkbox(&mut on, label).changed() {
                             match set_run_at_startup(on) {
                                 Ok(()) => self.run_at_startup = Some(on),
                                 Err(e) => self.status = format!("Couldn't change that: {e}"),

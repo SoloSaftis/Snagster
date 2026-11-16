@@ -959,6 +959,8 @@
   "Canvas size and color": "Gréisst a Faarf vun der Leinwand",
   "Export pictures": "Biller exportéieren",
   "What's new in Snagster": "Wat ass nei am Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Nei Versioune vu Snagster kommen iwwer {who}. Aktualiséiert et do, zum Beispill an Ärem Software-Center."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Nei Versioune vu Snagster kommen iwwer {who}. Aktualiséiert et do, zum Beispill an Ärem Software-Center.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "D'Scroll-Opnam ass op Wayland-Desktoppen nach net disponibel: maacht amplaz eng Opnam vum siichtbaren Deel.",
+  "Start Snagster when you log in": "Snagster beim Umellen starten"
  }
 }

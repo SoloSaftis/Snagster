@@ -959,6 +959,8 @@
   "Canvas size and color": "ক্যানভাসের আকার ও রং",
   "Export pictures": "ছবি এক্সপোর্ট করুন",
   "What's new in Snagster": "Snagster-এ নতুন কী আছে",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster-এর নতুন সংস্করণ {who}-এর মাধ্যমে আসে। সেখানেই এটি আপডেট করুন, যেমন আপনার সফটওয়্যার সেন্টারে।"
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagster-এর নতুন সংস্করণ {who}-এর মাধ্যমে আসে। সেখানেই এটি আপডেট করুন, যেমন আপনার সফটওয়্যার সেন্টারে।",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Wayland ডেস্কটপে স্ক্রলিং ক্যাপচার এখনো উপলব্ধ নয়: এর বদলে দৃশ্যমান অংশটি ক্যাপচার করুন।",
+  "Start Snagster when you log in": "লগ ইন করলে Snagster চালু করুন"
  }
 }

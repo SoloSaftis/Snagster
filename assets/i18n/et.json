@@ -959,6 +959,8 @@
   "Canvas size and color": "Lõuendi suurus ja värv",
   "Export pictures": "Ekspordi pildid",
   "What's new in Snagster": "Mis on Snagsteris uut",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagsteri uued versioonid tulevad {who} kaudu. Uuenda seda seal, näiteks oma tarkvarakeskuses."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagsteri uued versioonid tulevad {who} kaudu. Uuenda seda seal, näiteks oma tarkvarakeskuses.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Keriv jäädvustus pole Waylandi töölaudadel veel saadaval: jäädvusta selle asemel nähtav osa.",
+  "Start Snagster when you log in": "Käivita Snagster sisselogimisel"
  }
 }

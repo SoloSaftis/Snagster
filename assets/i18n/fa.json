@@ -959,6 +959,8 @@
   "Canvas size and color": "اندازه و رنگ بوم",
   "Export pictures": "صادر کردن تصویرها",
   "What's new in Snagster": "تازه‌های Snagster",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "نسخه‌های جدید Snagster از طریق {who} می‌رسند. آن را همان‌جا به‌روز کنید، مثلاً در مرکز نرم‌افزار."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "نسخه‌های جدید Snagster از طریق {who} می‌رسند. آن را همان‌جا به‌روز کنید، مثلاً در مرکز نرم‌افزار.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "ضبط پیمایشی هنوز در میزکارهای Wayland در دسترس نیست: به‌جای آن بخش قابل مشاهده را ضبط کنید.",
+  "Start Snagster when you log in": "اجرای Snagster هنگام ورود"
  }
 }

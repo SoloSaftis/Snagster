@@ -959,6 +959,8 @@
   "Canvas size and color": "Lienzo sayay hinaspa color",
   "Export pictures": "Llimp'ikunata hawaman apay",
   "What's new in Snagster": "Snagsterpi imachus musuq",
-  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagsterpa musuq versionninkunaqa {who} nisqawanmi chayamun. Chaypi musuqyachiy, ahinataq software centroykipi."
+  "New versions of Snagster come through {who}. Update it there, for example in your software center.": "Snagsterpa musuq versionninkunaqa {who} nisqawanmi chayamun. Chaypi musuqyachiy, ahinataq software centroykipi.",
+  "Scrolling capture isn't available on Wayland desktops yet: capture the visible part instead.": "Wayland escritoriokunapiqa manaraqmi muyuchispa hapiy kanchu: rikukuq partellanta hapiy.",
+  "Start Snagster when you log in": "Yaykuspa Snagsterta qallarichiy"
  }
 }
