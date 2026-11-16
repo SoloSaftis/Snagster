@@ -801,6 +801,22 @@ mod linux_files_tests {
         assert_eq!(first, Some(env!("CARGO_PKG_VERSION")), "add this version to the top of <releases> in the metainfo file");
     }
 
+    /// Our own Flatpak (packaging/flatpak) builds the same app: its ID, the files it installs and
+    /// the LLVM version it names everywhere agree with the rest of the repository.
+    #[test]
+    fn our_own_flatpak_manifest_matches_the_app() {
+        const MANIFEST: &str = include_str!("../packaging/flatpak/io.github.SoloSaftis.Snagster.yml");
+        assert!(MANIFEST.lines().any(|l| l == format!("id: {APP_ID}")));
+        assert!(MANIFEST.lines().any(|l| l == "command: snagster"), "the binary Cargo builds");
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        for f in [format!("assets/linux/{APP_ID}.desktop"), format!("assets/linux/{APP_ID}.metainfo.xml"), format!("assets/linux/{APP_ID}.png"), "LICENSE-MIT".into(), "LICENSE-APACHE".into()] {
+            assert!(root.join(&f).exists(), "the manifest installs {f}");
+        }
+        let llvm: std::collections::BTreeSet<&str> = MANIFEST.match_indices("llvm").map(|(i, _)| MANIFEST[i..].split(|c: char| !c.is_ascii_alphanumeric()).next().unwrap()).collect();
+        assert_eq!(llvm.len(), 1, "one LLVM version throughout: {llvm:?}");
+        assert!(!MANIFEST.contains("type: git"), "built from this checkout, not a download");
+    }
+
     /// Flathub wants an icon of at least 256 by 256 pixels.
     #[test]
     fn the_linux_icon_is_256_pixels() {

@@ -2,6 +2,14 @@
 
 What changed for people using Snagster, per version.
 
+## Unreleased
+
+New:
+
+- **Flatpak download for Linux**: every release now has `Snagster-linux-x86_64.flatpak`, the
+  sandboxed Snagster for any Linux distribution. Install it with
+  `flatpak install --user Snagster-linux-x86_64.flatpak`. Updates come with each new download.
+
 ## 0.10.3 — 2026-11-15
 
 Fixed:

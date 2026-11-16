@@ -14,6 +14,7 @@ packaging, reviewing or reusing Snagster can see it. It is kept current when tha
 | Translations | `assets/i18n/` (85 language packs) | All of them (machine-translated by the AI, not yet reviewed by native speakers) |
 | Build and release automation | `.github/workflows/` | Essentially all of it |
 | Linux desktop entry and AppStream metainfo | `assets/linux/` | All of it |
+| Snagster's own Flatpak packaging (the `.flatpak` on the releases page) | `packaging/flatpak/` | All of it. This is not a Flathub manifest |
 | Icon | drawn by code in `src/main.rs`; `assets/snagster-256.png` and `assets/linux/*.png` are renders of it | All of it |
 | Screenshots | `assets/screenshots/` | Made by Snagster itself (`--screenshot`) from AI-written views |
 
@@ -31,8 +32,9 @@ applies if Snagster is submitted there:
 - The submission discloses the AI-generated material above (this file lists the parts and the
   extent).
 - The Flathub manifest contains no AI-generated or AI-assisted content: it is written by hand
-  by a person, and it is not kept in this repository. AI tools in this project never write,
-  edit or suggest lines for it.
+  by a person, and it is not kept in this repository. (`packaging/flatpak/` is a different,
+  AI-generated manifest for Snagster's own download and is never used for Flathub.) AI tools
+  in this project never write, edit or suggest lines for the Flathub manifest.
 - AI tools never open or automate the submission pull request, and never write its commit
   messages, description, review comments or replies. No AI-agent review is requested.
 - Reviewers decide on the disclosed material at their discretion; disclosure does not mean

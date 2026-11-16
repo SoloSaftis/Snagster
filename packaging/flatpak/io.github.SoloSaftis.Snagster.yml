@@ -1,0 +1,60 @@
+# Snagster's own Flatpak, built by CI (.github/workflows/build.yml, job "flatpak") and attached
+# to every GitHub release as Snagster-linux-x86_64.flatpak.
+#
+# This is NOT a Flathub manifest. It is AI-generated (AI-DISCLOSURE.md) and builds from this
+# checkout. Flathub's generative AI policy doesn't allow AI-generated manifests, so any Flathub
+# submission uses a separate manifest written by a person (CLAUDE.md rule 8); keep the two apart.
+#
+# cargo-sources.json (the crates for the offline build) is generated from Cargo.lock in CI with
+# flatpak-cargo-generator and is not kept in the repository.
+id: io.github.SoloSaftis.Snagster
+runtime: org.freedesktop.Platform
+runtime-version: '26.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+  # libclang for bindgen (PipeWire's bindings).
+  - org.freedesktop.Sdk.Extension.llvm23
+command: snagster
+
+finish-args:
+  # The window: Wayland first, X11 where there is no Wayland.
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  # OpenGL drawing and graphics-chip video encoding (VA-API).
+  - --device=dri
+  # Live streaming (RTMP/RTMPS) and the optional MCP server on 127.0.0.1.
+  - --share=network
+  # Where captures and recordings are saved by default (Pictures/Snagster, Videos/Snagster).
+  - --filesystem=xdg-pictures
+  - --filesystem=xdg-videos
+  # The tray icon (StatusNotifierItem).
+  - --talk-name=org.kde.StatusNotifierWatcher
+  # The screen itself is reached only through the desktop's portals (Screenshot, ScreenCast).
+
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm23/bin
+  prepend-ld-library-path: /usr/lib/sdk/llvm23/lib
+  env:
+    CARGO_HOME: /run/build/snagster/cargo
+    LIBCLANG_PATH: /usr/lib/sdk/llvm23/lib
+
+modules:
+  - name: snagster
+    buildsystem: simple
+    build-commands:
+      - cargo --offline build --release --locked
+      - install -Dm755 target/release/snagster -t ${FLATPAK_DEST}/bin
+      - install -Dm644 assets/linux/${FLATPAK_ID}.desktop -t ${FLATPAK_DEST}/share/applications
+      - install -Dm644 assets/linux/${FLATPAK_ID}.metainfo.xml -t ${FLATPAK_DEST}/share/metainfo
+      - install -Dm644 assets/linux/${FLATPAK_ID}.png -t ${FLATPAK_DEST}/share/icons/hicolor/256x256/apps
+      - install -Dm644 LICENSE-MIT LICENSE-APACHE -t ${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - target
+          - .git
+          - dist
+      - cargo-sources.json

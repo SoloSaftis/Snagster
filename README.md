@@ -64,6 +64,7 @@ when you start a live stream).
 | **Windows** 10 or 11 | [⬇️ Download for Windows](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-windows-x64-portable.zip) | Open the folder and double-click **Snagster** |
 | **Mac** with Apple chip (M1 or newer) | [⬇️ Download for Mac](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-macos-arm64.zip) | Open it and drag **Snagster** to Applications. Then allow it under System Settings → Privacy & Security → **Screen Recording** |
 | **Linux** | [⬇️ Download for Linux](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-linux-x86_64.AppImage) | Right-click → Properties → allow running as a program, then double-click it ([folder version](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-linux-x86_64-portable.tar.gz)) |
+| **Linux, sandboxed** (Flatpak) | [⬇️ Download the Flatpak](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-linux-x86_64.flatpak) | Run `flatpak install --user Snagster-linux-x86_64.flatpak`, then start Snagster from your apps menu |
 
 <details>
 <summary><b>Your computer warns you the first time?</b></summary>
