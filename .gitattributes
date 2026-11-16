@@ -2,5 +2,5 @@
 assets/linux/*.desktop text eol=lf
 assets/linux/*.xml text eol=lf
 tests/*.sh text eol=lf
-tests/desktop/* text eol=lf
+
 packaging/flatpak/*.yml text eol=lf
