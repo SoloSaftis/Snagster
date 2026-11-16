@@ -281,11 +281,22 @@ pub fn record(opts: &VideoOpts, stop: &AtomicBool, pause: &AtomicBool) -> VideoD
         return done;
     }
     crate::capture::background_thread(false);
+    RECORDING_LIVE.store(cfg!(windows), Ordering::Relaxed);
     #[cfg(windows)]
     win::record(opts, stop, pause, &mut done);
     #[cfg(not(windows))]
     soft::record(opts, stop, pause, &mut done);
+    RECORDING_LIVE.store(false, Ordering::Relaxed);
     done
+}
+
+/// Whether the recording that is running has its screen and is counting time. On Wayland a
+/// recording first waits for the person in the desktop's "Share screen" dialog; the recording
+/// bar says so instead of counting.
+static RECORDING_LIVE: AtomicBool = AtomicBool::new(false);
+
+pub fn recording_live() -> bool {
+    RECORDING_LIVE.load(Ordering::Relaxed)
 }
 
 /// Paces frames at a steady rate, holding the clock while paused and skipping ticks when the
@@ -654,25 +665,30 @@ trait Grab {
 
 /// The best way to copy `rect` on this system: Desktop Duplication (or GDI) on Windows; on
 /// Linux one X connection with shared memory on X11, and on Wayland (and in a Flatpak) a screen
-/// share through the desktop's ScreenCast portal (xcap's way, then XWayland, when the desktop has
-/// none); on macOS `CGDisplayCreateImageForRect`; xcap where those can't be had.
+/// share through the desktop's ScreenCast portal (XWayland when the desktop has none, e.g.
+/// WSLg); on macOS `CGDisplayCreateImageForRect`; xcap where those can't be had. Never one
+/// desktop screenshot per picture on Wayland (`per_picture_screenshots`).
 fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, String> {
     #[cfg(windows)]
     return win::open_grab(rect, cursor);
     #[cfg(target_os = "linux")]
-    if use_portal(x11::is_wayland(), crate::update::managed_by() == Some("Flatpak")) {
-        match PortalGrab::open(rect, cursor) {
-            Ok(g) => return Ok(Box::new(g)),
-            // In a sandbox the portal is the only way in: say why it failed.
-            Err(e) if crate::update::managed_by() == Some("Flatpak") && !x11::reachable() => return Err(e),
-            Err(_) => {}
-        }
-    }
-    #[cfg(target_os = "linux")]
-    if use_x11(x11::is_wayland(), || crate::capture::grab_rect(rect.0, rect.1, rect.2.clamp(2, 16), rect.3.clamp(2, 16)).is_ok())
-        && let Ok(g) = x11::X11Grab::open(rect, cursor)
     {
-        return Ok(Box::new(g));
+        let wayland = x11::is_wayland();
+        let mut why = None;
+        if use_portal(wayland, crate::update::managed_by() == Some("Flatpak")) {
+            match PortalGrab::open(rect, cursor) {
+                Ok(g) => return Ok(Box::new(g)),
+                Err(e) => why = Some(e),
+            }
+        }
+        if (!wayland || why.is_some())
+            && let Ok(g) = x11::X11Grab::open(rect, cursor)
+        {
+            return Ok(Box::new(g));
+        }
+        if !per_picture_screenshots(wayland) {
+            return Err(why.unwrap_or_else(|| "the desktop's screen sharing isn't available".into()));
+        }
     }
     #[cfg(target_os = "macos")]
     if let Some(g) = cg::CgGrab::open(rect, cursor) {
@@ -682,13 +698,12 @@ fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, 
     return Ok(Box::new(XcapGrab { rect, cursor }));
 }
 
-/// Whether Linux copies the screen through X11 (one connection, shared memory): always on X11.
-/// On Wayland X11 only sees XWayland's windows, so xcap's Wayland way is kept, unless it can't
-/// copy the screen at all (a compositor without the screencopy protocol, e.g. WSLg): then
-/// XWayland's picture is better than none.
+/// Whether a recording or stream may fall back to one screenshot per picture (xcap): not on
+/// Wayland, where every screenshot is a request to the desktop (GNOME: a flash, a sound and a
+/// permission check). Ubuntu froze under 2 a second; Wayland records through screen sharing.
 #[cfg(any(target_os = "linux", test))]
-fn use_x11(wayland: bool, xcap_copies: impl FnOnce() -> bool) -> bool {
-    !wayland || !xcap_copies()
+fn per_picture_screenshots(wayland: bool) -> bool {
+    !wayland
 }
 
 /// Whether Linux records through the ScreenCast portal first: on Wayland (where reading the
@@ -1121,11 +1136,6 @@ mod x11 {
     pub fn is_wayland() -> bool {
         let var = |k: &str| std::env::var_os(k).unwrap_or_default().to_string_lossy().to_lowercase();
         var("XDG_SESSION_TYPE") == "wayland" || var("WAYLAND_DISPLAY").contains("wayland")
-    }
-
-    /// An X server Snagster may talk to (a sandbox without the X11 socket has none).
-    pub fn reachable() -> bool {
-        std::env::var_os("DISPLAY").is_some_and(|d| !d.is_empty())
     }
 
     /// A System V shared-memory segment attached here and by the X server.
@@ -3015,12 +3025,15 @@ mod soft {
         let file = std::fs::File::create(&opts.path).map_err(|e| e.to_string())?;
         let mut mux = Mux::new(std::io::BufWriter::new(file), w, h)?;
         let mut spacer = Spacer::new(fps);
-        let mut clock = Clock::new(fps);
         let mut first = true;
         let mut rgba = vec![0u8; (w * h * 4) as usize];
         // The screen through the best copy here (the same one streaming uses: X11 shared memory
         // on Linux, CoreGraphics on macOS), not a capture-library grab per picture.
         let mut grab = if opts.frames.is_none() { Some(super::open_grab((x, y, w, h), opts.cursor)?) } else { None };
+        // The clock starts once the screen is there: on Wayland opening it waits for the person
+        // in the desktop's "Share screen" dialog, and that wait isn't part of the video.
+        let mut clock = Clock::new(fps);
+        super::RECORDING_LIVE.store(true, Ordering::Relaxed);
         if let Some(g) = &grab {
             done.capture = g.name();
         }
@@ -3172,16 +3185,15 @@ mod soft {
 mod tests {
     use super::*;
 
-    /// X11 on X11; on Wayland the capture library first, and XWayland only where the library
-    /// can't copy the screen at all (WSLg crashed or failed there before).
+    /// X11 on X11; on Wayland and in a Flatpak screen sharing, XWayland only when that fails, and
+    /// never a desktop screenshot per picture on Wayland.
     #[test]
-    fn linux_copies_through_x11_unless_waylands_own_way_works() {
+    fn linux_copies_through_x11_or_screen_sharing() {
         assert!(!use_portal(false, false), "plain X11 copies directly");
         assert!(use_portal(true, false), "Wayland shares the screen through the portal");
         assert!(use_portal(false, true), "a Flatpak only gets the screen through the portal");
-        assert!(use_x11(false, || panic!("not asked on X11")));
-        assert!(!use_x11(true, || true), "Wayland's own way works: keep it");
-        assert!(use_x11(true, || false), "it can't copy: XWayland is better than nothing");
+        assert!(per_picture_screenshots(false), "X11 copies are cheap: the last resort may grab per picture");
+        assert!(!per_picture_screenshots(true), "never a desktop screenshot per picture on Wayland");
     }
 
     fn solid_px(w: u32, h: u32, p: [u8; 4]) -> Vec<u8> {
@@ -3802,6 +3814,31 @@ mod tests {
         let b = recording_path(&dir.to_string_lossy(), "Studio", "wmv");
         // Same second: a number is added; a later second: a new name. Either way not the same file.
         assert_ne!(a, b);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// The recording bar counts from the first picture: the recording is "live" only while it
+    /// takes pictures (on Wayland the Share dialog comes first), and not after it ends.
+    #[test]
+    fn a_recording_is_live_while_it_takes_pictures_and_not_after() {
+        let dir = std::env::temp_dir().join(format!("snagster-video-live-{}", std::process::id()));
+        let mut o = VideoOpts::screen((0, 0, 64, 64), 10, VideoFormat::Mp4, dir.join("live.mp4"));
+        o.hardware = false;
+        let seen = Arc::new(AtomicBool::new(false));
+        let calls = Arc::new(std::sync::atomic::AtomicU32::new(0));
+        let (s2, c2) = (seen.clone(), calls.clone());
+        o.frames = Some(Arc::new(move |px: &mut [u8]| {
+            if recording_live() {
+                s2.store(true, Ordering::Relaxed);
+            }
+            px.fill(128);
+            c2.fetch_add(1, Ordering::Relaxed) < 3
+        }));
+        let (stop, pause) = (AtomicBool::new(false), AtomicBool::new(false));
+        let d = record(&o, &stop, &pause);
+        assert!(d.result.is_ok(), "{:?}", d.result);
+        assert!(seen.load(Ordering::Relaxed), "live while pictures were taken");
+        assert!(!recording_live(), "not live after the recording ended");
         let _ = std::fs::remove_dir_all(&dir);
     }
 

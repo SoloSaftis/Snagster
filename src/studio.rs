@@ -282,9 +282,44 @@ pub struct Compositor {
     windows: std::collections::HashMap<String, (Instant, Option<(i32, i32, u32, u32)>)>,
     screens: Option<(Instant, Vec<crate::capture::MonitorInfo>)>,
     texts: std::collections::HashMap<String, RgbaImage>,
+    /// Wayland: one screen share per live area (the desktop asks the person once), instead of
+    /// a desktop screenshot per frame. A share that couldn't start is retried after a while.
+    feeds: std::collections::HashMap<(i32, i32, u32, u32), Result<crate::video::ScreenFeed, Instant>>,
+}
+
+/// How long a screen share that couldn't start (the person said no, or the desktop has none)
+/// waits before Studio asks again.
+const FEED_RETRY: Duration = Duration::from_secs(30);
+
+/// Whether a failed screen share should be asked for again.
+fn feed_retry_due(failed_at: Instant, now: Instant) -> bool {
+    now.duration_since(failed_at) >= FEED_RETRY
 }
 
 impl Compositor {
+    /// The newest picture of the screen share for `rect` (started on first use).
+    fn feed_picture(&mut self, rect: (i32, i32, u32, u32)) -> Option<RgbaImage> {
+        let now = Instant::now();
+        let due = match self.feeds.get(&rect) {
+            None => true,
+            Some(Err(at)) => feed_retry_due(*at, now),
+            Some(Ok(_)) => false,
+        };
+        if due {
+            let o = crate::video::FeedOptions { fps: 30, cursor: true, fit: None, every_frame: false };
+            self.feeds.insert(rect, crate::video::ScreenFeed::start(rect, o).map_err(|_| now));
+        }
+        let Some(Ok(feed)) = self.feeds.get(&rect) else { return None };
+        if let Some(e) = feed.error()
+            && feed.frames() == 0
+            && e.contains("said no")
+        {
+            self.feeds.insert(rect, Err(now));
+            return None;
+        }
+        feed.with_latest(|f| (f.width > 0 && f.height > 0).then(|| RgbaImage::from_raw(f.width, f.height, f.rgba.clone())).flatten())
+    }
+
     fn screen_rect(&mut self, index: usize) -> Option<(i32, i32, u32, u32)> {
         let fresh = self.screens.as_ref().is_some_and(|(t, _)| t.elapsed() < Duration::from_secs(3));
         if !fresh {
@@ -347,6 +382,15 @@ impl Compositor {
                         _ => None,
                     };
                     if let Some((x, y, w, h)) = rect
+                        && w > 0
+                        && h > 0
+                        && crate::capture::desktop_screenshots_only()
+                    {
+                        // Wayland: the desktop's screen sharing, never a screenshot per frame.
+                        if let Some(img) = self.feed_picture((x, y, w, h)) {
+                            blit_scaled(out, &img, dx, dy, dw, dh, false);
+                        }
+                    } else if let Some((x, y, w, h)) = rect
                         && w > 0
                         && h > 0
                         && let Ok(mut img) = crate::capture::grab_rect(x, y, w, h)
@@ -578,6 +622,16 @@ pub fn record_headless(settings: &StudioSettings, scene: Option<usize>, seconds:
 
 #[cfg(test)]
 mod tests {
+    /// A screen share the person refused is asked for again only after a while, not every frame
+    /// (on Wayland each ask is a dialog).
+    #[test]
+    fn a_refused_screen_share_is_asked_again_only_after_a_while() {
+        let t = Instant::now();
+        assert!(!super::feed_retry_due(t, t + Duration::from_secs(1)));
+        assert!(!super::feed_retry_due(t, t + super::FEED_RETRY - Duration::from_millis(1)));
+        assert!(super::feed_retry_due(t, t + super::FEED_RETRY));
+    }
+
     use super::*;
 
     #[test]

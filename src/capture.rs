@@ -579,6 +579,7 @@ pub fn crop_desktop(img: &RgbaImage, origin: (i32, i32), x: i32, y: i32, w: u32,
 
 /// A desktop rectangle, grabbed from the monitor it sits on (see `guarded`).
 pub fn grab_rect(x: i32, y: i32, w: u32, h: u32) -> Result<RgbaImage, String> {
+    desktop_screenshot_budget()?;
     guarded(|| grab_rect_raw(x, y, w, h))
 }
 
@@ -610,7 +611,7 @@ fn screens_listable() -> bool {
 /// The whole desktop through the desktop's Screenshot portal (Linux, see `crate::portal`).
 #[cfg(target_os = "linux")]
 fn portal_shot() -> Result<Shot, String> {
-    let image = crate::portal::screenshot()?;
+    let image = crate::portal::screenshot(false)?;
     Ok(shot(image, (0, 0), "Screen".into()))
 }
 
@@ -659,9 +660,76 @@ fn grab_window(id: u32, title: String, raise: bool) -> Result<Shot, String> {
     Ok(shot(image, (win.x().unwrap_or(0), win.y().unwrap_or(0)), title))
 }
 
+/// Linux on Wayland: the screen can only be read through the desktop's screenshot service
+/// (GNOME Shell, the Screenshot portal). Each picture costs the desktop a flash, a sound or a
+/// permission check, so pictures are taken one at a time, never as a stream (screen sharing is
+/// for that: `portal::Cast`).
+pub fn desktop_screenshots_only() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        let var = |k: &str| std::env::var_os(k).unwrap_or_default().to_string_lossy().to_lowercase();
+        var("XDG_SESSION_TYPE") == "wayland" || !var("WAYLAND_DISPLAY").is_empty()
+    }
+    #[cfg(not(target_os = "linux"))]
+    false
+}
+
+/// At most this many desktop screenshots in `SCREENSHOT_WINDOW` (Wayland): more means something
+/// is asking for a stream of them, which floods the desktop with flashes and sounds.
+const SCREENSHOT_LIMIT: usize = 4;
+const SCREENSHOT_WINDOW: Duration = Duration::from_secs(10);
+
+/// Whether another desktop screenshot may be taken `now`, given the times of the recent ones
+/// (which this updates).
+fn screenshot_allowed(recent: &mut std::collections::VecDeque<Instant>, now: Instant) -> bool {
+    while recent.front().is_some_and(|t| now.duration_since(*t) >= SCREENSHOT_WINDOW) {
+        recent.pop_front();
+    }
+    if recent.len() >= SCREENSHOT_LIMIT {
+        return false;
+    }
+    recent.push_back(now);
+    true
+}
+
+/// The limit above, for this run (Wayland only; elsewhere screen copies are cheap and silent).
+fn desktop_screenshot_budget() -> Result<(), String> {
+    if !desktop_screenshots_only() {
+        return Ok(());
+    }
+    static RECENT: std::sync::Mutex<std::collections::VecDeque<Instant>> = std::sync::Mutex::new(std::collections::VecDeque::new());
+    let mut recent = RECENT.lock().unwrap_or_else(|p| p.into_inner());
+    if screenshot_allowed(&mut recent, Instant::now()) {
+        Ok(())
+    } else {
+        Err("Snagster stopped asking the desktop for screenshots: too many in a row. Live screen sources use the desktop's screen sharing instead.".into())
+    }
+}
+
+/// The captures that, on Wayland, open the desktop's own screenshot tool from Snagster's window:
+/// Snagster can't hide itself and come back there (a Wayland app may minimize itself but not
+/// un-minimize), so the desktop's tool picks the area, window or screen instead of Snagster's
+/// overlay.
+#[cfg(any(target_os = "linux", test))]
+pub(crate) fn desktop_tool_covers(kind: &CaptureKind) -> bool {
+    // Only plain pictures: picking an area to record, scroll, read or combine needs Snagster's
+    // own overlay (the desktop's tool gives back a picture, not an area).
+    matches!(kind, CaptureKind::Screen | CaptureKind::AllScreens | CaptureKind::Monitor(_) | CaptureKind::Pick(_, PickPurpose::Capture) | CaptureKind::WindowPick)
+}
+
 /// Take the picture `kind` asks for (see `guarded`: the screen library can't take Snagster down).
 pub fn grab(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String> {
+    desktop_screenshot_budget()?;
     guarded(|| grab_raw(kind, fallback_at))
+}
+
+/// Linux on Wayland, a capture started from Snagster's window: the desktop's own screenshot
+/// tool, its picture as one screen-sized shot.
+#[cfg(target_os = "linux")]
+pub fn grab_with_desktop_tool() -> Result<Shot, String> {
+    desktop_screenshot_budget()?;
+    let image = crate::portal::screenshot(true)?;
+    Ok(shot(image, (0, 0), "Screenshot".into()))
 }
 
 fn grab_raw(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String> {
@@ -832,6 +900,13 @@ pub fn grab_error_message(raw: &str, access: ScreenAccess) -> String {
 pub fn spawn(kind: CaptureKind, delay_ms: u64, at: (i32, i32), ctx: eframe::egui::Context, tx: Sender<CaptureResult>) {
     std::thread::spawn(move || {
         std::thread::sleep(Duration::from_millis(delay_ms));
+        #[cfg(target_os = "linux")]
+        if desktop_screenshots_only() && desktop_tool_covers(&kind) {
+            // The desktop's tool has already picked the area: straight to the editor.
+            let _ = tx.send(CaptureResult { kind: CaptureKind::AllScreens, shot: grab_with_desktop_tool() });
+            ctx.request_repaint();
+            return;
+        }
         let shot = grab(&kind, at);
         let _ = tx.send(CaptureResult { kind, shot });
         ctx.request_repaint();
@@ -1434,6 +1509,38 @@ mod tests {
             assert!(eframe::egui::Key::from_name(s.key()).is_some(), "{s:?}");
             assert!(!s.label().is_empty());
         }
+    }
+
+    /// Studio's screen preview asked GNOME for a screenshot every frame on Wayland (19 portal
+    /// and 38 GNOME Shell screenshots in 10 s), flooding the desktop until it had to restart.
+    #[test]
+    fn a_stream_of_desktop_screenshots_is_refused() {
+        let mut recent = std::collections::VecDeque::new();
+        let t0 = Instant::now();
+        for i in 0..SCREENSHOT_LIMIT {
+            assert!(screenshot_allowed(&mut recent, t0 + Duration::from_millis(i as u64 * 33)), "picture {i}");
+        }
+        assert!(!screenshot_allowed(&mut recent, t0 + Duration::from_millis(200)), "a fifth one in a moment is refused");
+        // Once the window has passed, single pictures are fine again.
+        assert!(screenshot_allowed(&mut recent, t0 + SCREENSHOT_WINDOW + Duration::from_millis(200)));
+    }
+
+    #[test]
+    fn the_desktop_tool_picks_whole_screens_and_areas_on_wayland() {
+        assert!(desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture)));
+        assert!(desktop_tool_covers(&CaptureKind::AllScreens));
+        assert!(desktop_tool_covers(&CaptureKind::WindowPick));
+        // Picking an area to record, scroll through or read keeps Snagster's overlay.
+        assert!(!desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::RecordGif)));
+        assert!(!desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::AllInOne)));
+        assert!(!desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::GrabText)));
+        assert!(!desktop_tool_covers(&CaptureKind::Fixed(640, 480)));
+        // A window by id, the last area and menus keep their own way.
+        assert!(!desktop_tool_covers(&CaptureKind::Window(1, "x".into())));
+        assert!(!desktop_tool_covers(&CaptureKind::LastRegion(0, 0, 10, 10)));
+        assert!(!desktop_tool_covers(&CaptureKind::Menus));
+        // The color picker and the ruler need Snagster's own overlay.
+        assert!(!desktop_tool_covers(&CaptureKind::ColorPicker));
     }
 
     #[test]

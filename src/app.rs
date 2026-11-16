@@ -383,8 +383,18 @@ pub struct SnagApp {
     pub(crate) gif_open: bool,
     pub(crate) mini: Option<Mini>,
     mini_since: Instant,
+    /// When the recording bar opened (its size is asked for again in the first moments).
+    mini_entered: Instant,
+    /// A window size asked for after the recording bar, and since when: asked again until the
+    /// window has it (Wayland may apply an older size after it).
+    size_wanted: Option<(Vec2, Instant)>,
     mini_paused: Option<Instant>,
-    mini_restore: Option<(Pos2, Vec2)>,
+    /// Where (when the system says: not on Wayland) and how big the window was before the
+    /// recording bar.
+    mini_restore: Option<(Option<Pos2>, Vec2)>,
+    /// The window's size the last time it was shown normally (no overlay, no bar, not full
+    /// screen): what comes back after the recording bar where the position is unknown.
+    normal_size: Option<Vec2>,
     pub(crate) interval: Option<IntervalJob>,
     pub(crate) schedule: Option<(chrono::NaiveTime, CaptureKind)>,
     pub(crate) timer_open: bool,
@@ -559,8 +569,11 @@ impl SnagApp {
             gif_open: false,
             mini: None,
             mini_since: Instant::now(),
+            mini_entered: Instant::now(),
+            size_wanted: None,
             mini_paused: None,
             mini_restore: None,
+            normal_size: None,
             interval: None,
             schedule: None,
             timer_open: false,
@@ -758,7 +771,10 @@ impl SnagApp {
         self.hidden_for_capture = minimized;
         self.started_away = minimized;
         let mut delay = 60;
-        if self.settings.hide_window && !minimized {
+        // Wayland: Snagster never minimizes itself for a capture: it couldn't come back (only the
+        // person can un-minimize a Wayland window), and the capture seemed frozen until they
+        // clicked Snagster in the dock. Plain pictures go to the desktop's own screenshot tool.
+        if self.settings.hide_window && !minimized && !self_minimize_blocked() {
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
             self.hidden_for_capture = true;
             delay = self.settings.hide_settle_ms;
@@ -1016,10 +1032,12 @@ impl SnagApp {
     fn enter_mini(&mut self, ctx: &egui::Context, kind: Mini) {
         let ppp = ctx.input(|i| i.viewport().native_pixels_per_point).unwrap_or(1.0);
         let (outer, inner) = ctx.input(|i| (i.viewport().outer_rect, i.viewport().inner_rect));
-        if let (Some(o), Some(i)) = (outer, inner) {
-            self.mini_restore = Some((pos2(o.min.x * ppp, o.min.y * ppp), i.size()));
-        }
-        let (bw, bh) = (420.0, 56.0);
+        self.mini_restore = match (outer, inner) {
+            (Some(o), Some(i)) => Some((Some(pos2(o.min.x * ppp, o.min.y * ppp)), i.size())),
+            // Wayland: no position, and the window may still be full screen from the overlay.
+            _ => self.normal_size.map(|s| (None, s)),
+        };
+        let (bw, bh) = (MINI_BAR_SIZE.x, MINI_BAR_SIZE.y);
         if let Ok((mx, my, mw, mh)) = capture::monitor_under_cursor() {
             let x = (mx + mw as i32) as f32 - (bw + 24.0) * ppp;
             let y = (my + mh as i32) as f32 - (bh + 72.0) * ppp;
@@ -1032,6 +1050,7 @@ impl SnagApp {
         }
         self.mini = Some(kind);
         self.mini_since = Instant::now();
+        self.mini_entered = Instant::now();
     }
 
     fn leave_mini(&mut self, ctx: &egui::Context) {
@@ -1042,7 +1061,10 @@ impl SnagApp {
         if let Some((pos, size)) = self.mini_restore.take() {
             let ppp = ctx.input(|i| i.viewport().native_pixels_per_point).unwrap_or(1.0);
             ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(size));
-            ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(pos2(pos.x / ppp, pos.y / ppp)));
+            self.size_wanted = Some((size, Instant::now()));
+            if let Some(pos) = pos {
+                ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(pos2(pos.x / ppp, pos.y / ppp)));
+            }
         }
         ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
     }
@@ -3766,7 +3788,27 @@ impl SnagApp {
 
     fn mini_bar(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        // A video counts from its first picture (on Wayland the desktop's "Share screen" dialog
+        // comes first).
+        let waiting = self.mini == Some(Mini::Video) && !crate::video::recording_live();
+        if waiting {
+            self.mini_since = Instant::now();
+            ctx.request_repaint_after(Duration::from_millis(200));
+        }
         let secs = self.mini_since.elapsed().as_secs();
+        // Wayland: leaving the full-screen overlay restores the window's old size after the bar
+        // asked for its own, which left a big dark window over the area being recorded. Ask
+        // again until the bar has its size.
+        // (The content area: on Wayland the window's position, and so its rectangle, is unknown.)
+        let have = ctx.input(|i| i.content_rect().size());
+        if resize_due(have, MINI_BAR_SIZE, self.mini_entered.elapsed()) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(MINI_BAR_SIZE));
+        }
+        // The bar can be dragged by its free space (a Wayland app can't place its own window).
+        let bg = ui.interact(ui.max_rect(), egui::Id::unique("mini-bar-drag"), Sense::drag());
+        if bg.drag_started() {
+            ctx.send_viewport_cmd(egui::ViewportCommand::StartDrag);
+        }
         ui.horizontal_centered(|ui| {
             ui.add_space(10.0);
             let blink = (self.mini_since.elapsed().as_millis() / 500) % 2 == 0;
@@ -3775,6 +3817,7 @@ impl SnagApp {
             let text = match self.mini {
                 Some(Mini::Gif) => format!("Recording GIF  {}:{:02}", secs / 60, secs % 60),
                 Some(Mini::Video) if self.paused() => "Paused".to_string(),
+                Some(Mini::Video) if waiting => "Waiting for screen sharing...".to_string(),
                 Some(Mini::Video) => format!("Recording {} at {} fps  {}:{:02}", self.settings.rec_format.ext().to_uppercase(), self.settings.video_fps, secs / 60, secs % 60),
                 Some(Mini::Steps) => format!("Recording steps: {} so far", self.guide.len()),
                 Some(Mini::Scroll) if self.scroll_manual => "Scroll it yourself, then press Stop".to_string(),
@@ -3895,6 +3938,19 @@ impl SnagApp {
                         }
                     }
                 }
+            }
+        }
+        let full = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
+        if !full && self.mini.is_none() && self.overlay.is_none() && self.size_wanted.is_none() {
+            self.normal_size = Some(ctx.input(|i| i.content_rect().size()));
+        }
+        if let Some((want, since)) = self.size_wanted {
+            let have = ctx.input(|i| i.content_rect().size());
+            if resize_due(have, want, since.elapsed()) {
+                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(want));
+                ctx.request_repaint_after(Duration::from_millis(100));
+            } else {
+                self.size_wanted = None;
             }
         }
         self.poll_hotkeys(ctx);
@@ -5368,6 +5424,20 @@ impl SnagApp {
     }
 }
 
+/// The recording bar's size.
+const MINI_BAR_SIZE: Vec2 = vec2(420.0, 56.0);
+
+/// Whether a window size asked for `since` ago should be asked for again: in the first
+/// seconds, while the window is visibly bigger or smaller than `want`.
+fn resize_due(have: Vec2, want: Vec2, since: Duration) -> bool {
+    since < Duration::from_secs(3) && ((have.x - want.x).abs() > 4.0 || (have.y - want.y).abs() > 4.0)
+}
+
+/// Whether Snagster may not minimize itself before a capture (Linux on Wayland).
+fn self_minimize_blocked() -> bool {
+    capture::desktop_screenshots_only()
+}
+
 /// What brings up the full-screen capture overlay, from a window that is shown, minimized or
 /// hidden to the tray. Visible(true) comes first: without it a window hidden to the tray went
 /// full screen but stayed invisible, holding the keyboard (Print Screen seemed to freeze).
@@ -5378,6 +5448,21 @@ pub(crate) fn overlay_show_commands(at: Pos2) -> Vec<egui::ViewportCommand> {
 
 #[cfg(test)]
 mod tests {
+    /// The recording bar re-asks for its size while the window is still the old size (Wayland
+    /// restored it after leaving full screen), and stops asking after a few seconds.
+    #[test]
+    fn the_recording_bar_asks_for_its_size_until_it_has_it() {
+        use super::{MINI_BAR_SIZE, resize_due};
+        use std::time::Duration;
+        let old = egui::vec2(1165.0, 752.0);
+        assert!(resize_due(old, MINI_BAR_SIZE, Duration::from_millis(300)));
+        assert!(!resize_due(MINI_BAR_SIZE, MINI_BAR_SIZE, Duration::from_millis(300)), "already the bar's size");
+        assert!(!resize_due(MINI_BAR_SIZE + egui::vec2(3.0, 2.0), MINI_BAR_SIZE, Duration::from_millis(300)), "rounding is fine");
+        assert!(!resize_due(old, MINI_BAR_SIZE, Duration::from_secs(4)), "the person may resize it later");
+        // And back: after Stop the window gets its old size even when the bar's size lingers.
+        assert!(resize_due(MINI_BAR_SIZE, old, Duration::from_millis(300)));
+    }
+
     /// Print Screen while Snagster was closed to the tray: the overlay must be made visible
     /// before it goes full screen and takes the keyboard.
     #[test]

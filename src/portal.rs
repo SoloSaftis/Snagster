@@ -94,11 +94,13 @@ pub fn file_uri_path(uri: &str) -> Option<std::path::PathBuf> {
     Some(std::ffi::OsString::from_vec(out).into())
 }
 
-/// One picture of the whole desktop through the Screenshot portal. The desktop may ask the
-/// person the first time. The file the desktop wrote is deleted after reading.
-pub fn screenshot() -> Result<RgbaImage, String> {
+/// One picture through the Screenshot portal. Not `interactive`: the whole desktop at once (the
+/// desktop may ask the person the first time). `interactive`: the desktop's own screenshot tool,
+/// where the person picks an area, a window or a screen; no permission dialog is needed then.
+/// The file the desktop wrote is deleted after reading.
+pub fn screenshot(interactive: bool) -> Result<RgbaImage, String> {
     let uri = pollster::block_on(async {
-        let request = ashpd::desktop::screenshot::Screenshot::request().interactive(false).modal(false).send().await.map_err(|e| e.to_string())?;
+        let request = ashpd::desktop::screenshot::Screenshot::request().interactive(interactive).modal(false).send().await.map_err(|e| e.to_string())?;
         let answer = request.response().map_err(|e| e.to_string())?;
         Ok::<_, String>(answer.uri().to_string())
     })
