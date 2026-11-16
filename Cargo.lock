@@ -3535,7 +3535,7 @@ dependencies = [
 
 [[package]]
 name = "snagster"
-version = "0.10.4"
+version = "0.10.5"
 dependencies = [
  "ab_glyph",
  "arboard",

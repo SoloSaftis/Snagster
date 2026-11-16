@@ -66,6 +66,15 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.10.5" date="2026-11-17">
+      <description>
+        <ul>
+          <li>Wayland: no more screenshot loop; Studio, recording and streaming use screen sharing</li>
+          <li>Wayland: captures open the desktop's own screenshot tool instead of seeming frozen</li>
+          <li>Recording waits for screen sharing, and the recording bar stays small</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.10.4" date="2026-11-16">
       <description>
         <ul>

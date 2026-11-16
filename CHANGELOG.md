@@ -2,6 +2,25 @@
 
 What changed for people using Snagster, per version.
 
+## 0.10.5 — 2026-11-17
+
+Fixed on Linux with Wayland (found and checked on Ubuntu 26.04 with GNOME):
+
+- **No more screenshot loop**: Studio's screen preview asked the desktop for a screenshot every
+  frame, which flooded GNOME until the computer had to be restarted. Studio, recording and live
+  streaming now use the desktop's screen sharing (one "Share" dialog), and Snagster never asks
+  for more than a few screenshots in a row.
+- **Capture no longer seems frozen**: Snagster minimized itself before a capture and couldn't come
+  back (only you can un-minimize a window on Wayland). It now stays put, and a capture opens the
+  desktop's own screenshot tool (area, window or screen); the picture goes straight to the
+  editor. This also fixes the Flatpak's "no access to the desktop".
+- **Recording**: the video starts when you've clicked Share (the bar says "Waiting for screen
+  sharing" until then), the recording bar keeps its small size and can be dragged out of the
+  way, and the window gets its size back afterwards.
+- **Scrolling capture** says it isn't available on Wayland yet instead of starting; circle,
+  freehand and polygon captures keep their shape.
+- On Linux and macOS the start-up setting reads "Start Snagster when you log in".
+
 ## 0.10.4 — 2026-11-16
 
 New:
