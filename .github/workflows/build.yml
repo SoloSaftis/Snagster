@@ -293,26 +293,34 @@ jobs:
           name: flatpak-cargo-sources
           path: cargo-sources.json
 
+  # flatpak-builder straight on the runner: Flathub's build container failed to update its
+  # preinstalled SDK ("Invalid cross-device link").
   flatpak:
     needs: flatpak-sources
     runs-on: ubuntu-24.04
-    container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-26.08
-      options: --privileged
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: flatpak-cargo-sources
           path: packaging/flatpak
-      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6.8
+      - name: Flatpak and flatpak-builder
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends flatpak flatpak-builder
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+      - uses: actions/cache@v4
         with:
-          bundle: Snagster-linux-x86_64.flatpak
-          manifest-path: packaging/flatpak/io.github.SoloSaftis.Snagster.yml
-          cache-key: flatpak-builder-${{ hashFiles('Cargo.lock') }}
-          upload-artifact: false
-      - name: The bundle is there
-        run: ls -l Snagster-linux-x86_64.flatpak
+          path: .flatpak-builder
+          key: flatpak-builder-${{ hashFiles('Cargo.lock', 'packaging/flatpak/*.yml') }}
+          restore-keys: flatpak-builder-
+      - name: Build the Flatpak
+        run: |
+          flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse --force-clean \
+            --repo=repo --default-branch=stable build packaging/flatpak/io.github.SoloSaftis.Snagster.yml
+          flatpak build-bundle repo Snagster-linux-x86_64.flatpak io.github.SoloSaftis.Snagster stable \
+            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+          ls -l Snagster-linux-x86_64.flatpak
       - uses: actions/upload-artifact@v4
         with:
           name: flatpak
