@@ -34,7 +34,7 @@ Windows · Mac · Linux · 86 languages · works offline · written in Rust · f
 - **Your language** – 86 languages, picked automatically from your computer and changeable at any time; right-to-left languages read right to left.
 - **A ribbon like Word's** – tabs for Home, Capture, Record, Studio, Stream, Edit, Image, Share, View and Help, every tool with an icon and an explanation when you point at it.
 - **Keeps itself up to date** – Snagster checks for a new version once a day (you can turn it off) and installs it with one click.
-- **For AI apps** – Snagster is an MCP server with 66 tools: Claude, ChatGPT, Cursor, VS Code and local AI (Ollama, LM Studio, llama.cpp through apps such as Open WebUI) can capture, mark up, read text, record videos, run Studio and go live.
+- **For AI apps** – Snagster is an MCP server with 73 tools that reach every button and setting: Claude, ChatGPT, Cursor, VS Code and local AI (Ollama, LM Studio, llama.cpp through apps such as Open WebUI) can capture, mark up, read text, record videos, run Studio and go live.
 
 **Your pictures stay on your computer.** No account, no ads, no tracking. Nothing is sent anywhere
 (Snagster goes online only for the daily look for a new version, which you can switch off, and
@@ -115,12 +115,18 @@ snagster mcp-http --port 45831
 The server only listens on this computer, refuses web pages from other sites, and can require a
 password (`Authorization: Bearer ...`).
 
-**What an AI can do** (66 tools): capture the screen, a window, an area or a scrolling page; read text;
+**What an AI can do** (73 tools): everything a person can do in the window. It can capture the screen, a window, an area or a scrolling page; read text;
 add arrows, boxes, text, steps and blur; crop, resize and apply effects; undo and redo; save in every
 format; make PDF, Word and web-page guides; search and add to the library; record videos with sound at
 1–120 fps; set up and record Studio scenes; start, watch and stop a live stream (the saved stream key
-is used and never shown); read and change settings; switch language; check for updates. Your AI app
-lists every tool with what it does. It also offers ready-made prompts (annotate a screenshot, redact one, record a demo, make a
+is used and never shown); cut out, fill, erase and lift parts of a picture; trim and combine GIFs;
+save to OneDrive, Dropbox, Google Drive or iCloud folders; read and change every setting (each one
+checked against its kind and range); switch language; check for updates. `list_commands` lists every
+ribbon button, menu item and tick box with the tool or setting that does the same, and `app_command`
+presses any of them in the open window (zoom, pins, dialogs, email, print, Studio and stream buttons).
+Commands that would print, email, install an update or delete something are marked, and the ones that
+open a dialog still leave the decision to you. The AI-app server's own settings (on/off, port, password)
+can only be changed by you. Your AI app lists every tool with what it does. It also offers ready-made prompts (annotate a screenshot, redact one, record a demo, make a
 guide) and the current picture, settings and library as resources.
 
 **From a terminal**, the same tools: `snagster help` lists commands such as

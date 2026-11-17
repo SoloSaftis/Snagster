@@ -252,14 +252,14 @@ fn add_source_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<Item> {
 }
 
 /// New scene: an empty "Scene N" (translated), made the current one.
-fn new_scene(st: &mut crate::studio::StudioSettings) {
+pub(crate) fn new_scene(st: &mut crate::studio::StudioSettings) {
     let n = st.scenes.len() + 1;
     let i = st.add_scene(Some(&tf("Scene {n}", &[("n", &n.to_string())])));
     let _ = st.set_current(i);
 }
 
 /// Copy scene: "<name> copy" with the same sources, made the current one.
-fn copy_scene(st: &mut crate::studio::StudioSettings) {
+pub(crate) fn copy_scene(st: &mut crate::studio::StudioSettings) {
     let Some(s) = st.scene().cloned() else { return };
     let i = st.add_scene(Some(&tf("{name} copy", &[("name", &s.name)])));
     st.scenes[i].items = s.items;
@@ -267,7 +267,7 @@ fn copy_scene(st: &mut crate::studio::StudioSettings) {
 }
 
 /// Delete scene: removes the current one (never the last); the one before becomes current.
-fn delete_scene(st: &mut crate::studio::StudioSettings) {
+pub(crate) fn delete_scene(st: &mut crate::studio::StudioSettings) {
     let c = st.current.min(st.scenes.len().saturating_sub(1));
     let _ = st.remove_scene(c);
 }
@@ -300,6 +300,11 @@ pub(crate) fn start(app: &mut SnagApp, ctx: &egui::Context) {
     app.status = tf("Studio is recording at {fps} fps.", &[("fps", &fps.to_string())]);
 }
 
+/// Studio is open and recording.
+pub(crate) fn recording(app: &SnagApp) -> bool {
+    app.x.studio.as_ref().is_some_and(|s| s.rec.is_some())
+}
+
 pub(crate) fn stop(app: &mut SnagApp) {
     if let Some(r) = app.x.studio.as_ref().and_then(|s| s.rec.as_ref()) {
         r.stop.store(true, Ordering::Relaxed);
@@ -307,7 +312,7 @@ pub(crate) fn stop(app: &mut SnagApp) {
     }
 }
 
-fn toggle_pause(app: &mut SnagApp) {
+pub(crate) fn toggle_pause(app: &mut SnagApp) {
     if let Some(r) = app.x.studio.as_mut().and_then(|s| s.rec.as_mut()) {
         let now = !r.pause.load(Ordering::Relaxed);
         r.pause.store(now, Ordering::Relaxed);
@@ -482,9 +487,9 @@ impl SnagApp {
                         scene.items.remove(i);
                         select = None;
                     }
-                    1 if i + 1 < scene.items.len() => scene.items.swap(i, i + 1),
-                    -1 if i > 0 => scene.items.swap(i, i - 1),
-                    _ => {}
+                    d => {
+                        move_item(&mut scene.items, i, d);
+                    }
                 }
             }
         }
@@ -849,19 +854,35 @@ fn add_sound_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<crate::studio:
 
 /// Put `s` in the current scene (when there is room and it isn't there yet).
 pub(crate) fn add_sound(app: &mut SnagApp, s: crate::studio::SceneSound) {
-    let st = &mut app.settings.studio;
-    let c = st.current.min(st.scenes.len().saturating_sub(1));
+    let c = app.settings.studio.current.min(app.settings.studio.scenes.len().saturating_sub(1));
+    if let Err(why) = add_sound_to(&mut app.settings.studio, c, s) {
+        app.status = why;
+    }
+}
+
+/// Put `s` in scene `c` (Studio's "Add sound" and the MCP server's studio_edit).
+pub(crate) fn add_sound_to(st: &mut crate::studio::StudioSettings, c: usize, s: crate::studio::SceneSound) -> Result<(), String> {
+    if c >= st.scenes.len() {
+        return Err("there's no such scene".into());
+    }
     if st.scene_sounds(c).iter().any(|x| x.input == s.input) {
-        app.status = t("That sound is in this scene already.").into();
-        return;
+        return Err(t("That sound is in this scene already.").into());
     }
     if !st.room_for_sound(c) {
-        app.status = tf("A scene has at most {n} sounds.", &[("n", &crate::studio::MAX_SOUNDS.to_string())]);
-        return;
+        return Err(tf("A scene has at most {n} sounds.", &[("n", &crate::studio::MAX_SOUNDS.to_string())]));
     }
-    if let Some(scene) = st.scenes.get_mut(c) {
-        scene.sounds.push(s);
+    st.scenes.get_mut(c).ok_or("there's no such scene")?.sounds.push(s);
+    Ok(())
+}
+
+/// Move source `i` one place: 1 up (in front), -1 down (behind). False when it can't move.
+pub(crate) fn move_item<T>(items: &mut [T], i: usize, d: i32) -> bool {
+    match d {
+        1 if i + 1 < items.len() => items.swap(i, i + 1),
+        -1 if i > 0 && i < items.len() => items.swap(i, i - 1),
+        _ => return false,
     }
+    true
 }
 
 impl SnagApp {
@@ -1026,6 +1047,21 @@ impl StudioUi {
 mod tests {
     use super::*;
     use crate::studio::Scene;
+
+    #[test]
+    fn sources_move_one_place_and_sounds_are_added_once() {
+        let mut v = vec![1, 2, 3];
+        assert!(move_item(&mut v, 0, 1));
+        assert_eq!(v, vec![2, 1, 3]);
+        assert!(move_item(&mut v, 2, -1));
+        assert_eq!(v, vec![2, 3, 1]);
+        assert!(!move_item(&mut v, 2, 1) && !move_item(&mut v, 0, -1) && !move_item(&mut v, 9, -1) && !move_item(&mut v, 1, 0));
+        let mut st = crate::studio::StudioSettings { scenes: vec![Scene { sounds: Vec::new(), name: "A".into(), items: Vec::new() }], current: 0, ..Default::default() };
+        let wav = || crate::studio::SceneSound::new(crate::audio::SoundInput::File { path: "a.wav".into() }, "a");
+        add_sound_to(&mut st, 0, wav()).unwrap();
+        assert!(add_sound_to(&mut st, 0, wav()).unwrap_err().contains("already"));
+        assert!(add_sound_to(&mut st, 5, wav()).is_err());
+    }
 
     #[test]
     fn scene_buttons_use_the_shared_scene_rules() {

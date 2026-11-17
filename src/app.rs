@@ -45,6 +45,7 @@ pub(crate) mod ribbon;
 pub(crate) mod studio_ui;
 pub(crate) mod stream_ui;
 pub(crate) mod updates_ui;
+pub(crate) mod commands_ui;
 /// The editor window's smallest size (lifted while it is the panel or the recording bar).
 pub const MIN_SIZE: Vec2 = Vec2::new(900.0, 560.0);
 
@@ -2293,11 +2294,8 @@ impl SnagApp {
         });
         ui.separator();
         let path = self.current.and_then(|i| self.entries[i].path.clone());
-        if item_on(ui, path.is_some(), "Copy file path", "")
-            && let Some(p) = &path
-        {
-            let _ = arboard::Clipboard::new().and_then(|mut c| c.set_text(p.display().to_string()));
-            self.status = crate::i18n::tf("Copied {path}", &[("path", &p.display().to_string())]);
+        if item_on(ui, path.is_some(), "Copy file path", "") {
+            self.copy_file_path();
         }
         if item(ui, "Open save folder", "") {
             let f = PathBuf::from(&self.settings.save_folder);
@@ -2507,18 +2505,17 @@ impl SnagApp {
     pub(crate) fn slideshow(&mut self, _ctx: &egui::Context) {
         let docs: Vec<Doc> = self.entries.iter().map(|e| e.doc.clone()).collect();
         let max_w = self.settings.gif_max_width;
-        let ms = (self.settings.slideshow_s.clamp(0.2, 30.0) * 1000.0) as u32;
+        let secs = self.settings.slideshow_s;
+        let ms = (secs.clamp(0.2, 30.0) * 1000.0) as u32;
         let path = work::free_path(crate::video::recording_path(&self.settings.video_folder, "Slideshow", "gif"), &self.saving);
         self.saving.insert(path.clone());
         self.jobs.queue(move || {
             let imgs: Vec<RgbaImage> = docs.iter().map(render::compose).collect();
-            let list: Vec<(RgbaImage, u32)> = export::letterbox(&imgs, max_w).into_iter().map(|f| (f, ms)).collect();
-            let n = list.len();
-            let r = export::write_gif(&path, &list);
+            let r = export::slideshow_gif(&imgs, max_w, secs, &path);
             Box::new(move |app: &mut SnagApp, ctx: &egui::Context| {
                 app.saving.remove(&path);
                 match r {
-                    Ok(()) => {
+                    Ok(n) => {
                         app.recordings.insert(0, Recording { path: path.clone(), frames: n as u32, seconds: n as f32 * ms as f32 / 1000.0 });
                         app.status = crate::i18n::tf("Made a {count}-picture slideshow GIF.", &[("count", &n.to_string())]);
                         app.open_gif(ctx, path);
@@ -2697,9 +2694,7 @@ impl SnagApp {
         ui.separator();
         let c = self.settings.color;
         if item(ui, &format!("Copy color #{:02X}{:02X}{:02X}", c[0], c[1], c[2]), "") {
-            let hex = format!("#{:02X}{:02X}{:02X}", c[0], c[1], c[2]);
-            let _ = arboard::Clipboard::new().and_then(|mut cb| cb.set_text(hex.clone()));
-            self.status = crate::i18n::tf("Copied {color}.", &[("color", &hex)]);
+            self.copy_color();
         }
         if !self.pins.is_empty() && item(ui, "Close all pins", "") {
             for p in &mut self.pins {
@@ -2745,8 +2740,7 @@ impl SnagApp {
                 && let Some(i) = self.current
             {
                 let title = self.entries[i].name.clone();
-                let base = self.settings.file_name(&title);
-                let path = crate::settings::unique_path(&p.join("Snagster"), &base, self.settings.format.ext());
+                let path = self.settings.cloud_save_path(&p, &title);
                 self.save_in_background(i, path);
             }
         }
@@ -3977,8 +3971,10 @@ impl SnagApp {
             self.unhide(ctx);
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
-            if let crate::instance::Ask::Open(p) = ask {
-                self.open_path(&p);
+            match ask {
+                crate::instance::Ask::Open(p) => self.open_path(&p),
+                crate::instance::Ask::Command(id, value) => self.run_command(ctx, &id, value.as_deref()),
+                crate::instance::Ask::Show => {}
             }
         }
         self.poll_capture(ctx);
@@ -5509,7 +5505,7 @@ mod tests {
     }
 
     /// A window state with one white 200 x 100 picture open; no screen, files or threads.
-    fn app() -> SnagApp {
+    pub(crate) fn app() -> SnagApp {
         let mut a = SnagApp::blank(Settings::default(), false, None);
         a.add_entry("Test".into(), Doc::new(RgbaImage::from_pixel(200, 100, image::Rgba([255, 255, 255, 255]))));
         a

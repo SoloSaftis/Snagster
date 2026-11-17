@@ -130,6 +130,50 @@ function stdio() {
         check(!save.isError && fs.existsSync(out) && fs.statSync(out).size > 1000, 'save PNG', save.content && save.content[0].text);
         const saveLink = save.content && save.content.find((c) => c.type === 'resource_link');
         check(saveLink && saveLink.uri.startsWith('file:///') && saveLink.mimeType === 'image/png', 'save gives a resource link');
+        // Every option reachable: the command catalogue, typed settings and the newer tools.
+        const all = ['list_commands', 'app_command', 'list_settings', 'editor_apply', 'save_to_cloud', 'gif_edit', 'studio_edit'];
+        check(all.every((n) => names.has(n)), 'tools/list has the every-option tools', all.filter((n) => !names.has(n)).join(', '));
+        check(byName('app_command').annotations.destructiveHint === true && byName('app_command').annotations.openWorldHint === true, 'app_command is marked destructive and open-world');
+        const cmds = await tool('list_commands', { filter: 'zoom' });
+        const cmdItems = (cmds.structuredContent && cmds.structuredContent.items) || [];
+        check(!cmds.isError && cmdItems.some((c) => c.id === 'zoom_in' && c.window === true), 'list_commands finds the zoom buttons');
+        const every = await tool('list_commands');
+        const everyItems = (every.structuredContent && every.structuredContent.items) || [];
+        check(everyItems.length > 150 && everyItems.some((c) => c.id === 'email' && c.risk === 'reaches outside Snagster'), `list_commands lists every command with its risk (${everyItems.length})`);
+        const badCmd = await tool('app_command', { command: 'no_such_command', start: false });
+        check(badCmd.isError === true, 'app_command refuses an unknown command without starting a window');
+        const noValue = await tool('app_command', { command: 'capture_fixed_size', start: false });
+        check(noValue.isError === true && noValue.content[0].text.includes('WIDTHxHEIGHT'), 'app_command says which value a command needs');
+        const sets = await tool('list_settings', { filter: 'stream.fps' });
+        const setItems = (sets.structuredContent && sets.structuredContent.items) || [];
+        check(setItems.length === 1 && setItems[0].kind === 'a whole number 1-120', 'list_settings gives kind and range', JSON.stringify(setItems));
+        const nested = await tool('get_settings', { key: 'stream.fps' });
+        check(!nested.isError && /^\d+$/.test(nested.content[0].text.trim()), 'get_settings reads a nested key');
+        const token = await tool('set_setting', { key: 'mcp_token', value: 'stolen' });
+        check(token.isError === true && token.content[0].text.includes('only be changed by the person'), 'set_setting refuses the AI-app access token');
+        const range = await tool('set_setting', { key: 'video_fps', value: 1000 });
+        check(range.isError === true && range.content[0].text.includes('1-120'), 'set_setting checks the range');
+        const fill = await tool('editor_apply', { action: 'fill', x: 1, y: 1, color: 'green' });
+        check(!fill.isError, 'editor_apply fill', fill.content && fill.content[0].text);
+        const cut = await tool('editor_apply', { action: 'cut_out', x: 0, y: 40, width: 400, height: 20 });
+        check(!cut.isError && cut.content[0].text.includes('Cut out'), 'editor_apply cut_out', cut.content && cut.content[0].text);
+        const boxMark = await tool('add_mark', { kind: 'arrow', x: 5, y: 5, x2: 60, y2: 40 });
+        check(!boxMark.isError, 'add_mark before duplicate_mark', boxMark.content && boxMark.content[0].text);
+        const dup = await tool('editor_apply', { action: 'duplicate_mark', index: 0 });
+        check(!dup.isError, 'editor_apply duplicate_mark', dup.content && dup.content[0].text);
+        const clouds = await tool('save_to_cloud', {});
+        check(!clouds.isError, 'save_to_cloud lists cloud folders');
+        const gif = path.join(tmp, 'slides.gif');
+        const slides = await tool('gif_edit', { action: 'slideshow', paths: [picture, out], out: gif, seconds: 1 });
+        check(!slides.isError && fs.existsSync(gif), 'gif_edit slideshow', slides.content && slides.content[0].text);
+        const ginfo = await tool('gif_edit', { action: 'info', path: gif });
+        check(!ginfo.isError && ginfo.content[0].text.startsWith('2 frames'), 'gif_edit info', ginfo.content && ginfo.content[0].text);
+        const trimmed = path.join(tmp, 'trimmed.gif');
+        const gtrim = await tool('gif_edit', { action: 'trim', path: gif, first: 1, last: 1, out: trimmed });
+        check(!gtrim.isError && fs.existsSync(trimmed), 'gif_edit trim', gtrim.content && gtrim.content[0].text);
+        const gframe = await tool('gif_edit', { action: 'frame', path: gif, frame: 0 });
+        check(!gframe.isError, 'gif_edit frame becomes the picture');
+        await tool('open_image', { path: out });
         const pdf = path.join(tmp, 'guide.pdf');
         const before = progress.length;
         const guide = await tool('make_guide', { title: 'Smoke', steps: [{ path: out, caption: 'One' }, { path: out }], path: pdf }, { progressToken: 'smoke-guide' });
@@ -220,6 +264,20 @@ async function httpTest() {
       'HTTP progress arrives on an event stream before the answer',
       guide.body.slice(0, 300)
     );
+    const toolCall = async (id, name, args) => {
+      const r = await post(port, { jsonrpc: '2.0', id, method: 'tools/call', params: { name, arguments: args } }, { 'Mcp-Session-Id': sid });
+      const body = r.body.startsWith('data: ') || r.body.includes('\ndata: ') ? r.body.split('\n').filter((l) => l.startsWith('data: ')).map((l) => JSON.parse(l.slice(6))).pop() : JSON.parse(r.body);
+      return body.result || {};
+    };
+    const hcmds = await toolCall(5, 'list_commands', { filter: 'studio' });
+    check(hcmds.structuredContent && hcmds.structuredContent.items.some((c) => c.id === 'studio_copy_scene'), 'HTTP list_commands');
+    const hbad = await toolCall(6, 'app_command', { command: 'effect', start: false });
+    check(hbad.isError === true && hbad.content[0].text.includes('needs a value'), 'HTTP app_command checks its value');
+    const hset = await toolCall(7, 'list_settings', { filter: 'studio.width' });
+    check(hset.structuredContent && hset.structuredContent.items[0].key === 'studio.width', 'HTTP list_settings');
+    await toolCall(8, 'open_image', { path: picture });
+    const hed = await toolCall(9, 'editor_apply', { action: 'lift', x: 0, y: 0, width: 50, height: 50 });
+    check(hed.isError === false && hed.content[0].text.includes('Lifted out'), 'HTTP editor_apply lift', JSON.stringify(hed).slice(0, 200));
     const evil = await post(port, { jsonrpc: '2.0', id: 3, method: 'ping' }, { Host: 'evil.example' });
     check(evil.status === 403, 'HTTP refuses a foreign host name');
   } catch (e) {

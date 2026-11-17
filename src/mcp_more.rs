@@ -111,11 +111,11 @@ pub(super) fn tools() -> Vec<Tool> {
         },
         Tool { name: "list_recordings", description: "The videos and GIFs in Snagster's recordings folder, newest first.", schema: obj(json!({"limit": n("Default 20.")}), &[]), edits: false },
         Tool { name: "video_info", description: "Read a video file back: size, frames, length (MP4, WMV) or a GIF's frames and length.", schema: obj(json!({"path": s("Full path.")}), &["path"]), edits: false },
-        Tool { name: "get_settings", description: "Snagster's settings as JSON (or one of them, by key).", schema: obj(json!({"key": s("One setting's name, e.g. video_fps.")}), &[]), edits: false },
+        Tool { name: "get_settings", description: "Snagster's settings as JSON (or one of them, by key; nested ones as stream.fps). list_settings explains each one. The AI-app access token is never shown.", schema: obj(json!({"key": s("One setting's key, e.g. video_fps or stream.fps.")}), &[]), edits: false },
         Tool {
             name: "set_setting",
-            description: "Change one of Snagster's settings (see get_settings for names and current values). Saved at once; a running Snagster window picks it up when it next saves or restarts.",
-            schema: obj(json!({"key": s("The setting's name, e.g. video_fps, rec_format, audio_source, language, save_folder."), "value": {"description": "The new value, as JSON (number, text, true/false...)."}}), &["key", "value"]),
+            description: "Change one of Snagster's settings: every tick box, choice and number on the settings pages and ribbon (list_settings gives each key, its kind, range and current value). Nested keys use a dot: stream.fps, studio.width, panel.tab. The value is checked against the setting's kind and range. Saved at once, and an open Snagster window takes it straight away. Some keys reach outside Snagster (save_folder, video_folder, update_check, start_mode...); the AI-app server's own keys (mcp_http, mcp_port, mcp_token) only the person changes.",
+            schema: obj(json!({"key": s("The setting's key, e.g. video_fps, rec_format, audio_source, save_folder, stream.fps, studio.width."), "value": {"description": "The new value, as JSON (number, text, true/false, a list...)."}}), &["key", "value"]),
             edits: false,
         },
         Tool { name: "list_languages", description: "The 86 languages Snagster's interface speaks: code, English name and own name.", schema: obj(json!({}), &[]), edits: false },
@@ -780,21 +780,29 @@ impl Workspace {
                 Ok(vec![json_text(&json!({"frames": pr.frames, "seconds": pr.seconds, "width": pr.width, "height": pr.height}))])
             }
             "get_settings" => {
-                let v = serde_json::to_value(self.settings()).map_err(|e| e.to_string())?;
+                let v = super::masked_settings(&self.settings())?;
                 match str_arg(a, "key") {
-                    Some(k) => Ok(vec![json_text(v.get(k).ok_or(format!("there's no setting {k}"))?)]),
+                    Some(k) => {
+                        let found = k.split('.').try_fold(&v, |v, part| v.get(part)).ok_or(format!("there's no setting {k}"))?;
+                        Ok(vec![json_text(found)])
+                    }
                     None => Ok(vec![json_text(&v)]),
                 }
             }
             "set_setting" => {
                 let key = str_arg(a, "key").ok_or("missing key")?;
                 let value = a.get("value").cloned().ok_or("missing value")?;
+                let spec = crate::catalog::check_setting(key, &value)?;
                 let mut v = serde_json::to_value(self.settings()).map_err(|e| e.to_string())?;
-                let slot = v.get_mut(key).ok_or(format!("there's no setting {key} (see get_settings)"))?;
+                let mut slot = &mut v;
+                for part in key.split('.') {
+                    slot = slot.get_mut(part).ok_or(format!("there's no setting {key} (see list_settings)"))?;
+                }
                 *slot = value;
                 let s: crate::settings::Settings = serde_json::from_value(v).map_err(|e| format!("that value doesn't fit {key}: {e}"))?;
                 self.save_settings(&s);
-                Ok(vec![text(format!("Set {key}."))])
+                let note = if spec.who == crate::catalog::Who::Outside { " (this reaches outside Snagster)" } else { "" };
+                Ok(vec![text(format!("Set {key}{note}."))])
             }
             "list_languages" => {
                 let list: Vec<Value> = crate::i18n::CODES.iter().map(|c| json!({"code": c, "name": crate::i18n::name_in(c, "en"), "native": crate::i18n::native_name(c)})).collect();
@@ -1028,7 +1036,7 @@ impl Workspace {
                 Ok(vec![text(line)])
             }
             "stream_start" => self.stream_start(a),
-            other => Err(format!("unknown tool {other} (tools/list shows them all)")),
+            other => self.call_app(other, a),
         }
     }
 
@@ -1337,7 +1345,9 @@ mod tests {
         assert_eq!(ws.call("set_setting", &json!({})).unwrap_err(), "missing key");
         assert_eq!(ws.call("set_setting", &json!({"key": "video_fps"})).unwrap_err(), "missing value");
         assert!(ws.call("set_setting", &json!({"key": "no_such_setting_xyz", "value": 1})).unwrap_err().contains("no setting no_such_setting_xyz"));
-        assert!(ws.call("set_setting", &json!({"key": "video_fps", "value": "lots"})).unwrap_err().contains("doesn't fit video_fps"));
+        assert!(ws.call("set_setting", &json!({"key": "video_fps", "value": "lots"})).unwrap_err().contains("video_fps takes a whole number 1-120"));
+        assert!(ws.call("set_setting", &json!({"key": "bindings", "value": 5})).unwrap_err().contains("doesn't fit bindings"));
+        assert!(ws.call("set_setting", &json!({"key": "mcp_token", "value": "x"})).unwrap_err().contains("only be changed by the person"));
         assert!(ws.call("get_settings", &json!({"key": "no_such_setting_xyz"})).unwrap_err().contains("no setting"));
         assert_eq!(ws.call("set_language", &json!({})).unwrap_err(), "missing code");
         assert!(ws.call("set_language", &json!({"code": "xx-nope"})).unwrap_err().contains("isn't one of"));

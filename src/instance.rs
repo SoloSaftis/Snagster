@@ -23,6 +23,29 @@ pub enum Ask {
     Show,
     /// Come to the front and open this file.
     Open(PathBuf),
+    /// Run a command from `catalog::COMMANDS` (an AI app's `app_command`), with its value.
+    Command(String, Option<String>),
+}
+
+/// Sends a command to the running Snagster window. Fails when no window listens (none is
+/// open, or "Allow more than one Snagster" is on).
+pub fn send_command(id: &str, value: Option<&str>) -> Result<(), String> {
+    let lock = lock_path().ok_or("Snagster has no settings folder here")?;
+    send_command_at(&lock, id, value)
+}
+
+pub(crate) fn send_command_at(lock: &Path, id: &str, value: Option<&str>) -> Result<(), String> {
+    let (port, secret) = std::fs::read_to_string(lock).ok().as_deref().and_then(parse_lock).ok_or("Snagster's window isn't open")?;
+    send(port, &command_message(&secret, id, value)).map_err(|_| "Snagster's window isn't open (or doesn't answer)".to_string())
+}
+
+/// The secret, then COMMAND, the id and the value on one line (tab between; no new lines).
+pub(crate) fn command_message(secret: &str, id: &str, value: Option<&str>) -> String {
+    let clean = |s: &str| s.replace(['\r', '\n', '\t'], " ");
+    match value {
+        Some(v) => format!("{secret}\nCOMMAND {}\t{}\n", clean(id), clean(v)),
+        None => format!("{secret}\nCOMMAND {}\n", clean(id)),
+    }
 }
 
 /// How a start went.
@@ -102,16 +125,27 @@ pub(crate) fn parse_message(text: &str, secret: &str) -> Option<Ask> {
     let what = lines.next()?;
     if what == "SHOW" {
         Some(Ask::Show)
+    } else if let Some(c) = what.strip_prefix("COMMAND ") {
+        let (id, value) = match c.split_once('\t') {
+            Some((id, v)) => (id, Some(v.to_string())),
+            None => (c, None),
+        };
+        (!id.trim().is_empty()).then(|| Ask::Command(id.trim().to_string(), value))
     } else {
         what.strip_prefix("OPEN ").map(|p| Ask::Open(PathBuf::from(p))).filter(|a| !matches!(a, Ask::Open(p) if p.as_os_str().is_empty()))
     }
 }
 
 fn hand_over(port: u16, secret: &str, open: Option<&Path>) -> Result<(), String> {
+    send(port, &message(secret, open))
+}
+
+/// Sends one message and waits for "ok".
+fn send(port: u16, msg: &str) -> Result<(), String> {
     let addr = SocketAddr::from((Ipv4Addr::LOCALHOST, port));
     let mut s = TcpStream::connect_timeout(&addr, Duration::from_millis(500)).map_err(|e| e.to_string())?;
     s.set_read_timeout(Some(Duration::from_secs(2))).map_err(|e| e.to_string())?;
-    s.write_all(message(secret, open).as_bytes()).map_err(|e| e.to_string())?;
+    s.write_all(msg.as_bytes()).map_err(|e| e.to_string())?;
     let mut reply = String::new();
     BufReader::new(s).read_line(&mut reply).map_err(|e| e.to_string())?;
     if reply.trim() == "ok" { Ok(()) } else { Err(format!("unexpected answer {reply:?}")) }
@@ -208,6 +242,10 @@ mod tests {
         assert_eq!(parse_message("", &secret), None);
         assert_eq!(parse_message(&format!("{secret}\nDELETE everything\n"), &secret), None);
         assert_eq!(parse_message(&format!("{secret}\nOPEN \n"), &secret), None);
+        assert_eq!(parse_message(&command_message(&secret, "zoom_in", None), &secret), Some(Ask::Command("zoom_in".into(), None)));
+        assert_eq!(parse_message(&command_message(&secret, "open", Some("C:/a\nb.png")), &secret), Some(Ask::Command("open".into(), Some("C:/a b.png".into()))));
+        assert_eq!(parse_message(&format!("{secret}\nCOMMAND \n"), &secret), None);
+        assert_eq!(parse_message(&command_message("wrong-secret-0000", "exit", None), &secret), None);
         assert_eq!(parse_lock("45831 0123456789abcdef0123\n"), Some((45831, "0123456789abcdef0123".into())));
         assert_eq!(parse_lock("0 0123456789abcdef"), None);
         assert_eq!(parse_lock("80 short"), None);
@@ -239,6 +277,12 @@ mod tests {
         let real = std::fs::read_to_string(&lock).unwrap();
         let (p, _) = parse_lock(&real).unwrap();
         assert!(hand_over(p, "not-the-secret-not-the-secret-00", None).is_err());
+        // An AI app's command reaches the first one, with its value.
+        first.lock().unwrap().clear();
+        send_command_at(&lock, "zoom_in", None).unwrap();
+        send_command_at(&lock, "effect", Some("Border")).unwrap();
+        assert_eq!(*first.lock().unwrap(), vec![Ask::Command("zoom_in".into(), None), Ask::Command("effect".into(), Some("Border".into()))]);
+        assert!(send_command_at(&dir.join("none.lock"), "zoom_in", None).unwrap_err().contains("isn't open"));
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
