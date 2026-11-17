@@ -6,6 +6,58 @@ What changed for people using Snagster, per version.
 
 Windows:
 
+- **A Microsoft Store edition** is ready to submit: the Store signs it (no SmartScreen or
+  "unknown publisher" warning) and keeps it up to date; a Snagster installed from the Store
+  doesn't download updates itself. `PRIVACY.md` says what Snagster does and doesn't send.
+- Builds can be signed with Azure Artifact Signing (`Snagster.exe` and the installer) once it
+  is set up.
+
+## 0.10.6 — 2026-11-17
+
+Linux with Wayland (checked on Ubuntu 26.04 with GNOME):
+
+- **Asked once**: the desktop asks to share the screen the first time and remembers it, so
+  recording, Studio, live streaming and screen captures start without the dialog after that.
+  Capturing a whole screen no longer opens the desktop's screenshot tool.
+- **Hotkeys work on Wayland**: Snagster gives its hotkeys to the desktop (GNOME 48 and later,
+  KDE Plasma 6), which asks you once and lets you change them in its keyboard settings. Where a
+  desktop can't, a shortcut you set there can run `snagster --action Area` (or AllInOne, Window,
+  Screen, RecordGif…).
+- Snagster follows the desktop's accent colour, and GNOME and KDE get a main menu at the end of
+  the tab row (F10) with Settings, Keyboard shortcuts, Getting started, About and Quit.
+- Fixed: Studio and recording showed nothing in the Flatpak; the first click on the recording
+  bar's Stop was lost; Space in "Choose the area to record" took a picture instead of recording
+  the whole screen (Windows too); Record GIF stopped after a few frames.
+
+AI apps:
+
+- **Every option in Snagster can be reached over MCP**: every button, menu item and setting has a
+  tool or a typed setting (73 tools), and `stream_start` sets up a whole stream in one call.
+
+
+Snagster follows each system's own design rules more closely (Windows 11, GNOME, KDE Plasma,
+macOS):
+
+- **Keys do what the menus say**: Ctrl+S saves (it asks where only the first time), Ctrl+Shift+S
+  is Save as, Ctrl+Alt+S saves to the save folder at once, Ctrl+P prints, Ctrl+Shift+P pins the
+  picture, and Ctrl+N makes a new picture. On Linux and macOS, Ctrl+Q / ⌘Q quits. Windows such
+  as Settings close with Ctrl+W (⌘W) as well as Esc.
+- **On a Mac** shortcuts are shown as ⌘, ⌥, ⇧ and ⌃, and new installs get capture hotkeys a Mac
+  keyboard has (⇧⌘2 for All-in-one) that leave the system's ⇧⌘3, 4 and 5 alone. The screen
+  permission message names "Screen & System Audio Recording" and says to choose Quit & Reopen.
+- **Deleting from the Library** moves the capture to the Recycle Bin (Trash on Linux and macOS),
+  so it can be brought back; it used to be deleted for good.
+- **Dialogs** put their buttons in the system's order (on GNOME and macOS Cancel comes first and
+  the action last). Return runs the action and Esc cancels; "Go live" is never started by Return.
+- **Linux**: GNOME on Wayland gets a proper Adwaita-style title bar. Closing the window really
+  closes it on desktops without a tray (stock GNOME), new installs don't keep Snagster in the
+  tray unless you choose it, and Linux and macOS say Trash, Quit and tray instead of Windows words.
+- **Screen readers** (Narrator, Orca, VoiceOver) can now read Snagster's buttons.
+- Ribbon labels are a little bigger and easier to read, the window title bar stays dark when
+  the system is in light mode, and menu commands that ask for more use the "…" character.
+
+Windows:
+
 - **Smoother on company laptops and in remote sessions**: the window is now drawn with
   Direct3D 12 instead of OpenGL. Company laptops often have old OpenGL drivers, and Remote
   Desktop, Citrix and other VDI sessions offer only OpenGL 1.1 (where Snagster used to lag or
@@ -15,8 +67,7 @@ Windows:
   was a remote session, and `snagster --hw-report` lists the graphics chips.
 - **An installer (MSIX)**, made by every build: it installs to Start and Settings > Apps,
   updates through App Installer, starts with Windows through its startup task and opens
-  `.snag` projects. It joins the downloads once it can be signed, and a Microsoft Store edition
-  (signed by the Store, updated by the Store) is ready to submit.
+  `.snag` projects. It joins the downloads once it is signed.
 
 ## 0.10.5 — 2026-11-17
 

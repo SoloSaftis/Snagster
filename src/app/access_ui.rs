@@ -86,16 +86,12 @@ impl SnagApp {
                 ui.set_max_width(380.0);
                 ui.label(crate::capture::grab_error_message("", access));
                 ui.add_space(6.0);
-                ui.horizontal(|ui| {
-                    if access == ScreenAccess::NotGranted
-                        && ui.add(egui::Button::new(RichText::new(t("Open Screen Recording settings")).color(Color32::WHITE).strong()).fill(ACCENT)).clicked()
-                    {
-                        settings = true;
-                    }
-                    if ui.button(t("Close")).clicked() {
-                        close = true;
-                    }
-                });
+                let open_settings = (access == ScreenAccess::NotGranted).then(|| t("Open Screen Recording settings"));
+                match crate::platform::dialog_buttons(ui, open_settings, t("Close"), crate::platform::Kind::Normal, true) {
+                    Some(crate::platform::Choice::Action) => settings = true,
+                    Some(crate::platform::Choice::Cancel) => close = true,
+                    None => {}
+                }
             });
         if settings {
             self.open_screen_settings();

@@ -23,6 +23,48 @@ pub enum Ask {
     Show,
     /// Come to the front and open this file.
     Open(PathBuf),
+    /// Do this capture or recording (an `Action` by name, e.g. "Area"): `snagster --action Area`,
+    /// for a keyboard shortcut set in the desktop's own settings.
+    Action(String),
+    /// Run a command from `catalog::COMMANDS` (an AI app's `app_command`), with its value.
+    Command(String, Option<String>),
+}
+
+impl Ask {
+    /// What a start with these command-line choices asks for.
+    pub fn from_args(open: Option<&Path>, action: Option<&str>) -> Ask {
+        match (action, open) {
+            (Some(a), _) => Ask::Action(a.to_string()),
+            (None, Some(p)) => Ask::Open(p.to_path_buf()),
+            (None, None) => Ask::Show,
+        }
+    }
+}
+
+/// An action name as the command line and the messages carry it: letters only.
+fn action_name(name: &str) -> bool {
+    !name.is_empty() && name.len() <= 40 && name.chars().all(|c| c.is_ascii_alphabetic())
+}
+
+/// Sends a command to the running Snagster window. Fails when no window listens (none is
+/// open, or "Allow more than one Snagster" is on).
+pub fn send_command(id: &str, value: Option<&str>) -> Result<(), String> {
+    let lock = lock_path().ok_or("Snagster has no settings folder here")?;
+    send_command_at(&lock, id, value)
+}
+
+pub(crate) fn send_command_at(lock: &Path, id: &str, value: Option<&str>) -> Result<(), String> {
+    let (port, secret) = std::fs::read_to_string(lock).ok().as_deref().and_then(parse_lock).ok_or("Snagster's window isn't open")?;
+    send(port, &command_message(&secret, id, value)).map_err(|_| "Snagster's window isn't open (or doesn't answer)".to_string())
+}
+
+/// The secret, then COMMAND, the id and the value on one line (tab between; no new lines).
+pub(crate) fn command_message(secret: &str, id: &str, value: Option<&str>) -> String {
+    let clean = |s: &str| s.replace(['\r', '\n', '\t'], " ");
+    match value {
+        Some(v) => format!("{secret}\nCOMMAND {}\t{}\n", clean(id), clean(v)),
+        None => format!("{secret}\nCOMMAND {}\n", clean(id)),
+    }
 }
 
 /// How a start went.
@@ -48,11 +90,23 @@ fn lock_path() -> Option<PathBuf> {
     Some(crate::settings::settings_path()?.parent()?.join("instance.lock"))
 }
 
-/// Be the first Snagster, or hand `open` (or just "show") to the running one.
-pub fn claim(open: Option<&Path>) -> Claim {
-    match lock_path() {
-        Some(p) => claim_at(&p, open, inbox().clone()),
+/// Be the first Snagster, or hand what this start asks for to the running one. The first one
+/// keeps a file or an action for itself, to do once its window is up.
+pub fn claim(ask: Ask) -> Claim {
+    let claim = match lock_path() {
+        Some(p) => claim_at(&p, &ask, inbox().clone()),
         None => Claim::First,
+    };
+    if claim == Claim::First && matches!(ask, Ask::Action(_)) && let Ok(mut g) = inbox().lock() {
+        g.push(ask);
+    }
+    claim
+}
+
+/// Do this once the window is up (an action asked for on this start's own command line).
+pub fn keep(ask: Ask) {
+    if let Ok(mut g) = inbox().lock() {
+        g.push(ask);
     }
 }
 
@@ -66,9 +120,9 @@ pub fn take() -> Vec<Ask> {
     inbox().lock().map(|mut g| std::mem::take(&mut *g)).unwrap_or_default()
 }
 
-pub(crate) fn claim_at(lock: &Path, open: Option<&Path>, inbox: Inbox) -> Claim {
+pub(crate) fn claim_at(lock: &Path, ask: &Ask, inbox: Inbox) -> Claim {
     if let Some((port, secret)) = std::fs::read_to_string(lock).ok().as_deref().and_then(parse_lock)
-        && hand_over(port, &secret, open).is_ok()
+        && hand_over(port, &secret, ask).is_ok()
     {
         return Claim::Handed;
     }
@@ -85,11 +139,14 @@ pub(crate) fn parse_lock(text: &str) -> Option<(u16, String)> {
     (port > 0 && secret.len() >= 16).then_some((port, secret))
 }
 
-/// The message to the running Snagster: the secret, then SHOW or OPEN and a path.
-pub(crate) fn message(secret: &str, open: Option<&Path>) -> String {
-    match open {
-        Some(p) => format!("{secret}\nOPEN {}\n", p.display()),
-        None => format!("{secret}\nSHOW\n"),
+/// The message to the running Snagster: the secret, then SHOW, OPEN and a path, or ACTION and
+/// a name.
+pub(crate) fn message(secret: &str, ask: &Ask) -> String {
+    match ask {
+        Ask::Open(p) => format!("{secret}\nOPEN {}\n", p.display()),
+        Ask::Action(a) => format!("{secret}\nACTION {a}\n"),
+        Ask::Command(id, value) => command_message(secret, id, value.as_deref()),
+        Ask::Show => format!("{secret}\nSHOW\n"),
     }
 }
 
@@ -102,16 +159,29 @@ pub(crate) fn parse_message(text: &str, secret: &str) -> Option<Ask> {
     let what = lines.next()?;
     if what == "SHOW" {
         Some(Ask::Show)
+    } else if let Some(a) = what.strip_prefix("ACTION ") {
+        action_name(a).then(|| Ask::Action(a.to_string()))
+    } else if let Some(c) = what.strip_prefix("COMMAND ") {
+        let (id, value) = match c.split_once('\t') {
+            Some((id, v)) => (id, Some(v.to_string())),
+            None => (c, None),
+        };
+        (!id.trim().is_empty()).then(|| Ask::Command(id.trim().to_string(), value))
     } else {
         what.strip_prefix("OPEN ").map(|p| Ask::Open(PathBuf::from(p))).filter(|a| !matches!(a, Ask::Open(p) if p.as_os_str().is_empty()))
     }
 }
 
-fn hand_over(port: u16, secret: &str, open: Option<&Path>) -> Result<(), String> {
+fn hand_over(port: u16, secret: &str, ask: &Ask) -> Result<(), String> {
+    send(port, &message(secret, ask))
+}
+
+/// Sends one message and waits for "ok".
+fn send(port: u16, msg: &str) -> Result<(), String> {
     let addr = SocketAddr::from((Ipv4Addr::LOCALHOST, port));
     let mut s = TcpStream::connect_timeout(&addr, Duration::from_millis(500)).map_err(|e| e.to_string())?;
     s.set_read_timeout(Some(Duration::from_secs(2))).map_err(|e| e.to_string())?;
-    s.write_all(message(secret, open).as_bytes()).map_err(|e| e.to_string())?;
+    s.write_all(msg.as_bytes()).map_err(|e| e.to_string())?;
     let mut reply = String::new();
     BufReader::new(s).read_line(&mut reply).map_err(|e| e.to_string())?;
     if reply.trim() == "ok" { Ok(()) } else { Err(format!("unexpected answer {reply:?}")) }
@@ -197,17 +267,36 @@ mod tests {
     use super::*;
 
     #[test]
+    fn an_action_on_the_command_line_wins_over_a_file() {
+        let p = Path::new("/tmp/a.png");
+        assert_eq!(Ask::from_args(None, None), Ask::Show);
+        assert_eq!(Ask::from_args(Some(p), None), Ask::Open(p.to_path_buf()));
+        assert_eq!(Ask::from_args(Some(p), Some("Area")), Ask::Action("Area".into()));
+        assert!(action_name("AllInOne"));
+        assert!(!action_name("All In One"));
+        assert!(!action_name(""));
+    }
+
+    #[test]
     fn messages_need_the_secret() {
         let secret = new_secret();
         assert_eq!(secret.len(), 32);
         assert_ne!(secret, new_secret(), "a new secret each time");
-        assert_eq!(parse_message(&message(&secret, None), &secret), Some(Ask::Show));
+        assert_eq!(parse_message(&message(&secret, &Ask::Show), &secret), Some(Ask::Show));
         let p = Path::new("C:/Pictures/a b.png");
-        assert_eq!(parse_message(&message(&secret, Some(p)), &secret), Some(Ask::Open(p.to_path_buf())));
-        assert_eq!(parse_message(&message("wrong-secret-0000", None), &secret), None);
+        assert_eq!(parse_message(&message(&secret, &Ask::Open(p.to_path_buf())), &secret), Some(Ask::Open(p.to_path_buf())));
+        assert_eq!(parse_message(&message(&secret, &Ask::Action("Area".into())), &secret), Some(Ask::Action("Area".into())));
+        // Only a plain action name gets through.
+        assert_eq!(parse_message(&format!("{secret}\nACTION \n"), &secret), None);
+        assert_eq!(parse_message(&format!("{secret}\nACTION ../../x\n"), &secret), None);
+        assert_eq!(parse_message(&message("wrong-secret-0000", &Ask::Show), &secret), None);
         assert_eq!(parse_message("", &secret), None);
         assert_eq!(parse_message(&format!("{secret}\nDELETE everything\n"), &secret), None);
         assert_eq!(parse_message(&format!("{secret}\nOPEN \n"), &secret), None);
+        assert_eq!(parse_message(&command_message(&secret, "zoom_in", None), &secret), Some(Ask::Command("zoom_in".into(), None)));
+        assert_eq!(parse_message(&command_message(&secret, "open", Some("C:/a\nb.png")), &secret), Some(Ask::Command("open".into(), Some("C:/a b.png".into()))));
+        assert_eq!(parse_message(&format!("{secret}\nCOMMAND \n"), &secret), None);
+        assert_eq!(parse_message(&command_message("wrong-secret-0000", "exit", None), &secret), None);
         assert_eq!(parse_lock("45831 0123456789abcdef0123\n"), Some((45831, "0123456789abcdef0123".into())));
         assert_eq!(parse_lock("0 0123456789abcdef"), None);
         assert_eq!(parse_lock("80 short"), None);
@@ -222,23 +311,30 @@ mod tests {
         let lock = dir.join("instance.lock");
         let _ = std::fs::remove_dir_all(&dir);
         let first: Inbox = Inbox::default();
-        assert_eq!(claim_at(&lock, None, first.clone()), Claim::First);
+        assert_eq!(claim_at(&lock, &Ask::Show, first.clone()), Claim::First);
         assert!(lock.exists());
         let second: Inbox = Inbox::default();
-        assert_eq!(claim_at(&lock, Some(Path::new("/tmp/shot.png")), second.clone()), Claim::Handed);
-        assert_eq!(claim_at(&lock, None, second.clone()), Claim::Handed);
-        assert_eq!(*first.lock().unwrap(), vec![Ask::Open(PathBuf::from("/tmp/shot.png")), Ask::Show]);
+        assert_eq!(claim_at(&lock, &Ask::Open(PathBuf::from("/tmp/shot.png")), second.clone()), Claim::Handed);
+        assert_eq!(claim_at(&lock, &Ask::Show, second.clone()), Claim::Handed);
+        assert_eq!(claim_at(&lock, &Ask::Action("Area".into()), second.clone()), Claim::Handed);
+        assert_eq!(*first.lock().unwrap(), vec![Ask::Open(PathBuf::from("/tmp/shot.png")), Ask::Show, Ask::Action("Area".into())]);
         assert!(second.lock().unwrap().is_empty());
         // A stale lock (nothing listens on its port): the new start is the first.
         let stale = dir.join("stale.lock");
         let port = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap().local_addr().unwrap().port();
         std::fs::write(&stale, format!("{port} 0123456789abcdef0123456789abcdef\n")).unwrap();
-        assert_eq!(claim_at(&stale, None, Inbox::default()), Claim::First);
+        assert_eq!(claim_at(&stale, &Ask::Show, Inbox::default()), Claim::First);
         assert_ne!(std::fs::read_to_string(&stale).unwrap().split_whitespace().next(), Some(port.to_string().as_str()), "it now holds the new port");
         // A wrong secret gets no answer, so it isn't handed over.
         let real = std::fs::read_to_string(&lock).unwrap();
         let (p, _) = parse_lock(&real).unwrap();
-        assert!(hand_over(p, "not-the-secret-not-the-secret-00", None).is_err());
+        assert!(hand_over(p, "not-the-secret-not-the-secret-00", &Ask::Show).is_err());
+        // An AI app's command reaches the first one, with its value.
+        first.lock().unwrap().clear();
+        send_command_at(&lock, "zoom_in", None).unwrap();
+        send_command_at(&lock, "effect", Some("Border")).unwrap();
+        assert_eq!(*first.lock().unwrap(), vec![Ask::Command("zoom_in".into(), None), Ask::Command("effect".into(), Some("Border".into()))]);
+        assert!(send_command_at(&dir.join("none.lock"), "zoom_in", None).unwrap_err().contains("isn't open"));
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

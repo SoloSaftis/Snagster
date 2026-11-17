@@ -60,21 +60,21 @@ pub(crate) fn rate(bps: u64) -> String {
 pub(crate) fn state_label(snap: &Snapshot) -> &'static str {
     match (snap.phase, snap.stats.as_ref().map(|s| s.state)) {
         (Phase::Idle, _) => t("Off the air"),
-        (Phase::Starting, _) | (Phase::Running, Some(State::Connecting)) | (Phase::Running, None) => t("Connecting..."),
+        (Phase::Starting, _) | (Phase::Running, Some(State::Connecting)) | (Phase::Running, None) => t("Connecting…"),
         (Phase::Running, Some(State::Live)) => t("Live"),
-        (Phase::Running, Some(State::Reconnecting)) => t("Reconnecting..."),
+        (Phase::Running, Some(State::Reconnecting)) => t("Reconnecting…"),
         (Phase::Running, Some(State::Failed)) => t("The connection failed"),
-        (Phase::Stopping, _) | (Phase::Running, Some(State::Stopping | State::Stopped)) => t("Stopping..."),
+        (Phase::Stopping, _) | (Phase::Running, Some(State::Stopping | State::Stopped)) => t("Stopping…"),
     }
 }
 
 /// One service's state in a word for the band, and whether it is a warning.
 pub(crate) fn output_word(s: State) -> (&'static str, bool) {
     match s {
-        State::Connecting => (t("Connecting..."), false),
+        State::Connecting => (t("Connecting…"), false),
         State::Live => (t("Live"), false),
-        State::Reconnecting => (t("Reconnecting..."), true),
-        State::Stopping | State::Stopped => (t("Stopping..."), false),
+        State::Reconnecting => (t("Reconnecting…"), true),
+        State::Stopping | State::Stopped => (t("Stopping…"), false),
         State::Failed => (t("The connection failed"), true),
     }
 }
@@ -209,7 +209,7 @@ impl SnagApp {
         let enc = self.x.stream.encoders.clone().unwrap_or_else(|| Encoders::system_picked(&self.settings.video_encoder));
         let service = services_named(o.target.service, o.also.iter().map(|t| t.service));
         match live::begin(o, studio, enc) {
-            Ok(()) => self.status = tf("Going live on {service}...", &[("service", &service)]),
+            Ok(()) => self.status = tf("Going live on {service}…", &[("service", &service)]),
             Err(e) => self.status = keys.iter().fold(e, |e, k| mask(&e, k)),
         }
         ctx.request_repaint();
@@ -218,7 +218,7 @@ impl SnagApp {
     /// Stop now; the stream closes in the background.
     pub(crate) fn stop_stream(&mut self) {
         if live::end() {
-            self.status = t("Stopping the stream...").into();
+            self.status = t("Stopping the stream…").into();
         }
     }
 
@@ -311,14 +311,12 @@ impl SnagApp {
                 ui.label(tf("Everyone watching on {service} will see this from now on: {source}.", &[("service", &service), ("source", source)]));
                 ui.label(RichText::new(t("Snagster asks once each time it starts.")).color(TEXT_DIM));
                 ui.add_space(6.0);
-                ui.horizontal(|ui| {
-                    if ui.add(egui::Button::new(RichText::new(t("Go live")).color(Color32::WHITE).strong()).fill(LIVE_RED)).clicked() {
-                        go = true;
-                    }
-                    if ui.button(t("Cancel")).clicked() {
-                        cancel = true;
-                    }
-                });
+                // Going live reaches other people: red, and Return doesn't start it.
+                match crate::platform::dialog_buttons(ui, Some(t("Go live")), t("Cancel"), crate::platform::Kind::Destructive, true) {
+                    Some(crate::platform::Choice::Action) => go = true,
+                    Some(crate::platform::Choice::Cancel) => cancel = true,
+                    None => {}
+                }
             });
         if go {
             self.x.stream.confirmed = true;
@@ -382,7 +380,7 @@ impl SnagApp {
                 self.settings.stream.source = Source::Screen;
             }
             ui.menu_button(t("A window"), |ui| self.window_menu(ui));
-            if ui.button(t("Pick an area...")).clicked() {
+            if ui.button(t("Pick an area…")).clicked() {
                 ui.close();
                 self.pick_stream_area(ctx, false);
             }
@@ -393,7 +391,7 @@ impl SnagApp {
         ui.checkbox(&mut self.settings.stream.record_copy, t("Record a copy"));
         ui.checkbox(&mut self.settings.stream.cursor, t("Mouse pointer"));
         ui.separator();
-        if item(ui, t("Stream settings..."), "") {
+        if item(ui, t("Stream settings…"), "") {
             self.settings_open = true;
             self.settings_tab = SettingsTab::Streaming;
         }
@@ -817,16 +815,16 @@ mod tests {
         let mut s = Snapshot::default();
         assert_eq!(state_label(&s), "Off the air");
         s.phase = Phase::Starting;
-        assert_eq!(state_label(&s), "Connecting...");
+        assert_eq!(state_label(&s), "Connecting…");
         s.phase = Phase::Running;
         s.stats = Some(crate::stream::engine::Stats { state: State::Live, ..Default::default() });
         assert_eq!(state_label(&s), "Live");
         assert!(s.live() && s.on_air());
         s.stats = Some(crate::stream::engine::Stats { state: State::Reconnecting, ..Default::default() });
-        assert_eq!(state_label(&s), "Reconnecting...");
+        assert_eq!(state_label(&s), "Reconnecting…");
         assert!(!s.live() && s.on_air());
         s.phase = Phase::Stopping;
-        assert_eq!(state_label(&s), "Stopping...");
+        assert_eq!(state_label(&s), "Stopping…");
         assert!(!s.on_air());
     }
 

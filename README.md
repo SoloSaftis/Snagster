@@ -22,7 +22,7 @@ Windows · Mac · Linux · 86 languages · works offline · written in Rust · f
 - **Long pages** – scrolling capture scrolls by itself, keeps sticky headers once and stops at the end of the page, stitching a whole web page or document into one picture (sideways too).
 - **Mark it up** – arrows, boxes, text in any of your fonts, speech bubbles, numbered steps, 1,300+ color emojis, highlighter, spotlight, magnifier, blur and smart redact for private details.
 - **Tidy it up** – crop, cut out, move parts of the picture, borders, shadows, torn edges and more.
-- **Linux, Wayland too** – on Wayland desktops and inside a Flatpak, a capture opens the desktop's own screenshot tool, and Studio, recording and live streaming use the desktop's screen sharing (you click Share once). Checked on Ubuntu 26.04 with GNOME; scrolling capture and the Print Screen hotkey need an X11 session for now.
+- **Linux, Wayland too** – on Wayland desktops and inside a Flatpak, Studio, recording, live streaming and screen captures use the desktop's screen sharing, which asks once and then remembers; an area or a window is picked in the desktop's own screenshot tool. Hotkeys go through the desktop's shortcut service (GNOME 48 and later, KDE Plasma 6), which lets you change them in the desktop's keyboard settings; where a desktop has none, a shortcut you set there can run `snagster --action Area` (or AllInOne, Window, Screen, RecordGif…). Checked on Ubuntu 26.04 with GNOME; scrolling capture needs an X11 session for now.
 - **Grab text** – copy the text out of any picture or part of the screen (Windows).
 - **Record videos with sound** – MP4 (H.264 or HEVC) or WMV, 1 to 120 frames per second, with the computer's sound, your microphone or both (sound on Windows for now). The graphics chip does the encoding where it can (Intel Quick Sync, AMD or NVIDIA on Windows; VideoToolbox on Mac, checked on an Apple M1; VA-API for Intel and AMD and NVENC for NVIDIA on Linux, new and not yet tried on real hardware), so recording barely touches the processor or the battery. Snagster picks the best encoder by itself, or you choose one in Settings; if it can't start, Snagster quietly uses the best one that works. Videos go to your **Videos/Snagster** folder, pictures to **Pictures/Snagster**.
 - **Studio mode** – a live recording and streaming studio: scenes made of screens, windows, screen areas, pictures, text and colours, arranged by dragging; each scene with its own sound (up to 6 sources: computer sound, microphones, music files) and a mixer with level meters; one-click recording or going live, and scene buttons (Ctrl+1–9) to switch scenes while on air, the sound fading across.
@@ -34,7 +34,7 @@ Windows · Mac · Linux · 86 languages · works offline · written in Rust · f
 - **Your language** – 86 languages, picked automatically from your computer and changeable at any time; right-to-left languages read right to left.
 - **A ribbon like Word's** – tabs for Home, Capture, Record, Studio, Stream, Edit, Image, Share, View and Help, every tool with an icon and an explanation when you point at it.
 - **Keeps itself up to date** – Snagster checks for a new version once a day (you can turn it off) and installs it with one click.
-- **For AI apps** – Snagster is an MCP server with 66 tools: Claude, ChatGPT, Cursor, VS Code and local AI (Ollama, LM Studio, llama.cpp through apps such as Open WebUI) can capture, mark up, read text, record videos, run Studio and go live.
+- **For AI apps** – Snagster is an MCP server with 73 tools that reach every button and setting: Claude, ChatGPT, Cursor, VS Code and local AI (Ollama, LM Studio, llama.cpp through apps such as Open WebUI) can capture, mark up, read text, record videos, run Studio and go live.
 
 **Your pictures stay on your computer.** No account, no ads, no tracking. Nothing is sent anywhere
 (Snagster goes online only for the daily look for a new version, which you can switch off, and
@@ -115,12 +115,18 @@ snagster mcp-http --port 45831
 The server only listens on this computer, refuses web pages from other sites, and can require a
 password (`Authorization: Bearer ...`).
 
-**What an AI can do** (66 tools): capture the screen, a window, an area or a scrolling page; read text;
+**What an AI can do** (73 tools): everything a person can do in the window. It can capture the screen, a window, an area or a scrolling page; read text;
 add arrows, boxes, text, steps and blur; crop, resize and apply effects; undo and redo; save in every
 format; make PDF, Word and web-page guides; search and add to the library; record videos with sound at
 1–120 fps; set up and record Studio scenes; start, watch and stop a live stream (the saved stream key
-is used and never shown); read and change settings; switch language; check for updates. Your AI app
-lists every tool with what it does. It also offers ready-made prompts (annotate a screenshot, redact one, record a demo, make a
+is used and never shown); cut out, fill, erase and lift parts of a picture; trim and combine GIFs;
+save to OneDrive, Dropbox, Google Drive or iCloud folders; read and change every setting (each one
+checked against its kind and range); switch language; check for updates. `list_commands` lists every
+ribbon button, menu item and tick box with the tool or setting that does the same, and `app_command`
+presses any of them in the open window (zoom, pins, dialogs, email, print, Studio and stream buttons).
+Commands that would print, email, install an update or delete something are marked, and the ones that
+open a dialog still leave the decision to you. The AI-app server's own settings (on/off, port, password)
+can only be changed by you. Your AI app lists every tool with what it does. It also offers ready-made prompts (annotate a screenshot, redact one, record a demo, make a
 guide) and the current picture, settings and library as resources.
 
 **From a terminal**, the same tools: `snagster help` lists commands such as

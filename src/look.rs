@@ -5,7 +5,49 @@
 use eframe::egui::{self, Align2, Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId, Response, Sense, Stroke, Ui, pos2, vec2};
 use std::sync::Arc;
 
-pub const ACCENT: Color32 = Color32::from_rgb(91, 127, 245);
+const ACCENT_DEFAULT: Color32 = Color32::from_rgb(91, 127, 245);
+
+/// The accent colour (selection, focus, the main buttons): the one the person picked for the
+/// desktop where the desktop says (GNOME and KDE through the Settings portal), else Snagster's blue.
+pub fn accent() -> Color32 {
+    system_accent().unwrap_or(ACCENT_DEFAULT)
+}
+
+static SYSTEM_ACCENT: std::sync::OnceLock<Option<Color32>> = std::sync::OnceLock::new();
+
+/// The desktop's accent colour, once `read_system_accent` has asked.
+pub fn system_accent() -> Option<Color32> {
+    SYSTEM_ACCENT.get().copied().flatten()
+}
+
+/// Ask the desktop for its accent colour, once, at start. Linux only (the Settings portal);
+/// elsewhere Snagster keeps its own. At most a second: a slow or missing portal never holds up
+/// the window.
+pub fn read_system_accent() {
+    #[cfg(target_os = "linux")]
+    let found = {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let _ = std::thread::Builder::new().name("snagster-accent".into()).spawn(move || {
+            let c = pollster::block_on(async {
+                let s = ashpd::desktop::settings::Settings::new().await.ok()?;
+                let c = s.accent_color().await.ok()?;
+                accent_from(c.red(), c.green(), c.blue())
+            });
+            let _ = tx.send(c);
+        });
+        rx.recv_timeout(std::time::Duration::from_secs(1)).ok().flatten()
+    };
+    #[cfg(not(target_os = "linux"))]
+    let found = None;
+    let _ = SYSTEM_ACCENT.set(found);
+}
+
+/// The portal gives 0..1 per channel; out of range means "no accent set".
+#[cfg(any(target_os = "linux", test))]
+fn accent_from(r: f64, g: f64, b: f64) -> Option<Color32> {
+    let ok = |v: f64| (0.0..=1.0).contains(&v);
+    (ok(r) && ok(g) && ok(b)).then(|| Color32::from_rgb((r * 255.0).round() as u8, (g * 255.0).round() as u8, (b * 255.0).round() as u8))
+}
 pub const TEXT: Color32 = Color32::from_rgb(226, 229, 238);
 pub const DIM: Color32 = Color32::from_rgb(150, 156, 172);
 pub const FAINT: Color32 = Color32::from_rgb(92, 98, 112);
@@ -251,7 +293,8 @@ pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
     let galley = ui.painter().layout_no_wrap(label.to_string(), font, if on { Color32::WHITE } else { DIM });
     let size = vec2(galley.size().x + 22.0, 30.0);
     let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
-    let resp = resp.on_hover_text(tip);
+    let resp = resp.on_hover_text(crate::platform::keys(tip));
+    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
     if resp.hovered() && !on {
         ui.painter().rect_filled(rect.shrink2(vec2(2.0, 3.0)), CornerRadius::same(6), HOVER);
     }
@@ -260,22 +303,23 @@ pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
     ui.painter().galley(pos, galley, color);
     if on {
         let y = rect.bottom() - 2.0;
-        ui.painter().line_segment([pos2(rect.left() + 8.0, y), pos2(rect.right() - 8.0, y)], Stroke::new(2.5, ACCENT));
+        ui.painter().line_segment([pos2(rect.left() + 8.0, y), pos2(rect.right() - 8.0, y)], Stroke::new(2.5, accent()));
     }
     resp
 }
 
 /// A big ribbon tool: its icon over its name, flat until hovered, with a tooltip.
 pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, active: bool) -> Response {
-    let font = FontId::proportional(11.5);
+    let font = FontId::proportional(12.0);
     let galley = ui.painter().layout(label.to_string(), font, TEXT, 88.0);
     let w = galley.size().x.max(34.0) + 14.0;
     let (rect, resp) = ui.allocate_exact_size(vec2(w, 62.0), if enabled { Sense::click() } else { Sense::hover() });
-    let resp = resp.on_hover_text(tip);
+    let resp = resp.on_hover_text(crate::platform::keys(tip));
+    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, enabled, active, label));
     let p = ui.painter();
     if active {
         p.rect_filled(rect, CornerRadius::same(7), PRESSED);
-        p.rect_stroke(rect, CornerRadius::same(7), Stroke::new(1.0, ACCENT), egui::StrokeKind::Inside);
+        p.rect_stroke(rect, CornerRadius::same(7), Stroke::new(1.0, accent()), egui::StrokeKind::Inside);
     } else if enabled && resp.hovered() {
         p.rect_filled(rect, CornerRadius::same(7), if resp.is_pointer_button_down_on() { PRESSED } else { HOVER });
     }
@@ -284,7 +328,7 @@ pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, 
     } else if icon == ph::RECORD || icon == ph::STOP || icon == ph::BROADCAST {
         REC
     } else {
-        ACCENT
+        accent()
     };
     p.text(pos2(rect.center().x, rect.top() + 18.0), Align2::CENTER_CENTER, icon, FontId::new(23.0, icons()), icol);
     let tcol = if enabled { TEXT } else { FAINT };
@@ -298,12 +342,13 @@ pub fn small_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool
     let font = FontId::proportional(12.5);
     let galley = ui.painter().layout_no_wrap(label.to_string(), font, TEXT);
     let (rect, resp) = ui.allocate_exact_size(vec2(galley.size().x + 32.0, 20.0), if enabled { Sense::click() } else { Sense::hover() });
-    let resp = resp.on_hover_text(tip);
+    let resp = resp.on_hover_text(crate::platform::keys(tip));
+    resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, enabled, label));
     let p = ui.painter();
     if enabled && resp.hovered() {
         p.rect_filled(rect.expand(1.0), CornerRadius::same(5), HOVER);
     }
-    p.text(pos2(rect.left() + 12.0, rect.center().y), Align2::CENTER_CENTER, icon, FontId::new(15.0, icons()), if enabled { ACCENT } else { FAINT });
+    p.text(pos2(rect.left() + 12.0, rect.center().y), Align2::CENTER_CENTER, icon, FontId::new(15.0, icons()), if enabled { accent() } else { FAINT });
     p.galley(pos2(rect.left() + 26.0, rect.center().y - galley.size().y / 2.0), galley, if enabled { TEXT } else { FAINT });
     resp
 }
@@ -311,7 +356,7 @@ pub fn small_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool
 /// A ribbon group: its tools, its name underneath, a divider after it.
 pub fn group(ui: &mut Ui, name: &str, body: impl FnOnce(&mut Ui)) {
     let r = ui.vertical(|ui| {
-        ui.set_min_height(84.0);
+        ui.set_min_height(86.0);
         ui.horizontal(|ui| {
             ui.set_min_height(64.0);
             ui.spacing_mut().item_spacing.x = 2.0;
@@ -319,8 +364,8 @@ pub fn group(ui: &mut Ui, name: &str, body: impl FnOnce(&mut Ui)) {
         });
         ui.add_space(1.0);
         let w = ui.min_rect().width();
-        ui.allocate_ui(vec2(w, 14.0), |ui| {
-            ui.centered_and_justified(|ui| ui.label(egui::RichText::new(name).size(10.5).color(FAINT)));
+        ui.allocate_ui(vec2(w, 16.0), |ui| {
+            ui.centered_and_justified(|ui| ui.label(egui::RichText::new(name).size(12.0).color(DIM)));
         });
     });
     let x = r.response.rect.right() + 6.0;
@@ -358,7 +403,8 @@ pub fn small_menu(ui: &mut Ui, icon: &str, label: &str, tip: &str, body: impl Fn
 /// An icon-only button for tight places (tooltip required).
 pub fn icon_button(ui: &mut Ui, icon: &str, tip: &str) -> Response {
     let (rect, resp) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
-    let resp = resp.on_hover_text(tip);
+    let resp = resp.on_hover_text(crate::platform::keys(tip));
+    resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, tip));
     if resp.hovered() {
         ui.painter().rect_filled(rect, CornerRadius::same(6), HOVER);
     }
@@ -369,6 +415,16 @@ pub fn icon_button(ui: &mut Ui, icon: &str, tip: &str) -> Response {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn the_desktop_accent_is_read_from_its_0_to_1_channels() {
+        use super::*;
+        assert_eq!(accent_from(0.0, 0.5, 1.0), Some(Color32::from_rgb(0, 128, 255)));
+        assert_eq!(accent_from(0.207, 0.517, 0.894), Some(Color32::from_rgb(53, 132, 228)));
+        // (-1, -1, -1) or anything outside 0..1: the person set no accent.
+        assert_eq!(accent_from(-1.0, -1.0, -1.0), None);
+        assert_eq!(accent_from(1.2, 0.0, 0.0), None);
+    }
+
     use super::*;
     use std::collections::HashSet;
 
@@ -464,7 +520,7 @@ mod tests {
         assert_ne!(PRESSED, HOVER);
         assert_ne!(TABS, BAND);
         assert!(REC.r() > REC.g() && REC.r() > REC.b(), "recording is red");
-        for c in [ACCENT, TEXT, DIM, FAINT, HOVER, PRESSED, BAND, TABS, REC] {
+        for c in [accent(), TEXT, DIM, FAINT, HOVER, PRESSED, BAND, TABS, REC] {
             assert_eq!(c.a(), 255, "interface colours are opaque");
         }
     }

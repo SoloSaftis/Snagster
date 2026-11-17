@@ -433,9 +433,73 @@ pub fn docx(title: &str, items: &[(String, RgbaImage)], path: &Path) -> Result<(
     Ok(())
 }
 
+/// GIF editor "Save trimmed GIF as...": frames `first..=last` (counted from 0) of `path` into
+/// `out`. Returns how many frames were kept.
+pub fn trim_gif(path: &Path, first: usize, last: usize, out: &Path) -> Result<usize, String> {
+    if last < first {
+        return Err("the last frame comes before the first".into());
+    }
+    let kept: Vec<_> = gif_frames(path, 0)?.into_iter().skip(first).take(last - first + 1).collect();
+    if kept.is_empty() {
+        return Err("the GIF has no frames there".into());
+    }
+    write_gif(out, &kept)?;
+    Ok(kept.len())
+}
+
+/// GIF editor "Add another GIF to the end...": `path` with `other`'s frames added (sized to
+/// fit), written next to `path` as `<name>_combined.gif`.
+pub fn combine_gifs(path: &Path, other: &Path) -> Result<std::path::PathBuf, String> {
+    let mut first = gif_frames(path, 0)?;
+    let second = gif_frames(other, 0)?;
+    let w = first.first().map(|f| f.0.width()).unwrap_or(640);
+    let imgs: Vec<_> = second.iter().map(|f| f.0.clone()).collect();
+    let boxed = letterbox(&imgs, w);
+    let target_h = first.first().map(|f| f.0.height()).unwrap_or(480);
+    for (img, (_, ms)) in boxed.into_iter().zip(second) {
+        let img = if img.height() != target_h || img.width() != w { image::imageops::resize(&img, w, target_h, image::imageops::FilterType::Triangle) } else { img };
+        first.push((img, ms));
+    }
+    let out = path.with_file_name(format!("{}_combined.gif", path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default()));
+    write_gif(&out, &first)?;
+    Ok(out)
+}
+
+/// Record > GIF slideshow: one picture after another, `seconds` each, at most `max_w` wide.
+/// Returns the number of pictures.
+pub fn slideshow_gif(images: &[RgbaImage], max_w: u32, seconds: f32, out: &Path) -> Result<usize, String> {
+    let ms = (seconds.clamp(0.2, 30.0) * 1000.0) as u32;
+    let list: Vec<(RgbaImage, u32)> = letterbox(images, max_w).into_iter().map(|f| (f, ms)).collect();
+    write_gif(out, &list)?;
+    Ok(list.len())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn gif_editor_trims_combines_and_makes_slideshows() {
+        let dir = std::env::temp_dir().join(format!("snagster-gif-edit-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let frames: Vec<(RgbaImage, u32)> = (0..4u8).map(|i| (RgbaImage::from_pixel(20, 10, image::Rgba([i * 60, 0, 0, 255])), 100)).collect();
+        let a = dir.join("a.gif");
+        write_gif(&a, &frames).unwrap();
+        let t = dir.join("t.gif");
+        assert_eq!(trim_gif(&a, 1, 2, &t).unwrap(), 2);
+        assert_eq!(gif_frames(&t, 0).unwrap().len(), 2);
+        assert!(trim_gif(&a, 2, 1, &t).is_err());
+        assert!(trim_gif(&a, 10, 12, &t).is_err());
+        let c = combine_gifs(&a, &t).unwrap();
+        assert!(c.ends_with("a_combined.gif"));
+        assert_eq!(gif_frames(&c, 0).unwrap().len(), 6);
+        let s = dir.join("s.gif");
+        let imgs = vec![RgbaImage::new(30, 20), RgbaImage::new(10, 40)];
+        assert_eq!(slideshow_gif(&imgs, 0, 1.0, &s).unwrap(), 2);
+        assert_eq!(gif_frames(&s, 0).unwrap()[0].1, 1000);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
     use eframe::egui::{Color32, Rect, pos2};
     use std::io::Read as _;
     use std::path::PathBuf;

@@ -197,7 +197,33 @@ pub fn monitors() -> Vec<MonitorInfo> {
     guarded(|| Ok::<_, String>(monitors_raw())).unwrap_or_default()
 }
 
+/// The size of the screen Snagster's window is on, in pixels, as the window system tells the
+/// window (set every frame by the window).
+static WINDOW_SCREEN: std::sync::Mutex<Option<(u32, u32)>> = std::sync::Mutex::new(None);
+
+/// Remember the size of the screen the window is on (pixels).
+pub fn remember_window_screen(size: (u32, u32)) {
+    if size.0 > 0 && size.1 > 0 {
+        *WINDOW_SCREEN.lock().unwrap_or_else(|p| p.into_inner()) = Some(size);
+    }
+}
+
+/// The screens to offer when the screen library sees none: inside a Flatpak on Wayland it
+/// can't (it lists screens through X11, which the sandbox doesn't give), yet the desktop's
+/// screen sharing still works, so the screen the window is on stands in.
+fn stand_in_screens(listed: Vec<MonitorInfo>, wayland: bool, window_screen: Option<(u32, u32)>) -> Vec<MonitorInfo> {
+    match window_screen {
+        Some((width, height)) if listed.is_empty() && wayland => vec![MonitorInfo { id: 0, name: "Screen".into(), x: 0, y: 0, width, height, primary: true }],
+        _ => listed,
+    }
+}
+
 fn monitors_raw() -> Vec<MonitorInfo> {
+    let listed = monitors_listed();
+    stand_in_screens(listed, desktop_screenshots_only(), *WINDOW_SCREEN.lock().unwrap_or_else(|p| p.into_inner()))
+}
+
+fn monitors_listed() -> Vec<MonitorInfo> {
     let Ok(all) = guarded(xcap::Monitor::all) else { return Vec::new() };
     all.iter()
         .filter_map(|m| {
@@ -608,16 +634,22 @@ fn screens_listable() -> bool {
     guarded(xcap::Monitor::all).is_ok_and(|all| !all.is_empty())
 }
 
-/// The whole desktop through the desktop's Screenshot portal (Linux, see `crate::portal`).
+/// The screen through the desktop's portals (Linux, see `crate::portal`). On Wayland: one
+/// picture of a screen share, which the desktop asks about once and then remembers. Elsewhere
+/// (a Flatpak on X11): the Screenshot portal.
 #[cfg(target_os = "linux")]
 fn portal_shot() -> Result<Shot, String> {
+    if desktop_screenshots_only() {
+        let (image, origin) = crate::portal::still(false, SHARE_WAIT)?;
+        return Ok(shot(image, origin, "Screen".into()));
+    }
     let image = crate::portal::screenshot(false)?;
     Ok(shot(image, (0, 0), "Screen".into()))
 }
 
 fn grab_rect_raw(x: i32, y: i32, w: u32, h: u32) -> Result<RgbaImage, String> {
     #[cfg(target_os = "linux")]
-    if !screens_listable() {
+    if desktop_screenshots_only() || !screens_listable() {
         let all = portal_shot()?;
         return crop_desktop(&all.image, all.origin, x, y, w, h).ok_or_else(|| "that area is off screen".to_string());
     }
@@ -706,16 +738,13 @@ fn desktop_screenshot_budget() -> Result<(), String> {
     }
 }
 
-/// The captures that, on Wayland, open the desktop's own screenshot tool from Snagster's window:
-/// Snagster can't hide itself and come back there (a Wayland app may minimize itself but not
-/// un-minimize), so the desktop's tool picks the area, window or screen instead of Snagster's
-/// overlay.
+/// The captures that, on Wayland, open the desktop's own screenshot tool: picking a window
+/// (Snagster can't see the other windows there) and a plain rectangle (the person picks it in
+/// the desktop's tool). A whole screen needs no picking: it is a silent picture of the
+/// remembered screen share (the desktop asks once, see `portal::still`).
 #[cfg(any(target_os = "linux", test))]
 pub(crate) fn desktop_tool_covers(kind: &CaptureKind) -> bool {
-    // Only plain pictures: picking an area to record, scroll, read or combine needs Snagster's
-    // own overlay (the desktop's tool gives back a picture, not an area).
-    // (A circle, freehand or polygon cut needs the overlay too: the desktop's tool cuts rectangles.)
-    matches!(kind, CaptureKind::Screen | CaptureKind::AllScreens | CaptureKind::Monitor(_) | CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture) | CaptureKind::WindowPick)
+    matches!(kind, CaptureKind::WindowPick | CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture))
 }
 
 /// Whether scrolling capture can work here: it turns other windows' scroll wheels and takes a
@@ -749,8 +778,10 @@ pub fn grab_with_desktop_tool() -> Result<Shot, String> {
 }
 
 fn grab_raw(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String> {
+    // Wayland: always through the portals (the screen library would ask the desktop for a
+    // screenshot of its own, confirmed each time).
     #[cfg(target_os = "linux")]
-    if portal_covers(kind) && !screens_listable() {
+    if portal_covers(kind) && (desktop_screenshots_only() || !screens_listable()) {
         return portal_shot();
     }
     let at = cursor_pos().unwrap_or(fallback_at);
@@ -841,7 +872,7 @@ impl ScreenAccess {
 
 /// What a grab says on macOS when Snagster may not record the screen (translated in the window).
 pub const SCREEN_ACCESS_NEEDED: &str =
-    "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.";
+    "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.";
 /// What a grab says on macOS without a logged-in desktop (translated in the window).
 pub const NO_DESKTOP: &str = "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.";
 /// What `--video-test` and `--stream-test` print instead of FAIL when the screen can't be seen.
@@ -1344,12 +1375,29 @@ pub fn spawn_gif_recorder(
     ctx: eframe::egui::Context,
     done: Sender<GifDone>,
 ) {
+    GIF_LIVE.store(false, Ordering::Relaxed);
     std::thread::spawn(move || {
         background_thread(false);
         let (x, y, w, h) = rect;
         let fps = fps.clamp(1, 30);
         let scale = if w > max_width.max(160) { max_width.max(160) as f32 / w as f32 } else { 1.0 };
         let (ow, oh) = (((w as f32 * scale) as u32).clamp(1, 65535), ((h as f32 * scale) as u32).clamp(1, 65535));
+        // Wayland: one screen share (the person clicks Share once) instead of a desktop
+        // screenshot per frame; the GIF starts when the first picture arrives.
+        let feed = if desktop_screenshots_only() {
+            let o = crate::video::FeedOptions { fps: fps.max(10), cursor: pointer, fit: None, every_frame: false };
+            let started = crate::video::screen_feed(rect, o).and_then(|f| wait_for_first_picture(|| f.frames(), || f.error(), &stop, SHARE_WAIT).map(|_| f));
+            match started {
+                Ok(f) => Some(f),
+                Err(e) => {
+                    let _ = done.send(GifDone { path, frames: 0, seconds: 0.0, result: Err(e) });
+                    ctx.request_repaint();
+                    return;
+                }
+            }
+        } else {
+            None
+        };
         // (picture part, left, top, delay in ms)
         let (ftx, frx) = std::sync::mpsc::channel::<(RgbaImage, u32, u32, u32)>();
         let enc_path = path.clone();
@@ -1377,6 +1425,7 @@ pub fn spawn_gif_recorder(
             Ok(n)
         });
         let frame_ms = 1000 / fps;
+        GIF_LIVE.store(true, Ordering::Relaxed);
         let start = Instant::now();
         let mut next = start;
         let mut err = None;
@@ -1384,13 +1433,18 @@ pub fn spawn_gif_recorder(
         let mut pending: Option<(RgbaImage, u32, u32, u32)> = None;
         let mut captured = 0u32;
         while !stop.load(Ordering::Relaxed) && start.elapsed().as_secs() < max_s as u64 {
-            match grab_rect(x, y, w, h) {
+            let grabbed = match &feed {
+                Some(f) => feed_picture(f),
+                None => grab_rect(x, y, w, h),
+            };
+            match grabbed {
                 Ok(mut img) => {
-                    if scale < 1.0 {
+                    if img.dimensions() != (ow, oh) {
                         // A plain box filter: far cheaper than smooth resampling, fine for GIFs.
-                        img = image::imageops::thumbnail(&img, ow, oh);
+                        img = if img.width() > ow { image::imageops::thumbnail(&img, ow, oh) } else { image::imageops::resize(&img, ow, oh, image::imageops::FilterType::Nearest) };
                     }
-                    if pointer && let Some(c) = cursor_pos() {
+                    // (A screen share draws the pointer in itself.)
+                    if pointer && feed.is_none() && let Some(c) = cursor_pos() {
                         stamp_pointer(&mut img, ((c.0 - x) as f32 * scale, (c.1 - y) as f32 * scale));
                     }
                     captured += 1;
@@ -1441,9 +1495,50 @@ pub fn spawn_gif_recorder(
             (Ok(_), Some(e)) => (captured, Err(e)),
             (Err(e), _) => (0, Err(e)),
         };
+        GIF_LIVE.store(false, Ordering::Relaxed);
         let _ = done.send(GifDone { path, frames, seconds, result });
         ctx.request_repaint();
     });
+}
+
+/// Whether a GIF recording is taking pictures (false while it waits for screen sharing).
+static GIF_LIVE: AtomicBool = AtomicBool::new(false);
+
+/// Whether the GIF recording has started taking pictures (on Wayland it first waits for the
+/// person to click Share).
+pub fn gif_live() -> bool {
+    GIF_LIVE.load(Ordering::Relaxed)
+}
+
+/// How long a GIF recording waits for the person to click Share in the desktop's dialog.
+const SHARE_WAIT: Duration = Duration::from_secs(120);
+
+/// Wait until a screen share has its first picture (`frames` counts them): the desktop asks
+/// the person first. Fails when the share failed (`error` before any picture), Stop was
+/// pressed, or `limit` passed.
+fn wait_for_first_picture(frames: impl Fn() -> u64, error: impl Fn() -> Option<String>, stop: &AtomicBool, limit: Duration) -> Result<(), String> {
+    let t = Instant::now();
+    loop {
+        if frames() > 0 {
+            return Ok(());
+        }
+        if let Some(e) = error() {
+            return Err(e);
+        }
+        if stop.load(Ordering::Relaxed) {
+            return Err("Stopped before screen sharing started.".into());
+        }
+        if t.elapsed() >= limit {
+            return Err("Screen sharing didn't start: nothing was recorded.".into());
+        }
+        std::thread::sleep(Duration::from_millis(20));
+    }
+}
+
+/// The newest picture of a screen share.
+fn feed_picture(f: &crate::video::ScreenFeed) -> Result<RgbaImage, String> {
+    f.with_latest(|fr| (fr.number > 0).then(|| RgbaImage::from_raw(fr.width, fr.height, fr.rgba.clone())).flatten())
+        .ok_or_else(|| f.error().unwrap_or_else(|| "Screen sharing stopped.".into()))
 }
 
 /// A small arrow pointer picture, drawn once.
@@ -1527,6 +1622,54 @@ mod tests {
         }
     }
 
+    /// Inside the Flatpak on Wayland the screen library saw no screens (it asks X11, which the
+    /// sandbox doesn't give), so Studio and recording had nothing to share ("no screen found").
+    #[test]
+    fn the_window_screen_stands_in_when_no_screen_is_listed_on_wayland() {
+        let s = stand_in_screens(Vec::new(), true, Some((1920, 1200)));
+        assert_eq!(s.len(), 1);
+        assert_eq!((s[0].x, s[0].y, s[0].width, s[0].height, s[0].primary), (0, 0, 1920, 1200, true));
+        // A listed screen always wins.
+        let real = MonitorInfo { id: 7, name: "DP-1".into(), x: 10, y: 0, width: 800, height: 600, primary: true };
+        let s = stand_in_screens(vec![real], true, Some((1920, 1200)));
+        assert_eq!(s[0].id, 7);
+        // Not on X11 or Windows (no screen there is a real problem), nor before the window knows.
+        assert!(stand_in_screens(Vec::new(), false, Some((1920, 1200))).is_empty());
+        assert!(stand_in_screens(Vec::new(), true, None).is_empty());
+        // The window tells it; nonsense sizes are ignored.
+        remember_window_screen((0, 900));
+        remember_window_screen((2560, 1440));
+        assert_eq!(*WINDOW_SCREEN.lock().unwrap(), Some((2560, 1440)));
+    }
+
+    /// A GIF on Wayland took a desktop screenshot per frame, so the screenshot limit stopped it
+    /// after a few frames; it now waits for one screen share's first picture.
+    #[test]
+    fn a_gif_waits_for_the_screen_share_to_start() {
+        use std::cell::Cell;
+        let stop = AtomicBool::new(false);
+        let long = Duration::from_secs(5);
+        // The picture arrives after the person clicks Share.
+        let n = Cell::new(0u64);
+        let frames = || {
+            n.set(n.get() + 1);
+            if n.get() > 3 { 1 } else { 0 }
+        };
+        assert!(wait_for_first_picture(frames, || None, &stop, long).is_ok());
+        // The person said no: that error comes back.
+        let e = wait_for_first_picture(|| 0, || Some("The person said no.".to_string()), &stop, long).unwrap_err();
+        assert!(e.contains("said no"));
+        // A picture that already arrived wins over a later error.
+        assert!(wait_for_first_picture(|| 1, || Some("x".to_string()), &stop, long).is_ok());
+        // Nobody answers: it gives up at the limit.
+        let e = wait_for_first_picture(|| 0, || None, &stop, Duration::from_millis(50)).unwrap_err();
+        assert!(e.contains("didn't start"));
+        // Stop while waiting.
+        stop.store(true, Ordering::Relaxed);
+        let e = wait_for_first_picture(|| 0, || None, &stop, long).unwrap_err();
+        assert!(e.contains("Stopped"));
+    }
+
     /// Studio's screen preview asked GNOME for a screenshot every frame on Wayland (19 portal
     /// and 38 GNOME Shell screenshots in 10 s), flooding the desktop until it had to restart.
     #[test]
@@ -1542,10 +1685,13 @@ mod tests {
     }
 
     #[test]
-    fn the_desktop_tool_picks_whole_screens_and_areas_on_wayland() {
-        assert!(desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture)));
-        assert!(desktop_tool_covers(&CaptureKind::AllScreens));
+    fn the_desktop_tool_picks_windows_and_areas_on_wayland() {
         assert!(desktop_tool_covers(&CaptureKind::WindowPick));
+        assert!(desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture)));
+        // Whole screens: a silent picture (asked once), no tool to click through each time.
+        assert!(!desktop_tool_covers(&CaptureKind::AllScreens));
+        assert!(!desktop_tool_covers(&CaptureKind::Screen));
+        assert!(!desktop_tool_covers(&CaptureKind::Monitor(0)));
         // Picking an area to record, scroll through or read keeps Snagster's overlay.
         assert!(!desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::RecordGif)));
         assert!(!desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::AllInOne)));

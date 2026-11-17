@@ -35,7 +35,10 @@ on Windows), record_gif, and Studio scenes (studio_scenes, studio_add_scene, stu
 studio_record). Guides: make_guide (PDF, web page, Word or one tall picture). Library: library_search, library_tag, \
 library_delete. Live streaming: stream_services, stream_start (Twitch, YouTube, Kick, Facebook, Restream or any RTMP/RTMPS \
 server; the screen, a window, an area or the Studio scene; the stream key saved in Snagster is used and never shown), \
-stream_status and stream_stop. Defaults come from Snagster's settings (get_settings, set_setting). Long calls send progress when the \
+stream_status and stream_stop. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
+set_setting checks kind and range). Everything else a person can press in the window is in list_commands: app_command \
+presses it in the open window (zoom, pins, Recent, dialogs, email, print, Studio and stream buttons...); editor_apply \
+(cut out, fill, erase, lift, resize or copy a mark), gif_edit, studio_edit and save_to_cloud do the rest here. Long calls send progress when the \
 request has a progressToken and stop early when cancelled. Coordinates are picture pixels from the top-left corner \
 (desktop pixels for captures and recordings). Colours are #RRGGBB or a name (red, orange, yellow, green, blue, purple, \
 black, white).";
@@ -71,6 +74,18 @@ pub type Outcome = Result<Vec<Value>, String>;
 #[path = "mcp_more.rs"]
 mod more;
 
+#[path = "mcp_app.rs"]
+mod app_tools;
+
+/// The settings as JSON with the HTTP access token hidden (an AI app never reads it).
+fn masked_settings(s: &Settings) -> Result<Value, String> {
+    let mut v = serde_json::to_value(s).map_err(|e| e.to_string())?;
+    if v["mcp_token"].as_str().is_some_and(|t| !t.is_empty()) {
+        v["mcp_token"] = json!("(hidden)");
+    }
+    Ok(v)
+}
+
 struct Tool {
     name: &'static str,
     description: &'static str,
@@ -89,6 +104,7 @@ fn effect_names() -> Vec<String> {
 fn tools() -> Vec<Tool> {
     let mut all = base_tools();
     all.extend(more::tools());
+    all.extend(app_tools::tools());
     all
 }
 
@@ -278,17 +294,23 @@ fn base_tools() -> Vec<Tool> {
 const MARK_KINDS: [&str; 14] = ["arrow", "line", "box", "oval", "highlight", "pen", "text", "callout", "step", "stamp", "pointer", "spotlight", "magnify", "image"];
 
 /// Tools that change something outside the current picture (files, clipboard, settings, screen).
-const SIDE: [&str; 26] = [
+const SIDE: [&str; 30] = [
     "save", "quick_save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "library_delete", "library_tag",
     "set_setting", "set_language", "open_in_snagster", "studio_add_source", "studio_remove_source", "studio_update_source",
     "studio_add_scene", "studio_remove_scene", "studio_set_current", "studio_record", "capture_scrolling", "paste_from_clipboard",
-    "capture_screen", "capture_region", "capture_window", "stream_start", "stream_stop",
+    "capture_screen", "capture_region", "capture_window", "stream_start", "stream_stop", "app_command", "save_to_cloud", "gif_edit", "studio_edit",
 ];
 
 /// Tools that may delete or replace something (a mark, a source or scene, a library picture,
-/// a setting, or a file at a given path).
-const DESTRUCTIVE: [&str; 11] =
-    ["remove_mark", "clear_marks", "studio_remove_source", "studio_remove_scene", "library_delete", "set_setting", "save", "make_guide", "record_video", "record_gif", "studio_record"];
+/// a setting, or a file at a given path). app_command can exit Snagster, recycle a file or end
+/// a stream.
+const DESTRUCTIVE: [&str; 14] = [
+    "remove_mark", "clear_marks", "studio_remove_source", "studio_remove_scene", "library_delete", "set_setting", "save", "make_guide", "record_video", "record_gif", "studio_record",
+    "app_command", "gif_edit", "studio_edit",
+];
+
+/// Tools that reach beyond this computer's Snagster: the network, the cloud, other programs.
+const OPEN_WORLD: [&str; 4] = ["check_for_update", "stream_start", "app_command", "save_to_cloud"];
 
 /// Tools that change something but leave the same result when called again with the same
 /// arguments.
@@ -311,6 +333,8 @@ fn output_schema(name: &str) -> Option<Value> {
     };
     Some(match name {
         "list_monitors" => items(props(json!({"id": num, "name": st, "x": num, "y": num, "width": num, "height": num, "primary": bo}))),
+        "list_commands" => items(props(json!({"id": st, "place": st, "labels": strings, "tool": st, "setting": st, "window": bo, "value": st, "risk": st}))),
+        "list_settings" => items(props(json!({"key": st, "value": {}, "kind": st, "help": st, "ai_may_change": st}))),
         "list_windows" => items(props(json!({"id": num, "title": st, "program": st, "x": num, "y": num, "width": num, "height": num}))),
         "library_search" => items(props(json!({"path": st, "title": st, "program": st, "kind": st, "created": st, "tags": strings}))),
         "list_languages" => items(props(json!({"code": st, "name": st, "native": st}))),
@@ -350,7 +374,7 @@ pub fn tool_list() -> Value {
                     "readOnlyHint": read_only,
                     "destructiveHint": DESTRUCTIVE.contains(&t.name),
                     "idempotentHint": read_only || IDEMPOTENT.contains(&t.name),
-                    "openWorldHint": matches!(t.name, "check_for_update" | "stream_start"),
+                    "openWorldHint": OPEN_WORLD.contains(&t.name),
                 },
             });
             if let Some(o) = output_schema(t.name) {
@@ -585,7 +609,11 @@ impl Workspace {
     fn save_settings(&mut self, s: &Settings) {
         match &mut self.fixed {
             Some(f) => *f = s.clone(),
-            None => s.save(),
+            None => {
+                s.save();
+                // An open window takes the new settings now (instead of saving its own over them).
+                let _ = crate::instance::send_command(crate::app::commands_ui::RELOAD_SETTINGS, None);
+            }
         }
     }
 
@@ -2385,8 +2413,11 @@ mod tests {
         for n in SIDE.iter().chain(DESTRUCTIVE.iter()).chain(IDEMPOTENT.iter()) {
             find(n);
         }
+        for n in OPEN_WORLD {
+            find(n);
+        }
         for t in tools {
-            let open = t["name"] == "check_for_update" || t["name"] == "stream_start";
+            let open = ["check_for_update", "stream_start", "app_command", "save_to_cloud"].contains(&t["name"].as_str().unwrap());
             assert_eq!(t["annotations"]["openWorldHint"], open, "{}", t["name"]);
             assert!(t["title"].as_str().unwrap().chars().next().unwrap().is_uppercase());
         }

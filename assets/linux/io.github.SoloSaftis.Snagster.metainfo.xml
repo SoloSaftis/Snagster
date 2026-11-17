@@ -66,6 +66,16 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.10.6" date="2026-11-17">
+      <description>
+        <ul>
+          <li>Wayland: screen sharing is asked once and remembered, for recording, streaming and captures</li>
+          <li>Wayland: hotkeys go through the desktop, which lets you change them</li>
+          <li>Follows the desktop's accent colour; GNOME's title bar; a main menu on GNOME and KDE</li>
+          <li>Keyboard shortcuts match the menus; screen readers can read the buttons</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.10.5" date="2026-11-17">
       <description>
         <ul>

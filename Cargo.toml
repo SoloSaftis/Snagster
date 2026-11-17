@@ -1,6 +1,6 @@
 [package]
 name = "snagster"
-version = "0.10.5"
+version = "0.10.6"
 edition = "2024"
 # let-chains and other newer Rust: older compilers stop with a clear message.
 rust-version = "1.88"
@@ -11,7 +11,7 @@ ab_glyph = "0.2.32"
 arboard = "3.7.0"
 base64 = "0.22"
 chrono = "0.4.45"
-eframe = { version = "0.37.0", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }
+eframe = { version = "0.37.0", default-features = false, features = ["accesskit", "default_fonts", "glow", "x11", "wayland"] }
 egui = { version = "0.37.0", features = ["serde"] }
 epaint_default_fonts = { version = "0.37.0", features = ["monochrome_emoji_fonts"] }
 gif = "0.14"
@@ -92,9 +92,17 @@ libc = "0.2"
 # The desktop's portals (Screenshot, ScreenCast) and PipeWire for the screen share: how Snagster
 # sees the screen on Wayland and inside a Flatpak. The same versions and features xcap already
 # brings (ashpd MIT, pipewire MIT, pollster Apache-2.0/MIT), so nothing new in the tree.
-ashpd = { version = "0.14", default-features = false, features = ["async-io", "pipewire", "screencast", "screenshot"] }
+ashpd = { version = "0.14", default-features = false, features = ["async-io", "global_shortcuts", "pipewire", "screencast", "screenshot", "settings"] }
+# Global hotkeys on Wayland (the GlobalShortcuts portal): waiting for a key and a timer at once.
+# Both already in the tree through ashpd and zbus (MIT/Apache-2.0).
+futures-util = { version = "0.3", default-features = false }
+async-io = "2"
 pipewire = "0.10"
 pollster = "1"
+# The Adwaita-style title bar winit draws on GNOME under Wayland (GNOME has no server-side
+# title bars; without this winit draws a plain grey fallback). sctk-adwaita is MIT, its
+# tiny-skia BSD-3-Clause, ab_glyph Apache-2.0 (already here).
+winit = { version = "0.30", default-features = false, features = ["wayland-csd-adwaita"] }
 
 [target."cfg(target_os = \"macos\")".dependencies]
 winit = "0.30"

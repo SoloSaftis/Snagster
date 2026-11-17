@@ -102,12 +102,34 @@ pub struct Registered {
 pub struct Hotkeys {
     _manager: Option<GlobalHotKeyManager>,
     pub list: Vec<Registered>,
-    pub summary: String,
+    summary: String,
+    /// Linux on Wayland: the hotkeys are the desktop's (GlobalShortcuts portal).
+    #[cfg(target_os = "linux")]
+    portal: Option<crate::keys_portal::PortalKeys>,
 }
 
 impl Hotkeys {
     pub fn none(summary: &str) -> Self {
-        Self { _manager: None, list: Vec::new(), summary: summary.into() }
+        Self::with(None, Vec::new(), summary.into())
+    }
+
+    fn with(manager: Option<GlobalHotKeyManager>, list: Vec<Registered>, summary: String) -> Self {
+        Self {
+            _manager: manager,
+            list,
+            summary,
+            #[cfg(target_os = "linux")]
+            portal: None,
+        }
+    }
+
+    /// One line on how the hotkeys are doing, for Settings > Hotkeys.
+    pub fn summary(&self) -> String {
+        #[cfg(target_os = "linux")]
+        if let Some(p) = &self.portal {
+            return portal_summary(&p.state(), std::env::var_os("FLATPAK_ID").is_some());
+        }
+        self.summary.clone()
     }
 
     pub fn target(&self, id: u32) -> Option<Target> {
@@ -115,7 +137,13 @@ impl Hotkeys {
     }
 
     pub fn status_of(&self, t: Target) -> Option<bool> {
-        self.list.iter().find(|r| r.target == t).map(|r| r.ok || r.hooked)
+        let found = self.list.iter().find(|r| r.target == t)?;
+        // Wayland: the desktop decides; nothing is "active" until it has said yes.
+        #[cfg(target_os = "linux")]
+        if let Some(p) = &self.portal {
+            return portal_status(&p.state());
+        }
+        Some(found.ok || found.hooked)
     }
 
 }
@@ -156,6 +184,10 @@ pub fn register(s: &Settings, tx: Sender<u32>, wake: impl Fn() + Send + Sync + '
     if !s.hotkeys_enabled {
         set_hook_keys(Vec::new(), tx, std::sync::Arc::new(|| {}));
         return Hotkeys::none("Hotkeys are switched off.");
+    }
+    #[cfg(target_os = "linux")]
+    if crate::capture::desktop_screenshots_only() {
+        return register_with_desktop(s, tx, std::sync::Arc::new(wake));
     }
     let manager = match GlobalHotKeyManager::new() {
         Ok(m) => m,
@@ -198,12 +230,65 @@ pub fn register(s: &Settings, tx: Sender<u32>, wake: impl Fn() + Send + Sync + '
         format!("{} hotkeys are active ({taken_over} taken over from another program).", active + taken_over)
     } else if failed == 0 {
         format!("{active} hotkeys are active.")
-    } else {
+    } else if cfg!(windows) {
         format!(
             "{active} hotkeys are active; {failed} couldn't be used because another program (or Windows' own Print Screen setting) already has them."
         )
+    } else {
+        format!("{active} hotkeys are active; {failed} couldn't be used because another program already has them.")
     };
-    Hotkeys { _manager: Some(manager), list, summary }
+    Hotkeys::with(Some(manager), list, summary)
+}
+
+/// Linux on Wayland: ask the desktop for the hotkeys (GlobalShortcuts portal). Each gets an id
+/// of its own; the desktop says which one was pressed.
+#[cfg(target_os = "linux")]
+fn register_with_desktop(s: &Settings, tx: Sender<u32>, wake: std::sync::Arc<dyn Fn() + Send + Sync>) -> Hotkeys {
+    let mut list = Vec::new();
+    let mut asks = Vec::new();
+    for (n, (target, combo)) in wanted(s).into_iter().enumerate() {
+        let id = n as u32 + 1;
+        let description = match target {
+            Target::Action(a) => crate::i18n::tr(a.label()),
+            Target::Preset(i) => s.presets.get(i).map(|p| p.name.clone()).unwrap_or_default(),
+        };
+        asks.push(crate::keys_portal::Wanted { id, description, combo: combo.clone() });
+        list.push(Registered { target, combo, id, ok: true, hooked: false });
+    }
+    let mut hk = Hotkeys::with(None, list, String::new());
+    hk.portal = Some(crate::keys_portal::start(asks, tx, wake));
+    hk
+}
+
+/// Whether a hotkey the desktop holds works: yes once it took them, no when it refused or has no
+/// portal, not known while it is still asking.
+#[cfg(target_os = "linux")]
+fn portal_status(state: &crate::keys_portal::State) -> Option<bool> {
+    use crate::keys_portal::State;
+    match state {
+        State::Asking => None,
+        State::Bound(_) => Some(true),
+        State::NoPortal | State::Failed(_) => Some(false),
+    }
+}
+
+/// What Settings says about hotkeys the desktop holds. In the Flatpak the command to put in a
+/// desktop shortcut starts with `flatpak run`.
+#[cfg(target_os = "linux")]
+fn portal_summary(state: &crate::keys_portal::State, flatpak: bool) -> String {
+    use crate::keys_portal::State;
+    match state {
+        State::Asking => crate::i18n::t("Asking the desktop for the hotkeys…").to_string(),
+        State::Bound(n) => crate::i18n::tf("{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.", &[("count", &n.to_string())]),
+        State::NoPortal => {
+            let cmd = if flatpak { "flatpak run io.github.SoloSaftis.Snagster --action Area" } else { "snagster --action Area" };
+            crate::i18n::tf(
+                "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).",
+                &[("command", cmd)],
+            )
+        }
+        State::Failed(e) => crate::i18n::tf("The desktop didn't set the hotkeys: {error}", &[("error", e)]),
+    }
 }
 
 /// Press each registered hotkey for real and report which ones Snagster received.
@@ -218,7 +303,7 @@ pub fn self_test(s: &Settings) {
     let got: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new(Vec::new()));
     let (tx, rx) = std::sync::mpsc::channel::<u32>();
     let hk = register(s, tx, || {});
-    println!("{}", hk.summary);
+    println!("{}", hk.summary());
     let pump = |ms: u64| {
         let end = std::time::Instant::now() + std::time::Duration::from_millis(ms);
         while std::time::Instant::now() < end {
@@ -497,24 +582,41 @@ mod tests {
             ],
             vec![Preset { combo: f1.clone(), ..Default::default() }],
         );
-        assert_eq!(duplicates(&s), vec!["Ctrl + F1".to_string()]);
+        // Labelled the way this system writes it ("Ctrl + F1", "⌃F1" on a Mac).
+        assert_eq!(duplicates(&s), vec![f1.label()]);
     }
 
     fn registered(target: Target, id: u32, ok: bool, hooked: bool) -> Registered {
         Registered { target, combo: Combo::default(), id, ok, hooked }
     }
 
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn settings_say_how_the_desktop_took_the_hotkeys() {
+        use crate::keys_portal::State;
+        // A refused hotkey is never shown as active.
+        assert_eq!(portal_status(&State::Failed("NotAllowed".into())), Some(false));
+        assert_eq!(portal_status(&State::NoPortal), Some(false));
+        assert_eq!(portal_status(&State::Asking), None);
+        assert_eq!(portal_status(&State::Bound(2)), Some(true));
+        assert!(portal_summary(&State::Bound(3), false).starts_with("3 "));
+        // No portal: the command for a desktop shortcut, the Flatpak way inside the Flatpak.
+        assert!(portal_summary(&State::NoPortal, false).contains("snagster --action Area"));
+        assert!(portal_summary(&State::NoPortal, true).contains("flatpak run io.github.SoloSaftis.Snagster --action Area"));
+        assert!(portal_summary(&State::Failed("refused".into()), false).contains("refused"));
+    }
+
     #[test]
     fn targets_are_found_only_for_working_keys() {
-        let hk = Hotkeys {
-            _manager: None,
-            list: vec![
+        let hk = Hotkeys::with(
+            None,
+            vec![
                 registered(Target::Action(Action::Area), 1, true, false),
                 registered(Target::Action(Action::Window), 2, false, true),
                 registered(Target::Preset(0), 3, false, false),
             ],
-            summary: String::new(),
-        };
+            String::new(),
+        );
         assert_eq!(hk.target(1), Some(Target::Action(Action::Area)));
         assert_eq!(hk.target(2), Some(Target::Action(Action::Window)), "taken over keys work too");
         assert_eq!(hk.target(3), None, "a key that failed doesn't fire");
@@ -529,7 +631,7 @@ mod tests {
     fn none_has_only_a_summary() {
         let hk = Hotkeys::none("Hotkeys are switched off.");
         assert!(hk.list.is_empty());
-        assert_eq!(hk.summary, "Hotkeys are switched off.");
+        assert_eq!(hk.summary(), "Hotkeys are switched off.");
         assert_eq!(hk.target(0), None);
     }
 }

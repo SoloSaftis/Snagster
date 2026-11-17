@@ -118,7 +118,11 @@ impl SnagApp {
                 if snap.on_air() && crate::app::stream_ui::live_badge(ui, &snap).clicked() {
                     self.switch_tab(&ctx, RibbonTab::Stream);
                 }
-                if look::icon_button(ui, ph::GEAR, &format!("{} (Ctrl+,)", t("Settings"))).clicked() {
+                // GNOME and KDE: one main menu at the end of the tab row (F10 opens it) with
+                // Settings, Keyboard Shortcuts, Help, About and Quit. Windows and macOS: the gear.
+                if crate::platform::linux() {
+                    self.main_menu(ui);
+                } else if look::icon_button(ui, ph::GEAR, &crate::platform::keys(&format!("{} (Ctrl+,)", t("Settings")))).clicked() {
                     self.settings_open = true;
                 }
                 if look::icon_button(ui, ph::GLOBE, &tf("Language: {name}", &[("name", &crate::i18n::name(crate::i18n::current()))])).clicked() {
@@ -245,7 +249,7 @@ impl SnagApp {
                 if look::small_tool(ui, ph::UNDO, t("Undo"), "Ctrl+Z", can_undo).clicked() {
                     self.undo();
                 }
-                if look::small_tool(ui, ph::REDO, t("Redo"), "Ctrl+Y", can_redo).clicked() {
+                if look::small_tool(ui, ph::REDO, t("Redo"), super::redo_keys(), can_redo).clicked() {
                     self.redo();
                 }
             });
@@ -432,7 +436,7 @@ impl SnagApp {
                         }
                     }
                     ui.separator();
-                    if ui.button(t("Edit presets...")).clicked() {
+                    if ui.button(t("Edit presets…")).clicked() {
                         self.settings_open = true;
                         self.settings_tab = SettingsTab::Presets;
                         ui.close();
@@ -525,7 +529,7 @@ impl SnagApp {
             if look::big_tool(ui, ph::UNDO, t("Undo"), "Ctrl+Z", can_undo, false).clicked() {
                 self.undo();
             }
-            if look::big_tool(ui, ph::REDO, t("Redo"), "Ctrl+Y", can_redo, false).clicked() {
+            if look::big_tool(ui, ph::REDO, t("Redo"), super::redo_keys(), can_redo, false).clicked() {
                 self.redo();
             }
         });
@@ -684,7 +688,7 @@ impl SnagApp {
                 self.save_as();
             }
             look::column(ui, |ui| {
-                if look::small_tool(ui, ph::DOWNLOAD, t("Quick save"), &format!("{} (Ctrl+Shift+S)", t("Save to the save folder at once")), has).clicked() {
+                if look::small_tool(ui, ph::DOWNLOAD, t("Quick save"), &format!("{} (Ctrl+Alt+S)", t("Save to the save folder at once")), has).clicked() {
                     self.quick_save();
                 }
                 if look::small_tool(ui, ph::ARROW_SQUARE_OUT, t("Open with"), t("Open in the computer's picture program"), has).clicked() {
@@ -721,8 +725,7 @@ impl SnagApp {
                         && let Some(i) = self.current
                     {
                         let title = self.entries[i].name.clone();
-                        let base = self.settings.file_name(&title);
-                        let path = crate::settings::unique_path(&p.join("Snagster"), &base, self.settings.format.ext());
+                        let path = self.settings.cloud_save_path(&p, &title);
                         self.save_in_background(i, path);
                         ui.close();
                     }
@@ -769,6 +772,36 @@ impl SnagApp {
         });
     }
 
+    /// GNOME's primary menu and KDE's hamburger menu: the standard last group (Settings,
+    /// Keyboard Shortcuts, Help, About, Quit) behind one button. F10 opens it, as on both desktops.
+    fn main_menu(&mut self, ui: &mut egui::Ui) {
+        let resp = look::icon_button(ui, ph::LIST, t("Main menu"));
+        let f10 = ui.ctx().input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::F10));
+        let toggle = (f10 || resp.clicked()).then_some(egui::SetOpenCommand::Toggle);
+        egui::Popup::menu(&resp).open_memory(toggle).show(|ui| {
+            ui.set_min_width(220.0);
+            if crate::app::item(ui, "Settings", "Ctrl+,") {
+                self.settings_open = true;
+            }
+            if crate::app::item(ui, "Keyboard shortcuts", "F1") {
+                self.shortcuts_open = true;
+            }
+            if crate::app::item(ui, "Getting started", "") {
+                self.dialog = Some(crate::windows::Dialog::GettingStarted);
+            }
+            if crate::app::item(ui, "About Snagster", "") {
+                self.about_open = true;
+            }
+            ui.separator();
+            let (quit, quit_keys) = crate::platform::quit_item();
+            if crate::app::item(ui, quit, quit_keys) {
+                // Ends Snagster even when closing the window would keep it in the tray.
+                self.quitting = true;
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+        });
+    }
+
     fn band_help(&mut self, ui: &mut egui::Ui) {
         look::group(ui, t("Help"), |ui| {
             if look::big_tool(ui, ph::QUESTION, t("Getting started"), t("How to capture, mark up and share"), true, false).clicked() {
@@ -783,7 +816,7 @@ impl SnagApp {
         });
         look::group(ui, t("Updates"), |ui| {
             let checking = self.x.update.checking();
-            if look::big_tool(ui, ph::DOWNLOAD, if checking { t("Checking...") } else { t("Check for updates") }, t("Ask GitHub whether a newer Snagster is out"), !checking, false).clicked() {
+            if look::big_tool(ui, ph::DOWNLOAD, if checking { t("Checking…") } else { t("Check for updates") }, t("Ask GitHub whether a newer Snagster is out"), !checking, false).clicked() {
                 self.x.update.check(ui.ctx(), true);
             }
         });

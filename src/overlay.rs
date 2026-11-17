@@ -12,7 +12,12 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Receiver;
 
-pub const ACCENT: Color32 = Color32::from_rgb(79, 124, 255);
+const ACCENT_DEFAULT: Color32 = Color32::from_rgb(79, 124, 255);
+
+/// The accent colour: the desktop's where it has one (`look::accent`), else Snagster's blue.
+fn accent() -> Color32 {
+    crate::look::system_accent().unwrap_or(ACCENT_DEFAULT)
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum OverlayMode {
@@ -253,6 +258,15 @@ impl Overlay {
         if let OverlayMode::Pick(p) = self.mode { Some(p) } else { None }
     }
 
+    /// Space: the whole screen. A capture takes it straight away; anything else (a recording,
+    /// the all-in-one toolbar, a GIF...) gets it as the chosen area.
+    fn whole_screen(&mut self, full: Rect) -> Outcome {
+        match self.purpose() {
+            None | Some(PickPurpose::Capture) => Outcome::FullScreen,
+            _ => self.finish(full, CutShape::Rect, Vec::new()),
+        }
+    }
+
     fn finish(&mut self, rect: Rect, shape: CutShape, points: Vec<Pos2>) -> Outcome {
         let action = match self.purpose() {
             Some(PickPurpose::AllInOne) => {
@@ -319,7 +333,7 @@ impl Overlay {
         if let Some((rect, shape, points)) = self.chosen.clone() {
             dim_except(rect);
             let outline: Vec<Pos2> = self.shape_outline(shape, rect, &points.iter().map(|q| *q + rect.min.to_vec2()).collect::<Vec<_>>());
-            p.add(egui::Shape::closed_line(outline.iter().map(|q| to_scr(*q)).collect(), Stroke::new(2.0, ACCENT)));
+            p.add(egui::Shape::closed_line(outline.iter().map(|q| to_scr(*q)).collect(), Stroke::new(2.0, accent())));
             let sr = scr_rect(rect);
             let below = sr.max.y + 56.0 < area.max.y;
             let anchor = if below { pos2(sr.center().x, sr.max.y + 10.0) } else { pos2(sr.center().x, sr.min.y - 10.0) };
@@ -335,7 +349,7 @@ impl Overlay {
                         .fill(Color32::from_rgb(28, 30, 37))
                         .corner_radius(CornerRadius::same(10))
                         .inner_margin(egui::Margin::same(6))
-                        .stroke(Stroke::new(1.0, ACCENT))
+                        .stroke(Stroke::new(1.0, accent()))
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 ui.label(
@@ -344,7 +358,7 @@ impl Overlay {
                                 );
                                 let b = |ui: &mut egui::Ui, t: &str, tip: &str| ui.button(t).on_hover_text(tip).clicked();
                                 if ui
-                                    .add(egui::Button::new(egui::RichText::new(crate::i18n::t("Capture")).strong().color(Color32::WHITE)).fill(ACCENT))
+                                    .add(egui::Button::new(egui::RichText::new(crate::i18n::t("Capture")).strong().color(Color32::WHITE)).fill(accent()))
                                     .on_hover_text("Open it in Snagster (Enter)")
                                     .clicked()
                                 {
@@ -353,14 +367,17 @@ impl Overlay {
                                 if b(ui, "Copy", "Straight to the clipboard") {
                                     picked = Some(AreaAction::Copy);
                                 }
-                                if b(ui, "Scroll down", "Keep scrolling and stitch a long picture") {
-                                    picked = Some(AreaAction::Scroll { horizontal: false });
-                                }
-                                if b(ui, "Scroll sideways", "A wide panoramic picture") {
-                                    picked = Some(AreaAction::Scroll { horizontal: true });
-                                }
-                                if b(ui, "Scroll yourself", "Snagster keeps capturing while you scroll; press Stop when done") {
-                                    picked = Some(AreaAction::ManualScroll);
+                                // (Not on Wayland: scrolling capture can't work there yet.)
+                                if crate::capture::scrolling_supported() {
+                                    if b(ui, "Scroll down", "Keep scrolling and stitch a long picture") {
+                                        picked = Some(AreaAction::Scroll { horizontal: false });
+                                    }
+                                    if b(ui, "Scroll sideways", "A wide panoramic picture") {
+                                        picked = Some(AreaAction::Scroll { horizontal: true });
+                                    }
+                                    if b(ui, "Scroll yourself", "Snagster keeps capturing while you scroll; press Stop when done") {
+                                        picked = Some(AreaAction::ManualScroll);
+                                    }
                                 }
                                 if b(ui, "Record GIF", "Record this area as an animated GIF") {
                                     picked = Some(AreaAction::RecordGif);
@@ -422,7 +439,7 @@ impl Overlay {
                 }
             }
             if ui.input(|i| i.key_pressed(Key::Space)) {
-                return Outcome::FullScreen;
+                return self.whole_screen(full);
             }
         }
 
@@ -528,7 +545,7 @@ impl Overlay {
                 if let Some(c) = hover {
                     let r = fixed_frame(c, w, h, iw, ih);
                     dim_except(r);
-                    p.rect_stroke(scr_rect(r), CornerRadius::ZERO, Stroke::new(2.0, ACCENT), StrokeKind::Outside);
+                    p.rect_stroke(scr_rect(r), CornerRadius::ZERO, Stroke::new(2.0, accent()), StrokeKind::Outside);
                     label = Some(format!("{w} x {h}   click to capture"));
                     if resp.clicked_by(PointerButton::Primary) {
                         outcome = Outcome::Area { rect: r, shape: CutShape::Rect, points: Vec::new(), action: AreaAction::Capture };
@@ -568,7 +585,7 @@ impl Overlay {
             dim_except(r);
             let pts: Vec<Pos2> = self.path.iter().map(|q| to_scr(*q)).collect();
             if self.shape == CutShape::Polygon {
-                p.add(egui::Shape::line(pts.clone(), Stroke::new(2.0, ACCENT)));
+                p.add(egui::Shape::line(pts.clone(), Stroke::new(2.0, accent())));
                 if let (Some(last), Some(h)) = (pts.last(), hover) {
                     p.line_segment([*last, to_scr(h)], Stroke::new(1.0, Color32::WHITE));
                 }
@@ -577,7 +594,7 @@ impl Overlay {
                 }
                 label = Some(format!("{} points. Click the first point, double-click or press Enter to finish.", pts.len()));
             } else {
-                p.add(egui::Shape::line(pts, Stroke::new(2.0, ACCENT)));
+                p.add(egui::Shape::line(pts, Stroke::new(2.0, accent())));
             }
         } else if picking && self.start.is_some() {
             let a = self.start.unwrap();
@@ -586,7 +603,7 @@ impl Overlay {
             let r = Rect::from_two_pos(a, b);
             dim_except(r);
             let outline = self.shape_outline(self.shape, r, &[]);
-            p.add(egui::Shape::closed_line(outline.iter().map(|q| to_scr(*q)).collect(), Stroke::new(2.0, ACCENT)));
+            p.add(egui::Shape::closed_line(outline.iter().map(|q| to_scr(*q)).collect(), Stroke::new(2.0, accent())));
             if self.shape != CutShape::Rect {
                 p.rect_stroke(scr_rect(r), CornerRadius::ZERO, Stroke::new(1.0, Color32::from_white_alpha(90)), StrokeKind::Middle);
             }
@@ -596,7 +613,7 @@ impl Overlay {
             let sr = scr_rect(*r);
             // A bright outline that shows on dark and light programs alike, and the size.
             p.rect_stroke(sr, CornerRadius::ZERO, Stroke::new(1.0, Color32::WHITE), StrokeKind::Outside);
-            p.rect_stroke(sr, CornerRadius::ZERO, Stroke::new(3.0, ACCENT), StrokeKind::Inside);
+            p.rect_stroke(sr, CornerRadius::ZERO, Stroke::new(3.0, accent()), StrokeKind::Inside);
             let size = format!("{} x {}", r.width().round(), r.height().round());
             let tag = size_tag(&size, level);
             let above = sr.min.y - 26.0 > area.min.y;
@@ -615,7 +632,7 @@ impl Overlay {
             let sr = scr_rect(*r);
             let uv = Rect::from_min_max(pos2(r.min.x / iw, r.min.y / ih), pos2(r.max.x / iw, r.max.y / ih));
             p.image(tex, sr, uv, Color32::WHITE);
-            p.rect_stroke(sr, CornerRadius::ZERO, Stroke::new(2.0, ACCENT), StrokeKind::Outside);
+            p.rect_stroke(sr, CornerRadius::ZERO, Stroke::new(2.0, accent()), StrokeKind::Outside);
             pill(&p, sr.left_top() + vec2(4.0, 4.0), Align2::LEFT_TOP, &format!("{}", n + 1), 13.0);
         }
         if self.mode == OverlayMode::Ruler {
@@ -675,7 +692,7 @@ impl Overlay {
                 let mid = (cells - 1.0) / 2.0;
                 let center = Rect::from_min_size(mrect.min + Vec2::splat(mid * cell), Vec2::splat(cell));
                 p.rect_stroke(center, CornerRadius::ZERO, Stroke::new(2.0, Color32::WHITE), StrokeKind::Middle);
-                p.rect_stroke(mrect, CornerRadius::same(2), Stroke::new(2.0, ACCENT), StrokeKind::Outside);
+                p.rect_stroke(mrect, CornerRadius::same(2), Stroke::new(2.0, accent()), StrokeKind::Outside);
                 let swatch = Rect::from_min_size(pos2(mrect.min.x, mrect.max.y + 6.0), vec2(18.0, 18.0));
                 p.rect_filled(swatch, CornerRadius::same(3), Color32::from_rgb(px[0], px[1], px[2]));
                 p.rect_stroke(swatch, CornerRadius::same(3), Stroke::new(1.0, Color32::WHITE), StrokeKind::Outside);
@@ -966,6 +983,26 @@ mod tests {
         }
         let mut w = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), Vec::new()));
         assert!(matches!(w.finish(area, CutShape::Rect, Vec::new()), Outcome::Area { action: AreaAction::Capture, .. }));
+    }
+
+    /// Space in "Choose the area to record" took a picture of the screen instead of recording it.
+    #[test]
+    fn space_picks_the_whole_screen_for_what_the_pick_is_for() {
+        let full = r(0.0, 0.0, 200.0, 100.0);
+        assert!(matches!(pick(PickPurpose::Capture).whole_screen(full), Outcome::FullScreen));
+        match pick(PickPurpose::RecordGif).whole_screen(full) {
+            Outcome::Area { rect, shape, action, .. } => {
+                assert_eq!(rect, full);
+                assert_eq!(shape, CutShape::Rect);
+                assert_eq!(action, AreaAction::RecordGif);
+            }
+            _ => panic!("a recording should get the whole screen as its area"),
+        }
+        assert!(matches!(pick(PickPurpose::GrabText).whole_screen(full), Outcome::Area { action: AreaAction::GrabText, .. }));
+        // The all-in-one toolbar opens around the whole screen.
+        let mut o = pick(PickPurpose::AllInOne);
+        assert!(matches!(o.whole_screen(full), Outcome::Pending));
+        assert_eq!(o.chosen.as_ref().map(|c| c.0), Some(full));
     }
 
     #[test]
