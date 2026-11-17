@@ -137,7 +137,13 @@ impl Hotkeys {
     }
 
     pub fn status_of(&self, t: Target) -> Option<bool> {
-        self.list.iter().find(|r| r.target == t).map(|r| r.ok || r.hooked)
+        let found = self.list.iter().find(|r| r.target == t)?;
+        // Wayland: the desktop decides; nothing is "active" until it has said yes.
+        #[cfg(target_os = "linux")]
+        if let Some(p) = &self.portal {
+            return portal_status(&p.state());
+        }
+        Some(found.ok || found.hooked)
     }
 
 }
@@ -252,6 +258,18 @@ fn register_with_desktop(s: &Settings, tx: Sender<u32>, wake: std::sync::Arc<dyn
     let mut hk = Hotkeys::with(None, list, String::new());
     hk.portal = Some(crate::keys_portal::start(asks, tx, wake));
     hk
+}
+
+/// Whether a hotkey the desktop holds works: yes once it took them, no when it refused or has no
+/// portal, not known while it is still asking.
+#[cfg(target_os = "linux")]
+fn portal_status(state: &crate::keys_portal::State) -> Option<bool> {
+    use crate::keys_portal::State;
+    match state {
+        State::Asking => None,
+        State::Bound(_) => Some(true),
+        State::NoPortal | State::Failed(_) => Some(false),
+    }
 }
 
 /// What Settings says about hotkeys the desktop holds. In the Flatpak the command to put in a
@@ -575,6 +593,11 @@ mod tests {
     #[test]
     fn settings_say_how_the_desktop_took_the_hotkeys() {
         use crate::keys_portal::State;
+        // A refused hotkey is never shown as active.
+        assert_eq!(portal_status(&State::Failed("NotAllowed".into())), Some(false));
+        assert_eq!(portal_status(&State::NoPortal), Some(false));
+        assert_eq!(portal_status(&State::Asking), None);
+        assert_eq!(portal_status(&State::Bound(2)), Some(true));
         assert!(portal_summary(&State::Bound(3), false).starts_with("3 "));
         // No portal: the command for a desktop shortcut, the Flatpak way inside the Flatpak.
         assert!(portal_summary(&State::NoPortal, false).contains("snagster --action Area"));

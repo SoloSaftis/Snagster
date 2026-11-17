@@ -634,16 +634,22 @@ fn screens_listable() -> bool {
     guarded(xcap::Monitor::all).is_ok_and(|all| !all.is_empty())
 }
 
-/// The whole desktop through the desktop's Screenshot portal (Linux, see `crate::portal`).
+/// The screen through the desktop's portals (Linux, see `crate::portal`). On Wayland: one
+/// picture of a screen share, which the desktop asks about once and then remembers. Elsewhere
+/// (a Flatpak on X11): the Screenshot portal.
 #[cfg(target_os = "linux")]
 fn portal_shot() -> Result<Shot, String> {
+    if desktop_screenshots_only() {
+        let (image, origin) = crate::portal::still(false, SHARE_WAIT)?;
+        return Ok(shot(image, origin, "Screen".into()));
+    }
     let image = crate::portal::screenshot(false)?;
     Ok(shot(image, (0, 0), "Screen".into()))
 }
 
 fn grab_rect_raw(x: i32, y: i32, w: u32, h: u32) -> Result<RgbaImage, String> {
     #[cfg(target_os = "linux")]
-    if !screens_listable() {
+    if desktop_screenshots_only() || !screens_listable() {
         let all = portal_shot()?;
         return crop_desktop(&all.image, all.origin, x, y, w, h).ok_or_else(|| "that area is off screen".to_string());
     }
@@ -732,16 +738,13 @@ fn desktop_screenshot_budget() -> Result<(), String> {
     }
 }
 
-/// The captures that, on Wayland, open the desktop's own screenshot tool from Snagster's window:
-/// Snagster can't hide itself and come back there (a Wayland app may minimize itself but not
-/// un-minimize), so the desktop's tool picks the area, window or screen instead of Snagster's
-/// overlay.
+/// The captures that, on Wayland, open the desktop's own screenshot tool: picking a window
+/// (Snagster can't see the other windows there) and a plain rectangle (the person picks it in
+/// the desktop's tool). A whole screen needs no picking: it is a silent picture of the
+/// remembered screen share (the desktop asks once, see `portal::still`).
 #[cfg(any(target_os = "linux", test))]
 pub(crate) fn desktop_tool_covers(kind: &CaptureKind) -> bool {
-    // Only plain pictures: picking an area to record, scroll, read or combine needs Snagster's
-    // own overlay (the desktop's tool gives back a picture, not an area).
-    // (A circle, freehand or polygon cut needs the overlay too: the desktop's tool cuts rectangles.)
-    matches!(kind, CaptureKind::Screen | CaptureKind::AllScreens | CaptureKind::Monitor(_) | CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture) | CaptureKind::WindowPick)
+    matches!(kind, CaptureKind::WindowPick | CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture))
 }
 
 /// Whether scrolling capture can work here: it turns other windows' scroll wheels and takes a
@@ -775,8 +778,10 @@ pub fn grab_with_desktop_tool() -> Result<Shot, String> {
 }
 
 fn grab_raw(kind: &CaptureKind, fallback_at: (i32, i32)) -> Result<Shot, String> {
+    // Wayland: always through the portals (the screen library would ask the desktop for a
+    // screenshot of its own, confirmed each time).
     #[cfg(target_os = "linux")]
-    if portal_covers(kind) && !screens_listable() {
+    if portal_covers(kind) && (desktop_screenshots_only() || !screens_listable()) {
         return portal_shot();
     }
     let at = cursor_pos().unwrap_or(fallback_at);
@@ -1680,10 +1685,13 @@ mod tests {
     }
 
     #[test]
-    fn the_desktop_tool_picks_whole_screens_and_areas_on_wayland() {
-        assert!(desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture)));
-        assert!(desktop_tool_covers(&CaptureKind::AllScreens));
+    fn the_desktop_tool_picks_windows_and_areas_on_wayland() {
         assert!(desktop_tool_covers(&CaptureKind::WindowPick));
+        assert!(desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture)));
+        // Whole screens: a silent picture (asked once), no tool to click through each time.
+        assert!(!desktop_tool_covers(&CaptureKind::AllScreens));
+        assert!(!desktop_tool_covers(&CaptureKind::Screen));
+        assert!(!desktop_tool_covers(&CaptureKind::Monitor(0)));
         // Picking an area to record, scroll through or read keeps Snagster's overlay.
         assert!(!desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::RecordGif)));
         assert!(!desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::AllInOne)));

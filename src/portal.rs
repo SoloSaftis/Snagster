@@ -13,6 +13,22 @@
 //! the D-Bus and PipeWire parts need a desktop and are checked by hand (`docs/CAPTURE.md`).
 
 use image::RgbaImage;
+
+/// Tell the desktop's portal which app this is, before any other portal call. A Flatpak is
+/// known by its sandbox; a program run directly (AppImage, tar.gz, a build) has to say it, or
+/// newer portals refuse requests such as GlobalShortcuts with "An app id is required". Older
+/// portals without the Registry just answer an error, which is fine. At most a second.
+pub fn register_app() {
+    let (tx, rx) = std::sync::mpsc::channel();
+    let _ = std::thread::Builder::new().name("snagster-portal-app".into()).spawn(move || {
+        let r = pollster::block_on(async {
+            let id = ashpd::AppID::try_from(crate::APP_ID).map_err(|e| e.to_string())?;
+            ashpd::register_host_app(id).await.map_err(|e| e.to_string())
+        });
+        let _ = tx.send(r);
+    });
+    let _ = rx.recv_timeout(std::time::Duration::from_secs(1));
+}
 use std::sync::{Arc, Mutex};
 
 /// The pixel layouts a screen share may send (4 bytes a pixel).
@@ -111,6 +127,63 @@ pub fn screenshot(interactive: bool) -> Result<RgbaImage, String> {
     img
 }
 
+/// The pointer mode to ask for: in the picture when wanted and offered, else hidden when
+/// offered, else none at all (some desktops offer no modes, and asking for one then fails).
+fn cursor_mode(want_pointer: bool, offered: ashpd::desktop::screencast::CursorMode) -> Option<ashpd::desktop::screencast::CursorMode> {
+    use ashpd::desktop::screencast::CursorMode;
+    if want_pointer && offered.contains(CursorMode::EMBEDDED) {
+        Some(CursorMode::EMBEDDED)
+    } else if offered.contains(CursorMode::HIDDEN) {
+        Some(CursorMode::HIDDEN)
+    } else {
+        None
+    }
+}
+
+/// Where the screen-share restore token is kept: next to the settings.
+fn token_path() -> Option<std::path::PathBuf> {
+    Some(crate::settings::settings_path()?.parent()?.join("screencast-token"))
+}
+
+/// The saved restore token, if it looks like one (the desktop makes them: a UUID or similar).
+fn read_token(path: &std::path::Path) -> Option<String> {
+    let t = std::fs::read_to_string(path).ok()?;
+    let t = t.trim();
+    (!t.is_empty() && t.len() <= 200 && t.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')).then(|| t.to_string())
+}
+
+/// Keep the token, readable by this user only (it lets the screen be shared without asking).
+fn write_token(path: &std::path::Path, token: &str) {
+    use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
+    if let Some(dir) = path.parent() {
+        let _ = std::fs::create_dir_all(dir);
+    }
+    if let Ok(mut f) = std::fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o600).open(path) {
+        let _ = f.write_all(token.as_bytes());
+    }
+}
+
+/// One still picture of the screen through a screen share that ends at once. On Wayland this
+/// asks only the first time (the share is remembered with its restore token), unlike the
+/// Screenshot portal, which GNOME confirms for every picture of a program run outside a sandbox.
+/// The first time the person picks the screen in the desktop's dialog: up to `limit` to do it.
+pub fn still(cursor: bool, limit: std::time::Duration) -> Result<(RgbaImage, (i32, i32)), String> {
+    let cast = Cast::start(cursor)?;
+    let end = std::time::Instant::now() + limit;
+    let mut rgba = Vec::new();
+    loop {
+        if let Some((w, h, _)) = cast.newer_than(0, &mut rgba)? {
+            let img = RgbaImage::from_raw(w, h, std::mem::take(&mut rgba)).ok_or("the screen share sent a picture of the wrong size")?;
+            return Ok((img, cast.origin));
+        }
+        if std::time::Instant::now() >= end {
+            return Err("the screen share sent no picture".into());
+        }
+        std::thread::sleep(std::time::Duration::from_millis(15));
+    }
+}
+
 /// The newest picture of a screen share, shared between the PipeWire thread and the grabber.
 #[derive(Default)]
 struct Newest {
@@ -137,19 +210,37 @@ pub struct Cast {
 }
 
 impl Cast {
-    /// Ask the desktop for a screen share (it shows its own dialog), then start receiving.
+    /// Ask the desktop for a screen share, then start receiving. The desktop shows its dialog
+    /// the first time; after that the screen chosen then is shared again without asking (a
+    /// restore token, kept next to the settings), until the person revokes it in the desktop's
+    /// settings or picks again after the token stops working.
     pub fn start(cursor: bool) -> Result<Cast, String> {
+        use ashpd::desktop::PersistMode;
         use ashpd::desktop::screencast::{CursorMode, Screencast, SelectSourcesOptions, SourceType};
+        let token_file = token_path();
+        let saved = token_file.as_deref().and_then(read_token);
         let (session, stream, fd) = pollster::block_on(async {
             let proxy = Screencast::new().await.map_err(|e| e.to_string())?;
             let session = proxy.create_session(Default::default()).await.map_err(|e| e.to_string())?;
-            let modes = proxy.available_cursor_modes().await.unwrap_or(CursorMode::HIDDEN);
-            let mode = if cursor && modes.contains(CursorMode::EMBEDDED) { CursorMode::EMBEDDED } else { CursorMode::HIDDEN };
+            let modes = proxy.available_cursor_modes().await.unwrap_or(CursorMode::empty());
+            let mode = cursor_mode(cursor, modes);
             proxy
-                .select_sources(&session, SelectSourcesOptions::default().set_sources(SourceType::MONITOR).set_multiple(false).set_cursor_mode(mode))
+                .select_sources(
+                    &session,
+                    SelectSourcesOptions::default()
+                        .set_sources(SourceType::MONITOR)
+                        .set_multiple(false)
+                        .set_cursor_mode(mode)
+                        .set_persist_mode(PersistMode::ExplicitlyRevoked)
+                        .set_restore_token(saved.as_deref()),
+                )
                 .await
                 .map_err(|e| e.to_string())?;
             let streams = proxy.start(&session, None, Default::default()).await.map_err(|e| e.to_string())?.response().map_err(|e| e.to_string())?;
+            // A token works once: keep the new one for the next share.
+            if let (Some(path), Some(t)) = (token_file.as_deref(), streams.restore_token()) {
+                write_token(path, t);
+            }
             let stream = streams.streams().first().cloned().ok_or("no screen was chosen")?;
             let fd = proxy.open_pipe_wire_remote(&session, Default::default()).await.map_err(|e| e.to_string())?;
             Ok::<_, String>((session, stream, fd))
@@ -310,6 +401,39 @@ fn receive(fd: std::os::fd::OwnedFd, node: u32, newest: Arc<Mutex<Newest>>, quit
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_a_pointer_mode_the_desktop_offers_is_asked_for() {
+        use ashpd::desktop::screencast::CursorMode;
+        let all = CursorMode::HIDDEN | CursorMode::EMBEDDED | CursorMode::METADATA;
+        assert_eq!(cursor_mode(true, all), Some(CursorMode::EMBEDDED));
+        assert_eq!(cursor_mode(false, all), Some(CursorMode::HIDDEN));
+        assert_eq!(cursor_mode(true, CursorMode::HIDDEN), Some(CursorMode::HIDDEN));
+        // A desktop that offers none (GNOME in a virtual machine): ask for none.
+        assert_eq!(cursor_mode(true, CursorMode::empty()), None);
+        assert_eq!(cursor_mode(false, CursorMode::empty()), None);
+    }
+
+    #[test]
+    fn the_screen_share_token_is_kept_private_and_read_back() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("snagster-token-test-{}", std::process::id()));
+        let path = dir.join("screencast-token");
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(read_token(&path), None, "nothing saved yet");
+        write_token(&path, "3f2a-9b_c1");
+        assert_eq!(read_token(&path).as_deref(), Some("3f2a-9b_c1"));
+        assert_eq!(std::fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600);
+        // A new token replaces the old one.
+        write_token(&path, "next");
+        assert_eq!(read_token(&path).as_deref(), Some("next"));
+        // Anything that doesn't look like a token is ignored (the dialog then asks again).
+        std::fs::write(&path, "not a token\n").unwrap();
+        assert_eq!(read_token(&path), None);
+        std::fs::write(&path, "  \n").unwrap();
+        assert_eq!(read_token(&path), None);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn rows_with_padding_become_packed_opaque_rgba() {

@@ -452,6 +452,9 @@ fn main() -> eframe::Result {
         }));
     }
 
+    // Linux: say which app this is to the desktop's portal first (hotkeys, accent colour...).
+    #[cfg(target_os = "linux")]
+    portal::register_app();
     // The desktop's accent colour (Linux), before the first frame is drawn with it.
     look::read_system_accent();
     eframe::run_native(

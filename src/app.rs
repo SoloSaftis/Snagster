@@ -4602,7 +4602,7 @@ pub(crate) fn logo(ui: &mut egui::Ui, size: f32) {
 /// Snagster's mark: a rounded tile with viewfinder corners and a dot.
 pub fn logo_at(p: &egui::Painter, c: Pos2, size: f32) {
     let r = Rect::from_center_size(c, Vec2::splat(size));
-    p.rect_filled(r, CornerRadius::same((size * 0.25) as u8), accent());
+    p.rect_filled(r, CornerRadius::same((size * 0.25) as u8), ACCENT_DEFAULT);
     frame_icon(p, r.shrink(size * 0.2), Color32::WHITE, false);
     p.circle_filled(c, size * 0.1, Color32::WHITE);
 }
