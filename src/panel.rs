@@ -299,7 +299,7 @@ impl SnagApp {
                         }
                     }
                     ui.separator();
-                    if ui.button(crate::i18n::t("Edit presets...")).clicked() {
+                    if ui.button(crate::i18n::t("Edit presets…")).clicked() {
                         self.settings_open = true;
                         self.settings_tab = crate::app::SettingsTab::Presets;
                         ui.close();
@@ -366,7 +366,7 @@ impl SnagApp {
             ui.add_enabled_ui(idle, |ui| {
                 egui::ComboBox::from_id_salt("p-stream-src").width(230.0).selected_text(shown).show_ui(ui, |ui| {
                     ui.selectable_value(&mut self.settings.stream.source, Source::Screen, t("Whole screen"));
-                    if ui.selectable_label(matches!(src, Source::Area(..)), t("Pick an area...")).clicked() {
+                    if ui.selectable_label(matches!(src, Source::Area(..)), t("Pick an area…")).clicked() {
                         pick_area = true;
                     }
                     ui.selectable_value(&mut self.settings.stream.source, Source::Studio, t("Studio scene"));
@@ -393,7 +393,7 @@ impl SnagApp {
             let snap = self.x.stream.snap.clone();
             ui.horizontal(|ui| {
                 ui.label(RichText::new(crate::app::stream_ui::state_label(&snap)).color(TEXT_DIM));
-                if ui.small_button(t("Stream settings...")).clicked() {
+                if ui.small_button(t("Stream settings…")).clicked() {
                     self.settings_open = true;
                     self.settings_tab = crate::app::SettingsTab::Streaming;
                     let ctx = ui.ctx().clone();

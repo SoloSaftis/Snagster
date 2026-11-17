@@ -75,21 +75,8 @@ impl Combo {
         if !self.is_set() {
             return "Not set".into();
         }
-        let mut parts = Vec::new();
-        if self.ctrl {
-            parts.push("Ctrl");
-        }
-        if self.alt {
-            parts.push("Alt");
-        }
-        if self.shift {
-            parts.push("Shift");
-        }
-        if self.win {
-            parts.push("Win");
-        }
-        parts.push(&self.key);
-        parts.join(" + ")
+        // Written the way this system writes shortcuts (Super on Linux, ⌃⌥⇧⌘ on a Mac).
+        crate::platform::hotkey_label(self.ctrl, self.alt, self.shift, self.win, &self.key)
     }
 }
 
@@ -177,18 +164,43 @@ pub struct Binding {
 }
 
 pub fn default_bindings() -> Vec<Binding> {
+    default_bindings_for(crate::platform::system() == crate::platform::System::Mac)
+}
+
+/// The hotkeys Snagster starts with. A Mac keyboard has no Print Screen key and Command is
+/// its main modifier, so the Mac gets Command-based keys that leave the system's own
+/// screenshot keys (Shift-Command-3, 4 and 5) alone.
+fn default_bindings_for(mac: bool) -> Vec<Binding> {
     let ps = "Print Screen";
     let b = |action, combo| Binding { action, combo };
-    vec![
-        b(Action::AllInOne, Combo::new(false, false, false, ps)),
-        b(Action::Screen, Combo::new(true, false, false, ps)),
-        b(Action::ActiveWindow, Combo::new(false, true, false, ps)),
-        b(Action::AllScreens, Combo::new(false, false, true, ps)),
-        b(Action::LastArea, Combo::new(true, false, true, ps)),
-        b(Action::GrabText, Combo::new(true, false, true, "F9")),
-        b(Action::Scrolling, Combo::new(true, false, true, "F10")),
-        b(Action::RecordGif, Combo::new(true, false, true, "F11")),
-        b(Action::RecordSteps, Combo::new(true, false, true, "F12")),
+    // Shift-Command (and Option-Shift-Command) with a key, for the Mac.
+    let cmd = |alt: bool, key: &str| Combo { ctrl: false, alt, shift: true, win: true, key: key.into() };
+    let first: Vec<Binding> = if mac {
+        vec![
+            b(Action::AllInOne, cmd(false, "2")),
+            b(Action::Screen, cmd(true, "3")),
+            b(Action::ActiveWindow, cmd(true, "4")),
+            b(Action::AllScreens, Combo::default()),
+            b(Action::LastArea, cmd(true, "2")),
+            b(Action::GrabText, cmd(true, "T")),
+            b(Action::Scrolling, cmd(true, "S")),
+            b(Action::RecordGif, cmd(true, "G")),
+            b(Action::RecordSteps, cmd(true, "R")),
+        ]
+    } else {
+        vec![
+            b(Action::AllInOne, Combo::new(false, false, false, ps)),
+            b(Action::Screen, Combo::new(true, false, false, ps)),
+            b(Action::ActiveWindow, Combo::new(false, true, false, ps)),
+            b(Action::AllScreens, Combo::new(false, false, true, ps)),
+            b(Action::LastArea, Combo::new(true, false, true, ps)),
+            b(Action::GrabText, Combo::new(true, false, true, "F9")),
+            b(Action::Scrolling, Combo::new(true, false, true, "F10")),
+            b(Action::RecordGif, Combo::new(true, false, true, "F11")),
+            b(Action::RecordSteps, Combo::new(true, false, true, "F12")),
+        ]
+    };
+    first.into_iter().chain([
         b(Action::Area, Combo::default()),
         b(Action::Window, Combo::default()),
         b(Action::Panorama, Combo::default()),
@@ -201,7 +213,8 @@ pub fn default_bindings() -> Vec<Binding> {
         b(Action::ColorPicker, Combo::default()),
         b(Action::Ruler, Combo::default()),
         b(Action::ShowSnag, Combo::default()),
-    ]
+    ])
+    .collect()
 }
 
 /// How a preset captures.
@@ -656,7 +669,7 @@ impl Default for Settings {
             show_side_panel: true,
             show_tray: true,
             tray_icon: true,
-            close_to_tray: true,
+            close_to_tray: crate::platform::close_to_tray_by_default(),
             panel: PanelSettings::default(),
             override_hotkeys: true,
             start_mode: StartMode::Editor,
@@ -1322,8 +1335,30 @@ mod tests {
         for (i, c) in set.iter().enumerate() {
             assert!(!set[..i].contains(c), "{} is bound twice", c.label());
         }
-        assert_eq!(Settings::default().binding(Action::AllInOne), Combo::new(false, false, false, "Print Screen"));
+        if !cfg!(target_os = "macos") {
+            assert_eq!(Settings::default().binding(Action::AllInOne), Combo::new(false, false, false, "Print Screen"));
+        }
         assert!(!Settings::default().binding(Action::Area).is_set());
+    }
+
+    /// The Mac's defaults: every action once, no Print Screen (Mac keyboards have none), and
+    /// never the system's own Shift-Command-3, 4 or 5.
+    #[test]
+    fn mac_default_hotkeys_use_command_and_leave_the_system_keys_alone() {
+        for mac in [true, false] {
+            let b = default_bindings_for(mac);
+            assert_eq!(b.len(), Action::ALL.len());
+            let set: Vec<&Combo> = b.iter().map(|b| &b.combo).filter(|c| c.is_set()).collect();
+            for (i, c) in set.iter().enumerate() {
+                assert!(!set[..i].contains(c), "bound twice");
+                assert!(crate::hotkeys::to_hotkey(c).is_some(), "{} isn't a known key", c.key);
+                if mac {
+                    assert!(c.win && c.key != "Print Screen", "{c:?}");
+                    let system_key = !c.alt && !c.ctrl && c.shift && ["3", "4", "5"].contains(&c.key.as_str());
+                    assert!(!system_key, "{c:?} is the Mac's own screenshot key");
+                }
+            }
+        }
     }
 
     #[test]
@@ -1338,9 +1373,12 @@ mod tests {
         assert_eq!(Combo::default().label(), "Not set");
         assert!(!Combo::default().is_set());
         assert_eq!(Combo::new(false, false, false, "F9").label(), "F9");
-        assert_eq!(Combo::new(true, false, true, "F9").label(), "Ctrl + Shift + F9");
+        assert_eq!(Combo::new(true, false, true, "F9").label(), crate::platform::hotkey_label(true, false, true, false, "F9"));
         let all = Combo { ctrl: true, alt: true, shift: true, win: true, key: "A".into() };
-        assert_eq!(all.label(), "Ctrl + Alt + Shift + Win + A");
+        assert_eq!(all.label(), crate::platform::hotkey_label(true, true, true, true, "A"));
+        if cfg!(windows) {
+            assert_eq!(all.label(), "Ctrl + Alt + Shift + Win + A");
+        }
         // Modifiers without a key are still "not set".
         let mods_only = Combo { ctrl: true, alt: true, shift: false, win: false, key: String::new() };
         assert_eq!(mods_only.label(), "Not set");

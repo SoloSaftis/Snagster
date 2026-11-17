@@ -61,7 +61,7 @@ fn parse(id: &str) -> Option<TrayCmd> {
 pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync + Clone + 'static) -> Result<Tray, String> {
     let menu = Menu::new();
     let add = |m: &Menu, id: &str, text: &str| m.append(&MenuItem::with_id(id, crate::i18n::tr(text), true, None)).map_err(|e| e.to_string());
-    add(&menu, "panel", "Capture panel...")?;
+    add(&menu, "panel", "Capture panel…")?;
     menu.append(&PredefinedMenuItem::separator()).map_err(|e| e.to_string())?;
     for a in ACTIONS {
         let combo = s.binding(a);
@@ -69,7 +69,7 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
         add(&menu, &format!("a:{a:?}"), &text)?;
     }
     if !s.presets.is_empty() {
-        let sub = Submenu::new("Presets", true);
+        let sub = Submenu::new(crate::i18n::tr("Presets"), true);
         for (i, p) in s.presets.iter().enumerate() {
             sub.append(&MenuItem::with_id(format!("p:{i}"), &p.name, true, None)).map_err(|e| e.to_string())?;
         }
@@ -80,13 +80,15 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
     add(&menu, "library", "Library")?;
     add(&menu, "settings", "Settings")?;
     menu.append(&PredefinedMenuItem::separator()).map_err(|e| e.to_string())?;
-    add(&menu, "quit", "Quit Snagster")?;
+    // "Exit" in the Windows notification area, "Quit Snagster" elsewhere.
+    add(&menu, "quit", if crate::platform::recycle_bin() { "Exit" } else { "Quit Snagster" })?;
 
     let ic = crate::icon();
     let icon = tray_icon::Icon::from_rgba(ic.rgba, ic.width, ic.height).map_err(|e| e.to_string())?;
     let tray = TrayIconBuilder::new()
         .with_menu(Box::new(menu))
-        .with_tooltip("Snagster: click to capture, right-click for more")
+        // Just the name: the guidelines keep instructions out of tray tooltips.
+        .with_tooltip("Snagster")
         .with_icon(icon)
         .with_menu_on_left_click(false)
         .build()

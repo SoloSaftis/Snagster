@@ -11,7 +11,7 @@ ab_glyph = "0.2.32"
 arboard = "3.7.0"
 base64 = "0.22"
 chrono = "0.4.45"
-eframe = { version = "0.37.0", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }
+eframe = { version = "0.37.0", default-features = false, features = ["accesskit", "default_fonts", "glow", "x11", "wayland"] }
 egui = { version = "0.37.0", features = ["serde"] }
 epaint_default_fonts = { version = "0.37.0", features = ["monochrome_emoji_fonts"] }
 gif = "0.14"
@@ -86,6 +86,10 @@ libc = "0.2"
 ashpd = { version = "0.14", default-features = false, features = ["async-io", "pipewire", "screencast", "screenshot"] }
 pipewire = "0.10"
 pollster = "1"
+# The Adwaita-style title bar winit draws on GNOME under Wayland (GNOME has no server-side
+# title bars; without this winit draws a plain grey fallback). sctk-adwaita is MIT, its
+# tiny-skia BSD-3-Clause, ab_glyph Apache-2.0 (already here).
+winit = { version = "0.30", default-features = false, features = ["wayland-csd-adwaita"] }
 
 [target."cfg(target_os = \"macos\")".dependencies]
 winit = "0.30"

@@ -2,6 +2,29 @@
 
 What changed for people using Snagster, per version.
 
+## Not released yet
+
+Snagster follows each system's own design rules more closely (Windows 11, GNOME, KDE Plasma,
+macOS):
+
+- **Keys do what the menus say**: Ctrl+S saves (it asks where only the first time), Ctrl+Shift+S
+  is Save as, Ctrl+Alt+S saves to the save folder at once, Ctrl+P prints, Ctrl+Shift+P pins the
+  picture, and Ctrl+N makes a new picture. On Linux and macOS, Ctrl+Q / ⌘Q quits. Windows such
+  as Settings close with Ctrl+W (⌘W) as well as Esc.
+- **On a Mac** shortcuts are shown as ⌘, ⌥, ⇧ and ⌃, and new installs get capture hotkeys a Mac
+  keyboard has (⇧⌘2 for All-in-one) that leave the system's ⇧⌘3, 4 and 5 alone. The screen
+  permission message names "Screen & System Audio Recording" and says to choose Quit & Reopen.
+- **Deleting from the Library** moves the capture to the Recycle Bin (Trash on Linux and macOS),
+  so it can be brought back; it used to be deleted for good.
+- **Dialogs** put their buttons in the system's order (on GNOME and macOS Cancel comes first and
+  the action last). Return runs the action and Esc cancels; "Go live" is never started by Return.
+- **Linux**: GNOME on Wayland gets a proper Adwaita-style title bar. Closing the window really
+  closes it on desktops without a tray (stock GNOME), new installs don't keep Snagster in the
+  tray unless you choose it, and Linux and macOS say Trash, Quit and tray instead of Windows words.
+- **Screen readers** (Narrator, Orca, VoiceOver) can now read Snagster's buttons.
+- Ribbon labels are a little bigger and easier to read, the window title bar stays dark when
+  the system is in light mode, and menu commands that ask for more use the "…" character.
+
 ## 0.10.5 — 2026-11-17
 
 Fixed on Linux with Wayland (found and checked on Ubuntu 26.04 with GNOME):

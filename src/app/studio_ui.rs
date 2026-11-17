@@ -225,7 +225,7 @@ fn add_source_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<Item> {
         out = Some(Item { name: t("Screen area").into(), kind: SourceKind::Area { x, y, w, h }, x: 0.0, y: 0.0, w: w as f32, h: h as f32, visible: true });
         ui.close();
     }
-    if ui.button(format!("{}  {}", ph::IMAGE, t("Picture..."))).clicked() {
+    if ui.button(format!("{}  {}", ph::IMAGE, t("Picture…"))).clicked() {
         ui.close();
         if let Some(p) = rfd::FileDialog::new().add_filter(t("Pictures"), &["png", "jpg", "jpeg", "bmp", "gif", "webp"]).pick_file() {
             let (w, h) = image::image_dimensions(&p).unwrap_or((400, 300));
@@ -554,7 +554,7 @@ impl SnagApp {
                         SourceKind::Window { title } => {
                             ui.label(t("Window title contains"));
                             ui.text_edit_singleline(title);
-                            let r = ui.button(t("Pick a window..."));
+                            let r = ui.button(t("Pick a window…"));
                             if r.clicked() {
                                 refresh_windows = true;
                             }
@@ -591,7 +591,7 @@ impl SnagApp {
                         SourceKind::Image { path } => {
                             let shown = std::path::Path::new(path.as_str()).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
                             ui.label(RichText::new(shown).small().color(TEXT_DIM)).on_hover_text(path.as_str());
-                            if ui.button(t("Choose another picture...")).clicked()
+                            if ui.button(t("Choose another picture…")).clicked()
                                 && let Some(p) = rfd::FileDialog::new().add_filter(t("Pictures"), &["png", "jpg", "jpeg", "bmp", "gif", "webp"]).pick_file()
                             {
                                 *path = p.to_string_lossy().to_string();
@@ -837,7 +837,7 @@ fn add_sound_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<crate::studio:
             }
         });
     });
-    if ui.button(format!("{}  {}", ph::WAVEFORM, t("Sound file (WAV)..."))).on_hover_text(t("Music or a jingle, played over and over")).clicked() {
+    if ui.button(format!("{}  {}", ph::WAVEFORM, t("Sound file (WAV)…"))).on_hover_text(t("Music or a jingle, played over and over")).clicked() {
         ui.close();
         if let Some(p) = rfd::FileDialog::new().add_filter(t("WAV sound"), &["wav", "wave"]).pick_file() {
             let name = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();

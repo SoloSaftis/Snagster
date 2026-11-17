@@ -149,8 +149,19 @@ pub fn thumbnail_of(path: &Path, img: &RgbaImage, size: u32) -> Option<RgbaImage
     Some(thumb)
 }
 
+/// Move a capture to the Recycle Bin / Trash (so it can be brought back) and drop its tags
+/// and thumbnail. Every system's guidelines ask for this instead of deleting for good.
 pub fn delete(item: &Item) -> Result<(), String> {
-    std::fs::remove_file(&item.path).map_err(|e| e.to_string())?;
+    delete_with(item, |p| trash::delete(p).map_err(|e| e.to_string()))
+}
+
+/// `delete`, with `remove` doing the picture itself (tests delete for real instead of
+/// using the system's Trash).
+fn delete_with(item: &Item, remove: impl FnOnce(&Path) -> Result<(), String>) -> Result<(), String> {
+    if !item.path.exists() {
+        return Err(format!("{} is gone", item.path.display()));
+    }
+    remove(&item.path)?;
     let _ = std::fs::remove_file(item.meta_path());
     if let (Some(dir), Some(name)) = (item.path.parent(), item.path.file_name()) {
         let _ = std::fs::remove_file(dir.join(".thumbs").join(name));
@@ -390,10 +401,12 @@ mod tests {
         let it = scan(&dir).pop().unwrap();
         let thumb = p.parent().unwrap().join(".thumbs").join(p.file_name().unwrap());
         assert!(thumb.exists() && it.meta_path().exists());
-        delete(&it).unwrap();
+        let real = |p: &Path| std::fs::remove_file(p).map_err(|e| e.to_string());
+        delete_with(&it, real).unwrap();
         assert!(!p.exists() && !it.meta_path().exists() && !thumb.exists());
         assert!(scan(&dir).is_empty());
-        assert!(delete(&it).is_err(), "deleting twice says so");
+        assert!(delete_with(&it, real).is_err(), "deleting twice says so");
+        assert!(delete(&it).is_err(), "a capture that is gone isn't sent to the Trash");
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
