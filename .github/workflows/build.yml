@@ -46,6 +46,10 @@ jobs:
 
   windows:
     runs-on: windows-latest
+    env:
+      # A real code-signing certificate (base64 .pfx) and its subject, once there is one; until
+      # then the MSIX is signed with a throwaway test certificate and isn't released.
+      MSIX_SIGNED: ${{ secrets.MSIX_CERT_PFX != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -67,13 +71,23 @@ jobs:
           node-version: 22
       - name: MCP smoke test (stdio and HTTP, no screen needed)
         run: node tests/mcp-smoke.js target/release/snagster.exe
-      - name: Button test (every button in the real window)
+      - name: Button test (every button in the real window, drawn with Direct3D 12)
         timeout-minutes: 10
         shell: pwsh
         run: |
-          # The CI machine has no graphics driver (OpenGL 1.1 only), so the test copy gets Mesa's
-          # software OpenGL beside it: a pinned release, checked against its published checksum.
-          # The shipped zip doesn't include it; real computers use their own driver.
+          # The CI machine has no graphics driver: Direct3D 12 runs on Microsoft's WARP software
+          # renderer, like a Remote Desktop or VDI session on a company laptop.
+          Start-Process target/release/snagster.exe -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test-d3d.txt
+          Get-Content ui-test-d3d.txt
+          if (-not (Select-String -Path ui-test-d3d.txt -Pattern '^(\d+) of \1 button actions worked' -Quiet)) { exit 1 }
+          if (-not (Select-String -Path ui-test-d3d.txt -Pattern '^Drawn with Direct3D 12 on' -Quiet)) { throw "the window wasn't drawn with Direct3D" }
+      - name: Button test (the OpenGL fallback)
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          # OpenGL is what Snagster falls back to when Direct3D can't start. The CI machine has
+          # only OpenGL 1.1, so the test copy gets Mesa's software OpenGL beside it: a pinned
+          # release, checked against its published checksum. Nothing ships with Mesa.
           $mesa = "mesa3d-26.2.6-release-mingw.7z"
           Invoke-WebRequest -Uri "https://github.com/pal1000/mesa-dist-win/releases/download/26.2.6/$mesa" -OutFile $mesa
           if ((Get-FileHash $mesa -Algorithm SHA256).Hash -ne "DA0F71D9181B672C1918F3C342F11118C687F6059A46B16502845160733CC388") { throw "Mesa checksum differs" }
@@ -89,10 +103,12 @@ jobs:
           Copy-Item "$($gl.DirectoryName)/*.dll" uitest/
           Get-ChildItem uitest | Format-Table Name, Length
           $env:GALLIUM_DRIVER = "llvmpipe"
+          $env:SNAGSTER_RENDERER = "opengl"
           # The release build is a windowed program: wait for it and collect what it prints.
           Start-Process uitest/snagster.exe -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test.txt
           Get-Content ui-test.txt
           if (-not (Select-String -Path ui-test.txt -Pattern '^(\d+) of \1 button actions worked' -Quiet)) { exit 1 }
+          if (-not (Select-String -Path ui-test.txt -Pattern '^Drawn with OpenGL' -Quiet)) { throw "the window wasn't drawn with OpenGL" }
       - name: Stream test (the screen into Snagster's own RTMP server on 127.0.0.1)
         timeout-minutes: 5
         shell: pwsh
@@ -108,10 +124,56 @@ jobs:
           Copy-Item target/release/snagster.exe "$dir/Snagster.exe"
           Copy-Item README.md, LICENSE-MIT, LICENSE-APACHE $dir
           Compress-Archive -Path "$dir/*" -DestinationPath dist/Snagster-windows-x64-portable.zip
+      - name: Package (MSIX installer)
+        shell: pwsh
+        env:
+          MSIX_CERT_PFX: ${{ secrets.MSIX_CERT_PFX }}
+          MSIX_CERT_PASSWORD: ${{ secrets.MSIX_CERT_PASSWORD }}
+          MSIX_PUBLISHER: ${{ vars.MSIX_PUBLISHER }}
+        run: |
+          if ($env:MSIX_SIGNED -eq 'true') {
+            if (-not $env:MSIX_PUBLISHER) { throw "Set the repository variable MSIX_PUBLISHER to the certificate's subject" }
+            pwsh packaging/msix/make-msix.ps1 -Exe target/release/snagster.exe -Out dist/Snagster-windows-x64.msix -Publisher $env:MSIX_PUBLISHER -PfxBase64 $env:MSIX_CERT_PFX -PfxPassword $env:MSIX_CERT_PASSWORD
+          } else {
+            pwsh packaging/msix/make-msix.ps1 -Exe target/release/snagster.exe -Out dist/Snagster-windows-x64.msix -TestCert dist/Snagster-test-signing.cer
+          }
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Install the MSIX and run it
+        timeout-minutes: 15
+        shell: pwsh
+        run: |
+          # Install it the way a person would (the runner is an administrator, so the test
+          # certificate can be trusted for this machine), then run the installed copy through
+          # its command-line alias: the button test, then the MCP smoke test.
+          if (Test-Path dist/Snagster-test-signing.cer) {
+            Import-Certificate -FilePath dist/Snagster-test-signing.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+          }
+          Add-AppxPackage -Path dist/Snagster-windows-x64.msix
+          $pkg = Get-AppxPackage -Name SoloSaftis.Snagster
+          $pkg | Format-List Name, Version, InstallLocation, SignatureKind
+          $alias = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\snagster.exe"
+          if (-not (Test-Path $alias)) { throw "the snagster.exe alias wasn't made" }
+          Start-Process $alias -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test-msix.txt
+          Get-Content ui-test-msix.txt
+          if (-not (Select-String -Path ui-test-msix.txt -Pattern '^(\d+) of \1 button actions worked' -Quiet)) { exit 1 }
+          node tests/mcp-smoke.js $alias
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Remove-AppxPackage -Package $pkg.PackageFullName
       - uses: actions/upload-artifact@v4
         with:
           name: windows
-          path: dist/Snagster-windows-x64-portable.zip
+          path: |
+            dist/Snagster-windows-x64-portable.zip
+            ${{ env.MSIX_SIGNED == 'true' && 'dist/Snagster-windows-x64.msix' || '' }}
+      # Until there is a real certificate: the test-signed package and its certificate, for
+      # trying it by hand (not released).
+      - uses: actions/upload-artifact@v4
+        if: env.MSIX_SIGNED != 'true'
+        with:
+          name: windows-msix-test
+          path: |
+            dist/Snagster-windows-x64.msix
+            dist/Snagster-test-signing.cer
 
   linux:
     # Built on Ubuntu 24.04, so the download runs on every Linux with glibc 2.39 or newer (Ubuntu
@@ -342,7 +404,8 @@ jobs:
         run: |
           cd artifacts
           ls -l
-          test "$(ls | wc -l)" -eq 5
+          # The five downloads, and the MSIX once it is signed with a real certificate.
+          n=$(ls | wc -l); test "$n" -eq 5 -o "$n" -eq 6
           sha256sum -b -- * > ../SHA256SUMS
           mv ../SHA256SUMS .
           cat SHA256SUMS

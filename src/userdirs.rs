@@ -55,6 +55,17 @@ fn home_from(os: Os, env: &dyn Fn(&str) -> Option<OsString>) -> Option<PathBuf> 
     }
 }
 
+/// `%LOCALAPPDATA%` on Windows (where installed packages put their command-line aliases).
+#[cfg(windows)]
+pub fn local_app_data() -> Option<PathBuf> {
+    known::local_app_data().or_else(|| abs(env("LOCALAPPDATA")))
+}
+
+#[cfg(not(windows))]
+pub fn local_app_data() -> Option<PathBuf> {
+    None
+}
+
 /// Where programs keep their settings: `%APPDATA%`, `~/Library/Application Support`, or
 /// `$XDG_CONFIG_HOME` (else `~/.config`).
 pub fn config_dir() -> Option<PathBuf> {
@@ -239,7 +250,7 @@ fn parse_user_dirs(text: &str, home: &Path, key: &str) -> Option<PathBuf> {
 mod known {
     use std::path::PathBuf;
     use windows::Win32::System::Com::CoTaskMemFree;
-    use windows::Win32::UI::Shell::{FOLDERID_Pictures, FOLDERID_Profile, FOLDERID_RoamingAppData, FOLDERID_Videos, KNOWN_FOLDER_FLAG, SHGetKnownFolderPath};
+    use windows::Win32::UI::Shell::{FOLDERID_LocalAppData, FOLDERID_Pictures, FOLDERID_Profile, FOLDERID_RoamingAppData, FOLDERID_Videos, KNOWN_FOLDER_FLAG, SHGetKnownFolderPath};
     use windows::core::GUID;
 
     fn get(id: &GUID) -> Option<PathBuf> {
@@ -257,6 +268,10 @@ mod known {
 
     pub fn roaming_app_data() -> Option<PathBuf> {
         get(&FOLDERID_RoamingAppData)
+    }
+
+    pub fn local_app_data() -> Option<PathBuf> {
+        get(&FOLDERID_LocalAppData)
     }
 
     pub fn pictures() -> Option<PathBuf> {

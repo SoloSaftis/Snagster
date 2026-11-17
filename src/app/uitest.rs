@@ -927,6 +927,7 @@ impl SnagApp {
                 }
             } else {
                 println!("\n{} of {} button actions worked.", t.passed, t.steps.len());
+                println!("Drawn with {}.", crate::drawing::drawn_with());
                 for f in &t.failed {
                     println!("  failed: {f}");
                 }

@@ -1,7 +1,9 @@
 //! New versions: ask GitHub for Snagster's latest release, and install it in place.
 //!
 //! Windows: the portable zip's Snagster.exe replaces the running one (which is renamed first, as
-//! Windows allows), then the new one starts. Linux: the AppImage (or the portable binary) is
+//! Windows allows), then the new one starts. Installed from the MSIX package, the new
+//! `.msix` is downloaded and opened in Windows' App Installer, which updates the package (the
+//! installed folder is read-only; see `packaged.rs`). Linux: the AppImage (or the portable binary) is
 //! replaced the same way. macOS: the app bundle is replaced. The download is checked against the
 //! size GitHub lists for it and against its SHA-256 in the release's `SHA256SUMS` file (which
 //! the release job of `.github/workflows/build.yml` makes); a release without that file, or a
@@ -51,15 +53,19 @@ struct ApiAsset {
     size: u64,
 }
 
+/// The Windows installer package in a release.
+pub const MSIX_NAME: &str = "Snagster-windows-x64.msix";
+
 /// The release file this kind of computer uses.
 pub fn asset_name() -> &'static str {
-    asset_name_for(std::env::consts::OS, std::env::var_os("APPIMAGE").is_some())
+    asset_name_for(std::env::consts::OS, std::env::var_os("APPIMAGE").is_some(), crate::packaged::is_packaged())
 }
 
-/// The release file for an operating system ("windows", "macos", "linux"...), and on Linux
-/// whether Snagster runs as an AppImage.
-fn asset_name_for(os: &str, app_image: bool) -> &'static str {
+/// The release file for an operating system ("windows", "macos", "linux"...), on Linux whether
+/// Snagster runs as an AppImage, and on Windows whether it was installed from the MSIX.
+fn asset_name_for(os: &str, app_image: bool, packaged: bool) -> &'static str {
     match os {
+        "windows" if packaged => MSIX_NAME,
         "windows" => "Snagster-windows-x64-portable.zip",
         "macos" => "Snagster-macos-arm64.zip",
         _ if app_image => "Snagster-linux-x86_64.AppImage",
@@ -303,8 +309,12 @@ fn swap(target: &Path, new: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// Remove what an earlier update left behind (the previous version's file).
+/// Remove what an earlier update left behind (the previous version's file). An installed
+/// package's folder is read-only and Windows tidies it, so nothing is touched there.
 pub fn clean_up() {
+    if crate::packaged::is_packaged() {
+        return;
+    }
     if let Ok(exe) = std::env::current_exe() {
         for n in 0..ASIDE_NAMES {
             let _ = std::fs::remove_file(aside(&exe, n));
@@ -323,6 +333,10 @@ pub fn install(release: &Release, progress: &dyn Fn(f32)) -> Result<PathBuf, Str
     expected_sum(&sums, &name)?;
     let file = download(&url, &name, size, progress)?;
     verify(&file, &name, &sums)?;
+    if is_msix(&file) {
+        // App Installer puts it in place (`restart` opens it).
+        return Ok(file);
+    }
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     if cfg!(windows) {
         let fresh = file.with_file_name("Snagster.exe");
@@ -378,8 +392,17 @@ pub fn install(release: &Release, progress: &dyn Fn(f32)) -> Result<PathBuf, Str
     Ok(exe)
 }
 
-/// Start the new version (and let this one close).
+/// Whether a downloaded file is an MSIX package (handed to App Installer, not run).
+fn is_msix(path: &Path) -> bool {
+    path.extension().is_some_and(|e| e.eq_ignore_ascii_case("msix"))
+}
+
+/// Start the new version (and let this one close). A downloaded MSIX opens in App Installer,
+/// which updates the installed package and can start it again.
 pub fn restart(program: &Path) -> Result<(), String> {
+    if is_msix(program) {
+        return crate::packaged::open_installer(program);
+    }
     #[cfg(target_os = "macos")]
     if let Some(bundle) = program.ancestors().nth(3).filter(|p| p.extension().is_some_and(|e| e == "app")) {
         return std::process::Command::new("open").arg("-n").arg(bundle).spawn().map(|_| ()).map_err(|e| e.to_string());
@@ -450,12 +473,13 @@ mod tests {
 
     #[test]
     fn every_system_gets_its_own_file() {
-        assert_eq!(asset_name_for("windows", false), "Snagster-windows-x64-portable.zip");
-        assert_eq!(asset_name_for("windows", true), "Snagster-windows-x64-portable.zip");
-        assert_eq!(asset_name_for("macos", false), "Snagster-macos-arm64.zip");
-        assert_eq!(asset_name_for("macos", true), "Snagster-macos-arm64.zip");
-        assert_eq!(asset_name_for("linux", false), "Snagster-linux-x86_64-portable.tar.gz");
-        assert_eq!(asset_name_for("linux", true), "Snagster-linux-x86_64.AppImage");
+        assert_eq!(asset_name_for("windows", false, false), "Snagster-windows-x64-portable.zip");
+        assert_eq!(asset_name_for("windows", true, false), "Snagster-windows-x64-portable.zip");
+        assert_eq!(asset_name_for("windows", false, true), "Snagster-windows-x64.msix");
+        assert_eq!(asset_name_for("macos", false, false), "Snagster-macos-arm64.zip");
+        assert_eq!(asset_name_for("macos", true, false), "Snagster-macos-arm64.zip");
+        assert_eq!(asset_name_for("linux", false, false), "Snagster-linux-x86_64-portable.tar.gz");
+        assert_eq!(asset_name_for("linux", true, false), "Snagster-linux-x86_64.AppImage");
         // This computer's choice is one of them.
         let here = asset_name();
         if cfg!(windows) {
@@ -476,6 +500,7 @@ mod tests {
         "unknown_field": 1,
         "assets": [
             { "name": "Snagster-windows-x64-portable.zip", "browser_download_url": "https://github.com/w.zip", "size": 100 },
+            { "name": "Snagster-windows-x64.msix", "browser_download_url": "https://github.com/w.msix", "size": 150 },
             { "name": "Snagster-macos-arm64.zip", "browser_download_url": "https://github.com/m.zip", "size": 200 },
             { "name": "Snagster-linux-x86_64.AppImage", "browser_download_url": "https://github.com/l.AppImage", "size": 300 },
             { "name": "Snagster-linux-x86_64-portable.tar.gz", "browser_download_url": "https://github.com/l.tar.gz" },
@@ -490,13 +515,14 @@ mod tests {
     #[test]
     fn release_picks_the_file_for_each_system() {
         let cases = [
-            (("windows", false), ("https://github.com/w.zip", 100)),
-            (("macos", false), ("https://github.com/m.zip", 200)),
-            (("linux", true), ("https://github.com/l.AppImage", 300)),
-            (("linux", false), ("https://github.com/l.tar.gz", 0)),
+            (("windows", false, false), ("https://github.com/w.zip", 100)),
+            (("windows", false, true), ("https://github.com/w.msix", 150)),
+            (("macos", false, false), ("https://github.com/m.zip", 200)),
+            (("linux", true, false), ("https://github.com/l.AppImage", 300)),
+            (("linux", false, false), ("https://github.com/l.tar.gz", 0)),
         ];
-        for ((os, app_image), (url, size)) in cases {
-            let want = asset_name_for(os, app_image);
+        for ((os, app_image, packaged), (url, size)) in cases {
+            let want = asset_name_for(os, app_image, packaged);
             let r = release_from(answer(), want).unwrap();
             assert_eq!(r.version, "0.10.2");
             assert_eq!(r.notes, "What changed");
@@ -523,6 +549,18 @@ mod tests {
         assert_eq!(to_hex(&up["a.zip"]), ABC);
         // A name with spaces stays whole.
         assert!(parse_sums(&format!("{ABC}  my file.zip")).contains_key("my file.zip"));
+    }
+
+    #[test]
+    fn an_installed_snagster_gets_the_package_and_opens_it_instead_of_running_it() {
+        assert!(is_msix(Path::new(r"C:\Temp\snagster-update-1\Snagster-windows-x64.msix")));
+        assert!(is_msix(Path::new("x.MSIX")));
+        assert!(!is_msix(Path::new("Snagster.exe")));
+        assert!(!is_msix(Path::new("Snagster-windows-x64-portable.zip")));
+        // A release from before the MSIX has no package: the dialog sends people to the page.
+        let mut a = answer();
+        a.assets.retain(|x| x.name != MSIX_NAME);
+        assert_eq!(release_from(a, MSIX_NAME).unwrap().asset, None);
     }
 
     #[test]

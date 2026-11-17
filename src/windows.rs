@@ -1698,8 +1698,13 @@ mod registry {
     }
 }
 
-/// Start Snagster when Windows starts (the Run key in the registry).
+/// Start Snagster when Windows starts: the Run key in the registry, or the package's startup
+/// task when Snagster was installed from its MSIX (its folder changes with every update).
 pub fn set_run_at_startup(on: bool) -> Result<(), String> {
+    #[cfg(windows)]
+    if crate::packaged::is_packaged() {
+        return crate::packaged::set_startup(on);
+    }
     #[cfg(windows)]
     {
         // Straight through the registry API: it used to start `reg.exe` (twice) and wait for it
@@ -1758,6 +1763,10 @@ fn autostart_file() -> Option<PathBuf> {
 
 pub fn runs_at_startup() -> bool {
     #[cfg(windows)]
+    if crate::packaged::is_packaged() {
+        return crate::packaged::startup() == Ok(crate::packaged::Startup::On);
+    }
+    #[cfg(windows)]
     {
         registry::get(RUN_KEY, "Snagster").is_some()
     }
@@ -1771,7 +1780,7 @@ impl SnagApp {
     /// How to let AI apps (Claude Code, Claude Desktop, Cursor...) use Snagster over MCP.
     fn ai_tab(&mut self, ui: &mut egui::Ui) {
         use crate::i18n::{t, tf};
-        let exe = std::env::current_exe().map(|p| p.display().to_string()).unwrap_or_else(|_| "snagster".into());
+        let exe = crate::packaged::mcp_command();
         ui.label(t("Snagster is an MCP server: any AI app that speaks MCP can capture the screen, mark up pictures, read text, record videos and run Studio. Apps on this computer only; nothing goes online."));
         ui.add_space(6.0);
         let copy_row = |ui: &mut egui::Ui, label: &str, text: String| {
