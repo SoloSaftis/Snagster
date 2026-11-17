@@ -1240,13 +1240,10 @@ impl SnagApp {
             if let Some(out) = rfd::FileDialog::new().add_filter("GIF", &["gif"]).set_file_name("trimmed.gif").save_file() {
                 let path = path.clone();
                 self.jobs.queue(move || {
-                    let r = export::gif_frames(&path, 0).and_then(|f| {
-                        let kept: Vec<_> = f.into_iter().skip(a).take(b - a + 1).collect();
-                        export::write_gif(&out, &kept)
-                    });
+                    let r = export::trim_gif(&path, a, b, &out);
                     Box::new(move |app: &mut SnagApp, _: &egui::Context| {
                         app.status = match r {
-                            Ok(()) => format!("Saved frames {}-{} to {}", a + 1, b + 1, out.display()),
+                            Ok(_) =>format!("Saved frames {}-{} to {}", a + 1, b + 1, out.display()),
                             Err(e) => format!("Couldn't save: {e}"),
                         };
                     })
@@ -1255,7 +1252,7 @@ impl SnagApp {
         }
         if append && let Some(other) = rfd::FileDialog::new().add_filter("GIF", &["gif"]).pick_file() {
             self.jobs.queue(move || {
-                let r = combine_gifs(&path, &other);
+                let r = export::combine_gifs(&path, &other);
                 Box::new(move |app: &mut SnagApp, ctx: &egui::Context| match r {
                     Ok(out) => {
                         app.status = format!("Combined into {}", out.display());
@@ -1268,26 +1265,6 @@ impl SnagApp {
     }
 }
 
-/// `path` with `other`'s frames added at the end (sized to fit), written next to `path`.
-fn combine_gifs(path: &std::path::Path, other: &std::path::Path) -> Result<PathBuf, String> {
-    let mut first = export::gif_frames(path, 0)?;
-    let second = export::gif_frames(other, 0)?;
-    let w = first.first().map(|f| f.0.width()).unwrap_or(640);
-    let imgs: Vec<_> = second.iter().map(|f| f.0.clone()).collect();
-    let boxed = export::letterbox(&imgs, w);
-    let target_h = first.first().map(|f| f.0.height()).unwrap_or(480);
-    for (img, (_, ms)) in boxed.into_iter().zip(second) {
-        let img = if img.height() != target_h || img.width() != w {
-            image::imageops::resize(&img, w, target_h, image::imageops::FilterType::Triangle)
-        } else {
-            img
-        };
-        first.push((img, ms));
-    }
-    let out = path.with_file_name(format!("{}_combined.gif", path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default()));
-    export::write_gif(&out, &first)?;
-    Ok(out)
-}
 
 impl SnagApp {
     pub(crate) fn show_pins(&mut self, ctx: &egui::Context) {

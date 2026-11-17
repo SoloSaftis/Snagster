@@ -967,6 +967,13 @@ impl Settings {
         self.bindings.iter().find(|b| b.action == a).map(|b| b.combo.clone()).unwrap_or_default()
     }
 
+    /// Where Share > Save to the cloud puts a picture: `<cloud folder>/Snagster/<file name>`,
+    /// never over an existing file. The window and the MCP server's save_to_cloud both use it.
+    pub fn cloud_save_path(&mut self, cloud: &std::path::Path, title: &str) -> PathBuf {
+        let base = self.file_name(title);
+        unique_path(&cloud.join("Snagster"), &base, self.format.ext())
+    }
+
     /// Fill in the file-name pattern: %Y %m %d %H %M %S date and time, %n counter, %t title.
     pub fn file_name(&mut self, title: &str) -> String {
         let now = chrono::Local::now();
