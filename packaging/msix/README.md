@@ -27,37 +27,59 @@ more readily than a loose, unsigned `.exe` in the Downloads folder.
 The code is in `src/packaged.rs` (package detection, startup task, App Installer) and
 `src/update.rs`.
 
-## Signing
+## Signing (Azure Artifact Signing)
 
-Windows only installs an MSIX whose signature it trusts. Until Snagster has a code-signing
-certificate, CI signs the package with a throwaway test certificate and keeps it out of the
+Windows only installs an MSIX whose signature it trusts. Snagster is signed with **Azure
+Artifact Signing** (formerly Trusted Signing), through Microsoft's GitHub action
+[`azure/artifact-signing-action`](https://github.com/Azure/artifact-signing-action) (MIT). Once
+it is set up, CI signs `Snagster.exe` (in the portable zip too, so SmartScreen and company
+security software see a known publisher) and the MSIX, and the release gets the MSIX as a
+seventh file.
+
+Until then CI signs the package with a throwaway test certificate and keeps it out of the
 release (the `windows-msix-test` artifact of each CI run has the package and the certificate).
 To try that one by hand, an administrator imports `Snagster-test-signing.cer` into **Local
 Computer > Trusted People**, then double-clicks the `.msix`.
 
-Once there is a certificate:
+### Who can get a certificate
 
-1. Add the repository secret `MSIX_CERT_PFX` (the `.pfx`, base64: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("cert.pfx"))`)
-   and `MSIX_CERT_PASSWORD`.
-2. Add the repository variable `MSIX_PUBLISHER` with the certificate's subject, exactly as the
-   certificate has it (for example `CN=Jane Doe, O=Jane Doe, L=Oslo, C=NO`).
-3. The next tag's release then has seven files: the MSIX joins the five downloads and
-   `SHA256SUMS`. Add its link to `README.md` and `.github/release-notes.md` at that point.
+Public-trust certificates go to **organisations** in the USA, Canada, the EU, the UK, Australia,
+New Zealand, Japan, South Korea, Singapore, Switzerland, Norway and Israel, and to **individual
+developers only in the USA and Canada** (Microsoft's quickstart, checked 2026-11-17). An
+organisation needs a business identifier, a website and an email address on its own domain.
+The certificate's name is the validated legal name; it can't be chosen. Validation takes 1 to 20
+business days. It needs a paid Azure subscription (not a free or trial one); the Basic plan is
+about USD 10 a month for 5,000 signatures.
+
+### Setting it up (the person, in the Azure portal)
+
+1. In a pay-as-you-go Azure subscription, register the resource provider
+   `Microsoft.CodeSigning` (Subscriptions > Resource providers).
+2. Create an **Artifact Signing account** (Basic) in a region near you, for example North
+   Europe (endpoint `https://neu.codesigning.azure.net`).
+3. Give yourself the **Artifact Signing Identity Verifier** role on the account, then create an
+   **identity validation** (Public) and complete it.
+4. Create a **certificate profile** of type **Public Trust** from that validation. Copy its
+   **certificate subject** exactly.
+5. For GitHub: in Microsoft Entra ID, register an app (for example `snagster-github-signing`),
+   add a **federated credential** for GitHub Actions (organisation `SoloSaftis`, repository
+   `Snagster`, entity type Tag, pattern `v*`, and a second one for branch `main` if you want
+   signed test builds), and give the app the **Artifact Signing Certificate Profile Signer** role
+   on the account. No password or secret is stored anywhere.
+6. In the GitHub repository (Settings > Secrets and variables > Actions):
+   - secrets `AZURE_CLIENT_ID` (the app's id), `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`;
+   - variables `ARTIFACT_SIGNING_ENDPOINT` (from step 2), `ARTIFACT_SIGNING_ACCOUNT`,
+     `ARTIFACT_SIGNING_PROFILE`, and `MSIX_PUBLISHER` (the subject from step 4, exactly).
+
+The next tag then releases seven files. Add the MSIX link to `README.md` and
+`.github/release-notes.md` at that point, and update the file count in the private notes.
 
 Changing the publisher later makes Windows treat the package as a different app (people would
-have to uninstall the old one), so pick the certificate once.
+have to uninstall the old one), so it is chosen once.
 
-Ways to get a certificate (none bought or set up yet):
+### Later: the Microsoft Store
 
-- **Azure Artifact Signing** (formerly Trusted Signing), about USD 10 a month. Microsoft holds
-  the key; signatures are trusted by Windows and build SmartScreen reputation. Identity
-  validation is for organisations in the USA, Canada, the EU and the UK, and (as far as the
-  documentation said in 2026) individuals only in the USA and Canada. Signing then runs in CI
-  through Microsoft's GitHub action instead of the `.pfx` secret.
-- **An OV code-signing certificate** from a certificate authority (for example Certum's
-  open-source certificate for individuals). Since 2023 the key must live on a hardware token or
-  in the authority's cloud signing service, so CI signs through that service rather than a
-  `.pfx` file.
-- **The Microsoft Store.** Registering as an individual developer is free; the Store signs the
-  package itself, and many company laptops allow Store apps where they block other installers.
-  The `unvirtualizedResources` capability needs a short justification in the submission.
+Registering as an individual developer is free and the Store signs the package itself; many
+company laptops allow Store apps where they block other installers. The
+`unvirtualizedResources` capability needs a short justification in the submission, and a
+Store install must leave updates to the Store (the updater doesn't do that yet).

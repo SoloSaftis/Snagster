@@ -1,23 +1,20 @@
 # Make Snagster's MSIX package from a built Snagster.exe (see README.md beside this file).
 #
 #   pwsh packaging/msix/make-msix.ps1 -Exe target/release/snagster.exe -Out dist/Snagster-windows-x64.msix `
-#        [-Publisher "CN=..."] [-PfxBase64 <base64> -PfxPassword <text>] [-TestCert dist/test.cer]
+#        [-Publisher "CN=..."] [-TestCert dist/test.cer]
 #
 # -Publisher is the signing certificate's subject, exactly (Windows refuses a package whose
 # publisher differs from its signature). Signing:
-#   -PfxBase64/-PfxPassword  a real code-signing certificate (.pfx, base64): the package installs
-#                            on any Windows that trusts it.
+#   (default)                unsigned, for signing afterwards: CI signs it with Azure Artifact
+#                            Signing (azure/artifact-signing-action).
 #   -TestCert <file.cer>     no certificate yet: make a throwaway self-signed one, sign with it and
 #                            write its public part to <file.cer>. Only computers that import that
 #                            certificate (Trusted People, an administrator's job) can install it.
-#   neither                  unsigned (for signing afterwards, e.g. with Azure Artifact Signing).
 # Uses makeappx.exe and signtool.exe from the Windows SDK (on GitHub's Windows runners).
 param(
     [Parameter(Mandatory)] [string] $Exe,
     [Parameter(Mandatory)] [string] $Out,
     [string] $Publisher = "CN=Snagster Test Signing",
-    [string] $PfxBase64 = "",
-    [string] $PfxPassword = "",
     [string] $TestCert = ""
 )
 $ErrorActionPreference = "Stop"
@@ -64,16 +61,8 @@ Remove-Item $Out -ErrorAction SilentlyContinue
 & (Find-SdkTool makeappx.exe) pack /d $stage /p $Out /o /h SHA256
 if ($LASTEXITCODE -ne 0) { throw "makeappx failed" }
 
-$signtool = Find-SdkTool signtool.exe
-if ($PfxBase64) {
-    $pfx = Join-Path $stage "..\snagster-sign-$PID.pfx"
-    [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($PfxBase64))
-    try {
-        & $signtool sign /fd SHA256 /f $pfx /p $PfxPassword /tr http://timestamp.digicert.com /td SHA256 $Out
-        if ($LASTEXITCODE -ne 0) { throw "signing failed" }
-    } finally { Remove-Item $pfx -ErrorAction SilentlyContinue }
-    Write-Host "Signed with the release certificate."
-} elseif ($TestCert) {
+if ($TestCert) {
+    $signtool = Find-SdkTool signtool.exe
     $cert = New-SelfSignedCertificate -Type Custom -Subject $Publisher -KeyUsage DigitalSignature -FriendlyName "Snagster test signing" `
         -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
     try {
@@ -84,7 +73,7 @@ if ($PfxBase64) {
     } finally { Remove-Item "Cert:\CurrentUser\My\$($cert.Thumbprint)" -ErrorAction SilentlyContinue }
     Write-Host "Signed with a throwaway test certificate ($TestCert): for testing only."
 } else {
-    Write-Host "Not signed: sign it before handing it out."
+    Write-Host "Not signed yet: sign it before handing it out."
 }
 Remove-Item -Recurse -Force $stage -ErrorAction SilentlyContinue
 Get-Item $Out | Format-Table Name, Length
