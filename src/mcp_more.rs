@@ -213,6 +213,11 @@ pub(super) fn tools() -> Vec<Tool> {
                     "max_height": n("The tallest picture sent, e.g. 720 (0: the source's size)."),
                     "audio": {"type": "string", "enum": ["none", "system", "microphone", "both"], "description": "Sound to stream (Windows); default: the setting."},
                     "record_copy": b("Also save what is streamed as an FLV file in the recordings folder."),
+                    "hevc": b("Send HEVC (H.265) where the service takes it (YouTube and custom servers, over Enhanced RTMP); others get H.264. Default: the setting."),
+                    "hardware": b("Encode on the graphics chip (Intel, AMD or NVIDIA). Default: the setting."),
+                    "keyframe_s": n("Seconds between keyframes, 1-4 (services usually want 2). Default: the setting."),
+                    "reconnects": n("Reconnect this many times when the connection drops, 0-50. Default: the setting."),
+                    "cursor": b("Show the mouse pointer in the stream. Default: the setting."),
                     "also": {
                         "type": "array",
                         "maxItems": 4,
@@ -238,40 +243,9 @@ impl Workspace {
     /// store unless given. Every message has the key masked.
     fn stream_start(&mut self, a: &Value) -> Outcome {
         use crate::stream::live::{self, LiveOptions, Phase, StudioFrames};
-        use crate::stream::{Service, Source, mask};
+        use crate::stream::{Source, mask};
         let mut s = self.settings();
-        if let Some(v) = str_arg(a, "service") {
-            s.stream.service = Service::parse(v).ok_or("service is twitch, youtube, kick, facebook, restream or custom")?;
-            s.stream.url.clear();
-        }
-        if let Some(u) = str_arg(a, "url") {
-            s.stream.url = u.trim().to_string();
-        }
-        if let Some(v) = str_arg(a, "source") {
-            s.stream.source = match Source::parse(v).ok_or("source is screen, window, area or studio")? {
-                Source::Window(_) => Source::Window(str_arg(a, "title").ok_or("source window needs the title (part of it is enough)")?.to_string()),
-                Source::Area(..) => {
-                    let r = rect_arg(a)?;
-                    Source::Area(r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32)
-                }
-                other => other,
-            };
-        }
-        if let Some(f) = num(a, "fps") {
-            s.stream.fps = f.clamp(1.0, 120.0) as u32;
-        }
-        if let Some(k) = num(a, "bitrate") {
-            s.stream.kbps = k.clamp(0.0, 100_000.0) as u32;
-        }
-        if let Some(h) = num(a, "max_height") {
-            s.stream.max_height = h.clamp(0.0, 4320.0) as u32;
-        }
-        if let Some(x) = str_arg(a, "audio") {
-            s.stream.audio = crate::audio::AudioSource::parse(x).ok_or("audio is none, system, microphone or both")?;
-        }
-        if let Some(c) = bool_arg(a, "record_copy") {
-            s.stream.record_copy = c;
-        }
+        stream_args(&mut s, a)?;
         let key = match str_arg(a, "key") {
             Some(k) => k.trim().to_string(),
             None => crate::stream::keystore::load().unwrap_or_default(),
@@ -343,6 +317,66 @@ impl Workspace {
 
 /// stream_start's `also`: the services to multistream to, each key given or the one saved for
 /// that service (the first extra service of the settings with the same service).
+/// stream_start's arguments on top of the Streaming settings (for this stream only; nothing is
+/// saved). Every option on the Streaming page has an argument here.
+fn stream_args(s: &mut crate::settings::Settings, a: &Value) -> Result<(), String> {
+    use crate::stream::{Service, Source};
+    if let Some(v) = str_arg(a, "service") {
+        s.stream.service = Service::parse(v).ok_or("service is twitch, youtube, kick, facebook, restream or custom")?;
+        s.stream.url.clear();
+    }
+    if let Some(u) = str_arg(a, "url") {
+        s.stream.url = u.trim().to_string();
+    }
+    if let Some(v) = str_arg(a, "source") {
+        s.stream.source = match Source::parse(v).ok_or("source is screen, window, area or studio")? {
+            Source::Window(_) => Source::Window(str_arg(a, "title").ok_or("source window needs the title (part of it is enough)")?.to_string()),
+            Source::Area(..) => {
+                let r = rect_arg(a)?;
+                Source::Area(r.min.x as i32, r.min.y as i32, r.width() as u32, r.height() as u32)
+            }
+            other => other,
+        };
+    }
+    if let Some(f) = num(a, "fps") {
+        s.stream.fps = f.clamp(1.0, 120.0) as u32;
+    }
+    if let Some(k) = num(a, "bitrate") {
+        s.stream.kbps = k.clamp(0.0, 100_000.0) as u32;
+    }
+    if let Some(h) = num(a, "max_height") {
+        s.stream.max_height = h.clamp(0.0, 4320.0) as u32;
+    }
+    if let Some(x) = str_arg(a, "audio") {
+        s.stream.audio = crate::audio::AudioSource::parse(x).ok_or("audio is none, system, microphone or both")?;
+    }
+    if let Some(c) = bool_arg(a, "record_copy") {
+        s.stream.record_copy = c;
+    }
+    if let Some(v) = bool_arg(a, "hevc") {
+        s.stream.hevc = v;
+    }
+    if let Some(v) = bool_arg(a, "hardware") {
+        s.stream.hardware = v;
+    }
+    if let Some(v) = bool_arg(a, "cursor") {
+        s.stream.cursor = v;
+    }
+    if let Some(k) = num(a, "keyframe_s") {
+        if !(1.0..=4.0).contains(&k) {
+            return Err("keyframe_s is 1-4 seconds".into());
+        }
+        s.stream.keyframe_s = k.round() as u32;
+    }
+    if let Some(r) = num(a, "reconnects") {
+        if !(0.0..=50.0).contains(&r) {
+            return Err("reconnects is 0-50".into());
+        }
+        s.stream.reconnects = r.round() as u32;
+    }
+    Ok(())
+}
+
 fn also_arg(list: &Value, saved: &[crate::settings::ExtraService], saved_key: &dyn Fn(u32) -> String) -> Result<Vec<crate::stream::StreamTarget>, String> {
     use crate::stream::{Service, StreamTarget};
     let items = list.as_array().ok_or("also is a list of {service, url, key}")?;
@@ -1140,6 +1174,40 @@ impl Workspace {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn stream_start_takes_every_streaming_option() {
+        let mut s = crate::settings::Settings::default();
+        s.stream.hevc = false;
+        s.stream.hardware = true;
+        s.stream.cursor = true;
+        let a = json!({"service": "youtube", "source": "screen", "fps": 60, "bitrate": 9000, "max_height": 1080, "audio": "both", "record_copy": true,
+            "hevc": true, "hardware": false, "cursor": false, "keyframe_s": 4, "reconnects": 10});
+        stream_args(&mut s, &a).unwrap();
+        let st = &s.stream;
+        assert_eq!(st.service, crate::stream::Service::YouTube);
+        assert_eq!(st.source, crate::stream::Source::Screen);
+        assert_eq!((st.fps, st.kbps, st.max_height, st.keyframe_s, st.reconnects), (60, 9000, 1080, 4, 10));
+        assert!(st.hevc && !st.hardware && !st.cursor && st.record_copy);
+        assert_eq!(st.audio, crate::audio::AudioSource::Both);
+        // Left out: the setting stays.
+        let before = s.stream.clone();
+        stream_args(&mut s, &json!({})).unwrap();
+        assert_eq!(s.stream, before);
+        assert!(stream_args(&mut s, &json!({"keyframe_s": 9})).unwrap_err().contains("1-4"));
+        assert!(stream_args(&mut s, &json!({"reconnects": 99})).unwrap_err().contains("0-50"));
+        assert!(stream_args(&mut s, &json!({"source": "window"})).unwrap_err().contains("title"));
+        // Every Streaming setting an AI app may change can be given to stream_start directly
+        // (also: the list; url and service: the server; source: what is streamed).
+        let props = tools().into_iter().find(|t| t.name == "stream_start").unwrap().schema["properties"].clone();
+        for k in crate::catalog::SETTINGS.iter().filter_map(|k| k.key.strip_prefix("stream.")) {
+            let arg = match k {
+                "kbps" => "bitrate",
+                other => other,
+            };
+            assert!(props.get(arg).is_some(), "stream_start has no argument for stream.{k}");
+        }
+    }
 
     #[test]
     fn ai_scrolling_uses_the_windows_scroll_settings() {

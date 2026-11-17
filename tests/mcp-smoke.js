@@ -205,6 +205,10 @@ function stdio() {
         check(badStream.isError === true && !JSON.stringify(badStream).includes('sk_smoke_secret_42'), 'stream_start refuses a bad address without echoing the key', JSON.stringify(badStream));
         const badSource = await tool('stream_start', { source: 'window', key: 'sk_smoke_secret_42' });
         check(badSource.isError === true && badSource.content[0].text.includes('title'), 'stream_start needs a window title');
+        const sp = ss.inputSchema.properties;
+        check(['hevc', 'hardware', 'keyframe_s', 'reconnects', 'cursor', 'also', 'record_copy', 'audio', 'max_height', 'bitrate', 'fps'].every((k) => sp[k]), 'stream_start takes every streaming option');
+        const badKey = await tool('stream_start', { keyframe_s: 9, key: 'sk_smoke_secret_42' });
+        check(badKey.isError === true && badKey.content[0].text.includes('1-4') && !JSON.stringify(badKey).includes('sk_smoke_secret_42'), 'stream_start checks keyframe_s before going live');
         const bad = await tool('no_such_tool');
         check(bad.isError === true, 'unknown tool is an error, not a crash');
         const read = await call('resources/read', { uri: 'snagster://picture/current' });
