@@ -77,11 +77,13 @@ fn asset_name_for(os: &str, app_image: bool, packaged: bool) -> &'static str {
 /// Flatpak (Flathub or our own) or a Snap the files are read-only and updates come from there, so
 /// Snagster doesn't download any. `None`: Snagster updates itself.
 pub fn managed_by() -> Option<&'static str> {
-    managed_by_from(std::env::var_os("FLATPAK_ID").is_some() || Path::new("/.flatpak-info").exists(), std::env::var_os("SNAP").is_some())
+    managed_by_from(std::env::var_os("FLATPAK_ID").is_some() || Path::new("/.flatpak-info").exists(), std::env::var_os("SNAP").is_some(), crate::packaged::from_store())
 }
 
-fn managed_by_from(flatpak: bool, snap: bool) -> Option<&'static str> {
-    if flatpak {
+fn managed_by_from(flatpak: bool, snap: bool, store: bool) -> Option<&'static str> {
+    if store {
+        Some("the Microsoft Store")
+    } else if flatpak {
         Some("Flatpak")
     } else if snap {
         Some("Snap")
@@ -416,10 +418,12 @@ mod tests {
 
     #[test]
     fn flatpak_and_snap_install_updates_themselves() {
-        assert_eq!(managed_by_from(true, false), Some("Flatpak"));
-        assert_eq!(managed_by_from(false, true), Some("Snap"));
-        assert_eq!(managed_by_from(true, true), Some("Flatpak"));
-        assert_eq!(managed_by_from(false, false), None);
+        assert_eq!(managed_by_from(true, false, false), Some("Flatpak"));
+        assert_eq!(managed_by_from(false, true, false), Some("Snap"));
+        assert_eq!(managed_by_from(true, true, false), Some("Flatpak"));
+        assert_eq!(managed_by_from(false, false, false), None);
+        // Installed from the Microsoft Store: the Store updates it, Snagster doesn't download.
+        assert_eq!(managed_by_from(false, false, true), Some("the Microsoft Store"));
     }
 
     #[test]

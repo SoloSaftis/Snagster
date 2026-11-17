@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Snagster's MSIX package for Windows (see packaging/msix/README.md). make-msix.ps1 fills in
-  __VERSION__ (four numbers, the last one 0) and __PUBLISHER__ (the signing certificate's
-  subject, exactly). The ids below are checked against src/packaged.rs by `cargo test`.
+  __VERSION__ (four numbers, the last one 0), __IDENTITY_NAME__, __PUBLISHER__ (the signing
+  certificate's subject, exactly) and __PUBLISHER_DISPLAY_NAME__. The GitHub package uses
+  SoloSaftis.Snagster; the Microsoft Store package uses the three values Partner Center gives
+  (packaging/msix/STORE.md). The ids below are checked against src/packaged.rs by `cargo test`.
 -->
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -13,11 +15,11 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   IgnorableNamespaces="uap uap3 desktop desktop6 rescap">
 
-  <Identity Name="SoloSaftis.Snagster" Publisher="__PUBLISHER__" Version="__VERSION__" ProcessorArchitecture="x64" />
+  <Identity Name="__IDENTITY_NAME__" Publisher="__PUBLISHER__" Version="__VERSION__" ProcessorArchitecture="x64" />
 
   <Properties>
     <DisplayName>Snagster</DisplayName>
-    <PublisherDisplayName>SoloSaftis</PublisherDisplayName>
+    <PublisherDisplayName>__PUBLISHER_DISPLAY_NAME__</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
     <Description>Capture your screen, mark it up, record and share it.</Description>
     <!-- Settings, crash.log and captures go to the real %APPDATA%\Snagster, Pictures and Videos

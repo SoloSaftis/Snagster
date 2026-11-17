@@ -44,6 +44,24 @@ pub fn is_packaged() -> bool {
     }
 }
 
+/// Whether the installed package came from the Microsoft Store (the Store signed it, and the
+/// Store installs its updates). False for a package from GitHub and for the portable copy.
+pub fn from_store() -> bool {
+    #[cfg(windows)]
+    {
+        use std::sync::OnceLock;
+        static STORE: OnceLock<bool> = OnceLock::new();
+        *STORE.get_or_init(|| {
+            use windows::ApplicationModel::{Package, PackageSignatureKind};
+            is_packaged() && Package::Current().and_then(|p| p.SignatureKind()).is_ok_and(|k| k == PackageSignatureKind::Store)
+        })
+    }
+    #[cfg(not(windows))]
+    {
+        false
+    }
+}
+
 /// The program AI apps should start: the package's alias when installed, else this program.
 pub fn mcp_command() -> String {
     let exe = std::env::current_exe().unwrap_or_else(|_| PathBuf::from("snagster"));
@@ -170,7 +188,13 @@ mod tests {
         assert!(MANIFEST.contains("<uap:FileType>.snag</uap:FileType>"));
         assert!(MANIFEST.contains("<desktop6:FileSystemWriteVirtualization>disabled<"));
         assert!(MANIFEST.contains("Name=\"unvirtualizedResources\"") && MANIFEST.contains("Name=\"runFullTrust\""));
-        assert!(MANIFEST.contains("Version=\"__VERSION__\"") && MANIFEST.contains("Publisher=\"__PUBLISHER__\""));
+        for fill in ["Version=\"__VERSION__\"", "Name=\"__IDENTITY_NAME__\"", "Publisher=\"__PUBLISHER__\"", ">__PUBLISHER_DISPLAY_NAME__<"] {
+            assert!(MANIFEST.contains(fill), "make-msix.ps1 fills in {fill}");
+        }
+        let script = include_str!("../packaging/msix/make-msix.ps1");
+        for fill in ["__VERSION__", "__IDENTITY_NAME__", "__PUBLISHER__", "__PUBLISHER_DISPLAY_NAME__"] {
+            assert!(script.contains(&format!("\"{fill}\"")), "make-msix.ps1 replaces {fill}");
+        }
         // CI makes the package under the name the updater looks for.
         let ci = include_str!("../.github/workflows/build.yml");
         assert!(ci.contains(crate::update::MSIX_NAME), "build.yml makes {}", crate::update::MSIX_NAME);
@@ -180,6 +204,7 @@ mod tests {
     fn tests_do_not_run_from_a_package() {
         // `cargo test` runs a plain program, never an installed package.
         assert!(!is_packaged());
+        assert!(!from_store());
         assert!(!mcp_command().is_empty());
     }
 

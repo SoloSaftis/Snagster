@@ -15,7 +15,8 @@ Windows:
   was a remote session, and `snagster --hw-report` lists the graphics chips.
 - **An installer (MSIX)**, made by every build: it installs to Start and Settings > Apps,
   updates through App Installer, starts with Windows through its startup task and opens
-  `.snag` projects. It joins the downloads once signing with Azure Artifact Signing is set up.
+  `.snag` projects. It joins the downloads once it can be signed, and a Microsoft Store edition
+  (signed by the Store, updated by the Store) is ready to submit.
 
 ## 0.10.5 — 2026-11-17
 

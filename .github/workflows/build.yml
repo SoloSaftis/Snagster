@@ -199,12 +199,33 @@ jobs:
           node tests/mcp-smoke.js $alias
           if ($LASTEXITCODE -ne 0) { exit 1 }
           Remove-AppxPackage -Package $pkg.PackageFullName
+      - name: Package (Microsoft Store upload, unsigned)
+        shell: pwsh
+        env:
+          # From Partner Center > Snagster > Product identity (packaging/msix/STORE.md). Without
+          # them the package is still made with stand-in values, so the step is always tested.
+          STORE_IDENTITY_NAME: ${{ vars.STORE_IDENTITY_NAME }}
+          STORE_PUBLISHER: ${{ vars.STORE_PUBLISHER }}
+          STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
+        run: |
+          $name = if ($env:STORE_IDENTITY_NAME) { $env:STORE_IDENTITY_NAME } else { "00000Example.Snagster" }
+          $pub = if ($env:STORE_PUBLISHER) { $env:STORE_PUBLISHER } else { "CN=00000000-0000-0000-0000-000000000000" }
+          $shown = if ($env:STORE_PUBLISHER_DISPLAY_NAME) { $env:STORE_PUBLISHER_DISPLAY_NAME } else { "Example" }
+          # The Store signs what it publishes, so this one is uploaded unsigned.
+          pwsh packaging/msix/make-msix.ps1 -Exe dist/Snagster/Snagster.exe -Out dist/store/Snagster-windows-x64-store.msix -IdentityName $name -Publisher $pub -PublisherDisplayName $shown
+          if ($LASTEXITCODE -ne 0) { exit 1 }
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: |
             dist/Snagster-windows-x64-portable.zip
             ${{ env.SIGNED == 'true' && 'dist/msix/Snagster-windows-x64.msix' || '' }}
+      # For uploading to Partner Center by hand (never on GitHub's release page).
+      - uses: actions/upload-artifact@v4
+        if: vars.STORE_IDENTITY_NAME != ''
+        with:
+          name: windows-store
+          path: dist/store/Snagster-windows-x64-store.msix
       # Until signing is set up: the test-signed package and its certificate, for trying it by
       # hand (not released).
       - uses: actions/upload-artifact@v4
