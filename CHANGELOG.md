@@ -2,7 +2,28 @@
 
 What changed for people using Snagster, per version.
 
-## Not released yet
+## 0.10.6 — 2026-11-17
+
+Linux with Wayland (checked on Ubuntu 26.04 with GNOME):
+
+- **Asked once**: the desktop asks to share the screen the first time and remembers it, so
+  recording, Studio, live streaming and screen captures start without the dialog after that.
+  Capturing a whole screen no longer opens the desktop's screenshot tool.
+- **Hotkeys work on Wayland**: Snagster gives its hotkeys to the desktop (GNOME 48 and later,
+  KDE Plasma 6), which asks you once and lets you change them in its keyboard settings. Where a
+  desktop can't, a shortcut you set there can run `snagster --action Area` (or AllInOne, Window,
+  Screen, RecordGif…).
+- Snagster follows the desktop's accent colour, and GNOME and KDE get a main menu at the end of
+  the tab row (F10) with Settings, Keyboard shortcuts, Getting started, About and Quit.
+- Fixed: Studio and recording showed nothing in the Flatpak; the first click on the recording
+  bar's Stop was lost; Space in "Choose the area to record" took a picture instead of recording
+  the whole screen (Windows too); Record GIF stopped after a few frames.
+
+AI apps:
+
+- **Every option in Snagster can be reached over MCP**: every button, menu item and setting has a
+  tool or a typed setting (73 tools), and `stream_start` sets up a whole stream in one call.
+
 
 Snagster follows each system's own design rules more closely (Windows 11, GNOME, KDE Plasma,
 macOS):
@@ -36,7 +57,7 @@ Windows:
   was a remote session, and `snagster --hw-report` lists the graphics chips.
 - **An installer (MSIX)**, made by every build: it installs to Start and Settings > Apps,
   updates through App Installer, starts with Windows through its startup task and opens
-  `.snag` projects. It joins the downloads once signing with Azure Artifact Signing is set up.
+  `.snag` projects. It joins the downloads once it is signed.
 
 ## 0.10.5 — 2026-11-17
 
