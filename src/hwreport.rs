@@ -39,12 +39,17 @@ pub fn failures(text: &str) -> usize {
 /// What the window can be drawn with: the Direct3D 12 graphics chips (Windows), whether this
 /// is a remote session, and whether Snagster runs installed or portable.
 fn drawing_lines() -> Vec<String> {
-    let mut v = vec![format!(
+    let order = format!(
         "Window drawing tried in this order: {}",
         crate::drawing::order_here().iter().map(|b| b.name()).collect::<Vec<_>>().join(", then ")
-    )];
+    );
+    #[cfg(not(windows))]
+    {
+        vec![order]
+    }
     #[cfg(windows)]
     {
+        let mut v = vec![order];
         use eframe::egui_wgpu::wgpu;
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor { backends: wgpu::Backends::DX12, ..wgpu::InstanceDescriptor::new_without_display_handle() });
         let adapters = pollster::block_on(instance.enumerate_adapters(wgpu::Backends::DX12));
@@ -59,8 +64,8 @@ fn drawing_lines() -> Vec<String> {
         }
         v.push(format!("Remote session: {}", if crate::drawing::remote_session() { "yes" } else { "no" }));
         v.push(format!("Snagster runs {}", if crate::packaged::is_packaged() { "installed (MSIX)" } else { "portable" }));
+        v
     }
-    v
 }
 
 fn system_lines() -> Vec<String> {

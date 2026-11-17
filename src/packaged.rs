@@ -18,6 +18,7 @@
 use std::path::{Path, PathBuf};
 
 /// The startup task's id in the package manifest.
+#[cfg(any(windows, test))]
 pub const STARTUP_TASK: &str = "SnagsterStartup";
 
 /// The command-line name the package registers.
@@ -58,6 +59,7 @@ pub(crate) fn mcp_command_for(exe: &Path, packaged: bool, local_app_data: Option
 }
 
 /// Where the startup task stands, in Windows' words.
+#[cfg(any(windows, test))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Startup {
     On,
@@ -69,6 +71,7 @@ pub enum Startup {
 }
 
 /// The message for a startup task that couldn't be switched on.
+#[cfg(any(windows, test))]
 pub fn startup_refusal(s: Startup) -> Option<&'static str> {
     match s {
         Startup::OffByPerson => Some("Windows has Snagster turned off as a startup app. Turn it on in Settings > Apps > Startup."),
@@ -89,36 +92,23 @@ fn startup_state(s: windows::ApplicationModel::StartupTaskState) -> Startup {
 }
 
 /// The package's startup task now.
+#[cfg(windows)]
 pub fn startup() -> Result<Startup, String> {
-    #[cfg(windows)]
-    {
-        let task = windows::ApplicationModel::StartupTask::GetAsync(&windows::core::HSTRING::from(STARTUP_TASK)).and_then(|a| a.join()).map_err(|e| e.to_string())?;
-        Ok(startup_state(task.State().map_err(|e| e.to_string())?))
-    }
-    #[cfg(not(windows))]
-    {
-        Err("Only installed Windows packages have a startup task.".into())
-    }
+    let task = windows::ApplicationModel::StartupTask::GetAsync(&windows::core::HSTRING::from(STARTUP_TASK)).and_then(|a| a.join()).map_err(|e| e.to_string())?;
+    Ok(startup_state(task.State().map_err(|e| e.to_string())?))
 }
 
 /// Switch the package's startup task on or off.
+#[cfg(windows)]
 pub fn set_startup(on: bool) -> Result<(), String> {
-    #[cfg(windows)]
-    {
-        let task = windows::ApplicationModel::StartupTask::GetAsync(&windows::core::HSTRING::from(STARTUP_TASK)).and_then(|a| a.join()).map_err(|e| e.to_string())?;
-        if !on {
-            return task.Disable().map_err(|e| e.to_string());
-        }
-        let now = startup_state(task.RequestEnableAsync().and_then(|a| a.join()).map_err(|e| e.to_string())?);
-        match startup_refusal(now) {
-            Some(why) => Err(why.into()),
-            None => Ok(()),
-        }
+    let task = windows::ApplicationModel::StartupTask::GetAsync(&windows::core::HSTRING::from(STARTUP_TASK)).and_then(|a| a.join()).map_err(|e| e.to_string())?;
+    if !on {
+        return task.Disable().map_err(|e| e.to_string());
     }
-    #[cfg(not(windows))]
-    {
-        let _ = on;
-        Err("Only installed Windows packages have a startup task.".into())
+    let now = startup_state(task.RequestEnableAsync().and_then(|a| a.join()).map_err(|e| e.to_string())?);
+    match startup_refusal(now) {
+        Some(why) => Err(why.into()),
+        None => Ok(()),
     }
 }
 
