@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Snagster's MSIX package for Windows (see packaging/msix/README.md). make-msix.ps1 fills in
+  __VERSION__ (four numbers, the last one 0) and __PUBLISHER__ (the signing certificate's
+  subject, exactly). The ids below are checked against src/packaged.rs by `cargo test`.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap3 desktop desktop6 rescap">
+
+  <Identity Name="SoloSaftis.Snagster" Publisher="__PUBLISHER__" Version="__VERSION__" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Snagster</DisplayName>
+    <PublisherDisplayName>SoloSaftis</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <Description>Capture your screen, mark it up, record and share it.</Description>
+    <!-- Settings, crash.log and captures go to the real %APPDATA%\Snagster, Pictures and Videos
+         (shared with the portable copy, visible to Explorer), not a private copy per package. -->
+    <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
+    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="Snagster" Executable="Snagster.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Snagster"
+        Description="Capture your screen, mark it up, record and share it."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <!-- "Start Snagster when Windows starts" in Settings switches this (off until then). -->
+        <desktop:Extension Category="windows.startupTask" Executable="Snagster.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="SnagsterStartup" Enabled="false" DisplayName="Snagster" />
+        </desktop:Extension>
+        <!-- `snagster` on the command line and for AI apps (MCP), whatever version is installed. -->
+        <uap3:Extension Category="windows.appExecutionAlias" Executable="Snagster.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap3:AppExecutionAlias>
+            <desktop:ExecutionAlias Alias="snagster.exe" />
+          </uap3:AppExecutionAlias>
+        </uap3:Extension>
+        <!-- Snagster projects open in Snagster. -->
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="snagproject">
+            <uap:DisplayName>Snagster project</uap:DisplayName>
+            <uap:Logo>Assets\Square44x44Logo.png</uap:Logo>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.snag</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <rescap:Capability Name="unvirtualizedResources" />
+    <!-- Recording with the microphone. -->
+    <DeviceCapability Name="microphone" />
+  </Capabilities>
+</Package>

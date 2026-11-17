@@ -25,6 +25,19 @@ macOS):
 - Ribbon labels are a little bigger and easier to read, the window title bar stays dark when
   the system is in light mode, and menu commands that ask for more use the "…" character.
 
+Windows:
+
+- **Smoother on company laptops and in remote sessions**: the window is now drawn with
+  Direct3D 12 instead of OpenGL. Company laptops often have old OpenGL drivers, and Remote
+  Desktop, Citrix and other VDI sessions offer only OpenGL 1.1 (where Snagster used to lag or
+  not start at all); Direct3D 12 is part of Windows and uses Microsoft's own software renderer
+  when there is no graphics chip. OpenGL is still used when Direct3D can't start. If drawing
+  lags, crash.log (Help > Problem reports) now says so, with the graphics chip and whether it
+  was a remote session, and `snagster --hw-report` lists the graphics chips.
+- **An installer (MSIX)**, made by every build: it installs to Start and Settings > Apps,
+  updates through App Installer, starts with Windows through its startup task and opens
+  `.snag` projects. It joins the downloads once signing with Azure Artifact Signing is set up.
+
 ## 0.10.5 — 2026-11-17
 
 Fixed on Linux with Wayland (found and checked on Ubuntu 26.04 with GNOME):

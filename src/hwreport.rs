@@ -36,6 +36,38 @@ pub fn failures(text: &str) -> usize {
     text.lines().filter(|l| l.trim_start().starts_with("FAIL")).count()
 }
 
+/// What the window can be drawn with: the Direct3D 12 graphics chips (Windows), whether this
+/// is a remote session, and whether Snagster runs installed or portable.
+fn drawing_lines() -> Vec<String> {
+    let order = format!(
+        "Window drawing tried in this order: {}",
+        crate::drawing::order_here().iter().map(|b| b.name()).collect::<Vec<_>>().join(", then ")
+    );
+    #[cfg(not(windows))]
+    {
+        vec![order]
+    }
+    #[cfg(windows)]
+    {
+        let mut v = vec![order];
+        use eframe::egui_wgpu::wgpu;
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor { backends: wgpu::Backends::DX12, ..wgpu::InstanceDescriptor::new_without_display_handle() });
+        let adapters = pollster::block_on(instance.enumerate_adapters(wgpu::Backends::DX12));
+        if adapters.is_empty() {
+            v.push("Direct3D 12: no graphics chip (the window falls back to OpenGL)".into());
+        }
+        for a in adapters {
+            let i = a.get_info();
+            let line = crate::drawing::adapter_line("Direct3D 12", &i.name, i.device_type == wgpu::DeviceType::Cpu);
+            let driver = format!("{} {}", i.driver, i.driver_info);
+            v.push(if driver.trim().is_empty() { line } else { format!("{line}, driver {}", driver.trim()) });
+        }
+        v.push(format!("Remote session: {}", if crate::drawing::remote_session() { "yes" } else { "no" }));
+        v.push(format!("Snagster runs {}", if crate::packaged::is_packaged() { "installed (MSIX)" } else { "portable" }));
+        v
+    }
+}
+
 fn system_lines() -> Vec<String> {
     let mut v = vec![format!("Snagster {} ({} {})", env!("CARGO_PKG_VERSION"), std::env::consts::OS, std::env::consts::ARCH)];
     #[cfg(target_os = "linux")]
@@ -72,6 +104,7 @@ fn system_lines() -> Vec<String> {
         }
     }
     v.push(format!("Processor threads: {}", std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1)));
+    v.extend(drawing_lines());
     for m in crate::capture::monitors() {
         v.push(format!("Screen: {} x {} at {}, {}", m.width, m.height, m.x, m.y));
     }

@@ -5300,6 +5300,7 @@ impl eframe::App for SnagApp {
     // carries on.
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let started = Instant::now();
+        crate::drawing::frame(ctx, self.persist);
         if let Err(e) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.logic_body(ctx))) {
             self.recovered(e);
         }

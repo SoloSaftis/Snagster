@@ -10,6 +10,8 @@ mod instance;
 mod keys_portal;
 mod wav;
 mod doc;
+mod drawing;
+mod packaged;
 mod effects;
 mod export;
 mod library;
@@ -141,9 +143,13 @@ fn main() -> eframe::Result {
             continue;
         }
         if a == "--icon-png" {
-            // Write the app icon (256 px) for packaging.
+            // Write the app icon for packaging: `--icon-png out.png [size]` (256 px unless given).
             if let Some(out) = args.next() {
-                let ic = icon_sized(256);
+                let size = args.clone().next().and_then(|s| s.parse::<u32>().ok()).filter(|n| (16..=1024).contains(n));
+                if size.is_some() {
+                    args.next();
+                }
+                let ic = icon_sized(size.unwrap_or(256));
                 if let Some(img) = image::RgbaImage::from_raw(ic.width, ic.height, ic.rgba) {
                     let _ = img.save(out);
                 }
@@ -442,26 +448,51 @@ fn main() -> eframe::Result {
         }
     }
 
-    #[allow(unused_mut)]
-    let mut options = eframe::NativeOptions { viewport, centered: true, ..Default::default() };
-    #[cfg(target_os = "macos")]
-    if screenshot.is_some() {
-        options.event_loop_builder = Some(Box::new(|b| {
-            use winit::platform::macos::EventLoopBuilderExtMacOS;
-            b.with_activate_ignoring_other_apps(false);
-        }));
-    }
-
     // Linux: say which app this is to the desktop's portal first (hotkeys, accent colour...).
     #[cfg(target_os = "linux")]
     portal::register_app();
     // The desktop's accent colour (Linux), before the first frame is drawn with it.
     look::read_system_accent();
-    eframe::run_native(
-        "Snagster",
-        options,
-        Box::new(move |cc| Ok(Box::new(app::SnagApp::new(cc, screenshot, open)))),
-    )
+    // Direct3D first on Windows, OpenGL when it can't start (see drawing.rs). A renderer that
+    // fails before the window opens is noted in crash.log and the next one is tried; a failure
+    // after the window was open is passed on as before.
+    let backends = drawing::order_here();
+    let opened = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let mut result = Ok(());
+    for (i, backend) in backends.iter().enumerate() {
+        #[allow(unused_mut)]
+        let mut options = eframe::NativeOptions { viewport: viewport.clone(), centered: true, ..Default::default() };
+        drawing::apply(&mut options, *backend);
+        #[cfg(target_os = "macos")]
+        if screenshot.is_some() {
+            options.event_loop_builder = Some(Box::new(|b| {
+                use winit::platform::macos::EventLoopBuilderExtMacOS;
+                b.with_activate_ignoring_other_apps(false);
+            }));
+        }
+        let (shot, file, flag) = (screenshot.clone(), open.clone(), opened.clone());
+        result = eframe::run_native(
+            "Snagster",
+            options,
+            Box::new(move |cc| {
+                flag.store(true, std::sync::atomic::Ordering::Relaxed);
+                drawing::note(cc);
+                Ok(Box::new(app::SnagApp::new(cc, shot, file)))
+            }),
+        );
+        let Err(e) = &result else { break };
+        if opened.load(std::sync::atomic::Ordering::Relaxed) || i + 1 == backends.len() {
+            break;
+        }
+        append_crash_log(&format!(
+            "{} Snagster {} couldn't draw with {} ({e}); trying {}\n",
+            chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+            env!("CARGO_PKG_VERSION"),
+            backend.name(),
+            backends[i + 1].name()
+        ));
+    }
+    result
 }
 
 /// The word after `name` on the command line (`--port 8080` gives "8080").
