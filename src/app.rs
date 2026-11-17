@@ -385,6 +385,9 @@ pub struct SnagApp {
     mini_since: Instant,
     /// When the recording bar opened (its size is asked for again in the first moments).
     mini_entered: Instant,
+    /// Where the recording bar's buttons were last frame: a press there is a click, never a
+    /// drag of the bar.
+    mini_buttons: Vec<egui::Rect>,
     /// A window size asked for after the recording bar, and since when: asked again until the
     /// window has it (Wayland may apply an older size after it).
     size_wanted: Option<(Vec2, Instant)>,
@@ -570,6 +573,7 @@ impl SnagApp {
             mini: None,
             mini_since: Instant::now(),
             mini_entered: Instant::now(),
+            mini_buttons: Vec::new(),
             size_wanted: None,
             mini_paused: None,
             mini_restore: None,
@@ -3794,7 +3798,11 @@ impl SnagApp {
         let ctx = ui.ctx().clone();
         // A video counts from its first picture (on Wayland the desktop's "Share screen" dialog
         // comes first).
-        let waiting = self.mini == Some(Mini::Video) && !crate::video::recording_live();
+        let waiting = match self.mini {
+            Some(Mini::Video) => !crate::video::recording_live(),
+            Some(Mini::Gif) => !capture::gif_live(),
+            _ => false,
+        };
         if waiting {
             self.mini_since = Instant::now();
             ctx.request_repaint_after(Duration::from_millis(200));
@@ -3809,16 +3817,20 @@ impl SnagApp {
             ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(MINI_BAR_SIZE));
         }
         // The bar can be dragged by its free space (a Wayland app can't place its own window).
-        let bg = ui.interact(ui.max_rect(), egui::Id::unique("mini-bar-drag"), Sense::drag());
-        if bg.drag_started() {
+        // (Click and drag: the drag starts once the pointer moves, so a press on Stop isn't
+        // handed to the desktop as a window move, which swallowed the click.)
+        let bg = ui.interact(ui.max_rect(), ui.make_persistent_id("mini-bar-drag"), Sense::click_and_drag());
+        if bg.drag_started() && bar_drag_allowed(ctx.input(|i| i.pointer.press_origin()), &self.mini_buttons) {
             ctx.send_viewport_cmd(egui::ViewportCommand::StartDrag);
         }
+        let mut buttons = Vec::new();
         ui.horizontal_centered(|ui| {
             ui.add_space(10.0);
             let blink = (self.mini_since.elapsed().as_millis() / 500) % 2 == 0;
             let (r, _) = ui.allocate_exact_size(vec2(14.0, 14.0), Sense::hover());
             ui.painter().circle_filled(r.center(), 6.0, if blink { Color32::from_rgb(229, 72, 77) } else { Color32::from_rgb(120, 40, 44) });
             let text = match self.mini {
+                Some(Mini::Gif) if waiting => "Waiting for screen sharing...".to_string(),
                 Some(Mini::Gif) => format!("Recording GIF  {}:{:02}", secs / 60, secs % 60),
                 Some(Mini::Video) if self.paused() => "Paused".to_string(),
                 Some(Mini::Video) if waiting => "Waiting for screen sharing...".to_string(),
@@ -3843,7 +3855,9 @@ impl SnagApp {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(10.0);
                 let stop = egui::Button::new(RichText::new(crate::i18n::t("Stop")).color(Color32::WHITE).strong()).fill(Color32::from_rgb(229, 72, 77));
-                if ui.add(stop).clicked() {
+                let stop = ui.add(stop);
+                buttons.push(stop.rect);
+                if stop.clicked() {
                     match self.mini {
                         Some(Mini::Steps) => self.stop_steps(&ctx),
                         _ => self.stop_job(),
@@ -3851,12 +3865,15 @@ impl SnagApp {
                 }
                 if self.mini == Some(Mini::Video) {
                     let label = if self.paused() { "Resume" } else { "Pause" };
-                    if ui.button(RichText::new(label).strong()).clicked() {
+                    let pause = ui.button(RichText::new(label).strong());
+                    buttons.push(pause.rect);
+                    if pause.clicked() {
                         self.toggle_pause();
                     }
                 }
             });
         });
+        self.mini_buttons = buttons;
         ctx.request_repaint_after(Duration::from_millis(250));
     }
 
@@ -3943,6 +3960,10 @@ impl SnagApp {
                     }
                 }
             }
+        }
+        if let Some(m) = ctx.input(|i| i.viewport().monitor_size) {
+            let ppp = ctx.pixels_per_point();
+            capture::remember_window_screen(((m.x * ppp).round() as u32, (m.y * ppp).round() as u32));
         }
         let full = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
         if !full && self.mini.is_none() && self.overlay.is_none() && self.size_wanted.is_none() {
@@ -5428,6 +5449,11 @@ impl SnagApp {
     }
 }
 
+/// Whether a press at `press` may move the recording bar: not when it was on one of its buttons.
+fn bar_drag_allowed(press: Option<egui::Pos2>, buttons: &[egui::Rect]) -> bool {
+    press.is_some_and(|p| !buttons.iter().any(|r| r.expand(2.0).contains(p)))
+}
+
 /// The recording bar's size.
 const MINI_BAR_SIZE: Vec2 = vec2(420.0, 56.0);
 
@@ -5452,6 +5478,22 @@ pub(crate) fn overlay_show_commands(at: Pos2) -> Vec<egui::ViewportCommand> {
 
 #[cfg(test)]
 mod tests {
+    /// The first click on the recording bar's Stop was lost on GNOME: the press started a
+    /// window move, and the desktop kept the release. A press on a button never moves the bar.
+    #[test]
+    fn a_press_on_the_bars_buttons_never_moves_it() {
+        let stop = egui::Rect::from_min_max(pos2(330.0, 14.0), pos2(370.0, 42.0));
+        let pause = egui::Rect::from_min_max(pos2(270.0, 14.0), pos2(320.0, 42.0));
+        let buttons = [stop, pause];
+        assert!(!bar_drag_allowed(Some(pos2(350.0, 28.0)), &buttons));
+        assert!(!bar_drag_allowed(Some(pos2(290.0, 20.0)), &buttons));
+        // Right at a button's edge still counts as the button.
+        assert!(!bar_drag_allowed(Some(pos2(371.0, 28.0)), &buttons));
+        // The free space moves it; no press, no move.
+        assert!(bar_drag_allowed(Some(pos2(120.0, 28.0)), &buttons));
+        assert!(!bar_drag_allowed(None, &buttons));
+    }
+
     /// The recording bar re-asks for its size while the window is still the old size (Wayland
     /// restored it after leaving full screen), and stops asking after a few seconds.
     #[test]

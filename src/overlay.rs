@@ -253,6 +253,15 @@ impl Overlay {
         if let OverlayMode::Pick(p) = self.mode { Some(p) } else { None }
     }
 
+    /// Space: the whole screen. A capture takes it straight away; anything else (a recording,
+    /// the all-in-one toolbar, a GIF...) gets it as the chosen area.
+    fn whole_screen(&mut self, full: Rect) -> Outcome {
+        match self.purpose() {
+            None | Some(PickPurpose::Capture) => Outcome::FullScreen,
+            _ => self.finish(full, CutShape::Rect, Vec::new()),
+        }
+    }
+
     fn finish(&mut self, rect: Rect, shape: CutShape, points: Vec<Pos2>) -> Outcome {
         let action = match self.purpose() {
             Some(PickPurpose::AllInOne) => {
@@ -353,14 +362,17 @@ impl Overlay {
                                 if b(ui, "Copy", "Straight to the clipboard") {
                                     picked = Some(AreaAction::Copy);
                                 }
-                                if b(ui, "Scroll down", "Keep scrolling and stitch a long picture") {
-                                    picked = Some(AreaAction::Scroll { horizontal: false });
-                                }
-                                if b(ui, "Scroll sideways", "A wide panoramic picture") {
-                                    picked = Some(AreaAction::Scroll { horizontal: true });
-                                }
-                                if b(ui, "Scroll yourself", "Snagster keeps capturing while you scroll; press Stop when done") {
-                                    picked = Some(AreaAction::ManualScroll);
+                                // (Not on Wayland: scrolling capture can't work there yet.)
+                                if crate::capture::scrolling_supported() {
+                                    if b(ui, "Scroll down", "Keep scrolling and stitch a long picture") {
+                                        picked = Some(AreaAction::Scroll { horizontal: false });
+                                    }
+                                    if b(ui, "Scroll sideways", "A wide panoramic picture") {
+                                        picked = Some(AreaAction::Scroll { horizontal: true });
+                                    }
+                                    if b(ui, "Scroll yourself", "Snagster keeps capturing while you scroll; press Stop when done") {
+                                        picked = Some(AreaAction::ManualScroll);
+                                    }
                                 }
                                 if b(ui, "Record GIF", "Record this area as an animated GIF") {
                                     picked = Some(AreaAction::RecordGif);
@@ -422,7 +434,7 @@ impl Overlay {
                 }
             }
             if ui.input(|i| i.key_pressed(Key::Space)) {
-                return Outcome::FullScreen;
+                return self.whole_screen(full);
             }
         }
 
@@ -966,6 +978,26 @@ mod tests {
         }
         let mut w = Overlay::new(OverlayMode::Window, CutShape::Rect, shot(200, 100, (0, 0), Vec::new()));
         assert!(matches!(w.finish(area, CutShape::Rect, Vec::new()), Outcome::Area { action: AreaAction::Capture, .. }));
+    }
+
+    /// Space in "Choose the area to record" took a picture of the screen instead of recording it.
+    #[test]
+    fn space_picks_the_whole_screen_for_what_the_pick_is_for() {
+        let full = r(0.0, 0.0, 200.0, 100.0);
+        assert!(matches!(pick(PickPurpose::Capture).whole_screen(full), Outcome::FullScreen));
+        match pick(PickPurpose::RecordGif).whole_screen(full) {
+            Outcome::Area { rect, shape, action, .. } => {
+                assert_eq!(rect, full);
+                assert_eq!(shape, CutShape::Rect);
+                assert_eq!(action, AreaAction::RecordGif);
+            }
+            _ => panic!("a recording should get the whole screen as its area"),
+        }
+        assert!(matches!(pick(PickPurpose::GrabText).whole_screen(full), Outcome::Area { action: AreaAction::GrabText, .. }));
+        // The all-in-one toolbar opens around the whole screen.
+        let mut o = pick(PickPurpose::AllInOne);
+        assert!(matches!(o.whole_screen(full), Outcome::Pending));
+        assert_eq!(o.chosen.as_ref().map(|c| c.0), Some(full));
     }
 
     #[test]
