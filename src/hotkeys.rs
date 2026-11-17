@@ -582,7 +582,8 @@ mod tests {
             ],
             vec![Preset { combo: f1.clone(), ..Default::default() }],
         );
-        assert_eq!(duplicates(&s), vec!["Ctrl + F1".to_string()]);
+        // Labelled the way this system writes it ("Ctrl + F1", "⌃F1" on a Mac).
+        assert_eq!(duplicates(&s), vec![f1.label()]);
     }
 
     fn registered(target: Target, id: u32, ok: bool, hooked: bool) -> Registered {

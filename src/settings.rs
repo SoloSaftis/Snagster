@@ -1567,7 +1567,9 @@ mod tests {
         // The saved binding wins over the default one and stays first.
         assert_eq!(s.bindings[0].action, Action::Screen);
         assert_eq!(s.binding(Action::Screen), Combo::new(false, true, false, "F1"));
-        assert_eq!(s.binding(Action::AllInOne), Combo::new(false, false, false, "Print Screen"));
+        // The others get this system's defaults (Print Screen; Shift-Command-2 on a Mac).
+        let default_all_in_one = default_bindings().into_iter().find(|b| b.action == Action::AllInOne).map(|b| b.combo);
+        assert_eq!(Some(s.binding(Action::AllInOne)), default_all_in_one);
         for a in Action::ALL {
             assert_eq!(s.bindings.iter().filter(|b| b.action == a).count(), 1, "{a:?}");
         }
