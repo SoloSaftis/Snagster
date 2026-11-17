@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Ez az asztali környezet csak bővítménnyel jeleníti meg az értesítési terület ikonjait, ezért az ablak bezárása kilép a Snagsterből.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "A Snagsternek engedély kell a képernyő rögzítéséhez: Rendszerbeállítások > Adatvédelem és biztonság > Képernyő- és rendszerhangfelvétel (régebbi macOS-en Képernyőfelvétel), ott kapcsolja be a Snagstert, majd válassza a Kilépés és újranyitás lehetőséget.",
   "Capture panel…": "Rögzítés panel…",
-  "Open editor": "Szerkesztő megnyitása"
+  "Open editor": "Szerkesztő megnyitása",
+  "Main menu": "Főmenü",
+  "Asking the desktop for the hotkeys…": "Gyorsbillentyűk lekérdezése az asztali környezettől…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} gyorsbillentyűt az asztali környezet állít be. A billentyűiket az asztali környezet billentyűzetbeállításaiban módosíthatja.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ez az asztali környezet nem engedi, hogy az alkalmazások gyorsbillentyűket állítsanak be. Vegyen fel az asztali környezet billentyűzetbeállításaiban egy parancsikont, amely ezt futtatja: {command} (vagy AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Az asztali környezet nem állította be a gyorsbillentyűket: {error}"
  }
 }

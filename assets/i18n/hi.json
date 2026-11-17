@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "यह डेस्कटॉप ट्रे आइकन केवल एक्सटेंशन के साथ दिखाता है, इसलिए विंडो बंद करने से Snagster बंद हो जाता है।",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "स्क्रीन रिकॉर्ड करने के लिए Snagster को अनुमति चाहिए: सिस्टम सेटिंग्स > गोपनीयता और सुरक्षा > स्क्रीन और सिस्टम ऑडियो रिकॉर्डिंग (पुराने macOS पर स्क्रीन रिकॉर्डिंग), फिर Snagster चालू करें और \"बंद करें और फिर से खोलें\" चुनें।",
   "Capture panel…": "कैप्चर पैनल…",
-  "Open editor": "संपादक खोलें"
+  "Open editor": "संपादक खोलें",
+  "Main menu": "मुख्य मेन्यू",
+  "Asking the desktop for the hotkeys…": "डेस्कटॉप से हॉटकी पूछी जा रही हैं…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} हॉटकी डेस्कटॉप के ज़रिए सेट हैं। उनकी कुंजियाँ डेस्कटॉप की कीबोर्ड सेटिंग्स में बदलें।",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "यह डेस्कटॉप ऐप्स को हॉटकी सेट करने नहीं देता। डेस्कटॉप की कीबोर्ड सेटिंग्स में एक शॉर्टकट जोड़ें जो यह चलाए: {command} (या AllInOne, Window, Screen, RecordGif…)।",
+  "The desktop didn't set the hotkeys: {error}": "डेस्कटॉप ने हॉटकी सेट नहीं कीं: {error}"
  }
 }

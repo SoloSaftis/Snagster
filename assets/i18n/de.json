@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Diese Arbeitsumgebung zeigt Symbole im Infobereich nur mit einer Erweiterung an, daher beendet das Schließen des Fensters Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster braucht die Erlaubnis zur Bildschirmaufnahme: Systemeinstellungen > Datenschutz & Sicherheit > Bildschirm- & Systemaudioaufnahme (Bildschirmaufnahme bei älteren macOS-Versionen), dann Snagster einschalten und „Beenden & erneut öffnen“ wählen.",
   "Capture panel…": "Aufnahmeleiste…",
-  "Open editor": "Editor öffnen"
+  "Open editor": "Editor öffnen",
+  "Main menu": "Hauptmenü",
+  "Asking the desktop for the hotkeys…": "Die Desktop-Umgebung wird nach den Tastenkombinationen gefragt…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} Tastenkombinationen werden über die Desktop-Umgebung festgelegt. Ändern Sie ihre Tasten in den Tastatureinstellungen der Desktop-Umgebung.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Diese Desktop-Umgebung erlaubt Apps nicht, Tastenkombinationen festzulegen. Fügen Sie in den Tastatureinstellungen der Desktop-Umgebung eine Tastenkombination hinzu, die Folgendes ausführt: {command} (oder AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Die Desktop-Umgebung hat die Tastenkombinationen nicht festgelegt: {error}"
  }
 }

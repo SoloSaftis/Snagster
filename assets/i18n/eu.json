@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Mahaigain honek erretiluko ikonoak hedapen batekin soilik erakusten ditu; beraz, leihoa ixteak Snagster amaitzen du.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster-ek baimena behar du pantaila grabatzeko: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording macOS zaharragoetan), gero aktibatu Snagster eta aukeratu Quit & Reopen.",
   "Capture panel…": "Kaptura-panela…",
-  "Open editor": "Ireki editorea"
+  "Open editor": "Ireki editorea",
+  "Main menu": "Menu nagusia",
+  "Asking the desktop for the hotkeys…": "Mahaigainari laster-teklak eskatzen…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} laster-tekla mahaigainaren bidez ezartzen dira. Aldatu haien teklak mahaigainaren teklatuaren ezarpenetan.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Mahaigain honek ez die aplikazioei laster-teklak ezartzen uzten. Gehitu lasterbide bat mahaigainaren teklatuaren ezarpenetan, hau exekutatzen duena: {command} (edo AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Mahaigainak ez ditu laster-teklak ezarri: {error}"
  }
 }

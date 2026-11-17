@@ -973,5 +973,10 @@
  "This desktop shows tray icons only with an extension, so closing the window ends Snagster.",
  "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.",
  "Capture panel…",
- "Open editor"
+ "Open editor",
+ "Main menu",
+ "Asking the desktop for the hotkeys…",
+ "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.",
+ "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).",
+ "The desktop didn't set the hotkeys: {error}"
 ]

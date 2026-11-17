@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "ეს სამუშაო მაგიდა სისტემური უჯრის ხატულებს მხოლოდ გაფართოებით აჩვენებს, ამიტომ ფანჯრის დახურვა Snagster-ს ამთავრებს.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster-ს ეკრანის ჩაწერის ნებართვა სჭირდება: სისტემის პარამეტრები > კონფიდენციალურობა და უსაფრთხოება > ეკრანისა და სისტემის აუდიოს ჩაწერა (macOS-ის ძველ ვერსიებში ეკრანის ჩაწერა), შემდეგ ჩართეთ Snagster და აირჩიეთ „გასვლა და ხელახლა გახსნა“.",
   "Capture panel…": "გადაღების პანელი…",
-  "Open editor": "რედაქტორის გახსნა"
+  "Open editor": "რედაქტორის გახსნა",
+  "Main menu": "მთავარი მენიუ",
+  "Asking the desktop for the hotkeys…": "დესკტოპს ცხელი კლავიშები ეკითხება…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ცხელი კლავიში დესკტოპის საშუალებით არის დაყენებული. შეცვალეთ მათი კლავიშები დესკტოპის კლავიატურის პარამეტრებში.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "ეს დესკტოპი აპებს ცხელი კლავიშების დაყენების უფლებას არ აძლევს. დესკტოპის კლავიატურის პარამეტრებში დაამატეთ მალსახმობი, რომელიც გაუშვებს: {command} (ან AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "დესკტოპმა ცხელი კლავიშები არ დააყენა: {error}"
  }
 }

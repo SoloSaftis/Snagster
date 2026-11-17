@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Este escritorio solo muestra íconos en la bandeja con una extensión, así que cerrar la ventana cierra Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster necesita permiso para grabar la pantalla: Configuración del Sistema > Privacidad y seguridad > Grabación de pantalla y audio del sistema (Grabación de pantalla en versiones anteriores de macOS); luego activa Snagster y elige Salir y volver a abrir.",
   "Capture panel…": "Panel de captura…",
-  "Open editor": "Abrir el editor"
+  "Open editor": "Abrir el editor",
+  "Main menu": "Menú principal",
+  "Asking the desktop for the hotkeys…": "Consultando al escritorio los atajos…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} atajos se establecen a través del escritorio. Cambia sus teclas en la configuración del teclado del escritorio.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Este escritorio no permite que las aplicaciones establezcan atajos. Agrega un atajo en la configuración del teclado del escritorio que ejecute: {command} (o AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "El escritorio no estableció los atajos: {error}"
  }
 }

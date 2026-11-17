@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Toto prostředí zobrazuje ikony v systémové liště jen s rozšířením, takže zavřením okna se Snagster ukončí.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster potřebuje oprávnění k záznamu obrazovky: Nastavení systému > Soukromí a zabezpečení > Záznam obrazovky a systémového zvuku (ve starších verzích macOS Záznam obrazovky), pak zapněte Snagster a zvolte Ukončit a znovu otevřít.",
   "Capture panel…": "Panel zachycení…",
-  "Open editor": "Otevřít editor"
+  "Open editor": "Otevřít editor",
+  "Main menu": "Hlavní nabídka",
+  "Asking the desktop for the hotkeys…": "Dotazuji se plochy na klávesové zkratky…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Počet klávesových zkratek nastavených přes plochu: {count}. Jejich klávesy změníte v nastavení klávesnice plochy.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Tato plocha aplikacím nedovoluje nastavovat klávesové zkratky. V nastavení klávesnice plochy přidejte zkratku, která spustí: {command} (nebo AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Plocha klávesové zkratky nenastavila: {error}"
  }
 }

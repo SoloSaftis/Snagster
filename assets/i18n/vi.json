@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Môi trường desktop này chỉ hiện biểu tượng khay hệ thống khi có tiện ích mở rộng, nên đóng cửa sổ sẽ thoát Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster cần quyền ghi màn hình: Cài đặt hệ thống > Quyền riêng tư & Bảo mật > Ghi màn hình & âm thanh hệ thống (Ghi màn hình trên macOS cũ hơn), sau đó bật Snagster và chọn Thoát & mở lại.",
   "Capture panel…": "Bảng chụp…",
-  "Open editor": "Mở trình chỉnh sửa"
+  "Open editor": "Mở trình chỉnh sửa",
+  "Main menu": "Menu chính",
+  "Asking the desktop for the hotkeys…": "Đang yêu cầu phím tắt từ môi trường màn hình nền…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} phím tắt được đặt thông qua môi trường màn hình nền. Hãy đổi phím trong phần cài đặt bàn phím của môi trường màn hình nền.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Môi trường màn hình nền này không cho ứng dụng đặt phím tắt. Hãy thêm một phím tắt trong phần cài đặt bàn phím của môi trường màn hình nền để chạy: {command} (hoặc AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Môi trường màn hình nền không đặt được phím tắt: {error}"
  }
 }

@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Ka whakaatu tēnei papamahi i ngā tohu paepae mā te toronga anake, nō reira ka kati te matapihi, ka mutu a Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Me whai whakaaetanga a Snagster hei hopu i te mata: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording i ngā macOS tawhito), kātahi ka whakakā i a Snagster, ka kōwhiri i Quit & Reopen.",
   "Capture panel…": "Papa hopu…",
-  "Open editor": "Huakina te kaiwhakatika"
+  "Open editor": "Huakina te kaiwhakatika",
+  "Main menu": "Tahua matua",
+  "Asking the desktop for the hotkeys…": "E patapatai ana ki te papamahi mō ngā ara poto…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ngā ara poto kua tautuhia mā te papamahi. Whakarerekētia ō rātou kī i ngā tautuhinga papapātuhi o te papamahi.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Kāore tēnei papamahi e whakaae kia tautuhia e ngā taupānga ngā ara poto. Tāpirihia he ara poto ki ngā tautuhinga papapātuhi o te papamahi hei whakahaere i tēnei: {command} (me AllInOne, Window, Screen, RecordGif rānei…).",
+  "The desktop didn't set the hotkeys: {error}": "Kīhai te papamahi i tautuhi i ngā ara poto: {error}"
  }
 }

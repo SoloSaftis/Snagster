@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Ky desktop i shfaq ikonat në zonën e njoftimeve vetëm me një shtesë, prandaj mbyllja e dritares e mbyll Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster ka nevojë për leje për të regjistruar ekranin: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording në versionet më të vjetra të macOS), pastaj aktivizoni Snagster dhe zgjidhni Quit & Reopen.",
   "Capture panel…": "Paneli i kapjes…",
-  "Open editor": "Hap redaktorin"
+  "Open editor": "Hap redaktorin",
+  "Main menu": "Menyja kryesore",
+  "Asking the desktop for the hotkeys…": "Po pyetet desktopi për tastet e shpejta…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} taste të shpejta caktohen përmes desktopit. Ndryshoji tastet e tyre te cilësimet e tastierës së desktopit.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ky desktop nuk i lejon aplikacionet të caktojnë taste të shpejta. Shto te cilësimet e tastierës së desktopit një shkurtore që nis: {command} (ose AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Desktopi nuk i caktoi tastet e shpejta: {error}"
  }
 }

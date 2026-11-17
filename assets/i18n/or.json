@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "ଏହି ଡେସ୍କଟପ୍ କେବଳ ଏକ୍ସଟେନସନ୍ ସହିତ ଟ୍ରେ ଆଇକନ୍ ଦେଖାଏ, ତେଣୁ ୱିଣ୍ଡୋ ବନ୍ଦ କଲେ Snagster ବନ୍ଦ ହୋଇଯାଏ।",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "ସ୍କ୍ରିନ୍ ରେକର୍ଡ କରିବାକୁ Snagster ର ଅନୁମତି ଆବଶ୍ୟକ: System Settings > Privacy & Security > Screen & System Audio Recording (ପୁରୁଣା macOS ରେ Screen Recording), ତାପରେ Snagster ଚାଲୁ କରନ୍ତୁ ଏବଂ Quit & Reopen ବାଛନ୍ତୁ।",
   "Capture panel…": "କ୍ୟାପଚର୍ ପ୍ୟାନେଲ୍…",
-  "Open editor": "ଏଡିଟର୍ ଖୋଲନ୍ତୁ"
+  "Open editor": "ଏଡିଟର୍ ଖୋଲନ୍ତୁ",
+  "Main menu": "ମୁଖ୍ୟ ମେନୁ",
+  "Asking the desktop for the hotkeys…": "ହଟ୍‌କି ପାଇଁ ଡେସ୍କଟପ୍‌କୁ ପଚରାଯାଉଛି…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ହଟ୍‌କି ଡେସ୍କଟପ୍ ମାଧ୍ୟମରେ ସେଟ୍ ହୋଇଛି। ସେଗୁଡ଼ିକର କି ଡେସ୍କଟପ୍‌ର କୀବୋର୍ଡ୍ ସେଟିଂସ୍‌ରେ ବଦଳାନ୍ତୁ।",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "ଏହି ଡେସ୍କଟପ୍ ଆପ୍‌ଗୁଡ଼ିକୁ ହଟ୍‌କି ସେଟ୍ କରିବାକୁ ଦିଏ ନାହିଁ। ଡେସ୍କଟପ୍‌ର କୀବୋର୍ଡ୍ ସେଟିଂସ୍‌ରେ ଏହା ଚଲାଉଥିବା ଏକ ସର୍ଟକଟ୍ ଯୋଡ଼ନ୍ତୁ: {command} (କିମ୍ବା AllInOne, Window, Screen, RecordGif…)।",
+  "The desktop didn't set the hotkeys: {error}": "ଡେସ୍କଟପ୍ ହଟ୍‌କି ସେଟ୍ କଲା ନାହିଁ: {error}"
  }
 }

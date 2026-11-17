@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Aquest escriptori només mostra icones a la safata amb una extensió, així que en tancar la finestra es tanca Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster necessita permís per a gravar la pantalla: Configuració del Sistema > Privacitat i seguretat > Gravació de la pantalla i l'àudio del sistema (Gravació de la pantalla en versions anteriors de macOS), després activa Snagster i tria Sortir i tornar a obrir.",
   "Capture panel…": "Plafó de captura…",
-  "Open editor": "Obri l'editor"
+  "Open editor": "Obri l'editor",
+  "Main menu": "Menú principal",
+  "Asking the desktop for the hotkeys…": "Demanant les dreceres a l'escriptori…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} dreceres s'establixen mitjançant l'escriptori. Canvieu-ne les tecles en la configuració del teclat de l'escriptori.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Este escriptori no permet que les aplicacions establisquen dreceres. Afegiu una drecera en la configuració del teclat de l'escriptori que execute: {command} (o AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "L'escriptori no ha establit les dreceres: {error}"
  }
 }

@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Bu masaüstü sistem tepsisi simgelerini yalnızca bir uzantıyla gösterir; bu yüzden pencereyi kapatmak Snagster'ı sonlandırır.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster'ın ekranı kaydetmek için izne ihtiyacı var: Sistem Ayarları > Gizlilik ve Güvenlik > Ekran ve Sistem Sesi Kaydı (eski macOS sürümlerinde Ekran Kaydı), ardından Snagster'ı açın ve Çık ve Yeniden Aç'ı seçin.",
   "Capture panel…": "Yakalama paneli…",
-  "Open editor": "Düzenleyiciyi aç"
+  "Open editor": "Düzenleyiciyi aç",
+  "Main menu": "Ana menü",
+  "Asking the desktop for the hotkeys…": "Masaüstünden kısayol tuşları isteniyor…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} kısayol tuşu masaüstü üzerinden ayarlandı. Tuşlarını masaüstünün klavye ayarlarından değiştirin.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Bu masaüstü uygulamaların kısayol tuşu ayarlamasına izin vermiyor. Masaüstünün klavye ayarlarına şunu çalıştıran bir kısayol ekleyin: {command} (veya AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Masaüstü kısayol tuşlarını ayarlamadı: {error}"
  }
 }

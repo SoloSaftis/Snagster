@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "لا يعرض سطح المكتب هذا أيقونات علبة النظام إلا بامتداد، لذا يؤدي إغلاق النافذة إلى إنهاء Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "يحتاج Snagster إلى إذن لتسجيل الشاشة: إعدادات النظام > الخصوصية والأمن > تسجيل الشاشة وصوت النظام (تسجيل الشاشة في إصدارات macOS الأقدم)، ثم شغّل Snagster واختر إنهاء وإعادة فتح.",
   "Capture panel…": "لوحة الالتقاط…",
-  "Open editor": "فتح المحرر"
+  "Open editor": "فتح المحرر",
+  "Main menu": "القائمة الرئيسية",
+  "Asking the desktop for the hotkeys…": "جارٍ سؤال سطح المكتب عن مفاتيح الاختصار…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "تم تعيين {count} من مفاتيح الاختصار عبر سطح المكتب. غيّر مفاتيحها في إعدادات لوحة المفاتيح لسطح المكتب.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "لا يسمح سطح المكتب هذا للتطبيقات بتعيين مفاتيح الاختصار. أضف اختصارًا في إعدادات لوحة المفاتيح لسطح المكتب يشغّل: {command} (أو AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "لم يعيّن سطح المكتب مفاتيح الاختصار: {error}"
  }
 }

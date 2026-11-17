@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Бу эш өстәле хәбәрләр өлкәсендәге значокларны киңәйтү белән генә күрсәтә, шуңа күрә тәрәзәне ябу Snagster эшен тәмамлый.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster-ка экранны язарга рөхсәт кирәк: System Settings > Privacy & Security > Screen & System Audio Recording (иске macOS-та Screen Recording), аннары Snagster-ны кабызыгыз һәм Quit & Reopen сайлагыз.",
   "Capture panel…": "Төшерү панеле…",
-  "Open editor": "Редакторны ачу"
+  "Open editor": "Редакторны ачу",
+  "Main menu": "Төп меню",
+  "Asking the desktop for the hotkeys…": "Эш өстәленнән кайнар төймәләр сорала…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} кайнар төймә эш өстәле аша көйләнгән. Аларның төймәләрен эш өстәленең клавиатура көйләүләрендә үзгәртегез.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Бу эш өстәле кушымталарга кайнар төймәләр көйләргә рөхсәт итми. Эш өстәленең клавиатура көйләүләрендә моны эшләтүче ярлык өстәгез: {command} (яки AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Эш өстәле кайнар төймәләрне көйләмәде: {error}"
  }
 }

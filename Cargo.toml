@@ -83,7 +83,11 @@ libc = "0.2"
 # The desktop's portals (Screenshot, ScreenCast) and PipeWire for the screen share: how Snagster
 # sees the screen on Wayland and inside a Flatpak. The same versions and features xcap already
 # brings (ashpd MIT, pipewire MIT, pollster Apache-2.0/MIT), so nothing new in the tree.
-ashpd = { version = "0.14", default-features = false, features = ["async-io", "pipewire", "screencast", "screenshot"] }
+ashpd = { version = "0.14", default-features = false, features = ["async-io", "global_shortcuts", "pipewire", "screencast", "screenshot", "settings"] }
+# Global hotkeys on Wayland (the GlobalShortcuts portal): waiting for a key and a timer at once.
+# Both already in the tree through ashpd and zbus (MIT/Apache-2.0).
+futures-util = { version = "0.3", default-features = false }
+async-io = "2"
 pipewire = "0.10"
 pollster = "1"
 # The Adwaita-style title bar winit draws on GNOME under Wayland (GNOME has no server-side

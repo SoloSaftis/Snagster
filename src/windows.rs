@@ -1,7 +1,7 @@
 //! Snagster's extra windows: settings (with hotkeys and presets), library, GIF recordings,
 //! timer, grabbed text, help, and pinned pictures.
 
-use crate::app::{ACCENT, IntervalJob, SettingsTab, SnagApp, TEXT_DIM, logo, rgb};
+use crate::app::{accent, IntervalJob, SettingsTab, SnagApp, TEXT_DIM, logo, rgb};
 use crate::capture::CaptureKind;
 use crate::doc::{Doc, Tool};
 use crate::effects::Effect;
@@ -524,7 +524,7 @@ impl SnagApp {
     fn hotkeys_tab(&mut self, ui: &mut egui::Ui) {
         ui.checkbox(&mut self.settings.hotkeys_enabled, crate::i18n::t("Use global hotkeys (they work while Snagster is in the background)"));
         ui.checkbox(&mut self.settings.override_hotkeys, crate::i18n::t("Take over keys another program already uses (for example Print Screen)"));
-        ui.label(RichText::new(&self.hotkeys.summary).color(TEXT_DIM));
+        ui.label(RichText::new(self.hotkeys.summary()).color(TEXT_DIM));
         let dups = hotkeys::duplicates(&self.settings);
         if !dups.is_empty() {
             ui.label(RichText::new(format!("Used twice (only the first one works): {}", dups.join(", "))).color(Color32::from_rgb(255, 170, 60)));
@@ -816,7 +816,7 @@ impl SnagApp {
             });
             if let Some(job) = &self.interval {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(format!("{} captures left", job.left)).color(ACCENT));
+                    ui.label(RichText::new(format!("{} captures left", job.left)).color(accent()));
                     if ui.button(crate::i18n::t("Stop")).clicked() {
                         stop_interval = true;
                     }
@@ -836,7 +836,7 @@ impl SnagApp {
             });
             if let Some((t, _)) = &self.schedule {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(format!("Capture scheduled at {}", t.format("%H:%M"))).color(ACCENT));
+                    ui.label(RichText::new(format!("Capture scheduled at {}", t.format("%H:%M"))).color(accent()));
                     if ui.button(crate::i18n::t("Cancel")).clicked() {
                         cancel_schedule = true;
                     }
@@ -1039,7 +1039,7 @@ impl SnagApp {
                             TEXT_DIM,
                         );
                         if !item.meta.tags.is_empty() {
-                            p.text(pos2(rect.min.x + 8.0, rect.min.y + 156.0), egui::Align2::LEFT_TOP, format!("# {}", item.meta.tags.join(", ")), egui::FontId::proportional(11.0), ACCENT);
+                            p.text(pos2(rect.min.x + 8.0, rect.min.y + 156.0), egui::Align2::LEFT_TOP, format!("# {}", item.meta.tags.join(", ")), egui::FontId::proportional(11.0), accent());
                         }
                         if resp.double_clicked() || resp.clicked_by(PointerButton::Primary) && ui.input(|i| i.modifiers.ctrl) {
                             open_item = Some(i);
@@ -1322,7 +1322,7 @@ impl SnagApp {
                 let rect = ui.max_rect();
                 let resp = ui.allocate_rect(rect, Sense::click_and_drag());
                 ui.painter().image(tex, rect, Rect::from_min_max(Pos2::ZERO, pos2(1.0, 1.0)), Color32::WHITE);
-                ui.painter().rect_stroke(rect, CornerRadius::ZERO, Stroke::new(1.0, ACCENT), StrokeKind::Inside);
+                ui.painter().rect_stroke(rect, CornerRadius::ZERO, Stroke::new(1.0, accent()), StrokeKind::Inside);
                 if resp.drag_started_by(PointerButton::Primary) {
                     ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
                 }

@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Šis darbalaukis rodo dėklo piktogramas tik su plėtiniu, todėl uždarius langą Snagster baigia darbą.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster reikia leidimo įrašyti ekraną: Sistemos nustatymai > Privatumas ir saugumas > Ekrano ir sistemos garso įrašymas (senesnėse macOS – Ekrano įrašymas), tada įjunkite Snagster ir pasirinkite „Išeiti ir atidaryti iš naujo“.",
   "Capture panel…": "Fiksavimo skydelis…",
-  "Open editor": "Atidaryti redaktorių"
+  "Open editor": "Atidaryti redaktorių",
+  "Main menu": "Pagrindinis meniu",
+  "Asking the desktop for the hotkeys…": "Darbalaukio klausiama dėl sparčiųjų klavišų…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} sparčiųjų klavišų nustatomi per darbalaukį. Jų klavišus keiskite darbalaukio klaviatūros nustatymuose.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Šis darbalaukis neleidžia programoms nustatyti sparčiųjų klavišų. Darbalaukio klaviatūros nustatymuose pridėkite spartųjį klavišą, kuris paleidžia: {command} (arba AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Darbalaukis nenustatė sparčiųjų klavišų: {error}"
  }
 }

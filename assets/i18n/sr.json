@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Ово радно окружење приказује иконе у системској траци само уз проширење, па затварање прозора гаси Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster-у је потребна дозвола за снимање екрана: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording на старијим верзијама macOS-а), затим укључите Snagster и изаберите Quit & Reopen.",
   "Capture panel…": "Панел за снимање…",
-  "Open editor": "Отвори уређивач"
+  "Open editor": "Отвори уређивач",
+  "Main menu": "Главни мени",
+  "Asking the desktop for the hotkeys…": "Тражим пречице од радне површине…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Пречица подешених преко радне површине: {count}. Промените њихове тастере у подешавањима тастатуре радне површине.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ова радна површина не дозвољава апликацијама да подешавају пречице. Додајте у подешавањима тастатуре радне површине пречицу која покреће: {command} (или AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Радна површина није подесила пречице: {error}"
  }
 }

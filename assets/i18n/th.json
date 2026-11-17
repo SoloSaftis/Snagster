@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "เดสก์ท็อปนี้แสดงไอคอนในถาดระบบได้เฉพาะเมื่อมีส่วนขยาย ดังนั้นการปิดหน้าต่างจะปิด Snagster",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster ต้องได้รับอนุญาตให้บันทึกหน้าจอ: การตั้งค่าระบบ > ความเป็นส่วนตัวและความปลอดภัย > การบันทึกหน้าจอและเสียงระบบ (การบันทึกหน้าจอ ใน macOS รุ่นเก่า) จากนั้นเปิด Snagster แล้วเลือก ออกและเปิดใหม่",
   "Capture panel…": "แผงแคปเจอร์…",
-  "Open editor": "เปิดตัวแก้ไข"
+  "Open editor": "เปิดตัวแก้ไข",
+  "Main menu": "เมนูหลัก",
+  "Asking the desktop for the hotkeys…": "กำลังขอปุ่มลัดจากเดสก์ท็อป…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "ปุ่มลัด {count} รายการถูกตั้งค่าผ่านเดสก์ท็อป เปลี่ยนปุ่มได้ในการตั้งค่าแป้นพิมพ์ของเดสก์ท็อป",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "เดสก์ท็อปนี้ไม่อนุญาตให้แอปตั้งปุ่มลัด ให้เพิ่มทางลัดในการตั้งค่าแป้นพิมพ์ของเดสก์ท็อปที่รันคำสั่ง: {command} (หรือ AllInOne, Window, Screen, RecordGif…)",
+  "The desktop didn't set the hotkeys: {error}": "เดสก์ท็อปไม่ได้ตั้งปุ่มลัด: {error}"
  }
 }

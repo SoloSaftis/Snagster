@@ -706,8 +706,8 @@ impl SnagApp {
         let item_rect = |it: &Item| Rect::from_min_max(to_screen(it.x, it.y), to_screen(it.x + it.w, it.y + it.h));
         if let Some(i) = st.selected.filter(|i| *i < scene.items.len()) {
             let r = item_rect(&scene.items[i]);
-            p.rect_stroke(r, CornerRadius::ZERO, Stroke::new(2.0, ACCENT), egui::StrokeKind::Outside);
-            p.rect_filled(Rect::from_center_size(r.right_bottom(), vec2(10.0, 10.0)), CornerRadius::same(2), ACCENT);
+            p.rect_stroke(r, CornerRadius::ZERO, Stroke::new(2.0, accent()), egui::StrokeKind::Outside);
+            p.rect_filled(Rect::from_center_size(r.right_bottom(), vec2(10.0, 10.0)), CornerRadius::same(2), accent());
         }
         if resp.drag_started()
             && let Some(at) = resp.interact_pointer_pos()

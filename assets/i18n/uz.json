@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Bu ish stoli tizim tepsisidagi belgilarni faqat kengaytma bilan ko‘rsatadi, shuning uchun oynani yopish Snagster ishini tugatadi.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster ekranni yozib olish uchun ruxsat talab qiladi: System Settings > Privacy & Security > Screen & System Audio Recording (eski macOS’da Screen Recording), so‘ng Snagster’ni yoqing va Quit & Reopen tugmasini tanlang.",
   "Capture panel…": "Olish paneli…",
-  "Open editor": "Muharrirni ochish"
+  "Open editor": "Muharrirni ochish",
+  "Main menu": "Asosiy menyu",
+  "Asking the desktop for the hotkeys…": "Ish stolidan tezkor tugmalar so‘ralmoqda…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ta tezkor tugma ish stoli orqali o‘rnatilgan. Ularning tugmalarini ish stolining klaviatura sozlamalarida o‘zgartiring.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Bu ish stoli ilovalarga tezkor tugmalarni o‘rnatishga ruxsat bermaydi. Ish stolining klaviatura sozlamalarida quyidagini ishga tushiradigan yorliq qo‘shing: {command} (yoki AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Ish stoli tezkor tugmalarni o‘rnatmadi: {error}"
  }
 }

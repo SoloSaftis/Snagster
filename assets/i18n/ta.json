@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "இந்த டெஸ்க்டாப் ஒரு நீட்டிப்பு இருந்தால் மட்டுமே தட்டு ஐகான்களைக் காட்டும், எனவே சாளரத்தை மூடினால் Snagster நிறுத்தப்படும்.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "திரையைப் பதிவுசெய்ய Snagster-க்கு அனுமதி தேவை: System Settings > Privacy & Security > Screen & System Audio Recording (பழைய macOS-இல் Screen Recording), பின்னர் Snagster-ஐ இயக்கி Quit & Reopen என்பதைத் தேர்ந்தெடுக்கவும்.",
   "Capture panel…": "பிடிப்புப் பலகம்…",
-  "Open editor": "திருத்தியைத் திற"
+  "Open editor": "திருத்தியைத் திற",
+  "Main menu": "முதன்மை மெனு",
+  "Asking the desktop for the hotkeys…": "ஹாட்கீகளுக்காக டெஸ்க்டாப்பிடம் கேட்கிறது…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ஹாட்கீகள் டெஸ்க்டாப் மூலம் அமைக்கப்பட்டுள்ளன. அவற்றின் விசைகளை டெஸ்க்டாப்பின் விசைப்பலகை அமைப்புகளில் மாற்றவும்.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "இந்த டெஸ்க்டாப் பயன்பாடுகள் ஹாட்கீகளை அமைக்க அனுமதிக்காது. டெஸ்க்டாப்பின் விசைப்பலகை அமைப்புகளில் இதை இயக்கும் ஒரு குறுக்குவழியைச் சேர்க்கவும்: {command} (அல்லது AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "டெஸ்க்டாப் ஹாட்கீகளை அமைக்கவில்லை: {error}"
  }
 }

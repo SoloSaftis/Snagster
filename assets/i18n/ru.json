@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Эта среда рабочего стола показывает значки в области уведомлений только с расширением, поэтому закрытие окна завершает Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster нужно разрешение на запись экрана: Системные настройки > Конфиденциальность и безопасность > Запись экрана и системного звука (Запись экрана в более старых версиях macOS), затем включите Snagster и выберите «Завершить и открыть снова».",
   "Capture panel…": "Панель захвата…",
-  "Open editor": "Открыть редактор"
+  "Open editor": "Открыть редактор",
+  "Main menu": "Главное меню",
+  "Asking the desktop for the hotkeys…": "Запрос горячих клавиш у рабочего стола…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Горячих клавиш, заданных через рабочий стол: {count}. Измените их в настройках клавиатуры рабочего стола.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Этот рабочий стол не позволяет приложениям задавать горячие клавиши. Добавьте в настройках клавиатуры рабочего стола сочетание, которое запускает: {command} (или AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Рабочий стол не задал горячие клавиши: {error}"
  }
 }

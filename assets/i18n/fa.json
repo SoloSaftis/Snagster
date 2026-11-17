@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "این میزکار نمادهای سینی را فقط با یک افزونه نشان می‌دهد، پس بستن پنجره Snagster را می‌بندد.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster برای ضبط صفحه به اجازه نیاز دارد: System Settings > Privacy & Security > Screen & System Audio Recording (در macOS قدیمی‌تر Screen Recording)، سپس Snagster را روشن کنید و Quit & Reopen را انتخاب کنید.",
   "Capture panel…": "پنل ضبط…",
-  "Open editor": "باز کردن ویرایشگر"
+  "Open editor": "باز کردن ویرایشگر",
+  "Main menu": "منوی اصلی",
+  "Asking the desktop for the hotkeys…": "در حال پرسیدن کلیدهای میان‌بر از دسکتاپ…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} کلید میان‌بر از طریق دسکتاپ تنظیم شده‌اند. کلیدهای آن‌ها را در تنظیمات صفحه‌کلید دسکتاپ تغییر دهید.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "این دسکتاپ به برنامه‌ها اجازه نمی‌دهد کلیدهای میان‌بر تنظیم کنند. در تنظیمات صفحه‌کلید دسکتاپ میان‌بری اضافه کنید که این را اجرا کند: {command} (یا AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "دسکتاپ کلیدهای میان‌بر را تنظیم نکرد: {error}"
  }
 }

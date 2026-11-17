@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Ní thaispeánann an deasc seo deilbhíní tráidire ach le síneadh, mar sin cuireann dúnadh na fuinneoige deireadh le Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Tá cead ag teastáil ó Snagster an scáileán a thaifeadadh: Socruithe an Chórais > Príobháideachas agus Slándáil > Taifeadadh Scáileáin agus Fuaime an Chórais (Taifeadadh Scáileáin ar leaganacha níos sine de macOS), ansin cas air Snagster agus roghnaigh Scoir agus Athoscail.",
   "Capture panel…": "Painéal gabhála…",
-  "Open editor": "Oscail an t-eagarthóir"
+  "Open editor": "Oscail an t-eagarthóir",
+  "Main menu": "Príomh-roghchlár",
+  "Asking the desktop for the hotkeys…": "Ag fiafraí den deasc faoi na heochracha te…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Socraítear {count} eochair the tríd an deasc. Athraigh a n-eochracha i socruithe méarchláir na deisce.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ní ligeann an deasc seo d'aipeanna eochracha te a shocrú. Cuir aicearra leis i socruithe méarchláir na deisce a rithfidh: {command} (nó AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Níor shocraigh an deasc na heochracha te: {error}"
  }
 }

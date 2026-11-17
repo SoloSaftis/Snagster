@@ -20,7 +20,12 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-pub const ACCENT: Color32 = Color32::from_rgb(79, 124, 255);
+const ACCENT_DEFAULT: Color32 = Color32::from_rgb(79, 124, 255);
+
+/// The accent colour: the desktop's where it has one (`look::accent`), else Snagster's blue.
+pub fn accent() -> Color32 {
+    crate::look::system_accent().unwrap_or(ACCENT_DEFAULT)
+}
 pub const BG_DARK: Color32 = Color32::from_rgb(24, 25, 30);
 pub const PANEL: Color32 = Color32::from_rgb(33, 35, 42);
 pub const PANEL_HI: Color32 = Color32::from_rgb(46, 49, 59);
@@ -2825,7 +2830,7 @@ impl SnagApp {
                 let (rect, resp) = ui.allocate_exact_size(vec2(54.0, 44.0), Sense::click());
                 let selected = self.tool == t;
                 let bg = if selected {
-                    ACCENT
+                    accent()
                 } else if resp.hovered() {
                     PANEL_HI
                 } else {
@@ -3112,7 +3117,7 @@ impl SnagApp {
                         None
                     };
                     if self.stamp.starts_with(*ch) {
-                        ui.painter().rect_filled(rect, CornerRadius::same(4), ACCENT);
+                        ui.painter().rect_filled(rect, CornerRadius::same(4), accent());
                     } else if resp.hovered() {
                         ui.painter().rect_filled(rect, CornerRadius::same(4), PANEL_HI);
                     }
@@ -3216,7 +3221,7 @@ impl SnagApp {
                         }
                         self.entries[i].doc.shapes = shapes;
                         if is_cur {
-                            p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(2.0, ACCENT), StrokeKind::Inside);
+                            p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(2.0, accent()), StrokeKind::Inside);
                         } else if resp.hovered() {
                             p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, TEXT_DIM), StrokeKind::Inside);
                         }
@@ -3341,20 +3346,20 @@ impl SnagApp {
             let p = ui.painter();
             p.rect_filled(rect, CornerRadius::same(14), if resp.hovered() { PANEL_HI } else { PANEL });
             if k == 0 {
-                p.rect_stroke(rect, CornerRadius::same(14), Stroke::new(2.0, ACCENT), StrokeKind::Inside);
+                p.rect_stroke(rect, CornerRadius::same(14), Stroke::new(2.0, accent()), StrokeKind::Inside);
             }
             let icon = Rect::from_center_size(rect.center() - vec2(0.0, 22.0), vec2(30.0, 30.0));
             match k {
-                0 => frame_icon(p, icon, ACCENT, true),
+                0 => frame_icon(p, icon, accent(), true),
                 1 => {
-                    frame_icon(p, icon, ACCENT, false);
-                    p.arrow(icon.center() - vec2(0.0, 6.0), vec2(0.0, 12.0), Stroke::new(2.0, ACCENT));
+                    frame_icon(p, icon, accent(), false);
+                    p.arrow(icon.center() - vec2(0.0, 6.0), vec2(0.0, 12.0), Stroke::new(2.0, accent()));
                 }
                 2 => {
                     p.circle_filled(icon.center(), 9.0, Color32::from_rgb(229, 72, 77));
-                    p.circle_stroke(icon.center(), 14.0, Stroke::new(2.0, ACCENT));
+                    p.circle_stroke(icon.center(), 14.0, Stroke::new(2.0, accent()));
                 }
-                _ => folder_icon(p, icon, ACCENT),
+                _ => folder_icon(p, icon, accent()),
             }
             p.text(rect.center() + vec2(0.0, 16.0), Align2::CENTER_CENTER, title, FontId::proportional(16.0), Color32::WHITE);
             p.text(rect.center() + vec2(0.0, 38.0), Align2::CENTER_CENTER, sub, FontId::proportional(12.5), TEXT_DIM);
@@ -3369,7 +3374,7 @@ impl SnagApp {
         }
         let link = Rect::from_center_size(pos2(area.center().x, top + 300.0), vec2(260.0, 26.0));
         let resp = ui.interact(link, ui.scope_id().with("sample"), Sense::click());
-        let col = if resp.hovered() { Color32::WHITE } else { ACCENT };
+        let col = if resp.hovered() { Color32::WHITE } else { accent() };
         ui.painter().text(link.center(), Align2::CENTER_CENTER, crate::i18n::t("Try the tools on a sample picture"), FontId::proportional(14.0), col);
         if resp.clicked() {
             let name = self.next_name("Sample");
@@ -3631,7 +3636,7 @@ impl SnagApp {
         {
             let b = s.bounds();
             let r = Rect::from_two_pos(to_scr(b.min), to_scr(b.max)).expand(4.0);
-            dashed_rect(&painter, r, ACCENT);
+            dashed_rect(&painter, r, accent());
         }
         self.entries[ci].doc.shapes = shapes;
         if let Drag::Draw { start, cur, points } = &self.drag {
@@ -3787,7 +3792,7 @@ impl SnagApp {
             .order(egui::Order::Foreground)
             .show(&ctx, |ui| {
                 egui::Frame::new()
-                    .stroke(Stroke::new(1.0, ACCENT))
+                    .stroke(Stroke::new(1.0, accent()))
                     .fill(fill)
                     .inner_margin(egui::Margin::same(3))
                     .show(ui, |ui| {
@@ -4030,6 +4035,13 @@ impl SnagApp {
         self.poll_stream(ctx);
         // Snagster opened again: this one comes forward (and opens the file asked for).
         for ask in crate::instance::take() {
+            // A capture asked for from a desktop shortcut: done as if its hotkey was pressed.
+            if let crate::instance::Ask::Action(name) = &ask {
+                if let Some(a) = crate::settings::Action::ALL.iter().find(|a| format!("{a:?}") == *name) {
+                    self.do_action(ctx, *a);
+                }
+                continue;
+            }
             self.unhide(ctx);
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
@@ -4076,7 +4088,7 @@ impl SnagApp {
         }
         if self.mini.is_some() {
             egui::CentralPanel::default()
-                .frame(egui::Frame::new().fill(BG_DARK).stroke(Stroke::new(1.0, ACCENT)))
+                .frame(egui::Frame::new().fill(BG_DARK).stroke(Stroke::new(1.0, accent())))
                 .show(ui, |ui| self.mini_bar(ui));
             return;
         }
@@ -4173,8 +4185,8 @@ fn setup_style(ctx: &egui::Context) {
     v.panel_fill = PANEL;
     v.window_fill = PANEL;
     v.extreme_bg_color = BG_DARK;
-    v.selection.bg_fill = ACCENT;
-    v.hyperlink_color = ACCENT;
+    v.selection.bg_fill = accent();
+    v.hyperlink_color = accent();
     v.widgets.inactive.weak_bg_fill = PANEL_HI;
     v.widgets.inactive.bg_fill = PANEL_HI;
     v.widgets.inactive.corner_radius = CornerRadius::same(6);
@@ -4590,7 +4602,7 @@ pub(crate) fn logo(ui: &mut egui::Ui, size: f32) {
 /// Snagster's mark: a rounded tile with viewfinder corners and a dot.
 pub fn logo_at(p: &egui::Painter, c: Pos2, size: f32) {
     let r = Rect::from_center_size(c, Vec2::splat(size));
-    p.rect_filled(r, CornerRadius::same((size * 0.25) as u8), ACCENT);
+    p.rect_filled(r, CornerRadius::same((size * 0.25) as u8), accent());
     frame_icon(p, r.shrink(size * 0.2), Color32::WHITE, false);
     p.circle_filled(c, size * 0.1, Color32::WHITE);
 }

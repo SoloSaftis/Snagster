@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "See töölaud näitab salveikoone ainult laiendusega, seega akna sulgemine lõpetab Snagsteri töö.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster vajab ekraani salvestamiseks luba: System Settings > Privacy & Security > Screen & System Audio Recording (vanemas macOS-is Screen Recording), seejärel lülita Snagster sisse ja vali Quit & Reopen.",
   "Capture panel…": "Jäädvustuspaneel…",
-  "Open editor": "Ava redaktor"
+  "Open editor": "Ava redaktor",
+  "Main menu": "Peamenüü",
+  "Asking the desktop for the hotkeys…": "Küsin töölaualt kiirklahve…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} kiirklahvi määratakse töölaua kaudu. Muutke nende klahve töölaua klaviatuurisätetes.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "See töölaud ei lase rakendustel kiirklahve määrata. Lisage töölaua klaviatuurisätetes otsetee, mis käivitab: {command} (või AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Töölaud ei määranud kiirklahve: {error}"
  }
 }

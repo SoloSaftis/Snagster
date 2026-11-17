@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Այս աշխատասեղանը սկուտեղի պատկերակները ցույց է տալիս միայն ընդլայնմամբ, ուստի պատուհանը փակելիս Snagster-ի աշխատանքն ավարտվում է։",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster-ին էկրանը ձայնագրելու թույլտվություն է պետք․ Համակարգի կարգավորումներ > Գաղտնիություն և անվտանգություն > Էկրանի և համակարգի ձայնի ձայնագրում (macOS-ի հին տարբերակներում՝ Էկրանի ձայնագրում), ապա միացրեք Snagster-ը և ընտրեք «Ելք և վերաբացում»։",
   "Capture panel…": "Նկարահանման վահանակ…",
-  "Open editor": "Բացել խմբագիրը"
+  "Open editor": "Բացել խմբագիրը",
+  "Main menu": "Գլխավոր ընտրացանկ",
+  "Asking the desktop for the hotkeys…": "Աշխատասեղանից հարցվում են թեժ ստեղները…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} թեժ ստեղն սահմանվում է աշխատասեղանի միջոցով։ Փոխեք դրանց ստեղները աշխատասեղանի ստեղնաշարի կարգավորումներում։",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Այս աշխատասեղանը թույլ չի տալիս հավելվածներին սահմանել թեժ ստեղներ։ Աշխատասեղանի ստեղնաշարի կարգավորումներում ավելացրեք դյուրանցում, որը գործարկում է՝ {command} (կամ AllInOne, Window, Screen, RecordGif…)։",
+  "The desktop didn't set the hotkeys: {error}": "Աշխատասեղանը չսահմանեց թեժ ստեղները՝ {error}"
  }
 }

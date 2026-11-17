@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "此桌面環境需安裝擴充功能才會顯示系統匣圖示，因此關閉視窗會結束 Snagster。",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster 需要錄製螢幕的權限：系統設定 > 隱私權與安全性 > 螢幕與系統錄音（較舊版 macOS 為「螢幕錄製」），然後開啟 Snagster 並選擇「結束並重新打開」。",
   "Capture panel…": "擷取面板…",
-  "Open editor": "開啟編輯器"
+  "Open editor": "開啟編輯器",
+  "Main menu": "主功能表",
+  "Asking the desktop for the hotkeys…": "正在向桌面要求快速鍵…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "有 {count} 個快速鍵透過桌面設定。請在桌面的鍵盤設定中變更它們的按鍵。",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "此桌面不允許應用程式設定快速鍵。請在桌面的鍵盤設定中新增一個執行以下指令的捷徑：{command}（或 AllInOne、Window、Screen、RecordGif…）。",
+  "The desktop didn't set the hotkeys: {error}": "桌面未能設定快速鍵：{error}"
  }
 }

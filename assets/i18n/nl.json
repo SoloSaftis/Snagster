@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Deze desktop toont systeemvakpictogrammen alleen met een extensie, dus als je het venster sluit, wordt Snagster afgesloten.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster heeft toestemming nodig om het scherm op te nemen: Systeeminstellingen > Privacy en beveiliging > Scherm- en systeemaudio-opname (Schermopname in oudere macOS), zet dan Snagster aan en kies 'Stop en open opnieuw'.",
   "Capture panel…": "Opnamepaneel…",
-  "Open editor": "Editor openen"
+  "Open editor": "Editor openen",
+  "Main menu": "Hoofdmenu",
+  "Asking the desktop for the hotkeys…": "Het bureaublad om de sneltoetsen vragen…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} sneltoetsen worden via het bureaublad ingesteld. Wijzig hun toetsen in de toetsenbordinstellingen van het bureaublad.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Dit bureaublad laat apps geen sneltoetsen instellen. Voeg in de toetsenbordinstellingen van het bureaublad een snelkoppeling toe die dit uitvoert: {command} (of AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Het bureaublad heeft de sneltoetsen niet ingesteld: {error}"
  }
 }

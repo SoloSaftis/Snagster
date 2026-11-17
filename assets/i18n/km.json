@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "ផ្ទៃតុនេះបង្ហាញរូបតំណាងថាសប្រព័ន្ធតែជាមួយផ្នែកបន្ថែមប៉ុណ្ណោះ ដូច្នេះការបិទបង្អួចនឹងបញ្ចប់ Snagster។",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster ត្រូវការការអនុញ្ញាតដើម្បីថតអេក្រង់៖ ការកំណត់ប្រព័ន្ធ > ឯកជនភាព និងសុវត្ថិភាព > ការថតអេក្រង់ និងសំឡេងប្រព័ន្ធ (ការថតអេក្រង់ នៅលើ macOS ចាស់ៗ) បន្ទាប់មកបើក Snagster ហើយជ្រើសរើស «ចាកចេញ និងបើកឡើងវិញ»។",
   "Capture panel…": "ផ្ទាំងចាប់យក…",
-  "Open editor": "បើកកម្មវិធីកែសម្រួល"
+  "Open editor": "បើកកម្មវិធីកែសម្រួល",
+  "Main menu": "ម៉ឺនុយមេ",
+  "Asking the desktop for the hotkeys…": "កំពុងសួរផ្ទៃតុអំពីគ្រាប់ចុចលឿន…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "គ្រាប់ចុចលឿនចំនួន {count} ត្រូវបានកំណត់តាមរយៈផ្ទៃតុ។ ប្ដូរគ្រាប់ចុចរបស់វានៅក្នុងការកំណត់ក្តារចុចរបស់ផ្ទៃតុ។",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "ផ្ទៃតុនេះមិនអនុញ្ញាតឱ្យកម្មវិធីកំណត់គ្រាប់ចុចលឿនទេ។ បន្ថែមផ្លូវកាត់មួយនៅក្នុងការកំណត់ក្តារចុចរបស់ផ្ទៃតុ ដែលដំណើរការ៖ {command} (ឬ AllInOne, Window, Screen, RecordGif…)។",
+  "The desktop didn't set the hotkeys: {error}": "ផ្ទៃតុមិនបានកំណត់គ្រាប់ចុចលឿនទេ៖ {error}"
  }
 }

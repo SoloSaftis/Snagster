@@ -118,7 +118,11 @@ impl SnagApp {
                 if snap.on_air() && crate::app::stream_ui::live_badge(ui, &snap).clicked() {
                     self.switch_tab(&ctx, RibbonTab::Stream);
                 }
-                if look::icon_button(ui, ph::GEAR, &format!("{} (Ctrl+,)", t("Settings"))).clicked() {
+                // GNOME and KDE: one main menu at the end of the tab row (F10 opens it) with
+                // Settings, Keyboard Shortcuts, Help, About and Quit. Windows and macOS: the gear.
+                if crate::platform::linux() {
+                    self.main_menu(ui);
+                } else if look::icon_button(ui, ph::GEAR, &crate::platform::keys(&format!("{} (Ctrl+,)", t("Settings")))).clicked() {
                     self.settings_open = true;
                 }
                 if look::icon_button(ui, ph::GLOBE, &tf("Language: {name}", &[("name", &crate::i18n::name(crate::i18n::current()))])).clicked() {
@@ -765,6 +769,36 @@ impl SnagApp {
         look::group(ui, t("Language"), |ui| {
             if look::big_tool(ui, ph::TRANSLATE, &crate::i18n::name(crate::i18n::current()), t("Change the language of Snagster's buttons and menus"), true, false).clicked() {
                 self.x.lang_open = true;
+            }
+        });
+    }
+
+    /// GNOME's primary menu and KDE's hamburger menu: the standard last group (Settings,
+    /// Keyboard Shortcuts, Help, About, Quit) behind one button. F10 opens it, as on both desktops.
+    fn main_menu(&mut self, ui: &mut egui::Ui) {
+        let resp = look::icon_button(ui, ph::LIST, t("Main menu"));
+        let f10 = ui.ctx().input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::F10));
+        let toggle = (f10 || resp.clicked()).then_some(egui::SetOpenCommand::Toggle);
+        egui::Popup::menu(&resp).open_memory(toggle).show(|ui| {
+            ui.set_min_width(220.0);
+            if crate::app::item(ui, "Settings", "Ctrl+,") {
+                self.settings_open = true;
+            }
+            if crate::app::item(ui, "Keyboard shortcuts", "F1") {
+                self.shortcuts_open = true;
+            }
+            if crate::app::item(ui, "Getting started", "") {
+                self.dialog = Some(crate::windows::Dialog::GettingStarted);
+            }
+            if crate::app::item(ui, "About Snagster", "") {
+                self.about_open = true;
+            }
+            ui.separator();
+            let (quit, quit_keys) = crate::platform::quit_item();
+            if crate::app::item(ui, quit, quit_keys) {
+                // Ends Snagster even when closing the window would keep it in the tray.
+                self.quitting = true;
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
             }
         });
     }

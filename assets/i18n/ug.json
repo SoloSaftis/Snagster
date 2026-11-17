@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "بۇ ئۈستەلئۈستى سىستېما تەخسىسى سىنبەلگىلىرىنى پەقەت كېڭەيتمە ئارقىلىقلا كۆرسىتىدۇ، شۇڭا كۆزنەكنى تاقىسا Snagster ئاخىرلىشىدۇ.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster ئېكراننى خاتىرىلەش ئۈچۈن ئىجازەت كېرەك: System Settings > Privacy & Security > Screen & System Audio Recording (كونا macOS دا Screen Recording)، ئاندىن Snagster نى ئېچىپ Quit & Reopen نى تاللاڭ.",
   "Capture panel…": "سۈرەتكە ئېلىش تاختىسى…",
-  "Open editor": "تەھرىرلىگۈچنى ئېچىش"
+  "Open editor": "تەھرىرلىگۈچنى ئېچىش",
+  "Main menu": "ئاساسىي تىزىملىك",
+  "Asking the desktop for the hotkeys…": "ئۈستەل يۈزىدىن تېز كۇنۇپكىلار سورىلىۋاتىدۇ…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} تېز كۇنۇپكا ئۈستەل يۈزى ئارقىلىق تەڭشەلگەن. ئۇلارنىڭ كۇنۇپكىلىرىنى ئۈستەل يۈزىنىڭ كۇنۇپكا تاختىسى تەڭشىكىدە ئۆزگەرتىڭ.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "بۇ ئۈستەل يۈزى ئەپلەرنىڭ تېز كۇنۇپكا تەڭشىشىگە يول قويمايدۇ. ئۈستەل يۈزىنىڭ كۇنۇپكا تاختىسى تەڭشىكىگە بۇنى ئىجرا قىلىدىغان قىسقا يول قوشۇڭ: {command} (ياكى AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "ئۈستەل يۈزى تېز كۇنۇپكىلارنى تەڭشىمىدى: {error}"
  }
 }

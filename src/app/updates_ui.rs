@@ -158,7 +158,7 @@ impl SnagApp {
                     let busy = self.x.update.install_rx.is_some();
                     let can = rel.asset.is_some();
                     if ui
-                        .add_enabled(!busy && can, egui::Button::new(RichText::new(t("Update now")).strong().color(Color32::WHITE)).fill(ACCENT))
+                        .add_enabled(!busy && can, egui::Button::new(RichText::new(t("Update now")).strong().color(Color32::WHITE)).fill(accent()))
                         .on_hover_text(t("Download it, put it in place of this version and start it"))
                         .clicked()
                     {

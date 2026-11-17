@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Бұл жұмыс үстелі жүйелік науа белгішелерін тек кеңейтпемен көрсетеді, сондықтан терезені жапқанда Snagster жұмысын аяқтайды.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster экранды жазу үшін рұқсат қажет: Жүйе параметрлері > Құпиялылық және қауіпсіздік > Экран мен жүйе дыбысын жазу (ескі macOS нұсқаларында Экранды жазу), содан кейін Snagster-ді қосып, «Шығу және қайта ашу» түймесін таңдаңыз.",
   "Capture panel…": "Түсіру тақтасы…",
-  "Open editor": "Редакторды ашу"
+  "Open editor": "Редакторды ашу",
+  "Main menu": "Негізгі мәзір",
+  "Asking the desktop for the hotkeys…": "Жұмыс үстелінен жылдам пернелер сұралуда…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} жылдам перне жұмыс үстелі арқылы орнатылған. Олардың пернелерін жұмыс үстелінің пернетақта параметрлерінде өзгертіңіз.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Бұл жұмыс үстелі қолданбаларға жылдам пернелерді орнатуға рұқсат бермейді. Жұмыс үстелінің пернетақта параметрлерінде мынаны іске қосатын таңбаша қосыңыз: {command} (немесе AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Жұмыс үстелі жылдам пернелерді орнатпады: {error}"
  }
 }

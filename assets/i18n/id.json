@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Desktop ini hanya menampilkan ikon baki sistem dengan ekstensi, jadi menutup jendela akan mengakhiri Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster memerlukan izin untuk merekam layar: Pengaturan Sistem > Privasi & Keamanan > Rekaman Layar & Audio Sistem (Rekaman Layar di macOS lama), lalu aktifkan Snagster dan pilih Keluar & Buka Ulang.",
   "Capture panel…": "Panel tangkap…",
-  "Open editor": "Buka editor"
+  "Open editor": "Buka editor",
+  "Main menu": "Menu utama",
+  "Asking the desktop for the hotkeys…": "Menanyakan pintasan ke desktop…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} pintasan diatur melalui desktop. Ubah tombolnya di pengaturan keyboard desktop.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Desktop ini tidak mengizinkan aplikasi mengatur pintasan. Tambahkan pintasan di pengaturan keyboard desktop yang menjalankan: {command} (atau AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Desktop tidak mengatur pintasan: {error}"
  }
 }

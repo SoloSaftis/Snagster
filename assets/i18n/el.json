@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Αυτή η επιφάνεια εργασίας εμφανίζει εικονίδια στο πλαίσιο συστήματος μόνο με επέκταση, οπότε το κλείσιμο του παραθύρου τερματίζει το Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Το Snagster χρειάζεται άδεια για εγγραφή οθόνης: Ρυθμίσεις συστήματος > Απόρρητο και ασφάλεια > Εγγραφή οθόνης και ήχου συστήματος (Εγγραφή οθόνης σε παλαιότερες εκδόσεις macOS), μετά ενεργοποιήστε το Snagster και επιλέξτε Τερματισμός και επανάνοιγμα.",
   "Capture panel…": "Πίνακας λήψης…",
-  "Open editor": "Άνοιγμα επεξεργαστή"
+  "Open editor": "Άνοιγμα επεξεργαστή",
+  "Main menu": "Κύριο μενού",
+  "Asking the desktop for the hotkeys…": "Ερώτηση στην επιφάνεια εργασίας για τις συντομεύσεις…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} συντομεύσεις ορίζονται μέσω της επιφάνειας εργασίας. Αλλάξτε τα πλήκτρα τους στις ρυθμίσεις πληκτρολογίου της επιφάνειας εργασίας.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Αυτή η επιφάνεια εργασίας δεν επιτρέπει στις εφαρμογές να ορίζουν συντομεύσεις. Προσθέστε μια συντόμευση στις ρυθμίσεις πληκτρολογίου της επιφάνειας εργασίας που εκτελεί: {command} (ή AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Η επιφάνεια εργασίας δεν όρισε τις συντομεύσεις: {error}"
  }
 }

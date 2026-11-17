@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Dan id-desktop juri l-ikoni tat-tray biss b'estensjoni, għalhekk l-għeluq tat-tieqa jtemm lil Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster jeħtieġ permess biex jirrekordja l-iskrin: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording f'macOS eqdem), imbagħad ixgħel lil Snagster u agħżel Quit & Reopen.",
   "Capture panel…": "Pannell tal-qbid…",
-  "Open editor": "Iftaħ l-editur"
+  "Open editor": "Iftaħ l-editur",
+  "Main menu": "Menu ewlieni",
+  "Asking the desktop for the hotkeys…": "Qed nistaqsu lid-desktop għat-tasti shortcut…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} tasti shortcut huma ssettjati permezz tad-desktop. Biddel it-tasti tagħhom fl-issettjar tat-tastiera tad-desktop.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Dan id-desktop ma jħallix lill-apps jissettjaw tasti shortcut. Żid shortcut fl-issettjar tat-tastiera tad-desktop li jmexxi: {command} (jew AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Id-desktop ma ssettjax it-tasti shortcut: {error}"
  }
 }

@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Det här skrivbordet visar ikoner i systemfältet bara med ett tillägg, så när fönstret stängs avslutas Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster behöver behörighet att spela in skärmen: Systeminställningar > Integritet och säkerhet > Skärm- och systemljudinspelning (Skärminspelning i äldre macOS), slå sedan på Snagster och välj Avsluta och öppna igen.",
   "Capture panel…": "Fångstpanel…",
-  "Open editor": "Öppna redigeraren"
+  "Open editor": "Öppna redigeraren",
+  "Main menu": "Huvudmeny",
+  "Asking the desktop for the hotkeys…": "Frågar skrivbordet efter snabbtangenterna…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} snabbtangenter ställs in via skrivbordet. Ändra deras tangenter i skrivbordets tangentbordsinställningar.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Det här skrivbordet låter inte appar ställa in snabbtangenter. Lägg till en genväg i skrivbordets tangentbordsinställningar som kör: {command} (eller AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Skrivbordet ställde inte in snabbtangenterna: {error}"
  }
 }

@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Dette skrivebordet viser ikoner i systemkurven bare med en utvidelse, så når du lukker vinduet, avsluttes Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster trenger tillatelse til å ta opp skjermen: Systeminnstillinger > Personvern og sikkerhet > Skjerm- og systemlydopptak (Skjermopptak på eldre macOS), slå deretter på Snagster og velg «Avslutt og åpne på nytt».",
   "Capture panel…": "Opptakspanel…",
-  "Open editor": "Åpne redigering"
+  "Open editor": "Åpne redigering",
+  "Main menu": "Hovedmeny",
+  "Asking the desktop for the hotkeys…": "Spør skrivebordet om hurtigtastene…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} hurtigtaster er satt gjennom skrivebordet. Endre tastene i tastaturinnstillingene til skrivebordet.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Dette skrivebordet lar ikke apper angi hurtigtaster. Legg til en snarvei i tastaturinnstillingene til skrivebordet som kjører: {command} (eller AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Skrivebordet satte ikke hurtigtastene: {error}"
  }
 }

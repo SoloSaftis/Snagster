@@ -2,7 +2,7 @@
 //! Video tabs, what to capture, an effect, where to send it, a few switches and a big
 //! Capture button.
 
-use crate::app::{ACCENT, BG_DARK, PANEL, PANEL_HI, SnagApp, TEXT_DIM};
+use crate::app::{accent, BG_DARK, PANEL, PANEL_HI, SnagApp, TEXT_DIM};
 use crate::capture::{CaptureKind, CutShape, PickPurpose};
 use crate::effects::Effect;
 use crate::settings::{Action, PanelSelection, PanelSettings, PanelShare, Preset, PresetMode};
@@ -90,7 +90,7 @@ impl SnagApp {
             } else if resp.hovered() {
                 ui.painter().rect_filled(r.shrink(4.0), CornerRadius::same(8), Color32::from_rgb(38, 40, 48));
             }
-            let col = if sel { ACCENT } else { Color32::from_rgb(200, 204, 215) };
+            let col = if sel { accent() } else { Color32::from_rgb(200, 204, 215) };
             tab_icon(ui.painter(), r.center() - vec2(0.0, 7.0), i as u8, col);
             ui.painter().text(r.center() + vec2(0.0, 13.0), Align2::CENTER_CENTER, *name, FontId::proportional(12.0), col);
             if resp.clicked() {

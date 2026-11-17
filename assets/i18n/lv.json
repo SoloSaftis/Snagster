@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Šī darbvirsma rāda teknes ikonas tikai ar paplašinājumu, tāpēc, aizverot logu, Snagster tiek aizvērts.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster nepieciešama atļauja ierakstīt ekrānu: Sistēmas iestatījumi > Privātums un drošība > Ekrāna un sistēmas audio ierakstīšana (vecākās macOS versijās – Ekrāna ierakstīšana), pēc tam ieslēdziet Snagster un izvēlieties “Iziet un atvērt atkārtoti”.",
   "Capture panel…": "Tveršanas panelis…",
-  "Open editor": "Atvērt redaktoru"
+  "Open editor": "Atvērt redaktoru",
+  "Main menu": "Galvenā izvēlne",
+  "Asking the desktop for the hotkeys…": "Darbvirsmai tiek lūgti karstie taustiņi…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} karstie taustiņi ir iestatīti, izmantojot darbvirsmu. Mainiet to taustiņus darbvirsmas tastatūras iestatījumos.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Šī darbvirsma neļauj lietotnēm iestatīt karstos taustiņus. Darbvirsmas tastatūras iestatījumos pievienojiet saīsni, kas palaiž: {command} (vai AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Darbvirsma neiestatīja karstos taustiņus: {error}"
  }
 }

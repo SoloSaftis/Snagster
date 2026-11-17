@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Acest desktop afișează pictograme în zona de notificare doar cu o extensie, așa că închiderea ferestrei închide Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster are nevoie de permisiunea de a înregistra ecranul: Configurări sistem > Confidențialitate și securitate > Înregistrare ecran și audio sistem (Înregistrare ecran în versiunile mai vechi de macOS), apoi activați Snagster și alegeți Ieși și redeschide.",
   "Capture panel…": "Panou de captură…",
-  "Open editor": "Deschide editorul"
+  "Open editor": "Deschide editorul",
+  "Main menu": "Meniu principal",
+  "Asking the desktop for the hotkeys…": "Se cer tastele rapide de la desktop…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} taste rapide sunt setate prin desktop. Schimbă tastele lor în setările de tastatură ale desktopului.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Acest desktop nu permite aplicațiilor să seteze taste rapide. Adaugă în setările de tastatură ale desktopului o scurtătură care rulează: {command} (sau AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Desktopul nu a setat tastele rapide: {error}"
  }
 }

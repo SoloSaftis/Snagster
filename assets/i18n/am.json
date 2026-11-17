@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "ይህ ዴስክቶፕ የትሪ አዶዎችን የሚያሳየው በቅጥያ ብቻ ነው፣ ስለዚህ መስኮቱን መዝጋት Snagsterን ያቆማል።",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster ማያ ገጹን ለመቅረጽ ፈቃድ ያስፈልገዋል፦ System Settings > Privacy & Security > Screen & System Audio Recording (በቀድሞ macOS ላይ Screen Recording)፣ ከዚያ Snagsterን ያብሩ እና Quit & Reopen የሚለውን ይምረጡ።",
   "Capture panel…": "የቀረጻ ፓነል…",
-  "Open editor": "አርታዒን ክፈት"
+  "Open editor": "አርታዒን ክፈት",
+  "Main menu": "ዋና ምናሌ",
+  "Asking the desktop for the hotkeys…": "ዴስክቶፑን ስለ ፈጣን ቁልፎች በመጠየቅ ላይ…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ፈጣን ቁልፎች በዴስክቶፑ በኩል ተዘጋጅተዋል። ቁልፎቻቸውን በዴስክቶፑ የቁልፍ ሰሌዳ ቅንብሮች ውስጥ ይቀይሩ።",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "ይህ ዴስክቶፕ መተግበሪያዎች ፈጣን ቁልፎችን እንዲያዘጋጁ አይፈቅድም። በዴስክቶፑ የቁልፍ ሰሌዳ ቅንብሮች ውስጥ ይህን የሚያሄድ አቋራጭ ያክሉ፦ {command} (ወይም AllInOne, Window, Screen, RecordGif…)።",
+  "The desktop didn't set the hotkeys: {error}": "ዴስክቶፑ ፈጣን ቁልፎችን አላዘጋጀም፦ {error}"
  }
 }

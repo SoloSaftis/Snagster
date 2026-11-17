@@ -168,7 +168,7 @@ pub fn dialog_buttons(ui: &mut egui::Ui, action: Option<&str>, cancel: &str, kin
                 Choice::Action => {
                     let Some(action) = action else { continue };
                     let b = egui::Button::new(egui::RichText::new(action).color(egui::Color32::WHITE).strong())
-                        .fill(if destructive { crate::look::REC } else { crate::look::ACCENT })
+                        .fill(if destructive { crate::look::REC } else { crate::look::accent() })
                         .min_size(egui::vec2(80.0, 0.0));
                     if ui.add_enabled(enabled, b).clicked() {
                         choice = Some(Choice::Action);
@@ -206,6 +206,11 @@ pub fn by_system(windows: &'static str, mac: &'static str, linux: &'static str) 
         System::Mac => mac,
         _ => linux,
     }
+}
+
+/// A Linux desktop (GNOME, KDE or another).
+pub fn linux() -> bool {
+    matches!(system(), System::Gnome | System::Kde | System::OtherLinux)
 }
 
 /// Whether the desktop shows tray (status) icons. Stock GNOME doesn't (only with an

@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Kay escritorioqa bandeja unanchakunata extensionwan sapalla rikuchin, chayrayku ventanata wichq'aspa Snagster tukukun.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagsterqa pantallata grabanapaq permisota munan: System Settings > Privacy & Security > Screen & System Audio Recording (ñawpa macOS-pi Screen Recording), chaymanta Snagsterta hap'ichiy, Quit & Reopen nisqata akllay.",
   "Capture panel…": "Hap'iy panel…",
-  "Open editor": "Allichaqta kicharay"
+  "Open editor": "Allichaqta kicharay",
+  "Main menu": "Hatun menú",
+  "Asking the desktop for the hotkeys…": "Escritoriomanta utqay ñit'inakunata mañakuchkan…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} utqay ñit'inakuna escritorio nisqawan churasqa. Tiklasninkunata escritoriopa teclado churaykunapi tikray.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Kay escritorioqa mana aplicacionkunata utqay ñit'inakunata churayta saqinchu. Escritoriopa teclado churaykunapi kayta kallpachaq utqay ñit'ita yapay: {command} (utaq AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Escritorioqa mana utqay ñit'inakunata churarqanchu: {error}"
  }
 }

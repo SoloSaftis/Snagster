@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Tämä työpöytä näyttää ilmoitusalueen kuvakkeet vain laajennuksen kanssa, joten ikkunan sulkeminen lopettaa Snagsterin.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster tarvitsee luvan näytön tallentamiseen: Järjestelmäasetukset > Tietosuoja ja turvallisuus > Näytön ja järjestelmän äänen tallennus (vanhemmissa macOS-versioissa Näytön tallennus), laita Snagster päälle ja valitse Lopeta ja avaa uudelleen.",
   "Capture panel…": "Kaappauspaneeli…",
-  "Open editor": "Avaa muokkain"
+  "Open editor": "Avaa muokkain",
+  "Main menu": "Päävalikko",
+  "Asking the desktop for the hotkeys…": "Kysytään työpöydältä pikanäppäimiä…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} pikanäppäintä asetetaan työpöydän kautta. Muuta niiden näppäimiä työpöydän näppäimistöasetuksissa.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Tämä työpöytä ei salli sovellusten asettaa pikanäppäimiä. Lisää työpöydän näppäimistöasetuksissa pikakomento, joka suorittaa: {command} (tai AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Työpöytä ei asettanut pikanäppäimiä: {error}"
  }
 }

@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "שולחן עבודה זה מציג סמלים במגש המערכת רק עם הרחבה, ולכן סגירת החלון מסיימת את Snagster.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster צריך הרשאה להקליט את המסך: הגדרות המערכת > פרטיות ואבטחה > הקלטת מסך ושמע מערכת (הקלטת מסך בגרסאות macOS ישנות יותר), ואז להפעיל את Snagster ולבחור ב״יציאה ופתיחה מחדש״.",
   "Capture panel…": "חלונית צילום…",
-  "Open editor": "פתיחת העורך"
+  "Open editor": "פתיחת העורך",
+  "Main menu": "תפריט ראשי",
+  "Asking the desktop for the hotkeys…": "שואל את שולחן העבודה לגבי מקשי הקיצור…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} מקשי קיצור מוגדרים דרך שולחן העבודה. אפשר לשנות את המקשים שלהם בהגדרות המקלדת של שולחן העבודה.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "שולחן עבודה זה אינו מאפשר ליישומים להגדיר מקשי קיצור. הוסיפו בהגדרות המקלדת של שולחן העבודה קיצור שמריץ: {command} (או AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "שולחן העבודה לא הגדיר את מקשי הקיצור: {error}"
  }
 }

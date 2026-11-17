@@ -6,6 +6,8 @@ mod app;
 mod capture;
 mod hwreport;
 mod instance;
+#[cfg(target_os = "linux")]
+mod keys_portal;
 mod wav;
 mod doc;
 mod effects;
@@ -132,6 +134,7 @@ fn main() -> eframe::Result {
     let mut screenshot: Option<PathBuf> = None;
     let mut open: Option<PathBuf> = None;
     let mut new_window = false;
+    let mut action: Option<String> = None;
     while let Some(a) = args.next() {
         if a == "--ui-test" {
             app::UI_TEST.store(true, std::sync::atomic::Ordering::Relaxed);
@@ -389,6 +392,18 @@ fn main() -> eframe::Result {
                 eprintln!("couldn't save {out}: {e}");
             }
             return Ok(());
+        } else if a == "--action" {
+            // A capture or recording by name (`snagster --action Area`), done by the running
+            // Snagster: what a keyboard shortcut set in the desktop's own settings runs.
+            let name = args.next().unwrap_or_default();
+            match settings::Action::ALL.iter().find(|x| format!("{x:?}").eq_ignore_ascii_case(&name)) {
+                Some(x) => action = Some(format!("{x:?}")),
+                None => {
+                    let names: Vec<String> = settings::Action::ALL.iter().map(|x| format!("{x:?}")).collect();
+                    eprintln!("unknown action {name:?}; one of: {}", names.join(", "));
+                    std::process::exit(2);
+                }
+            }
         } else if a == "--new-window" {
             // Another Snagster even when one is running.
             new_window = true;
@@ -398,8 +413,13 @@ fn main() -> eframe::Result {
     }
     // One Snagster at a time: a running one comes forward (and opens the file) instead.
     let quiet_run = screenshot.is_some() || app::UI_TEST.load(std::sync::atomic::Ordering::Relaxed);
-    if !quiet_run && !new_window && !s0.allow_many && instance::claim(open.as_deref()) == instance::Claim::Handed {
-        return Ok(());
+    let ask = instance::Ask::from_args(open.as_deref(), action.as_deref());
+    if !quiet_run && !new_window && !s0.allow_many {
+        if instance::claim(ask) == instance::Claim::Handed {
+            return Ok(());
+        }
+    } else if matches!(ask, instance::Ask::Action(_)) {
+        instance::keep(ask);
     }
 
     let mut viewport = egui::ViewportBuilder::default()
@@ -432,6 +452,8 @@ fn main() -> eframe::Result {
         }));
     }
 
+    // The desktop's accent colour (Linux), before the first frame is drawn with it.
+    look::read_system_accent();
     eframe::run_native(
         "Snagster",
         options,

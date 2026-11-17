@@ -977,6 +977,11 @@
   "This desktop shows tray icons only with an extension, so closing the window ends Snagster.": "Þetta skjáborð sýnir aðeins tákn í kerfisbakka með viðbót, svo Snagster hættir þegar glugganum er lokað.",
   "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.": "Snagster þarf heimild til að taka upp skjáinn: Kerfisstillingar > Persónuvernd og öryggi > Upptaka skjás og kerfishljóðs (Skjáupptaka í eldri útgáfum macOS), kveiktu svo á Snagster og veldu Hætta og opna aftur.",
   "Capture panel…": "Myndatökuspjald…",
-  "Open editor": "Opna ritil"
+  "Open editor": "Opna ritil",
+  "Main menu": "Aðalvalmynd",
+  "Asking the desktop for the hotkeys…": "Spyr skjáborðið um flýtilyklana…",
+  "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} flýtilyklar eru stilltir í gegnum skjáborðið. Breyttu tökkum þeirra í lyklaborðsstillingum skjáborðsins.",
+  "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Þetta skjáborð leyfir forritum ekki að stilla flýtilykla. Bættu við flýtileið í lyklaborðsstillingum skjáborðsins sem keyrir: {command} (eða AllInOne, Window, Screen, RecordGif…).",
+  "The desktop didn't set the hotkeys: {error}": "Skjáborðið stillti ekki flýtilyklana: {error}"
  }
 }
