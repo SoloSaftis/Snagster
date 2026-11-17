@@ -764,8 +764,8 @@ impl UiTest {
             a.set_zoom(c, None);
         }));
         // What an AI app's app_command runs: the same methods as the buttons, in this window.
-        for (id, value) in [("zoom_in", None), ("zoom_fit", None), ("select_tool", Some("Arrow")), ("settings", Some("editor")), ("duplicate", None), ("remove_from_recent", None), ("effect", Some("Grayscale")), ("undo", None), ("redo", None), ("undo", None)] {
-            s.push(once(format!("AI app command: {id}"), move |a, c| {
+        for (n, (id, value)) in [("zoom_in", None), ("zoom_fit", None), ("select_tool", Some("Arrow")), ("settings", Some("editor")), ("duplicate", None), ("remove_from_recent", None), ("effect", Some("Grayscale")), ("undo", None), ("redo", None), ("undo", None)].into_iter().enumerate() {
+            s.push(once(format!("AI app command {}: {id}", n + 1), move |a, c| {
                 let before = a.entries.len();
                 a.run_command(c, id, value);
                 if id == "settings" {
