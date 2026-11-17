@@ -2,6 +2,16 @@
 
 What changed for people using Snagster, per version.
 
+## Not released yet
+
+Windows:
+
+- **A Microsoft Store edition** is ready to submit: the Store signs it (no SmartScreen or
+  "unknown publisher" warning) and keeps it up to date; a Snagster installed from the Store
+  doesn't download updates itself. `PRIVACY.md` says what Snagster does and doesn't send.
+- Builds can be signed with Azure Artifact Signing (`Snagster.exe` and the installer) once it
+  is set up.
+
 ## 0.10.6 — 2026-11-17
 
 Linux with Wayland (checked on Ubuntu 26.04 with GNOME):

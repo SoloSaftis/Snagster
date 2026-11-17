@@ -1,7 +1,10 @@
 # Make Snagster's MSIX package from a built Snagster.exe (see README.md beside this file).
 #
 #   pwsh packaging/msix/make-msix.ps1 -Exe target/release/snagster.exe -Out dist/Snagster-windows-x64.msix `
-#        [-Publisher "CN=..."] [-TestCert dist/test.cer]
+#        [-Publisher "CN=..."] [-TestCert dist/test.cer] [-IdentityName X -PublisherDisplayName Y]
+#
+# The Microsoft Store package takes the Identity Name, Publisher and Publisher display name
+# Partner Center shows under Product identity, and is uploaded unsigned (the Store signs it).
 #
 # -Publisher is the signing certificate's subject, exactly (Windows refuses a package whose
 # publisher differs from its signature). Signing:
@@ -15,6 +18,8 @@ param(
     [Parameter(Mandatory)] [string] $Exe,
     [Parameter(Mandatory)] [string] $Out,
     [string] $Publisher = "CN=Snagster Test Signing",
+    [string] $IdentityName = "SoloSaftis.Snagster",
+    [string] $PublisherDisplayName = "SoloSaftis",
     [string] $TestCert = ""
 )
 $ErrorActionPreference = "Stop"
@@ -37,7 +42,8 @@ Remove-Item -Recurse -Force $stage -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force "$stage/Assets" | Out-Null
 Copy-Item $Exe "$stage/Snagster.exe"
 Copy-Item "$root/LICENSE-MIT", "$root/LICENSE-APACHE" $stage
-(Get-Content "$here/AppxManifest.xml" -Raw).Replace("__VERSION__", $version).Replace("__PUBLISHER__", [Security.SecurityElement]::Escape($Publisher)) |
+$esc = { param($s) [Security.SecurityElement]::Escape($s) }
+(Get-Content "$here/AppxManifest.xml" -Raw).Replace("__VERSION__", $version).Replace("__IDENTITY_NAME__", (& $esc $IdentityName)).Replace("__PUBLISHER_DISPLAY_NAME__", (& $esc $PublisherDisplayName)).Replace("__PUBLISHER__", (& $esc $Publisher)) |
     Set-Content "$stage/AppxManifest.xml" -Encoding utf8
 
 # The logos, drawn by Snagster itself (the same icon as the window and the portable exe).

@@ -77,9 +77,9 @@ The next tag then releases seven files. Add the MSIX link to `README.md` and
 Changing the publisher later makes Windows treat the package as a different app (people would
 have to uninstall the old one), so it is chosen once.
 
-### Later: the Microsoft Store
+### The Microsoft Store edition
 
-Registering as an individual developer is free and the Store signs the package itself; many
+A separate Store edition is set up in `STORE.md`: the Store signs that package itself; many
 company laptops allow Store apps where they block other installers. The
-`unvirtualizedResources` capability needs a short justification in the submission, and a
-Store install must leave updates to the Store (the updater doesn't do that yet).
+`unvirtualizedResources` capability needs a short justification in the submission (the text is
+in `STORE.md`), and a Store install leaves updates to the Store.
