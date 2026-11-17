@@ -841,7 +841,7 @@ impl ScreenAccess {
 
 /// What a grab says on macOS when Snagster may not record the screen (translated in the window).
 pub const SCREEN_ACCESS_NEEDED: &str =
-    "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen Recording, then turn on Snagster and restart it.";
+    "Snagster needs permission to record the screen: System Settings > Privacy & Security > Screen & System Audio Recording (Screen Recording on older macOS), then turn on Snagster and choose Quit & Reopen.";
 /// What a grab says on macOS without a logged-in desktop (translated in the window).
 pub const NO_DESKTOP: &str = "Snagster can't see a screen: it needs a logged-in desktop, not only a remote shell. Log in on the Mac's screen (or with Screen Sharing) and start Snagster there.";
 /// What `--video-test` and `--stream-test` print instead of FAIL when the screen can't be seen.

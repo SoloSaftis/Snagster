@@ -150,7 +150,7 @@ impl SnagApp {
                 ui.add_space(8.0);
                 if let Some(p) = &self.x.update.progress {
                     let f = f32::from_bits(p.load(Ordering::Relaxed));
-                    ui.add(egui::ProgressBar::new(f).show_percentage().text(t("Downloading...")));
+                    ui.add(egui::ProgressBar::new(f).show_percentage().text(t("Downloading…")));
                 } else if let Some(m) = &self.x.update.message {
                     ui.label(RichText::new(m).color(Color32::from_rgb(240, 140, 120)));
                 }

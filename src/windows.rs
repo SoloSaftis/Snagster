@@ -6,6 +6,7 @@ use crate::capture::CaptureKind;
 use crate::doc::{Doc, Tool};
 use crate::effects::Effect;
 use crate::hotkeys::{self, Target};
+use crate::platform::Choice;
 use crate::settings::{Action, Combo, ImageFormat, Preset, PresetMode, Settings, Theme};
 use crate::{export, library};
 use eframe::egui::{self, Color32, CornerRadius, Key, PointerButton, Pos2, Rect, RichText, Sense, Stroke, StrokeKind, TextureOptions, pos2, vec2};
@@ -87,7 +88,9 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::InnerSize(vec2(width, want)));
             }
         }
-        let close = ui.ctx().input(|i| i.viewport().close_requested() || i.key_pressed(Key::Escape));
+        // Esc closes a secondary window everywhere; Ctrl+W (⌘W) too, as GNOME, KDE and macOS
+        // expect.
+        let close = ui.ctx().input(|i| i.viewport().close_requested() || i.key_pressed(Key::Escape) || (i.modifiers.command && i.key_pressed(Key::W)));
         (out, close)
     });
     if close {
@@ -161,9 +164,20 @@ impl SnagApp {
                         ui.checkbox(&mut s.after_pin, crate::i18n::t("Pin it on top of other windows"));
                         ui.checkbox(&mut s.include_cursor, crate::i18n::t("Include the mouse pointer as a movable mark"));
                         ui.add_space(8.0);
-                        ui.label(RichText::new(crate::i18n::t("Taskbar corner")).strong());
-                        ui.checkbox(&mut s.tray_icon, crate::i18n::t("Show Snagster's icon in the taskbar corner (click: capture panel, right-click: quick menu)"));
-                        ui.add_enabled(s.tray_icon, egui::Checkbox::new(&mut s.close_to_tray, "Closing the window keeps Snagster running there"));
+                        use crate::platform::by_system;
+                        ui.label(RichText::new(crate::i18n::t(by_system("Taskbar corner", "Menu bar icon", "Tray icon"))).strong());
+                        ui.checkbox(
+                            &mut s.tray_icon,
+                            crate::i18n::t(by_system(
+                                "Show Snagster's icon in the taskbar corner (click: capture panel, right-click: quick menu)",
+                                "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)",
+                                "Show Snagster's icon in the tray (click: capture panel, right-click: quick menu)",
+                            )),
+                        );
+                        ui.add_enabled(s.tray_icon, egui::Checkbox::new(&mut s.close_to_tray, crate::i18n::t("Closing the window keeps Snagster running there")));
+                        if !crate::platform::has_tray() {
+                            ui.label(RichText::new(crate::i18n::t("This desktop shows tray icons only with an extension, so closing the window ends Snagster.")).color(TEXT_DIM));
+                        }
                         ui.add_space(8.0);
                         ui.label(RichText::new(crate::i18n::t("Starting Snagster")).strong());
                         egui::ComboBox::from_id_salt("startmode").selected_text(format!("Start with {}", s.start_mode.label())).show_ui(ui, |ui| {
@@ -258,7 +272,7 @@ impl SnagApp {
                         ui.horizontal(|ui| {
                             ui.label(crate::i18n::t("Videos go to"));
                             ui.add(egui::TextEdit::singleline(&mut s.video_folder).desired_width(300.0));
-                            if ui.button(crate::i18n::t("Choose...")).clicked()
+                            if ui.button(crate::i18n::t("Choose…")).clicked()
                                 && let Some(p) = rfd::FileDialog::new().set_directory(&s.video_folder).pick_folder()
                             {
                                 s.video_folder = p.display().to_string();
@@ -375,7 +389,7 @@ impl SnagApp {
         ui.label(crate::i18n::t("Save folder"));
         ui.horizontal(|ui| {
             ui.add(egui::TextEdit::singleline(&mut s.save_folder).desired_width(380.0));
-            if ui.button(crate::i18n::t("Browse...")).clicked()
+            if ui.button(crate::i18n::t("Browse…")).clicked()
                 && let Some(f) = rfd::FileDialog::new().pick_folder()
             {
                 s.save_folder = f.display().to_string();
@@ -403,7 +417,7 @@ impl SnagApp {
         ui.label(RichText::new(crate::i18n::t("Library")).strong());
         ui.horizontal(|ui| {
             ui.add(egui::TextEdit::singleline(&mut s.library_folder).desired_width(380.0));
-            if ui.button(crate::i18n::t("Browse...")).clicked()
+            if ui.button(crate::i18n::t("Browse…")).clicked()
                 && let Some(f) = rfd::FileDialog::new().pick_folder()
             {
                 s.library_folder = f.display().to_string();
@@ -637,7 +651,7 @@ impl SnagApp {
                     if ui.button(crate::i18n::t("Duplicate")).clicked() {
                         dup = Some(i);
                     }
-                    if ui.button(crate::i18n::t("Export...")).clicked() {
+                    if ui.button(crate::i18n::t("Export…")).clicked() {
                         export_one = Some(i);
                     }
                     if ui.button(crate::i18n::t("Delete")).clicked() {
@@ -663,10 +677,10 @@ impl SnagApp {
             self.settings.presets.push(Preset::default());
         }
         ui.horizontal(|ui| {
-            if ui.button(crate::i18n::t("Import presets...")).clicked() {
+            if ui.button(crate::i18n::t("Import presets…")).clicked() {
                 import = true;
             }
-            if ui.button(crate::i18n::t("Export all presets...")).clicked() {
+            if ui.button(crate::i18n::t("Export all presets…")).clicked() {
                 export_all = true;
             }
         });
@@ -697,11 +711,11 @@ impl SnagApp {
                 egui::Grid::new("keys").striped(true).spacing(vec2(16.0, 4.0)).show(ui, |ui| {
                     let rows: Vec<(String, String)> = [
                         ("Ctrl+Shift+A / W / F", "All-in-one / window / screen capture"),
-                        ("Ctrl+Z, Ctrl+Y", "Undo, redo"),
+                        (if crate::platform::system() == crate::platform::System::Windows { "Ctrl+Z, Ctrl+Y" } else { "Ctrl+Z, Ctrl+Shift+Z" }, "Undo, redo"),
                         ("Ctrl+C, Ctrl+V", "Copy picture, paste a picture"),
-                        ("Ctrl+S, Ctrl+Shift+S", "Save as, quick save to folder"),
-                        ("Ctrl+O, Ctrl+L", "Open a picture, open the library"),
-                        ("Ctrl+P", "Pin picture to screen"),
+                        ("Ctrl+S, Ctrl+Shift+S, Ctrl+Alt+S", "Save, save as, quick save to folder"),
+                        ("Ctrl+N, Ctrl+O, Ctrl+L", "New picture, open a picture, open the library"),
+                        ("Ctrl+P, Ctrl+Shift+P", "Print, pin picture to screen"),
                         ("Ctrl+,", "Settings"),
                         ("Delete, [ and ]", "Delete, shrink or grow the selected mark"),
                         ("0, 1, +, -", "Fit, actual size, zoom in, zoom out"),
@@ -714,7 +728,7 @@ impl SnagApp {
                     .chain(Tool::ALL.iter().map(|t| (t.key().to_string(), format!("{} tool", t.label()))))
                     .collect();
                     for (k, v) in rows {
-                        ui.label(RichText::new(k).strong());
+                        ui.label(RichText::new(crate::platform::keys(&k)).strong());
                         ui.label(v);
                         ui.end_row();
                     }
@@ -1036,7 +1050,7 @@ impl SnagApp {
                                 open_item = Some(i);
                                 ui.close();
                             }
-                            if ui.button(crate::i18n::t("Edit tags...")).clicked() {
+                            if ui.button(crate::i18n::t("Edit tags…")).clicked() {
                                 self.lib_tag_edit = Some((i, self.lib_items[i].meta.tags.join(", ")));
                                 ui.close();
                             }
@@ -1044,7 +1058,7 @@ impl SnagApp {
                                 show_item = Some(i);
                                 ui.close();
                             }
-                            if ui.button(crate::i18n::t("Delete")).clicked() {
+                            if ui.button(crate::i18n::t(crate::platform::trash_text("Move to Recycle Bin", "Move to Trash"))).clicked() {
                                 delete_item = Some(i);
                                 ui.close();
                             }
@@ -1082,11 +1096,14 @@ impl SnagApp {
             self.open_folder(&p);
         }
         if let Some(i) = delete_item {
+            // To the Recycle Bin / Trash, where it can be brought back (never deleted for good).
             match library::delete(&self.lib_items[i]) {
                 Ok(()) => {
+                    let s = self.lib_items[i].path.display().to_string();
+                    self.status = crate::i18n::tf(crate::platform::trash_text("Moved {path} to the Recycle Bin.", "Moved {path} to the Trash."), &[("path", &s)]);
                     self.lib_items.remove(i);
                 }
-                Err(e) => self.status = format!("Couldn't delete: {e}"),
+                Err(e) => self.status = crate::i18n::tf(crate::platform::trash_text("Couldn't move it to the Recycle Bin: {error}", "Couldn't move it to the Trash: {error}"), &[("error", &e)]),
             }
         }
         self.library_open = open;
@@ -1104,7 +1121,7 @@ impl SnagApp {
         let mut slideshow = false;
         own_window(ctx, Win { key: "gifs", title: crate::i18n::t("GIF recordings"), size: vec2(740.0, 600.0), resizable: true }, &mut open, |ui| {
             ui.horizontal(|ui| {
-                if ui.button(crate::i18n::t("Open a GIF...")).clicked()
+                if ui.button(crate::i18n::t("Open a GIF…")).clicked()
                     && let Some(p) = rfd::FileDialog::new().add_filter("GIF", &["gif"]).pick_file()
                 {
                     load = Some(p);
@@ -1180,13 +1197,13 @@ impl SnagApp {
                 }
             });
             ui.horizontal(|ui| {
-                if ui.button(crate::i18n::t("Save trimmed GIF as...")).clicked() {
+                if ui.button(crate::i18n::t("Save trimmed GIF as…")).clicked() {
                     save_trim = true;
                 }
                 if ui.button(crate::i18n::t("Grab this frame as a picture")).clicked() {
                     grab = Some(ed.index);
                 }
-                if ui.button(crate::i18n::t("Add another GIF to the end...")).clicked() {
+                if ui.button(crate::i18n::t("Add another GIF to the end…")).clicked() {
                     append = true;
                 }
             });
@@ -1360,6 +1377,11 @@ impl Dialog {
     }
 }
 
+/// A dialog's main button (`action`, English) and Cancel, in this system's order.
+fn dialog_row(ui: &mut egui::Ui, action: &'static str, enabled: bool) -> Option<Choice> {
+    crate::platform::dialog_buttons(ui, Some(crate::i18n::t(action)), crate::i18n::t("Cancel"), crate::platform::Kind::Normal, enabled)
+}
+
 fn color4_edit(ui: &mut egui::Ui, c: &mut [u8; 4]) {
     let mut col = Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
     if egui::color_picker::color_edit_button_srgba(ui, &mut col, egui::color_picker::Alpha::OnlyBlend).changed() {
@@ -1397,7 +1419,9 @@ impl SnagApp {
                         *color = [0, 0, 0, 0];
                     }
                 });
-                if ui.button(crate::i18n::t("Create")).clicked() {
+                let pick = dialog_row(ui, "Create", true);
+                done |= pick.is_some();
+                if pick == Some(Choice::Action) {
                     let (w, h, c) = (*w, *h, *color);
                     action = Some(Box::new(move |app| {
                         let name = app.next_name("New image");
@@ -1418,7 +1442,9 @@ impl SnagApp {
                     }
                 });
                 ui.checkbox(keep, crate::i18n::t("Keep the proportions"));
-                if ui.button(crate::i18n::t("Resize")).clicked() {
+                let pick = dialog_row(ui, "Resize", true);
+                done |= pick.is_some();
+                if pick == Some(Choice::Action) {
                     let (w, h) = (*w, *h);
                     action = Some(Box::new(move |app| app.image_op("Resized", |img| crate::effects::resize_exact(img, w, h))));
                     done = true;
@@ -1439,7 +1465,9 @@ impl SnagApp {
                         *color = [0, 0, 0, 0];
                     }
                 });
-                if ui.button(crate::i18n::t("Apply")).clicked() {
+                let pick = dialog_row(ui, "Apply", true);
+                done |= pick.is_some();
+                if pick == Some(Choice::Action) {
                     let (w, h, c) = (*w, *h, *color);
                     action = Some(Box::new(move |app| app.image_op("New canvas", |img| crate::effects::canvas(img, w, h, c))));
                     done = true;
@@ -1449,7 +1477,13 @@ impl SnagApp {
                 let r = ui.text_edit_singleline(name);
                 r.request_focus();
                 ui.label(RichText::new(crate::i18n::t("A saved picture's file is renamed too.")).color(TEXT_DIM));
-                if ui.button(crate::i18n::t("Rename")).clicked() || ui.input(|i| i.key_pressed(Key::Enter)) {
+                let mut pick = dialog_row(ui, "Rename", !name.trim().is_empty());
+                // The name field has the keyboard, so Return is handled here.
+                if pick.is_none() && !name.trim().is_empty() && ui.input(|i| i.key_pressed(Key::Enter)) {
+                    pick = Some(Choice::Action);
+                }
+                done |= pick.is_some();
+                if pick == Some(Choice::Action) {
                     let n = name.clone();
                     action = Some(Box::new(move |app| app.rename_current(&n)));
                     done = true;
@@ -1474,7 +1508,7 @@ impl SnagApp {
                 ui.horizontal(|ui| {
                     ui.label(crate::i18n::t("Folder"));
                     ui.add(egui::TextEdit::singleline(folder).desired_width(300.0));
-                    if ui.button(crate::i18n::t("Browse...")).clicked()
+                    if ui.button(crate::i18n::t("Browse…")).clicked()
                         && let Some(f) = rfd::FileDialog::new().pick_folder()
                     {
                         *folder = f.display().to_string();
@@ -1487,7 +1521,9 @@ impl SnagApp {
                     }
                 });
                 let n = pick.iter().filter(|p| **p).count();
-                if ui.add_enabled(n > 0, egui::Button::new(format!("Export {n} pictures"))).clicked() {
+                let choice = crate::platform::dialog_buttons(ui, Some(&crate::i18n::tf("Export {n} pictures", &[("n", &n.to_string())])), crate::i18n::t("Cancel"), crate::platform::Kind::Normal, n > 0);
+                done |= choice.is_some();
+                if choice == Some(Choice::Action) {
                     let (pick, folder, format) = (pick.clone(), PathBuf::from(folder.clone()), *format);
                     action = Some(Box::new(move |app| app.export_many(&pick, &folder, format)));
                     done = true;
@@ -1553,7 +1589,7 @@ impl SnagApp {
             items.push((self.entries[i].doc.clone(), title, path));
         }
         let (settings, folder) = (self.settings.clone(), folder.to_path_buf());
-        self.status = crate::i18n::tf("Exporting {n} pictures to {folder}...", &[("n", &items.len().to_string()), ("folder", &folder.display().to_string())]);
+        self.status = crate::i18n::tf("Exporting {n} pictures to {folder}…", &[("n", &items.len().to_string()), ("folder", &folder.display().to_string())]);
         self.jobs.queue(move || {
             let (mut ok, mut last_err, mut paths) = (0, None, Vec::new());
             for (doc, title, path) in items {
@@ -1853,7 +1889,7 @@ impl SnagApp {
                 format!("{}  ·  {}", crate::i18n::name(cur), crate::i18n::native_name(cur))
             };
             ui.label(shown);
-            if ui.button(t("Change...")).clicked() {
+            if ui.button(t("Change…")).clicked() {
                 self.x.lang_open = true;
             }
         });
@@ -1867,7 +1903,7 @@ impl SnagApp {
             ui.checkbox(&mut self.settings.update_check, t("Look for a new version on GitHub when Snagster starts (once a day)"));
             ui.horizontal(|ui| {
                 let checking = self.x.update.checking();
-                if ui.add_enabled(!checking, egui::Button::new(if checking { t("Checking...") } else { t("Check now") })).clicked() {
+                if ui.add_enabled(!checking, egui::Button::new(if checking { t("Checking…") } else { t("Check now") })).clicked() {
                     self.x.update.check(ui.ctx(), true);
                 }
                 if let Some(r) = self.x.update.available().cloned()

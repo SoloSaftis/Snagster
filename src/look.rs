@@ -251,7 +251,8 @@ pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
     let galley = ui.painter().layout_no_wrap(label.to_string(), font, if on { Color32::WHITE } else { DIM });
     let size = vec2(galley.size().x + 22.0, 30.0);
     let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
-    let resp = resp.on_hover_text(tip);
+    let resp = resp.on_hover_text(crate::platform::keys(tip));
+    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
     if resp.hovered() && !on {
         ui.painter().rect_filled(rect.shrink2(vec2(2.0, 3.0)), CornerRadius::same(6), HOVER);
     }
@@ -267,11 +268,12 @@ pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
 
 /// A big ribbon tool: its icon over its name, flat until hovered, with a tooltip.
 pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, active: bool) -> Response {
-    let font = FontId::proportional(11.5);
+    let font = FontId::proportional(12.0);
     let galley = ui.painter().layout(label.to_string(), font, TEXT, 88.0);
     let w = galley.size().x.max(34.0) + 14.0;
     let (rect, resp) = ui.allocate_exact_size(vec2(w, 62.0), if enabled { Sense::click() } else { Sense::hover() });
-    let resp = resp.on_hover_text(tip);
+    let resp = resp.on_hover_text(crate::platform::keys(tip));
+    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, enabled, active, label));
     let p = ui.painter();
     if active {
         p.rect_filled(rect, CornerRadius::same(7), PRESSED);
@@ -298,7 +300,8 @@ pub fn small_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool
     let font = FontId::proportional(12.5);
     let galley = ui.painter().layout_no_wrap(label.to_string(), font, TEXT);
     let (rect, resp) = ui.allocate_exact_size(vec2(galley.size().x + 32.0, 20.0), if enabled { Sense::click() } else { Sense::hover() });
-    let resp = resp.on_hover_text(tip);
+    let resp = resp.on_hover_text(crate::platform::keys(tip));
+    resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, enabled, label));
     let p = ui.painter();
     if enabled && resp.hovered() {
         p.rect_filled(rect.expand(1.0), CornerRadius::same(5), HOVER);
@@ -311,7 +314,7 @@ pub fn small_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool
 /// A ribbon group: its tools, its name underneath, a divider after it.
 pub fn group(ui: &mut Ui, name: &str, body: impl FnOnce(&mut Ui)) {
     let r = ui.vertical(|ui| {
-        ui.set_min_height(84.0);
+        ui.set_min_height(86.0);
         ui.horizontal(|ui| {
             ui.set_min_height(64.0);
             ui.spacing_mut().item_spacing.x = 2.0;
@@ -319,8 +322,8 @@ pub fn group(ui: &mut Ui, name: &str, body: impl FnOnce(&mut Ui)) {
         });
         ui.add_space(1.0);
         let w = ui.min_rect().width();
-        ui.allocate_ui(vec2(w, 14.0), |ui| {
-            ui.centered_and_justified(|ui| ui.label(egui::RichText::new(name).size(10.5).color(FAINT)));
+        ui.allocate_ui(vec2(w, 16.0), |ui| {
+            ui.centered_and_justified(|ui| ui.label(egui::RichText::new(name).size(12.0).color(DIM)));
         });
     });
     let x = r.response.rect.right() + 6.0;
@@ -358,7 +361,8 @@ pub fn small_menu(ui: &mut Ui, icon: &str, label: &str, tip: &str, body: impl Fn
 /// An icon-only button for tight places (tooltip required).
 pub fn icon_button(ui: &mut Ui, icon: &str, tip: &str) -> Response {
     let (rect, resp) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
-    let resp = resp.on_hover_text(tip);
+    let resp = resp.on_hover_text(crate::platform::keys(tip));
+    resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, tip));
     if resp.hovered() {
         ui.painter().rect_filled(rect, CornerRadius::same(6), HOVER);
     }

@@ -245,7 +245,7 @@ impl SnagApp {
                 if look::small_tool(ui, ph::UNDO, t("Undo"), "Ctrl+Z", can_undo).clicked() {
                     self.undo();
                 }
-                if look::small_tool(ui, ph::REDO, t("Redo"), "Ctrl+Y", can_redo).clicked() {
+                if look::small_tool(ui, ph::REDO, t("Redo"), super::redo_keys(), can_redo).clicked() {
                     self.redo();
                 }
             });
@@ -432,7 +432,7 @@ impl SnagApp {
                         }
                     }
                     ui.separator();
-                    if ui.button(t("Edit presets...")).clicked() {
+                    if ui.button(t("Edit presets…")).clicked() {
                         self.settings_open = true;
                         self.settings_tab = SettingsTab::Presets;
                         ui.close();
@@ -525,7 +525,7 @@ impl SnagApp {
             if look::big_tool(ui, ph::UNDO, t("Undo"), "Ctrl+Z", can_undo, false).clicked() {
                 self.undo();
             }
-            if look::big_tool(ui, ph::REDO, t("Redo"), "Ctrl+Y", can_redo, false).clicked() {
+            if look::big_tool(ui, ph::REDO, t("Redo"), super::redo_keys(), can_redo, false).clicked() {
                 self.redo();
             }
         });
@@ -684,7 +684,7 @@ impl SnagApp {
                 self.save_as();
             }
             look::column(ui, |ui| {
-                if look::small_tool(ui, ph::DOWNLOAD, t("Quick save"), &format!("{} (Ctrl+Shift+S)", t("Save to the save folder at once")), has).clicked() {
+                if look::small_tool(ui, ph::DOWNLOAD, t("Quick save"), &format!("{} (Ctrl+Alt+S)", t("Save to the save folder at once")), has).clicked() {
                     self.quick_save();
                 }
                 if look::small_tool(ui, ph::ARROW_SQUARE_OUT, t("Open with"), t("Open in the computer's picture program"), has).clicked() {
@@ -783,7 +783,7 @@ impl SnagApp {
         });
         look::group(ui, t("Updates"), |ui| {
             let checking = self.x.update.checking();
-            if look::big_tool(ui, ph::DOWNLOAD, if checking { t("Checking...") } else { t("Check for updates") }, t("Ask GitHub whether a newer Snagster is out"), !checking, false).clicked() {
+            if look::big_tool(ui, ph::DOWNLOAD, if checking { t("Checking…") } else { t("Check for updates") }, t("Ask GitHub whether a newer Snagster is out"), !checking, false).clicked() {
                 self.x.update.check(ui.ctx(), true);
             }
         });

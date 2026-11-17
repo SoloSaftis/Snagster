@@ -26,6 +26,7 @@ mod settings;
 mod video;
 mod i18n;
 mod look;
+mod platform;
 mod audio;
 mod studio;
 mod update;
