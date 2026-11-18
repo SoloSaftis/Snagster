@@ -993,7 +993,12 @@
   "Follow system": "സിസ്റ്റം പിന്തുടരുക",
   "Light": "ലൈറ്റ്",
   "Dark": "ഡാർക്ക്",
-  "A contrast theme is on, so Snagster uses its colours.": "കോൺട്രാസ്റ്റ് തീം ഓണാണ്, അതിനാൽ Snagster അതിന്റെ നിറങ്ങൾ ഉപയോഗിക്കുന്നു.",
-  "The system asks for more contrast, so text and borders are stronger.": "സിസ്റ്റം കൂടുതൽ കോൺട്രാസ്റ്റ് ആവശ്യപ്പെടുന്നു, അതിനാൽ ടെക്സ്റ്റും ബോർഡറുകളും കൂടുതൽ തെളിഞ്ഞതാണ്."
+  "A contrast theme is on, so Snagster uses its colors.": "കോൺട്രാസ്റ്റ് തീം ഓണാണ്, അതിനാൽ Snagster അതിന്റെ നിറങ്ങൾ ഉപയോഗിക്കുന്നു.",
+  "The system asks for more contrast, so text and borders are stronger.": "സിസ്റ്റം കൂടുതൽ കോൺട്രാസ്റ്റ് ആവശ്യപ്പെടുന്നു, അതിനാൽ ടെക്സ്റ്റും ബോർഡറുകളും കൂടുതൽ തെളിഞ്ഞതാണ്.",
+  "App theme": "ആപ്പ് തീം",
+  "Use system setting": "സിസ്റ്റം ക്രമീകരണം ഉപയോഗിക്കുക",
+  "Match system": "സിസ്റ്റവുമായി ഒത്തുപോകുക",
+  "General": "പൊതുവായത്",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "സിസ്റ്റം ക്രമീകരണങ്ങളിൽ “കോൺട്രാസ്റ്റ് വർധിപ്പിക്കുക” ഓണാണ്, അതിനാൽ ടെക്സ്റ്റും ബോർഡറുകളും കൂടുതൽ വ്യക്തമാണ്."
  }
 }

@@ -149,7 +149,7 @@ impl SnagApp {
                         (SettingsTab::Presets, crate::i18n::t("Presets")),
                         (SettingsTab::Ai, crate::i18n::t("AI apps")),
                         (SettingsTab::Streaming, crate::i18n::t("Streaming")),
-                        (SettingsTab::Language, crate::i18n::t("Language & updates")),
+                        (SettingsTab::Language, crate::i18n::t("General")),
                     ] {
                         ui.selectable_value(&mut self.settings_tab, tab, label);
                     }
@@ -445,17 +445,6 @@ impl SnagApp {
 
     fn editor_tab(&mut self, ui: &mut egui::Ui) {
         let s = &mut self.settings;
-        ui.label(RichText::new(crate::i18n::t("Appearance")).strong());
-        ui.horizontal_wrapped(|ui| {
-            for c in crate::theme::ThemeChoice::ALL {
-                ui.radio_value(&mut s.appearance, c, crate::i18n::t(c.label()));
-            }
-        });
-        if let Some(note) = crate::theme::contrast_note() {
-            ui.label(RichText::new(crate::i18n::t(note)).color(pal().dim));
-        }
-        ui.add_space(10.0);
-        ui.label(RichText::new(crate::i18n::t("Marks")).strong());
         ui.horizontal(|ui| {
             ui.label(crate::i18n::t("Drawing color"));
             color_edit(ui, &mut s.color);
@@ -1882,6 +1871,17 @@ impl SnagApp {
     /// Language and updates.
     fn language_tab(&mut self, ui: &mut egui::Ui) {
         use crate::i18n::{t, tf};
+        // Light or dark, in each system's words (Windows: App theme / Use system setting).
+        ui.label(RichText::new(t(crate::theme::heading())).strong());
+        ui.horizontal_wrapped(|ui| {
+            for c in crate::theme::ThemeChoice::ALL {
+                ui.radio_value(&mut self.settings.appearance, c, t(c.label()));
+            }
+        });
+        if let Some(note) = crate::theme::contrast_note() {
+            ui.label(RichText::new(t(note)).color(pal().dim));
+        }
+        ui.add_space(10.0);
         ui.label(RichText::new(t("Language")).strong());
         let cur = crate::i18n::current();
         ui.horizontal(|ui| {

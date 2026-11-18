@@ -993,7 +993,12 @@
   "Follow system": "Fylgja kerfinu",
   "Light": "Ljóst",
   "Dark": "Dökkt",
-  "A contrast theme is on, so Snagster uses its colours.": "Kveikt er á birtuskilaþema, þannig að Snagster notar liti þess.",
-  "The system asks for more contrast, so text and borders are stronger.": "Kerfið biður um meiri birtuskil, þannig að texti og rammar eru skýrari."
+  "A contrast theme is on, so Snagster uses its colors.": "Kveikt er á birtuskilaþema, þannig að Snagster notar liti þess.",
+  "The system asks for more contrast, so text and borders are stronger.": "Kerfið biður um meiri birtuskil, þannig að texti og rammar eru skýrari.",
+  "App theme": "Þema forrits",
+  "Use system setting": "Nota kerfisstillingu",
+  "Match system": "Passa við kerfið",
+  "General": "Almennt",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Kveikt er á Auka birtuskil í kerfisstillingum, því texti og rammar eru skýrari."
  }
 }

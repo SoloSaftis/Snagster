@@ -993,7 +993,12 @@
   "Follow system": "اتباع النظام",
   "Light": "فاتح",
   "Dark": "داكن",
-  "A contrast theme is on, so Snagster uses its colours.": "سمة التباين قيد التشغيل، لذا يستخدم Snagster ألوانها.",
-  "The system asks for more contrast, so text and borders are stronger.": "يطلب النظام تباينًا أعلى، لذا يظهر النص والحدود بشكل أقوى."
+  "A contrast theme is on, so Snagster uses its colors.": "سمة التباين قيد التشغيل، لذا يستخدم Snagster ألوانها.",
+  "The system asks for more contrast, so text and borders are stronger.": "يطلب النظام تباينًا أعلى، لذا يظهر النص والحدود بشكل أقوى.",
+  "App theme": "سمة التطبيق",
+  "Use system setting": "استخدام إعداد النظام",
+  "Match system": "مطابقة النظام",
+  "General": "عام",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "خيار «زيادة التباين» قيد التشغيل في إعدادات النظام، لذا يظهر النص والحدود بشكل أوضح."
  }
 }

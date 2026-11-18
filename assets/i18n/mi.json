@@ -993,7 +993,12 @@
   "Follow system": "Whai i te pūnaha",
   "Light": "Marama",
   "Dark": "Pōuri",
-  "A contrast theme is on, so Snagster uses its colours.": "Kua pāoho tētahi kaupapa rerekētanga, nā reira ka whakamahi a Snagster i ōna kara.",
-  "The system asks for more contrast, so text and borders are stronger.": "Ka tono te pūnaha kia nui ake te rerekētanga, nā reira ka kaha ake te kuputaka me ngā tapa."
+  "A contrast theme is on, so Snagster uses its colors.": "Kua pāoho tētahi kaupapa rerekētanga, nā reira ka whakamahi a Snagster i ōna kara.",
+  "The system asks for more contrast, so text and borders are stronger.": "Ka tono te pūnaha kia nui ake te rerekētanga, nā reira ka kaha ake te kuputaka me ngā tapa.",
+  "App theme": "Kaupapa taiwhanga",
+  "Use system setting": "Whakamahia te tautuhinga pūnaha",
+  "Match system": "Whakahāngai ki te pūnaha",
+  "General": "Whānui",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Kua whakaaetia te Whakanui i te rerekētanga i ngā Tautuhinga Pūnaha, nō reira kua kaha ake te tuhinga me ngā tuaka."
  }
 }

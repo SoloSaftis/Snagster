@@ -993,7 +993,12 @@
   "Follow system": "システムに従う",
   "Light": "ライト",
   "Dark": "ダーク",
-  "A contrast theme is on, so Snagster uses its colours.": "コントラストテーマがオンのため、Snagster はそのテーマの色を使用します。",
-  "The system asks for more contrast, so text and borders are stronger.": "システムがより高いコントラストを求めているため、テキストと枠線が強調されます。"
+  "A contrast theme is on, so Snagster uses its colors.": "コントラストテーマがオンのため、Snagster はそのテーマの色を使用します。",
+  "The system asks for more contrast, so text and borders are stronger.": "システムがより高いコントラストを求めているため、テキストと枠線が強調されます。",
+  "App theme": "アプリのテーマ",
+  "Use system setting": "システム設定を使用",
+  "Match system": "システムに合わせる",
+  "General": "一般",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "システム設定で「コントラストを上げる」がオンのため、文字と境界線が強調されます。"
  }
 }

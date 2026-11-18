@@ -993,7 +993,12 @@
   "Follow system": "Sistemi izləyin",
   "Light": "Açıq",
   "Dark": "Tünd",
-  "A contrast theme is on, so Snagster uses its colours.": "Kontrast mövzusu aktivdir, ona görə Snagster onun rənglərindən istifadə edir.",
-  "The system asks for more contrast, so text and borders are stronger.": "Sistem daha çox kontrast istəyir, ona görə mətn və haşiyələr daha qüvvətlidir."
+  "A contrast theme is on, so Snagster uses its colors.": "Kontrast mövzusu aktivdir, ona görə Snagster onun rənglərindən istifadə edir.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistem daha çox kontrast istəyir, ona görə mətn və haşiyələr daha qüvvətlidir.",
+  "App theme": "Tətbiq mövzusu",
+  "Use system setting": "Sistem ayarından istifadə et",
+  "Match system": "Sistemə uyğunlaşdır",
+  "General": "Ümumi",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistem Ayarlarında “Kontrastı artır” aktivdir, ona görə mətn və haşiyələr daha qabarıqdır."
  }
 }

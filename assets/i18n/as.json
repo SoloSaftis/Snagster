@@ -993,7 +993,12 @@
   "Follow system": "ছিষ্টেম অনুসৰণ কৰক",
   "Light": "পোহৰ",
   "Dark": "গাঢ়",
-  "A contrast theme is on, so Snagster uses its colours.": "এটা কণ্ট্ৰাষ্ট থিম অন আছে, সেয়ে Snagster-এ ইয়াৰ ৰং ব্যৱহাৰ কৰে।",
-  "The system asks for more contrast, so text and borders are stronger.": "ছিষ্টেমে অধিক কণ্ট্ৰাষ্ট বিচাৰিছে, সেয়ে লিখনী আৰু ধাৰসমূহ অধিক স্পষ্ট।"
+  "A contrast theme is on, so Snagster uses its colors.": "এটা কণ্ট্ৰাষ্ট থিম অন আছে, সেয়ে Snagster-এ ইয়াৰ ৰং ব্যৱহাৰ কৰে।",
+  "The system asks for more contrast, so text and borders are stronger.": "ছিষ্টেমে অধিক কণ্ট্ৰাষ্ট বিচাৰিছে, সেয়ে লিখনী আৰু ধাৰসমূহ অধিক স্পষ্ট।",
+  "App theme": "এপৰ থীম",
+  "Use system setting": "ছিষ্টেম ছেটিং ব্যৱহাৰ কৰক",
+  "Match system": "ছিষ্টেমৰ লগত মিলাওক",
+  "General": "সাধাৰণ",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "ছিষ্টেম ছেটিংছত ‘কনট্ৰাষ্ট বঢ়াওক’ অন আছে, গতিকে লিখনি আৰু সীমা অধিক স্পষ্ট।"
  }
 }

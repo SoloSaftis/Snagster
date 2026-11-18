@@ -13,7 +13,7 @@ use eframe::egui::{self, Color32, CornerRadius, Stroke};
 use serde::{Deserialize, Serialize};
 use std::sync::{Mutex, OnceLock, RwLock};
 
-/// What the person picked in Settings → Editor & themes → Appearance.
+/// What the person picked in Settings → General → Appearance (App theme on Windows).
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub enum ThemeChoice {
     #[default]
@@ -22,12 +22,19 @@ pub enum ThemeChoice {
     Dark,
 }
 
+/// The heading over the choice: Windows' own apps say "App theme".
+pub fn heading() -> &'static str {
+    if cfg!(target_os = "windows") { "App theme" } else { "Appearance" }
+}
+
 impl ThemeChoice {
     pub const ALL: [ThemeChoice; 3] = [ThemeChoice::System, ThemeChoice::Light, ThemeChoice::Dark];
 
-    /// The name shown in Settings (English; passed through `i18n::t`).
+    /// The name shown in Settings (English; passed through `i18n::t`), in each system's words.
     pub fn label(self) -> &'static str {
         match self {
+            ThemeChoice::System if cfg!(target_os = "windows") => "Use system setting",
+            ThemeChoice::System if cfg!(target_os = "macos") => "Match system",
             ThemeChoice::System => "Follow system",
             ThemeChoice::Light => "Light",
             ThemeChoice::Dark => "Dark",
@@ -80,14 +87,19 @@ pub struct Palette {
     /// A tool under the pointer, and the tool that is on.
     pub hover: Color32,
     pub pressed: Color32,
-    /// Body text, headings, and text on a `pressed` tool.
+    /// Body text, headings, and text on a `pressed` tool or a `hover` one.
     pub text: Color32,
+    pub on_hover: Color32,
+    /// Text on egui's buttons.
+    pub button_text: Color32,
     pub strong: Color32,
     pub selected_text: Color32,
     /// Secondary text (notes under a setting, an icon at rest).
     pub dim: Color32,
     /// Group names on the ribbon and other quiet labels; still readable (4.5:1).
     pub faint: Color32,
+    /// Things that can't be used now.
+    pub disabled: Color32,
     /// Separators, frames and borders.
     pub line: Color32,
     pub border: Color32,
@@ -95,9 +107,11 @@ pub struct Palette {
     pub card: Color32,
     pub card_hover: Color32,
     pub card_text: Color32,
-    /// Selection, focus, links and the main buttons, and the text on them.
+    /// The accent as a fill (selection, the main buttons, the chosen segment), and the text on it.
     pub accent: Color32,
     pub on_accent: Color32,
+    /// The accent as text, icons, links and focus rings: readable on the panels.
+    pub link: Color32,
     /// Buttons that delete or stop (white text on them).
     pub danger: Color32,
     /// Messages: it worked, take care, it failed (text colours).
@@ -121,17 +135,21 @@ pub const DARK: Palette = Palette {
     hover: Color32::from_rgb(44, 48, 60),
     pressed: Color32::from_rgb(36, 46, 82),
     text: Color32::from_rgb(226, 229, 238),
+    on_hover: Color32::WHITE,
+    button_text: Color32::from_rgb(226, 229, 238),
     strong: Color32::WHITE,
     selected_text: Color32::WHITE,
     dim: Color32::from_rgb(150, 155, 170),
     faint: Color32::from_rgb(134, 140, 156),
+    disabled: Color32::from_rgb(104, 110, 124),
     line: Color32::from_rgb(52, 56, 68),
-    border: Color32::from_rgb(70, 74, 88),
+    border: Color32::from_rgb(112, 118, 134),
     card: Color32::from_rgb(28, 30, 36),
     card_hover: Color32::from_rgb(46, 49, 59),
     card_text: Color32::from_rgb(210, 214, 225),
-    accent: BRAND,
+    accent: Color32::from_rgb(60, 98, 222),
     on_accent: Color32::WHITE,
+    link: Color32::from_rgb(122, 156, 255),
     danger: Color32::from_rgb(196, 43, 28),
     ok: Color32::from_rgb(90, 200, 130),
     warn: Color32::from_rgb(240, 160, 110),
@@ -150,10 +168,13 @@ pub const LIGHT: Palette = Palette {
     hover: Color32::from_rgb(228, 231, 238),
     pressed: Color32::from_rgb(212, 223, 250),
     text: Color32::from_rgb(28, 30, 36),
+    on_hover: Color32::BLACK,
+    button_text: Color32::from_rgb(28, 30, 36),
     strong: Color32::BLACK,
     selected_text: Color32::BLACK,
     dim: Color32::from_rgb(84, 90, 104),
     faint: Color32::from_rgb(96, 102, 116),
+    disabled: Color32::from_rgb(150, 155, 166),
     line: Color32::from_rgb(214, 217, 224),
     border: Color32::from_rgb(128, 134, 148),
     card: Color32::from_rgb(255, 255, 255),
@@ -161,6 +182,7 @@ pub const LIGHT: Palette = Palette {
     card_text: Color32::from_rgb(40, 44, 52),
     accent: Color32::from_rgb(38, 90, 214),
     on_accent: Color32::WHITE,
+    link: Color32::from_rgb(38, 90, 214),
     danger: Color32::from_rgb(196, 43, 28),
     ok: Color32::from_rgb(16, 120, 64),
     warn: Color32::from_rgb(166, 78, 0),
@@ -178,6 +200,8 @@ pub fn stronger(p: Palette) -> Palette {
     Palette {
         high_contrast: true,
         text: fg,
+        on_hover: fg,
+        button_text: fg,
         strong: fg,
         selected_text: fg,
         dim: quiet,
@@ -198,16 +222,21 @@ pub fn from_system(c: SystemColors) -> Palette {
         bg: c.window,
         panel: c.window,
         panel_hi: c.button,
-        widget_hover: c.button,
+        // Hover, pressed and chosen all use the highlight and its text (Microsoft's rule).
+        widget_hover: c.highlight,
         band: c.window,
         tabs: c.window,
-        hover: c.button,
+        hover: c.highlight,
         pressed: c.highlight,
         text: c.window_text,
+        on_hover: c.highlight_text,
+        button_text: c.button_text,
         strong: c.window_text,
         selected_text: c.highlight_text,
         dim: c.window_text,
-        faint: c.gray_text,
+        // GrayText is for what can't be used, never for quiet text.
+        faint: c.window_text,
+        disabled: c.gray_text,
         line: c.window_text,
         border: c.window_text,
         card: c.window,
@@ -215,6 +244,7 @@ pub fn from_system(c: SystemColors) -> Palette {
         card_text: c.window_text,
         accent: c.highlight,
         on_accent: c.highlight_text,
+        link: c.link,
         danger: c.highlight,
         ok: c.window_text,
         warn: c.window_text,
@@ -239,10 +269,13 @@ pub fn choose(choice: ThemeChoice, sys: &SystemLook) -> Palette {
     }
     let base = if wants_dark(choice, sys.dark) { DARK } else { LIGHT };
     let mut p = if sys.more_contrast { stronger(base) } else { base };
-    let accent = sys.accent.unwrap_or(p.accent);
+    // One accent, two uses: as a fill it is darkened until white text on it reads (as libadwaita
+    // and Breeze always put white on the accent); as text and rings, made readable on the panels.
+    let raw = sys.accent.unwrap_or(if p.dark { BRAND } else { LIGHT.accent });
     let need = if p.high_contrast { 7.0 } else { 4.5 };
-    p.accent = readable_on(accent, p.panel, need);
-    p.on_accent = text_on(p.accent);
+    p.accent = readable_on(raw, Color32::WHITE, 4.5);
+    p.on_accent = Color32::WHITE;
+    p.link = readable_on(raw, p.panel, need);
     p
 }
 
@@ -295,12 +328,13 @@ pub fn visuals(p: &Palette) -> egui::Visuals {
     v.override_text_color = None;
     v.panel_fill = p.panel;
     v.window_fill = p.panel;
-    v.window_stroke = Stroke::new(1.0, p.border);
+    // Contrast themes: windows, menus and popups get a 2 px edge.
+    v.window_stroke = Stroke::new(if p.high_contrast { 2.0 } else { 1.0 }, p.border);
     v.extreme_bg_color = p.bg;
     v.text_edit_bg_color = Some(p.bg);
     v.faint_bg_color = p.band;
     v.code_bg_color = p.panel_hi;
-    v.hyperlink_color = p.accent;
+    v.hyperlink_color = p.link;
     v.selection.bg_fill = p.accent;
     v.selection.stroke = Stroke::new(1.0, p.on_accent);
     v.warn_fg_color = p.warn;
@@ -313,17 +347,17 @@ pub fn visuals(p: &Palette) -> egui::Visuals {
     w.noninteractive.fg_stroke = Stroke::new(1.0, p.text);
     w.inactive.bg_fill = p.panel_hi;
     w.inactive.weak_bg_fill = p.panel_hi;
-    // On a light panel a field, tick box or button needs an edge to be seen (WCAG 1.4.11).
-    w.inactive.bg_stroke = Stroke::new(if p.high_contrast || !p.dark { 1.0 } else { 0.0 }, p.border);
-    w.inactive.fg_stroke = Stroke::new(1.0, p.text);
+    // A field, tick box or button needs an edge that stands 3:1 to be seen (WCAG 1.4.11).
+    w.inactive.bg_stroke = Stroke::new(1.0, p.border);
+    w.inactive.fg_stroke = Stroke::new(1.0, p.button_text);
     // Hover and keyboard focus look the same in egui: an accent ring that stands 3:1.
     w.hovered.bg_fill = p.widget_hover;
     w.hovered.weak_bg_fill = p.widget_hover;
-    w.hovered.bg_stroke = Stroke::new(1.5, p.accent);
-    w.hovered.fg_stroke = Stroke::new(1.5, p.strong);
+    w.hovered.bg_stroke = Stroke::new(1.5, p.link);
+    w.hovered.fg_stroke = Stroke::new(1.5, p.on_hover);
     w.active.bg_fill = p.pressed;
     w.active.weak_bg_fill = p.pressed;
-    w.active.bg_stroke = Stroke::new(1.5, p.accent);
+    w.active.bg_stroke = Stroke::new(1.5, p.link);
     w.active.fg_stroke = Stroke::new(2.0, p.selected_text);
     w.open.bg_fill = p.panel_hi;
     w.open.weak_bg_fill = p.panel_hi;
@@ -352,9 +386,9 @@ fn set_pal(p: Palette) {
 static PORTAL: Mutex<SystemLook> = Mutex::new(SystemLook { dark: None, contrast_colors: None, more_contrast: false, accent: None });
 static CTX: OnceLock<egui::Context> = OnceLock::new();
 
-/// The desktop's accent colour, if it gave one (Linux).
+/// The desktop's accent colour, if it gives one (Linux's portal, macOS's accent colour).
 pub fn system_accent() -> Option<Color32> {
-    PORTAL.lock().unwrap_or_else(|e| e.into_inner()).accent
+    PORTAL.lock().unwrap_or_else(|e| e.into_inner()).accent.or_else(mac_accent)
 }
 
 /// Ask the desktop for its colour scheme, contrast and accent colour before the first frame
@@ -373,7 +407,7 @@ fn system_look(ctx: &egui::Context) -> SystemLook {
         dark: portal.dark.or(winit),
         contrast_colors: windows_contrast(),
         more_contrast: portal.more_contrast || mac_more_contrast(),
-        accent: portal.accent,
+        accent: portal.accent.or_else(mac_accent),
     }
 }
 
@@ -388,7 +422,9 @@ pub fn contrast_note() -> Option<&'static str> {
 
 fn note_for(sys: &SystemLook) -> Option<&'static str> {
     if sys.contrast_colors.is_some() {
-        Some("A contrast theme is on, so Snagster uses its colours.")
+        Some("A contrast theme is on, so Snagster uses its colors.")
+    } else if sys.more_contrast && cfg!(target_os = "macos") {
+        Some("Increase contrast is on in System Settings, so text and borders are stronger.")
     } else if sys.more_contrast {
         Some("The system asks for more contrast, so text and borders are stronger.")
     } else {
@@ -400,6 +436,10 @@ fn note_for(sys: &SystemLook) -> Option<&'static str> {
 /// bars. Call at the start of every frame (it does nothing when nothing changed).
 pub fn apply(ctx: &egui::Context, choice: ThemeChoice) {
     let _ = CTX.set(ctx.clone());
+    // Windows and macOS send no event when contrast is switched on or off: look again now and then.
+    if cfg!(any(target_os = "windows", target_os = "macos")) {
+        ctx.request_repaint_after(std::time::Duration::from_secs(2));
+    }
     let sys = system_look(ctx);
     let mut applied = APPLIED.lock().unwrap_or_else(|e| e.into_inner());
     if *applied == Some((choice, sys)) {
@@ -477,21 +517,31 @@ fn mac_more_contrast() -> bool {
     false
 }
 
+/// macOS: the accent colour picked in System Settings → Appearance.
+#[cfg(target_os = "macos")]
+fn mac_accent() -> Option<Color32> {
+    use objc2_app_kit::{NSColor, NSColorSpace};
+    let c = NSColor::controlAccentColor().colorUsingColorSpace(&NSColorSpace::sRGBColorSpace())?;
+    accent_from(c.redComponent(), c.greenComponent(), c.blueComponent())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn mac_accent() -> Option<Color32> {
+    None
+}
+
 /// The portal's colour components are 0..1; out of range means "no accent set".
-#[cfg(any(target_os = "linux", test))]
+#[cfg(any(target_os = "linux", target_os = "macos", test))]
 fn accent_from(r: f64, g: f64, b: f64) -> Option<Color32> {
     let ok = |v: f64| (0.0..=1.0).contains(&v);
     (ok(r) && ok(g) && ok(b)).then(|| Color32::from_rgb((r * 255.0).round() as u8, (g * 255.0).round() as u8, (b * 255.0).round() as u8))
 }
 
-/// The portal's colour-scheme answer: 1 dark, 2 light, anything else no preference.
+/// The portal's colour-scheme answer: 1 prefers dark; 0 (GNOME's "Default", no preference) and
+/// 2 are light, as libadwaita apps show them. No answer at all (None) is no preference.
 #[cfg(any(target_os = "linux", test))]
-fn dark_from_scheme(scheme: u32) -> Option<bool> {
-    match scheme {
-        1 => Some(true),
-        2 => Some(false),
-        _ => None,
-    }
+fn dark_from_scheme(scheme: Option<u32>) -> Option<bool> {
+    scheme.map(|s| s == 1)
 }
 
 #[cfg(target_os = "linux")]
@@ -501,9 +551,10 @@ mod linux {
 
     async fn read(s: &Settings) -> SystemLook {
         let scheme = match s.color_scheme().await {
-            Ok(ColorScheme::PreferDark) => 1,
-            Ok(ColorScheme::PreferLight) => 2,
-            _ => 0,
+            Ok(ColorScheme::PreferDark) => Some(1),
+            Ok(ColorScheme::PreferLight) => Some(2),
+            Ok(_) => Some(0),
+            Err(_) => None,
         };
         let accent = s.accent_color().await.ok().and_then(|c| accent_from(c.red(), c.green(), c.blue()));
         SystemLook {
@@ -604,6 +655,17 @@ mod tests {
     }
 
     #[test]
+    fn contrast_themes_use_each_system_colour_for_its_job() {
+        let p = from_system(night_sky());
+        // Hover in the highlight with its text; links in Hotlight; GrayText only when disabled.
+        assert_eq!((p.hover, p.on_hover), (night_sky().highlight, night_sky().highlight_text));
+        assert_eq!(p.link, night_sky().link);
+        assert_eq!((p.faint, p.disabled), (night_sky().window_text, night_sky().gray_text));
+        assert_eq!(visuals(&p).window_stroke.width, 2.0);
+        assert_eq!(visuals(&DARK).window_stroke.width, 1.0);
+    }
+
+    #[test]
     fn a_contrast_theme_wins_over_every_choice() {
         for c in ThemeChoice::ALL {
             let p = choose(c, &SystemLook { dark: Some(false), contrast_colors: Some(night_sky()), ..Default::default() });
@@ -622,7 +684,7 @@ mod tests {
             assert!(more.high_contrast);
             assert!(contrast(more.text, more.panel) > contrast(plain.text, plain.panel));
             assert!(contrast(more.faint, more.band) >= 7.0);
-            assert!(contrast(more.accent, more.panel) >= 7.0);
+            assert!(contrast(more.link, more.panel) >= 7.0);
         }
     }
 
@@ -631,11 +693,11 @@ mod tests {
         vec![
             ("text on panel", p.text, p.panel),
             ("text on button", p.text, p.panel_hi),
-            ("text on hovered button", p.strong, p.widget_hover),
+            ("text on hovered button", p.on_hover, p.widget_hover),
             ("text on field", p.text, p.bg),
             ("text on band", p.text, p.band),
             ("text on tabs", p.text, p.tabs),
-            ("text on hovered tool", p.text, p.hover),
+            ("text on hovered tool", p.on_hover, p.hover),
             ("text on chosen tool", p.selected_text, p.pressed),
             ("dim on panel", p.dim, p.panel),
             ("dim on band", p.dim, p.band),
@@ -644,7 +706,9 @@ mod tests {
             ("faint on panel", p.faint, p.panel),
             ("card text", p.card_text, p.card),
             ("card text hovered", p.card_text, p.card_hover),
-            ("link on panel", p.accent, p.panel),
+            ("link on panel", p.link, p.panel),
+            ("link on band", p.link, p.band),
+            ("button text", p.button_text, p.panel_hi),
             ("text on accent", p.on_accent, p.accent),
             ("text on a delete button", text_on(p.danger), p.danger),
             ("ok on panel", p.ok, p.panel),
@@ -667,10 +731,8 @@ mod tests {
                 assert!(r >= 4.5, "{name}: {what} is {r:.2}:1, below 4.5:1");
             }
             // The focus ring (hovered/focused widget border) against the window: 3:1.
-            if !p.dark || p.high_contrast {
-                assert!(contrast(p.border, p.panel) >= 3.0, "{name}: control edges");
-            }
-            assert!(contrast(p.accent, p.panel) >= 3.0, "{name}: focus ring");
+            assert!(contrast(p.border, p.panel) >= 3.0, "{name}: control edges");
+            assert!(contrast(p.link, p.panel) >= 3.0, "{name}: focus ring");
         }
     }
 
@@ -679,8 +741,10 @@ mod tests {
         // GNOME's yellow accent on the light palette, and a dark navy on the dark one.
         for (raw, dark) in [(Color32::from_rgb(200, 136, 0), false), (Color32::from_rgb(20, 30, 90), true)] {
             let p = choose(ThemeChoice::System, &SystemLook { dark: Some(dark), accent: Some(raw), ..Default::default() });
-            assert_ne!(p.accent, raw);
-            assert!(contrast(p.accent, p.panel) >= 4.5);
+            assert_ne!(p.link, raw);
+            assert!(contrast(p.link, p.panel) >= 4.5);
+            // White on the accent fill, as GNOME and KDE do.
+            assert_eq!(p.on_accent, Color32::WHITE);
             assert!(contrast(p.on_accent, p.accent) >= 4.5, "{:?} on {:?}", p.on_accent, p.accent);
         }
         // One that already reads well is kept as it is.
@@ -700,9 +764,11 @@ mod tests {
 
     #[test]
     fn portal_answers() {
-        assert_eq!(dark_from_scheme(1), Some(true));
-        assert_eq!(dark_from_scheme(2), Some(false));
-        assert_eq!(dark_from_scheme(0), None);
+        assert_eq!(dark_from_scheme(Some(1)), Some(true));
+        assert_eq!(dark_from_scheme(Some(2)), Some(false));
+        // GNOME's "Default" is light, as libadwaita apps show it.
+        assert_eq!(dark_from_scheme(Some(0)), Some(false));
+        assert_eq!(dark_from_scheme(None), None);
         assert_eq!(accent_from(0.0, 0.5, 1.0), Some(Color32::from_rgb(0, 128, 255)));
         assert_eq!(accent_from(0.207, 0.517, 0.894), Some(Color32::from_rgb(53, 132, 228)));
         assert_eq!(accent_from(-1.0, 0.0, 0.0), None);
@@ -716,7 +782,8 @@ mod tests {
             assert_eq!(v.panel_fill, p.panel);
             assert_eq!(v.selection.bg_fill, p.accent);
             assert_eq!(v.widgets.noninteractive.fg_stroke.color, p.text);
-            assert_eq!(v.widgets.hovered.bg_stroke.color, p.accent);
+            assert_eq!(v.widgets.hovered.bg_stroke.color, p.link);
+            assert_eq!(v.hyperlink_color, p.link);
         }
     }
 

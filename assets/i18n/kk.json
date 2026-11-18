@@ -993,7 +993,12 @@
   "Follow system": "Жүйеге сай",
   "Light": "Ашық",
   "Dark": "Қараңғы",
-  "A contrast theme is on, so Snagster uses its colours.": "Контрастты тақырып қосулы, сондықтан Snagster оның түстерін пайдаланады.",
-  "The system asks for more contrast, so text and borders are stronger.": "Жүйе жоғарырақ контрастты сұрайды, сондықтан мәтін мен жиектер айқынырақ."
+  "A contrast theme is on, so Snagster uses its colors.": "Контрастты тақырып қосулы, сондықтан Snagster оның түстерін пайдаланады.",
+  "The system asks for more contrast, so text and borders are stronger.": "Жүйе жоғарырақ контрастты сұрайды, сондықтан мәтін мен жиектер айқынырақ.",
+  "App theme": "Қолданба тақырыбы",
+  "Use system setting": "Жүйе параметрін қолдану",
+  "Match system": "Жүйеге сәйкестендіру",
+  "General": "Жалпы",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Жүйе параметрлерінде «Контрастты арттыру» қосулы, сондықтан мәтін мен жиектер айқынырақ."
  }
 }

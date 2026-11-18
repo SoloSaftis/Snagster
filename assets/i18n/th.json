@@ -993,7 +993,12 @@
   "Follow system": "ตามระบบ",
   "Light": "สว่าง",
   "Dark": "มืด",
-  "A contrast theme is on, so Snagster uses its colours.": "ธีมความคมชัดสูงเปิดอยู่ Snagster จึงใช้สีของธีมนั้น",
-  "The system asks for more contrast, so text and borders are stronger.": "ระบบร้องขอความคมชัดที่สูงขึ้น ข้อความและเส้นขอบจึงเด่นชัดขึ้น"
+  "A contrast theme is on, so Snagster uses its colors.": "ธีมความคมชัดสูงเปิดอยู่ Snagster จึงใช้สีของธีมนั้น",
+  "The system asks for more contrast, so text and borders are stronger.": "ระบบร้องขอความคมชัดที่สูงขึ้น ข้อความและเส้นขอบจึงเด่นชัดขึ้น",
+  "App theme": "ธีมของแอป",
+  "Use system setting": "ใช้การตั้งค่าระบบ",
+  "Match system": "ให้ตรงกับระบบ",
+  "General": "ทั่วไป",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "เปิด “เพิ่มความคมชัด” ไว้ในการตั้งค่าระบบ ข้อความและเส้นขอบจึงเด่นชัดขึ้น"
  }
 }

@@ -993,7 +993,12 @@
   "Follow system": "ಸಿಸ್ಟಂ ಅನುಸರಿಸಿ",
   "Light": "ಬೆಳಕು",
   "Dark": "ಗಾಢ",
-  "A contrast theme is on, so Snagster uses its colours.": "ಕಾಂಟ್ರಾಸ್ಟ್ ಥೀಮ್ ಆನ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ Snagster ಅದರ ಬಣ್ಣಗಳನ್ನು ಬಳಸುತ್ತದೆ.",
-  "The system asks for more contrast, so text and borders are stronger.": "ಸಿಸ್ಟಂ ಹೆಚ್ಚಿನ ಕಾಂಟ್ರಾಸ್ಟ್ ಕೇಳುತ್ತದೆ, ಆದ್ದರಿಂದ ಪಠ್ಯ ಮತ್ತು ಅಂಚುಗಳು ಹೆಚ್ಚು ಸ್ಪಷ್ಟವಾಗಿವೆ."
+  "A contrast theme is on, so Snagster uses its colors.": "ಕಾಂಟ್ರಾಸ್ಟ್ ಥೀಮ್ ಆನ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ Snagster ಅದರ ಬಣ್ಣಗಳನ್ನು ಬಳಸುತ್ತದೆ.",
+  "The system asks for more contrast, so text and borders are stronger.": "ಸಿಸ್ಟಂ ಹೆಚ್ಚಿನ ಕಾಂಟ್ರಾಸ್ಟ್ ಕೇಳುತ್ತದೆ, ಆದ್ದರಿಂದ ಪಠ್ಯ ಮತ್ತು ಅಂಚುಗಳು ಹೆಚ್ಚು ಸ್ಪಷ್ಟವಾಗಿವೆ.",
+  "App theme": "ಅಪ್ಲಿಕೇಶನ್ ಥೀಮ್",
+  "Use system setting": "ಸಿಸ್ಟಂ ಸೆಟ್ಟಿಂಗ್ ಬಳಸಿ",
+  "Match system": "ಸಿಸ್ಟಂಗೆ ಹೊಂದಿಸಿ",
+  "General": "ಸಾಮಾನ್ಯ",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "ಸಿಸ್ಟಂ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ “ಕಾಂಟ್ರಾಸ್ಟ್ ಹೆಚ್ಚಿಸಿ” ಆನ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ ಪಠ್ಯ ಮತ್ತು ಅಂಚುಗಳು ಹೆಚ್ಚು ಸ್ಪಷ್ಟವಾಗಿವೆ."
  }
 }

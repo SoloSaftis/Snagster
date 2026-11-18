@@ -802,10 +802,10 @@ fn sound_row(ui: &mut egui::Ui, s: &mut crate::studio::SceneSound, shared: bool,
     match level {
         Some(level) if !s.muted => {
             let f = meter_fill(level, s.volume);
-            ui.painter().rect_filled(Rect::from_min_size(r.min, vec2(r.width() * f, r.height())), CornerRadius::same(3), meter_color(f));
+            ui.painter().rect_filled(Rect::from_min_size(r.min, vec2(r.width() * f, r.height())), CornerRadius::same(3), meter_color_on(f, pal().dark));
         }
         None => {
-            ui.painter().line_segment([r.left_center(), r.right_center()], Stroke::new(1.0, Color32::from_rgb(200, 110, 90)));
+            ui.painter().line_segment([r.left_center(), r.right_center()], Stroke::new(1.0, pal().err));
         }
         _ => {}
     }
@@ -1009,6 +1009,13 @@ pub(crate) fn meter_fill(level: f32, volume: f32) -> f32 {
     (db + 60.0) / 60.0
 }
 
+/// The meter's colour on the palette in use: on a light track the green and yellow are darkened
+/// so the bar stands 3:1 against it.
+pub(crate) fn meter_color_on(f: f32, dark: bool) -> Color32 {
+    let c = meter_color(f);
+    if dark { c } else { crate::theme::readable_on(c, crate::theme::LIGHT.panel_hi, 3.0) }
+}
+
 /// Green, then yellow, then red near the top.
 pub(crate) fn meter_color(f: f32) -> Color32 {
     if f > 0.92 {
@@ -1128,6 +1135,12 @@ mod tests {
         assert_eq!(meter_color(0.5), Color32::from_rgb(80, 200, 120));
         assert_eq!(meter_color(0.8), Color32::from_rgb(240, 200, 70));
         assert_eq!(meter_color(0.95), Color32::from_rgb(240, 80, 70));
+        // On the light palette's track every colour stands 3:1; on the dark one they are kept.
+        for f in [0.5, 0.8, 0.95] {
+            let light = meter_color_on(f, false);
+            assert!(crate::theme::contrast(light, crate::theme::LIGHT.panel_hi) >= 3.0, "{f}: {light:?}");
+            assert_eq!(meter_color_on(f, true), meter_color(f));
+        }
     }
 
     #[test]

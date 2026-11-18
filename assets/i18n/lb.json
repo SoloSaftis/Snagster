@@ -993,7 +993,12 @@
   "Follow system": "Dem System follegen",
   "Light": "Hell",
   "Dark": "Donkel",
-  "A contrast theme is on, so Snagster uses its colours.": "En Kontrastdesign ass aktiv, dofir benotzt Snagster seng Faarwen.",
-  "The system asks for more contrast, so text and borders are stronger.": "D'System freet méi Kontrast, dofir sinn Text a Rummen méi kräfteg."
+  "A contrast theme is on, so Snagster uses its colors.": "En Kontrastdesign ass aktiv, dofir benotzt Snagster seng Faarwen.",
+  "The system asks for more contrast, so text and borders are stronger.": "D'System freet méi Kontrast, dofir sinn Text a Rummen méi kräfteg.",
+  "App theme": "App-Design",
+  "Use system setting": "Systemastellung benotzen",
+  "Match system": "Wéi System",
+  "General": "Allgemeng",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "„Kontrast erhéijen“ ass an de Systemastellungen aktivéiert, dofir sinn Text a Rummen méi kräfteg."
  }
 }

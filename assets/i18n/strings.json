@@ -989,6 +989,11 @@
  "Follow system",
  "Light",
  "Dark",
- "A contrast theme is on, so Snagster uses its colours.",
- "The system asks for more contrast, so text and borders are stronger."
+ "A contrast theme is on, so Snagster uses its colors.",
+ "The system asks for more contrast, so text and borders are stronger.",
+ "App theme",
+ "Use system setting",
+ "Match system",
+ "General",
+ "Increase contrast is on in System Settings, so text and borders are stronger."
 ]

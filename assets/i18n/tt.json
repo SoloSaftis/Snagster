@@ -993,7 +993,12 @@
   "Follow system": "Системаны үтәү",
   "Light": "Ачык",
   "Dark": "Караңгы",
-  "A contrast theme is on, so Snagster uses its colours.": "Контраст теле кабул ителгән, шуңа күрә Snagster аның төсләрен куллана.",
-  "The system asks for more contrast, so text and borders are stronger.": "Система югарырак контраст сорый, шуңа күрә текст һәм чикләр көчлерәк."
+  "A contrast theme is on, so Snagster uses its colors.": "Контраст теле кабул ителгән, шуңа күрә Snagster аның төсләрен куллана.",
+  "The system asks for more contrast, so text and borders are stronger.": "Система югарырак контраст сорый, шуңа күрә текст һәм чикләр көчлерәк.",
+  "App theme": "Кушымта темасы",
+  "Use system setting": "Система көйләвен куллану",
+  "Match system": "Системага туры китерү",
+  "General": "Гомуми",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Система көйләүләрендә «Контрастны арттыру» кабызылган, шуңа күрә текст һәм чикләр ачыграк."
  }
 }

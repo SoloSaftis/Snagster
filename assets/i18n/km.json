@@ -993,7 +993,12 @@
   "Follow system": "តាមប្រព័ន្ធ",
   "Light": "ភ្លឺ",
   "Dark": "ងងឹត",
-  "A contrast theme is on, so Snagster uses its colours.": "រចនាប័ទ្មភាពផ្ទុយគ្នាត្រូវបានបើក ដូច្នេះ Snagster ប្រើពណ៌របស់វា។",
-  "The system asks for more contrast, so text and borders are stronger.": "ប្រព័ន្ធស្នើឱ្យមានភាពផ្ទុយគ្នាខ្ពស់ជាង ដូច្នេះអត្ថបទ និងស៊ុមមានភាពច្បាស់ជាង។"
+  "A contrast theme is on, so Snagster uses its colors.": "រចនាប័ទ្មភាពផ្ទុយគ្នាត្រូវបានបើក ដូច្នេះ Snagster ប្រើពណ៌របស់វា។",
+  "The system asks for more contrast, so text and borders are stronger.": "ប្រព័ន្ធស្នើឱ្យមានភាពផ្ទុយគ្នាខ្ពស់ជាង ដូច្នេះអត្ថបទ និងស៊ុមមានភាពច្បាស់ជាង។",
+  "App theme": "ស្បែកកម្មវិធី",
+  "Use system setting": "ប្រើការកំណត់ប្រព័ន្ធ",
+  "Match system": "ដូចប្រព័ន្ធ",
+  "General": "ទូទៅ",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "«បង្កើនកម្រិតពណ៌ផ្ទុយ» ត្រូវបានបើកនៅក្នុងការកំណត់ប្រព័ន្ធ ដូច្នេះអត្ថបទ និងស៊ុមកាន់តែច្បាស់។"
  }
 }

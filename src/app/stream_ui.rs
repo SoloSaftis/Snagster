@@ -8,7 +8,7 @@ use crate::look::{self, ph};
 use crate::stream::live::{self, LiveOptions, Phase, Snapshot, StudioFrames};
 use crate::stream::{Encoders, PRESETS, Service, Source, State, StreamTarget, keystore, mask};
 
-pub(crate) const LIVE_RED: Color32 = Color32::from_rgb(229, 52, 58);
+pub(crate) const LIVE_RED: Color32 = Color32::from_rgb(200, 36, 44);
 
 #[derive(Default)]
 pub(crate) struct StreamUi {
@@ -585,7 +585,7 @@ impl SnagApp {
                 if snap.on_air() {
                     live_badge(ui, &snap);
                 }
-                ui.label(RichText::new(state_label(&snap)).strong().color(if snap.live() { LIVE_RED } else { look::pal().text }));
+                ui.label(RichText::new(state_label(&snap)).strong().color(if snap.live() { look::pal().err } else { look::pal().text }));
             });
             match (&snap.stats, &snap.info) {
                 (Some(s), Some(i)) => {
@@ -780,7 +780,7 @@ fn sound_buttons(app: &mut SnagApp, ui: &mut egui::Ui) {
                 if let Some(level) = app.studio_level(&s.input).filter(|_| !s.muted) {
                     let f = super::studio_ui::meter_fill(level, s.volume);
                     let y = r.rect.bottom() - 2.0;
-                    ui.painter().line_segment([pos2(r.rect.left() + 3.0, y), pos2(r.rect.left() + 3.0 + (r.rect.width() - 6.0) * f, y)], Stroke::new(2.0, super::studio_ui::meter_color(f)));
+                    ui.painter().line_segment([pos2(r.rect.left() + 3.0, y), pos2(r.rect.left() + 3.0 + (r.rect.width() - 6.0) * f, y)], Stroke::new(2.0, super::studio_ui::meter_color_on(f, look::pal().dark)));
                 }
             }
         });

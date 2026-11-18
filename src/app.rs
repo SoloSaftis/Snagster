@@ -2972,7 +2972,7 @@ impl SnagApp {
                 let (rect, resp) = ui.allocate_exact_size(vec2(54.0, 44.0), Sense::click());
                 let selected = self.tool == t;
                 let bg = if selected {
-                    accent()
+                    pal().accent
                 } else if resp.hovered() {
                     pal().panel_hi
                 } else {
@@ -3259,7 +3259,7 @@ impl SnagApp {
                         None
                     };
                     if self.stamp.starts_with(*ch) {
-                        ui.painter().rect_filled(rect, CornerRadius::same(4), accent());
+                        ui.painter().rect_filled(rect, CornerRadius::same(4), pal().accent);
                     } else if resp.hovered() {
                         ui.painter().rect_filled(rect, CornerRadius::same(4), pal().panel_hi);
                     }
@@ -3836,7 +3836,7 @@ impl SnagApp {
                 }
                 Tool::Selection => {
                     dashed_rect(&painter, r, Color32::WHITE);
-                    painter.rect_filled(r, CornerRadius::ZERO, Color32::from_rgba_unmultiplied(79, 124, 255, 40));
+                    painter.rect_filled(r, CornerRadius::ZERO, accent().gamma_multiply(0.16));
                 }
                 Tool::CutOut => {
                     let band = if r.width() >= r.height() {
@@ -5656,6 +5656,10 @@ impl SnagApp {
                 // Multistreaming in the picture: YouTube alongside Twitch (no real keys).
                 let id = self.settings.stream.new_also_id();
                 self.settings.stream.also = vec![crate::settings::ExtraService { id, service: crate::stream::Service::YouTube, url: String::new(), on: true }];
+            }
+            "settings-general" => {
+                self.settings_open = true;
+                self.settings_tab = SettingsTab::Language;
             }
             "settings-editor" => {
                 self.settings_open = true;

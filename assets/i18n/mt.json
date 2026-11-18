@@ -993,7 +993,12 @@
   "Follow system": "Segwi s-sistema",
   "Light": "Ċar",
   "Dark": "Skur",
-  "A contrast theme is on, so Snagster uses its colours.": "Tema ta' kuntrast hija mixgħula, għalhekk Snagster juża l-kuluri tagħha.",
-  "The system asks for more contrast, so text and borders are stronger.": "Is-sistema titlob aktar kuntrast, għalhekk it-test u l-fruntieri huma aktar b'saħħithom."
+  "A contrast theme is on, so Snagster uses its colors.": "Tema ta' kuntrast hija mixgħula, għalhekk Snagster juża l-kuluri tagħha.",
+  "The system asks for more contrast, so text and borders are stronger.": "Is-sistema titlob aktar kuntrast, għalhekk it-test u l-fruntieri huma aktar b'saħħithom.",
+  "App theme": "Tema tal-app",
+  "Use system setting": "Uża s-setting tas-sistema",
+  "Match system": "Qabbel mas-sistema",
+  "General": "Ġenerali",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Żid il-kuntrast huwa mixgħul fis-Settings tas-Sistema, għalhekk it-test u l-fruntieri huma aktar b'saħħithom."
  }
 }

@@ -993,7 +993,12 @@
   "Follow system": "సిస్టమ్‌ను అనుసరించండి",
   "Light": "లైట్",
   "Dark": "డార్క్",
-  "A contrast theme is on, so Snagster uses its colours.": "కాంట్రాస్ట్ థీమ్ ఆన్‌లో ఉంది, కాబట్టి Snagster దాని రంగులను ఉపయోగిస్తుంది.",
-  "The system asks for more contrast, so text and borders are stronger.": "సిస్టమ్ ఎక్కువ కాంట్రాస్ట్ కోరుతోంది, కాబట్టి వచనం మరియు అంచులు మరింత స్పష్టంగా ఉన్నాయి."
+  "A contrast theme is on, so Snagster uses its colors.": "కాంట్రాస్ట్ థీమ్ ఆన్‌లో ఉంది, కాబట్టి Snagster దాని రంగులను ఉపయోగిస్తుంది.",
+  "The system asks for more contrast, so text and borders are stronger.": "సిస్టమ్ ఎక్కువ కాంట్రాస్ట్ కోరుతోంది, కాబట్టి వచనం మరియు అంచులు మరింత స్పష్టంగా ఉన్నాయి.",
+  "App theme": "యాప్ థీమ్",
+  "Use system setting": "సిస్టమ్ సెట్టింగ్‌ను ఉపయోగించండి",
+  "Match system": "సిస్టమ్‌తో సరిపోల్చండి",
+  "General": "సాధారణ",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "సిస్టమ్ సెట్టింగ్‌లలో “కాంట్రాస్ట్ పెంచండి” ఆన్‌లో ఉంది, కాబట్టి టెక్స్ట్ మరియు అంచులు మరింత స్పష్టంగా ఉన్నాయి."
  }
 }

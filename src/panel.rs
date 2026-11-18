@@ -10,7 +10,7 @@ use crate::settings::{Action, PanelSelection, PanelSettings, PanelShare, Preset,
 use eframe::egui::{self, Align2, Color32, CornerRadius, FontId, Pos2, Rect, RichText, Sense, Stroke, StrokeKind, Vec2, pos2, vec2};
 
 pub const PANEL_SIZE: Vec2 = Vec2::new(780.0, 236.0);
-const CAPTURE_RED: Color32 = Color32::from_rgb(229, 72, 77);
+const CAPTURE_RED: Color32 = Color32::from_rgb(200, 44, 52);
 
 /// A small on/off switch.
 fn switch(ui: &mut egui::Ui, on: &mut bool) -> egui::Response {
@@ -252,12 +252,13 @@ impl SnagApp {
         }
         let big = Rect::from_center_size(pos2(full.max.x - 66.0, full.min.y + 100.0), vec2(100.0, 100.0));
         let br = ui.interact(big, ui.scope_id().with("big"), Sense::click());
+        // Reds that keep the white label readable (4.5:1); hover and press go darker.
         let fill = if tab == 3 && self.x.stream.snap.on_air() {
-            Color32::from_rgb(150, 40, 46)
+            Color32::from_rgb(150, 30, 38)
         } else if br.is_pointer_button_down_on() {
-            Color32::from_rgb(196, 52, 58)
+            Color32::from_rgb(150, 30, 38)
         } else if br.hovered() {
-            Color32::from_rgb(240, 96, 100)
+            Color32::from_rgb(176, 36, 44)
         } else {
             CAPTURE_RED
         };
@@ -509,6 +510,15 @@ fn unused(_: StrokeKind) {}
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn the_capture_button_label_reads_on_every_red() {
+        use crate::theme::contrast;
+        use eframe::egui::Color32;
+        for red in [super::CAPTURE_RED, Color32::from_rgb(176, 36, 44), Color32::from_rgb(150, 30, 38), crate::app::stream_ui::LIVE_RED] {
+            assert!(contrast(Color32::WHITE, red) >= 4.5, "{red:?}");
+        }
+    }
+
     use super::*;
 
     fn image_tab(selection: PanelSelection) -> PanelSettings {

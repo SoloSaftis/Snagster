@@ -993,7 +993,12 @@
   "Follow system": "Ακολούθηση συστήματος",
   "Light": "Φωτεινό",
   "Dark": "Σκούρο",
-  "A contrast theme is on, so Snagster uses its colours.": "Είναι ενεργό ένα θέμα αντίθεσης, οπότε το Snagster χρησιμοποιεί τα χρώματά του.",
-  "The system asks for more contrast, so text and borders are stronger.": "Το σύστημα ζητά μεγαλύτερη αντίθεση, οπότε το κείμενο και τα περιγράμματα είναι πιο έντονα."
+  "A contrast theme is on, so Snagster uses its colors.": "Είναι ενεργό ένα θέμα αντίθεσης, οπότε το Snagster χρησιμοποιεί τα χρώματά του.",
+  "The system asks for more contrast, so text and borders are stronger.": "Το σύστημα ζητά μεγαλύτερη αντίθεση, οπότε το κείμενο και τα περιγράμματα είναι πιο έντονα.",
+  "App theme": "Θέμα εφαρμογής",
+  "Use system setting": "Χρήση ρύθμισης συστήματος",
+  "Match system": "Ταίριασμα με το σύστημα",
+  "General": "Γενικά",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Η επιλογή «Αύξηση αντίθεσης» είναι ενεργή στις Ρυθμίσεις συστήματος, επομένως το κείμενο και τα περιγράμματα είναι πιο έντονα."
  }
 }

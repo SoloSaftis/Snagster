@@ -993,7 +993,12 @@
   "Follow system": "پیروی از سیستم",
   "Light": "روشن",
   "Dark": "تیره",
-  "A contrast theme is on, so Snagster uses its colours.": "یک زمینه کنتراست روشن است، بنابراین Snagster از رنگ‌های آن استفاده می‌کند.",
-  "The system asks for more contrast, so text and borders are stronger.": "سیستم کنتراست بیشتری می‌خواهد، بنابراین متن و حاشیه‌ها پررنگ‌ترند."
+  "A contrast theme is on, so Snagster uses its colors.": "یک زمینه کنتراست روشن است، بنابراین Snagster از رنگ‌های آن استفاده می‌کند.",
+  "The system asks for more contrast, so text and borders are stronger.": "سیستم کنتراست بیشتری می‌خواهد، بنابراین متن و حاشیه‌ها پررنگ‌ترند.",
+  "App theme": "زمینه برنامه",
+  "Use system setting": "استفاده از تنظیم سیستم",
+  "Match system": "مطابق سیستم",
+  "General": "عمومی",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "گزینه «افزایش کنتراست» در تنظیمات سیستم روشن است، بنابراین متن و حاشیه‌ها پررنگ‌ترند."
  }
 }

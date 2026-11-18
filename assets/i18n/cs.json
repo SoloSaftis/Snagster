@@ -993,7 +993,12 @@
   "Follow system": "Podle systému",
   "Light": "Světlý",
   "Dark": "Tmavý",
-  "A contrast theme is on, so Snagster uses its colours.": "Je zapnutý kontrastní motiv, takže Snagster používá jeho barvy.",
-  "The system asks for more contrast, so text and borders are stronger.": "Systém požaduje vyšší kontrast, proto jsou text a okraje výraznější."
+  "A contrast theme is on, so Snagster uses its colors.": "Je zapnutý kontrastní motiv, takže Snagster používá jeho barvy.",
+  "The system asks for more contrast, so text and borders are stronger.": "Systém požaduje vyšší kontrast, proto jsou text a okraje výraznější.",
+  "App theme": "Motiv aplikace",
+  "Use system setting": "Použít nastavení systému",
+  "Match system": "Podle systému",
+  "General": "Obecné",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "V Nastavení systému je zapnuto Zvýšit kontrast, text a okraje jsou proto výraznější."
  }
 }

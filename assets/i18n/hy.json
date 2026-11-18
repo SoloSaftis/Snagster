@@ -993,7 +993,12 @@
   "Follow system": "Հետևել համակարգին",
   "Light": "Լուսավոր",
   "Dark": "Մուգ",
-  "A contrast theme is on, so Snagster uses its colours.": "Հակադրության թեման միացված է, ուստի Snagster-ը օգտագործում է դրա գույները։",
-  "The system asks for more contrast, so text and borders are stronger.": "Համակարգը պահանջում է ավելի մեծ հակադրություն, ուստի տեքստը և եզրագծերն ավելի ընդգծված են։"
+  "A contrast theme is on, so Snagster uses its colors.": "Հակադրության թեման միացված է, ուստի Snagster-ը օգտագործում է դրա գույները։",
+  "The system asks for more contrast, so text and borders are stronger.": "Համակարգը պահանջում է ավելի մեծ հակադրություն, ուստի տեքստը և եզրագծերն ավելի ընդգծված են։",
+  "App theme": "Հավելվածի թեմա",
+  "Use system setting": "Օգտագործել համակարգի կարգավորումը",
+  "Match system": "Համընկնել համակարգին",
+  "General": "Ընդհանուր",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Համակարգի կարգավորումներում միացված է «Ավելացնել կոնտրաստը», ուստի տեքստն ու եզրագծերը ավելի ընդգծված են։"
  }
 }

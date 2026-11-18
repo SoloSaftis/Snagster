@@ -993,7 +993,12 @@
   "Follow system": "Lean an córas",
   "Light": "Éadrom",
   "Dark": "Dorcha",
-  "A contrast theme is on, so Snagster uses its colours.": "Tá téama codarsnachta ar siúl, mar sin úsáideann Snagster a dhathanna.",
-  "The system asks for more contrast, so text and borders are stronger.": "Iarrann an córas níos mó codarsnachta, mar sin tá téacs agus teorainneacha níos láidre."
+  "A contrast theme is on, so Snagster uses its colors.": "Tá téama codarsnachta ar siúl, mar sin úsáideann Snagster a dhathanna.",
+  "The system asks for more contrast, so text and borders are stronger.": "Iarrann an córas níos mó codarsnachta, mar sin tá téacs agus teorainneacha níos láidre.",
+  "App theme": "Téama na haipe",
+  "Use system setting": "Úsáid socrú an chórais",
+  "Match system": "Meaitseáil an córas",
+  "General": "Ginearálta",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Tá Méadaigh codarsnacht ar siúl i Socruithe an Chórais, mar sin tá téacs agus teorainneacha níos láidre."
  }
 }

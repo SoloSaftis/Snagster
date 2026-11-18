@@ -993,7 +993,12 @@
   "Follow system": "Sundin ang system",
   "Light": "Maliwanag",
   "Dark": "Madilim",
-  "A contrast theme is on, so Snagster uses its colours.": "Naka-on ang isang contrast theme, kaya ginagamit ng Snagster ang mga kulay nito.",
-  "The system asks for more contrast, so text and borders are stronger.": "Humihingi ang system ng mas mataas na contrast, kaya mas matingkad ang teksto at mga border."
+  "A contrast theme is on, so Snagster uses its colors.": "Naka-on ang isang contrast theme, kaya ginagamit ng Snagster ang mga kulay nito.",
+  "The system asks for more contrast, so text and borders are stronger.": "Humihingi ang system ng mas mataas na contrast, kaya mas matingkad ang teksto at mga border.",
+  "App theme": "Tema ng app",
+  "Use system setting": "Gamitin ang setting ng system",
+  "Match system": "Itugma sa system",
+  "General": "Pangkalahatan",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Naka-on ang Increase contrast sa System Settings, kaya mas matingkad ang text at mga hangganan."
  }
 }

@@ -993,7 +993,12 @@
   "Follow system": "Tizimga amal qilish",
   "Light": "Yorug'",
   "Dark": "Qorong'i",
-  "A contrast theme is on, so Snagster uses its colours.": "Kontrast mavzusi yoqilgan, shuning uchun Snagster uning ranglaridan foydalanadi.",
-  "The system asks for more contrast, so text and borders are stronger.": "Tizim yuqoriroq kontrast so'ramoqda, shuning uchun matn va chegaralar kuchliroq."
+  "A contrast theme is on, so Snagster uses its colors.": "Kontrast mavzusi yoqilgan, shuning uchun Snagster uning ranglaridan foydalanadi.",
+  "The system asks for more contrast, so text and borders are stronger.": "Tizim yuqoriroq kontrast so'ramoqda, shuning uchun matn va chegaralar kuchliroq.",
+  "App theme": "Ilova mavzusi",
+  "Use system setting": "Tizim sozlamasidan foydalanish",
+  "Match system": "Tizimga moslash",
+  "General": "Umumiy",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Tizim sozlamalarida «Kontrastni oshirish» yoqilgan, shuning uchun matn va chegaralar yaqqolroq."
  }
 }

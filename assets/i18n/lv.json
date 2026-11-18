@@ -993,7 +993,12 @@
   "Follow system": "Kā sistēmā",
   "Light": "Gaišs",
   "Dark": "Tumšs",
-  "A contrast theme is on, so Snagster uses its colours.": "Ir ieslēgta kontrasta tēma, tāpēc Snagster izmanto tās krāsas.",
-  "The system asks for more contrast, so text and borders are stronger.": "Sistēma pieprasa lielāku kontrastu, tāpēc teksts un apmales ir izteiktākas."
+  "A contrast theme is on, so Snagster uses its colors.": "Ir ieslēgta kontrasta tēma, tāpēc Snagster izmanto tās krāsas.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistēma pieprasa lielāku kontrastu, tāpēc teksts un apmales ir izteiktākas.",
+  "App theme": "Lietotnes motīvs",
+  "Use system setting": "Izmantot sistēmas iestatījumu",
+  "Match system": "Atbilstoši sistēmai",
+  "General": "Vispārīgi",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistēmas iestatījumos ir ieslēgta opcija Palielināt kontrastu, tāpēc teksts un apmales ir izteiksmīgākas."
  }
 }

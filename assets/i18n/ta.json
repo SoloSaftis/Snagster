@@ -993,7 +993,12 @@
   "Follow system": "கணினியைப் பின்பற்று",
   "Light": "வெளிர்",
   "Dark": "இருள்",
-  "A contrast theme is on, so Snagster uses its colours.": "மாறுபாட்டு தீம் இயக்கத்தில் உள்ளது, எனவே Snagster அதன் வண்ணங்களைப் பயன்படுத்துகிறது.",
-  "The system asks for more contrast, so text and borders are stronger.": "கணினி அதிக மாறுபாட்டைக் கேட்கிறது, எனவே உரையும் எல்லைகளும் அழுத்தமாக உள்ளன."
+  "A contrast theme is on, so Snagster uses its colors.": "மாறுபாட்டு தீம் இயக்கத்தில் உள்ளது, எனவே Snagster அதன் வண்ணங்களைப் பயன்படுத்துகிறது.",
+  "The system asks for more contrast, so text and borders are stronger.": "கணினி அதிக மாறுபாட்டைக் கேட்கிறது, எனவே உரையும் எல்லைகளும் அழுத்தமாக உள்ளன.",
+  "App theme": "பயன்பாட்டு தீம்",
+  "Use system setting": "கணினி அமைப்பைப் பயன்படுத்து",
+  "Match system": "கணினியுடன் பொருத்து",
+  "General": "பொது",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "கணினி அமைப்புகளில் “கான்ட்ராஸ்ட்டை அதிகரி” இயக்கத்தில் உள்ளது, எனவே உரையும் எல்லைகளும் அழுத்தமாக உள்ளன."
  }
 }

@@ -993,7 +993,12 @@
   "Follow system": "跟随系统",
   "Light": "浅色",
   "Dark": "深色",
-  "A contrast theme is on, so Snagster uses its colours.": "已启用对比度主题，因此 Snagster 使用其颜色。",
-  "The system asks for more contrast, so text and borders are stronger.": "系统要求更高的对比度，因此文字和边框会更加醒目。"
+  "A contrast theme is on, so Snagster uses its colors.": "已启用对比度主题，因此 Snagster 使用其颜色。",
+  "The system asks for more contrast, so text and borders are stronger.": "系统要求更高的对比度，因此文字和边框会更加醒目。",
+  "App theme": "应用主题",
+  "Use system setting": "使用系统设置",
+  "Match system": "与系统一致",
+  "General": "通用",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "系统设置中已开启“提高对比度”，因此文字和边框更加醒目。"
  }
 }

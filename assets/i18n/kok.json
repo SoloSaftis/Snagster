@@ -993,7 +993,12 @@
   "Follow system": "सिस्टीम प्रमाण",
   "Light": "उजळ",
   "Dark": "गडद",
-  "A contrast theme is on, so Snagster uses its colours.": "कॉन्ट्रास्ट थीम चालू आसा, देखून Snagster ताचे रंग वापरता.",
-  "The system asks for more contrast, so text and borders are stronger.": "सिस्टीम चड कॉन्ट्रास्ट मागता, देखून मजकूर आनी कडा चड स्पश्ट आसात."
+  "A contrast theme is on, so Snagster uses its colors.": "कॉन्ट्रास्ट थीम चालू आसा, देखून Snagster ताचे रंग वापरता.",
+  "The system asks for more contrast, so text and borders are stronger.": "सिस्टीम चड कॉन्ट्रास्ट मागता, देखून मजकूर आनी कडा चड स्पश्ट आसात.",
+  "App theme": "अ‍ॅप थीम",
+  "Use system setting": "सिस्टीम सेटिंग वापरचें",
+  "Match system": "सिस्टीमाक जुळोवचें",
+  "General": "सामान्य",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "सिस्टीम सेटिंग्जांत “कॉन्ट्रास्ट वाडयात” चालू आसा, देखून मजकूर आनी कांठ चड ठळक आसात."
  }
 }

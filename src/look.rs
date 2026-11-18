@@ -10,7 +10,7 @@ pub use crate::theme::pal;
 /// The accent colour of the palette in use (selection, focus, the main buttons): the desktop's
 /// where it has one (Linux), else Snagster's blue, made readable on the palette's panels.
 pub fn accent() -> Color32 {
-    pal().accent
+    pal().link
 }
 
 pub const REC: Color32 = Color32::from_rgb(229, 72, 77);
@@ -256,7 +256,8 @@ pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
     if resp.hovered() && !on {
         ui.painter().rect_filled(rect.shrink2(vec2(2.0, 3.0)), CornerRadius::same(6), pal().hover);
     }
-    let color = if on { pal().strong } else if resp.hovered() { pal().text } else { pal().dim };
+    let hovered = resp.hovered() && !on;
+    let color = if on { pal().strong } else if hovered { pal().on_hover } else { pal().dim };
     let pos = rect.center() - galley.size() / 2.0;
     ui.painter().galley(pos, galley, color);
     if on {
@@ -279,23 +280,24 @@ pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, 
     let down = active || (enabled && resp.is_pointer_button_down_on());
     if active {
         p.rect_filled(rect, CornerRadius::same(7), pal.pressed);
-        p.rect_stroke(rect, CornerRadius::same(7), Stroke::new(1.0, pal.accent), egui::StrokeKind::Inside);
+        p.rect_stroke(rect, CornerRadius::same(7), Stroke::new(1.0, pal.link), egui::StrokeKind::Inside);
     } else if enabled && resp.hovered() {
         p.rect_filled(rect, CornerRadius::same(7), if down { pal.pressed } else { pal.hover });
     }
     // In a contrast theme the system's colours win: no red or blue icons, and the chosen
     // tool's icon and name in the highlight's own text colour.
+    let lit = enabled && resp.hovered() && !down;
     let icol = if !enabled {
-        pal.faint
+        pal.disabled
     } else if pal.high_contrast {
-        if down { pal.selected_text } else { pal.text }
+        if down { pal.selected_text } else if lit { pal.on_hover } else { pal.text }
     } else if icon == ph::RECORD || icon == ph::STOP || icon == ph::BROADCAST {
         REC
     } else {
-        pal.accent
+        pal.link
     };
     p.text(pos2(rect.center().x, rect.top() + 18.0), Align2::CENTER_CENTER, icon, FontId::new(23.0, icons()), icol);
-    let tcol = if !enabled { pal.faint } else if down { pal.selected_text } else { pal.text };
+    let tcol = if !enabled { pal.disabled } else if down { pal.selected_text } else if lit { pal.on_hover } else { pal.text };
     let pos = pos2(rect.center().x - galley.size().x / 2.0, rect.top() + 34.0);
     p.galley(pos, galley, tcol);
     resp
@@ -309,11 +311,23 @@ pub fn small_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, enabled, label));
     let p = ui.painter();
-    if enabled && resp.hovered() {
-        p.rect_filled(rect.expand(1.0), CornerRadius::same(5), pal().hover);
+    let pal = pal();
+    let lit = enabled && resp.hovered();
+    if lit {
+        p.rect_filled(rect.expand(1.0), CornerRadius::same(5), pal.hover);
     }
-    p.text(pos2(rect.left() + 12.0, rect.center().y), Align2::CENTER_CENTER, icon, FontId::new(15.0, icons()), if enabled { accent() } else { pal().faint });
-    p.galley(pos2(rect.left() + 26.0, rect.center().y - galley.size().y / 2.0), galley, if enabled { pal().text } else { pal().faint });
+    // In a contrast theme icons at rest are plain text colour, not the highlight.
+    let icol = if !enabled {
+        pal.disabled
+    } else if lit {
+        if pal.high_contrast { pal.on_hover } else { pal.link }
+    } else if pal.high_contrast {
+        pal.text
+    } else {
+        pal.link
+    };
+    p.text(pos2(rect.left() + 12.0, rect.center().y), Align2::CENTER_CENTER, icon, FontId::new(15.0, icons()), icol);
+    p.galley(pos2(rect.left() + 26.0, rect.center().y - galley.size().y / 2.0), galley, if !enabled { pal.disabled } else if lit { pal.on_hover } else { pal.text });
     resp
 }
 
@@ -372,7 +386,7 @@ pub fn icon_button(ui: &mut Ui, icon: &str, tip: &str) -> Response {
     if resp.hovered() {
         ui.painter().rect_filled(rect, CornerRadius::same(6), pal().hover);
     }
-    ui.painter().text(rect.center(), Align2::CENTER_CENTER, icon, FontId::new(17.0, icons()), if resp.hovered() { pal().strong } else { pal().dim });
+    ui.painter().text(rect.center(), Align2::CENTER_CENTER, icon, FontId::new(17.0, icons()), if resp.hovered() { pal().on_hover } else { pal().dim });
     resp
 }
 

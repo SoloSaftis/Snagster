@@ -993,7 +993,12 @@
   "Follow system": "Segueix el sistema",
   "Light": "Clar",
   "Dark": "Fosc",
-  "A contrast theme is on, so Snagster uses its colours.": "Hi ha un tema de contrast activat, de manera que Snagster en fa servir els colors.",
-  "The system asks for more contrast, so text and borders are stronger.": "El sistema demana més contrast, de manera que el text i les vores són més marcats."
+  "A contrast theme is on, so Snagster uses its colors.": "Hi ha un tema de contrast activat, de manera que Snagster en fa servir els colors.",
+  "The system asks for more contrast, so text and borders are stronger.": "El sistema demana més contrast, de manera que el text i les vores són més marcats.",
+  "App theme": "Tema de l'aplicació",
+  "Use system setting": "Utilitza la configuració del sistema",
+  "Match system": "Coincideix amb el sistema",
+  "General": "General",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "«Augmenta el contrast» està activat a Configuració del Sistema, així que el text i les vores són més marcats."
  }
 }

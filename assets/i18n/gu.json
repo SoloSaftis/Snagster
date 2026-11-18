@@ -993,7 +993,12 @@
   "Follow system": "સિસ્ટમને અનુસરો",
   "Light": "આછો",
   "Dark": "ઘેરો",
-  "A contrast theme is on, so Snagster uses its colours.": "કોન્ટ્રાસ્ટ થીમ ચાલુ છે, તેથી Snagster તેના રંગોનો ઉપયોગ કરે છે.",
-  "The system asks for more contrast, so text and borders are stronger.": "સિસ્ટમ વધુ કોન્ટ્રાસ્ટ માંગે છે, તેથી ટેક્સ્ટ અને કિનારીઓ વધુ મજબૂત છે."
+  "A contrast theme is on, so Snagster uses its colors.": "કોન્ટ્રાસ્ટ થીમ ચાલુ છે, તેથી Snagster તેના રંગોનો ઉપયોગ કરે છે.",
+  "The system asks for more contrast, so text and borders are stronger.": "સિસ્ટમ વધુ કોન્ટ્રાસ્ટ માંગે છે, તેથી ટેક્સ્ટ અને કિનારીઓ વધુ મજબૂત છે.",
+  "App theme": "એપ થીમ",
+  "Use system setting": "સિસ્ટમ સેટિંગનો ઉપયોગ કરો",
+  "Match system": "સિસ્ટમ સાથે મેળવો",
+  "General": "સામાન્ય",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "સિસ્ટમ સેટિંગ્સમાં “કોન્ટ્રાસ્ટ વધારો” ચાલુ છે, તેથી ટેક્સ્ટ અને બોર્ડર વધુ સ્પષ્ટ છે."
  }
 }

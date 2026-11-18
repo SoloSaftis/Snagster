@@ -993,7 +993,12 @@
   "Follow system": "Як у системі",
   "Light": "Світла",
   "Dark": "Темна",
-  "A contrast theme is on, so Snagster uses its colours.": "Увімкнено контрастну тему, тому Snagster використовує її кольори.",
-  "The system asks for more contrast, so text and borders are stronger.": "Система запитує вищу контрастність, тому текст і межі виразніші."
+  "A contrast theme is on, so Snagster uses its colors.": "Увімкнено контрастну тему, тому Snagster використовує її кольори.",
+  "The system asks for more contrast, so text and borders are stronger.": "Система запитує вищу контрастність, тому текст і межі виразніші.",
+  "App theme": "Тема застосунку",
+  "Use system setting": "Використовувати системне налаштування",
+  "Match system": "Як у системі",
+  "General": "Загальні",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "У Системних параметрах увімкнено «Збільшити контрастність», тому текст і межі виразніші."
  }
 }

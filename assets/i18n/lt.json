@@ -993,7 +993,12 @@
   "Follow system": "Kaip sistemoje",
   "Light": "Šviesi",
   "Dark": "Tamsi",
-  "A contrast theme is on, so Snagster uses its colours.": "Įjungta kontrastinė tema, todėl Snagster naudoja jos spalvas.",
-  "The system asks for more contrast, so text and borders are stronger.": "Sistema prašo didesnio kontrasto, todėl tekstas ir kraštinės ryškesni."
+  "A contrast theme is on, so Snagster uses its colors.": "Įjungta kontrastinė tema, todėl Snagster naudoja jos spalvas.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistema prašo didesnio kontrasto, todėl tekstas ir kraštinės ryškesni.",
+  "App theme": "Programos tema",
+  "Use system setting": "Naudoti sistemos nustatymą",
+  "Match system": "Pagal sistemą",
+  "General": "Bendra",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistemos nustatymuose įjungta Didinti kontrastą, todėl tekstas ir kraštinės ryškesni."
  }
 }

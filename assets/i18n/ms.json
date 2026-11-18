@@ -993,7 +993,12 @@
   "Follow system": "Ikut sistem",
   "Light": "Cerah",
   "Dark": "Gelap",
-  "A contrast theme is on, so Snagster uses its colours.": "Tema kontras dihidupkan, jadi Snagster menggunakan warnanya.",
-  "The system asks for more contrast, so text and borders are stronger.": "Sistem meminta kontras lebih tinggi, jadi teks dan sempadan lebih ketara."
+  "A contrast theme is on, so Snagster uses its colors.": "Tema kontras dihidupkan, jadi Snagster menggunakan warnanya.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistem meminta kontras lebih tinggi, jadi teks dan sempadan lebih ketara.",
+  "App theme": "Tema apl",
+  "Use system setting": "Gunakan tetapan sistem",
+  "Match system": "Padankan sistem",
+  "General": "Umum",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Tingkatkan kontras dihidupkan dalam Tetapan Sistem, jadi teks dan sempadan lebih jelas."
  }
 }

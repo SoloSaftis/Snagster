@@ -993,7 +993,12 @@
   "Follow system": "Theo hệ thống",
   "Light": "Sáng",
   "Dark": "Tối",
-  "A contrast theme is on, so Snagster uses its colours.": "Một giao diện tương phản đang bật nên Snagster dùng màu của giao diện đó.",
-  "The system asks for more contrast, so text and borders are stronger.": "Hệ thống yêu cầu độ tương phản cao hơn nên văn bản và đường viền đậm nét hơn."
+  "A contrast theme is on, so Snagster uses its colors.": "Một giao diện tương phản đang bật nên Snagster dùng màu của giao diện đó.",
+  "The system asks for more contrast, so text and borders are stronger.": "Hệ thống yêu cầu độ tương phản cao hơn nên văn bản và đường viền đậm nét hơn.",
+  "App theme": "Giao diện ứng dụng",
+  "Use system setting": "Dùng cài đặt hệ thống",
+  "Match system": "Khớp với hệ thống",
+  "General": "Chung",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Tùy chọn Tăng độ tương phản đang bật trong Cài đặt Hệ thống, nên văn bản và đường viền rõ nét hơn."
  }
 }

@@ -993,7 +993,12 @@
   "Follow system": "Järgi süsteemi",
   "Light": "Hele",
   "Dark": "Tume",
-  "A contrast theme is on, so Snagster uses its colours.": "Kontrastiteema on sees, seega kasutab Snagster selle värve.",
-  "The system asks for more contrast, so text and borders are stronger.": "Süsteem nõuab suuremat kontrasti, seega on tekst ja ääred tugevamad."
+  "A contrast theme is on, so Snagster uses its colors.": "Kontrastiteema on sees, seega kasutab Snagster selle värve.",
+  "The system asks for more contrast, so text and borders are stronger.": "Süsteem nõuab suuremat kontrasti, seega on tekst ja ääred tugevamad.",
+  "App theme": "Rakenduse teema",
+  "Use system setting": "Kasuta süsteemi sätet",
+  "Match system": "Vasta süsteemile",
+  "General": "Üldine",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Süsteemisätetes on sisse lülitatud Suurenda kontrasti, mistõttu on tekst ja äärised selgemad."
  }
 }

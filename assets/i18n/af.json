@@ -993,7 +993,12 @@
   "Follow system": "Volg stelsel",
   "Light": "Lig",
   "Dark": "Donker",
-  "A contrast theme is on, so Snagster uses its colours.": "'n Kontrastema is aan, so Snagster gebruik sy kleure.",
-  "The system asks for more contrast, so text and borders are stronger.": "Die stelsel vra vir meer kontras, so teks en rande is sterker."
+  "A contrast theme is on, so Snagster uses its colors.": "'n Kontrastema is aan, so Snagster gebruik sy kleure.",
+  "The system asks for more contrast, so text and borders are stronger.": "Die stelsel vra vir meer kontras, so teks en rande is sterker.",
+  "App theme": "Toepassingtema",
+  "Use system setting": "Gebruik stelselinstelling",
+  "Match system": "Pas by stelsel",
+  "General": "Algemeen",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Verhoog kontras is aan in Stelselinstellings, dus teks en rande is sterker."
  }
 }

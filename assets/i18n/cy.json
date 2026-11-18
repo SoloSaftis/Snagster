@@ -993,7 +993,12 @@
   "Follow system": "Dilyn y system",
   "Light": "Golau",
   "Dark": "Tywyll",
-  "A contrast theme is on, so Snagster uses its colours.": "Mae thema cyferbyniad ymlaen, felly mae Snagster yn defnyddio ei lliwiau.",
-  "The system asks for more contrast, so text and borders are stronger.": "Mae'r system yn gofyn am fwy o gyferbyniad, felly mae testun ac ymylon yn gryfach."
+  "A contrast theme is on, so Snagster uses its colors.": "Mae thema cyferbyniad ymlaen, felly mae Snagster yn defnyddio ei lliwiau.",
+  "The system asks for more contrast, so text and borders are stronger.": "Mae'r system yn gofyn am fwy o gyferbyniad, felly mae testun ac ymylon yn gryfach.",
+  "App theme": "Thema'r ap",
+  "Use system setting": "Defnyddio gosodiad y system",
+  "Match system": "Cyfateb â'r system",
+  "General": "Cyffredinol",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Mae Cynyddu cyferbyniad wedi'i droi ymlaen yng Ngosodiadau'r System, felly mae testun ac ymylon yn gryfach."
  }
 }

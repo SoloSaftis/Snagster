@@ -993,7 +993,12 @@
   "Follow system": "سىستېمىغا ئەگىشىش",
   "Light": "ئوچۇق",
   "Dark": "قاراڭغۇ",
-  "A contrast theme is on, so Snagster uses its colours.": "قارىمۇقارشىلىق ئۇسلۇبى ئوچۇق، شۇڭا Snagster ئۇنىڭ رەڭلىرىنى ئىشلىتىدۇ.",
-  "The system asks for more contrast, so text and borders are stronger.": "سىستېما تېخىمۇ يۇقىرى قارىمۇقارشىلىق تەلەپ قىلىدۇ، شۇڭا تېكىست ۋە چېگرالار روشەنرەك."
+  "A contrast theme is on, so Snagster uses its colors.": "قارىمۇقارشىلىق ئۇسلۇبى ئوچۇق، شۇڭا Snagster ئۇنىڭ رەڭلىرىنى ئىشلىتىدۇ.",
+  "The system asks for more contrast, so text and borders are stronger.": "سىستېما تېخىمۇ يۇقىرى قارىمۇقارشىلىق تەلەپ قىلىدۇ، شۇڭا تېكىست ۋە چېگرالار روشەنرەك.",
+  "App theme": "ئەپ ئۆڭگىرىشى",
+  "Use system setting": "سىستېما تەڭشىكىنى ئىشلىتىش",
+  "Match system": "سىستېمىغا ماسلاشتۇرۇش",
+  "General": "ئادەتتىكى",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "سىستېما تەڭشەكلىرىدە «سېلىشتۇرمىنى ئاشۇرۇش» ئوچۇق، شۇڭا تېكىست ۋە گىرۋەكلەر روشەنرەك."
  }
 }

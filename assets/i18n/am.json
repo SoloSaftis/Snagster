@@ -993,7 +993,12 @@
   "Follow system": "ሲስተሙን ተከተል",
   "Light": "ብርሃን",
   "Dark": "ጨለማ",
-  "A contrast theme is on, so Snagster uses its colours.": "የንፅፅር ገጽታ ተከፍቷል፣ ስለዚህ Snagster ቀለሞቹን ይጠቀማል።",
-  "The system asks for more contrast, so text and borders are stronger.": "ሲስተሙ ተጨማሪ ንፅፅር ይጠይቃል፣ ስለዚህ ጽሑፍና ድንበሮች ጠንካራ ናቸው።"
+  "A contrast theme is on, so Snagster uses its colors.": "የንፅፅር ገጽታ ተከፍቷል፣ ስለዚህ Snagster ቀለሞቹን ይጠቀማል።",
+  "The system asks for more contrast, so text and borders are stronger.": "ሲስተሙ ተጨማሪ ንፅፅር ይጠይቃል፣ ስለዚህ ጽሑፍና ድንበሮች ጠንካራ ናቸው።",
+  "App theme": "የመተግበሪያ ገጽታ",
+  "Use system setting": "የሲስተም ቅንብርን ተጠቀም",
+  "Match system": "ከሲስተሙ ጋር አዛምድ",
+  "General": "አጠቃላይ",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "በስርዓት ቅንብሮች ውስጥ ንፅፅርን ጨምር በርቷል፣ ስለዚህ ጽሑፍና ድንበሮች ጠንካራ ናቸው።"
  }
 }

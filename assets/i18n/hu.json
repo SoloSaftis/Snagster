@@ -993,7 +993,12 @@
   "Follow system": "Rendszer követése",
   "Light": "Világos",
   "Dark": "Sötét",
-  "A contrast theme is on, so Snagster uses its colours.": "Kontrasztos téma van bekapcsolva, ezért a Snagster annak színeit használja.",
-  "The system asks for more contrast, so text and borders are stronger.": "A rendszer nagyobb kontrasztot kér, ezért a szöveg és a szegélyek erősebbek."
+  "A contrast theme is on, so Snagster uses its colors.": "Kontrasztos téma van bekapcsolva, ezért a Snagster annak színeit használja.",
+  "The system asks for more contrast, so text and borders are stronger.": "A rendszer nagyobb kontrasztot kér, ezért a szöveg és a szegélyek erősebbek.",
+  "App theme": "Alkalmazás témája",
+  "Use system setting": "Rendszerbeállítás használata",
+  "Match system": "Egyezzen a rendszerrel",
+  "General": "Általános",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "A Rendszerbeállításokban be van kapcsolva a Kontraszt növelése, ezért a szöveg és a szegélyek erősebbek."
  }
 }

@@ -993,7 +993,12 @@
   "Follow system": "Lean an siostam",
   "Light": "Soilleir",
   "Dark": "Dorcha",
-  "A contrast theme is on, so Snagster uses its colours.": "Tha ùrlar iomsgaraidh air, agus mar sin cleachdaidh Snagster na dathan aige.",
-  "The system asks for more contrast, so text and borders are stronger.": "Tha an siostam ag iarraidh barrachd iomsgaraidh, agus mar sin tha teacsa is oirean nas làidire."
+  "A contrast theme is on, so Snagster uses its colors.": "Tha ùrlar iomsgaraidh air, agus mar sin cleachdaidh Snagster na dathan aige.",
+  "The system asks for more contrast, so text and borders are stronger.": "Tha an siostam ag iarraidh barrachd iomsgaraidh, agus mar sin tha teacsa is oirean nas làidire.",
+  "App theme": "Tèama an aplacaid",
+  "Use system setting": "Cleachd roghainn an t-siostaim",
+  "Match system": "Maidsich an siostam",
+  "General": "Coitcheann",
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Tha Cuir barrachd iomsgaraidh air ann an Roghainnean an t-siostaim, mar sin tha teacsa is crìochan nas làidire."
  }
 }
