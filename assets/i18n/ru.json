@@ -988,6 +988,8 @@
   "Recording saved": "Запись сохранена",
   "box": "рамка",
   "freehand": "от руки",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протяните рамку поверх текста, чтобы выделить его. Выберите справа «от руки», чтобы рисовать штрихи."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протяните рамку поверх текста, чтобы выделить его. Выберите справа «от руки», чтобы рисовать штрихи.",
+  "More tabs": "Другие вкладки",
+  "The groups that don't fit the window": "Группы, которые не помещаются в окне"
  }
 }

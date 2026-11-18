@@ -988,6 +988,8 @@
   "Recording saved": "Taifead sábháilte",
   "box": "bosca",
   "freehand": "saorláimhe",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tarraing bosca thar théacs chun é a aibhsiú. Roghnaigh saorláimhe ar dheis chun stríoca a tharraingt ina ionad."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tarraing bosca thar théacs chun é a aibhsiú. Roghnaigh saorláimhe ar dheis chun stríoca a tharraingt ina ionad.",
+  "More tabs": "Tuilleadh cluaisíní",
+  "The groups that don't fit the window": "Na grúpaí nach n-oireann don fhuinneog"
  }
 }

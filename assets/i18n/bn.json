@@ -988,6 +988,8 @@
   "Recording saved": "রেকর্ডিং সংরক্ষিত হয়েছে",
   "box": "বাক্স",
   "freehand": "ফ্রিহ্যান্ড",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লেখা হাইলাইট করতে তার উপর দিয়ে একটি বাক্স টানুন। এর বদলে দাগ আঁকতে ডানদিকে ফ্রিহ্যান্ড বেছে নিন।"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লেখা হাইলাইট করতে তার উপর দিয়ে একটি বাক্স টানুন। এর বদলে দাগ আঁকতে ডানদিকে ফ্রিহ্যান্ড বেছে নিন।",
+  "More tabs": "আরও ট্যাব",
+  "The groups that don't fit the window": "যে গ্রুপগুলো উইন্ডোতে আঁটে না"
  }
 }

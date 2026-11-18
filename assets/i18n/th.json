@@ -988,6 +988,8 @@
   "Recording saved": "บันทึกการบันทึกแล้ว",
   "box": "กล่อง",
   "freehand": "อิสระ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ลากกล่องคร่อมข้อความเพื่อไฮไลต์ เลือก อิสระ ทางขวาเพื่อวาดเส้นแทน"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ลากกล่องคร่อมข้อความเพื่อไฮไลต์ เลือก อิสระ ทางขวาเพื่อวาดเส้นแทน",
+  "More tabs": "แท็บเพิ่มเติม",
+  "The groups that don't fit the window": "กลุ่มที่ไม่พอดีกับหน้าต่าง"
  }
 }

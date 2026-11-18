@@ -54,7 +54,9 @@ pub(crate) mod stream_ui;
 pub(crate) mod updates_ui;
 pub(crate) mod commands_ui;
 /// The editor window's smallest size (lifted while it is the panel or the recording bar).
-pub const MIN_SIZE: Vec2 = Vec2::new(900.0, 560.0);
+/// Narrow enough for Windows' Snap layouts to put it in half or a third of the screen
+/// (Microsoft asks for 500 or less); the ribbon and the side panel fold up to fit.
+pub const MIN_SIZE: Vec2 = Vec2::new(500.0, 400.0);
 
 pub fn rgb(c: [u8; 3]) -> Color32 {
     Color32::from_rgb(c[0], c[1], c[2])
@@ -519,6 +521,7 @@ pub struct SnagApp {
 impl SnagApp {
     pub fn new(cc: &eframe::CreationContext<'_>, screenshot: Option<PathBuf>, open: Option<PathBuf>) -> Self {
         setup_style(&cc.egui_ctx);
+        crate::panel::round_window_corners(cc);
         let check_run = screenshot.is_some() || UI_TEST.load(Ordering::Relaxed);
         let settings = Settings::load(check_run);
         fonts::start_scan(cc.egui_ctx.clone());
@@ -2968,12 +2971,38 @@ impl SnagApp {
 
     // ---------- panels ----------
 
-    fn tool_bar(&mut self, ui: &mut egui::Ui) {
+    /// The tools, in two columns that scroll when the window is low; `options_button` adds
+    /// the button that shows the folded options panel.
+    fn tool_bar(&mut self, ui: &mut egui::Ui, options_button: bool) {
         ui.add_space(6.0);
+        if options_button {
+            let on = self.x.narrow_options;
+            let label = crate::i18n::t("Options panel");
+            let (rect, resp) = ui.allocate_exact_size(vec2(grown(110.0, 64.0), grown(28.0, 12.0)), Sense::click());
+            let resp = resp.on_hover_text(crate::i18n::t("Colours, sizes and styles on the right"));
+            resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
+            let bg = if on { accent() } else if resp.hovered() { PANEL_HI } else { Color32::TRANSPARENT };
+            ui.painter().rect_filled(rect.shrink(1.0), CornerRadius::same(4), bg);
+            let fg = if on { Color32::WHITE } else { Color32::from_rgb(210, 214, 225) };
+            let p = ui.painter();
+            p.text(pos2(rect.left() + 16.0, rect.center().y), Align2::CENTER_CENTER, crate::look::ph::SLIDERS, FontId::new(16.0, crate::look::icons()), fg);
+            // Long names in some languages get a smaller font so they stay inside the button.
+            let w = p.layout_no_wrap(label.to_string(), FontId::proportional(12.0), fg).size().x;
+            let size = if w > 80.0 { (12.0 * 80.0 / w).max(8.0) } else { 12.0 };
+            p.text(pos2(rect.left() + 30.0, rect.center().y), Align2::LEFT_CENTER, label, FontId::proportional(size), fg);
+            if resp.clicked() {
+                self.x.narrow_options = !on;
+            }
+            ui.add_space(4.0);
+        }
+        egui::ScrollArea::vertical().id_salt("tools-scroll").show(ui, |ui| self.tool_grid(ui));
+    }
+
+    fn tool_grid(&mut self, ui: &mut egui::Ui) {
         egui::Grid::new("tools").spacing(vec2(2.0, 2.0)).show(ui, |ui| {
             let shown: Vec<Tool> = Tool::ALL.into_iter().filter(|t| !self.settings.hidden_tools.iter().any(|h| h == t.label())).collect();
             for (n, t) in shown.into_iter().enumerate() {
-                let (rect, resp) = ui.allocate_exact_size(vec2(54.0, 44.0), Sense::click());
+                let (rect, resp) = ui.allocate_exact_size(vec2(grown(54.0, 32.0), grown(44.0, 14.0)), Sense::click());
                 let selected = self.tool == t;
                 let bg = if selected {
                     accent()
@@ -2989,7 +3018,8 @@ impl SnagApp {
                 // Long names in some languages get a smaller font so they stay inside the button.
                 let name = crate::i18n::t(t.label());
                 let w = ui.painter().layout_no_wrap(name.to_string(), FontId::proportional(10.0), fg).size().x;
-                let size = if w > 52.0 { (10.0 * 52.0 / w).max(7.0) } else { 10.0 };
+                let room = rect.width() - 2.0;
+                let size = if w > room { (10.0 * room / w).max(7.0) } else { 10.0 };
                 ui.painter().text(pos2(rect.center().x, rect.bottom() - 8.0), Align2::CENTER_CENTER, name, FontId::proportional(size), fg);
                 let resp = resp.on_hover_text(format!("{} ({})\n{}", crate::i18n::t(t.label()), t.key(), crate::i18n::t(t.hint())));
                 if resp.clicked() {
@@ -3310,10 +3340,11 @@ impl SnagApp {
     }
 
     fn tray(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
+        // Top-aligned: the status text beside the pictures never pushes them down.
+        ui.horizontal_top(|ui| {
             ui.add_space(8.0);
             ui.vertical(|ui| {
-                ui.set_width(250.0);
+                ui.set_width(status_width(ui.ctx().content_rect().width()));
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
                     ui.label(RichText::new(crate::i18n::t("Recent")).strong().color(Color32::WHITE));
@@ -3323,7 +3354,20 @@ impl SnagApp {
                         self.switch_tab(&ctx, ribbon::RibbonTab::Stream);
                     }
                 });
-                ui.add(egui::Label::new(RichText::new(crate::i18n::tr(&self.status)).color(TEXT_DIM).size(12.5)).wrap());
+                // Two lines at most (a narrow window or bigger text would push the pictures
+                // beside it out of the bar); the whole message is in the tooltip.
+                let status = crate::i18n::tr(&self.status);
+                let text = egui::WidgetText::from(RichText::new(status.clone()).color(TEXT_DIM).size(12.5));
+                let mut job = (*text.into_layout_job(ui.style(), egui::FontSelection::Default, egui::Align::LEFT)).clone();
+                job.wrap.max_width = ui.available_width();
+                job.wrap.max_rows = 2;
+                job.wrap.overflow_character = Some('…');
+                let galley = ui.painter().layout_job(job);
+                let cut = galley.elided;
+                let r = ui.add(egui::Label::new(galley));
+                if cut {
+                    r.on_hover_text(status);
+                }
                 self.screen_access_link(ui);
             });
             ui.separator();
@@ -3345,7 +3389,7 @@ impl SnagApp {
                         ui.label(RichText::new(crate::i18n::t("Your captures show up here.")).color(TEXT_DIM));
                     }
                     for i in (0..self.entries.len()).rev() {
-                        let (rect, resp) = ui.allocate_exact_size(vec2(124.0, 84.0), Sense::click());
+                        let (rect, resp) = ui.allocate_exact_size(vec2(124.0, grown(84.0, 20.0)), Sense::click());
                         // Pictures scrolled out of view aren't drawn (their textures can go).
                         if !ui.is_rect_visible(rect) {
                             continue;
@@ -3372,7 +3416,7 @@ impl SnagApp {
                             p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, TEXT_DIM), StrokeKind::Inside);
                         }
                         let name: String = self.entries[i].name.chars().take(18).collect();
-                        p.text(pos2(rect.center().x, rect.bottom() - 10.0), Align2::CENTER_CENTER, name, FontId::proportional(11.5), Color32::from_rgb(210, 214, 225));
+                        p.text(pos2(rect.center().x, rect.bottom() - grown(10.0, 8.0)), Align2::CENTER_CENTER, name, FontId::proportional(11.5), Color32::from_rgb(210, 214, 225));
                         if resp.clicked() {
                             switch = Some(i);
                         }
@@ -3427,7 +3471,7 @@ impl SnagApp {
         ui.label(RichText::new(crate::i18n::t("Earlier")).color(TEXT_DIM).size(12.0));
         let mut pick = None;
         for it in items {
-            let (rect, resp) = ui.allocate_exact_size(vec2(124.0, 84.0), Sense::click());
+            let (rect, resp) = ui.allocate_exact_size(vec2(124.0, grown(84.0, 20.0)), Sense::click());
             if !ui.is_rect_visible(rect) {
                 continue;
             }
@@ -3453,7 +3497,7 @@ impl SnagApp {
                 p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, TEXT_DIM), StrokeKind::Inside);
             }
             let name: String = it.name().chars().take(18).collect();
-            p.text(pos2(rect.center().x, rect.bottom() - 10.0), Align2::CENTER_CENTER, name, FontId::proportional(11.5), Color32::from_rgb(170, 175, 190));
+            p.text(pos2(rect.center().x, rect.bottom() - grown(10.0, 8.0)), Align2::CENTER_CENTER, name, FontId::proportional(11.5), Color32::from_rgb(170, 175, 190));
             let tip = if it.video { crate::i18n::t("Play this video") } else { crate::i18n::t("Open this picture") };
             let resp = resp.on_hover_text(format!("{tip}\n{}", it.path.display()));
             if resp.clicked() {
@@ -4280,18 +4324,21 @@ impl SnagApp {
         }
         if self.settings.show_tray {
             egui::Panel::bottom("tray")
-                .exact_size(112.0)
+                .exact_size(grown(112.0, 36.0))
                 .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(4, 6)))
                 .show(ui, |ui| self.tray(ui));
         }
+        // A narrow window (Snap's half or third of the screen) keeps the picture in view: the
+        // options panel folds away behind a button above the tools.
+        let narrow = is_narrow(ctx.content_rect().width());
         egui::Panel::left("tools")
-            .exact_size(118.0)
+            .exact_size(grown(118.0, 64.0))
             .resizable(false)
             .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(4, 0)))
-            .show(ui, |ui| self.tool_bar(ui));
-        if self.settings.show_side_panel {
+            .show(ui, |ui| self.tool_bar(ui, narrow && self.settings.show_side_panel));
+        if self.settings.show_side_panel && (!narrow || self.x.narrow_options) {
             egui::Panel::right("props")
-                .exact_size(230.0)
+                .exact_size(grown(230.0, 140.0))
                 .resizable(false)
                 .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(14, 6)))
                 .show(ui, |ui| self.side_panel(ui));
@@ -4362,6 +4409,28 @@ fn setup_style(ctx: &egui::Context) {
         s.spacing.item_spacing = vec2(8.0, 6.0);
         s.spacing.button_padding = vec2(9.0, 5.0);
     });
+}
+
+/// Below this width the window is narrow: the options panel folds away (Snap puts windows in
+/// half or a third of the screen).
+const NARROW_W: f32 = 820.0;
+
+/// A size that grows with the system's text size: `per_step` more for each 100 % more text.
+fn grown(size: f32, per_step: f32) -> f32 {
+    grown_by(size, per_step, crate::fonts::text_scale())
+}
+
+fn grown_by(size: f32, per_step: f32, text_scale: f32) -> f32 {
+    size + per_step * (text_scale - 1.0).max(0.0)
+}
+
+fn is_narrow(window_width: f32) -> bool {
+    window_width < NARROW_W
+}
+
+/// The width of the Recent bar's status text: a share of a narrow window, 250 in a wide one.
+fn status_width(window_width: f32) -> f32 {
+    (window_width * 0.3).clamp(140.0, 250.0)
 }
 
 pub(crate) fn section(ui: &mut egui::Ui, title: &str) {
@@ -4528,7 +4597,7 @@ pub(crate) struct PaintCtx {
 
 impl PaintCtx {
     fn font(&self, font: &str, bold: bool, italic: bool, size: f32) -> FontId {
-        let fam = self.families.get(&fonts::key(font, bold, italic)).cloned().unwrap_or(FontFamily::Proportional);
+        let fam = self.families.get(&fonts::key(font, bold, italic)).cloned().unwrap_or_else(fonts::canvas_family);
         FontId::new(size.max(1.0), fam)
     }
 }
@@ -4704,7 +4773,7 @@ fn paint_one(p: &egui::Painter, s: &Shape, to: &dyn Fn(Pos2) -> Pos2, scale: f32
                 p.circle_stroke(c, r, Stroke::new(((radius / 8.0).max(2.0) * scale).max(1.0), Color32::WHITE));
                 let label = style.format(*n);
                 let shrink = if label.chars().count() > 2 { 0.75 } else { 1.0 };
-                p.text(c, Align2::CENTER_CENTER, label, FontId::proportional((r * 1.15 * shrink).max(1.0)), render::halo_color(*color));
+                p.text(c, Align2::CENTER_CENTER, label, FontId::new((r * 1.15 * shrink).max(1.0), fonts::canvas_family()), render::halo_color(*color));
             }
         }
         Shape::Stamp { center, emoji, size, .. } => {
@@ -5057,7 +5126,7 @@ impl SnagApp {
         }
         let ppp = ctx.input(|i| i.viewport().native_pixels_per_point).unwrap_or(1.0);
         let (pos, size) = self.panel_restore.take().unwrap_or((pos2(120.0 * ppp, 80.0 * ppp), vec2(1280.0, 800.0)));
-        let size = if size.x < 900.0 || size.y < 560.0 { vec2(1280.0, 800.0) } else { size };
+        let size = if size.x < MIN_SIZE.x || size.y < MIN_SIZE.y { vec2(1280.0, 800.0) } else { size };
         ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(size));
         ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(pos2(pos.x / ppp, pos.y / ppp)));
     }

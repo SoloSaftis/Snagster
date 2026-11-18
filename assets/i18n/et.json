@@ -988,6 +988,8 @@
   "Recording saved": "Lindistus salvestatud",
   "box": "kast",
   "freehand": "vabakäsi",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Teksti esiletõstmiseks lohistage selle kohale kast. Joonte joonistamiseks valige paremalt vabakäsi."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Teksti esiletõstmiseks lohistage selle kohale kast. Joonte joonistamiseks valige paremalt vabakäsi.",
+  "More tabs": "Rohkem vahekaarte",
+  "The groups that don't fit the window": "Rühmad, mis aknasse ei mahu"
  }
 }

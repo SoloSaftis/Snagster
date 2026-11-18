@@ -988,6 +988,8 @@
   "Recording saved": "Upptaka vistuð",
   "box": "kassi",
   "freehand": "frjáls hönd",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dragðu kassa yfir texta til að auðkenna hann. Veldu frjáls hönd til hægri til að teikna strik."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dragðu kassa yfir texta til að auðkenna hann. Veldu frjáls hönd til hægri til að teikna strik.",
+  "More tabs": "Fleiri flipar",
+  "The groups that don't fit the window": "Hóparnir sem komast ekki fyrir í glugganum"
  }
 }

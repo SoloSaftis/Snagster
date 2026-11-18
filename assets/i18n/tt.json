@@ -988,6 +988,8 @@
   "Recording saved": "Язма саклана",
   "box": "рамка",
   "freehand": "иректән",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Тексты билгеләү өчен аның өстенә рамка сөйрәгез. Сызыклар сызу өчен уңда иректән сайлагыз."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Тексты билгеләү өчен аның өстенә рамка сөйрәгез. Сызыклар сызу өчен уңда иректән сайлагыз.",
+  "More tabs": "Күбрәк кыстырма",
+  "The groups that don't fit the window": "Тәрәзәгә сыймаган төркемнәр"
  }
 }

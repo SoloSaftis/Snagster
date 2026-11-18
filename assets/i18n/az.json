@@ -988,6 +988,8 @@
   "Recording saved": "Qeyd saxlanıldı",
   "box": "qutu",
   "freehand": "sərbəst",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Mətni vurğulamaq üçün üzərinə qutu çəkin. Əvəzinə xətlər çəkmək üçün sağda sərbəst seçin."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Mətni vurğulamaq üçün üzərinə qutu çəkin. Əvəzinə xətlər çəkmək üçün sağda sərbəst seçin.",
+  "More tabs": "Daha çox tab",
+  "The groups that don't fit the window": "Pəncərəyə sığmayan qruplar"
  }
 }

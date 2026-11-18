@@ -988,6 +988,8 @@
   "Recording saved": "रिकॉर्डिंग सहेजी गई",
   "box": "बॉक्स",
   "freehand": "फ्रीहैंड",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "टेक्स्ट को हाइलाइट करने के लिए उस पर बॉक्स खींचें। इसके बजाय रेखाएँ खींचने के लिए दाईं ओर फ्रीहैंड चुनें।"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "टेक्स्ट को हाइलाइट करने के लिए उस पर बॉक्स खींचें। इसके बजाय रेखाएँ खींचने के लिए दाईं ओर फ्रीहैंड चुनें।",
+  "More tabs": "और टैब",
+  "The groups that don't fit the window": "वे समूह जो विंडो में नहीं समाते"
  }
 }

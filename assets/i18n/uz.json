@@ -988,6 +988,8 @@
   "Recording saved": "Yozuv saqlandi",
   "box": "quti",
   "freehand": "erkin",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Matnni ajratib ko'rsatish uchun uning ustiga quti torting. Chiziqlar chizish uchun o'ngda erkin tanlang."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Matnni ajratib ko'rsatish uchun uning ustiga quti torting. Chiziqlar chizish uchun o'ngda erkin tanlang.",
+  "More tabs": "Boshqa yorliqlar",
+  "The groups that don't fit the window": "Oynaga sig‘maydigan guruhlar"
  }
 }

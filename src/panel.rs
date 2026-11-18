@@ -9,6 +9,35 @@ use crate::settings::{Action, PanelSelection, PanelSettings, PanelShare, Preset,
 use eframe::egui::{self, Align2, Color32, CornerRadius, FontId, Pos2, Rect, RichText, Sense, Stroke, StrokeKind, Vec2, pos2, vec2};
 
 pub const PANEL_SIZE: Vec2 = Vec2::new(780.0, 236.0);
+
+/// Whether Windows draws the window's corners round (Windows 11, once asked by
+/// `round_window_corners`); the panel then paints square ones inside them.
+static SYSTEM_ROUNDS: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The corner radius the panel paints: none when the system rounds the window itself (Windows
+/// 11 draws 8 px corners, a border and a shadow), else 12.
+fn painted_corner(system_rounds: bool) -> u8 {
+    if system_rounds { 0 } else { 12 }
+}
+
+/// Ask Windows 11 to round the main window's corners (Microsoft's guidance for windows without
+/// a title bar, which the compact panel and the recording bar are; a framed window is round
+/// already). Windows 10 says no and keeps square corners. Other systems: nothing to do.
+#[cfg(windows)]
+pub fn round_window_corners(window: &impl raw_window_handle::HasWindowHandle) {
+    use raw_window_handle::RawWindowHandle;
+    use windows_sys::Win32::Graphics::Dwm::{DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_ROUND, DwmSetWindowAttribute};
+    let Ok(handle) = window.window_handle() else { return };
+    let RawWindowHandle::Win32(h) = handle.as_raw() else { return };
+    let pref = DWMWCP_ROUND;
+    let hr = unsafe {
+        DwmSetWindowAttribute(h.hwnd.get() as _, DWMWA_WINDOW_CORNER_PREFERENCE as u32, (&pref as *const i32).cast(), std::mem::size_of_val(&pref) as u32)
+    };
+    SYSTEM_ROUNDS.store(hr == 0, std::sync::atomic::Ordering::Relaxed);
+}
+
+#[cfg(not(windows))]
+pub fn round_window_corners<T>(_window: &T) {}
 const CAPTURE_RED: Color32 = Color32::from_rgb(229, 72, 77);
 
 /// A small on/off switch.
@@ -79,7 +108,8 @@ impl SnagApp {
 
         // ---- left: tabs ----
         let tabs_rect = Rect::from_min_size(full.min, vec2(92.0, full.height() - 44.0));
-        ui.painter().rect_filled(tabs_rect, CornerRadius { nw: 12, ne: 0, sw: 0, se: 0 }, BG_DARK);
+        let corner = painted_corner(SYSTEM_ROUNDS.load(std::sync::atomic::Ordering::Relaxed));
+        ui.painter().rect_filled(tabs_rect, CornerRadius { nw: corner, ne: 0, sw: 0, se: 0 }, BG_DARK);
         let tab_h = tabs_rect.height() / 4.0;
         for (i, name) in ["All-in-One", "Image", "Video", crate::i18n::t("Stream")].iter().enumerate() {
             let r = Rect::from_min_size(tabs_rect.min + vec2(0.0, i as f32 * tab_h), vec2(92.0, tab_h));
@@ -500,8 +530,11 @@ impl SnagApp {
     }
 
     /// Draw the panel's outline (the window has no frame of its own while it shows).
+    /// (Windows 11 draws a round border of its own, so the painted outline goes.)
     pub(crate) fn panel_frame() -> egui::Frame {
-        egui::Frame::new().fill(PANEL).stroke(Stroke::new(1.0, Color32::from_rgb(70, 74, 88))).corner_radius(CornerRadius::same(12))
+        let system = SYSTEM_ROUNDS.load(std::sync::atomic::Ordering::Relaxed);
+        let line = if system { Stroke::NONE } else { Stroke::new(1.0, Color32::from_rgb(70, 74, 88)) };
+        egui::Frame::new().fill(PANEL).stroke(line).corner_radius(CornerRadius::same(painted_corner(system)))
     }
 }
 
@@ -511,6 +544,12 @@ fn unused(_: StrokeKind) {}
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_panel_paints_round_corners_only_where_windows_does_not() {
+        assert_eq!(painted_corner(true), 0, "Windows 11 rounds the window itself");
+        assert_eq!(painted_corner(false), 12);
+    }
 
     fn image_tab(selection: PanelSelection) -> PanelSettings {
         PanelSettings { tab: 1, selection, ..Default::default() }

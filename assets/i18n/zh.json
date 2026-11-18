@@ -988,6 +988,8 @@
   "Recording saved": "录制已保存",
   "box": "方框",
   "freehand": "手绘",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖动方框即可高亮显示。选择右侧的“手绘”可改为绘制笔画。"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖动方框即可高亮显示。选择右侧的“手绘”可改为绘制笔画。",
+  "More tabs": "更多选项卡",
+  "The groups that don't fit the window": "窗口放不下的组"
  }
 }

@@ -988,6 +988,8 @@
   "Recording saved": "ضبط ذخیره شد",
   "box": "کادر",
   "freehand": "آزاد",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "برای هایلایت کردن متن، یک کادر روی آن بکشید. برای کشیدن خط‌ها، در سمت راست آزاد را انتخاب کنید."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "برای هایلایت کردن متن، یک کادر روی آن بکشید. برای کشیدن خط‌ها، در سمت راست آزاد را انتخاب کنید.",
+  "More tabs": "زبانه‌های بیشتر",
+  "The groups that don't fit the window": "گروه‌هایی که در پنجره جا نمی‌شوند"
  }
 }

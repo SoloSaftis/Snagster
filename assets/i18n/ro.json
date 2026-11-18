@@ -988,6 +988,8 @@
   "Recording saved": "Înregistrare salvată",
   "box": "casetă",
   "freehand": "mână liberă",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trageți o casetă peste text pentru a-l evidenția. Alegeți mână liberă în dreapta pentru a desena în schimb linii."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trageți o casetă peste text pentru a-l evidenția. Alegeți mână liberă în dreapta pentru a desena în schimb linii.",
+  "More tabs": "Mai multe file",
+  "The groups that don't fit the window": "Grupurile care nu încap în fereastră"
  }
 }

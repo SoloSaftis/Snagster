@@ -988,6 +988,8 @@
   "Recording saved": "Įrašas išsaugotas",
   "box": "langelis",
   "freehand": "laisva ranka",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Nutempkite langelį ant teksto, kad jį paryškintumėte. Pasirinkite dešinėje laisva ranka, kad pieštumėte brūkšnius."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Nutempkite langelį ant teksto, kad jį paryškintumėte. Pasirinkite dešinėje laisva ranka, kad pieštumėte brūkšnius.",
+  "More tabs": "Daugiau skirtukų",
+  "The groups that don't fit the window": "Grupės, kurios netelpa lange"
  }
 }

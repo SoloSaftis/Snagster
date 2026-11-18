@@ -988,6 +988,8 @@
   "Recording saved": "録画を保存しました",
   "box": "四角",
   "freehand": "フリーハンド",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "文字の上にドラッグして四角で囲み、ハイライトします。右の「フリーハンド」を選ぶと、代わりに線を描けます。"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "文字の上にドラッグして四角で囲み、ハイライトします。右の「フリーハンド」を選ぶと、代わりに線を描けます。",
+  "More tabs": "その他のタブ",
+  "The groups that don't fit the window": "ウィンドウに収まらないグループ"
  }
 }

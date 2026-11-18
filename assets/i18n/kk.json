@@ -988,6 +988,8 @@
   "Recording saved": "Жазба сақталды",
   "box": "жәшік",
   "freehand": "еркін",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Мәтінді бөлектеу үшін оның үстінен жәшік сүйреңіз. Сызықтар салу үшін оң жақтан еркін таңдаңыз."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Мәтінді бөлектеу үшін оның үстінен жәшік сүйреңіз. Сызықтар салу үшін оң жақтан еркін таңдаңыз.",
+  "More tabs": "Басқа қойындылар",
+  "The groups that don't fit the window": "Терезеге сыймайтын топтар"
  }
 }

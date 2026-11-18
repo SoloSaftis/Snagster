@@ -988,6 +988,8 @@
   "Recording saved": "Записът е запазен",
   "box": "поле",
   "freehand": "свободно",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Плъзнете поле върху текста, за да го маркирате. Изберете свободно отдясно, за да рисувате щрихи."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Плъзнете поле върху текста, за да го маркирате. Изберете свободно отдясно, за да рисувате щрихи.",
+  "More tabs": "Още раздели",
+  "The groups that don't fit the window": "Групите, които не се побират в прозореца"
  }
 }

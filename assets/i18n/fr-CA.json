@@ -988,6 +988,8 @@
   "Recording saved": "Enregistrement terminé",
   "box": "boîte",
   "freehand": "à main levée",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Faites glisser une boîte sur le texte pour le surligner. Choisissez à main levée à droite pour tracer des traits."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Faites glisser une boîte sur le texte pour le surligner. Choisissez à main levée à droite pour tracer des traits.",
+  "More tabs": "Plus d'onglets",
+  "The groups that don't fit the window": "Les groupes qui n'entrent pas dans la fenêtre"
  }
 }

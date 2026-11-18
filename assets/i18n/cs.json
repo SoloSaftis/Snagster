@@ -988,6 +988,8 @@
   "Recording saved": "Nahrávka uložena",
   "box": "rámeček",
   "freehand": "od ruky",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Přetažením rámečku přes text jej zvýrazníte. Chcete-li kreslit tahy, vyberte vpravo od ruky."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Přetažením rámečku přes text jej zvýrazníte. Chcete-li kreslit tahy, vyberte vpravo od ruky.",
+  "More tabs": "Další karty",
+  "The groups that don't fit the window": "Skupiny, které se do okna nevejdou"
  }
 }

@@ -988,6 +988,8 @@
   "Recording saved": "Inspelning sparad",
   "box": "ruta",
   "freehand": "frihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra en ruta över texten för att markera den. Välj frihand till höger för att rita streck i stället."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra en ruta över texten för att markera den. Välj frihand till höger för att rita streck i stället.",
+  "More tabs": "Fler flikar",
+  "The groups that don't fit the window": "Grupperna som inte får plats i fönstret"
  }
 }

@@ -988,6 +988,8 @@
   "Recording saved": "பதிவு சேமிக்கப்பட்டது",
   "box": "பெட்டி",
   "freehand": "கைவரைவு",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "உரையை முன்னிலைப்படுத்த அதன் மேல் ஒரு பெட்டியை இழுக்கவும். அதற்குப் பதிலாக கோடுகள் வரைய வலதுபுறம் கைவரைவைத் தேர்ந்தெடுக்கவும்."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "உரையை முன்னிலைப்படுத்த அதன் மேல் ஒரு பெட்டியை இழுக்கவும். அதற்குப் பதிலாக கோடுகள் வரைய வலதுபுறம் கைவரைவைத் தேர்ந்தெடுக்கவும்.",
+  "More tabs": "மேலும் தாவல்கள்",
+  "The groups that don't fit the window": "சாளரத்தில் பொருந்தாத குழுக்கள்"
  }
 }

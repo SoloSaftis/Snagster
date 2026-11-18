@@ -988,6 +988,8 @@
   "Recording saved": "تم حفظ التسجيل",
   "box": "مربع",
   "freehand": "يدوي",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "اسحب مربعًا فوق النص لتمييزه. اختر يدوي على اليمين لرسم خطوط بدلًا من ذلك."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "اسحب مربعًا فوق النص لتمييزه. اختر يدوي على اليمين لرسم خطوط بدلًا من ذلك.",
+  "More tabs": "مزيد من علامات التبويب",
+  "The groups that don't fit the window": "المجموعات التي لا تتسع لها النافذة"
  }
 }

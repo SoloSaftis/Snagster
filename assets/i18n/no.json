@@ -988,6 +988,8 @@
   "Recording saved": "Opptak lagret",
   "box": "boks",
   "freehand": "frihånd",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra en boks over teksten for å utheve den. Velg frihånd til høyre for å tegne streker i stedet."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra en boks over teksten for å utheve den. Velg frihånd til høyre for å tegne streker i stedet.",
+  "More tabs": "Flere faner",
+  "The groups that don't fit the window": "Gruppene som ikke får plass i vinduet"
  }
 }

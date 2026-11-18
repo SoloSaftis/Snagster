@@ -988,6 +988,8 @@
   "Recording saved": "Gravação salva",
   "box": "caixa",
   "freehand": "à mão livre",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arraste uma caixa sobre o texto para destacá-lo. Escolha à mão livre à direita para desenhar traços."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arraste uma caixa sobre o texto para destacá-lo. Escolha à mão livre à direita para desenhar traços.",
+  "More tabs": "Mais guias",
+  "The groups that don't fit the window": "Os grupos que não cabem na janela"
  }
 }

@@ -988,6 +988,8 @@
   "Recording saved": "Nauhoitus tallennettu",
   "box": "laatikko",
   "freehand": "vapaa käsi",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Korosta teksti vetämällä sen päälle laatikko. Valitse oikealta vapaa käsi piirtääksesi vetoja."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Korosta teksti vetämällä sen päälle laatikko. Valitse oikealta vapaa käsi piirtääksesi vetoja.",
+  "More tabs": "Lisää välilehtiä",
+  "The groups that don't fit the window": "Ryhmät, jotka eivät mahdu ikkunaan"
  }
 }

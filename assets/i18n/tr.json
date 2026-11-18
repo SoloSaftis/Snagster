@@ -988,6 +988,8 @@
   "Recording saved": "Kayıt kaydedildi",
   "box": "kutu",
   "freehand": "serbest",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Metni vurgulamak için üzerine bir kutu sürükleyin. Bunun yerine çizgi çizmek için sağdan serbest seçin."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Metni vurgulamak için üzerine bir kutu sürükleyin. Bunun yerine çizgi çizmek için sağdan serbest seçin.",
+  "More tabs": "Diğer sekmeler",
+  "The groups that don't fit the window": "Pencereye sığmayan gruplar"
  }
 }

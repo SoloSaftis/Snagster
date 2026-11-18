@@ -988,6 +988,8 @@
   "Recording saved": "Regjistrimi u ruajt",
   "box": "kuti",
   "freehand": "dorë e lirë",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tërhiqni një kuti mbi tekst për ta theksuar. Zgjidhni dorë e lirë djathtas për të vizatuar vija."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tërhiqni një kuti mbi tekst për ta theksuar. Zgjidhni dorë e lirë djathtas për të vizatuar vija.",
+  "More tabs": "Më shumë skeda",
+  "The groups that don't fit the window": "Grupet që nuk nxënë në dritare"
  }
 }

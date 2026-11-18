@@ -3796,6 +3796,7 @@ dependencies = [
  "openh264-sys2",
  "pipewire",
  "pollster",
+ "raw-window-handle",
  "regex",
  "rfd",
  "ring",

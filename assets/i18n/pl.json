@@ -988,6 +988,8 @@
   "Recording saved": "Zapisano nagranie",
   "box": "ramka",
   "freehand": "odręcznie",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Przeciągnij ramkę nad tekstem, aby go zaznaczyć. Wybierz po prawej odręcznie, aby zamiast tego rysować pociągnięcia."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Przeciągnij ramkę nad tekstem, aby go zaznaczyć. Wybierz po prawej odręcznie, aby zamiast tego rysować pociągnięcia.",
+  "More tabs": "Więcej kart",
+  "The groups that don't fit the window": "Grupy, które nie mieszczą się w oknie"
  }
 }

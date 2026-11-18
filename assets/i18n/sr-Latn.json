@@ -988,6 +988,8 @@
   "Recording saved": "Snimak je sačuvan",
   "box": "okvir",
   "freehand": "slobodnom rukom",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Prevucite okvir preko teksta da ga istaknete. Izaberite slobodnom rukom desno da umesto toga crtate poteze."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Prevucite okvir preko teksta da ga istaknete. Izaberite slobodnom rukom desno da umesto toga crtate poteze.",
+  "More tabs": "Još kartica",
+  "The groups that don't fit the window": "Grupe koje ne staju u prozor"
  }
 }

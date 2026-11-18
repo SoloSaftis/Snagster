@@ -988,6 +988,8 @@
   "Recording saved": "Opname opgeslagen",
   "box": "kader",
   "freehand": "vrije hand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep een kader over tekst om die te markeren. Kies rechts vrije hand om in plaats daarvan streken te tekenen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep een kader over tekst om die te markeren. Kies rechts vrije hand om in plaats daarvan streken te tekenen.",
+  "More tabs": "Meer tabbladen",
+  "The groups that don't fit the window": "De groepen die niet in het venster passen"
  }
 }

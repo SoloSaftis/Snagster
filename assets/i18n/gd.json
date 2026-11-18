@@ -988,6 +988,8 @@
   "Recording saved": "Clàradh air a shàbhaladh",
   "box": "bogsa",
   "freehand": "làmh-shaor",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Slaod bogsa thairis air teacsa gus a sheulachadh. Tagh làmh-shaor air an taobh deas gus strìochan a tharraing."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Slaod bogsa thairis air teacsa gus a sheulachadh. Tagh làmh-shaor air an taobh deas gus strìochan a tharraing.",
+  "More tabs": "Barrachd thabaichean",
+  "The groups that don't fit the window": "Na buidhnean nach eil a' freagairt air an uinneag"
  }
 }

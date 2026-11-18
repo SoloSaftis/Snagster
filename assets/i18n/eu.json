@@ -988,6 +988,8 @@
   "Recording saved": "Grabaketa gordeta",
   "box": "koadroa",
   "freehand": "esku libre",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastatu koadro bat testuaren gainean nabarmentzeko. Aukeratu esku libre eskuinean trazuak marrazteko."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastatu koadro bat testuaren gainean nabarmentzeko. Aukeratu esku libre eskuinean trazuak marrazteko.",
+  "More tabs": "Fitxa gehiago",
+  "The groups that don't fit the window": "Leihoan sartzen ez diren taldeak"
  }
 }

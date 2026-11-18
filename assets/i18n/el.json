@@ -988,6 +988,8 @@
   "Recording saved": "Η εγγραφή αποθηκεύτηκε",
   "box": "πλαίσιο",
   "freehand": "ελεύθερο",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Σύρετε ένα πλαίσιο πάνω από το κείμενο για να το επισημάνετε. Επιλέξτε ελεύθερο στα δεξιά για να σχεδιάσετε γραμμές."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Σύρετε ένα πλαίσιο πάνω από το κείμενο για να το επισημάνετε. Επιλέξτε ελεύθερο στα δεξιά για να σχεδιάσετε γραμμές.",
+  "More tabs": "Περισσότερες καρτέλες",
+  "The groups that don't fit the window": "Οι ομάδες που δεν χωρούν στο παράθυρο"
  }
 }

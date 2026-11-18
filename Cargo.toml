@@ -73,6 +73,10 @@ wgpu = { version = "30", default-features = false, features = ["std", "dx12", "w
 # The graphics chips Direct3D offers, for --hw-report (already in the tree through eframe).
 pollster = "1"
 
+# The window handle eframe hands over, for Windows 11's round corners on the frameless panel
+# (MIT/Apache-2.0/Zlib; already in the tree through winit).
+raw-window-handle = "0.6"
+
 [target."cfg(windows)".build-dependencies]
 winresource = "0.1.34"
 

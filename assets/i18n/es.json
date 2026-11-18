@@ -988,6 +988,8 @@
   "Recording saved": "Grabación guardada",
   "box": "cuadro",
   "freehand": "a mano alzada",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastra un cuadro sobre el texto para resaltarlo. Elige a mano alzada a la derecha para dibujar trazos."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastra un cuadro sobre el texto para resaltarlo. Elige a mano alzada a la derecha para dibujar trazos.",
+  "More tabs": "Más pestañas",
+  "The groups that don't fit the window": "Los grupos que no caben en la ventana"
  }
 }

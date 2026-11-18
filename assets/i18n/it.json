@@ -988,6 +988,8 @@
   "Recording saved": "Registrazione salvata",
   "box": "riquadro",
   "freehand": "a mano libera",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trascina un riquadro sul testo per evidenziarlo. Scegli a mano libera a destra per disegnare tratti."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trascina un riquadro sul testo per evidenziarlo. Scegli a mano libera a destra per disegnare tratti.",
+  "More tabs": "Altre schede",
+  "The groups that don't fit the window": "I gruppi che non entrano nella finestra"
  }
 }

@@ -213,33 +213,43 @@ pub struct UiFonts {
     user: Vec<(String, Arc<eframe::egui::FontData>)>,
     /// Whether the base includes the computer's Chinese, Japanese and Korean fonts, and for which language.
     pub base: Option<(bool, String)>,
+    /// The text size (percent) the interface fonts were made for.
+    pub text_scale: u32,
 }
 
 impl Default for UiFonts {
     fn default() -> Self {
-        Self { defs: crate::look::base_fonts(false, "en"), loaded: HashSet::new(), failed: HashSet::new(), user: Vec::new(), base: None }
+        let mut defs = crate::look::base_fonts(false, "en");
+        interface_fonts(&mut defs, None, 100);
+        Self { defs, loaded: HashSet::new(), failed: HashSet::new(), user: Vec::new(), base: None, text_scale: 100 }
     }
 }
 
 impl UiFonts {
-    /// Make sure the interface fonts suit `lang` (and include CJK fonts when `cjk`), keeping
-    /// the fonts loaded for text marks. Cheap when nothing changes.
+    /// Make sure the interface fonts suit `lang` (and include CJK fonts when `cjk`) and the
+    /// system's text size, keeping the fonts loaded for text marks. Cheap when nothing changes.
     pub fn ensure_base(&mut self, ctx: &eframe::egui::Context, lang: &str, cjk: bool) {
-        use eframe::egui::FontFamily;
+        self.ensure_base_sized(ctx, lang, cjk, current_text_scale());
+    }
+
+    fn ensure_base_sized(&mut self, ctx: &eframe::egui::Context, lang: &str, cjk: bool, text_scale: u32) {
         let want = (cjk, lang.to_string());
-        if self.base.as_ref() == Some(&want) {
+        if self.base.as_ref() == Some(&want) && self.text_scale == text_scale {
             return;
         }
         let mut defs = crate::look::base_fonts(cjk, lang);
-        let base = defs.families.get(&FontFamily::Proportional).cloned().unwrap_or_default();
+        interface_fonts(&mut defs, system_ui_font(), text_scale);
+        // Text marks fall back to the picture fonts, not the (system, resized) interface ones.
+        let base = defs.families.get(&canvas_family()).cloned().unwrap_or_default();
         for (k, data) in &self.user {
             defs.font_data.insert(k.clone(), data.clone());
             let mut list = vec![k.clone()];
             list.extend(base.iter().cloned());
-            defs.families.insert(FontFamily::Name(k.clone().into()), list);
+            defs.families.insert(eframe::egui::FontFamily::Name(k.clone().into()), list);
         }
         self.defs = defs;
         self.base = Some(want);
+        self.text_scale = text_scale;
         ctx.set_fonts(self.defs.clone());
         ctx.request_repaint();
     }
@@ -248,20 +258,20 @@ impl UiFonts {
     pub fn family(&mut self, ctx: &eframe::egui::Context, family: &str, bold: bool, italic: bool) -> eframe::egui::FontFamily {
         use eframe::egui::{FontData, FontFamily};
         if family.is_empty() {
-            return FontFamily::Proportional;
+            return canvas_family();
         }
         let k = key(family, bold, italic);
         if self.loaded.contains(&k) {
             return FontFamily::Name(k.into());
         }
         if self.failed.contains(&k) {
-            return FontFamily::Proportional;
+            return canvas_family();
         }
         let Some(path) = path_of(family, bold, italic) else {
             if families().is_some() {
                 self.failed.insert(k);
             }
-            return FontFamily::Proportional;
+            return canvas_family();
         };
         match std::fs::read(&path) {
             Ok(bytes) if ttf_parser::Face::parse(&bytes, 0).is_ok() => {
@@ -269,7 +279,7 @@ impl UiFonts {
                 self.defs.font_data.insert(k.clone(), data.clone());
                 self.user.push((k.clone(), data));
                 let mut list = vec![k.clone()];
-                if let Some(base) = self.defs.families.get(&FontFamily::Proportional) {
+                if let Some(base) = self.defs.families.get(&canvas_family()) {
                     list.extend(base.iter().cloned());
                 }
                 self.defs.families.insert(FontFamily::Name(k.clone().into()), list);
@@ -281,7 +291,7 @@ impl UiFonts {
                 self.failed.insert(k);
             }
         }
-        FontFamily::Proportional
+        canvas_family()
     }
 }
 
@@ -302,6 +312,184 @@ pub fn export_font(family: &str, bold: bool, italic: bool) -> Option<ab_glyph::F
         .map(ab_glyph::FontArc::new);
     cache.lock().ok()?.insert(k, font.clone());
     font
+}
+
+
+// ---------- the system's interface font and text size ----------
+
+/// The egui family for text drawn into pictures (text and callout marks, step numbers) when no
+/// font is chosen: egui's built-in font at its own size, the same one saved pictures use
+/// (`render.rs`). The interface fonts may be the system's and bigger (Windows' text size); the
+/// picture must not change with them.
+pub fn canvas_family() -> eframe::egui::FontFamily {
+    eframe::egui::FontFamily::Name("canvas".into())
+}
+
+/// The first Windows 11 build. Windows 11 still says "10.0" in its version number.
+const WINDOWS_11_BUILD: u32 = 22000;
+
+/// The file of Windows' interface font in the Fonts folder: Segoe UI Variable on Windows 11,
+/// Segoe UI on Windows 10 (and on 11 if the variable font is missing). `has` says whether a
+/// file is there. None when neither is.
+pub fn windows_ui_font(build: Option<u32>, has: impl Fn(&str) -> bool) -> Option<&'static str> {
+    if build.is_some_and(|b| b >= WINDOWS_11_BUILD) && has("SegUIVar.ttf") {
+        return Some("SegUIVar.ttf");
+    }
+    has("segoeui.ttf").then_some("segoeui.ttf")
+}
+
+/// The text size in percent: Windows' "Text size" setting (Accessibility, 100 to 225) or the
+/// `SNAGSTER_TEXT_SCALE` override (for testing), kept within what Windows allows. Neither set
+/// is 100.
+pub fn text_scale_percent(overridden: Option<&str>, setting: Option<u32>) -> u32 {
+    overridden
+        .and_then(|s| s.trim().trim_end_matches('%').parse::<u32>().ok())
+        .or(setting)
+        .unwrap_or(100)
+        .clamp(100, 225)
+}
+
+/// The text size now, read at most every two seconds (the setting can change while Snagster
+/// runs; reading it is a registry lookup).
+fn current_text_scale() -> u32 {
+    static LAST: Mutex<Option<(std::time::Instant, u32)>> = Mutex::new(None);
+    let Ok(mut last) = LAST.lock() else { return 100 };
+    if let Some((at, v)) = *last
+        && at.elapsed() < std::time::Duration::from_secs(2)
+    {
+        return v;
+    }
+    let v = text_scale_percent(std::env::var("SNAGSTER_TEXT_SCALE").ok().as_deref(), sysui::text_scale_setting());
+    *last = Some((std::time::Instant::now(), v));
+    v
+}
+
+/// How big interface text is drawn (1.0 normal, up to 2.25), from Windows' Text size setting.
+pub fn text_scale() -> f32 {
+    current_text_scale() as f32 / 100.0
+}
+
+/// The system's interface font, read once (Windows; None elsewhere, where egui's font stays).
+fn system_ui_font() -> Option<Arc<eframe::egui::FontData>> {
+    static F: OnceLock<Option<Arc<eframe::egui::FontData>>> = OnceLock::new();
+    F.get_or_init(|| {
+        let dir = sysui::fonts_folder()?;
+        let file = windows_ui_font(sysui::windows_build(), |f| dir.join(f).is_file())?;
+        let bytes = std::fs::read(dir.join(file)).ok()?;
+        ttf_parser::Face::parse(&bytes, 0).ok()?;
+        Some(Arc::new(eframe::egui::FontData::from_owned(bytes)))
+    })
+    .clone()
+}
+
+/// Make `defs` (from `look::base_fonts`) the interface fonts: the system's font first when there
+/// is one, and every text font `percent` big (the icons stay as they are). The family
+/// `canvas_family` keeps the fonts as they were, for picture text.
+pub fn interface_fonts(defs: &mut eframe::egui::FontDefinitions, system: Option<Arc<eframe::egui::FontData>>, percent: u32) {
+    use eframe::egui::FontFamily;
+    let canvas = defs.families.get(&FontFamily::Proportional).cloned().unwrap_or_default();
+    defs.families.insert(canvas_family(), canvas);
+    let scale = percent as f32 / 100.0;
+    let sized = |defs: &mut eframe::egui::FontDefinitions, name: &str, data: Arc<eframe::egui::FontData>| -> String {
+        if percent == 100 {
+            defs.font_data.insert(name.to_string(), data);
+            return name.to_string();
+        }
+        let key = format!("ui-{name}");
+        if !defs.font_data.contains_key(&key) {
+            let mut d = (*data).clone();
+            d.tweak.scale *= scale;
+            defs.font_data.insert(key.clone(), Arc::new(d));
+        }
+        key
+    };
+    for fam in [FontFamily::Proportional, FontFamily::Monospace] {
+        let Some(old) = defs.families.get(&fam).cloned() else { continue };
+        let mut list = Vec::with_capacity(old.len() + 1);
+        if fam == FontFamily::Proportional
+            && let Some(sys) = &system
+        {
+            list.push(sized(defs, "system-ui", sys.clone()));
+        }
+        for name in old {
+            if name == "Phosphor" {
+                list.push(name);
+                continue;
+            }
+            match defs.font_data.get(&name).cloned() {
+                Some(data) => list.push(sized(defs, &name, data)),
+                None => list.push(name),
+            }
+        }
+        // The icons stay right after the first font (see `look::base_fonts`).
+        if let Some(i) = list.iter().position(|n| n == "Phosphor")
+            && i != 1
+            && list.len() > 1
+        {
+            let p = list.remove(i);
+            list.insert(1, p);
+        }
+        defs.families.insert(fam, list);
+    }
+}
+
+/// What the system says (Windows' registry); nothing elsewhere.
+#[cfg(windows)]
+mod sysui {
+    use std::path::PathBuf;
+    use windows::Win32::Foundation::ERROR_SUCCESS;
+    use windows::Win32::System::Registry::{HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, RRF_RT_REG_DWORD, RRF_RT_REG_SZ, RegGetValueW};
+    use windows::core::HSTRING;
+
+    fn dword(root: HKEY, key: &str, name: &str) -> Option<u32> {
+        let mut v = 0u32;
+        let mut bytes = 4u32;
+        let r = unsafe { RegGetValueW(root, &HSTRING::from(key), &HSTRING::from(name), RRF_RT_REG_DWORD, None, Some((&mut v as *mut u32).cast()), Some(&mut bytes)) };
+        (r == ERROR_SUCCESS).then_some(v)
+    }
+
+    fn text(root: HKEY, key: &str, name: &str) -> Option<String> {
+        let mut buf = vec![0u16; 64];
+        let mut bytes = (buf.len() * 2) as u32;
+        let r = unsafe { RegGetValueW(root, &HSTRING::from(key), &HSTRING::from(name), RRF_RT_REG_SZ, None, Some(buf.as_mut_ptr().cast()), Some(&mut bytes)) };
+        if r != ERROR_SUCCESS {
+            return None;
+        }
+        let len = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
+        Some(String::from_utf16_lossy(&buf[..len]))
+    }
+
+    /// Settings > Accessibility > Text size, in percent (absent until it is first changed).
+    pub fn text_scale_setting() -> Option<u32> {
+        dword(HKEY_CURRENT_USER, r"Software\Microsoft\Accessibility", "TextScaleFactor")
+    }
+
+    /// The Windows build number (22000 and up is Windows 11).
+    pub fn windows_build() -> Option<u32> {
+        text(HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion", "CurrentBuildNumber")?.trim().parse().ok()
+    }
+
+    pub fn fonts_folder() -> Option<PathBuf> {
+        Some(PathBuf::from(std::env::var_os("WINDIR")?).join("Fonts"))
+    }
+}
+
+/// Other systems keep egui's built-in interface font at its own size for now.
+#[cfg(not(windows))]
+mod sysui {
+    use std::path::PathBuf;
+
+    pub fn text_scale_setting() -> Option<u32> {
+        None
+    }
+
+    pub fn windows_build() -> Option<u32> {
+        None
+    }
+
+    pub fn fonts_folder() -> Option<PathBuf> {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -404,8 +592,8 @@ mod tests {
         assert!(export_font("No Such Font Family 1234", true, true).is_none());
         let ctx = eframe::egui::Context::default();
         let mut ui = UiFonts::default();
-        assert_eq!(ui.family(&ctx, "", false, false), eframe::egui::FontFamily::Proportional);
-        assert_eq!(ui.family(&ctx, "No Such Font Family 1234", false, false), eframe::egui::FontFamily::Proportional);
+        assert_eq!(ui.family(&ctx, "", false, false), canvas_family());
+        assert_eq!(ui.family(&ctx, "No Such Font Family 1234", false, false), canvas_family());
     }
 
     #[test]
@@ -419,5 +607,138 @@ mod tests {
         assert_eq!(ui.base, Some((false, "de".to_string())));
         ui.ensure_base(&ctx, "fr", false);
         assert_eq!(ui.base, Some((false, "fr".to_string())));
+    }
+
+    #[test]
+    fn windows_11_gets_segoe_ui_variable_and_windows_10_segoe_ui() {
+        let all = |_: &str| true;
+        assert_eq!(windows_ui_font(Some(22000), all), Some("SegUIVar.ttf"));
+        assert_eq!(windows_ui_font(Some(26100), all), Some("SegUIVar.ttf"));
+        // Windows 10, even with the variable font installed by hand.
+        assert_eq!(windows_ui_font(Some(19045), all), Some("segoeui.ttf"));
+        assert_eq!(windows_ui_font(None, all), Some("segoeui.ttf"), "unknown build: the safe choice");
+        // Windows 11 without the variable font falls back; nothing at all keeps egui's font.
+        assert_eq!(windows_ui_font(Some(22631), |f| f == "segoeui.ttf"), Some("segoeui.ttf"));
+        assert_eq!(windows_ui_font(Some(22631), |_| false), None);
+        assert_eq!(windows_ui_font(Some(19045), |f| f == "SegUIVar.ttf"), None);
+    }
+
+    #[test]
+    fn text_size_follows_the_setting_within_what_windows_allows() {
+        assert_eq!(text_scale_percent(None, None), 100, "never changed: normal size");
+        assert_eq!(text_scale_percent(None, Some(100)), 100);
+        assert_eq!(text_scale_percent(None, Some(150)), 150);
+        assert_eq!(text_scale_percent(None, Some(225)), 225);
+        assert_eq!(text_scale_percent(None, Some(400)), 225, "kept to Windows' largest");
+        assert_eq!(text_scale_percent(None, Some(0)), 100, "never smaller than normal");
+        assert_eq!(text_scale_percent(Some("175"), Some(120)), 175, "the test override wins");
+        assert_eq!(text_scale_percent(Some(" 130% "), None), 130);
+        assert_eq!(text_scale_percent(Some("big"), Some(120)), 120, "a bad override is ignored");
+        assert_eq!(text_scale_percent(Some("999"), None), 225);
+    }
+
+    fn system_font() -> Arc<eframe::egui::FontData> {
+        Arc::new(eframe::egui::FontData::from_owned(std::fs::read(font_file()).unwrap()))
+    }
+
+    #[test]
+    fn the_system_font_comes_first_and_icons_stay_second() {
+        use eframe::egui::FontFamily;
+        let mut defs = crate::look::base_fonts(false, "en");
+        let before = defs.families[&FontFamily::Proportional].clone();
+        let mono_before = defs.families[&FontFamily::Monospace].clone();
+        interface_fonts(&mut defs, Some(system_font()), 100);
+        let list = &defs.families[&FontFamily::Proportional];
+        assert_eq!(list[0], "system-ui");
+        assert_eq!(list[1], "Phosphor");
+        assert_eq!(list.len(), before.len() + 1);
+        assert_eq!(defs.families[&FontFamily::Monospace], mono_before, "code text keeps its font");
+        assert_eq!(defs.families[&canvas_family()], before, "picture text keeps egui's font");
+        for fam in [FontFamily::Proportional, FontFamily::Monospace, canvas_family()] {
+            for n in &defs.families[&fam] {
+                assert!(defs.font_data.contains_key(n), "{fam:?}: {n} isn't loaded");
+            }
+        }
+    }
+
+    #[test]
+    fn without_a_system_font_or_text_size_nothing_changes() {
+        use eframe::egui::FontFamily;
+        let mut defs = crate::look::base_fonts(false, "en");
+        let before = defs.families.clone();
+        interface_fonts(&mut defs, None, 100);
+        for fam in [FontFamily::Proportional, FontFamily::Monospace] {
+            assert_eq!(defs.families[&fam], before[&fam]);
+        }
+        assert_eq!(defs.families[&canvas_family()], before[&FontFamily::Proportional]);
+    }
+
+    #[test]
+    fn bigger_text_grows_the_text_fonts_but_not_icons_or_picture_text() {
+        use eframe::egui::FontFamily;
+        let mut defs = crate::look::base_fonts(false, "en");
+        let own = |defs: &eframe::egui::FontDefinitions, n: &str| defs.font_data.get(n).map_or(1.0, |d| d.tweak.scale);
+        let before = defs.clone();
+        interface_fonts(&mut defs, Some(system_font()), 150);
+        for fam in [FontFamily::Proportional, FontFamily::Monospace] {
+            for n in &defs.families[&fam] {
+                // egui's emoji fonts carry their own scale; the text size multiplies it.
+                let want = match n.as_str() {
+                    "Phosphor" => 1.0,
+                    "ui-system-ui" => 1.5,
+                    _ => own(&before, n.trim_start_matches("ui-")) * 1.5,
+                };
+                assert!((defs.font_data[n].tweak.scale - want).abs() < 1e-5, "{fam:?}: {n}");
+            }
+        }
+        for n in &defs.families[&canvas_family()] {
+            assert_eq!(defs.font_data[n].tweak.scale, own(&before, n), "picture text: {n}");
+        }
+        assert_eq!(defs.families[&crate::look::icons()], vec!["Phosphor".to_string()]);
+    }
+
+    #[test]
+    fn bigger_text_lays_out_bigger_and_picture_text_does_not() {
+        use eframe::egui::{FontFamily, FontId};
+        let measure = |percent: u32, family: FontFamily| {
+            let ctx = eframe::egui::Context::default();
+            let mut defs = crate::look::base_fonts(false, "en");
+            interface_fonts(&mut defs, None, percent);
+            ctx.set_fonts(defs);
+            let mut size = eframe::egui::Vec2::ZERO;
+            let mut out = ctx.run_ui(Default::default(), |ui| {
+                size = ui.painter().layout_no_wrap("Capture".into(), FontId::new(14.0, family.clone()), eframe::egui::Color32::WHITE).size();
+            });
+            // No GPU here: the font pictures the frame would upload are dropped.
+            out.textures_delta.clear();
+            size
+        };
+        let (normal, big) = (measure(100, FontFamily::Proportional), measure(200, FontFamily::Proportional));
+        assert!(big.x > normal.x * 1.8 && big.y > normal.y * 1.8, "{normal:?} -> {big:?}");
+        assert_eq!(measure(100, canvas_family()), measure(200, canvas_family()));
+    }
+
+    #[test]
+    fn the_text_size_is_part_of_what_the_base_fonts_are_made_for() {
+        let ctx = eframe::egui::Context::default();
+        let mut ui = UiFonts::default();
+        ui.ensure_base_sized(&ctx, "en", false, 100);
+        assert_eq!(ui.text_scale, 100);
+        ui.ensure_base_sized(&ctx, "en", false, 175);
+        assert_eq!(ui.text_scale, 175);
+        assert!(ui.defs.font_data.contains_key("ui-Ubuntu-Light"));
+    }
+
+    /// The real system font on this computer (Windows only): it parses, and it has no letters
+    /// where the icons are, so putting the icons second doesn't hide any.
+    #[cfg(windows)]
+    #[test]
+    fn the_windows_font_is_found_and_leaves_the_icons_alone() {
+        let Some(f) = system_ui_font() else { return };
+        let face = ttf_parser::Face::parse(f.bytes(), 0).unwrap();
+        for cp in 0xE000u32..=0xEAFF {
+            let c = char::from_u32(cp).unwrap();
+            assert!(face.glyph_index(c).is_none(), "the system font has U+{cp:X}");
+        }
     }
 }
