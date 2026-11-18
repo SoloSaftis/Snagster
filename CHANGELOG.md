@@ -12,6 +12,21 @@ Windows:
 - Builds can be signed with Azure Artifact Signing (`Snagster.exe` and the installer) once it
   is set up.
 
+Linux:
+
+- **Every screen in a Screen capture on Wayland**: the desktop's dialog lets you pick all your
+  screens once, and Screen, Area and scrolling captures then see the whole desk, each screen
+  where it sits (screens with different scaling are matched to the sharpest). Recording keeps
+  its own remembered screen.
+- **Areas start where you pressed**: an area began a few pixels on from the click (where the
+  drag was noticed), so the cut was off on Wayland. Area on Wayland is Snagster's own overlay
+  again: no desktop dialog after the first share.
+- **A notification** says "Recording saved" or "GIF saved" when Snagster is in the tray or
+  behind other windows.
+- The keyboard-shortcut settings say **Super** (Linux) and ⌃ ⌥ ⇧ ⌘ (Mac) instead of Win.
+- Cancelling the desktop's share dialog now says plainly that nothing was shared, and
+  `snagster record` works in the Flatpak on Wayland.
+
 ## 0.10.6 — 2026-11-17
 
 Linux with Wayland (checked on Ubuntu 26.04 with GNOME):

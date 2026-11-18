@@ -116,7 +116,12 @@ pub fn file_uri_path(uri: &str) -> Option<std::path::PathBuf> {
 /// The file the desktop wrote is deleted after reading.
 pub fn screenshot(interactive: bool) -> Result<RgbaImage, String> {
     let uri = pollster::block_on(async {
-        let request = ashpd::desktop::screenshot::Screenshot::request().interactive(interactive).modal(false).send().await.map_err(|e| e.to_string())?;
+        let request = ashpd::desktop::screenshot::Screenshot::request()
+            .interactive(interactive)
+            .modal(false)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
         let answer = request.response().map_err(|e| e.to_string())?;
         Ok::<_, String>(answer.uri().to_string())
     })
@@ -164,9 +169,71 @@ fn cursor_mode(want_pointer: bool, offered: ashpd::desktop::screencast::CursorMo
     }
 }
 
-/// Where the screen-share restore token is kept: next to the settings.
-fn token_path() -> Option<std::path::PathBuf> {
-    Some(crate::settings::settings_path()?.parent()?.join("screencast-token"))
+/// Where a screen-share restore token is kept: next to the settings. Recordings share one
+/// screen ("screencast-token"); still pictures share every screen ("screenshot-token"), so each
+/// remembers its own choice.
+fn token_path(every_screen: bool) -> Option<std::path::PathBuf> {
+    let name = if every_screen { "screenshot-token" } else { "screencast-token" };
+    Some(crate::settings::settings_path()?.parent()?.join(name))
+}
+
+/// One shared screen's picture, where that screen is on the desktop and its size there
+/// (0 × 0: the desktop didn't say).
+pub struct Part {
+    pub image: RgbaImage,
+    pub origin: (i32, i32),
+    pub logical: (u32, u32),
+}
+
+/// The pictures of several shared screens as one picture of the desktop, and where it starts.
+///
+/// Each screen goes where the desktop says it is. A screen may send more pixels than its
+/// desktop size (scaled 2×, say): the whole picture is made at the sharpest screen's scale and
+/// the others are enlarged to match, so the screens line up as they do on the desk. When the
+/// desktop gives no places (or places that overlap), the screens are set side by side.
+pub fn join_screens(parts: Vec<Part>) -> Option<(RgbaImage, (i32, i32))> {
+    if parts.len() == 1 {
+        let p = parts.into_iter().next()?;
+        return Some((p.image, p.origin));
+    }
+    // Pixels per desktop unit of each screen (1 when its desktop size is unknown).
+    let scale_of = |p: &Part| if p.logical.0 > 0 { p.image.width() as f64 / p.logical.0 as f64 } else { 1.0 };
+    let scale = parts.iter().map(scale_of).fold(1.0f64, f64::max);
+    // Each screen's place on the desktop, in desktop units.
+    let mut rects: Vec<(i32, i32, i32, i32)> = parts
+        .iter()
+        .map(|p| {
+            let (w, h) = if p.logical.0 > 0 && p.logical.1 > 0 { p.logical } else { p.image.dimensions() };
+            (p.origin.0, p.origin.1, w as i32, h as i32)
+        })
+        .collect();
+    let overlap = |a: &(i32, i32, i32, i32), b: &(i32, i32, i32, i32)| a.0 < b.0 + b.2 && b.0 < a.0 + a.2 && a.1 < b.1 + b.3 && b.1 < a.1 + a.3;
+    let overlapping = (0..rects.len()).any(|i| (i + 1..rects.len()).any(|j| overlap(&rects[i], &rects[j])));
+    if overlapping {
+        let mut x = 0;
+        for r in &mut rects {
+            *r = (x, 0, r.2, r.3);
+            x += r.2;
+        }
+    }
+    let min_x = rects.iter().map(|r| r.0).min()?;
+    let min_y = rects.iter().map(|r| r.1).min()?;
+    let max_x = rects.iter().map(|r| r.0 + r.2).max()?;
+    let max_y = rects.iter().map(|r| r.1 + r.3).max()?;
+    let px = |v: i32| (v as f64 * scale).round() as i64;
+    let (cw, ch) = (px(max_x - min_x).max(1) as u32, px(max_y - min_y).max(1) as u32);
+    let mut canvas = RgbaImage::from_pixel(cw, ch, image::Rgba([0, 0, 0, 255]));
+    for (p, r) in parts.iter().zip(&rects) {
+        let (w, h) = (px(r.2).max(1) as u32, px(r.3).max(1) as u32);
+        let at = (px(r.0 - min_x), px(r.1 - min_y));
+        if p.image.dimensions() == (w, h) {
+            image::imageops::replace(&mut canvas, &p.image, at.0, at.1);
+        } else {
+            let big = image::imageops::resize(&p.image, w, h, image::imageops::FilterType::Triangle);
+            image::imageops::replace(&mut canvas, &big, at.0, at.1);
+        }
+    }
+    Some((canvas, (px(min_x) as i32, px(min_y) as i32)))
 }
 
 /// The saved restore token, if it looks like one (the desktop makes them: a UUID or similar).
@@ -192,14 +259,14 @@ fn write_token(path: &std::path::Path, token: &str) {
 /// asks only the first time (the share is remembered with its restore token), unlike the
 /// Screenshot portal, which GNOME confirms for every picture of a program run outside a sandbox.
 /// The first time the person picks the screen in the desktop's dialog: up to `limit` to do it.
-pub fn still(cursor: bool, limit: std::time::Duration) -> Result<(RgbaImage, (i32, i32)), String> {
-    let cast = Cast::start(cursor)?;
+/// With `every_screen` the desktop is asked for all screens (the person can pick several) and
+/// their pictures are joined into one (`join_screens`); without, the recordings' single screen.
+pub fn still(cursor: bool, limit: std::time::Duration, every_screen: bool) -> Result<(RgbaImage, (i32, i32)), String> {
+    let cast = Cast::open(cursor, every_screen)?;
     let end = std::time::Instant::now() + limit;
-    let mut rgba = Vec::new();
     loop {
-        if let Some((w, h, _)) = cast.newer_than(0, &mut rgba)? {
-            let img = RgbaImage::from_raw(w, h, std::mem::take(&mut rgba)).ok_or("the screen share sent a picture of the wrong size")?;
-            return Ok((img, cast.origin));
+        if let Some(parts) = cast.first_pictures()? {
+            return join_screens(parts).ok_or_else(|| "no screen was chosen".to_string());
         }
         if std::time::Instant::now() >= end {
             return Err("the screen share sent no picture".into());
@@ -224,13 +291,21 @@ struct Newest {
 /// desktop's dialog, then its pictures arrive on a PipeWire thread of its own. Dropping it ends
 /// the share.
 pub struct Cast {
-    newest: Arc<Mutex<Newest>>,
+    /// The newest picture of each shared screen (the first is the one recordings use).
+    screens: Vec<Shared>,
     quit: Option<pipewire::channel::Sender<()>>,
     thread: Option<std::thread::JoinHandle<()>>,
     session: Option<ashpd::desktop::Session<ashpd::desktop::screencast::Screencast>>,
-    /// Where the shared screen is on the desktop, and its size there (0: not told).
+    /// Where the (first) shared screen is on the desktop, and its size there (0: not told).
     pub origin: (i32, i32),
     pub logical: (u32, u32),
+}
+
+/// One shared screen of a `Cast`: its place on the desktop and its newest picture.
+struct Shared {
+    origin: (i32, i32),
+    logical: (u32, u32),
+    newest: Arc<Mutex<Newest>>,
 }
 
 impl Cast {
@@ -239,11 +314,17 @@ impl Cast {
     /// restore token, kept next to the settings), until the person revokes it in the desktop's
     /// settings or picks again after the token stops working.
     pub fn start(cursor: bool) -> Result<Cast, String> {
+        Cast::open(cursor, false)
+    }
+
+    /// `start`, or with `every_screen` a share of all screens the person picks (remembered
+    /// apart from the recordings' screen).
+    fn open(cursor: bool, every_screen: bool) -> Result<Cast, String> {
         use ashpd::desktop::PersistMode;
         use ashpd::desktop::screencast::{CursorMode, Screencast, SelectSourcesOptions, SourceType};
-        let token_file = token_path();
+        let token_file = token_path(every_screen);
         let saved = token_file.as_deref().and_then(read_token);
-        let (session, stream, fd) = pollster::block_on(async {
+        let (session, picked, fd) = pollster::block_on(async {
             let proxy = Screencast::new().await.map_err(|e| e.to_string())?;
             let session = proxy.create_session(Default::default()).await.map_err(|e| e.to_string())?;
             let modes = proxy.available_cursor_modes().await.unwrap_or(CursorMode::empty());
@@ -253,44 +334,88 @@ impl Cast {
                     &session,
                     SelectSourcesOptions::default()
                         .set_sources(SourceType::MONITOR)
-                        .set_multiple(false)
+                        .set_multiple(every_screen)
                         .set_cursor_mode(mode)
                         .set_persist_mode(PersistMode::ExplicitlyRevoked)
                         .set_restore_token(saved.as_deref()),
                 )
                 .await
                 .map_err(|e| e.to_string())?;
-            let streams = proxy.start(&session, None, Default::default()).await.map_err(|e| e.to_string())?.response().map_err(|e| e.to_string())?;
+            let streams = proxy
+                .start(&session, None, Default::default())
+                .await
+                .map_err(|e| e.to_string())?
+                .response()
+                .map_err(|e| e.to_string())?;
             // A token works once: keep the new one for the next share.
             if let (Some(path), Some(t)) = (token_file.as_deref(), streams.restore_token()) {
                 write_token(path, t);
             }
-            let stream = streams.streams().first().cloned().ok_or("no screen was chosen")?;
+            let streams = streams.streams().to_vec();
+            if streams.is_empty() {
+                return Err("no screen was chosen".to_string());
+            }
             let fd = proxy.open_pipe_wire_remote(&session, Default::default()).await.map_err(|e| e.to_string())?;
-            Ok::<_, String>((session, stream, fd))
+            Ok::<_, String>((session, streams, fd))
         })
         .map_err(|e| share_refusal(&e))?;
-        let origin = stream.position().unwrap_or((0, 0));
-        let logical = stream.size().map(|(w, h)| (w.max(0) as u32, h.max(0) as u32)).unwrap_or((0, 0));
-        let node = stream.pipe_wire_node_id();
-        let newest = Arc::new(Mutex::new(Newest::default()));
+        let screens: Vec<Shared> = picked
+            .iter()
+            .map(|s| Shared {
+                origin: s.position().unwrap_or((0, 0)),
+                logical: s.size().map(|(w, h)| (w.max(0) as u32, h.max(0) as u32)).unwrap_or((0, 0)),
+                newest: Arc::new(Mutex::new(Newest::default())),
+            })
+            .collect();
+        let nodes: Vec<(u32, Arc<Mutex<Newest>>)> = picked.iter().zip(&screens).map(|(s, sh)| (s.pipe_wire_node_id(), sh.newest.clone())).collect();
         let (quit_tx, quit_rx) = pipewire::channel::channel::<()>();
-        let shared = newest.clone();
         let thread = std::thread::Builder::new()
             .name("snagster-screencast".into())
             .spawn(move || {
-                if let Err(e) = receive(fd, node, shared.clone(), quit_rx) {
-                    shared.lock().unwrap_or_else(|p| p.into_inner()).ended = Some(e);
+                if let Err(e) = receive(fd, &nodes, quit_rx) {
+                    for (_, n) in &nodes {
+                        n.lock().unwrap_or_else(|p| p.into_inner()).ended = Some(e.clone());
+                    }
                 }
             })
             .map_err(|e| e.to_string())?;
-        Ok(Cast { newest, quit: Some(quit_tx), thread: Some(thread), session: Some(session), origin, logical })
+        let (origin, logical) = (screens[0].origin, screens[0].logical);
+        Ok(Cast {
+            screens,
+            quit: Some(quit_tx),
+            thread: Some(thread),
+            session: Some(session),
+            origin,
+            logical,
+        })
+    }
+
+    /// The first picture of every shared screen, once each has sent one. Err when the share
+    /// has ended.
+    fn first_pictures(&self) -> Result<Option<Vec<Part>>, String> {
+        let mut parts = Vec::with_capacity(self.screens.len());
+        for s in &self.screens {
+            let n = s.newest.lock().unwrap_or_else(|p| p.into_inner());
+            if n.number == 0 {
+                return match &n.ended {
+                    Some(e) => Err(e.clone()),
+                    None => Ok(None),
+                };
+            }
+            let image = RgbaImage::from_raw(n.width, n.height, n.rgba.clone()).ok_or("the screen share sent a picture of the wrong size")?;
+            parts.push(Part {
+                image,
+                origin: s.origin,
+                logical: s.logical,
+            });
+        }
+        Ok(Some(parts))
     }
 
     /// The newest picture when it is newer than `seen`: copies it into `out` and returns its
     /// width, height and number. Err when the share has ended.
     pub fn newer_than(&self, seen: u64, out: &mut Vec<u8>) -> Result<Option<(u32, u32, u64)>, String> {
-        let n = self.newest.lock().unwrap_or_else(|p| p.into_inner());
+        let n = self.screens[0].newest.lock().unwrap_or_else(|p| p.into_inner());
         if n.number > seen {
             out.clear();
             out.extend_from_slice(&n.rgba);
@@ -317,9 +442,9 @@ impl Drop for Cast {
     }
 }
 
-/// The PipeWire side of a `Cast`: connect through the portal's descriptor, ask for raw 4-byte
-/// pixels, and keep the newest picture until `quit` says stop.
-fn receive(fd: std::os::fd::OwnedFd, node: u32, newest: Arc<Mutex<Newest>>, quit: pipewire::channel::Receiver<()>) -> Result<(), String> {
+/// The PipeWire side of a `Cast`: connect through the portal's descriptor, then for each shared
+/// screen (`nodes`) ask for raw 4-byte pixels and keep its newest picture until `quit` says stop.
+fn receive(fd: std::os::fd::OwnedFd, nodes: &[(u32, Arc<Mutex<Newest>>)], quit: pipewire::channel::Receiver<()>) -> Result<(), String> {
     use pipewire::spa::param::format::{FormatProperties, MediaSubtype, MediaType};
     use pipewire::spa::param::video::{VideoFormat, VideoInfoRaw};
     use pipewire::spa::param::{ParamType, format_utils};
@@ -331,90 +456,111 @@ fn receive(fd: std::os::fd::OwnedFd, node: u32, newest: Arc<Mutex<Newest>>, quit
     let main_loop = pipewire::main_loop::MainLoopRc::new(None).map_err(|e| e.to_string())?;
     let context = pipewire::context::ContextRc::new(&main_loop, None).map_err(|e| e.to_string())?;
     let core = context.connect_fd_rc(fd, None).map_err(|e| e.to_string())?;
-    let stream = StreamRc::new(
-        core,
-        "Snagster",
-        pipewire::properties::properties! {
-            *pipewire::keys::MEDIA_TYPE => "Video",
-            *pipewire::keys::MEDIA_CATEGORY => "Capture",
-            *pipewire::keys::MEDIA_ROLE => "Screen",
-        },
-    )
-    .map_err(|e| e.to_string())?;
-
-    let ended = newest.clone();
-    let _listener = stream
-        .add_local_listener_with_user_data(VideoInfoRaw::default())
-        .state_changed(move |_, _, _, now| {
-            if let pipewire::stream::StreamState::Error(e) = now {
-                ended.lock().unwrap_or_else(|p| p.into_inner()).ended = Some(e);
-            }
-        })
-        .param_changed(|_, format, id, param| {
-            let Some(param) = param else { return };
-            if id != ParamType::Format.as_raw() {
-                return;
-            }
-            if let Ok((MediaType::Video, MediaSubtype::Raw)) = format_utils::parse_format(param) {
-                let _ = format.parse(param);
-            }
-        })
-        .process(move |stream, format| {
-            let Some(mut buffer) = stream.dequeue_buffer() else { return };
-            let px = match format.format() {
-                VideoFormat::RGBx => Px::Rgbx,
-                VideoFormat::RGBA => Px::Rgba,
-                VideoFormat::BGRx => Px::Bgrx,
-                VideoFormat::BGRA => Px::Bgra,
-                _ => return,
-            };
-            let size = format.size();
-            let datas = buffer.datas_mut();
-            let Some(d) = datas.first_mut() else { return };
-            let (offset, stride) = (d.chunk().offset() as usize, d.chunk().stride().max(0) as usize);
-            let stride = if stride == 0 { size.width as usize * 4 } else { stride };
-            let Some(bytes) = d.data() else { return };
-            let Some(bytes) = bytes.get(offset..) else { return };
-            let mut n = newest.lock().unwrap_or_else(|p| p.into_inner());
-            let mut rgba = std::mem::take(&mut n.rgba);
-            if copy_rgba(bytes, size.width, size.height, stride, px, &mut rgba) {
-                n.width = size.width;
-                n.height = size.height;
-                n.number += 1;
-            }
-            n.rgba = rgba;
-        })
-        .register()
+    // Each screen's stream and listener, kept until the loop ends.
+    let mut kept = Vec::with_capacity(nodes.len());
+    for (node, newest) in nodes {
+        let (node, newest) = (*node, newest.clone());
+        let stream = StreamRc::new(
+            core.clone(),
+            "Snagster",
+            pipewire::properties::properties! {
+                *pipewire::keys::MEDIA_TYPE => "Video",
+                *pipewire::keys::MEDIA_CATEGORY => "Capture",
+                *pipewire::keys::MEDIA_ROLE => "Screen",
+            },
+        )
         .map_err(|e| e.to_string())?;
 
-    let wanted = pod::object!(
-        SpaTypes::ObjectParamFormat,
-        ParamType::EnumFormat,
-        pod::property!(FormatProperties::MediaType, Id, MediaType::Video),
-        pod::property!(FormatProperties::MediaSubtype, Id, MediaSubtype::Raw),
-        pod::property!(FormatProperties::VideoFormat, Choice, Enum, Id, VideoFormat::BGRx, VideoFormat::BGRx, VideoFormat::RGBx, VideoFormat::BGRA, VideoFormat::RGBA),
-        pod::property!(
-            FormatProperties::VideoSize,
-            Choice,
-            Range,
-            Rectangle,
-            Rectangle { width: 1920, height: 1080 },
-            Rectangle { width: 1, height: 1 },
-            Rectangle { width: 8192, height: 8192 }
-        ),
-        pod::property!(
-            FormatProperties::VideoFramerate,
-            Choice,
-            Range,
-            Fraction,
-            Fraction { num: 60, denom: 1 },
-            Fraction { num: 0, denom: 1 },
-            Fraction { num: 240, denom: 1 }
-        ),
-    );
-    let bytes = PodSerializer::serialize(std::io::Cursor::new(Vec::new()), &pod::Value::Object(wanted)).map_err(|e| format!("{e:?}"))?.0.into_inner();
-    let mut params = [Pod::from_bytes(&bytes).ok_or("the screen-share format couldn't be written")?];
-    stream.connect(Direction::Input, Some(node), StreamFlags::AUTOCONNECT | StreamFlags::MAP_BUFFERS, &mut params).map_err(|e| e.to_string())?;
+        let ended = newest.clone();
+        let listener = stream
+            .add_local_listener_with_user_data(VideoInfoRaw::default())
+            .state_changed(move |_, _, _, now| {
+                if let pipewire::stream::StreamState::Error(e) = now {
+                    ended.lock().unwrap_or_else(|p| p.into_inner()).ended = Some(e);
+                }
+            })
+            .param_changed(|_, format, id, param| {
+                let Some(param) = param else { return };
+                if id != ParamType::Format.as_raw() {
+                    return;
+                }
+                if let Ok((MediaType::Video, MediaSubtype::Raw)) = format_utils::parse_format(param) {
+                    let _ = format.parse(param);
+                }
+            })
+            .process(move |stream, format| {
+                let Some(mut buffer) = stream.dequeue_buffer() else { return };
+                let px = match format.format() {
+                    VideoFormat::RGBx => Px::Rgbx,
+                    VideoFormat::RGBA => Px::Rgba,
+                    VideoFormat::BGRx => Px::Bgrx,
+                    VideoFormat::BGRA => Px::Bgra,
+                    _ => return,
+                };
+                let size = format.size();
+                let datas = buffer.datas_mut();
+                let Some(d) = datas.first_mut() else { return };
+                let (offset, stride) = (d.chunk().offset() as usize, d.chunk().stride().max(0) as usize);
+                let stride = if stride == 0 { size.width as usize * 4 } else { stride };
+                let Some(bytes) = d.data() else { return };
+                let Some(bytes) = bytes.get(offset..) else { return };
+                let mut n = newest.lock().unwrap_or_else(|p| p.into_inner());
+                let mut rgba = std::mem::take(&mut n.rgba);
+                if copy_rgba(bytes, size.width, size.height, stride, px, &mut rgba) {
+                    n.width = size.width;
+                    n.height = size.height;
+                    n.number += 1;
+                }
+                n.rgba = rgba;
+            })
+            .register()
+            .map_err(|e| e.to_string())?;
+
+        let wanted = pod::object!(
+            SpaTypes::ObjectParamFormat,
+            ParamType::EnumFormat,
+            pod::property!(FormatProperties::MediaType, Id, MediaType::Video),
+            pod::property!(FormatProperties::MediaSubtype, Id, MediaSubtype::Raw),
+            pod::property!(
+                FormatProperties::VideoFormat,
+                Choice,
+                Enum,
+                Id,
+                VideoFormat::BGRx,
+                VideoFormat::BGRx,
+                VideoFormat::RGBx,
+                VideoFormat::BGRA,
+                VideoFormat::RGBA
+            ),
+            pod::property!(
+                FormatProperties::VideoSize,
+                Choice,
+                Range,
+                Rectangle,
+                Rectangle { width: 1920, height: 1080 },
+                Rectangle { width: 1, height: 1 },
+                Rectangle { width: 8192, height: 8192 }
+            ),
+            pod::property!(
+                FormatProperties::VideoFramerate,
+                Choice,
+                Range,
+                Fraction,
+                Fraction { num: 60, denom: 1 },
+                Fraction { num: 0, denom: 1 },
+                Fraction { num: 240, denom: 1 }
+            ),
+        );
+        let bytes = PodSerializer::serialize(std::io::Cursor::new(Vec::new()), &pod::Value::Object(wanted))
+            .map_err(|e| format!("{e:?}"))?
+            .0
+            .into_inner();
+        let mut params = [Pod::from_bytes(&bytes).ok_or("the screen-share format couldn't be written")?];
+        stream
+            .connect(Direction::Input, Some(node), StreamFlags::AUTOCONNECT | StreamFlags::MAP_BUFFERS, &mut params)
+            .map_err(|e| e.to_string())?;
+        kept.push((stream, listener));
+    }
 
     let ml = main_loop.clone();
     let _quit = quit.attach(main_loop.loop_(), move |()| ml.quit());
@@ -486,6 +632,67 @@ mod tests {
         assert!(!copy_rgba(&[0; 64], 0, 2, 8, Px::Rgba, &mut out));
         // The last row needs only its own pixels, not the padding after it.
         assert!(copy_rgba(&[0; 12 + 8], 2, 2, 12, Px::Rgba, &mut out));
+    }
+
+    fn solid(w: u32, h: u32, v: u8) -> RgbaImage {
+        RgbaImage::from_pixel(w, h, image::Rgba([v, v, v, 255]))
+    }
+
+    #[test]
+    fn one_shared_screen_is_kept_as_it_is() {
+        let (img, at) = join_screens(vec![Part { image: solid(4, 3, 7), origin: (1920, 0), logical: (4, 3) }]).unwrap();
+        assert_eq!((img.dimensions(), at), ((4, 3), (1920, 0)));
+        assert!(join_screens(Vec::new()).is_none());
+    }
+
+    #[test]
+    fn several_screens_are_joined_where_they_sit_on_the_desk() {
+        // A 4 × 3 screen, and a 2 × 2 one to its right, a row lower; a gap stays black.
+        let (img, at) = join_screens(vec![
+            Part { image: solid(4, 3, 10), origin: (0, 0), logical: (4, 3) },
+            Part { image: solid(2, 2, 20), origin: (4, 1), logical: (2, 2) },
+        ])
+        .unwrap();
+        assert_eq!((img.dimensions(), at), ((6, 3), (0, 0)));
+        assert_eq!(img.get_pixel(3, 2)[0], 10);
+        assert_eq!(img.get_pixel(4, 1)[0], 20);
+        assert_eq!(img.get_pixel(5, 0)[0], 0, "nothing above the second screen");
+        // A screen left of and above the main one: the picture starts there.
+        let (img, at) = join_screens(vec![
+            Part { image: solid(4, 3, 10), origin: (0, 0), logical: (4, 3) },
+            Part { image: solid(2, 2, 20), origin: (-2, -1), logical: (2, 2) },
+        ])
+        .unwrap();
+        assert_eq!((img.dimensions(), at), ((6, 4), (-2, -1)));
+        assert_eq!(img.get_pixel(0, 0)[0], 20);
+        assert_eq!(img.get_pixel(2, 1)[0], 10);
+    }
+
+    #[test]
+    fn a_sharper_screen_sets_the_scale_of_the_whole_picture() {
+        // The right screen sends 2 pixels per desktop unit: the left one is enlarged to match.
+        let (img, at) = join_screens(vec![
+            Part { image: solid(4, 3, 10), origin: (0, 0), logical: (4, 3) },
+            Part { image: solid(8, 6, 20), origin: (4, 0), logical: (4, 3) },
+        ])
+        .unwrap();
+        assert_eq!((img.dimensions(), at), ((16, 6), (0, 0)));
+        assert_eq!(img.get_pixel(7, 5)[0], 10);
+        assert_eq!(img.get_pixel(8, 0)[0], 20);
+    }
+
+    #[test]
+    fn screens_without_places_are_set_side_by_side() {
+        // The desktop told neither place nor size: both say (0, 0), so they would cover each other.
+        let (img, at) = join_screens(vec![
+            Part { image: solid(4, 3, 10), origin: (0, 0), logical: (0, 0) },
+            Part { image: solid(5, 2, 20), origin: (0, 0), logical: (0, 0) },
+        ])
+        .unwrap();
+        assert_eq!((img.dimensions(), at), ((9, 3), (0, 0)));
+        assert_eq!(img.get_pixel(3, 0)[0], 10);
+        assert_eq!(img.get_pixel(4, 0)[0], 20);
+        assert_eq!(img.get_pixel(4, 2)[0], 0);
     }
 
     #[test]

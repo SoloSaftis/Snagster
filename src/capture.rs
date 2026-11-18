@@ -253,7 +253,7 @@ pub fn monitor_under_cursor() -> Result<(i32, i32, u32, u32), String> {
     // `portal::still`), and that size stands in from then on.
     #[cfg(target_os = "linux")]
     let mons = if mons.is_empty() && desktop_screenshots_only() {
-        let (img, _) = crate::portal::still(false, SHARE_WAIT)?;
+        let (img, _) = crate::portal::still(false, SHARE_WAIT, false)?;
         remember_window_screen(img.dimensions());
         monitors()
     } else {
@@ -646,12 +646,13 @@ fn screens_listable() -> bool {
 }
 
 /// The screen through the desktop's portals (Linux, see `crate::portal`). On Wayland: one
-/// picture of a screen share, which the desktop asks about once and then remembers. Elsewhere
+/// picture of a share of every screen the person picked (joined as they sit on the desk), which
+/// the desktop asks about once and then remembers. Elsewhere
 /// (a Flatpak on X11): the Screenshot portal.
 #[cfg(target_os = "linux")]
 fn portal_shot() -> Result<Shot, String> {
     if desktop_screenshots_only() {
-        let (image, origin) = crate::portal::still(false, SHARE_WAIT)?;
+        let (image, origin) = crate::portal::still(false, SHARE_WAIT, true)?;
         return Ok(shot(image, origin, "Screen".into()));
     }
     let image = crate::portal::screenshot(false)?;
