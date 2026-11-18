@@ -8,7 +8,7 @@
 
 Windows · Mac · Linux · 86 languages · works offline · written in Rust · free and open source
 
-[**⬇️ Windows**](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-windows-x64-portable.zip) &nbsp;·&nbsp;
+[**⬇️ Windows**](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-windows-x64-portable.zip) ([Microsoft Store](https://apps.microsoft.com/detail/9MVZGNTS547Z)) &nbsp;·&nbsp;
 [**⬇️ Mac**](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-macos-arm64.zip) &nbsp;·&nbsp;
 [**⬇️ Linux**](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-linux-x86_64.AppImage)
 
@@ -62,6 +62,7 @@ when you start a live stream).
 | Your computer | Download | Then |
 |---|---|---|
 | **Windows** 10 or 11 | [⬇️ Download for Windows](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-windows-x64-portable.zip) | Open the folder and double-click **Snagster** |
+| **Windows**, from the Microsoft Store | [Get it from the Microsoft Store](https://apps.microsoft.com/detail/9MVZGNTS547Z) | Click **Get**. It installs like any Store app, with no security warning, and the Store keeps it up to date (also where work laptops allow only Store apps) |
 | **Mac** with Apple chip (M1 or newer) | [⬇️ Download for Mac](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-macos-arm64.zip) | Open it and drag **Snagster** to Applications. Then allow it under System Settings → Privacy & Security → **Screen Recording** |
 | **Linux** | [⬇️ Download for Linux](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-linux-x86_64.AppImage) | Right-click → Properties → allow running as a program, then double-click it ([folder version](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-linux-x86_64-portable.tar.gz)) |
 | **Linux, sandboxed** (Flatpak) | [⬇️ Download the Flatpak](https://github.com/SoloSaftis/Snagster/releases/latest/download/Snagster-linux-x86_64.flatpak) | Run `flatpak install --user Snagster-linux-x86_64.flatpak`, then start Snagster from your apps menu |
@@ -71,7 +72,7 @@ when you start a live stream).
 
 The app is not signed yet, so you may see a warning once:
 
-- **Windows** says "Windows protected your PC": click **More info**, then **Run anyway**.
+- **Windows** says "Windows protected your PC": click **More info**, then **Run anyway** (the Microsoft Store edition doesn't ask).
 - **Mac** says Apple "could not verify" Snagster: click **Done**, open System Settings → Privacy & Security, scroll down and click **Open Anyway** next to Snagster.
 
 </details>

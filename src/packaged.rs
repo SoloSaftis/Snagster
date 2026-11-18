@@ -220,6 +220,35 @@ mod tests {
         assert_eq!(map["en"], "en-us", "English is the package's default language");
     }
 
+    /// The Store listing (packaging/msix/listing, made into Partner Center's import folder by
+    /// make-listing.js) has every language the package declares, each with every text the
+    /// English one has and within the Store's limits.
+    #[test]
+    fn the_store_listing_is_in_every_language() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("packaging/msix/listing");
+        let read = |code: &str| -> serde_json::Map<String, serde_json::Value> {
+            serde_json::from_str(&std::fs::read_to_string(dir.join(format!("{code}.json"))).unwrap_or_else(|e| panic!("{code}: {e}"))).unwrap_or_else(|e| panic!("{code}: {e}"))
+        };
+        let english = read("en-us");
+        let map: serde_json::Map<String, serde_json::Value> = serde_json::from_str(include_str!("../packaging/msix/store-languages.json")).unwrap();
+        for (_, code) in map.iter().filter(|(k, _)| *k != "_comment") {
+            let code = code.as_str().unwrap();
+            let listing = read(code);
+            for key in english.keys() {
+                let text = listing.get(key).and_then(|v| v.as_str()).unwrap_or_default();
+                assert!(!text.trim().is_empty(), "{code}: {key} is missing");
+                let max = match key.as_str() {
+                    "Description" => 10000,
+                    "ShortDescription" => 1000,
+                    "ReleaseNotes" => 1500,
+                    k if k.starts_with("SearchTerm") => 30,
+                    _ => 200,
+                };
+                assert!(text.chars().count() <= max, "{code}: {key} is longer than {max} characters");
+            }
+        }
+    }
+
     #[test]
     fn tests_do_not_run_from_a_package() {
         // `cargo test` runs a plain program, never an installed package.
