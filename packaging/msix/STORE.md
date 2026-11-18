@@ -10,7 +10,7 @@ are in the same places as with the GitHub copies.
 It is the same package as the GitHub MSIX (`AppxManifest.xml`), with the identity Partner Center
 gives Snagster instead of `SoloSaftis.Snagster`, and it is uploaded unsigned.
 
-## Once: the account and the name (the person, by hand)
+## Once: the account and the name (done 2026-11-17: Store ID 9MVZGNTS547Z)
 
 1. Register as an individual developer at <https://storedeveloper.microsoft.com> ("Get started
    for free", Individual). It is free for individuals since 2025; it needs a personal Microsoft
@@ -20,7 +20,7 @@ gives Snagster instead of `SoloSaftis.Snagster`, and it is uploaded unsigned.
    **Snagster**.
 3. Open **Product management > Product identity** and copy three values into the GitHub
    repository (Settings > Secrets and variables > Actions > Variables):
-   - `STORE_IDENTITY_NAME`: *Package/Identity/Name* (looks like `12345SoloSaftis.Snagster`)
+   - `STORE_IDENTITY_NAME`: *Package/Identity/Name* (Snagster's is `SoloSaftis.Snagster`)
    - `STORE_PUBLISHER`: *Package/Identity/Publisher* (looks like `CN=1A2B3C4D-...`)
    - `STORE_PUBLISHER_DISPLAY_NAME`: *Package/Properties/PublisherDisplayName*
 

@@ -32,8 +32,10 @@
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
   </Dependencies>
 
+  <!-- Every interface language (store-languages.json), English first, filled in by make-msix.ps1
+       so the Store shows them all. -->
   <Resources>
-    <Resource Language="en-us" />
+__RESOURCES__
   </Resources>
 
   <Applications>

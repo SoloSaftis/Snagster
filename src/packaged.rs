@@ -192,12 +192,32 @@ mod tests {
             assert!(MANIFEST.contains(fill), "make-msix.ps1 fills in {fill}");
         }
         let script = include_str!("../packaging/msix/make-msix.ps1");
-        for fill in ["__VERSION__", "__IDENTITY_NAME__", "__PUBLISHER__", "__PUBLISHER_DISPLAY_NAME__"] {
+        assert!(MANIFEST.contains("<Resources>\n__RESOURCES__") || MANIFEST.contains("<Resources>\r\n__RESOURCES__"));
+        for fill in ["__RESOURCES__", "__VERSION__", "__IDENTITY_NAME__", "__PUBLISHER__", "__PUBLISHER_DISPLAY_NAME__"] {
             assert!(script.contains(&format!("\"{fill}\"")), "make-msix.ps1 replaces {fill}");
         }
         // CI makes the package under the name the updater looks for.
         let ci = include_str!("../.github/workflows/build.yml");
         assert!(ci.contains(crate::update::MSIX_NAME), "build.yml makes {}", crate::update::MSIX_NAME);
+    }
+
+    /// The package (and so the Store) lists every language Snagster speaks, each as a language
+    /// code Windows and the Store accept, and no language Snagster doesn't have.
+    #[test]
+    fn the_package_declares_every_interface_language() {
+        let map: serde_json::Map<String, serde_json::Value> = serde_json::from_str(include_str!("../packaging/msix/store-languages.json")).unwrap();
+        let names: serde_json::Map<String, serde_json::Value> = serde_json::from_str(include_str!("../assets/i18n/language-names.json")).unwrap();
+        let ours: std::collections::BTreeSet<&str> = names.keys().map(String::as_str).collect();
+        let mapped: std::collections::BTreeSet<&str> = map.keys().map(String::as_str).filter(|k| *k != "_comment").collect();
+        assert_eq!(ours, mapped, "store-languages.json has one entry per language pack");
+        let mut seen = std::collections::BTreeSet::new();
+        for (ours, code) in map.iter().filter(|(k, _)| *k != "_comment") {
+            let code = code.as_str().unwrap();
+            assert!(seen.insert(code), "{code} is used twice");
+            assert_eq!(code, code.to_ascii_lowercase(), "{ours}: Store codes are lower case");
+            assert!(code.split('-').all(|p| (2..=8).contains(&p.len()) && p.chars().all(|c| c.is_ascii_alphanumeric())), "{ours}: {code} isn't a language tag");
+        }
+        assert_eq!(map["en"], "en-us", "English is the package's default language");
     }
 
     #[test]
