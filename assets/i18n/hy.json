@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Աշխատասեղանից հարցվում են թեժ ստեղները…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} թեժ ստեղն սահմանվում է աշխատասեղանի միջոցով։ Փոխեք դրանց ստեղները աշխատասեղանի ստեղնաշարի կարգավորումներում։",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Այս աշխատասեղանը թույլ չի տալիս հավելվածներին սահմանել թեժ ստեղներ։ Աշխատասեղանի ստեղնաշարի կարգավորումներում ավելացրեք դյուրանցում, որը գործարկում է՝ {command} (կամ AllInOne, Window, Screen, RecordGif…)։",
-  "The desktop didn't set the hotkeys: {error}": "Աշխատասեղանը չսահմանեց թեժ ստեղները՝ {error}"
+  "The desktop didn't set the hotkeys: {error}": "Աշխատասեղանը չսահմանեց թեժ ստեղները՝ {error}",
+  "Super": "Super",
+  "GIF saved": "GIF-ը պահպանվել է",
+  "Recording saved": "Ձայնագրությունը պահպանվել է"
  }
 }

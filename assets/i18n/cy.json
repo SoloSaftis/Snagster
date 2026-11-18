@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Gofyn i'r bwrdd gwaith am y bysellau poeth…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Mae {count} bysell boeth wedi'u gosod drwy'r bwrdd gwaith. Newidiwch eu bysellau yng ngosodiadau bysellfwrdd y bwrdd gwaith.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Nid yw'r bwrdd gwaith hwn yn gadael i apiau osod bysellau poeth. Ychwanegwch lwybr byr yng ngosodiadau bysellfwrdd y bwrdd gwaith sy'n rhedeg: {command} (neu AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Ni osododd y bwrdd gwaith y bysellau poeth: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Ni osododd y bwrdd gwaith y bysellau poeth: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF wedi'i gadw",
+  "Recording saved": "Recordiad wedi'i chadw"
  }
 }

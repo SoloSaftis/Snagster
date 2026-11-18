@@ -799,6 +799,22 @@ impl SnagApp {
         self.capturing = Some(kind);
     }
 
+    /// A desktop notification for work that finished while Snagster was out of the way (in the
+    /// tray, minimized or behind other windows): GNOME's and KDE's guidelines, Linux only for now.
+    fn notify_away(&self, ctx: &egui::Context, title: &str, path: &std::path::Path) {
+        let focused = ctx.input(|i| i.viewport().focused);
+        if !notify_when(focused, self.in_tray) {
+            return;
+        }
+        #[cfg(target_os = "linux")]
+        {
+            let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+            crate::portal::notify("finished", title, &name);
+        }
+        #[cfg(not(target_os = "linux"))]
+        let _ = (title, path);
+    }
+
     /// Hide the window to the tray (it keeps running there).
     pub(crate) fn hide_to_tray(&mut self, ctx: &egui::Context) {
         self.in_tray = true;
@@ -1276,6 +1292,7 @@ impl SnagApp {
             match done.result {
                 Ok(()) => {
                     self.status = crate::i18n::tf("Recorded {frames} frames ({seconds} s). Open Tools > GIF recordings to trim or grab frames.", &[("frames", &done.frames.to_string()), ("seconds", &format!("{:.1}", done.seconds))]);
+                    self.notify_away(ctx, crate::i18n::t("GIF saved"), &done.path);
                     self.recordings.insert(0, Recording { path: done.path.clone(), frames: done.frames, seconds: done.seconds });
                     self.open_gif(ctx, done.path);
                 }
@@ -1300,6 +1317,7 @@ impl SnagApp {
                     if !done.note.is_empty() {
                         self.status = format!("{} {}.", self.status, recording_note(&done.note));
                     }
+                    self.notify_away(ctx, crate::i18n::t("Recording saved"), &done.path);
                     self.videos.insert(0, done);
                     self.earlier.expire();
                 }
@@ -5518,6 +5536,12 @@ fn resize_due(have: Vec2, want: Vec2, since: Duration) -> bool {
     since < Duration::from_secs(3) && ((have.x - want.x).abs() > 4.0 || (have.y - want.y).abs() > 4.0)
 }
 
+/// Whether finished work gets a desktop notification: only when the window isn't in front (in
+/// the tray, or the desktop says another window has the focus). Not known counts as in front.
+fn notify_when(focused: Option<bool>, in_tray: bool) -> bool {
+    in_tray || focused == Some(false)
+}
+
 /// Whether Snagster may not minimize itself before a capture (Linux on Wayland).
 fn self_minimize_blocked() -> bool {
     capture::desktop_screenshots_only()
@@ -5533,6 +5557,14 @@ pub(crate) fn overlay_show_commands(at: Pos2) -> Vec<egui::ViewportCommand> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn finished_work_is_notified_only_when_snagster_is_away() {
+        assert!(super::notify_when(Some(false), false), "another window has the focus");
+        assert!(super::notify_when(None, true), "in the tray");
+        assert!(!super::notify_when(Some(true), false), "Snagster is in front: the status line says it");
+        assert!(!super::notify_when(None, false), "not known: no notification");
+    }
+
     /// The first click on the recording bar's Stop was lost on GNOME: the press started a
     /// window move, and the desktop kept the release. A press on a button never moves the bar.
     #[test]

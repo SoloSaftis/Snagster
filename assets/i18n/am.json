@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "ዴስክቶፑን ስለ ፈጣን ቁልፎች በመጠየቅ ላይ…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ፈጣን ቁልፎች በዴስክቶፑ በኩል ተዘጋጅተዋል። ቁልፎቻቸውን በዴስክቶፑ የቁልፍ ሰሌዳ ቅንብሮች ውስጥ ይቀይሩ።",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "ይህ ዴስክቶፕ መተግበሪያዎች ፈጣን ቁልፎችን እንዲያዘጋጁ አይፈቅድም። በዴስክቶፑ የቁልፍ ሰሌዳ ቅንብሮች ውስጥ ይህን የሚያሄድ አቋራጭ ያክሉ፦ {command} (ወይም AllInOne, Window, Screen, RecordGif…)።",
-  "The desktop didn't set the hotkeys: {error}": "ዴስክቶፑ ፈጣን ቁልፎችን አላዘጋጀም፦ {error}"
+  "The desktop didn't set the hotkeys: {error}": "ዴስክቶፑ ፈጣን ቁልፎችን አላዘጋጀም፦ {error}",
+  "Super": "Super",
+  "GIF saved": "GIF ተቀምጧል",
+  "Recording saved": "ቀረጻ ተቀምጧል"
  }
 }

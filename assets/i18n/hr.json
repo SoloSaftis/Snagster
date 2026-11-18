@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Pitanje radnoj površini za prečace…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Broj prečaca postavljenih putem radne površine: {count}. Promijenite njihove tipke u postavkama tipkovnice radne površine.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ova radna površina ne dopušta aplikacijama postavljanje prečaca. U postavkama tipkovnice radne površine dodajte prečac koji pokreće: {command} (ili AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Radna površina nije postavila prečace: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Radna površina nije postavila prečace: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF je spremljen",
+  "Recording saved": "Snimka je spremljena"
  }
 }

@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Ερώτηση στην επιφάνεια εργασίας για τις συντομεύσεις…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} συντομεύσεις ορίζονται μέσω της επιφάνειας εργασίας. Αλλάξτε τα πλήκτρα τους στις ρυθμίσεις πληκτρολογίου της επιφάνειας εργασίας.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Αυτή η επιφάνεια εργασίας δεν επιτρέπει στις εφαρμογές να ορίζουν συντομεύσεις. Προσθέστε μια συντόμευση στις ρυθμίσεις πληκτρολογίου της επιφάνειας εργασίας που εκτελεί: {command} (ή AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Η επιφάνεια εργασίας δεν όρισε τις συντομεύσεις: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Η επιφάνεια εργασίας δεν όρισε τις συντομεύσεις: {error}",
+  "Super": "Super",
+  "GIF saved": "Το GIF αποθηκεύτηκε",
+  "Recording saved": "Η εγγραφή αποθηκεύτηκε"
  }
 }

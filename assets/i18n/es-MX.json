@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Consultando al escritorio los atajos…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} atajos se establecen a través del escritorio. Cambia sus teclas en la configuración del teclado del escritorio.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Este escritorio no permite que las aplicaciones establezcan atajos. Agrega un atajo en la configuración del teclado del escritorio que ejecute: {command} (o AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "El escritorio no estableció los atajos: {error}"
+  "The desktop didn't set the hotkeys: {error}": "El escritorio no estableció los atajos: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF guardado",
+  "Recording saved": "Grabación guardada"
  }
 }

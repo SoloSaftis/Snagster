@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Küsin töölaualt kiirklahve…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} kiirklahvi määratakse töölaua kaudu. Muutke nende klahve töölaua klaviatuurisätetes.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "See töölaud ei lase rakendustel kiirklahve määrata. Lisage töölaua klaviatuurisätetes otsetee, mis käivitab: {command} (või AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Töölaud ei määranud kiirklahve: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Töölaud ei määranud kiirklahve: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF salvestatud",
+  "Recording saved": "Lindistus salvestatud"
  }
 }

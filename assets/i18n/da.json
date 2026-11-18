@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Spørger skrivebordet om genvejstasterne…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} genvejstaster er indstillet via skrivebordet. Skift deres taster i skrivebordets tastaturindstillinger.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Dette skrivebord lader ikke apps indstille genvejstaster. Tilføj en genvej i skrivebordets tastaturindstillinger, der kører: {command} (eller AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Skrivebordet indstillede ikke genvejstasterne: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Skrivebordet indstillede ikke genvejstasterne: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF gemt",
+  "Recording saved": "Optagelse gemt"
  }
 }

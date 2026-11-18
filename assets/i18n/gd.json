@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "A' faighneachd dhen deasg mu na h-iuchraichean luatha…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Tha {count} iuchair luath air an suidheachadh tron deasg. Atharraich na h-iuchraichean aca ann an roghainnean meur-chlàr an deasg.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Cha leig an deasg seo le aplacaidean iuchraichean luatha a shuidheachadh. Cuir ath-ghoirid ris ann an roghainnean meur-chlàr an deasg a ruitheas: {command} (no AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Cha do shuidhich an deasg na h-iuchraichean luatha: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Cha do shuidhich an deasg na h-iuchraichean luatha: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF air a shàbhaladh",
+  "Recording saved": "Clàradh air a shàbhaladh"
  }
 }

@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Frågar skrivbordet efter snabbtangenterna…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} snabbtangenter ställs in via skrivbordet. Ändra deras tangenter i skrivbordets tangentbordsinställningar.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Det här skrivbordet låter inte appar ställa in snabbtangenter. Lägg till en genväg i skrivbordets tangentbordsinställningar som kör: {command} (eller AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Skrivbordet ställde inte in snabbtangenterna: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Skrivbordet ställde inte in snabbtangenterna: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF sparad",
+  "Recording saved": "Inspelning sparad"
  }
 }

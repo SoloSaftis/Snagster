@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "正在向桌面请求热键…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "有 {count} 个热键通过桌面设置。请在桌面的键盘设置中更改它们的按键。",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "此桌面不允许应用设置热键。请在桌面的键盘设置中添加一个运行以下命令的快捷键：{command}（或 AllInOne、Window、Screen、RecordGif…）。",
-  "The desktop didn't set the hotkeys: {error}": "桌面未能设置热键：{error}"
+  "The desktop didn't set the hotkeys: {error}": "桌面未能设置热键：{error}",
+  "Super": "Super",
+  "GIF saved": "GIF 已保存",
+  "Recording saved": "录制已保存"
  }
 }

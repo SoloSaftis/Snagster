@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Запыт гарачых клавіш у працоўнага стала…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} гарачых клавіш задаюцца праз працоўны стол. Змяніце іх клавішы ў наладах клавіятуры працоўнага стала.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Гэты працоўны стол не дазваляе праграмам задаваць гарачыя клавішы. Дадайце ў наладах клавіятуры працоўнага стала спалучэнне, якое запускае: {command} (або AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Працоўны стол не задаў гарачыя клавішы: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Працоўны стол не задаў гарачыя клавішы: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF захавана",
+  "Recording saved": "Запіс захаваны"
  }
 }

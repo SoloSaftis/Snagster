@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Pedindo os atalhos ao ambiente de trabalho…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} atalhos são definidos pelo ambiente de trabalho. Altere as teclas nas configurações de teclado do ambiente de trabalho.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Este ambiente de trabalho não permite que aplicativos definam atalhos. Adicione um atalho nas configurações de teclado do ambiente de trabalho que execute: {command} (ou AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "O ambiente de trabalho não definiu os atalhos: {error}"
+  "The desktop didn't set the hotkeys: {error}": "O ambiente de trabalho não definiu os atalhos: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF salvo",
+  "Recording saved": "Gravação salva"
  }
 }

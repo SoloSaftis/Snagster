@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "در حال پرسیدن کلیدهای میان‌بر از دسکتاپ…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} کلید میان‌بر از طریق دسکتاپ تنظیم شده‌اند. کلیدهای آن‌ها را در تنظیمات صفحه‌کلید دسکتاپ تغییر دهید.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "این دسکتاپ به برنامه‌ها اجازه نمی‌دهد کلیدهای میان‌بر تنظیم کنند. در تنظیمات صفحه‌کلید دسکتاپ میان‌بری اضافه کنید که این را اجرا کند: {command} (یا AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "دسکتاپ کلیدهای میان‌بر را تنظیم نکرد: {error}"
+  "The desktop didn't set the hotkeys: {error}": "دسکتاپ کلیدهای میان‌بر را تنظیم نکرد: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF ذخیره شد",
+  "Recording saved": "ضبط ذخیره شد"
  }
 }

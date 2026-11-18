@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "ஹாட்கீகளுக்காக டெஸ்க்டாப்பிடம் கேட்கிறது…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ஹாட்கீகள் டெஸ்க்டாப் மூலம் அமைக்கப்பட்டுள்ளன. அவற்றின் விசைகளை டெஸ்க்டாப்பின் விசைப்பலகை அமைப்புகளில் மாற்றவும்.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "இந்த டெஸ்க்டாப் பயன்பாடுகள் ஹாட்கீகளை அமைக்க அனுமதிக்காது. டெஸ்க்டாப்பின் விசைப்பலகை அமைப்புகளில் இதை இயக்கும் ஒரு குறுக்குவழியைச் சேர்க்கவும்: {command} (அல்லது AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "டெஸ்க்டாப் ஹாட்கீகளை அமைக்கவில்லை: {error}"
+  "The desktop didn't set the hotkeys: {error}": "டெஸ்க்டாப் ஹாட்கீகளை அமைக்கவில்லை: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF சேமிக்கப்பட்டது",
+  "Recording saved": "பதிவு சேமிக்கப்பட்டது"
  }
 }

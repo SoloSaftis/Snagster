@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "হটকির জন্য ডেস্কটপকে জিজ্ঞাসা করা হচ্ছে…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count}টি হটকি ডেস্কটপের মাধ্যমে সেট করা হয়েছে। সেগুলির কি ডেস্কটপের কীবোর্ড সেটিংসে পরিবর্তন করুন।",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "এই ডেস্কটপ অ্যাপকে হটকি সেট করতে দেয় না। ডেস্কটপের কীবোর্ড সেটিংসে একটি শর্টকাট যোগ করুন যা চালায়: {command} (অথবা AllInOne, Window, Screen, RecordGif…)।",
-  "The desktop didn't set the hotkeys: {error}": "ডেস্কটপ হটকি সেট করেনি: {error}"
+  "The desktop didn't set the hotkeys: {error}": "ডেস্কটপ হটকি সেট করেনি: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF সংরক্ষিত হয়েছে",
+  "Recording saved": "রেকর্ডিং সংরক্ষিত হয়েছে"
  }
 }

@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "កំពុងសួរផ្ទៃតុអំពីគ្រាប់ចុចលឿន…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "គ្រាប់ចុចលឿនចំនួន {count} ត្រូវបានកំណត់តាមរយៈផ្ទៃតុ។ ប្ដូរគ្រាប់ចុចរបស់វានៅក្នុងការកំណត់ក្តារចុចរបស់ផ្ទៃតុ។",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "ផ្ទៃតុនេះមិនអនុញ្ញាតឱ្យកម្មវិធីកំណត់គ្រាប់ចុចលឿនទេ។ បន្ថែមផ្លូវកាត់មួយនៅក្នុងការកំណត់ក្តារចុចរបស់ផ្ទៃតុ ដែលដំណើរការ៖ {command} (ឬ AllInOne, Window, Screen, RecordGif…)។",
-  "The desktop didn't set the hotkeys: {error}": "ផ្ទៃតុមិនបានកំណត់គ្រាប់ចុចលឿនទេ៖ {error}"
+  "The desktop didn't set the hotkeys: {error}": "ផ្ទៃតុមិនបានកំណត់គ្រាប់ចុចលឿនទេ៖ {error}",
+  "Super": "Super",
+  "GIF saved": "បានរក្សាទុក GIF",
+  "Recording saved": "បានរក្សាទុកការថត"
  }
 }

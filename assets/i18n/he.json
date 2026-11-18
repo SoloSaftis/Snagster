@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "שואל את שולחן העבודה לגבי מקשי הקיצור…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} מקשי קיצור מוגדרים דרך שולחן העבודה. אפשר לשנות את המקשים שלהם בהגדרות המקלדת של שולחן העבודה.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "שולחן עבודה זה אינו מאפשר ליישומים להגדיר מקשי קיצור. הוסיפו בהגדרות המקלדת של שולחן העבודה קיצור שמריץ: {command} (או AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "שולחן העבודה לא הגדיר את מקשי הקיצור: {error}"
+  "The desktop didn't set the hotkeys: {error}": "שולחן העבודה לא הגדיר את מקשי הקיצור: {error}",
+  "Super": "Super",
+  "GIF saved": "ה-GIF נשמר",
+  "Recording saved": "ההקלטה נשמרה"
  }
 }

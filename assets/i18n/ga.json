@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Ag fiafraí den deasc faoi na heochracha te…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Socraítear {count} eochair the tríd an deasc. Athraigh a n-eochracha i socruithe méarchláir na deisce.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ní ligeann an deasc seo d'aipeanna eochracha te a shocrú. Cuir aicearra leis i socruithe méarchláir na deisce a rithfidh: {command} (nó AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Níor shocraigh an deasc na heochracha te: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Níor shocraigh an deasc na heochracha te: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF sábháilte",
+  "Recording saved": "Taifead sábháilte"
  }
 }

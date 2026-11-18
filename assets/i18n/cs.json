@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Dotazuji se plochy na klávesové zkratky…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Počet klávesových zkratek nastavených přes plochu: {count}. Jejich klávesy změníte v nastavení klávesnice plochy.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Tato plocha aplikacím nedovoluje nastavovat klávesové zkratky. V nastavení klávesnice plochy přidejte zkratku, která spustí: {command} (nebo AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Plocha klávesové zkratky nenastavila: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Plocha klávesové zkratky nenastavila: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF uložen",
+  "Recording saved": "Nahrávka uložena"
  }
 }

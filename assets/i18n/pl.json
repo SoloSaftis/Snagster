@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Pytanie pulpitu o skróty klawiszowe…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Skróty klawiszowe ({count}) są ustawiane przez pulpit. Zmień ich klawisze w ustawieniach klawiatury pulpitu.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ten pulpit nie pozwala aplikacjom ustawiać skrótów klawiszowych. Dodaj w ustawieniach klawiatury pulpitu skrót, który uruchamia: {command} (lub AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Pulpit nie ustawił skrótów klawiszowych: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Pulpit nie ustawił skrótów klawiszowych: {error}",
+  "Super": "Super",
+  "GIF saved": "Zapisano GIF",
+  "Recording saved": "Zapisano nagranie"
  }
 }

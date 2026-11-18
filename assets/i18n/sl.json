@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Spraševanje namizja o bližnjicah…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Bližnjice ({count}) so nastavljene prek namizja. Njihove tipke spremenite v nastavitvah tipkovnice namizja.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "To namizje aplikacijam ne dovoli nastavljanja bližnjic. V nastavitvah tipkovnice namizja dodajte bližnjico, ki zažene: {command} (ali AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Namizje ni nastavilo bližnjic: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Namizje ni nastavilo bližnjic: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF shranjen",
+  "Recording saved": "Posnetek shranjen"
  }
 }

@@ -686,7 +686,9 @@ fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, 
         {
             return Ok(Box::new(g));
         }
-        if !per_picture_screenshots(wayland) {
+        // The portal's own refusal is the answer on Wayland and in a Flatpak (a Flatpak on X11
+        // may still read X11 above): never a screenshot per picture after it said no.
+        if !per_picture_screenshots(wayland) || why.is_some() {
             return Err(why.unwrap_or_else(|| "the desktop's screen sharing isn't available".into()));
         }
     }

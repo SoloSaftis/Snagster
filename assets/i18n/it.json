@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Richiesta delle scorciatoie al desktop…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} scorciatoie sono impostate tramite il desktop. Modifica i loro tasti nelle impostazioni della tastiera del desktop.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Questo desktop non permette alle app di impostare scorciatoie. Aggiungi una scorciatoia nelle impostazioni della tastiera del desktop che esegua: {command} (oppure AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Il desktop non ha impostato le scorciatoie: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Il desktop non ha impostato le scorciatoie: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF salvata",
+  "Recording saved": "Registrazione salvata"
  }
 }

@@ -418,6 +418,9 @@ impl Overlay {
         let resp = ui.allocate_rect(area, Sense::click_and_drag());
         ui.ctx().set_cursor_icon(egui::CursorIcon::Crosshair);
         let hover = resp.hover_pos().or(resp.interact_pointer_pos()).map(to_img);
+        // Where the button went down: a drag is only noticed after the pointer has moved a little,
+        // and the area starts at the press, not where the drag was noticed.
+        let pressed = drag_start(ui.input(|i| i.pointer.press_origin()).map(to_img), hover);
         let (shift, ctrl) = ui.input(|i| (i.modifiers.shift, i.modifiers.ctrl));
 
         if ui.input(|i| i.key_pressed(Key::Escape)) || resp.clicked_by(PointerButton::Secondary) {
@@ -494,7 +497,7 @@ impl Overlay {
                 CutShape::Freehand => {
                     if resp.drag_started_by(PointerButton::Primary) {
                         self.path.clear();
-                        self.start = hover;
+                        self.start = pressed;
                     }
                     if resp.dragged_by(PointerButton::Primary)
                         && let Some(h) = hover
@@ -511,7 +514,7 @@ impl Overlay {
                 }
                 _ => {
                     if resp.drag_started_by(PointerButton::Primary) {
-                        self.start = hover;
+                        self.start = pressed;
                         self.cur = hover;
                     }
                     if resp.dragged_by(PointerButton::Primary) {
@@ -561,7 +564,7 @@ impl Overlay {
             }
             OverlayMode::Ruler => {
                 if resp.drag_started_by(PointerButton::Primary) {
-                    self.start = hover;
+                    self.start = pressed;
                     self.cur = hover;
                     self.ruler = None;
                 }
@@ -780,8 +783,22 @@ fn pill(p: &egui::Painter, at: Pos2, align: Align2, text: &str, size: f32) {
     p.galley(r.min + vec2(8.0, 4.0), galley, Color32::WHITE);
 }
 
+/// Where a drag starts: the press, when it is known, else the pointer now.
+fn drag_start(press: Option<Pos2>, hover: Option<Pos2>) -> Option<Pos2> {
+    press.or(hover)
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn an_area_starts_where_the_button_went_down() {
+        use super::drag_start;
+        use eframe::egui::pos2;
+        // The drag was noticed 20 px further on: the area still starts at the press.
+        assert_eq!(drag_start(Some(pos2(900.0, 700.0)), Some(pos2(920.0, 715.0))), Some(pos2(900.0, 700.0)));
+        assert_eq!(drag_start(None, Some(pos2(5.0, 6.0))), Some(pos2(5.0, 6.0)));
+    }
+
     use super::*;
     use image::{Rgba, RgbaImage};
 

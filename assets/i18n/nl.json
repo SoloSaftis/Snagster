@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Het bureaublad om de sneltoetsen vragen…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} sneltoetsen worden via het bureaublad ingesteld. Wijzig hun toetsen in de toetsenbordinstellingen van het bureaublad.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Dit bureaublad laat apps geen sneltoetsen instellen. Voeg in de toetsenbordinstellingen van het bureaublad een snelkoppeling toe die dit uitvoert: {command} (of AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Het bureaublad heeft de sneltoetsen niet ingesteld: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Het bureaublad heeft de sneltoetsen niet ingesteld: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF opgeslagen",
+  "Recording saved": "Opname opgeslagen"
  }
 }

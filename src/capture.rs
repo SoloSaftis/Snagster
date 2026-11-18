@@ -248,6 +248,17 @@ pub fn monitor_at(mons: &[MonitorInfo], at: (i32, i32)) -> Option<&MonitorInfo> 
 /// The desktop area of the screen under the mouse pointer (or the first screen).
 pub fn monitor_under_cursor() -> Result<(i32, i32, u32, u32), String> {
     let mons = monitors();
+    // Inside the Flatpak on Wayland without a window (`snagster record`, an AI app): no screen
+    // can be listed, so the screen share says how big the screen is (asked once, see
+    // `portal::still`), and that size stands in from then on.
+    #[cfg(target_os = "linux")]
+    let mons = if mons.is_empty() && desktop_screenshots_only() {
+        let (img, _) = crate::portal::still(false, SHARE_WAIT)?;
+        remember_window_screen(img.dimensions());
+        monitors()
+    } else {
+        mons
+    };
     let at = cursor_pos().unwrap_or((0, 0));
     monitor_at(&mons, at).map(|m| (m.x, m.y, m.width, m.height)).ok_or_else(|| "no screen found".to_string())
 }
@@ -738,13 +749,13 @@ fn desktop_screenshot_budget() -> Result<(), String> {
     }
 }
 
-/// The captures that, on Wayland, open the desktop's own screenshot tool: picking a window
-/// (Snagster can't see the other windows there) and a plain rectangle (the person picks it in
-/// the desktop's tool). A whole screen needs no picking: it is a silent picture of the
-/// remembered screen share (the desktop asks once, see `portal::still`).
+/// The captures that, on Wayland, open the desktop's own screenshot tool: only picking a
+/// window (Snagster can't see the other windows there). Screens are a silent picture of the
+/// remembered screen share (the desktop asks once, see `portal::still`), and areas are picked
+/// on that picture in Snagster's own overlay, as on the other systems.
 #[cfg(any(target_os = "linux", test))]
 pub(crate) fn desktop_tool_covers(kind: &CaptureKind) -> bool {
-    matches!(kind, CaptureKind::WindowPick | CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture))
+    matches!(kind, CaptureKind::WindowPick)
 }
 
 /// Whether scrolling capture can work here: it turns other windows' scroll wheels and takes a
@@ -1685,9 +1696,10 @@ mod tests {
     }
 
     #[test]
-    fn the_desktop_tool_picks_windows_and_areas_on_wayland() {
+    fn the_desktop_tool_only_picks_windows_on_wayland() {
         assert!(desktop_tool_covers(&CaptureKind::WindowPick));
-        assert!(desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture)));
+        // Areas: Snagster's own overlay on a silent picture (asked once).
+        assert!(!desktop_tool_covers(&CaptureKind::Pick(CutShape::Rect, PickPurpose::Capture)));
         // Whole screens: a silent picture (asked once), no tool to click through each time.
         assert!(!desktop_tool_covers(&CaptureKind::AllScreens));
         assert!(!desktop_tool_covers(&CaptureKind::Screen));

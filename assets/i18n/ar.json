@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "جارٍ سؤال سطح المكتب عن مفاتيح الاختصار…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "تم تعيين {count} من مفاتيح الاختصار عبر سطح المكتب. غيّر مفاتيحها في إعدادات لوحة المفاتيح لسطح المكتب.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "لا يسمح سطح المكتب هذا للتطبيقات بتعيين مفاتيح الاختصار. أضف اختصارًا في إعدادات لوحة المفاتيح لسطح المكتب يشغّل: {command} (أو AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "لم يعيّن سطح المكتب مفاتيح الاختصار: {error}"
+  "The desktop didn't set the hotkeys: {error}": "لم يعيّن سطح المكتب مفاتيح الاختصار: {error}",
+  "Super": "Super",
+  "GIF saved": "تم حفظ GIF",
+  "Recording saved": "تم حفظ التسجيل"
  }
 }

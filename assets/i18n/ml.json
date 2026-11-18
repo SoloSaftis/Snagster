@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "ഹോട്ട്കീകൾക്കായി ഡെസ്ക്ടോപ്പിനോട് ചോദിക്കുന്നു…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ഹോട്ട്കീകൾ ഡെസ്ക്ടോപ്പ് വഴി സജ്ജമാക്കിയിരിക്കുന്നു. അവയുടെ കീകൾ ഡെസ്ക്ടോപ്പിന്റെ കീബോർഡ് ക്രമീകരണങ്ങളിൽ മാറ്റുക.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "ഈ ഡെസ്ക്ടോപ്പ് ആപ്പുകളെ ഹോട്ട്കീകൾ സജ്ജമാക്കാൻ അനുവദിക്കുന്നില്ല. ഡെസ്ക്ടോപ്പിന്റെ കീബോർഡ് ക്രമീകരണങ്ങളിൽ ഇത് പ്രവർത്തിപ്പിക്കുന്ന ഒരു ഷോർട്ട്കട്ട് ചേർക്കുക: {command} (അല്ലെങ്കിൽ AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "ഡെസ്ക്ടോപ്പ് ഹോട്ട്കീകൾ സജ്ജമാക്കിയില്ല: {error}"
+  "The desktop didn't set the hotkeys: {error}": "ഡെസ്ക്ടോപ്പ് ഹോട്ട്കീകൾ സജ്ജമാക്കിയില്ല: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF സംരക്ഷിച്ചു",
+  "Recording saved": "റെക്കോർഡിംഗ് സംരക്ഷിച്ചു"
  }
 }

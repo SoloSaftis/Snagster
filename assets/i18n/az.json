@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "İş masasından qısayol düymələri soruşulur…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} qısayol düyməsi iş masası vasitəsilə təyin edilib. Onların düymələrini iş masasının klaviatura ayarlarında dəyişin.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Bu iş masası tətbiqlərə qısayol düymələri təyin etməyə icazə vermir. İş masasının klaviatura ayarlarında bunu işə salan qısayol əlavə edin: {command} (və ya AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "İş masası qısayol düymələrini təyin etmədi: {error}"
+  "The desktop didn't set the hotkeys: {error}": "İş masası qısayol düymələrini təyin etmədi: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF saxlanıldı",
+  "Recording saved": "Qeyd saxlanıldı"
  }
 }

@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Тражим пречице од радне површине…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "Пречица подешених преко радне површине: {count}. Промените њихове тастере у подешавањима тастатуре радне површине.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ова радна површина не дозвољава апликацијама да подешавају пречице. Додајте у подешавањима тастатуре радне површине пречицу која покреће: {command} (или AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Радна површина није подесила пречице: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Радна површина није подесила пречице: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF је сачуван",
+  "Recording saved": "Снимак је сачуван"
  }
 }

@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Die Desktop-Umgebung wird nach den Tastenkombinationen gefragt…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} Tastenkombinationen werden über die Desktop-Umgebung festgelegt. Ändern Sie ihre Tasten in den Tastatureinstellungen der Desktop-Umgebung.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Diese Desktop-Umgebung erlaubt Apps nicht, Tastenkombinationen festzulegen. Fügen Sie in den Tastatureinstellungen der Desktop-Umgebung eine Tastenkombination hinzu, die Folgendes ausführt: {command} (oder AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Die Desktop-Umgebung hat die Tastenkombinationen nicht festgelegt: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Die Desktop-Umgebung hat die Tastenkombinationen nicht festgelegt: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF gespeichert",
+  "Recording saved": "Aufzeichnung gespeichert"
  }
 }

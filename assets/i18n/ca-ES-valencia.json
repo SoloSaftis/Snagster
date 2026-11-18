@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Demanant les dreceres a l'escriptori…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} dreceres s'establixen mitjançant l'escriptori. Canvieu-ne les tecles en la configuració del teclat de l'escriptori.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Este escriptori no permet que les aplicacions establisquen dreceres. Afegiu una drecera en la configuració del teclat de l'escriptori que execute: {command} (o AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "L'escriptori no ha establit les dreceres: {error}"
+  "The desktop didn't set the hotkeys: {error}": "L'escriptori no ha establit les dreceres: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF guardat",
+  "Recording saved": "Gravació guardada"
  }
 }

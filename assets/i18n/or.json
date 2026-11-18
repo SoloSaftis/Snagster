@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "ହଟ୍‌କି ପାଇଁ ଡେସ୍କଟପ୍‌କୁ ପଚରାଯାଉଛି…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ହଟ୍‌କି ଡେସ୍କଟପ୍ ମାଧ୍ୟମରେ ସେଟ୍ ହୋଇଛି। ସେଗୁଡ଼ିକର କି ଡେସ୍କଟପ୍‌ର କୀବୋର୍ଡ୍ ସେଟିଂସ୍‌ରେ ବଦଳାନ୍ତୁ।",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "ଏହି ଡେସ୍କଟପ୍ ଆପ୍‌ଗୁଡ଼ିକୁ ହଟ୍‌କି ସେଟ୍ କରିବାକୁ ଦିଏ ନାହିଁ। ଡେସ୍କଟପ୍‌ର କୀବୋର୍ଡ୍ ସେଟିଂସ୍‌ରେ ଏହା ଚଲାଉଥିବା ଏକ ସର୍ଟକଟ୍ ଯୋଡ଼ନ୍ତୁ: {command} (କିମ୍ବା AllInOne, Window, Screen, RecordGif…)।",
-  "The desktop didn't set the hotkeys: {error}": "ଡେସ୍କଟପ୍ ହଟ୍‌କି ସେଟ୍ କଲା ନାହିଁ: {error}"
+  "The desktop didn't set the hotkeys: {error}": "ଡେସ୍କଟପ୍ ହଟ୍‌କି ସେଟ୍ କଲା ନାହିଁ: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF ସେଭ୍ ହେଲା",
+  "Recording saved": "ରେକର୍ଡିଂ ସେଭ୍ ହେଲା"
  }
 }

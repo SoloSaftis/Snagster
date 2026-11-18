@@ -118,6 +118,21 @@ fn hotkey_label_for(sys: System, ctrl: bool, alt: bool, shift: bool, win: bool, 
     parts.join(" + ")
 }
 
+/// The names of the four modifier boxes in Settings > Hotkeys (Ctrl, Alt, Shift, and the
+/// system key): Win on Windows, Super on Linux, the key symbols on a Mac (where Ctrl is
+/// Control, Alt is Option and the system key is Command).
+pub fn modifier_labels() -> [&'static str; 4] {
+    modifier_labels_for(system())
+}
+
+fn modifier_labels_for(sys: System) -> [&'static str; 4] {
+    match sys {
+        System::Windows => ["Ctrl", "Alt", "Shift", "Win"],
+        System::Mac => ["⌃", "⌥", "⇧", "⌘"],
+        _ => ["Ctrl", "Alt", "Shift", "Super"],
+    }
+}
+
 /// Whether a dialog's main (action) button comes first, on the left of Cancel. Windows and
 /// KDE put it first; GNOME and macOS put Cancel first and the action at the far right.
 fn action_first_for(sys: System) -> bool {
@@ -239,6 +254,16 @@ pub fn quit_item() -> (&'static str, &'static str) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_hotkey_boxes_use_each_systems_key_names() {
+        assert_eq!(modifier_labels_for(System::Windows), ["Ctrl", "Alt", "Shift", "Win"]);
+        assert_eq!(modifier_labels_for(System::Gnome)[3], "Super");
+        assert_eq!(modifier_labels_for(System::Kde)[3], "Super");
+        assert_eq!(modifier_labels_for(System::Mac), ["⌃", "⌥", "⇧", "⌘"]);
+        // The same names as the hotkey labels use.
+        assert!(hotkey_label_for(System::Gnome, false, false, false, true, "A").starts_with("Super"));
+    }
 
     #[test]
     fn linux_desktops_are_told_apart() {

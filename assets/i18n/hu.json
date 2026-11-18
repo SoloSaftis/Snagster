@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Gyorsbillentyűk lekérdezése az asztali környezettől…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} gyorsbillentyűt az asztali környezet állít be. A billentyűiket az asztali környezet billentyűzetbeállításaiban módosíthatja.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ez az asztali környezet nem engedi, hogy az alkalmazások gyorsbillentyűket állítsanak be. Vegyen fel az asztali környezet billentyűzetbeállításaiban egy parancsikont, amely ezt futtatja: {command} (vagy AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Az asztali környezet nem állította be a gyorsbillentyűket: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Az asztali környezet nem állította be a gyorsbillentyűket: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF elmentve",
+  "Recording saved": "Felvétel elmentve"
  }
 }

@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Эш өстәленнән кайнар төймәләр сорала…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} кайнар төймә эш өстәле аша көйләнгән. Аларның төймәләрен эш өстәленең клавиатура көйләүләрендә үзгәртегез.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Бу эш өстәле кушымталарга кайнар төймәләр көйләргә рөхсәт итми. Эш өстәленең клавиатура көйләүләрендә моны эшләтүче ярлык өстәгез: {command} (яки AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Эш өстәле кайнар төймәләрне көйләмәде: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Эш өстәле кайнар төймәләрне көйләмәде: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF саклана",
+  "Recording saved": "Язма саклана"
  }
 }

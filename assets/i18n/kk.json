@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Жұмыс үстелінен жылдам пернелер сұралуда…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} жылдам перне жұмыс үстелі арқылы орнатылған. Олардың пернелерін жұмыс үстелінің пернетақта параметрлерінде өзгертіңіз.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Бұл жұмыс үстелі қолданбаларға жылдам пернелерді орнатуға рұқсат бермейді. Жұмыс үстелінің пернетақта параметрлерінде мынаны іске қосатын таңбаша қосыңыз: {command} (немесе AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Жұмыс үстелі жылдам пернелерді орнатпады: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Жұмыс үстелі жылдам пернелерді орнатпады: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF сақталды",
+  "Recording saved": "Жазба сақталды"
  }
 }

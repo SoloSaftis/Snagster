@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Masaüstünden kısayol tuşları isteniyor…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} kısayol tuşu masaüstü üzerinden ayarlandı. Tuşlarını masaüstünün klavye ayarlarından değiştirin.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Bu masaüstü uygulamaların kısayol tuşu ayarlamasına izin vermiyor. Masaüstünün klavye ayarlarına şunu çalıştıran bir kısayol ekleyin: {command} (veya AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Masaüstü kısayol tuşlarını ayarlamadı: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Masaüstü kısayol tuşlarını ayarlamadı: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF kaydedildi",
+  "Recording saved": "Kayıt kaydedildi"
  }
 }

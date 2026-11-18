@@ -127,6 +127,30 @@ pub fn screenshot(interactive: bool) -> Result<RgbaImage, String> {
     img
 }
 
+/// A desktop notification through the Notification portal (works in the Flatpak too), sent
+/// from a thread of its own so a slow desktop never holds anything up. `id` replaces an
+/// earlier notification with the same id.
+pub fn notify(id: &str, title: &str, body: &str) {
+    let (id, title, body) = (id.to_string(), title.to_string(), body.to_string());
+    let _ = std::thread::Builder::new().name("snagster-notify".into()).spawn(move || {
+        let _ = pollster::block_on(async {
+            use ashpd::desktop::notification::{Notification, NotificationProxy};
+            let proxy = NotificationProxy::new().await?;
+            proxy.add_notification(&id, Notification::new(&title).body(body.as_str())).await
+        });
+    });
+}
+
+/// What to say when the screen share didn't start: plainly when the person pressed Cancel in
+/// the desktop's dialog, else the portal's own words.
+fn share_refusal(raw: &str) -> String {
+    if raw.trim() == "Cancelled" || raw.contains("Response(Cancelled)") {
+        "Screen sharing was cancelled in the desktop's dialog: nothing was shared.".into()
+    } else {
+        format!("the desktop's screen-sharing portal said no ({raw})")
+    }
+}
+
 /// The pointer mode to ask for: in the picture when wanted and offered, else hidden when
 /// offered, else none at all (some desktops offer no modes, and asking for one then fails).
 fn cursor_mode(want_pointer: bool, offered: ashpd::desktop::screencast::CursorMode) -> Option<ashpd::desktop::screencast::CursorMode> {
@@ -245,7 +269,7 @@ impl Cast {
             let fd = proxy.open_pipe_wire_remote(&session, Default::default()).await.map_err(|e| e.to_string())?;
             Ok::<_, String>((session, stream, fd))
         })
-        .map_err(|e| format!("the desktop's screen-sharing portal said no ({e})"))?;
+        .map_err(|e| share_refusal(&e))?;
         let origin = stream.position().unwrap_or((0, 0));
         let logical = stream.size().map(|(w, h)| (w.max(0) as u32, h.max(0) as u32)).unwrap_or((0, 0));
         let node = stream.pipe_wire_node_id();
@@ -401,6 +425,13 @@ fn receive(fd: std::os::fd::OwnedFd, node: u32, newest: Arc<Mutex<Newest>>, quit
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_cancelled_share_is_said_plainly() {
+        assert!(share_refusal("Cancelled").starts_with("Screen sharing was cancelled"));
+        let other = share_refusal("Portal request failed: org.freedesktop.portal.Error.NotAllowed");
+        assert!(other.contains("NotAllowed") && other.starts_with("the desktop's screen-sharing portal said no"));
+    }
 
     #[test]
     fn only_a_pointer_mode_the_desktop_offers_is_asked_for() {

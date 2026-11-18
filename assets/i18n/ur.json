@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "ڈیسک ٹاپ سے ہاٹ کیز مانگی جا رہی ہیں…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} ہاٹ کیز ڈیسک ٹاپ کے ذریعے سیٹ ہیں۔ ان کی کیز ڈیسک ٹاپ کی کی بورڈ ترتیبات میں تبدیل کریں۔",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "یہ ڈیسک ٹاپ ایپس کو ہاٹ کیز سیٹ کرنے نہیں دیتا۔ ڈیسک ٹاپ کی کی بورڈ ترتیبات میں ایک شارٹ کٹ شامل کریں جو یہ چلائے: {command} (یا AllInOne, Window, Screen, RecordGif…)۔",
-  "The desktop didn't set the hotkeys: {error}": "ڈیسک ٹاپ نے ہاٹ کیز سیٹ نہیں کیں: {error}"
+  "The desktop didn't set the hotkeys: {error}": "ڈیسک ٹاپ نے ہاٹ کیز سیٹ نہیں کیں: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF محفوظ ہو گئی",
+  "Recording saved": "ریکارڈنگ محفوظ ہو گئی"
  }
 }

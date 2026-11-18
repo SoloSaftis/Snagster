@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Po pyetet desktopi për tastet e shpejta…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} taste të shpejta caktohen përmes desktopit. Ndryshoji tastet e tyre te cilësimet e tastierës së desktopit.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ky desktop nuk i lejon aplikacionet të caktojnë taste të shpejta. Shto te cilësimet e tastierës së desktopit një shkurtore që nis: {command} (ose AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Desktopi nuk i caktoi tastet e shpejta: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Desktopi nuk i caktoi tastet e shpejta: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF u ruajt",
+  "Recording saved": "Regjistrimi u ruajt"
  }
 }

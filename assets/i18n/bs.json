@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Pitam desktop za prečice…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} prečica postavlja se putem desktopa. Promijenite njihove tipke u postavkama tastature desktopa.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ovaj desktop ne dozvoljava aplikacijama da postavljaju prečice. Dodajte prečicu u postavkama tastature desktopa koja pokreće: {command} (ili AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Desktop nije postavio prečice: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Desktop nije postavio prečice: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF je sačuvan",
+  "Recording saved": "Snimak je sačuvan"
  }
 }

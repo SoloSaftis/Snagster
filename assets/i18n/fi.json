@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Kysytään työpöydältä pikanäppäimiä…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} pikanäppäintä asetetaan työpöydän kautta. Muuta niiden näppäimiä työpöydän näppäimistöasetuksissa.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Tämä työpöytä ei salli sovellusten asettaa pikanäppäimiä. Lisää työpöydän näppäimistöasetuksissa pikakomento, joka suorittaa: {command} (tai AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Työpöytä ei asettanut pikanäppäimiä: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Työpöytä ei asettanut pikanäppäimiä: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF tallennettu",
+  "Recording saved": "Nauhoitus tallennettu"
  }
 }

@@ -103,10 +103,11 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
 /// Modifier boxes and a key list for one hotkey.
 fn combo_editor(ui: &mut egui::Ui, id: String, c: &mut Combo) -> bool {
     let before = c.clone();
-    ui.checkbox(&mut c.ctrl, crate::i18n::t("Ctrl"));
-    ui.checkbox(&mut c.alt, crate::i18n::t("Alt"));
-    ui.checkbox(&mut c.shift, crate::i18n::t("Shift"));
-    ui.checkbox(&mut c.win, crate::i18n::t("Win"));
+    let [ctrl, alt, shift, win] = crate::platform::modifier_labels();
+    ui.checkbox(&mut c.ctrl, crate::i18n::t(ctrl));
+    ui.checkbox(&mut c.alt, crate::i18n::t(alt));
+    ui.checkbox(&mut c.shift, crate::i18n::t(shift));
+    ui.checkbox(&mut c.win, crate::i18n::t(win));
     egui::ComboBox::from_id_salt(id)
         .width(110.0)
         .selected_text(if c.key.is_empty() { "Not set".to_string() } else { c.key.clone() })
@@ -523,7 +524,10 @@ impl SnagApp {
 
     fn hotkeys_tab(&mut self, ui: &mut egui::Ui) {
         ui.checkbox(&mut self.settings.hotkeys_enabled, crate::i18n::t("Use global hotkeys (they work while Snagster is in the background)"));
-        ui.checkbox(&mut self.settings.override_hotkeys, crate::i18n::t("Take over keys another program already uses (for example Print Screen)"));
+        // On Wayland the desktop holds the hotkeys (and settles clashes itself): nothing to take over.
+        if !crate::capture::desktop_screenshots_only() {
+            ui.checkbox(&mut self.settings.override_hotkeys, crate::i18n::t("Take over keys another program already uses (for example Print Screen)"));
+        }
         ui.label(RichText::new(self.hotkeys.summary()).color(TEXT_DIM));
         let dups = hotkeys::duplicates(&self.settings);
         if !dups.is_empty() {

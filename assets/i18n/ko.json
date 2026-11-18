@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "데스크톱에 단축키를 요청하는 중…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "단축키 {count}개가 데스크톱을 통해 설정되어 있습니다. 키는 데스크톱의 키보드 설정에서 변경하세요.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "이 데스크톱은 앱이 단축키를 설정하도록 허용하지 않습니다. 데스크톱의 키보드 설정에서 다음을 실행하는 바로 가기를 추가하세요: {command} (또는 AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "데스크톱이 단축키를 설정하지 못했습니다: {error}"
+  "The desktop didn't set the hotkeys: {error}": "데스크톱이 단축키를 설정하지 못했습니다: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF 저장됨",
+  "Recording saved": "녹화 저장됨"
  }
 }

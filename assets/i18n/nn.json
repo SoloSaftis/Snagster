@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Spør skrivebordet om hurtigtastane…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} hurtigtastar er sette gjennom skrivebordet. Endre tastane i tastaturinnstillingane til skrivebordet.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Dette skrivebordet lèt ikkje appar setje hurtigtastar. Legg til ein snarveg i tastaturinnstillingane til skrivebordet som køyrer: {command} (eller AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Skrivebordet sette ikkje hurtigtastane: {error}"
+  "The desktop didn't set the hotkeys: {error}": "Skrivebordet sette ikkje hurtigtastane: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF lagra",
+  "Recording saved": "Innspeling lagra"
  }
 }

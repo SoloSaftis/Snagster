@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "हॉटकींखातीर डेस्कटॉपाक विचारता…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} हॉटकी डेस्कटॉपा वरवीं सेट केल्यात. तांचे कीज डेस्कटॉपाच्या कीबोर्ड सेटिंग्जांनी बदलात.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "हो डेस्कटॉप अ‍ॅपांक हॉटकी सेट करपाक दिना. डेस्कटॉपाच्या कीबोर्ड सेटिंग्जांनी हें चलोवपी शॉर्टकट जोडात: {command} (वा AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "डेस्कटॉपान हॉटकी सेट केल्यांत ना: {error}"
+  "The desktop didn't set the hotkeys: {error}": "डेस्कटॉपान हॉटकी सेट केल्यांत ना: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF सेव्ह केलें",
+  "Recording saved": "रेकॉर्डिंग सेव्ह केलें"
  }
 }

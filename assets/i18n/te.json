@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "హాట్‌కీల కోసం డెస్క్‌టాప్‌ను అడుగుతోంది…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} హాట్‌కీలు డెస్క్‌టాప్ ద్వారా సెట్ చేయబడ్డాయి. వాటి కీలను డెస్క్‌టాప్ కీబోర్డ్ సెట్టింగ్‌లలో మార్చండి.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "ఈ డెస్క్‌టాప్ యాప్‌లను హాట్‌కీలు సెట్ చేయనివ్వదు. డెస్క్‌టాప్ కీబోర్డ్ సెట్టింగ్‌లలో దీన్ని అమలు చేసే షార్ట్‌కట్‌ను జోడించండి: {command} (లేదా AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "డెస్క్‌టాప్ హాట్‌కీలను సెట్ చేయలేదు: {error}"
+  "The desktop didn't set the hotkeys: {error}": "డెస్క్‌టాప్ హాట్‌కీలను సెట్ చేయలేదు: {error}",
+  "Super": "Super",
+  "GIF saved": "GIF సేవ్ అయింది",
+  "Recording saved": "రికార్డింగ్ సేవ్ అయింది"
  }
 }

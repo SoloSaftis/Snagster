@@ -982,6 +982,9 @@
   "Asking the desktop for the hotkeys…": "Demande des raccourcis au bureau…",
   "{count} hotkeys are set through the desktop. Change their keys in the desktop's keyboard settings.": "{count} raccourcis sont définis par le bureau. Modifiez leurs touches dans les paramètres du clavier du bureau.",
   "This desktop doesn't let apps set hotkeys. Add a shortcut in the desktop's keyboard settings that runs: {command} (or AllInOne, Window, Screen, RecordGif…).": "Ce bureau ne permet pas aux applications de définir des raccourcis. Ajoutez un raccourci dans les paramètres du clavier du bureau qui exécute : {command} (ou AllInOne, Window, Screen, RecordGif…).",
-  "The desktop didn't set the hotkeys: {error}": "Le bureau n'a pas défini les raccourcis : {error}"
+  "The desktop didn't set the hotkeys: {error}": "Le bureau n'a pas défini les raccourcis : {error}",
+  "Super": "Super",
+  "GIF saved": "GIF enregistré",
+  "Recording saved": "Enregistrement terminé"
  }
 }
