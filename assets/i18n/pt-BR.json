@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arraste uma caixa sobre o texto para destacá-lo. Escolha à mão livre à direita para desenhar traços.",
   "Moved {count} captures to the Recycle Bin.": "{count} capturas movidas para a Lixeira.",
   "Moved {count} captures to the Trash.": "{count} capturas movidas para a Lixeira.",
-  "Brought back {path}.": "{path} restaurado.",
-  "Brought back {count} captures.": "{count} capturas restauradas.",
-  "Couldn't bring it back: {error}": "Não foi possível restaurar: {error}"
+  "Restored {name}.": "{name} restaurado.",
+  "Restored {count} captures.": "{count} capturas restauradas.",
+  "Couldn't restore {name}: {error}": "Não foi possível restaurar {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{count} de {total} capturas restauradas. Não foi possível restaurar {name}: {error}",
+  "a new file has taken its name": "um novo arquivo agora tem o mesmo nome",
+  "it isn't in the Recycle Bin any more": "não está mais na Lixeira",
+  "it isn't in the Trash any more": "não está mais na Lixeira",
+  "this system can't bring files back from the Trash": "este sistema não consegue restaurar arquivos da Lixeira"
  }
 }

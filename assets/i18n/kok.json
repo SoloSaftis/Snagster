@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "मजकूर हायलाइट करपाक ताचेर बॉक्स ओड. ताचे बदला रेषा काडपाक उजव्या वटेन फ्रीहँड वेंच.",
   "Moved {count} captures to the Recycle Bin.": "{count} कॅप्चर रिसायकल बिनांत हालयले.",
   "Moved {count} captures to the Trash.": "{count} कॅप्चर कचरापेटयेंत हालयले.",
-  "Brought back {path}.": "{path} परत हाडलें.",
-  "Brought back {count} captures.": "{count} कॅप्चर परत हाडले.",
-  "Couldn't bring it back: {error}": "परत हाडूंक जालें ना: {error}"
+  "Restored {name}.": "{name} पुनर्स्थापीत केलें.",
+  "Restored {count} captures.": "{count} कॅप्चर पुनर्स्थापीत केले.",
+  "Couldn't restore {name}: {error}": "{name} पुनर्स्थापीत करूंक जालें ना: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} पयकीं {count} कॅप्चर पुनर्स्थापीत केले. {name} पुनर्स्थापीत करूंक जालें ना: {error}",
+  "a new file has taken its name": "एका नव्या फायलीक आतां तेंचें नांव आसा",
+  "it isn't in the Recycle Bin any more": "तें आतां रिसायकल बिनांत ना",
+  "it isn't in the Trash any more": "तें आतां कचरापेटयेंत ना",
+  "this system can't bring files back from the Trash": "ही प्रणाली कचरापेटयेंतल्यान फायली पुनर्स्थापीत करूंक शकना"
  }
 }

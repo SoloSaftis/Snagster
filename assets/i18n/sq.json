@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tërhiqni një kuti mbi tekst për ta theksuar. Zgjidhni dorë e lirë djathtas për të vizatuar vija.",
   "Moved {count} captures to the Recycle Bin.": "{count} kapje u zhvendosën në Koshin e riciklimit.",
   "Moved {count} captures to the Trash.": "{count} kapje u zhvendosën në Kosh.",
-  "Brought back {path}.": "{path} u rikthye.",
-  "Brought back {count} captures.": "U rikthyen {count} kapje.",
-  "Couldn't bring it back: {error}": "Nuk u rikthye dot: {error}"
+  "Restored {name}.": "{name} u rikthye.",
+  "Restored {count} captures.": "U rikthyen {count} kapje.",
+  "Couldn't restore {name}: {error}": "{name} nuk u rikthye dot: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "U rikthyen {count} nga {total} kapje. {name} nuk u rikthye dot: {error}",
+  "a new file has taken its name": "një skedar i ri tani ka të njëjtin emër",
+  "it isn't in the Recycle Bin any more": "nuk është më në Koshin e riciklimit",
+  "it isn't in the Trash any more": "nuk është më në Kosh",
+  "this system can't bring files back from the Trash": "ky sistem nuk mund t'i rikthejë skedarët nga Koshi"
  }
 }

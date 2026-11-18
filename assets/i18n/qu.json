@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Qillqa patapi kaja chutay chaytaqa k'anchachinaykipaq. Paña kinraypi sapaq makiwan akllay siq'iykunata ruwanaykipaq.",
   "Moved {count} captures to the Recycle Bin.": "{count} hap'iykuna papelerman astasqa.",
   "Moved {count} captures to the Trash.": "{count} hap'iykuna q'upa wasiman astasqa.",
-  "Brought back {path}.": "{path} kutichisqa.",
-  "Brought back {count} captures.": "{count} hap'iykuna kutichisqa.",
-  "Couldn't bring it back: {error}": "Mana kutichiyta atirqanchu: {error}"
+  "Restored {name}.": "{name} kutichisqa.",
+  "Restored {count} captures.": "{count} hap'iykuna kutichisqa.",
+  "Couldn't restore {name}: {error}": "{name} mana kutichiyta atirqanchu: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} hap'iykunamanta {count} kutichisqa. {name} mana kutichiyta atirqanchu: {error}",
+  "a new file has taken its name": "musuq archivo kunan sutinta hap'in",
+  "it isn't in the Recycle Bin any more": "manañam papelerpichu kachkan",
+  "it isn't in the Trash any more": "manañam q'upa wasipichu kachkan",
+  "this system can't bring files back from the Trash": "kay sistemaqa manam q'upa wasimanta archivokunata kutichiyta atinchu"
  }
 }

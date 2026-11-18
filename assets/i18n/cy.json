@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Llusgwch flwch dros destun i'w amlygu. Dewiswch llawrydd ar y dde i dynnu llinellau yn lle hynny.",
   "Moved {count} captures to the Recycle Bin.": "Symudwyd {count} dalfa i'r Bin Ailgylchu.",
   "Moved {count} captures to the Trash.": "Symudwyd {count} dalfa i'r Sbwriel.",
-  "Brought back {path}.": "Daethpwyd â {path} yn ôl.",
-  "Brought back {count} captures.": "Daethpwyd â {count} dalfa yn ôl.",
-  "Couldn't bring it back: {error}": "Methu dod ag ef yn ôl: {error}"
+  "Restored {name}.": "Adferwyd {name}.",
+  "Restored {count} captures.": "Adferwyd {count} dalfa.",
+  "Couldn't restore {name}: {error}": "Methu adfer {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Adferwyd {count} o {total} dalfa. Methu adfer {name}: {error}",
+  "a new file has taken its name": "mae ffeil newydd wedi cymryd ei henw",
+  "it isn't in the Recycle Bin any more": "nid yw yn y Bin Ailgylchu bellach",
+  "it isn't in the Trash any more": "nid yw yn y Sbwriel bellach",
+  "this system can't bring files back from the Trash": "ni all y system hon adfer ffeiliau o'r Sbwriel"
  }
 }

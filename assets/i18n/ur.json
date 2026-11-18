@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "متن کو نمایاں کرنے کے لیے اس پر باکس کھینچیں۔ اس کے بجائے لکیریں کھینچنے کے لیے دائیں طرف فری ہینڈ منتخب کریں۔",
   "Moved {count} captures to the Recycle Bin.": "{count} کیپچرز ری سائیکل بن میں منتقل ہو گئے۔",
   "Moved {count} captures to the Trash.": "{count} کیپچرز ردی کی ٹوکری میں منتقل ہو گئے۔",
-  "Brought back {path}.": "{path} واپس لایا گیا۔",
-  "Brought back {count} captures.": "{count} کیپچرز واپس لائے گئے۔",
-  "Couldn't bring it back: {error}": "واپس نہیں لایا جا سکا: {error}"
+  "Restored {name}.": "{name} بحال ہو گیا۔",
+  "Restored {count} captures.": "{count} کیپچرز بحال ہو گئے۔",
+  "Couldn't restore {name}: {error}": "{name} بحال نہیں ہو سکا: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} میں سے {count} کیپچرز بحال ہو گئے۔ {name} بحال نہیں ہو سکا: {error}",
+  "a new file has taken its name": "اب ایک نئی فائل کا یہی نام ہے",
+  "it isn't in the Recycle Bin any more": "یہ اب ری سائیکل بن میں نہیں ہے",
+  "it isn't in the Trash any more": "یہ اب ردی کی ٹوکری میں نہیں ہے",
+  "this system can't bring files back from the Trash": "یہ سسٹم ردی کی ٹوکری سے فائلیں بحال نہیں کر سکتا"
  }
 }

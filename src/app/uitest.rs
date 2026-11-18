@@ -202,7 +202,7 @@ impl UiTest {
         }));
         s.push((
             "Delete: the file is back".to_string(),
-            Box::new(move |a: &mut SnagApp, _: &egui::Context| deleted_file.exists() && a.status.starts_with("Brought back")),
+            Box::new(move |a: &mut SnagApp, _: &egui::Context| deleted_file.exists() && a.status.starts_with("Restored")),
         ));
         s.push(once("File: rename", |a, _| {
             a.rename_current("Renamed by test");

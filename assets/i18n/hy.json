@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Տեքստը ընդգծելու համար քաշեք վանդակ դրա վրայով։ Աջից ընտրեք ազատ ձեռքով՝ գծեր գծելու համար։",
   "Moved {count} captures to the Recycle Bin.": "{count} նկարահանում տեղափոխվեց Աղբարկղ։",
   "Moved {count} captures to the Trash.": "{count} նկարահանում տեղափոխվեց Աղբարկղ։",
-  "Brought back {path}.": "{path}-ը վերականգնվեց։",
-  "Brought back {count} captures.": "Վերականգնվեց {count} նկարահանում։",
-  "Couldn't bring it back: {error}": "Չհաջողվեց վերականգնել. {error}"
+  "Restored {name}.": "Վերականգնվեց՝ {name}։",
+  "Restored {count} captures.": "Վերականգնվեց {count} նկարահանում։",
+  "Couldn't restore {name}: {error}": "Չհաջողվեց վերականգնել {name}. {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Վերականգնվեց {count} նկարահանում {total}-ից։ Չհաջողվեց վերականգնել {name}. {error}",
+  "a new file has taken its name": "նոր ֆայլն արդեն կրում է նրա անունը",
+  "it isn't in the Recycle Bin any more": "այն այլևս Աղբարկղում չէ",
+  "it isn't in the Trash any more": "այն այլևս Աղբարկղում չէ",
+  "this system can't bring files back from the Trash": "այս համակարգը չի կարող ֆայլեր վերականգնել Աղբարկղից"
  }
 }

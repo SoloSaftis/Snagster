@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Slaod bogsa thairis air teacsa gus a sheulachadh. Tagh làmh-shaor air an taobh deas gus strìochan a tharraing.",
   "Moved {count} captures to the Recycle Bin.": "Chaidh {count} glacaidhean a ghluasad dhan Bhin ath-chuairteachaidh.",
   "Moved {count} captures to the Trash.": "Chaidh {count} glacaidhean a ghluasad dhan sgudal.",
-  "Brought back {path}.": "Chaidh {path} a thoirt air ais.",
-  "Brought back {count} captures.": "Chaidh {count} glacaidhean a thoirt air ais.",
-  "Couldn't bring it back: {error}": "Cha b' urrainn dhuinn a thoirt air ais: {error}"
+  "Restored {name}.": "Chaidh {name} aiseag.",
+  "Restored {count} captures.": "Chaidh {count} glacaidhean aiseag.",
+  "Couldn't restore {name}: {error}": "Cha b' urrainn dhuinn {name} aiseag: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Chaidh {count} à {total} glacaidhean aiseag. Cha b' urrainn dhuinn {name} aiseag: {error}",
+  "a new file has taken its name": "tha an t-ainm aige air faidhle ùr a-nis",
+  "it isn't in the Recycle Bin any more": "chan eil e sa Bhin ath-chuairteachaidh tuilleadh",
+  "it isn't in the Trash any more": "chan eil e san sgudal tuilleadh",
+  "this system can't bring files back from the Trash": "chan urrainn dhan t-siostam seo faidhlichean aiseag às an sgudal"
  }
 }

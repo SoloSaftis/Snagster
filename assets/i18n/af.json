@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep 'n blok oor teks om dit te merk. Kies vryhand regs om eerder met streke te teken.",
   "Moved {count} captures to the Recycle Bin.": "{count} vasvangings is na die Herwinningsblik geskuif.",
   "Moved {count} captures to the Trash.": "{count} vasvangings is na die asblik geskuif.",
-  "Brought back {path}.": "{path} is teruggebring.",
-  "Brought back {count} captures.": "{count} vasvangings is teruggebring.",
-  "Couldn't bring it back: {error}": "Kon dit nie terugbring nie: {error}"
+  "Restored {name}.": "{name} is herstel.",
+  "Restored {count} captures.": "{count} vasvangings is herstel.",
+  "Couldn't restore {name}: {error}": "Kon nie {name} herstel nie: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{count} van {total} vasvangings is herstel. Kon nie {name} herstel nie: {error}",
+  "a new file has taken its name": "'n nuwe lêer het nou sy naam",
+  "it isn't in the Recycle Bin any more": "dit is nie meer in die Herwinningsblik nie",
+  "it isn't in the Trash any more": "dit is nie meer in die asblik nie",
+  "this system can't bring files back from the Trash": "hierdie stelsel kan nie lêers uit die asblik herstel nie"
  }
 }

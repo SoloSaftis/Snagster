@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖曳方框即可醒目提示。選擇右側的「手繪」可改為繪製筆劃。",
   "Moved {count} captures to the Recycle Bin.": "已將 {count} 個擷取移到資源回收筒。",
   "Moved {count} captures to the Trash.": "已將 {count} 個擷取移到垃圾桶。",
-  "Brought back {path}.": "已還原 {path}。",
-  "Brought back {count} captures.": "已還原 {count} 個擷取。",
-  "Couldn't bring it back: {error}": "無法還原：{error}"
+  "Restored {name}.": "已還原 {name}。",
+  "Restored {count} captures.": "已還原 {count} 個擷取。",
+  "Couldn't restore {name}: {error}": "無法還原 {name}：{error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "已還原 {total} 個擷取中的 {count} 個。無法還原 {name}：{error}",
+  "a new file has taken its name": "已有新檔案使用這個名稱",
+  "it isn't in the Recycle Bin any more": "它已不在資源回收筒中",
+  "it isn't in the Trash any more": "它已不在垃圾桶中",
+  "this system can't bring files back from the Trash": "此系統無法從垃圾桶還原檔案"
  }
 }

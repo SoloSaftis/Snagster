@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ପାଠକୁ ହାଇଲାଇଟ୍ କରିବାକୁ ଏହା ଉପରେ ଏକ ବାକ୍ସ ଟାଣନ୍ତୁ। ବଦଳରେ ରେଖା ଆଙ୍କିବାକୁ ଡାହାଣରେ ଫ୍ରିହ୍ୟାଣ୍ଡ ବାଛନ୍ତୁ।",
   "Moved {count} captures to the Recycle Bin.": "{count}ଟି କ୍ୟାପଚର୍ ରିସାଇକଲ୍ ବିନ୍‌କୁ ନିଆଗଲା।",
   "Moved {count} captures to the Trash.": "{count}ଟି କ୍ୟାପଚର୍ ଆବର୍ଜନାକୁ ନିଆଗଲା।",
-  "Brought back {path}.": "{path} ଫେରାଇ ଅଣାଗଲା।",
-  "Brought back {count} captures.": "{count}ଟି କ୍ୟାପଚର୍ ଫେରାଇ ଅଣାଗଲା।",
-  "Couldn't bring it back: {error}": "ଫେରାଇ ଆଣିହେଲା ନାହିଁ: {error}"
+  "Restored {name}.": "{name} ପୁନଃସ୍ଥାପିତ ହେଲା।",
+  "Restored {count} captures.": "{count}ଟି କ୍ୟାପଚର୍ ପୁନଃସ୍ଥାପିତ ହେଲା।",
+  "Couldn't restore {name}: {error}": "{name} ପୁନଃସ୍ଥାପନ କରିହେଲା ନାହିଁ: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total}ଟିରୁ {count}ଟି କ୍ୟାପଚର୍ ପୁନଃସ୍ଥାପିତ ହେଲା। {name} ପୁନଃସ୍ଥାପନ କରିହେଲା ନାହିଁ: {error}",
+  "a new file has taken its name": "ଏବେ ଏକ ନୂଆ ଫାଇଲ୍ ଏହାର ନାମ ନେଇଛି",
+  "it isn't in the Recycle Bin any more": "ଏହା ଆଉ ରିସାଇକଲ୍ ବିନ୍‌ରେ ନାହିଁ",
+  "it isn't in the Trash any more": "ଏହା ଆଉ ଆବର୍ଜନାରେ ନାହିଁ",
+  "this system can't bring files back from the Trash": "ଏହି ସିଷ୍ଟମ୍ ଆବର୍ଜନାରୁ ଫାଇଲ୍ ପୁନଃସ୍ଥାପନ କରିପାରିବ ନାହିଁ"
  }
 }

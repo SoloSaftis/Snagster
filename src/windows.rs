@@ -876,6 +876,7 @@ impl SnagApp {
 
     pub(crate) fn library_window(&mut self, ctx: &egui::Context) {
         if !self.library_open {
+            self.lib_focused = false;
             return;
         }
         // Reading the library folder (maybe a cloud folder with thousands of files) is done on
@@ -951,16 +952,17 @@ impl SnagApp {
         let mut save_tags = None;
         let mut undo = false;
         own_window(ctx, Win { key: "library", title: crate::i18n::t("Library"), size: vec2(900.0, 640.0), resizable: true }, &mut open, |ui| {
-            // Right after a delete: what went, with Undo (also Ctrl+Z / ⌘Z, unless a text box
-            // has the keys).
+            self.lib_focused = ui.input(|i| i.focused);
+            // Right after a delete: what went, with Undo, at the foot (so the list doesn't move
+            // under the pointer when it goes). Ctrl+Z / ⌘Z too, unless a text box has the keys.
             if self.delete_undo_showing() {
-                let typing = ui.memory(|m| m.focused().is_some());
-                undo = !typing && ui.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, Key::Z));
-                egui::Frame::new().inner_margin(egui::Margin::symmetric(8, 4)).stroke(Stroke::new(1.0, accent())).corner_radius(4.0).show(ui, |ui| {
+                let typing = ui.ctx().egui_wants_keyboard_input();
+                undo = !typing && self.deleted.owns_shortcut(std::time::Instant::now()) && ui.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, Key::Z));
+                egui::Panel::bottom("library-undo").show_separator_line(false).show(ui, |ui| {
+                    ui.add_space(6.0);
                     // The button undoes on its own.
-                    self.delete_undo_bar(ui);
+                    self.delete_undo_bar(ui, 60);
                 });
-                ui.add_space(4.0);
             }
             ui.horizontal(|ui| {
                 ui.label(crate::i18n::t("Search"));

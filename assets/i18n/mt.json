@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kaxxa fuq it-test biex tenfasizzah. Agħżel b'idejk fuq il-lemin biex tfassal strixxi minflok.",
   "Moved {count} captures to the Recycle Bin.": "Ġew iċċaqilqu {count} qbid għar-Recycle Bin.",
   "Moved {count} captures to the Trash.": "Ġew iċċaqilqu {count} qbid għat-Trash.",
-  "Brought back {path}.": "{path} ġie rkuprat.",
-  "Brought back {count} captures.": "Ġew irkuprati {count} qbid.",
-  "Couldn't bring it back: {error}": "Ma setax jiġi rkuprat: {error}"
+  "Restored {name}.": "{name} ġie rkuprat.",
+  "Restored {count} captures.": "Ġew irkuprati {count} qbid.",
+  "Couldn't restore {name}: {error}": "Ma setax jiġi rkuprat {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Ġew irkuprati {count} minn {total} qbid. Ma setax jiġi rkuprat {name}: {error}",
+  "a new file has taken its name": "fajl ġdid issa għandu l-istess isem",
+  "it isn't in the Recycle Bin any more": "m'għadux fir-Recycle Bin",
+  "it isn't in the Trash any more": "m'għadux fit-Trash",
+  "this system can't bring files back from the Trash": "din is-sistema ma tistax tirkupra fajls mit-Trash"
  }
 }

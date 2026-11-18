@@ -490,6 +490,10 @@ pub struct SnagApp {
     pub(crate) status: String,
     /// What was just deleted, while its Undo shows (`deleted_ui`).
     pub(crate) deleted: crate::recycle::Pending,
+    /// The pictures' histories when the last delete happened (`deleted_ui::edits_mark`).
+    pub(crate) deleted_edits: (usize, usize, usize, u64),
+    /// Whether the Library window has the keyboard (the Undo waits while neither window has).
+    pub(crate) lib_focused: bool,
     counter: u32,
     screenshot: Option<ScreenshotJob>,
     last_scale: f32,
@@ -670,6 +674,8 @@ impl SnagApp {
             hotkeys_for: None,
             status: "Ready. Press Print Screen, use the Capture menu, or paste a picture with Ctrl+V.".into(),
             deleted: Default::default(),
+            deleted_edits: (0, 0, 0, 0),
+            lib_focused: false,
             counter: 0,
             screenshot: screenshot.map(|path| ScreenshotJob {
                 path,
@@ -2273,12 +2279,13 @@ impl SnagApp {
         if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z) || consume(Modifiers::COMMAND, Key::Y) {
             self.redo();
         }
-        // Right after a delete, Ctrl+Z / ⌘Z brings the file back (the last thing done).
+        // Right after a delete, Ctrl+Z / ⌘Z brings the file back (until something else is done;
+        // never while typing).
         if consume(Modifiers::COMMAND, Key::Z) {
-            if self.delete_undo_showing() {
-                self.undo_delete();
-            } else {
+            if typing {
                 self.undo();
+            } else {
+                self.undo_any();
             }
         }
         // Every system's standard keys (docs/DESIGN-GUIDELINES.md in the private notes): Save,
@@ -2735,8 +2742,8 @@ impl SnagApp {
             self.settings_open = true;
         }
         ui.separator();
-        if item_on(ui, can_undo, "Undo", "Ctrl+Z") {
-            self.undo();
+        if item_on(ui, self.can_undo_any(can_undo), "Undo", "Ctrl+Z") {
+            self.undo_any();
         }
         if item_on(ui, can_redo, "Redo", redo_keys()) {
             self.redo();
@@ -3336,7 +3343,10 @@ impl SnagApp {
                         self.switch_tab(&ctx, ribbon::RibbonTab::Stream);
                     }
                 });
-                if !self.delete_undo_bar(ui) && !self.delete_undo_showing() {
+                // The Undo after a delete, until a newer message takes the line.
+                if self.delete_undo_showing() && self.status == self.deleted_text() {
+                    self.delete_undo_bar(ui, 24);
+                } else {
                     ui.add(egui::Label::new(RichText::new(crate::i18n::tr(&self.status)).color(TEXT_DIM).size(12.5)).wrap());
                 }
                 self.screen_access_link(ui);
@@ -5698,6 +5708,12 @@ impl SnagApp {
             }
             "language" => {
                 self.x.lang_open = true;
+            }
+            "deleted" => {
+                // The Undo after a delete, in the status area and the Library (no file is touched).
+                let p = PathBuf::from(&self.settings.library_folder).join("2026-11").join("2026-11-19_10-24-31.png");
+                self.deleted(crate::recycle::Gone::in_bin(&p));
+                self.library_open = true;
             }
             _ => {}
         }

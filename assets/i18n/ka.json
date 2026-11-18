@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ტექსტის გამოსაყოფად გადაათრიეთ მასზე ყუთი. ხაზების დასახატად მარჯვნივ აირჩიეთ თავისუფალი.",
   "Moved {count} captures to the Recycle Bin.": "{count} გადაღება გადატანილია ნაგვის ყუთში.",
   "Moved {count} captures to the Trash.": "{count} გადაღება გადატანილია ნაგავში.",
-  "Brought back {path}.": "{path} აღდგენილია.",
-  "Brought back {count} captures.": "აღდგენილია {count} გადაღება.",
-  "Couldn't bring it back: {error}": "აღდგენა ვერ მოხერხდა: {error}"
+  "Restored {name}.": "{name} აღდგენილია.",
+  "Restored {count} captures.": "აღდგენილია {count} გადაღება.",
+  "Couldn't restore {name}: {error}": "{name} — აღდგენა ვერ მოხერხდა: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "აღდგენილია {count} გადაღება {total}-დან. {name} — აღდგენა ვერ მოხერხდა: {error}",
+  "a new file has taken its name": "მის სახელს ახლა ახალი ფაილი ატარებს",
+  "it isn't in the Recycle Bin any more": "ის აღარ არის ნაგვის ყუთში",
+  "it isn't in the Trash any more": "ის აღარ არის ნაგავში",
+  "this system can't bring files back from the Trash": "ამ სისტემას არ შეუძლია ფაილების ნაგვიდან აღდგენა"
  }
 }

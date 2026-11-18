@@ -18,8 +18,12 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-/// How long the window's Undo shows after the last delete.
-pub const UNDO_FOR: Duration = Duration::from_secs(10);
+/// How long the window's Undo shows after the last delete (it waits longer while the pointer
+/// or the keyboard is on it, or Snagster is in the background: `Pending::keep`). The Mac gets a
+/// little longer, as its review asked.
+pub const UNDO_FOR: Duration = Duration::from_secs(if cfg!(target_os = "macos") { 15 } else { 10 });
+/// After the pointer or keyboard leaves the Undo, it shows at least this much longer.
+pub const KEEP_AFTER: Duration = Duration::from_secs(4);
 /// How long an AI app has to call `undo_delete` (it reads, thinks and answers slower).
 pub const MCP_UNDO_FOR: Duration = Duration::from_secs(120);
 /// The hidden folder, next to the file, where it waits on systems that can't restore.
@@ -60,6 +64,12 @@ pub struct SystemBin;
 
 impl Bin for SystemBin {
     fn delete(&self, path: &Path) -> Result<(), String> {
+        // The Flatpak's own Trash (in its sandbox) is one the person never sees: the desktop's
+        // Trash portal puts it in theirs.
+        #[cfg(target_os = "linux")]
+        if in_flatpak() {
+            return portal_trash(path);
+        }
         trash::delete(path).map_err(|e| e.to_string())
     }
 
@@ -71,14 +81,21 @@ impl Bin for SystemBin {
             .into_iter()
             .filter(|i| i.name == name && same_dir(&i.original_parent, dir))
             .max_by_key(|i| i.time_deleted)
-            .ok_or_else(|| crate::platform::trash_text("it isn't in the Recycle Bin any more", "it isn't in the Trash any more").to_string())?;
+            .ok_or_else(|| crate::i18n::t(crate::platform::trash_text("it isn't in the Recycle Bin any more", "it isn't in the Trash any more")).to_string())?;
         trash::os_limited::restore_all([newest]).map_err(|e| e.to_string())
     }
 
     #[cfg(not(any(windows, all(unix, not(target_os = "macos"), not(target_os = "ios"), not(target_os = "android")))))]
     fn restore(&self, _path: &Path) -> Result<(), String> {
-        Err("this system can't bring files back from the Trash".into())
+        Err(crate::i18n::t("this system can't bring files back from the Trash").into())
     }
+}
+
+/// The desktop's Trash portal (it takes the open file; it can't restore).
+#[cfg(target_os = "linux")]
+fn portal_trash(path: &Path) -> Result<(), String> {
+    let f = std::fs::File::open(path).map_err(|e| e.to_string())?;
+    pollster::block_on(ashpd::desktop::trash::trash_file(&f)).map_err(|e| e.to_string())
 }
 
 /// Whether two folders are the same (Windows ignores case and the `\\?\` prefix).
@@ -105,8 +122,8 @@ pub struct Gone {
 }
 
 impl Gone {
-    /// A file that went to the Recycle Bin (tests).
-    #[cfg(test)]
+    /// A file that went to the Recycle Bin already (tests, and the screenshot view: nothing is
+    /// left to finish).
     pub fn in_bin(path: &Path) -> Gone {
         Gone { path: path.to_path_buf(), meta: None, held: None, reopen: false }
     }
@@ -129,7 +146,12 @@ pub fn remove(path: &Path, meta: Option<Meta>, way: Way, bin: &dyn Bin) -> Resul
         Way::Hold => {
             let (Some(dir), Some(name)) = (path.parent(), path.file_name()) else { return Err("not a file".into()) };
             let hold = dir.join(HOLD_DIR);
-            std::fs::create_dir_all(&hold).map_err(|e| e.to_string())?;
+            if std::fs::create_dir_all(&hold).is_err() {
+                // A folder that can't take another folder: to the Trash at once (Undo then
+                // asks the Trash, which can't always give it back).
+                bin.delete(path)?;
+                return Ok(tidy(path, meta, None));
+            }
             remember_hold_dir(&hold);
             // A file of the same name already waiting (deleted, made again, deleted again).
             let mut to = hold.join(name);
@@ -142,19 +164,24 @@ pub fn remove(path: &Path, meta: Option<Meta>, way: Way, bin: &dyn Bin) -> Resul
             Some(to)
         }
     };
+    Ok(tidy(path, meta, held))
+}
+
+/// After the file went: its tags file (a library capture) and thumbnail go too.
+fn tidy(path: &Path, meta: Option<Meta>, held: Option<PathBuf>) -> Gone {
     if meta.is_some() {
         let _ = std::fs::remove_file(path.with_extension("json"));
     }
     if let (Some(dir), Some(name)) = (path.parent(), path.file_name()) {
         let _ = std::fs::remove_file(dir.join(".thumbs").join(name));
     }
-    Ok(Gone { path: path.to_path_buf(), meta, held, reopen: false })
+    Gone { path: path.to_path_buf(), meta, held, reopen: false }
 }
 
 /// Undo: put the file back where it was, with its tags.
 pub fn bring_back(g: &Gone, bin: &dyn Bin) -> Result<(), String> {
     if g.path.exists() {
-        return Err(format!("there's a new file at {}", g.path.display()));
+        return Err(crate::i18n::t("a new file has taken its name").to_string());
     }
     match &g.held {
         None => bin.restore(&g.path)?,
@@ -258,6 +285,8 @@ fn forget_hold_dir(hold: &Path) {
 pub struct Pending {
     gone: Vec<Gone>,
     until: Option<Instant>,
+    /// Whether Ctrl+Z / ⌘Z still means "undo the delete" (until something else is done).
+    shortcut: bool,
     lasts: Duration,
     bin: Arc<dyn Bin>,
 }
@@ -270,7 +299,7 @@ impl Default for Pending {
 
 impl Pending {
     pub fn new(lasts: Duration, bin: Arc<dyn Bin>) -> Self {
-        Self { gone: Vec::new(), until: None, lasts, bin }
+        Self { gone: Vec::new(), until: None, shortcut: false, lasts, bin }
     }
 
     pub fn bin(&self) -> Arc<dyn Bin> {
@@ -282,6 +311,7 @@ impl Pending {
         let done = self.take_expired(now);
         self.gone.push(g);
         self.until = Some(now + self.lasts);
+        self.shortcut = true;
         done
     }
 
@@ -295,6 +325,27 @@ impl Pending {
         self.showing(now).then(|| self.until.unwrap() - now)
     }
 
+    /// The pointer or keyboard is on the Undo, or Snagster is in the background: it doesn't go
+    /// meanwhile, and shows a little longer after.
+    pub fn keep(&mut self, now: Instant) {
+        if self.showing(now)
+            && let Some(u) = self.until.as_mut()
+        {
+            *u = (*u).max(now + KEEP_AFTER);
+        }
+    }
+
+    /// Something else was done since: Ctrl+Z / ⌘Z undoes that, and only the button undoes the
+    /// delete.
+    pub fn drop_shortcut(&mut self) {
+        self.shortcut = false;
+    }
+
+    /// Whether Ctrl+Z / ⌘Z undoes the delete now.
+    pub fn owns_shortcut(&self, now: Instant) -> bool {
+        self.shortcut && self.showing(now)
+    }
+
     pub fn count(&self) -> usize {
         self.gone.len()
     }
@@ -304,11 +355,18 @@ impl Pending {
         if let [g] = self.gone.as_slice() { Some(g) } else { None }
     }
 
-    /// The Undo's time is up: what it held is to be finished (`finish`), off the window's thread.
+    /// Closed by hand (or its time is up): what it held is to be finished (`finish`), off the
+    /// window's thread.
+    pub fn end_now(&mut self) -> Vec<Gone> {
+        self.until = None;
+        self.shortcut = false;
+        std::mem::take(&mut self.gone)
+    }
+
+    /// The Undo's time is up: what it held, to finish.
     pub fn take_expired(&mut self, now: Instant) -> Vec<Gone> {
         if self.until.is_some_and(|u| now >= u) {
-            self.until = None;
-            return std::mem::take(&mut self.gone);
+            return self.end_now();
         }
         Vec::new()
     }
@@ -318,24 +376,25 @@ impl Pending {
         if !self.showing(now) {
             return Vec::new();
         }
-        self.until = None;
-        std::mem::take(&mut self.gone)
+        self.end_now()
     }
 
-    /// Put the files back now (here, on this thread); the paths that came back, and the errors.
-    pub fn undo_now(&mut self, now: Instant) -> (Vec<PathBuf>, Vec<String>) {
+    /// Put the files back now (here, on this thread); the paths that came back, and for each
+    /// that didn't, its name and why.
+    pub fn undo_now(&mut self, now: Instant) -> (Vec<PathBuf>, Vec<(String, String)>) {
         let bin = self.bin.clone();
         undo_all(self.take_for_undo(now), bin.as_ref())
     }
 }
 
-/// `bring_back` each, newest last delete first; the paths that came back and the errors.
-pub fn undo_all(gone: Vec<Gone>, bin: &dyn Bin) -> (Vec<PathBuf>, Vec<String>) {
+/// `bring_back` each, newest last delete first; the paths that came back, and for each that
+/// didn't, its name and why.
+pub fn undo_all(gone: Vec<Gone>, bin: &dyn Bin) -> (Vec<PathBuf>, Vec<(String, String)>) {
     let (mut back, mut errors) = (Vec::new(), Vec::new());
     for g in gone.into_iter().rev() {
         match bring_back(&g, bin) {
             Ok(()) => back.push(g.path),
-            Err(e) => errors.push(format!("{}: {e}", g.name())),
+            Err(e) => errors.push((g.name(), e)),
         }
     }
     back.reverse();
@@ -502,6 +561,39 @@ pub(crate) mod tests {
             assert_eq!(scanned_tags(&d).len(), 3);
             let _ = std::fs::remove_dir_all(&d);
         }
+    }
+
+    #[test]
+    fn the_undo_waits_while_kept_and_ctrl_z_is_its_own_until_something_else_is_done() {
+        let d = temp("keep");
+        let bin = Arc::new(FolderBin::new(d.join("bin")));
+        let mut pending = Pending::new(UNDO_FOR, bin.clone());
+        let t0 = Instant::now();
+        let (a, _) = capture(&d, "a.png", &[]);
+        pending.add(remove(&a, None, Way::Hold, bin.as_ref()).unwrap(), t0);
+        assert!(pending.owns_shortcut(t0));
+        // Hovered from just before the end until a minute later: still there, and a little after.
+        let mut t = t0 + UNDO_FOR - Duration::from_millis(100);
+        while t < t0 + Duration::from_secs(70) {
+            pending.keep(t);
+            t += Duration::from_millis(500);
+        }
+        let last = t - Duration::from_millis(500);
+        assert!(pending.showing(last + KEEP_AFTER - Duration::from_millis(1)));
+        assert!(!pending.showing(last + KEEP_AFTER));
+        pending.drop_shortcut();
+        assert!(!pending.owns_shortcut(last) && pending.showing(last), "the button still works");
+        // Keeping it after it went doesn't bring it back.
+        let later = last + Duration::from_secs(60);
+        pending.keep(later);
+        assert!(!pending.showing(later));
+        // Closed by hand: finished at once.
+        let mut p2 = Pending::new(UNDO_FOR, bin.clone());
+        let (b, _) = capture(&d, "b.png", &[]);
+        p2.add(remove(&b, None, Way::Hold, bin.as_ref()).unwrap(), t0);
+        assert_eq!(p2.end_now().len(), 1);
+        assert!(!p2.showing(t0) && !p2.owns_shortcut(t0) && p2.undo_now(t0).0.is_empty());
+        let _ = std::fs::remove_dir_all(&d);
     }
 
     #[test]

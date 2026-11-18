@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrossegueu un requadre sobre el text per ressaltar-lo. Trieu a mà alçada a la dreta per dibuixar traços.",
   "Moved {count} captures to the Recycle Bin.": "S'han mogut {count} captures a la Paperera de reciclatge.",
   "Moved {count} captures to the Trash.": "S'han mogut {count} captures a la paperera.",
-  "Brought back {path}.": "S'ha recuperat {path}.",
-  "Brought back {count} captures.": "S'han recuperat {count} captures.",
-  "Couldn't bring it back: {error}": "No s'ha pogut recuperar: {error}"
+  "Restored {name}.": "S'ha restaurat {name}.",
+  "Restored {count} captures.": "S'han restaurat {count} captures.",
+  "Couldn't restore {name}: {error}": "No s'ha pogut restaurar {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "S'han restaurat {count} de {total} captures. No s'ha pogut restaurar {name}: {error}",
+  "a new file has taken its name": "un fitxer nou ja té el seu nom",
+  "it isn't in the Recycle Bin any more": "ja no és a la Paperera de reciclatge",
+  "it isn't in the Trash any more": "ja no és a la paperera",
+  "this system can't bring files back from the Trash": "aquest sistema no pot restaurar fitxers de la paperera"
  }
 }

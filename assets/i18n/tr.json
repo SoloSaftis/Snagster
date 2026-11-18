@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Metni vurgulamak için üzerine bir kutu sürükleyin. Bunun yerine çizgi çizmek için sağdan serbest seçin.",
   "Moved {count} captures to the Recycle Bin.": "{count} yakalama Geri Dönüşüm Kutusu'na taşındı.",
   "Moved {count} captures to the Trash.": "{count} yakalama Çöpe taşındı.",
-  "Brought back {path}.": "{path} geri getirildi.",
-  "Brought back {count} captures.": "{count} yakalama geri getirildi.",
-  "Couldn't bring it back: {error}": "Geri getirilemedi: {error}"
+  "Restored {name}.": "{name} geri yüklendi.",
+  "Restored {count} captures.": "{count} yakalama geri yüklendi.",
+  "Couldn't restore {name}: {error}": "{name} geri yüklenemedi: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} yakalamadan {count} tanesi geri yüklendi. {name} geri yüklenemedi: {error}",
+  "a new file has taken its name": "artık yeni bir dosya aynı adı taşıyor",
+  "it isn't in the Recycle Bin any more": "artık Geri Dönüşüm Kutusu'nda değil",
+  "it isn't in the Trash any more": "artık Çöpte değil",
+  "this system can't bring files back from the Trash": "bu sistem dosyaları Çöpten geri yükleyemiyor"
  }
 }

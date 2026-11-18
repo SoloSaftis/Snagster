@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Mətni vurğulamaq üçün üzərinə qutu çəkin. Əvəzinə xətlər çəkmək üçün sağda sərbəst seçin.",
   "Moved {count} captures to the Recycle Bin.": "{count} çəkiliş Zibil qutusuna köçürüldü.",
   "Moved {count} captures to the Trash.": "{count} çəkiliş Zibil qutusuna köçürüldü.",
-  "Brought back {path}.": "{path} geri qaytarıldı.",
-  "Brought back {count} captures.": "{count} çəkiliş geri qaytarıldı.",
-  "Couldn't bring it back: {error}": "Geri qaytarmaq alınmadı: {error}"
+  "Restored {name}.": "{name} bərpa edildi.",
+  "Restored {count} captures.": "{count} çəkiliş bərpa edildi.",
+  "Couldn't restore {name}: {error}": "{name} bərpa etmək alınmadı: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} çəkilişdən {count} bərpa edildi. {name} bərpa etmək alınmadı: {error}",
+  "a new file has taken its name": "yeni fayl artıq onun adını daşıyır",
+  "it isn't in the Recycle Bin any more": "o artıq Zibil qutusunda deyil",
+  "it isn't in the Trash any more": "o artıq Zibil qutusunda deyil",
+  "this system can't bring files back from the Trash": "bu sistem faylları Zibil qutusundan bərpa edə bilmir"
  }
 }

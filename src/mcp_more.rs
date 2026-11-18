@@ -812,16 +812,17 @@ impl Workspace {
                         crate::recycle::MCP_UNDO_FOR.as_secs()
                     ));
                 };
-                let (back, errors) = deleted.undo_now(now);
+                let (back, failed) = deleted.undo_now(now);
+                let errors: Vec<String> = failed.iter().map(|(n, e)| format!("{n}: {e}")).collect();
                 self.structured = Some(json!({"restored": back, "errors": errors}));
                 let names = back.iter().map(|p| p.display().to_string()).collect::<Vec<_>>().join(", ");
                 if back.is_empty() {
-                    return Err(format!("couldn't bring it back: {}", errors.join("; ")));
+                    return Err(format!("couldn't restore it: {}", errors.join("; ")));
                 }
                 let mut out = vec![text(if errors.is_empty() {
-                    format!("Brought back {names}, with its tags.")
+                    format!("Restored {names}, with its tags.")
                 } else {
-                    format!("Brought back {names}, with its tags. Couldn't bring back: {}", errors.join("; "))
+                    format!("Restored {names}, with its tags. Couldn't restore: {}", errors.join("; "))
                 })];
                 out.extend(back.iter().map(|p| link(p)));
                 Ok(out)
@@ -1658,7 +1659,7 @@ mod tests {
         assert!(library::scan(&lib).is_empty());
         assert_eq!(bin.holds(), 2);
         let r = ws.call("undo_delete", &json!({})).unwrap();
-        assert!(r[0]["text"].as_str().unwrap().starts_with("Brought back"), "{r:?}");
+        assert!(r[0]["text"].as_str().unwrap().starts_with("Restored"), "{r:?}");
         assert_eq!(r.iter().filter(|c| c["type"] == "resource_link").count(), 2);
         let after: Vec<_> = library::scan(&lib).into_iter().map(|i| (i.path, i.meta.title, i.meta.tags)).collect();
         assert_eq!(after, before, "both back, with their titles and tags");

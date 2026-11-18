@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "برای هایلایت کردن متن، یک کادر روی آن بکشید. برای کشیدن خط‌ها، در سمت راست آزاد را انتخاب کنید.",
   "Moved {count} captures to the Recycle Bin.": "{count} ضبط به سطل بازیافت منتقل شد.",
   "Moved {count} captures to the Trash.": "{count} ضبط به زباله‌دان منتقل شد.",
-  "Brought back {path}.": "{path} بازگردانده شد.",
-  "Brought back {count} captures.": "{count} ضبط بازگردانده شد.",
-  "Couldn't bring it back: {error}": "بازگردانی انجام نشد: {error}"
+  "Restored {name}.": "{name} بازیابی شد.",
+  "Restored {count} captures.": "{count} ضبط بازیابی شد.",
+  "Couldn't restore {name}: {error}": "{name} بازیابی نشد: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{count} از {total} ضبط بازیابی شد. {name} بازیابی نشد: {error}",
+  "a new file has taken its name": "اکنون پرونده‌ای جدید همین نام را دارد",
+  "it isn't in the Recycle Bin any more": "دیگر در سطل بازیافت نیست",
+  "it isn't in the Trash any more": "دیگر در زباله‌دان نیست",
+  "this system can't bring files back from the Trash": "این سیستم نمی‌تواند پرونده‌ها را از زباله‌دان بازیابی کند"
  }
 }

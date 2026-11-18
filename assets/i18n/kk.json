@@ -991,8 +991,13 @@
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Мәтінді бөлектеу үшін оның үстінен жәшік сүйреңіз. Сызықтар салу үшін оң жақтан еркін таңдаңыз.",
   "Moved {count} captures to the Recycle Bin.": "{count} түсіру себетке жылжытылды.",
   "Moved {count} captures to the Trash.": "{count} түсіру қоқыс шелегіне жылжытылды.",
-  "Brought back {path}.": "{path} қалпына келтірілді.",
-  "Brought back {count} captures.": "{count} түсіру қалпына келтірілді.",
-  "Couldn't bring it back: {error}": "Қалпына келтіру мүмкін болмады: {error}"
+  "Restored {name}.": "{name} қалпына келтірілді.",
+  "Restored {count} captures.": "{count} түсіру қалпына келтірілді.",
+  "Couldn't restore {name}: {error}": "{name} қалпына келтіру мүмкін болмады: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} түсірудің {count} қалпына келтірілді. {name} қалпына келтіру мүмкін болмады: {error}",
+  "a new file has taken its name": "оның атын енді жаңа файл алды",
+  "it isn't in the Recycle Bin any more": "ол енді себетте жоқ",
+  "it isn't in the Trash any more": "ол енді қоқыс шелегінде жоқ",
+  "this system can't bring files back from the Trash": "бұл жүйе қоқыс шелегінен файлдарды қалпына келтіре алмайды"
  }
 }
