@@ -99,6 +99,7 @@ fn portal_trash(path: &Path) -> Result<(), String> {
 }
 
 /// Whether two folders are the same (Windows ignores case and the `\\?\` prefix).
+#[cfg(any(windows, all(unix, not(target_os = "macos"), not(target_os = "ios"), not(target_os = "android"))))]
 fn same_dir(a: &Path, b: &Path) -> bool {
     let norm = |p: &Path| {
         let p = std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());
