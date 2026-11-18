@@ -2978,7 +2978,7 @@ impl SnagApp {
         if options_button {
             let on = self.x.narrow_options;
             let label = crate::i18n::t("Options panel");
-            let (rect, resp) = ui.allocate_exact_size(vec2(grown(110.0, 64.0), grown(28.0, 12.0)), Sense::click());
+            let (rect, resp) = ui.allocate_exact_size(vec2(grown(110.0, 108.0), grown(28.0, 12.0)), Sense::click());
             let resp = resp.on_hover_text(crate::i18n::t("Colours, sizes and styles on the right"));
             resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
             let bg = if on { accent() } else if resp.hovered() { PANEL_HI } else { Color32::TRANSPARENT };
@@ -2988,7 +2988,8 @@ impl SnagApp {
             p.text(pos2(rect.left() + 16.0, rect.center().y), Align2::CENTER_CENTER, crate::look::ph::SLIDERS, FontId::new(16.0, crate::look::icons()), fg);
             // Long names in some languages get a smaller font so they stay inside the button.
             let w = p.layout_no_wrap(label.to_string(), FontId::proportional(12.0), fg).size().x;
-            let size = if w > 80.0 { (12.0 * 80.0 / w).max(8.0) } else { 12.0 };
+            let room = rect.width() - 38.0;
+            let size = if w > room { (12.0 * room / w).max(9.0) } else { 12.0 };
             p.text(pos2(rect.left() + 30.0, rect.center().y), Align2::LEFT_CENTER, label, FontId::proportional(size), fg);
             if resp.clicked() {
                 self.x.narrow_options = !on;
@@ -3002,7 +3003,7 @@ impl SnagApp {
         egui::Grid::new("tools").spacing(vec2(2.0, 2.0)).show(ui, |ui| {
             let shown: Vec<Tool> = Tool::ALL.into_iter().filter(|t| !self.settings.hidden_tools.iter().any(|h| h == t.label())).collect();
             for (n, t) in shown.into_iter().enumerate() {
-                let (rect, resp) = ui.allocate_exact_size(vec2(grown(54.0, 32.0), grown(44.0, 14.0)), Sense::click());
+                let (rect, resp) = ui.allocate_exact_size(vec2(grown(54.0, 54.0), grown(44.0, 14.0)), Sense::click());
                 let selected = self.tool == t;
                 let bg = if selected {
                     accent()
@@ -3384,7 +3385,8 @@ impl SnagApp {
                 self.earlier.poll(&ctx, folders);
             }
             egui::ScrollArea::horizontal().show(ui, |ui| {
-                ui.horizontal(|ui| {
+                // Top-aligned: a taller tile (Earlier's, with its label) doesn't push the others down.
+                ui.horizontal_top(|ui| {
                     if self.entries.is_empty() && self.earlier.items.is_empty() {
                         ui.label(RichText::new(crate::i18n::t("Your captures show up here.")).color(TEXT_DIM));
                     }
@@ -4332,7 +4334,7 @@ impl SnagApp {
         // options panel folds away behind a button above the tools.
         let narrow = is_narrow(ctx.content_rect().width());
         egui::Panel::left("tools")
-            .exact_size(grown(118.0, 64.0))
+            .exact_size(grown(118.0, 108.0))
             .resizable(false)
             .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(4, 0)))
             .show(ui, |ui| self.tool_bar(ui, narrow && self.settings.show_side_panel));

@@ -530,11 +530,10 @@ impl SnagApp {
     }
 
     /// Draw the panel's outline (the window has no frame of its own while it shows).
-    /// (Windows 11 draws a round border of its own, so the painted outline goes.)
     pub(crate) fn panel_frame() -> egui::Frame {
         let system = SYSTEM_ROUNDS.load(std::sync::atomic::Ordering::Relaxed);
-        let line = if system { Stroke::NONE } else { Stroke::new(1.0, Color32::from_rgb(70, 74, 88)) };
-        egui::Frame::new().fill(PANEL).stroke(line).corner_radius(CornerRadius::same(painted_corner(system)))
+        // The outline stays: over Remote Desktop Windows says yes but draws no border.
+        egui::Frame::new().fill(PANEL).stroke(Stroke::new(1.0, Color32::from_rgb(70, 74, 88))).corner_radius(CornerRadius::same(painted_corner(system)))
     }
 }
 

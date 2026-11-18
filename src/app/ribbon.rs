@@ -211,12 +211,13 @@ impl SnagApp {
         let ctx = ui.ctx().clone();
         // ---- tab row ----
         let tabs_rect = ui.available_rect_before_wrap();
-        ui.painter().rect_filled(Rect::from_min_size(tabs_rect.min, vec2(tabs_rect.width(), 34.0)), CornerRadius::ZERO, look::TABS);
+        let row_h = look::tab_height(ui) + 4.0;
+        ui.painter().rect_filled(Rect::from_min_size(tabs_rect.min, vec2(tabs_rect.width(), row_h)), CornerRadius::ZERO, look::TABS);
         // The buttons at the right end of the tab row, as wide as they were last time.
         let right_id = egui::Id::unique("ribbon-tabs-right");
         let right_w: f32 = ctx.data(|d| d.get_temp(right_id)).unwrap_or(130.0);
         ui.horizontal(|ui| {
-            ui.set_height(34.0);
+            ui.set_height(row_h);
             // The title bar shows Snagster's icon and name, so the tabs start at the edge.
             ui.add_space(6.0);
             // File: a menu, like Word's.
@@ -231,7 +232,9 @@ impl SnagApp {
             let room = ui.available_width() - right_w - gap;
             let current = RibbonTab::ALL.iter().position(|t| *t == self.x.tab).unwrap_or(0);
             let named = format!("{} {}", self.x.tab.name(), ph::CARET_DOWN);
-            let shown = fit::tabs_shown(&widths, current, room, look::tab_width(ui, DOTS) + gap, look::tab_width(ui, &named) + gap);
+            // Words, not just dots: an icon stays small beside big text.
+            let more_tabs = format!("{} {}", t("More"), ph::CARET_DOWN);
+            let shown = fit::tabs_shown(&widths, current, room, look::tab_width(ui, &more_tabs) + gap, look::tab_width(ui, &named) + gap);
             for tab in RibbonTab::ALL.into_iter().take(shown) {
                 let on = self.x.tab == tab && !self.settings.ribbon_folded;
                 if look::tab(ui, tab.name(), tab.tip(), on || (tab == RibbonTab::Studio && self.x.tab == RibbonTab::Studio)).clicked() {
@@ -246,7 +249,7 @@ impl SnagApp {
             if shown < RibbonTab::ALL.len() {
                 // The current tab, when it is one of those in the menu, names the menu.
                 let hidden_current = current >= shown;
-                let label = if hidden_current { named } else { DOTS.to_string() };
+                let label = if hidden_current { named } else { more_tabs.clone() };
                 let more = look::tab(ui, &label, t("More tabs"), hidden_current && !self.settings.ribbon_folded);
                 let mut pick = None;
                 egui::Popup::menu(&more).show(|ui| {

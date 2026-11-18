@@ -229,6 +229,7 @@ impl UiFonts {
     /// Make sure the interface fonts suit `lang` (and include CJK fonts when `cjk`) and the
     /// system's text size, keeping the fonts loaded for text marks. Cheap when nothing changes.
     pub fn ensure_base(&mut self, ctx: &eframe::egui::Context, lang: &str, cjk: bool) {
+        watch_text_scale(ctx);
         self.ensure_base_sized(ctx, lang, cjk, current_text_scale());
     }
 
@@ -367,6 +368,29 @@ fn current_text_scale() -> u32 {
 /// How big interface text is drawn (1.0 normal, up to 2.25), from Windows' Text size setting.
 pub fn text_scale() -> f32 {
     current_text_scale() as f32 / 100.0
+}
+
+/// Redraw when Windows' Text size setting changes while Snagster sits idle (a frame reads it
+/// again). A thread looks every two seconds; nothing where there is no such setting.
+fn watch_text_scale(ctx: &eframe::egui::Context) {
+    static STARTED: OnceLock<()> = OnceLock::new();
+    if !cfg!(windows) {
+        return;
+    }
+    STARTED.get_or_init(|| {
+        let ctx = ctx.clone();
+        let _ = std::thread::Builder::new().name("text-size".into()).spawn(move || {
+            let mut last = sysui::text_scale_setting();
+            loop {
+                std::thread::sleep(std::time::Duration::from_secs(2));
+                let now = sysui::text_scale_setting();
+                if now != last {
+                    last = now;
+                    ctx.request_repaint_after(std::time::Duration::from_millis(2100));
+                }
+            }
+        });
+    });
 }
 
 /// The system's interface font, read once (Windows; None elsewhere, where egui's font stays).

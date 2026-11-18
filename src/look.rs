@@ -292,11 +292,17 @@ pub fn tab_width(ui: &Ui, label: &str) -> f32 {
     ui.painter().layout_no_wrap(label.to_string(), FontId::proportional(13.5), DIM).size().x + 22.0
 }
 
+/// How high `tab` draws a tab: 30, or the text and some room when the text is bigger.
+pub fn tab_height(ui: &Ui) -> f32 {
+    (ui.painter().layout_no_wrap("Hg".into(), FontId::proportional(13.5), DIM).size().y + 8.0).max(30.0)
+}
+
 /// One tab of the tab row.
 pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
     let font = FontId::proportional(13.5);
     let galley = ui.painter().layout_no_wrap(label.to_string(), font, if on { Color32::WHITE } else { DIM });
-    let size = vec2(tab_width(ui, label), 30.0);
+    // 30 high, taller when Windows' bigger text needs it.
+    let size = vec2(tab_width(ui, label), tab_height(ui));
     let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
