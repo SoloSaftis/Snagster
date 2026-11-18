@@ -421,6 +421,7 @@ pub const SETTINGS: &[SettingKey] = &[
     k("audio_source", Kind::Choice(AUDIO), "Sound recorded with videos."),
     k("audio_mic", Kind::Text, "The microphone's id from list_audio_devices (\"\" the default)."),
     k("language", Kind::Text, "The interface language code (\"\" the computer's); set_language checks it."),
+    k("appearance", Kind::Choice(&["System", "Light", "Dark"]), "Light or dark: follow the system (System), or always Light or Dark. A high-contrast theme on the system wins."),
     ko("update_check", Kind::Bool, "Ask GitHub for a newer Snagster now and then (uses the network)."),
     SettingKey { key: "update_checked_at", kind: Kind::Int(0, i64::MAX), who: Who::Internal, help: "When updates were last checked (Snagster keeps it)." },
     k("update_skip", Kind::Text, "A version the person chose to skip."),

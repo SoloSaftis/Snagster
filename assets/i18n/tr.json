@@ -988,6 +988,12 @@
   "Recording saved": "Kayıt kaydedildi",
   "box": "kutu",
   "freehand": "serbest",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Metni vurgulamak için üzerine bir kutu sürükleyin. Bunun yerine çizgi çizmek için sağdan serbest seçin."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Metni vurgulamak için üzerine bir kutu sürükleyin. Bunun yerine çizgi çizmek için sağdan serbest seçin.",
+  "Appearance": "Görünüm",
+  "Follow system": "Sistemi izle",
+  "Light": "Açık",
+  "Dark": "Koyu",
+  "A contrast theme is on, so Snagster uses its colours.": "Bir karşıtlık teması açık, bu yüzden Snagster onun renklerini kullanıyor.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistem daha yüksek karşıtlık istiyor, bu yüzden metin ve kenarlıklar daha belirgin."
  }
 }

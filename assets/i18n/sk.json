@@ -988,6 +988,12 @@
   "Recording saved": "Nahrávka uložená",
   "box": "rámček",
   "freehand": "voľnou rukou",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Potiahnutím rámčeka cez text ho zvýrazníte. Ak chcete kresliť ťahy, vyberte vpravo voľnou rukou."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Potiahnutím rámčeka cez text ho zvýrazníte. Ak chcete kresliť ťahy, vyberte vpravo voľnou rukou.",
+  "Appearance": "Vzhľad",
+  "Follow system": "Podľa systému",
+  "Light": "Svetlý",
+  "Dark": "Tmavý",
+  "A contrast theme is on, so Snagster uses its colours.": "Je zapnutá kontrastná téma, takže Snagster používa jej farby.",
+  "The system asks for more contrast, so text and borders are stronger.": "Systém požaduje vyšší kontrast, preto sú text a okraje výraznejšie."
  }
 }

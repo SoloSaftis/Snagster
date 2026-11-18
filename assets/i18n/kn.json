@@ -988,6 +988,12 @@
   "Recording saved": "ರೆಕಾರ್ಡಿಂಗ್ ಉಳಿಸಲಾಗಿದೆ",
   "box": "ಬಾಕ್ಸ್",
   "freehand": "ಫ್ರೀಹ್ಯಾಂಡ್",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ಪಠ್ಯವನ್ನು ಹೈಲೈಟ್ ಮಾಡಲು ಅದರ ಮೇಲೆ ಬಾಕ್ಸ್ ಎಳೆಯಿರಿ. ಬದಲಿಗೆ ಗೆರೆಗಳನ್ನು ಬರೆಯಲು ಬಲಭಾಗದಲ್ಲಿ ಫ್ರೀಹ್ಯಾಂಡ್ ಆಯ್ಕೆಮಾಡಿ."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ಪಠ್ಯವನ್ನು ಹೈಲೈಟ್ ಮಾಡಲು ಅದರ ಮೇಲೆ ಬಾಕ್ಸ್ ಎಳೆಯಿರಿ. ಬದಲಿಗೆ ಗೆರೆಗಳನ್ನು ಬರೆಯಲು ಬಲಭಾಗದಲ್ಲಿ ಫ್ರೀಹ್ಯಾಂಡ್ ಆಯ್ಕೆಮಾಡಿ.",
+  "Appearance": "ಗೋಚರತೆ",
+  "Follow system": "ಸಿಸ್ಟಂ ಅನುಸರಿಸಿ",
+  "Light": "ಬೆಳಕು",
+  "Dark": "ಗಾಢ",
+  "A contrast theme is on, so Snagster uses its colours.": "ಕಾಂಟ್ರಾಸ್ಟ್ ಥೀಮ್ ಆನ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ Snagster ಅದರ ಬಣ್ಣಗಳನ್ನು ಬಳಸುತ್ತದೆ.",
+  "The system asks for more contrast, so text and borders are stronger.": "ಸಿಸ್ಟಂ ಹೆಚ್ಚಿನ ಕಾಂಟ್ರಾಸ್ಟ್ ಕೇಳುತ್ತದೆ, ಆದ್ದರಿಂದ ಪಠ್ಯ ಮತ್ತು ಅಂಚುಗಳು ಹೆಚ್ಚು ಸ್ಪಷ್ಟವಾಗಿವೆ."
  }
 }

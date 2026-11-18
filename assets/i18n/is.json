@@ -988,6 +988,12 @@
   "Recording saved": "Upptaka vistuð",
   "box": "kassi",
   "freehand": "frjáls hönd",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dragðu kassa yfir texta til að auðkenna hann. Veldu frjáls hönd til hægri til að teikna strik."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dragðu kassa yfir texta til að auðkenna hann. Veldu frjáls hönd til hægri til að teikna strik.",
+  "Appearance": "Útlit",
+  "Follow system": "Fylgja kerfinu",
+  "Light": "Ljóst",
+  "Dark": "Dökkt",
+  "A contrast theme is on, so Snagster uses its colours.": "Kveikt er á birtuskilaþema, þannig að Snagster notar liti þess.",
+  "The system asks for more contrast, so text and borders are stronger.": "Kerfið biður um meiri birtuskil, þannig að texti og rammar eru skýrari."
  }
 }

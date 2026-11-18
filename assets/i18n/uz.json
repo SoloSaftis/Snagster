@@ -988,6 +988,12 @@
   "Recording saved": "Yozuv saqlandi",
   "box": "quti",
   "freehand": "erkin",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Matnni ajratib ko'rsatish uchun uning ustiga quti torting. Chiziqlar chizish uchun o'ngda erkin tanlang."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Matnni ajratib ko'rsatish uchun uning ustiga quti torting. Chiziqlar chizish uchun o'ngda erkin tanlang.",
+  "Appearance": "Ko'rinish",
+  "Follow system": "Tizimga amal qilish",
+  "Light": "Yorug'",
+  "Dark": "Qorong'i",
+  "A contrast theme is on, so Snagster uses its colours.": "Kontrast mavzusi yoqilgan, shuning uchun Snagster uning ranglaridan foydalanadi.",
+  "The system asks for more contrast, so text and borders are stronger.": "Tizim yuqoriroq kontrast so'ramoqda, shuning uchun matn va chegaralar kuchliroq."
  }
 }

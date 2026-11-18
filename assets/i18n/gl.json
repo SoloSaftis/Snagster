@@ -988,6 +988,12 @@
   "Recording saved": "Gravación gardada",
   "box": "caixa",
   "freehand": "a man alzada",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastra unha caixa sobre o texto para realzalo. Escolle a man alzada á dereita para debuxar trazos."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastra unha caixa sobre o texto para realzalo. Escolle a man alzada á dereita para debuxar trazos.",
+  "Appearance": "Aparencia",
+  "Follow system": "Seguir o sistema",
+  "Light": "Claro",
+  "Dark": "Escuro",
+  "A contrast theme is on, so Snagster uses its colours.": "Hai un tema de contraste activado, así que Snagster usa as súas cores.",
+  "The system asks for more contrast, so text and borders are stronger.": "O sistema pide máis contraste, así que o texto e os bordos son máis marcados."
  }
 }

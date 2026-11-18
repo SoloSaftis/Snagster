@@ -988,6 +988,12 @@
   "Recording saved": "録画を保存しました",
   "box": "四角",
   "freehand": "フリーハンド",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "文字の上にドラッグして四角で囲み、ハイライトします。右の「フリーハンド」を選ぶと、代わりに線を描けます。"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "文字の上にドラッグして四角で囲み、ハイライトします。右の「フリーハンド」を選ぶと、代わりに線を描けます。",
+  "Appearance": "外観",
+  "Follow system": "システムに従う",
+  "Light": "ライト",
+  "Dark": "ダーク",
+  "A contrast theme is on, so Snagster uses its colours.": "コントラストテーマがオンのため、Snagster はそのテーマの色を使用します。",
+  "The system asks for more contrast, so text and borders are stronger.": "システムがより高いコントラストを求めているため、テキストと枠線が強調されます。"
  }
 }

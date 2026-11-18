@@ -988,6 +988,12 @@
   "Recording saved": "Recordiad wedi'i chadw",
   "box": "blwch",
   "freehand": "llawrydd",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Llusgwch flwch dros destun i'w amlygu. Dewiswch llawrydd ar y dde i dynnu llinellau yn lle hynny."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Llusgwch flwch dros destun i'w amlygu. Dewiswch llawrydd ar y dde i dynnu llinellau yn lle hynny.",
+  "Appearance": "Edrychiad",
+  "Follow system": "Dilyn y system",
+  "Light": "Golau",
+  "Dark": "Tywyll",
+  "A contrast theme is on, so Snagster uses its colours.": "Mae thema cyferbyniad ymlaen, felly mae Snagster yn defnyddio ei lliwiau.",
+  "The system asks for more contrast, so text and borders are stronger.": "Mae'r system yn gofyn am fwy o gyferbyniad, felly mae testun ac ymylon yn gryfach."
  }
 }

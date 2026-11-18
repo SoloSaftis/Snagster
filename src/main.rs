@@ -31,6 +31,7 @@ mod settings;
 mod video;
 mod i18n;
 mod look;
+mod theme;
 mod platform;
 mod audio;
 mod studio;
@@ -164,7 +165,8 @@ fn main() -> eframe::Result {
         if a == "--screenshot" {
             screenshot = args.next().map(PathBuf::from);
         } else if a == "--view" {
-            // What --screenshot shows: studio, settings-ai, language, record, or lang:<code>.
+            // What --screenshot shows: studio, settings-ai, settings-editor, library, language,
+            // record, or lang:<code>; light:<view> or dark:<view> in that palette.
             if let (Some(v), Ok(mut slot)) = (args.next(), app::SCREENSHOT_VIEW.lock()) {
                 *slot = v;
             }
@@ -452,8 +454,9 @@ fn main() -> eframe::Result {
     // Linux: say which app this is to the desktop's portal first (hotkeys, accent colour...).
     #[cfg(target_os = "linux")]
     portal::register_app();
-    // The desktop's accent colour (Linux), before the first frame is drawn with it.
-    look::read_system_accent();
+    // The desktop's colour scheme, contrast and accent colour (Linux portal), before the first
+    // frame is drawn with them; then followed while Snagster runs.
+    theme::start();
     // Direct3D first on Windows, OpenGL when it can't start (see drawing.rs). A renderer that
     // fails before the window opens is noted in crash.log and the next one is tried; a failure
     // after the window was open is passed on as before.

@@ -988,6 +988,12 @@
   "Recording saved": "Qeyd saxlanıldı",
   "box": "qutu",
   "freehand": "sərbəst",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Mətni vurğulamaq üçün üzərinə qutu çəkin. Əvəzinə xətlər çəkmək üçün sağda sərbəst seçin."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Mətni vurğulamaq üçün üzərinə qutu çəkin. Əvəzinə xətlər çəkmək üçün sağda sərbəst seçin.",
+  "Appearance": "Görünüş",
+  "Follow system": "Sistemi izləyin",
+  "Light": "Açıq",
+  "Dark": "Tünd",
+  "A contrast theme is on, so Snagster uses its colours.": "Kontrast mövzusu aktivdir, ona görə Snagster onun rənglərindən istifadə edir.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistem daha çox kontrast istəyir, ona görə mətn və haşiyələr daha qüvvətlidir."
  }
 }

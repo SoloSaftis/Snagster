@@ -988,6 +988,12 @@
   "Recording saved": "రికార్డింగ్ సేవ్ అయింది",
   "box": "బాక్స్",
   "freehand": "ఫ్రీహ్యాండ్",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "వచనాన్ని హైలైట్ చేయడానికి దానిపై బాక్స్ లాగండి. బదులుగా గీతలు గీయడానికి కుడివైపు ఫ్రీహ్యాండ్ ఎంచుకోండి."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "వచనాన్ని హైలైట్ చేయడానికి దానిపై బాక్స్ లాగండి. బదులుగా గీతలు గీయడానికి కుడివైపు ఫ్రీహ్యాండ్ ఎంచుకోండి.",
+  "Appearance": "రూపం",
+  "Follow system": "సిస్టమ్‌ను అనుసరించండి",
+  "Light": "లైట్",
+  "Dark": "డార్క్",
+  "A contrast theme is on, so Snagster uses its colours.": "కాంట్రాస్ట్ థీమ్ ఆన్‌లో ఉంది, కాబట్టి Snagster దాని రంగులను ఉపయోగిస్తుంది.",
+  "The system asks for more contrast, so text and borders are stronger.": "సిస్టమ్ ఎక్కువ కాంట్రాస్ట్ కోరుతోంది, కాబట్టి వచనం మరియు అంచులు మరింత స్పష్టంగా ఉన్నాయి."
  }
 }

@@ -20,16 +20,12 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-const ACCENT_DEFAULT: Color32 = Color32::from_rgb(79, 124, 255);
+pub use crate::theme::pal;
 
-/// The accent colour: the desktop's where it has one (`look::accent`), else Snagster's blue.
+/// The accent colour of the palette in use (see `theme`).
 pub fn accent() -> Color32 {
-    crate::look::system_accent().unwrap_or(ACCENT_DEFAULT)
+    pal().accent
 }
-pub const BG_DARK: Color32 = Color32::from_rgb(24, 25, 30);
-pub const PANEL: Color32 = Color32::from_rgb(33, 35, 42);
-pub const PANEL_HI: Color32 = Color32::from_rgb(46, 49, 59);
-pub const TEXT_DIM: Color32 = Color32::from_rgb(150, 155, 170);
 
 const UNDO_LIMIT: usize = 100;
 const SCREENSHOT_FRAMES: u32 = 120;
@@ -518,9 +514,9 @@ pub struct SnagApp {
 
 impl SnagApp {
     pub fn new(cc: &eframe::CreationContext<'_>, screenshot: Option<PathBuf>, open: Option<PathBuf>) -> Self {
-        setup_style(&cc.egui_ctx);
         let check_run = screenshot.is_some() || UI_TEST.load(Ordering::Relaxed);
         let settings = Settings::load(check_run);
+        setup_style(&cc.egui_ctx, settings.appearance);
         fonts::start_scan(cc.egui_ctx.clone());
         crate::instance::set_wake(&cc.egui_ctx);
         // Check runs (button test, README pictures) keep every box inside the one window they look at.
@@ -2406,7 +2402,7 @@ impl SnagApp {
         }
         ui.menu_button(crate::i18n::t("Open recent"), |ui| {
             if self.settings.recent_files.is_empty() {
-                ui.label(RichText::new(crate::i18n::t("Nothing opened or saved yet")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Nothing opened or saved yet")).color(pal().dim));
             }
             let mut open = None;
             for f in &self.settings.recent_files {
@@ -2458,7 +2454,7 @@ impl SnagApp {
             self.quick_save();
         }
         ui.menu_button(crate::i18n::t("Export guide"), |ui| {
-            ui.label(RichText::new(crate::i18n::t("From recorded steps, or all of Recent")).color(TEXT_DIM));
+            ui.label(RichText::new(crate::i18n::t("From recorded steps, or all of Recent")).color(pal().dim));
             ui.horizontal(|ui| {
                 ui.label(crate::i18n::t("Title"));
                 ui.text_edit_singleline(&mut self.guide_title);
@@ -2914,10 +2910,10 @@ impl SnagApp {
             self.open_folder(&p);
         }
         ui.separator();
-        ui.label(RichText::new(crate::i18n::t("Cloud folders (point the library or save folder here to sync):")).color(TEXT_DIM));
+        ui.label(RichText::new(crate::i18n::t("Cloud folders (point the library or save folder here to sync):")).color(pal().dim));
         let clouds = crate::settings::cloud_folders_now(Some(ui.ctx()));
         if clouds.is_empty() {
-            ui.label(RichText::new(crate::i18n::t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(TEXT_DIM));
+            ui.label(RichText::new(crate::i18n::t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(pal().dim));
         }
         for (name, p) in clouds {
             if item_on(ui, has, &format!("Save to {name}"), "")
@@ -2978,12 +2974,12 @@ impl SnagApp {
                 let bg = if selected {
                     accent()
                 } else if resp.hovered() {
-                    PANEL_HI
+                    pal().panel_hi
                 } else {
                     Color32::TRANSPARENT
                 };
                 ui.painter().rect_filled(rect.shrink(1.0), CornerRadius::same(8), bg);
-                let fg = if selected { Color32::WHITE } else { Color32::from_rgb(210, 214, 225) };
+                let fg = if selected { pal().on_accent } else { pal().text };
                 let icon = Rect::from_center_size(rect.center() - vec2(0.0, 7.0), vec2(20.0, 20.0));
                 tool_icon(ui.painter(), icon, t, fg, self.color());
                 // Long names in some languages get a smaller font so they stay inside the button.
@@ -3020,9 +3016,9 @@ impl SnagApp {
                     let (rect, resp) = ui.allocate_exact_size(vec2(36.0, 26.0), Sense::click());
                     ui.painter().rect_filled(rect, CornerRadius::same(6), c);
                     if c == cur {
-                        ui.painter().rect_stroke(rect.expand(2.0), CornerRadius::same(8), Stroke::new(2.0, Color32::WHITE), StrokeKind::Outside);
+                        ui.painter().rect_stroke(rect.expand(2.0), CornerRadius::same(8), Stroke::new(2.0, pal().strong), StrokeKind::Outside);
                     } else if resp.hovered() {
-                        ui.painter().rect_stroke(rect, CornerRadius::same(6), Stroke::new(1.0, TEXT_DIM), StrokeKind::Outside);
+                        ui.painter().rect_stroke(rect, CornerRadius::same(6), Stroke::new(1.0, pal().dim), StrokeKind::Outside);
                     }
                     if resp.clicked() {
                         chosen = Some(c);
@@ -3047,13 +3043,13 @@ impl SnagApp {
                 if egui::color_picker::color_edit_button_srgba(ui, &mut c, egui::color_picker::Alpha::Opaque).changed() {
                     chosen = Some(c);
                 }
-                ui.label(RichText::new(format!("#{:02X}{:02X}{:02X}", cur.r(), cur.g(), cur.b())).color(TEXT_DIM));
+                ui.label(RichText::new(format!("#{:02X}{:02X}{:02X}", cur.r(), cur.g(), cur.b())).color(pal().dim));
             });
             if let Some(c) = chosen {
                 self.set_color(c);
             }
             ui.horizontal(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Theme")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Theme")).color(pal().dim));
                 let mut apply = None;
                 egui::ComboBox::from_id_salt("theme").width(120.0).selected_text("Choose…").show_ui(ui, |ui| {
                     for (i, t) in self.settings.themes.iter().enumerate() {
@@ -3085,7 +3081,7 @@ impl SnagApp {
                 ui.checkbox(&mut self.settings.fill, crate::i18n::t("Fill boxes and ovals"));
             }
             if t == Tool::Rect {
-                ui.label(RichText::new(crate::i18n::t("Rounded corners")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Rounded corners")).color(pal().dim));
                 ui.add(egui::Slider::new(&mut self.settings.corner_radius, 0.0..=60.0).step_by(1.0).suffix(" px"));
             }
             if matches!(t, Tool::Text | Tool::Callout | Tool::Select) {
@@ -3093,19 +3089,19 @@ impl SnagApp {
                 if t == Tool::Text {
                     ui.checkbox(&mut self.settings.text_background, crate::i18n::t("Text on a colored box"));
                 }
-                ui.label(RichText::new(format!("Text size {:.0} px", doc::text_size(self.settings.width))).color(TEXT_DIM));
+                ui.label(RichText::new(format!("Text size {:.0} px", doc::text_size(self.settings.width))).color(pal().dim));
             }
             if t == Tool::Blur {
-                ui.label(RichText::new(crate::i18n::t("Pixel block size")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Pixel block size")).color(pal().dim));
                 ui.add(egui::Slider::new(&mut self.settings.blur_block, 4..=48).suffix(" px"));
             }
             if t == Tool::Magnify {
-                ui.label(RichText::new(crate::i18n::t("Magnification")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Magnification")).color(pal().dim));
                 ui.add(egui::Slider::new(&mut self.settings.magnify_zoom, 1.5..=6.0).suffix(" x"));
             }
             if t == Tool::Step {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(crate::i18n::t("Style")).color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("Style")).color(pal().dim));
                     egui::ComboBox::from_id_salt("stepstyle").selected_text(self.settings.step_style.label()).show_ui(ui, |ui| {
                         for s in crate::settings::StepStyle::ALL {
                             ui.selectable_value(&mut self.settings.step_style, s, s.label());
@@ -3113,12 +3109,12 @@ impl SnagApp {
                     });
                 });
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(crate::i18n::t("First")).color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("First")).color(pal().dim));
                     ui.add(egui::DragValue::new(&mut self.settings.step_start).range(1..=999));
                 });
                 if let Some(i) = self.current {
                     let n = self.entries[i].doc.next_step(self.settings.step_start);
-                    ui.label(RichText::new(format!("Next: {}", self.settings.step_style.format(n))).color(TEXT_DIM));
+                    ui.label(RichText::new(format!("Next: {}", self.settings.step_style.format(n))).color(pal().dim));
                 }
             }
             if t == Tool::Stamp {
@@ -3129,7 +3125,7 @@ impl SnagApp {
             if self.selected.is_some() {
                 ui.add_space(10.0);
                 section(ui, crate::i18n::t("Selected mark"));
-                ui.label(RichText::new(crate::i18n::t("Pick a color to recolor it. [ and ] change its size.")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Pick a color to recolor it. [ and ] change its size.")).color(pal().dim));
                 ui.horizontal(|ui| {
                     if ui.button(crate::i18n::t("Smaller")).clicked() {
                         self.scale_selected(1.0 / 1.15);
@@ -3161,19 +3157,19 @@ impl SnagApp {
                 }
             });
             let ppp = ui.ctx().pixels_per_point();
-            ui.label(RichText::new(format!("Zoom {:.0}%", self.last_scale * ppp * 100.0)).color(TEXT_DIM));
+            ui.label(RichText::new(format!("Zoom {:.0}%", self.last_scale * ppp * 100.0)).color(pal().dim));
             if let Some(i) = self.current {
                 let d = &self.entries[i].doc;
-                ui.label(RichText::new(format!("{} x {} pixels, {} marks", d.image.width(), d.image.height(), d.shapes.len())).color(TEXT_DIM));
+                ui.label(RichText::new(format!("{} x {} pixels, {} marks", d.image.width(), d.image.height(), d.shapes.len())).color(pal().dim));
             }
             ui.add_space(10.0);
-            ui.label(RichText::new(crate::i18n::t(self.tool.label())).strong().color(Color32::WHITE));
-            ui.add(egui::Label::new(RichText::new(crate::i18n::t(self.tool.hint())).color(TEXT_DIM).size(12.5)).wrap());
+            ui.label(RichText::new(crate::i18n::t(self.tool.label())).strong().color(pal().strong));
+            ui.add(egui::Label::new(RichText::new(crate::i18n::t(self.tool.hint())).color(pal().dim).size(12.5)).wrap());
         });
     }
 
     fn font_picker(&mut self, ui: &mut egui::Ui) {
-        ui.label(RichText::new(crate::i18n::t("Font")).color(TEXT_DIM));
+        ui.label(RichText::new(crate::i18n::t("Font")).color(pal().dim));
         let shown = if self.settings.font.is_empty() { "Default".to_string() } else { self.settings.font.clone() };
         let families = fonts::families();
         let mut chosen: Option<String> = None;
@@ -3184,7 +3180,7 @@ impl SnagApp {
             }
             match &families {
                 None => {
-                    ui.label(RichText::new(crate::i18n::t("Reading the installed fonts…")).color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("Reading the installed fonts…")).color(pal().dim));
                 }
                 Some(list) => {
                     let q = self.font_query.to_lowercase();
@@ -3199,7 +3195,7 @@ impl SnagApp {
             }
         });
         if let Some(n) = &families {
-            ui.label(RichText::new(format!("{} fonts installed", n.len())).color(TEXT_DIM).size(11.5));
+            ui.label(RichText::new(format!("{} fonts installed", n.len())).color(pal().dim).size(11.5));
         }
         ui.horizontal(|ui| {
             ui.toggle_value(&mut self.bold, RichText::new("B").strong());
@@ -3232,7 +3228,7 @@ impl SnagApp {
             } else {
                 format!("{} emojis (black and white)", ef.count())
             })
-            .color(TEXT_DIM),
+            .color(pal().dim),
         );
         let groups: Vec<&str> = ef.groups.iter().map(|g| g.0).collect();
         let gi = self.stamp_group.min(groups.len().saturating_sub(1));
@@ -3259,13 +3255,13 @@ impl SnagApp {
                     } else if self.stamp_ready(*ch, 32) || budget.allow() {
                         self.stamp_texture(&ctx, *ch, 32, [40, 40, 40, 255])
                     } else {
-                        ui.painter().rect_filled(rect.shrink(6.0), CornerRadius::same(4), PANEL_HI);
+                        ui.painter().rect_filled(rect.shrink(6.0), CornerRadius::same(4), pal().panel_hi);
                         None
                     };
                     if self.stamp.starts_with(*ch) {
                         ui.painter().rect_filled(rect, CornerRadius::same(4), accent());
                     } else if resp.hovered() {
-                        ui.painter().rect_filled(rect, CornerRadius::same(4), PANEL_HI);
+                        ui.painter().rect_filled(rect, CornerRadius::same(4), pal().panel_hi);
                     }
                     if let Some(t) = tex {
                         ui.painter().image(t, rect.shrink(3.0), Rect::from_min_max(Pos2::ZERO, pos2(1.0, 1.0)), Color32::WHITE);
@@ -3316,14 +3312,14 @@ impl SnagApp {
                 ui.set_width(250.0);
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(crate::i18n::t("Recent")).strong().color(Color32::WHITE));
+                    ui.label(RichText::new(crate::i18n::t("Recent")).strong().color(pal().strong));
                     let snap = self.x.stream.snap.clone();
                     if snap.on_air() && stream_ui::live_badge(ui, &snap).clicked() {
                         let ctx = ui.ctx().clone();
                         self.switch_tab(&ctx, ribbon::RibbonTab::Stream);
                     }
                 });
-                ui.add(egui::Label::new(RichText::new(crate::i18n::tr(&self.status)).color(TEXT_DIM).size(12.5)).wrap());
+                ui.add(egui::Label::new(RichText::new(crate::i18n::tr(&self.status)).color(pal().dim).size(12.5)).wrap());
                 self.screen_access_link(ui);
             });
             ui.separator();
@@ -3342,7 +3338,7 @@ impl SnagApp {
             egui::ScrollArea::horizontal().show(ui, |ui| {
                 ui.horizontal(|ui| {
                     if self.entries.is_empty() && self.earlier.items.is_empty() {
-                        ui.label(RichText::new(crate::i18n::t("Your captures show up here.")).color(TEXT_DIM));
+                        ui.label(RichText::new(crate::i18n::t("Your captures show up here.")).color(pal().dim));
                     }
                     for i in (0..self.entries.len()).rev() {
                         let (rect, resp) = ui.allocate_exact_size(vec2(124.0, 84.0), Sense::click());
@@ -3359,7 +3355,7 @@ impl SnagApp {
                         let shapes = std::mem::take(&mut self.entries[i].doc.shapes);
                         let pc = self.prepare_paint(&ctx, &shapes, s, Some((tex, size)));
                         let p = ui.painter();
-                        p.rect_filled(rect, CornerRadius::same(8), if is_cur { PANEL_HI } else { BG_DARK });
+                        p.rect_filled(rect, CornerRadius::same(8), if is_cur { pal().panel_hi } else { pal().bg });
                         p.image(tex, thumb, Rect::from_min_max(Pos2::ZERO, pos2(1.0, 1.0)), Color32::WHITE);
                         let to = |q: Pos2| pos2(thumb.min.x + q.x * s, thumb.min.y + q.y * s);
                         for sh in &shapes {
@@ -3369,10 +3365,10 @@ impl SnagApp {
                         if is_cur {
                             p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(2.0, accent()), StrokeKind::Inside);
                         } else if resp.hovered() {
-                            p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, TEXT_DIM), StrokeKind::Inside);
+                            p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, pal().dim), StrokeKind::Inside);
                         }
                         let name: String = self.entries[i].name.chars().take(18).collect();
-                        p.text(pos2(rect.center().x, rect.bottom() - 10.0), Align2::CENTER_CENTER, name, FontId::proportional(11.5), Color32::from_rgb(210, 214, 225));
+                        p.text(pos2(rect.center().x, rect.bottom() - 10.0), Align2::CENTER_CENTER, name, FontId::proportional(11.5), pal().card_text);
                         if resp.clicked() {
                             switch = Some(i);
                         }
@@ -3424,7 +3420,7 @@ impl SnagApp {
             return None;
         }
         ui.separator();
-        ui.label(RichText::new(crate::i18n::t("Earlier")).color(TEXT_DIM).size(12.0));
+        ui.label(RichText::new(crate::i18n::t("Earlier")).color(pal().dim).size(12.0));
         let mut pick = None;
         for it in items {
             let (rect, resp) = ui.allocate_exact_size(vec2(124.0, 84.0), Sense::click());
@@ -3432,7 +3428,7 @@ impl SnagApp {
                 continue;
             }
             let p = ui.painter();
-            p.rect_filled(rect, CornerRadius::same(8), BG_DARK);
+            p.rect_filled(rect, CornerRadius::same(8), pal().bg);
             let area = Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(116.0, 58.0));
             match self.earlier.thumbs.get(&it.path) {
                 Some(tex) => {
@@ -3442,18 +3438,18 @@ impl SnagApp {
                 }
                 None => {
                     let icon = if it.video { crate::look::ph::FILM_STRIP } else { crate::look::ph::IMAGE };
-                    p.text(area.center(), Align2::CENTER_CENTER, icon, FontId::new(26.0, crate::look::icons()), TEXT_DIM);
+                    p.text(area.center(), Align2::CENTER_CENTER, icon, FontId::new(26.0, crate::look::icons()), pal().dim);
                 }
             }
             if it.video {
                 let ext = it.path.extension().map(|e| e.to_string_lossy().to_uppercase()).unwrap_or_default();
-                p.text(area.right_top() + vec2(-4.0, 4.0), Align2::RIGHT_TOP, ext, FontId::proportional(10.5), Color32::from_rgb(240, 200, 120));
+                p.text(area.right_top() + vec2(-4.0, 4.0), Align2::RIGHT_TOP, ext, FontId::proportional(10.5), pal().warn);
             }
             if resp.hovered() {
-                p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, TEXT_DIM), StrokeKind::Inside);
+                p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, pal().dim), StrokeKind::Inside);
             }
             let name: String = it.name().chars().take(18).collect();
-            p.text(pos2(rect.center().x, rect.bottom() - 10.0), Align2::CENTER_CENTER, name, FontId::proportional(11.5), Color32::from_rgb(170, 175, 190));
+            p.text(pos2(rect.center().x, rect.bottom() - 10.0), Align2::CENTER_CENTER, name, FontId::proportional(11.5), pal().dim);
             let tip = if it.video { crate::i18n::t("Play this video") } else { crate::i18n::t("Open this picture") };
             let resp = resp.on_hover_text(format!("{tip}\n{}", it.path.display()));
             if resp.clicked() {
@@ -3476,8 +3472,8 @@ impl SnagApp {
         let top = area.center().y - 180.0;
         let p = ui.painter();
         logo_at(p, pos2(area.center().x, top), 64.0);
-        p.text(pos2(area.center().x, top + 62.0), Align2::CENTER_CENTER, "Snagster", FontId::proportional(40.0), Color32::WHITE);
-        p.text(pos2(area.center().x, top + 100.0), Align2::CENTER_CENTER, "Capture your screen, mark it up, share it.", FontId::proportional(17.0), TEXT_DIM);
+        p.text(pos2(area.center().x, top + 62.0), Align2::CENTER_CENTER, "Snagster", FontId::proportional(40.0), pal().strong);
+        p.text(pos2(area.center().x, top + 100.0), Align2::CENTER_CENTER, "Capture your screen, mark it up, share it.", FontId::proportional(17.0), pal().dim);
         let ctx = ui.ctx().clone();
         for k in 0..4usize {
             let (title, sub) = [
@@ -3490,7 +3486,7 @@ impl SnagApp {
             let rect = Rect::from_min_size(pos2(x, top + 140.0), vec2(card_w, 120.0));
             let resp = ui.interact(rect, ui.scope_id().with(("card", k)), Sense::click());
             let p = ui.painter();
-            p.rect_filled(rect, CornerRadius::same(14), if resp.hovered() { PANEL_HI } else { PANEL });
+            p.rect_filled(rect, CornerRadius::same(14), if resp.hovered() { pal().panel_hi } else { pal().panel });
             if k == 0 {
                 p.rect_stroke(rect, CornerRadius::same(14), Stroke::new(2.0, accent()), StrokeKind::Inside);
             }
@@ -3507,8 +3503,8 @@ impl SnagApp {
                 }
                 _ => folder_icon(p, icon, accent()),
             }
-            p.text(rect.center() + vec2(0.0, 16.0), Align2::CENTER_CENTER, title, FontId::proportional(16.0), Color32::WHITE);
-            p.text(rect.center() + vec2(0.0, 38.0), Align2::CENTER_CENTER, sub, FontId::proportional(12.5), TEXT_DIM);
+            p.text(rect.center() + vec2(0.0, 16.0), Align2::CENTER_CENTER, title, FontId::proportional(16.0), pal().strong);
+            p.text(rect.center() + vec2(0.0, 38.0), Align2::CENTER_CENTER, sub, FontId::proportional(12.5), pal().dim);
             if resp.clicked() {
                 match k {
                     0 => self.do_action(&ctx, Action::AllInOne),
@@ -3520,13 +3516,13 @@ impl SnagApp {
         }
         let link = Rect::from_center_size(pos2(area.center().x, top + 300.0), vec2(260.0, 26.0));
         let resp = ui.interact(link, ui.scope_id().with("sample"), Sense::click());
-        let col = if resp.hovered() { Color32::WHITE } else { accent() };
+        let col = if resp.hovered() { pal().strong } else { accent() };
         ui.painter().text(link.center(), Align2::CENTER_CENTER, crate::i18n::t("Try the tools on a sample picture"), FontId::proportional(14.0), col);
         if resp.clicked() {
             let name = self.next_name("Sample");
             self.add_entry(name, sample::sample_doc());
         }
-        ui.painter().text(pos2(area.center().x, top + 340.0), Align2::CENTER_CENTER, "Or drop a picture file here, or paste one with Ctrl+V.", FontId::proportional(12.5), TEXT_DIM);
+        ui.painter().text(pos2(area.center().x, top + 340.0), Align2::CENTER_CENTER, "Or drop a picture file here, or paste one with Ctrl+V.", FontId::proportional(12.5), pal().dim);
     }
 
     /// Load the fonts and stamp pictures the marks need before they're drawn.
@@ -4035,7 +4031,7 @@ impl SnagApp {
                 },
                 None => String::new(),
             };
-            ui.label(RichText::new(text).color(Color32::WHITE).strong());
+            ui.label(RichText::new(text).color(pal().strong).strong());
             // Esc stops a scrolling capture when this bar has the keyboard (on Windows it
             // works anywhere: the capture itself watches the key).
             if self.mini == Some(Mini::Scroll) && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
@@ -4043,7 +4039,7 @@ impl SnagApp {
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(10.0);
-                let stop = egui::Button::new(RichText::new(crate::i18n::t("Stop")).color(Color32::WHITE).strong()).fill(Color32::from_rgb(229, 72, 77));
+                let stop = egui::Button::new(RichText::new(crate::i18n::t("Stop")).color(crate::theme::text_on(pal().danger)).strong()).fill(pal().danger);
                 let stop = ui.add(stop);
                 buttons.push(stop.rect);
                 if stop.clicked() {
@@ -4252,7 +4248,7 @@ impl SnagApp {
         }
         if self.mini.is_some() {
             egui::CentralPanel::default()
-                .frame(egui::Frame::new().fill(BG_DARK).stroke(Stroke::new(1.0, accent())))
+                .frame(egui::Frame::new().fill(pal().bg).stroke(Stroke::new(1.0, accent())))
                 .show(ui, |ui| self.mini_bar(ui));
             return;
         }
@@ -4264,7 +4260,7 @@ impl SnagApp {
         self.shortcuts(&ctx);
 
         egui::Panel::top("ribbon")
-            .frame(egui::Frame::new().fill(crate::look::BAND))
+            .frame(egui::Frame::new().fill(crate::look::pal().band))
             .show(ui, |ui| self.ribbon(ui));
         self.language_window(&ctx);
         self.update_window(&ctx);
@@ -4281,22 +4277,22 @@ impl SnagApp {
         if self.settings.show_tray {
             egui::Panel::bottom("tray")
                 .exact_size(112.0)
-                .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(4, 6)))
+                .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(4, 6)))
                 .show(ui, |ui| self.tray(ui));
         }
         egui::Panel::left("tools")
             .exact_size(118.0)
             .resizable(false)
-            .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(4, 0)))
+            .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(4, 0)))
             .show(ui, |ui| self.tool_bar(ui));
         if self.settings.show_side_panel {
             egui::Panel::right("props")
                 .exact_size(230.0)
                 .resizable(false)
-                .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(14, 6)))
+                .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(14, 6)))
                 .show(ui, |ui| self.side_panel(ui));
         }
-        egui::CentralPanel::default().frame(egui::Frame::new().fill(BG_DARK)).show(ui, |ui| self.canvas(ui));
+        egui::CentralPanel::default().frame(egui::Frame::new().fill(pal().bg)).show(ui, |ui| self.canvas(ui));
 
         self.dialog_window(&ctx);
         self.settings_window(&ctx);
@@ -4339,25 +4335,9 @@ pub(crate) fn item_on(ui: &mut egui::Ui, enabled: bool, label: &str, keys: &str)
     clicked
 }
 
-fn setup_style(ctx: &egui::Context) {
-    // Snagster is dark on every system for now. Saying so keeps egui from swapping in its
-    // stock style when the system switches between light and dark, and gives every window a
-    // dark system title bar to match (instead of a white bar above a dark window).
-    ctx.set_theme(egui::Theme::Dark);
-    ctx.options_mut(|o| o.sync_window_theme = true);
-    let mut v = egui::Visuals::dark();
-    v.panel_fill = PANEL;
-    v.window_fill = PANEL;
-    v.extreme_bg_color = BG_DARK;
-    v.selection.bg_fill = accent();
-    v.hyperlink_color = accent();
-    v.widgets.inactive.weak_bg_fill = PANEL_HI;
-    v.widgets.inactive.bg_fill = PANEL_HI;
-    v.widgets.inactive.corner_radius = CornerRadius::same(6);
-    v.widgets.hovered.corner_radius = CornerRadius::same(6);
-    v.widgets.active.corner_radius = CornerRadius::same(6);
-    v.widgets.hovered.weak_bg_fill = Color32::from_rgb(60, 64, 78);
-    ctx.set_visuals(v);
+fn setup_style(ctx: &egui::Context, appearance: crate::theme::ThemeChoice) {
+    // Light, dark or high contrast, and title bars to match (see `theme`); checked every frame.
+    crate::theme::apply(ctx, appearance);
     ctx.all_styles_mut(|s| {
         s.spacing.item_spacing = vec2(8.0, 6.0);
         s.spacing.button_padding = vec2(9.0, 5.0);
@@ -4365,7 +4345,7 @@ fn setup_style(ctx: &egui::Context) {
 }
 
 pub(crate) fn section(ui: &mut egui::Ui, title: &str) {
-    ui.label(RichText::new(title).strong().color(Color32::WHITE));
+    ui.label(RichText::new(title).strong().color(pal().strong));
     ui.add_space(2.0);
 }
 
@@ -4769,7 +4749,7 @@ pub(crate) fn logo(ui: &mut egui::Ui, size: f32) {
 /// Snagster's mark: a rounded tile with viewfinder corners and a dot.
 pub fn logo_at(p: &egui::Painter, c: Pos2, size: f32) {
     let r = Rect::from_center_size(c, Vec2::splat(size));
-    p.rect_filled(r, CornerRadius::same((size * 0.25) as u8), ACCENT_DEFAULT);
+    p.rect_filled(r, CornerRadius::same((size * 0.25) as u8), crate::theme::BRAND);
     frame_icon(p, r.shrink(size * 0.2), Color32::WHITE, false);
     p.circle_filled(c, size * 0.1, Color32::WHITE);
 }
@@ -5332,7 +5312,7 @@ impl SnagApp {
 
     fn template_menu(&mut self, ui: &mut egui::Ui) {
         let n = self.entries.len();
-        ui.label(RichText::new(format!("Made from the {n} pictures in Recent")).color(TEXT_DIM));
+        ui.label(RichText::new(format!("Made from the {n} pictures in Recent")).color(pal().dim));
         // Nothing is drawn until one is picked (this used to draw every picture on every frame
         // while the menu was open), and then on the job queue.
         if item_on(ui, n >= 1, "Step-by-step guide (one page)", "") {
@@ -5370,7 +5350,7 @@ impl SnagApp {
         let t = self.tool;
         if t == Tool::Arrow {
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Heads")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Heads")).color(pal().dim));
                 ui.selectable_value(&mut self.settings.arrow_heads, 0, crate::i18n::t("none"));
                 ui.selectable_value(&mut self.settings.arrow_heads, 1, crate::i18n::t("end"));
                 ui.selectable_value(&mut self.settings.arrow_heads, 2, crate::i18n::t("both"));
@@ -5378,7 +5358,7 @@ impl SnagApp {
         }
         if matches!(t, Tool::Text | Tool::Callout) {
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Align")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Align")).color(pal().dim));
                 ui.selectable_value(&mut self.settings.text_align, 0, crate::i18n::t("left"));
                 ui.selectable_value(&mut self.settings.text_align, 1, crate::i18n::t("center"));
                 ui.selectable_value(&mut self.settings.text_align, 2, crate::i18n::t("right"));
@@ -5389,7 +5369,7 @@ impl SnagApp {
         }
         if t == Tool::Callout {
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Shape")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Shape")).color(pal().dim));
                 for (s, l) in [(CalloutShape::Rounded, "rounded"), (CalloutShape::Rectangle, "box"), (CalloutShape::Oval, "oval")] {
                     ui.selectable_value(&mut self.settings.callout_shape, s, l);
                 }
@@ -5398,7 +5378,7 @@ impl SnagApp {
         }
         if t == Tool::Blur {
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Type")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Type")).color(pal().dim));
                 for m in BlurMode::ALL {
                     ui.selectable_value(&mut self.settings.blur_mode, m, m.label());
                 }
@@ -5412,13 +5392,13 @@ impl SnagApp {
         }
         if t == Tool::Highlight {
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Shape")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Shape")).color(pal().dim));
                 ui.selectable_value(&mut self.settings.highlight_box, true, crate::i18n::t("box"));
                 ui.selectable_value(&mut self.settings.highlight_box, false, crate::i18n::t("freehand"));
             });
         }
         if t == Tool::Eraser {
-            ui.label(RichText::new(format!("Eraser width {:.0} px", self.settings.width * 3.0)).color(TEXT_DIM));
+            ui.label(RichText::new(format!("Eraser width {:.0} px", self.settings.width * 3.0)).color(pal().dim));
         }
         // Quick Styles: saved looks, one click away.
         ui.add_space(8.0);
@@ -5428,7 +5408,7 @@ impl SnagApp {
         ui.horizontal_wrapped(|ui| {
             for (i, q) in self.settings.quick_styles.iter().enumerate() {
                 let (r, resp) = ui.allocate_exact_size(vec2(30.0, 30.0), Sense::click());
-                ui.painter().rect_filled(r, CornerRadius::same(6), PANEL_HI);
+                ui.painter().rect_filled(r, CornerRadius::same(6), pal().panel_hi);
                 let c = rgb(q.color);
                 if q.fill {
                     ui.painter().circle_filled(r.center(), 9.0, c);
@@ -5436,7 +5416,7 @@ impl SnagApp {
                     ui.painter().circle_stroke(r.center(), 8.0, Stroke::new((q.width / 2.0).clamp(1.5, 5.0), c));
                 }
                 if q.shadow {
-                    ui.painter().rect_stroke(r.shrink(1.0), CornerRadius::same(6), Stroke::new(1.0, Color32::from_gray(110)), StrokeKind::Inside);
+                    ui.painter().rect_stroke(r.shrink(1.0), CornerRadius::same(6), Stroke::new(1.0, pal().border), StrokeKind::Inside);
                 }
                 if resp.clicked() {
                     apply = Some(i);
@@ -5484,6 +5464,7 @@ impl eframe::App for SnagApp {
 
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let started = Instant::now();
+        crate::theme::apply(ui.ctx(), self.settings.appearance);
         if let Err(e) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.ui_body(ui))) {
             self.recovered(e);
         }
@@ -5576,7 +5557,7 @@ impl SnagApp {
         if !self.win_cache.loaded() {
             ui.spinner();
         } else if self.win_cache.items().is_empty() {
-            ui.label(RichText::new(crate::i18n::t("No windows found")).color(TEXT_DIM));
+            ui.label(RichText::new(crate::i18n::t("No windows found")).color(pal().dim));
         }
         let mut pick = None;
         egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
@@ -5614,6 +5595,13 @@ impl SnagApp {
 
     /// Set up a view for `--screenshot --view ...` (README pictures).
     fn show_view(&mut self, ctx: &egui::Context, view: &str) {
+        // light:<view> and dark:<view> show a view in that palette (README pictures, design reviews).
+        for (prefix, choice) in [("light:", crate::theme::ThemeChoice::Light), ("dark:", crate::theme::ThemeChoice::Dark)] {
+            if let Some(rest) = view.strip_prefix(prefix) {
+                self.settings.appearance = choice;
+                return self.show_view(ctx, rest);
+            }
+        }
         if let Some(code) = view.strip_prefix("lang:") {
             self.settings.language = code.to_string();
             self.x.tab = ribbon::RibbonTab::Home;
@@ -5669,6 +5657,11 @@ impl SnagApp {
                 let id = self.settings.stream.new_also_id();
                 self.settings.stream.also = vec![crate::settings::ExtraService { id, service: crate::stream::Service::YouTube, url: String::new(), on: true }];
             }
+            "settings-editor" => {
+                self.settings_open = true;
+                self.settings_tab = SettingsTab::Editor;
+            }
+            "library" => self.library_open = true,
             "settings-ai" => {
                 self.settings_open = true;
                 self.settings_tab = SettingsTab::Ai;

@@ -988,6 +988,12 @@
   "Recording saved": "Rekording salvat",
   "box": "kaxxa",
   "freehand": "b'idejk",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kaxxa fuq it-test biex tenfasizzah. Agħżel b'idejk fuq il-lemin biex tfassal strixxi minflok."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kaxxa fuq it-test biex tenfasizzah. Agħżel b'idejk fuq il-lemin biex tfassal strixxi minflok.",
+  "Appearance": "Dehra",
+  "Follow system": "Segwi s-sistema",
+  "Light": "Ċar",
+  "Dark": "Skur",
+  "A contrast theme is on, so Snagster uses its colours.": "Tema ta' kuntrast hija mixgħula, għalhekk Snagster juża l-kuluri tagħha.",
+  "The system asks for more contrast, so text and borders are stronger.": "Is-sistema titlob aktar kuntrast, għalhekk it-test u l-fruntieri huma aktar b'saħħithom."
  }
 }

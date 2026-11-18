@@ -988,6 +988,12 @@
   "Recording saved": "Innspeling lagra",
   "box": "boks",
   "freehand": "frihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra ei boks over teksten for å utheve han. Vel frihand til høgre for å teikne strekar i staden."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra ei boks over teksten for å utheve han. Vel frihand til høgre for å teikne strekar i staden.",
+  "Appearance": "Utsjånad",
+  "Follow system": "Følg systemet",
+  "Light": "Lys",
+  "Dark": "Mørk",
+  "A contrast theme is on, so Snagster uses its colours.": "Eit kontrasttema er slått på, så Snagster brukar fargane til det.",
+  "The system asks for more contrast, so text and borders are stronger.": "Systemet ber om meir kontrast, så tekst og kantar er kraftigare."
  }
 }

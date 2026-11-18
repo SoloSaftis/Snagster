@@ -988,6 +988,12 @@
   "Recording saved": "Opname gestoor",
   "box": "blok",
   "freehand": "vryhand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep 'n blok oor teks om dit te merk. Kies vryhand regs om eerder met streke te teken."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep 'n blok oor teks om dit te merk. Kies vryhand regs om eerder met streke te teken.",
+  "Appearance": "Voorkoms",
+  "Follow system": "Volg stelsel",
+  "Light": "Lig",
+  "Dark": "Donker",
+  "A contrast theme is on, so Snagster uses its colours.": "'n Kontrastema is aan, so Snagster gebruik sy kleure.",
+  "The system asks for more contrast, so text and borders are stronger.": "Die stelsel vra vir meer kontras, so teks en rande is sterker."
  }
 }

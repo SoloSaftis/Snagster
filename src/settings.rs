@@ -500,6 +500,8 @@ pub struct Settings {
     pub audio_mic: String,
     /// Interface language code; empty follows the computer.
     pub language: String,
+    /// Light or dark: follow the system (the default), or always one of them.
+    pub appearance: crate::theme::ThemeChoice,
     /// Look for a new Snagster on GitHub when it starts (at most once a day).
     pub update_check: bool,
     /// When it last looked (Unix seconds).
@@ -627,6 +629,7 @@ impl Default for Settings {
             audio_source: crate::audio::AudioSource::System,
             audio_mic: String::new(),
             language: String::new(),
+            appearance: crate::theme::ThemeChoice::System,
             update_check: true,
             update_checked_at: 0,
             update_skip: String::new(),

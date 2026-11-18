@@ -988,6 +988,12 @@
   "Recording saved": "ჩანაწერი შენახულია",
   "box": "ყუთი",
   "freehand": "თავისუფალი",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ტექსტის გამოსაყოფად გადაათრიეთ მასზე ყუთი. ხაზების დასახატად მარჯვნივ აირჩიეთ თავისუფალი."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ტექსტის გამოსაყოფად გადაათრიეთ მასზე ყუთი. ხაზების დასახატად მარჯვნივ აირჩიეთ თავისუფალი.",
+  "Appearance": "იერსახე",
+  "Follow system": "სისტემის მიხედვით",
+  "Light": "ღია",
+  "Dark": "მუქი",
+  "A contrast theme is on, so Snagster uses its colours.": "კონტრასტული თემა ჩართულია, ამიტომ Snagster მის ფერებს იყენებს.",
+  "The system asks for more contrast, so text and borders are stronger.": "სისტემა მეტ კონტრასტს ითხოვს, ამიტომ ტექსტი და საზღვრები უფრო მკვეთრია."
  }
 }

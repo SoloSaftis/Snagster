@@ -988,6 +988,12 @@
   "Recording saved": "Жазба сақталды",
   "box": "жәшік",
   "freehand": "еркін",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Мәтінді бөлектеу үшін оның үстінен жәшік сүйреңіз. Сызықтар салу үшін оң жақтан еркін таңдаңыз."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Мәтінді бөлектеу үшін оның үстінен жәшік сүйреңіз. Сызықтар салу үшін оң жақтан еркін таңдаңыз.",
+  "Appearance": "Көрініс",
+  "Follow system": "Жүйеге сай",
+  "Light": "Ашық",
+  "Dark": "Қараңғы",
+  "A contrast theme is on, so Snagster uses its colours.": "Контрастты тақырып қосулы, сондықтан Snagster оның түстерін пайдаланады.",
+  "The system asks for more contrast, so text and borders are stronger.": "Жүйе жоғарырақ контрастты сұрайды, сондықтан мәтін мен жиектер айқынырақ."
  }
 }

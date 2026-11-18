@@ -988,6 +988,12 @@
   "Recording saved": "Η εγγραφή αποθηκεύτηκε",
   "box": "πλαίσιο",
   "freehand": "ελεύθερο",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Σύρετε ένα πλαίσιο πάνω από το κείμενο για να το επισημάνετε. Επιλέξτε ελεύθερο στα δεξιά για να σχεδιάσετε γραμμές."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Σύρετε ένα πλαίσιο πάνω από το κείμενο για να το επισημάνετε. Επιλέξτε ελεύθερο στα δεξιά για να σχεδιάσετε γραμμές.",
+  "Appearance": "Εμφάνιση",
+  "Follow system": "Ακολούθηση συστήματος",
+  "Light": "Φωτεινό",
+  "Dark": "Σκούρο",
+  "A contrast theme is on, so Snagster uses its colours.": "Είναι ενεργό ένα θέμα αντίθεσης, οπότε το Snagster χρησιμοποιεί τα χρώματά του.",
+  "The system asks for more contrast, so text and borders are stronger.": "Το σύστημα ζητά μεγαλύτερη αντίθεση, οπότε το κείμενο και τα περιγράμματα είναι πιο έντονα."
  }
 }

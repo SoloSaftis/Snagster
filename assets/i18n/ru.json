@@ -988,6 +988,12 @@
   "Recording saved": "Запись сохранена",
   "box": "рамка",
   "freehand": "от руки",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протяните рамку поверх текста, чтобы выделить его. Выберите справа «от руки», чтобы рисовать штрихи."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протяните рамку поверх текста, чтобы выделить его. Выберите справа «от руки», чтобы рисовать штрихи.",
+  "Appearance": "Оформление",
+  "Follow system": "Как в системе",
+  "Light": "Светлая",
+  "Dark": "Тёмная",
+  "A contrast theme is on, so Snagster uses its colours.": "Включена контрастная тема, поэтому Snagster использует её цвета.",
+  "The system asks for more contrast, so text and borders are stronger.": "Система запрашивает повышенную контрастность, поэтому текст и границы выделены сильнее."
  }
 }

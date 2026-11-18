@@ -988,6 +988,12 @@
   "Recording saved": "Zapisano nagranie",
   "box": "ramka",
   "freehand": "odręcznie",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Przeciągnij ramkę nad tekstem, aby go zaznaczyć. Wybierz po prawej odręcznie, aby zamiast tego rysować pociągnięcia."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Przeciągnij ramkę nad tekstem, aby go zaznaczyć. Wybierz po prawej odręcznie, aby zamiast tego rysować pociągnięcia.",
+  "Appearance": "Wygląd",
+  "Follow system": "Zgodnie z systemem",
+  "Light": "Jasny",
+  "Dark": "Ciemny",
+  "A contrast theme is on, so Snagster uses its colours.": "Włączono motyw kontrastowy, więc Snagster używa jego kolorów.",
+  "The system asks for more contrast, so text and borders are stronger.": "System prosi o większy kontrast, więc tekst i obramowania są wyraźniejsze."
  }
 }

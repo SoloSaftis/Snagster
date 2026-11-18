@@ -988,6 +988,12 @@
   "Recording saved": "บันทึกการบันทึกแล้ว",
   "box": "กล่อง",
   "freehand": "อิสระ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ลากกล่องคร่อมข้อความเพื่อไฮไลต์ เลือก อิสระ ทางขวาเพื่อวาดเส้นแทน"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ลากกล่องคร่อมข้อความเพื่อไฮไลต์ เลือก อิสระ ทางขวาเพื่อวาดเส้นแทน",
+  "Appearance": "รูปลักษณ์",
+  "Follow system": "ตามระบบ",
+  "Light": "สว่าง",
+  "Dark": "มืด",
+  "A contrast theme is on, so Snagster uses its colours.": "ธีมความคมชัดสูงเปิดอยู่ Snagster จึงใช้สีของธีมนั้น",
+  "The system asks for more contrast, so text and borders are stronger.": "ระบบร้องขอความคมชัดที่สูงขึ้น ข้อความและเส้นขอบจึงเด่นชัดขึ้น"
  }
 }

@@ -988,6 +988,12 @@
   "Recording saved": "Записът е запазен",
   "box": "поле",
   "freehand": "свободно",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Плъзнете поле върху текста, за да го маркирате. Изберете свободно отдясно, за да рисувате щрихи."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Плъзнете поле върху текста, за да го маркирате. Изберете свободно отдясно, за да рисувате щрихи.",
+  "Appearance": "Външен вид",
+  "Follow system": "Като системата",
+  "Light": "Светла",
+  "Dark": "Тъмна",
+  "A contrast theme is on, so Snagster uses its colours.": "Включена е контрастна тема, затова Snagster използва нейните цветове.",
+  "The system asks for more contrast, so text and borders are stronger.": "Системата изисква по-голям контраст, затова текстът и границите са по-силни."
  }
 }

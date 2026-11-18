@@ -988,6 +988,12 @@
   "Recording saved": "રેકોર્ડિંગ સાચવ્યું",
   "box": "બોક્સ",
   "freehand": "ફ્રીહેન્ડ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ટેક્સ્ટને હાઇલાઇટ કરવા તેના પર બોક્સ ખેંચો. તેના બદલે લીટીઓ દોરવા જમણી બાજુ ફ્રીહેન્ડ પસંદ કરો."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ટેક્સ્ટને હાઇલાઇટ કરવા તેના પર બોક્સ ખેંચો. તેના બદલે લીટીઓ દોરવા જમણી બાજુ ફ્રીહેન્ડ પસંદ કરો.",
+  "Appearance": "દેખાવ",
+  "Follow system": "સિસ્ટમને અનુસરો",
+  "Light": "આછો",
+  "Dark": "ઘેરો",
+  "A contrast theme is on, so Snagster uses its colours.": "કોન્ટ્રાસ્ટ થીમ ચાલુ છે, તેથી Snagster તેના રંગોનો ઉપયોગ કરે છે.",
+  "The system asks for more contrast, so text and borders are stronger.": "સિસ્ટમ વધુ કોન્ટ્રાસ્ટ માંગે છે, તેથી ટેક્સ્ટ અને કિનારીઓ વધુ મજબૂત છે."
  }
 }

@@ -988,6 +988,12 @@
   "Recording saved": "Taifead sábháilte",
   "box": "bosca",
   "freehand": "saorláimhe",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tarraing bosca thar théacs chun é a aibhsiú. Roghnaigh saorláimhe ar dheis chun stríoca a tharraingt ina ionad."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tarraing bosca thar théacs chun é a aibhsiú. Roghnaigh saorláimhe ar dheis chun stríoca a tharraingt ina ionad.",
+  "Appearance": "Cuma",
+  "Follow system": "Lean an córas",
+  "Light": "Éadrom",
+  "Dark": "Dorcha",
+  "A contrast theme is on, so Snagster uses its colours.": "Tá téama codarsnachta ar siúl, mar sin úsáideann Snagster a dhathanna.",
+  "The system asks for more contrast, so text and borders are stronger.": "Iarrann an córas níos mó codarsnachta, mar sin tá téacs agus teorainneacha níos láidre."
  }
 }

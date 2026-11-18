@@ -988,6 +988,12 @@
   "Recording saved": "Aufzeichnung gespeichert",
   "box": "Rechteck",
   "freehand": "freihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Ziehen Sie ein Rechteck über den Text, um ihn hervorzuheben. Wählen Sie rechts freihand, um stattdessen Striche zu zeichnen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Ziehen Sie ein Rechteck über den Text, um ihn hervorzuheben. Wählen Sie rechts freihand, um stattdessen Striche zu zeichnen.",
+  "Appearance": "Darstellung",
+  "Follow system": "Wie System",
+  "Light": "Hell",
+  "Dark": "Dunkel",
+  "A contrast theme is on, so Snagster uses its colours.": "Ein Kontrastdesign ist aktiv, daher verwendet Snagster dessen Farben.",
+  "The system asks for more contrast, so text and borders are stronger.": "Das System verlangt mehr Kontrast, daher sind Text und Rahmen kräftiger."
  }
 }

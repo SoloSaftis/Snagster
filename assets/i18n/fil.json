@@ -988,6 +988,12 @@
   "Recording saved": "Na-save ang recording",
   "box": "kahon",
   "freehand": "freehand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "I-drag ang isang kahon sa ibabaw ng teksto para i-highlight ito. Piliin ang freehand sa kanan para gumuhit ng mga guhit."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "I-drag ang isang kahon sa ibabaw ng teksto para i-highlight ito. Piliin ang freehand sa kanan para gumuhit ng mga guhit.",
+  "Appearance": "Hitsura",
+  "Follow system": "Sundin ang system",
+  "Light": "Maliwanag",
+  "Dark": "Madilim",
+  "A contrast theme is on, so Snagster uses its colours.": "Naka-on ang isang contrast theme, kaya ginagamit ng Snagster ang mga kulay nito.",
+  "The system asks for more contrast, so text and borders are stronger.": "Humihingi ang system ng mas mataas na contrast, kaya mas matingkad ang teksto at mga border."
  }
 }

@@ -988,6 +988,12 @@
   "Recording saved": "خاتىرە ساقلاندى",
   "box": "رامكا",
   "freehand": "ئەركىن",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "تېكىستنى گەۋدىلەندۈرۈش ئۈچۈن ئۈستىگە رامكا سۆرەڭ. سىزىق سىزىش ئۈچۈن ئوڭ تەرەپتىن ئەركىن تاللاڭ."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "تېكىستنى گەۋدىلەندۈرۈش ئۈچۈن ئۈستىگە رامكا سۆرەڭ. سىزىق سىزىش ئۈچۈن ئوڭ تەرەپتىن ئەركىن تاللاڭ.",
+  "Appearance": "كۆرۈنۈش",
+  "Follow system": "سىستېمىغا ئەگىشىش",
+  "Light": "ئوچۇق",
+  "Dark": "قاراڭغۇ",
+  "A contrast theme is on, so Snagster uses its colours.": "قارىمۇقارشىلىق ئۇسلۇبى ئوچۇق، شۇڭا Snagster ئۇنىڭ رەڭلىرىنى ئىشلىتىدۇ.",
+  "The system asks for more contrast, so text and borders are stronger.": "سىستېما تېخىمۇ يۇقىرى قارىمۇقارشىلىق تەلەپ قىلىدۇ، شۇڭا تېكىست ۋە چېگرالار روشەنرەك."
  }
 }

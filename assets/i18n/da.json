@@ -988,6 +988,12 @@
   "Recording saved": "Optagelse gemt",
   "box": "boks",
   "freehand": "frihånd",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Træk en boks over teksten for at fremhæve den. Vælg frihånd til højre for i stedet at tegne streger."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Træk en boks over teksten for at fremhæve den. Vælg frihånd til højre for i stedet at tegne streger.",
+  "Appearance": "Udseende",
+  "Follow system": "Følg systemet",
+  "Light": "Lys",
+  "Dark": "Mørk",
+  "A contrast theme is on, so Snagster uses its colours.": "Et kontrasttema er slået til, så Snagster bruger dets farver.",
+  "The system asks for more contrast, so text and borders are stronger.": "Systemet beder om mere kontrast, så tekst og kanter er kraftigere."
  }
 }

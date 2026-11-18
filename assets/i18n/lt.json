@@ -988,6 +988,12 @@
   "Recording saved": "Įrašas išsaugotas",
   "box": "langelis",
   "freehand": "laisva ranka",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Nutempkite langelį ant teksto, kad jį paryškintumėte. Pasirinkite dešinėje laisva ranka, kad pieštumėte brūkšnius."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Nutempkite langelį ant teksto, kad jį paryškintumėte. Pasirinkite dešinėje laisva ranka, kad pieštumėte brūkšnius.",
+  "Appearance": "Išvaizda",
+  "Follow system": "Kaip sistemoje",
+  "Light": "Šviesi",
+  "Dark": "Tamsi",
+  "A contrast theme is on, so Snagster uses its colours.": "Įjungta kontrastinė tema, todėl Snagster naudoja jos spalvas.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistema prašo didesnio kontrasto, todėl tekstas ir kraštinės ryškesni."
  }
 }

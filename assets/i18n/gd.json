@@ -988,6 +988,12 @@
   "Recording saved": "Clàradh air a shàbhaladh",
   "box": "bogsa",
   "freehand": "làmh-shaor",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Slaod bogsa thairis air teacsa gus a sheulachadh. Tagh làmh-shaor air an taobh deas gus strìochan a tharraing."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Slaod bogsa thairis air teacsa gus a sheulachadh. Tagh làmh-shaor air an taobh deas gus strìochan a tharraing.",
+  "Appearance": "Coltas",
+  "Follow system": "Lean an siostam",
+  "Light": "Soilleir",
+  "Dark": "Dorcha",
+  "A contrast theme is on, so Snagster uses its colours.": "Tha ùrlar iomsgaraidh air, agus mar sin cleachdaidh Snagster na dathan aige.",
+  "The system asks for more contrast, so text and borders are stronger.": "Tha an siostam ag iarraidh barrachd iomsgaraidh, agus mar sin tha teacsa is oirean nas làidire."
  }
 }

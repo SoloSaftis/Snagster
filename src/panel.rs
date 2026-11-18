@@ -2,7 +2,8 @@
 //! Video tabs, what to capture, an effect, where to send it, a few switches and a big
 //! Capture button.
 
-use crate::app::{accent, BG_DARK, PANEL, PANEL_HI, SnagApp, TEXT_DIM};
+use crate::app::{accent, SnagApp};
+use crate::theme::pal;
 use crate::capture::{CaptureKind, CutShape, PickPurpose};
 use crate::effects::Effect;
 use crate::settings::{Action, PanelSelection, PanelSettings, PanelShare, Preset, PresetMode};
@@ -19,14 +20,12 @@ fn switch(ui: &mut egui::Ui, on: &mut bool) -> egui::Response {
         resp.mark_changed();
     }
     let t = ui.ctx().animate_bool_responsive(resp.id, *on);
-    let bg = Color32::from_rgb(
-        (70.0 + (79.0 - 70.0) * t) as u8,
-        (74.0 + (124.0 - 74.0) * t) as u8,
-        (86.0 + (255.0 - 86.0) * t) as u8,
-    );
+    let p = pal();
+    let bg = p.border.lerp_to_gamma(p.accent, t);
     ui.painter().rect_filled(rect, CornerRadius::same(11), bg);
     let x = egui::lerp((rect.left() + 11.0)..=(rect.right() - 11.0), t);
-    ui.painter().circle_filled(pos2(x, rect.center().y), 8.0, Color32::WHITE);
+    let knob = if *on { p.on_accent } else { p.panel };
+    ui.painter().circle_filled(pos2(x, rect.center().y), 8.0, knob);
     resp
 }
 
@@ -39,7 +38,7 @@ fn tab_icon(p: &egui::Painter, c: Pos2, tab: u8, color: Color32) {
         1 => {
             let r = Rect::from_center_size(c, vec2(18.0, 13.0));
             p.rect_filled(r, CornerRadius::same(3), color);
-            p.circle_filled(c, 3.5, BG_DARK);
+            p.circle_filled(c, 3.5, pal().bg);
             p.rect_filled(Rect::from_min_size(r.min + vec2(3.0, -3.0), vec2(6.0, 3.0)), CornerRadius::same(1), color);
         }
         3 => {
@@ -79,18 +78,18 @@ impl SnagApp {
 
         // ---- left: tabs ----
         let tabs_rect = Rect::from_min_size(full.min, vec2(92.0, full.height() - 44.0));
-        ui.painter().rect_filled(tabs_rect, CornerRadius { nw: 12, ne: 0, sw: 0, se: 0 }, BG_DARK);
+        ui.painter().rect_filled(tabs_rect, CornerRadius { nw: 12, ne: 0, sw: 0, se: 0 }, pal().bg);
         let tab_h = tabs_rect.height() / 4.0;
         for (i, name) in ["All-in-One", "Image", "Video", crate::i18n::t("Stream")].iter().enumerate() {
             let r = Rect::from_min_size(tabs_rect.min + vec2(0.0, i as f32 * tab_h), vec2(92.0, tab_h));
             let resp = ui.interact(r, ui.scope_id().with(("tab", i)), Sense::click());
             let sel = tab as usize == i;
             if sel {
-                ui.painter().rect_filled(r.shrink(4.0), CornerRadius::same(8), PANEL_HI);
+                ui.painter().rect_filled(r.shrink(4.0), CornerRadius::same(8), pal().panel_hi);
             } else if resp.hovered() {
-                ui.painter().rect_filled(r.shrink(4.0), CornerRadius::same(8), Color32::from_rgb(38, 40, 48));
+                ui.painter().rect_filled(r.shrink(4.0), CornerRadius::same(8), pal().hover);
             }
-            let col = if sel { accent() } else { Color32::from_rgb(200, 204, 215) };
+            let col = if sel { accent() } else { pal().text };
             tab_icon(ui.painter(), r.center() - vec2(0.0, 7.0), i as u8, col);
             ui.painter().text(r.center() + vec2(0.0, 13.0), Align2::CENTER_CENTER, *name, FontId::proportional(12.0), col);
             if resp.clicked() {
@@ -106,7 +105,7 @@ impl SnagApp {
                 return;
             }
             egui::Grid::new("panel-grid").num_columns(2).spacing(vec2(14.0, 14.0)).show(ui, |ui| {
-                ui.label(RichText::new(crate::i18n::t("Selection:")).color(Color32::WHITE));
+                ui.label(RichText::new(crate::i18n::t("Selection:")).color(pal().strong));
                 ui.horizontal(|ui| {
                     let p = &mut self.settings.panel;
                     if tab == 0 {
@@ -155,7 +154,7 @@ impl SnagApp {
                 ui.end_row();
 
                 if tab == 2 {
-                    ui.label(RichText::new(crate::i18n::t("Format:")).color(Color32::WHITE));
+                    ui.label(RichText::new(crate::i18n::t("Format:")).color(pal().strong));
                     let f = &mut self.settings.rec_format;
                     egui::ComboBox::from_id_salt("p-format").width(230.0).selected_text(f.label()).show_ui(ui, |ui| {
                         for v in crate::video::VideoFormat::ALL {
@@ -166,7 +165,7 @@ impl SnagApp {
                     });
                     ui.end_row();
                 }
-                ui.label(RichText::new(crate::i18n::t("Effects:")).color(Color32::WHITE));
+                ui.label(RichText::new(crate::i18n::t("Effects:")).color(pal().strong));
                 let p = &mut self.settings.panel;
                 let shown = p.effect.map(|e| e.label()).unwrap_or("None");
                 ui.add_enabled_ui(tab != 2, |ui| {
@@ -179,7 +178,7 @@ impl SnagApp {
                 });
                 ui.end_row();
 
-                ui.label(RichText::new(crate::i18n::t("Share:")).color(Color32::WHITE));
+                ui.label(RichText::new(crate::i18n::t("Share:")).color(pal().strong));
                 ui.add_enabled_ui(tab != 2, |ui| {
                     egui::ComboBox::from_id_salt("p-share").width(230.0).selected_text(p.share.label()).show_ui(ui, |ui| {
                         for s in PanelShare::ALL {
@@ -198,7 +197,7 @@ impl SnagApp {
             let row = |ui: &mut egui::Ui, label: &str, on: &mut bool| {
                 ui.horizontal(|ui| {
                     ui.set_width(196.0);
-                    ui.label(RichText::new(label).color(Color32::WHITE));
+                    ui.label(RichText::new(label).color(pal().strong));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         switch(ui, on);
                     });
@@ -222,7 +221,7 @@ impl SnagApp {
                 ui.horizontal(|ui| {
                     ui.add_space(70.0);
                     ui.add(egui::DragValue::new(&mut self.settings.panel.delay_s).range(1..=120));
-                    ui.label(RichText::new(crate::i18n::t("seconds")).color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("seconds")).color(pal().dim));
                 });
             }
         });
@@ -230,7 +229,7 @@ impl SnagApp {
         // ---- far right: reset, close and the big button ----
         let reset_r = Rect::from_center_size(pos2(full.max.x - 46.0, full.min.y + 20.0), vec2(22.0, 22.0));
         let rr = ui.interact(reset_r, ui.scope_id().with("reset"), Sense::click()).on_hover_text("Reset the panel's choices");
-        let rc = if rr.hovered() { Color32::WHITE } else { TEXT_DIM };
+        let rc = if rr.hovered() { pal().strong } else { pal().dim };
         let arc: Vec<Pos2> = (0..=20)
             .map(|i| {
                 let a = -0.6 + i as f32 / 20.0 * 5.0;
@@ -245,7 +244,7 @@ impl SnagApp {
         }
         let close_r = Rect::from_center_size(pos2(full.max.x - 18.0, full.min.y + 20.0), vec2(22.0, 22.0));
         let cr = ui.interact(close_r, ui.scope_id().with("close"), Sense::click()).on_hover_text("Hide the panel (Esc)");
-        let cc = if cr.hovered() { Color32::WHITE } else { TEXT_DIM };
+        let cc = if cr.hovered() { pal().strong } else { pal().dim };
         ui.painter().line_segment([close_r.center() - vec2(5.0, 5.0), close_r.center() + vec2(5.0, 5.0)], Stroke::new(2.0, cc));
         ui.painter().line_segment([close_r.center() + vec2(-5.0, 5.0), close_r.center() + vec2(5.0, -5.0)], Stroke::new(2.0, cc));
         if cr.clicked() {
@@ -283,13 +282,13 @@ impl SnagApp {
 
         // ---- bottom row ----
         let bottom = Rect::from_min_max(pos2(full.min.x, full.max.y - 44.0), full.max);
-        ui.painter().line_segment([bottom.left_top(), bottom.right_top()], Stroke::new(1.0, Color32::from_rgb(52, 55, 66)));
+        ui.painter().line_segment([bottom.left_top(), bottom.right_top()], Stroke::new(1.0, pal().line));
         ui.scope_builder(egui::UiBuilder::new().max_rect(bottom.shrink2(vec2(14.0, 8.0))), |ui| {
             ui.horizontal_centered(|ui| {
                 let mut run = None;
                 ui.menu_button(crate::i18n::t("Presets"), |ui| {
                     if self.settings.presets.is_empty() {
-                        ui.label(RichText::new(crate::i18n::t("No presets yet")).color(TEXT_DIM));
+                        ui.label(RichText::new(crate::i18n::t("No presets yet")).color(pal().dim));
                     }
                     for (i, p) in self.settings.presets.iter().enumerate() {
                         let keys = if p.combo.is_set() { p.combo.label() } else { String::new() };
@@ -322,7 +321,7 @@ impl SnagApp {
                     if ui.button(crate::i18n::t("Open Editor")).clicked() {
                         open_editor = true;
                     }
-                    ui.label(RichText::new(&self.status).color(TEXT_DIM).size(11.5));
+                    ui.label(RichText::new(&self.status).color(pal().dim).size(11.5));
                     let snap = self.x.stream.snap.clone();
                     if snap.on_air() && crate::app::stream_ui::live_badge(ui, &snap).clicked() {
                         self.settings.panel.tab = 3;
@@ -356,7 +355,7 @@ impl SnagApp {
         use crate::stream::Source;
         let idle = self.x.stream.snap.phase == crate::stream::live::Phase::Idle;
         egui::Grid::new("panel-stream-grid").num_columns(2).spacing(vec2(14.0, 14.0)).show(ui, |ui| {
-            ui.label(RichText::new(t("Selection:")).color(Color32::WHITE));
+            ui.label(RichText::new(t("Selection:")).color(pal().strong));
             let src = self.settings.stream.source.clone();
             let shown = match &src {
                 Source::Window(w) if !w.is_empty() => w.clone(),
@@ -371,7 +370,7 @@ impl SnagApp {
                     }
                     ui.selectable_value(&mut self.settings.stream.source, Source::Studio, t("Studio scene"));
                     ui.separator();
-                    ui.label(RichText::new(t("A window")).color(TEXT_DIM));
+                    ui.label(RichText::new(t("A window")).color(pal().dim));
                     let ctx = ui.ctx().clone();
                     self.win_cache.get(Some(&ctx), crate::capture::list_windows);
                     for w in self.win_cache.items() {
@@ -384,15 +383,15 @@ impl SnagApp {
                 self.pick_stream_area(&ctx, false);
             }
             ui.end_row();
-            ui.label(RichText::new(t("Service:")).color(Color32::WHITE));
+            ui.label(RichText::new(t("Service:")).color(pal().strong));
             ui.add_enabled_ui(idle, |ui| {
                 egui::ComboBox::from_id_salt("p-stream-service").width(230.0).selected_text(service_name(self.settings.stream.service)).show_ui(ui, |ui| self.service_menu(ui));
             });
             ui.end_row();
-            ui.label(RichText::new(t("Status:")).color(Color32::WHITE));
+            ui.label(RichText::new(t("Status:")).color(pal().strong));
             let snap = self.x.stream.snap.clone();
             ui.horizontal(|ui| {
-                ui.label(RichText::new(crate::app::stream_ui::state_label(&snap)).color(TEXT_DIM));
+                ui.label(RichText::new(crate::app::stream_ui::state_label(&snap)).color(pal().dim));
                 if ui.small_button(t("Stream settings…")).clicked() {
                     self.settings_open = true;
                     self.settings_tab = crate::app::SettingsTab::Streaming;
@@ -501,7 +500,7 @@ impl SnagApp {
 
     /// Draw the panel's outline (the window has no frame of its own while it shows).
     pub(crate) fn panel_frame() -> egui::Frame {
-        egui::Frame::new().fill(PANEL).stroke(Stroke::new(1.0, Color32::from_rgb(70, 74, 88))).corner_radius(CornerRadius::same(12))
+        egui::Frame::new().fill(pal().panel).stroke(Stroke::new(1.0, pal().border)).corner_radius(CornerRadius::same(12))
     }
 }
 

@@ -988,6 +988,12 @@
   "Recording saved": "Rakaman disimpan",
   "box": "kotak",
   "freehand": "tangan bebas",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Seret kotak di atas teks untuk menyerlahkannya. Pilih tangan bebas di sebelah kanan untuk melukis coretan."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Seret kotak di atas teks untuk menyerlahkannya. Pilih tangan bebas di sebelah kanan untuk melukis coretan.",
+  "Appearance": "Penampilan",
+  "Follow system": "Ikut sistem",
+  "Light": "Cerah",
+  "Dark": "Gelap",
+  "A contrast theme is on, so Snagster uses its colours.": "Tema kontras dihidupkan, jadi Snagster menggunakan warnanya.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistem meminta kontras lebih tinggi, jadi teks dan sempadan lebih ketara."
  }
 }

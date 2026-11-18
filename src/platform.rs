@@ -182,8 +182,9 @@ pub fn dialog_buttons(ui: &mut egui::Ui, action: Option<&str>, cancel: &str, kin
                 }
                 Choice::Action => {
                     let Some(action) = action else { continue };
-                    let b = egui::Button::new(egui::RichText::new(action).color(egui::Color32::WHITE).strong())
-                        .fill(if destructive { crate::look::REC } else { crate::look::accent() })
+                    let fill = if destructive { crate::theme::pal().danger } else { crate::look::accent() };
+                    let b = egui::Button::new(egui::RichText::new(action).color(crate::theme::text_on(fill)).strong())
+                        .fill(fill)
                         .min_size(egui::vec2(80.0, 0.0));
                     if ui.add_enabled(enabled, b).clicked() {
                         choice = Some(Choice::Action);

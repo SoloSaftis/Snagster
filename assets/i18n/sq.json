@@ -988,6 +988,12 @@
   "Recording saved": "Regjistrimi u ruajt",
   "box": "kuti",
   "freehand": "dorë e lirë",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tërhiqni një kuti mbi tekst për ta theksuar. Zgjidhni dorë e lirë djathtas për të vizatuar vija."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tërhiqni një kuti mbi tekst për ta theksuar. Zgjidhni dorë e lirë djathtas për të vizatuar vija.",
+  "Appearance": "Pamja",
+  "Follow system": "Ndiq sistemin",
+  "Light": "E çelët",
+  "Dark": "E errët",
+  "A contrast theme is on, so Snagster uses its colours.": "Një temë kontrasti është e aktivizuar, ndaj Snagster përdor ngjyrat e saj.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistemi kërkon më shumë kontrast, ndaj teksti dhe kufijtë janë më të theksuar."
  }
 }

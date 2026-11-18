@@ -988,6 +988,12 @@
   "Recording saved": "ቀረጻ ተቀምጧል",
   "box": "ሳጥን",
   "freehand": "በነጻ እጅ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ጽሑፍን ለማጉላት ሳጥን ይጎትቱ። በምትኩ መስመሮችን ለመሳል በቀኝ በኩል በነጻ እጅ ይምረጡ።"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ጽሑፍን ለማጉላት ሳጥን ይጎትቱ። በምትኩ መስመሮችን ለመሳል በቀኝ በኩል በነጻ እጅ ይምረጡ።",
+  "Appearance": "መልክ",
+  "Follow system": "ሲስተሙን ተከተል",
+  "Light": "ብርሃን",
+  "Dark": "ጨለማ",
+  "A contrast theme is on, so Snagster uses its colours.": "የንፅፅር ገጽታ ተከፍቷል፣ ስለዚህ Snagster ቀለሞቹን ይጠቀማል።",
+  "The system asks for more contrast, so text and borders are stronger.": "ሲስተሙ ተጨማሪ ንፅፅር ይጠይቃል፣ ስለዚህ ጽሑፍና ድንበሮች ጠንካራ ናቸው።"
  }
 }

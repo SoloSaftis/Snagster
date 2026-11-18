@@ -988,6 +988,12 @@
   "Recording saved": "Kua tiakina te rekoatanga",
   "box": "pouaka",
   "freehand": "ringaringa-noa",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Toia he pouaka ki runga i te kuputuhi hei whakaatu. Kōwhiria te ringaringa-noa ki te taha matau hei tā rārangi."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Toia he pouaka ki runga i te kuputuhi hei whakaatu. Kōwhiria te ringaringa-noa ki te taha matau hei tā rārangi.",
+  "Appearance": "Te āhua",
+  "Follow system": "Whai i te pūnaha",
+  "Light": "Marama",
+  "Dark": "Pōuri",
+  "A contrast theme is on, so Snagster uses its colours.": "Kua pāoho tētahi kaupapa rerekētanga, nā reira ka whakamahi a Snagster i ōna kara.",
+  "The system asks for more contrast, so text and borders are stronger.": "Ka tono te pūnaha kia nui ake te rerekētanga, nā reira ka kaha ake te kuputaka me ngā tapa."
  }
 }

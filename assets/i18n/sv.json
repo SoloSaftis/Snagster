@@ -988,6 +988,12 @@
   "Recording saved": "Inspelning sparad",
   "box": "ruta",
   "freehand": "frihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra en ruta över texten för att markera den. Välj frihand till höger för att rita streck i stället."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra en ruta över texten för att markera den. Välj frihand till höger för att rita streck i stället.",
+  "Appearance": "Utseende",
+  "Follow system": "Följ systemet",
+  "Light": "Ljust",
+  "Dark": "Mörkt",
+  "A contrast theme is on, so Snagster uses its colours.": "Ett kontrasttema är aktivt, så Snagster använder dess färger.",
+  "The system asks for more contrast, so text and borders are stronger.": "Systemet ber om mer kontrast, så text och kanter är kraftigare."
  }
 }

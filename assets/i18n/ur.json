@@ -988,6 +988,12 @@
   "Recording saved": "ریکارڈنگ محفوظ ہو گئی",
   "box": "باکس",
   "freehand": "فری ہینڈ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "متن کو نمایاں کرنے کے لیے اس پر باکس کھینچیں۔ اس کے بجائے لکیریں کھینچنے کے لیے دائیں طرف فری ہینڈ منتخب کریں۔"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "متن کو نمایاں کرنے کے لیے اس پر باکس کھینچیں۔ اس کے بجائے لکیریں کھینچنے کے لیے دائیں طرف فری ہینڈ منتخب کریں۔",
+  "Appearance": "ظاہری شکل",
+  "Follow system": "سسٹم کی پیروی کریں",
+  "Light": "ہلکا",
+  "Dark": "گہرا",
+  "A contrast theme is on, so Snagster uses its colours.": "کنٹراسٹ تھیم آن ہے، اس لیے Snagster اس کے رنگ استعمال کرتا ہے۔",
+  "The system asks for more contrast, so text and borders are stronger.": "سسٹم مزید کنٹراسٹ مانگتا ہے، اس لیے متن اور بارڈر زیادہ نمایاں ہیں۔"
  }
 }

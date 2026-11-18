@@ -988,6 +988,12 @@
   "Recording saved": "Opnam gespäichert",
   "box": "Këscht",
   "freehand": "fräihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Zitt eng Këscht iwwer den Text, fir en ervirzehiewen. Wielt riets fräihand, fir amplaz Stréch ze zeechnen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Zitt eng Këscht iwwer den Text, fir en ervirzehiewen. Wielt riets fräihand, fir amplaz Stréch ze zeechnen.",
+  "Appearance": "Ausgesinn",
+  "Follow system": "Dem System follegen",
+  "Light": "Hell",
+  "Dark": "Donkel",
+  "A contrast theme is on, so Snagster uses its colours.": "En Kontrastdesign ass aktiv, dofir benotzt Snagster seng Faarwen.",
+  "The system asks for more contrast, so text and borders are stronger.": "D'System freet méi Kontrast, dofir sinn Text a Rummen méi kräfteg."
  }
 }

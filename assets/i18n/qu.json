@@ -988,6 +988,12 @@
   "Recording saved": "Grabay waqaychasqa",
   "box": "kaja",
   "freehand": "sapaq makiwan",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Qillqa patapi kaja chutay chaytaqa k'anchachinaykipaq. Paña kinraypi sapaq makiwan akllay siq'iykunata ruwanaykipaq."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Qillqa patapi kaja chutay chaytaqa k'anchachinaykipaq. Paña kinraypi sapaq makiwan akllay siq'iykunata ruwanaykipaq.",
+  "Appearance": "Rikch'ay",
+  "Follow system": "Sistemata qatiy",
+  "Light": "K'anchay",
+  "Dark": "Yanayaq",
+  "A contrast theme is on, so Snagster uses its colours.": "Contraste temaqa qawarichisqa, chayrayku Snagsterqa llimp'inkunata llamk'achin.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistemaqa astawan contrastetam mañan, chayrayku qillqapas ladupas astawan sinchi."
  }
 }

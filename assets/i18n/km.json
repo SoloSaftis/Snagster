@@ -988,6 +988,12 @@
   "Recording saved": "បានរក្សាទុកការថត",
   "box": "ប្រអប់",
   "freehand": "ដោយដៃ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "អូសប្រអប់លើអត្ថបទដើម្បីរំលេច។ ជ្រើស ដោយដៃ នៅខាងស្តាំ ដើម្បីគូរខ្សែវិញ។"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "អូសប្រអប់លើអត្ថបទដើម្បីរំលេច។ ជ្រើស ដោយដៃ នៅខាងស្តាំ ដើម្បីគូរខ្សែវិញ។",
+  "Appearance": "រូបរាង",
+  "Follow system": "តាមប្រព័ន្ធ",
+  "Light": "ភ្លឺ",
+  "Dark": "ងងឹត",
+  "A contrast theme is on, so Snagster uses its colours.": "រចនាប័ទ្មភាពផ្ទុយគ្នាត្រូវបានបើក ដូច្នេះ Snagster ប្រើពណ៌របស់វា។",
+  "The system asks for more contrast, so text and borders are stronger.": "ប្រព័ន្ធស្នើឱ្យមានភាពផ្ទុយគ្នាខ្ពស់ជាង ដូច្នេះអត្ថបទ និងស៊ុមមានភាពច្បាស់ជាង។"
  }
 }

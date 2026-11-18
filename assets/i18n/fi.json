@@ -988,6 +988,12 @@
   "Recording saved": "Nauhoitus tallennettu",
   "box": "laatikko",
   "freehand": "vapaa käsi",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Korosta teksti vetämällä sen päälle laatikko. Valitse oikealta vapaa käsi piirtääksesi vetoja."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Korosta teksti vetämällä sen päälle laatikko. Valitse oikealta vapaa käsi piirtääksesi vetoja.",
+  "Appearance": "Ulkoasu",
+  "Follow system": "Seuraa järjestelmää",
+  "Light": "Vaalea",
+  "Dark": "Tumma",
+  "A contrast theme is on, so Snagster uses its colours.": "Kontrastiteema on käytössä, joten Snagster käyttää sen värejä.",
+  "The system asks for more contrast, so text and borders are stronger.": "Järjestelmä pyytää suurempaa kontrastia, joten teksti ja reunat ovat vahvempia."
  }
 }

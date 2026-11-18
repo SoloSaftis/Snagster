@@ -988,6 +988,12 @@
   "Recording saved": "Enregistrement terminé",
   "box": "boîte",
   "freehand": "à main levée",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Faites glisser une boîte sur le texte pour le surligner. Choisissez à main levée à droite pour tracer des traits."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Faites glisser une boîte sur le texte pour le surligner. Choisissez à main levée à droite pour tracer des traits.",
+  "Appearance": "Apparence",
+  "Follow system": "Suivre le système",
+  "Light": "Clair",
+  "Dark": "Sombre",
+  "A contrast theme is on, so Snagster uses its colours.": "Un thème à contraste élevé est activé, donc Snagster utilise ses couleurs.",
+  "The system asks for more contrast, so text and borders are stronger.": "Le système demande plus de contraste, donc le texte et les bordures sont plus marqués."
  }
 }

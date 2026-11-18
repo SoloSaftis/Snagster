@@ -988,6 +988,12 @@
   "Recording saved": "ההקלטה נשמרה",
   "box": "תיבה",
   "freehand": "יד חופשית",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "גררו תיבה מעל הטקסט כדי להדגיש אותו. בחרו יד חופשית מימין כדי לצייר קווים."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "גררו תיבה מעל הטקסט כדי להדגיש אותו. בחרו יד חופשית מימין כדי לצייר קווים.",
+  "Appearance": "מראה",
+  "Follow system": "לפי המערכת",
+  "Light": "בהיר",
+  "Dark": "כהה",
+  "A contrast theme is on, so Snagster uses its colours.": "ערכת נושא בניגודיות גבוהה פעילה, ולכן Snagster משתמש בצבעים שלה.",
+  "The system asks for more contrast, so text and borders are stronger.": "המערכת מבקשת ניגודיות גבוהה יותר, ולכן הטקסט והמסגרות חזקים יותר."
  }
 }

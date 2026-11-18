@@ -988,6 +988,12 @@
   "Recording saved": "Opname opgeslagen",
   "box": "kader",
   "freehand": "vrije hand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep een kader over tekst om die te markeren. Kies rechts vrije hand om in plaats daarvan streken te tekenen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep een kader over tekst om die te markeren. Kies rechts vrije hand om in plaats daarvan streken te tekenen.",
+  "Appearance": "Weergave",
+  "Follow system": "Systeem volgen",
+  "Light": "Licht",
+  "Dark": "Donker",
+  "A contrast theme is on, so Snagster uses its colours.": "Er staat een contrastthema aan, dus Snagster gebruikt de kleuren ervan.",
+  "The system asks for more contrast, so text and borders are stronger.": "Het systeem vraagt om meer contrast, dus tekst en randen zijn sterker."
  }
 }

@@ -988,6 +988,12 @@
   "Recording saved": "Ձայնագրությունը պահպանվել է",
   "box": "տուփ",
   "freehand": "ազատ ձեռքով",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Տեքստը ընդգծելու համար քաշեք վանդակ դրա վրայով։ Աջից ընտրեք ազատ ձեռքով՝ գծեր գծելու համար։"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Տեքստը ընդգծելու համար քաշեք վանդակ դրա վրայով։ Աջից ընտրեք ազատ ձեռքով՝ գծեր գծելու համար։",
+  "Appearance": "Տեսք",
+  "Follow system": "Հետևել համակարգին",
+  "Light": "Լուսավոր",
+  "Dark": "Մուգ",
+  "A contrast theme is on, so Snagster uses its colours.": "Հակադրության թեման միացված է, ուստի Snagster-ը օգտագործում է դրա գույները։",
+  "The system asks for more contrast, so text and borders are stronger.": "Համակարգը պահանջում է ավելի մեծ հակադրություն, ուստի տեքստը և եզրագծերն ավելի ընդգծված են։"
  }
 }

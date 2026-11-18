@@ -988,6 +988,12 @@
   "Recording saved": "녹화 저장됨",
   "box": "상자",
   "freehand": "자유형",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "텍스트 위로 상자를 끌어 강조 표시하세요. 대신 획을 그리려면 오른쪽에서 자유형을 선택하세요."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "텍스트 위로 상자를 끌어 강조 표시하세요. 대신 획을 그리려면 오른쪽에서 자유형을 선택하세요.",
+  "Appearance": "모양",
+  "Follow system": "시스템 설정 따르기",
+  "Light": "라이트",
+  "Dark": "다크",
+  "A contrast theme is on, so Snagster uses its colours.": "대비 테마가 켜져 있어 Snagster가 해당 테마의 색을 사용합니다.",
+  "The system asks for more contrast, so text and borders are stronger.": "시스템이 더 높은 대비를 요청하므로 텍스트와 테두리가 더 선명하게 표시됩니다."
  }
 }

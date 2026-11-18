@@ -984,5 +984,11 @@
  "Recording saved",
  "box",
  "freehand",
- "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead."
+ "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.",
+ "Appearance",
+ "Follow system",
+ "Light",
+ "Dark",
+ "A contrast theme is on, so Snagster uses its colours.",
+ "The system asks for more contrast, so text and borders are stronger."
 ]

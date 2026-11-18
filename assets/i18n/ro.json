@@ -988,6 +988,12 @@
   "Recording saved": "Înregistrare salvată",
   "box": "casetă",
   "freehand": "mână liberă",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trageți o casetă peste text pentru a-l evidenția. Alegeți mână liberă în dreapta pentru a desena în schimb linii."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trageți o casetă peste text pentru a-l evidenția. Alegeți mână liberă în dreapta pentru a desena în schimb linii.",
+  "Appearance": "Aspect",
+  "Follow system": "Urmează sistemul",
+  "Light": "Luminos",
+  "Dark": "Întunecat",
+  "A contrast theme is on, so Snagster uses its colours.": "O temă cu contrast este activată, așa că Snagster folosește culorile ei.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistemul cere mai mult contrast, așa că textul și chenarele sunt mai pronunțate."
  }
 }

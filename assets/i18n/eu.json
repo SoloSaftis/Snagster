@@ -988,6 +988,12 @@
   "Recording saved": "Grabaketa gordeta",
   "box": "koadroa",
   "freehand": "esku libre",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastatu koadro bat testuaren gainean nabarmentzeko. Aukeratu esku libre eskuinean trazuak marrazteko."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastatu koadro bat testuaren gainean nabarmentzeko. Aukeratu esku libre eskuinean trazuak marrazteko.",
+  "Appearance": "Itxura",
+  "Follow system": "Jarraitu sistema",
+  "Light": "Argia",
+  "Dark": "Iluna",
+  "A contrast theme is on, so Snagster uses its colours.": "Kontraste-gai bat aktibo dago, beraz Snagster-ek haren koloreak erabiltzen ditu.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistemak kontraste handiagoa eskatzen du, beraz testua eta ertzak indartsuagoak dira."
  }
 }

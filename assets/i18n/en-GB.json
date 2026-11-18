@@ -988,6 +988,12 @@
   "Recording saved": "Recording saved",
   "box": "box",
   "freehand": "freehand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.",
+  "Appearance": "Appearance",
+  "Follow system": "Follow system",
+  "Light": "Light",
+  "Dark": "Dark",
+  "A contrast theme is on, so Snagster uses its colours.": "A contrast theme is on, so Snagster uses its colours.",
+  "The system asks for more contrast, so text and borders are stronger.": "The system asks for more contrast, so text and borders are stronger."
  }
 }

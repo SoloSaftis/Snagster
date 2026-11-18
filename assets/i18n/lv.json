@@ -988,6 +988,12 @@
   "Recording saved": "Ieraksts saglabāts",
   "box": "lodziņš",
   "freehand": "brīvroku",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Velciet lodziņu pāri tekstam, lai to izceltu. Labajā pusē izvēlieties brīvroku, lai zīmētu vilcienus."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Velciet lodziņu pāri tekstam, lai to izceltu. Labajā pusē izvēlieties brīvroku, lai zīmētu vilcienus.",
+  "Appearance": "Izskats",
+  "Follow system": "Kā sistēmā",
+  "Light": "Gaišs",
+  "Dark": "Tumšs",
+  "A contrast theme is on, so Snagster uses its colours.": "Ir ieslēgta kontrasta tēma, tāpēc Snagster izmanto tās krāsas.",
+  "The system asks for more contrast, so text and borders are stronger.": "Sistēma pieprasa lielāku kontrastu, tāpēc teksts un apmales ir izteiktākas."
  }
 }

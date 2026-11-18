@@ -5,56 +5,14 @@
 use eframe::egui::{self, Align2, Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId, Response, Sense, Stroke, Ui, pos2, vec2};
 use std::sync::Arc;
 
-const ACCENT_DEFAULT: Color32 = Color32::from_rgb(91, 127, 245);
+pub use crate::theme::pal;
 
-/// The accent colour (selection, focus, the main buttons): the one the person picked for the
-/// desktop where the desktop says (GNOME and KDE through the Settings portal), else Snagster's blue.
+/// The accent colour of the palette in use (selection, focus, the main buttons): the desktop's
+/// where it has one (Linux), else Snagster's blue, made readable on the palette's panels.
 pub fn accent() -> Color32 {
-    system_accent().unwrap_or(ACCENT_DEFAULT)
+    pal().accent
 }
 
-static SYSTEM_ACCENT: std::sync::OnceLock<Option<Color32>> = std::sync::OnceLock::new();
-
-/// The desktop's accent colour, once `read_system_accent` has asked.
-pub fn system_accent() -> Option<Color32> {
-    SYSTEM_ACCENT.get().copied().flatten()
-}
-
-/// Ask the desktop for its accent colour, once, at start. Linux only (the Settings portal);
-/// elsewhere Snagster keeps its own. At most a second: a slow or missing portal never holds up
-/// the window.
-pub fn read_system_accent() {
-    #[cfg(target_os = "linux")]
-    let found = {
-        let (tx, rx) = std::sync::mpsc::channel();
-        let _ = std::thread::Builder::new().name("snagster-accent".into()).spawn(move || {
-            let c = pollster::block_on(async {
-                let s = ashpd::desktop::settings::Settings::new().await.ok()?;
-                let c = s.accent_color().await.ok()?;
-                accent_from(c.red(), c.green(), c.blue())
-            });
-            let _ = tx.send(c);
-        });
-        rx.recv_timeout(std::time::Duration::from_secs(1)).ok().flatten()
-    };
-    #[cfg(not(target_os = "linux"))]
-    let found = None;
-    let _ = SYSTEM_ACCENT.set(found);
-}
-
-/// The portal gives 0..1 per channel; out of range means "no accent set".
-#[cfg(any(target_os = "linux", test))]
-fn accent_from(r: f64, g: f64, b: f64) -> Option<Color32> {
-    let ok = |v: f64| (0.0..=1.0).contains(&v);
-    (ok(r) && ok(g) && ok(b)).then(|| Color32::from_rgb((r * 255.0).round() as u8, (g * 255.0).round() as u8, (b * 255.0).round() as u8))
-}
-pub const TEXT: Color32 = Color32::from_rgb(226, 229, 238);
-pub const DIM: Color32 = Color32::from_rgb(150, 156, 172);
-pub const FAINT: Color32 = Color32::from_rgb(92, 98, 112);
-pub const HOVER: Color32 = Color32::from_rgb(44, 48, 60);
-pub const PRESSED: Color32 = Color32::from_rgb(36, 46, 82);
-pub const BAND: Color32 = Color32::from_rgb(30, 32, 40);
-pub const TABS: Color32 = Color32::from_rgb(22, 24, 30);
 pub const REC: Color32 = Color32::from_rgb(229, 72, 77);
 
 /// The icon font family (Phosphor, regular weight, MIT licence).
@@ -290,15 +248,15 @@ fn cjk_font_files(lang: &str) -> Vec<(std::path::PathBuf, u32)> {
 /// One tab of the tab row.
 pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
     let font = FontId::proportional(13.5);
-    let galley = ui.painter().layout_no_wrap(label.to_string(), font, if on { Color32::WHITE } else { DIM });
+    let galley = ui.painter().layout_no_wrap(label.to_string(), font, if on { pal().strong } else { pal().dim });
     let size = vec2(galley.size().x + 22.0, 30.0);
     let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
     if resp.hovered() && !on {
-        ui.painter().rect_filled(rect.shrink2(vec2(2.0, 3.0)), CornerRadius::same(6), HOVER);
+        ui.painter().rect_filled(rect.shrink2(vec2(2.0, 3.0)), CornerRadius::same(6), pal().hover);
     }
-    let color = if on { Color32::WHITE } else if resp.hovered() { TEXT } else { DIM };
+    let color = if on { pal().strong } else if resp.hovered() { pal().text } else { pal().dim };
     let pos = rect.center() - galley.size() / 2.0;
     ui.painter().galley(pos, galley, color);
     if on {
@@ -311,27 +269,33 @@ pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
 /// A big ribbon tool: its icon over its name, flat until hovered, with a tooltip.
 pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, active: bool) -> Response {
     let font = FontId::proportional(12.0);
-    let galley = ui.painter().layout(label.to_string(), font, TEXT, 88.0);
+    let galley = ui.painter().layout(label.to_string(), font, pal().text, 88.0);
     let w = galley.size().x.max(34.0) + 14.0;
     let (rect, resp) = ui.allocate_exact_size(vec2(w, 62.0), if enabled { Sense::click() } else { Sense::hover() });
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, enabled, active, label));
     let p = ui.painter();
+    let pal = pal();
+    let down = active || (enabled && resp.is_pointer_button_down_on());
     if active {
-        p.rect_filled(rect, CornerRadius::same(7), PRESSED);
-        p.rect_stroke(rect, CornerRadius::same(7), Stroke::new(1.0, accent()), egui::StrokeKind::Inside);
+        p.rect_filled(rect, CornerRadius::same(7), pal.pressed);
+        p.rect_stroke(rect, CornerRadius::same(7), Stroke::new(1.0, pal.accent), egui::StrokeKind::Inside);
     } else if enabled && resp.hovered() {
-        p.rect_filled(rect, CornerRadius::same(7), if resp.is_pointer_button_down_on() { PRESSED } else { HOVER });
+        p.rect_filled(rect, CornerRadius::same(7), if down { pal.pressed } else { pal.hover });
     }
+    // In a contrast theme the system's colours win: no red or blue icons, and the chosen
+    // tool's icon and name in the highlight's own text colour.
     let icol = if !enabled {
-        FAINT
+        pal.faint
+    } else if pal.high_contrast {
+        if down { pal.selected_text } else { pal.text }
     } else if icon == ph::RECORD || icon == ph::STOP || icon == ph::BROADCAST {
         REC
     } else {
-        accent()
+        pal.accent
     };
     p.text(pos2(rect.center().x, rect.top() + 18.0), Align2::CENTER_CENTER, icon, FontId::new(23.0, icons()), icol);
-    let tcol = if enabled { TEXT } else { FAINT };
+    let tcol = if !enabled { pal.faint } else if down { pal.selected_text } else { pal.text };
     let pos = pos2(rect.center().x - galley.size().x / 2.0, rect.top() + 34.0);
     p.galley(pos, galley, tcol);
     resp
@@ -340,16 +304,16 @@ pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, 
 /// A small ribbon tool: icon and name side by side (three fit in a column).
 pub fn small_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool) -> Response {
     let font = FontId::proportional(12.5);
-    let galley = ui.painter().layout_no_wrap(label.to_string(), font, TEXT);
+    let galley = ui.painter().layout_no_wrap(label.to_string(), font, pal().text);
     let (rect, resp) = ui.allocate_exact_size(vec2(galley.size().x + 32.0, 20.0), if enabled { Sense::click() } else { Sense::hover() });
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, enabled, label));
     let p = ui.painter();
     if enabled && resp.hovered() {
-        p.rect_filled(rect.expand(1.0), CornerRadius::same(5), HOVER);
+        p.rect_filled(rect.expand(1.0), CornerRadius::same(5), pal().hover);
     }
-    p.text(pos2(rect.left() + 12.0, rect.center().y), Align2::CENTER_CENTER, icon, FontId::new(15.0, icons()), if enabled { accent() } else { FAINT });
-    p.galley(pos2(rect.left() + 26.0, rect.center().y - galley.size().y / 2.0), galley, if enabled { TEXT } else { FAINT });
+    p.text(pos2(rect.left() + 12.0, rect.center().y), Align2::CENTER_CENTER, icon, FontId::new(15.0, icons()), if enabled { accent() } else { pal().faint });
+    p.galley(pos2(rect.left() + 26.0, rect.center().y - galley.size().y / 2.0), galley, if enabled { pal().text } else { pal().faint });
     resp
 }
 
@@ -365,13 +329,13 @@ pub fn group(ui: &mut Ui, name: &str, body: impl FnOnce(&mut Ui)) {
         ui.add_space(1.0);
         let w = ui.min_rect().width();
         ui.allocate_ui(vec2(w, 16.0), |ui| {
-            ui.centered_and_justified(|ui| ui.label(egui::RichText::new(name).size(12.0).color(DIM)));
+            ui.centered_and_justified(|ui| ui.label(egui::RichText::new(name).size(12.0).color(pal().dim)));
         });
     });
     let x = r.response.rect.right() + 6.0;
     let rect = r.response.rect;
     ui.add_space(12.0);
-    ui.painter().line_segment([pos2(x, rect.top() + 6.0), pos2(x, rect.bottom() - 4.0)], Stroke::new(1.0, Color32::from_rgb(52, 56, 68)));
+    ui.painter().line_segment([pos2(x, rect.top() + 6.0), pos2(x, rect.bottom() - 4.0)], Stroke::new(1.0, pal().line));
 }
 
 /// A column of small tools inside a group.
@@ -406,25 +370,15 @@ pub fn icon_button(ui: &mut Ui, icon: &str, tip: &str) -> Response {
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, tip));
     if resp.hovered() {
-        ui.painter().rect_filled(rect, CornerRadius::same(6), HOVER);
+        ui.painter().rect_filled(rect, CornerRadius::same(6), pal().hover);
     }
-    ui.painter().text(rect.center(), Align2::CENTER_CENTER, icon, FontId::new(17.0, icons()), if resp.hovered() { Color32::WHITE } else { DIM });
+    ui.painter().text(rect.center(), Align2::CENTER_CENTER, icon, FontId::new(17.0, icons()), if resp.hovered() { pal().strong } else { pal().dim });
     resp
 }
 
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn the_desktop_accent_is_read_from_its_0_to_1_channels() {
-        use super::*;
-        assert_eq!(accent_from(0.0, 0.5, 1.0), Some(Color32::from_rgb(0, 128, 255)));
-        assert_eq!(accent_from(0.207, 0.517, 0.894), Some(Color32::from_rgb(53, 132, 228)));
-        // (-1, -1, -1) or anything outside 0..1: the person set no accent.
-        assert_eq!(accent_from(-1.0, -1.0, -1.0), None);
-        assert_eq!(accent_from(1.2, 0.0, 0.0), None);
-    }
-
     use super::*;
     use std::collections::HashSet;
 
@@ -511,17 +465,15 @@ mod tests {
 
     #[test]
     fn colours_stand_apart() {
-        // Text must be readable on the ribbon, and the hover and pressed colours visible.
-        let lum = |c: Color32| 0.2126 * c.r() as f32 + 0.7152 * c.g() as f32 + 0.0722 * c.b() as f32;
-        assert!(lum(TEXT) - lum(BAND) > 150.0);
-        assert!(lum(DIM) - lum(BAND) > 80.0);
-        assert!(lum(FAINT) > lum(BAND));
-        assert_ne!(HOVER, BAND);
-        assert_ne!(PRESSED, HOVER);
-        assert_ne!(TABS, BAND);
-        assert!(REC.r() > REC.g() && REC.r() > REC.b(), "recording is red");
-        for c in [accent(), TEXT, DIM, FAINT, HOVER, PRESSED, BAND, TABS, REC] {
-            assert_eq!(c.a(), 255, "interface colours are opaque");
+        // Hover and pressed must show on the ribbon in every palette, and recording is red.
+        for p in [crate::theme::DARK, crate::theme::LIGHT] {
+            assert_ne!(p.hover, p.band);
+            assert_ne!(p.pressed, p.hover);
+            assert_ne!(p.tabs, p.band);
+            for c in [p.accent, p.text, p.dim, p.faint, p.hover, p.pressed, p.band, p.tabs, REC] {
+                assert_eq!(c.a(), 255, "interface colours are opaque");
+            }
         }
+        assert!(REC.r() > REC.g() && REC.r() > REC.b(), "recording is red");
     }
 }

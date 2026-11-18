@@ -988,6 +988,12 @@
   "Recording saved": "录制已保存",
   "box": "方框",
   "freehand": "手绘",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖动方框即可高亮显示。选择右侧的“手绘”可改为绘制笔画。"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖动方框即可高亮显示。选择右侧的“手绘”可改为绘制笔画。",
+  "Appearance": "外观",
+  "Follow system": "跟随系统",
+  "Light": "浅色",
+  "Dark": "深色",
+  "A contrast theme is on, so Snagster uses its colours.": "已启用对比度主题，因此 Snagster 使用其颜色。",
+  "The system asks for more contrast, so text and borders are stronger.": "系统要求更高的对比度，因此文字和边框会更加醒目。"
  }
 }

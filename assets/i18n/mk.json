@@ -988,6 +988,12 @@
   "Recording saved": "Снимката е зачувана",
   "box": "поле",
   "freehand": "слободна рака",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Повлечете поле врз текстот за да го истакнете. Изберете слободна рака десно за да цртате потези."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Повлечете поле врз текстот за да го истакнете. Изберете слободна рака десно за да цртате потези.",
+  "Appearance": "Изглед",
+  "Follow system": "Следи го системот",
+  "Light": "Светла",
+  "Dark": "Темна",
+  "A contrast theme is on, so Snagster uses its colours.": "Вклучена е тема со висок контраст, затоа Snagster ги користи нејзините бои.",
+  "The system asks for more contrast, so text and borders are stronger.": "Системот бара поголем контраст, затоа текстот и рамките се појаки."
  }
 }

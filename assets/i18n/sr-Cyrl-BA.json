@@ -988,6 +988,12 @@
   "Recording saved": "Снимак је сачуван",
   "box": "оквир",
   "freehand": "слободном руком",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Превуците оквир преко текста да га истакнете. Изаберите слободном руком десно да уместо тога цртате потезе."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Превуците оквир преко текста да га истакнете. Изаберите слободном руком десно да уместо тога цртате потезе.",
+  "Appearance": "Изглед",
+  "Follow system": "Прати систем",
+  "Light": "Свијетла",
+  "Dark": "Тамна",
+  "A contrast theme is on, so Snagster uses its colours.": "Укључена је тема високог контраста, па Snagster користи њене боје.",
+  "The system asks for more contrast, so text and borders are stronger.": "Систем тражи већи контраст, па су текст и оквири јачи."
  }
 }

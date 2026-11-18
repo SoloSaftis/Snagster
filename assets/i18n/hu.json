@@ -988,6 +988,12 @@
   "Recording saved": "Felvétel elmentve",
   "box": "doboz",
   "freehand": "szabadkéz",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Húzzon egy dobozt a szöveg fölé a kiemeléséhez. Jobbra válassza a szabadkéz lehetőséget a vonalak rajzolásához."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Húzzon egy dobozt a szöveg fölé a kiemeléséhez. Jobbra válassza a szabadkéz lehetőséget a vonalak rajzolásához.",
+  "Appearance": "Megjelenés",
+  "Follow system": "Rendszer követése",
+  "Light": "Világos",
+  "Dark": "Sötét",
+  "A contrast theme is on, so Snagster uses its colours.": "Kontrasztos téma van bekapcsolva, ezért a Snagster annak színeit használja.",
+  "The system asks for more contrast, so text and borders are stronger.": "A rendszer nagyobb kontrasztot kér, ezért a szöveg és a szegélyek erősebbek."
  }
 }

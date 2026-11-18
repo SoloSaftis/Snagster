@@ -988,6 +988,12 @@
   "Recording saved": "錄製內容已儲存",
   "box": "方框",
   "freehand": "手繪",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖曳方框即可醒目提示。選擇右側的「手繪」可改為繪製筆劃。"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖曳方框即可醒目提示。選擇右側的「手繪」可改為繪製筆劃。",
+  "Appearance": "外觀",
+  "Follow system": "跟隨系統",
+  "Light": "淺色",
+  "Dark": "深色",
+  "A contrast theme is on, so Snagster uses its colours.": "已啟用對比主題，因此 Snagster 使用其色彩。",
+  "The system asks for more contrast, so text and borders are stronger.": "系統要求更高的對比，因此文字和邊框會更加明顯。"
  }
 }

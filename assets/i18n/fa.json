@@ -988,6 +988,12 @@
   "Recording saved": "ضبط ذخیره شد",
   "box": "کادر",
   "freehand": "آزاد",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "برای هایلایت کردن متن، یک کادر روی آن بکشید. برای کشیدن خط‌ها، در سمت راست آزاد را انتخاب کنید."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "برای هایلایت کردن متن، یک کادر روی آن بکشید. برای کشیدن خط‌ها، در سمت راست آزاد را انتخاب کنید.",
+  "Appearance": "ظاهر",
+  "Follow system": "پیروی از سیستم",
+  "Light": "روشن",
+  "Dark": "تیره",
+  "A contrast theme is on, so Snagster uses its colours.": "یک زمینه کنتراست روشن است، بنابراین Snagster از رنگ‌های آن استفاده می‌کند.",
+  "The system asks for more contrast, so text and borders are stronger.": "سیستم کنتراست بیشتری می‌خواهد، بنابراین متن و حاشیه‌ها پررنگ‌ترند."
  }
 }

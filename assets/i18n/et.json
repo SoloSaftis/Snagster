@@ -988,6 +988,12 @@
   "Recording saved": "Lindistus salvestatud",
   "box": "kast",
   "freehand": "vabakäsi",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Teksti esiletõstmiseks lohistage selle kohale kast. Joonte joonistamiseks valige paremalt vabakäsi."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Teksti esiletõstmiseks lohistage selle kohale kast. Joonte joonistamiseks valige paremalt vabakäsi.",
+  "Appearance": "Välimus",
+  "Follow system": "Järgi süsteemi",
+  "Light": "Hele",
+  "Dark": "Tume",
+  "A contrast theme is on, so Snagster uses its colours.": "Kontrastiteema on sees, seega kasutab Snagster selle värve.",
+  "The system asks for more contrast, so text and borders are stronger.": "Süsteem nõuab suuremat kontrasti, seega on tekst ja ääred tugevamad."
  }
 }

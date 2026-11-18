@@ -988,6 +988,12 @@
   "Recording saved": "تم حفظ التسجيل",
   "box": "مربع",
   "freehand": "يدوي",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "اسحب مربعًا فوق النص لتمييزه. اختر يدوي على اليمين لرسم خطوط بدلًا من ذلك."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "اسحب مربعًا فوق النص لتمييزه. اختر يدوي على اليمين لرسم خطوط بدلًا من ذلك.",
+  "Appearance": "المظهر",
+  "Follow system": "اتباع النظام",
+  "Light": "فاتح",
+  "Dark": "داكن",
+  "A contrast theme is on, so Snagster uses its colours.": "سمة التباين قيد التشغيل، لذا يستخدم Snagster ألوانها.",
+  "The system asks for more contrast, so text and borders are stronger.": "يطلب النظام تباينًا أعلى، لذا يظهر النص والحدود بشكل أقوى."
  }
 }
