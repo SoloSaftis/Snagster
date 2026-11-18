@@ -988,6 +988,11 @@
   "Recording saved": "ریکارڈنگ محفوظ ہو گئی",
   "box": "باکس",
   "freehand": "فری ہینڈ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "متن کو نمایاں کرنے کے لیے اس پر باکس کھینچیں۔ اس کے بجائے لکیریں کھینچنے کے لیے دائیں طرف فری ہینڈ منتخب کریں۔"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "متن کو نمایاں کرنے کے لیے اس پر باکس کھینچیں۔ اس کے بجائے لکیریں کھینچنے کے لیے دائیں طرف فری ہینڈ منتخب کریں۔",
+  "Moved {count} captures to the Recycle Bin.": "{count} کیپچرز ری سائیکل بن میں منتقل ہو گئے۔",
+  "Moved {count} captures to the Trash.": "{count} کیپچرز ردی کی ٹوکری میں منتقل ہو گئے۔",
+  "Brought back {path}.": "{path} واپس لایا گیا۔",
+  "Brought back {count} captures.": "{count} کیپچرز واپس لائے گئے۔",
+  "Couldn't bring it back: {error}": "واپس نہیں لایا جا سکا: {error}"
  }
 }

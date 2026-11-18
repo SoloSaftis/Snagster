@@ -988,6 +988,11 @@
   "Recording saved": "បានរក្សាទុកការថត",
   "box": "ប្រអប់",
   "freehand": "ដោយដៃ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "អូសប្រអប់លើអត្ថបទដើម្បីរំលេច។ ជ្រើស ដោយដៃ នៅខាងស្តាំ ដើម្បីគូរខ្សែវិញ។"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "អូសប្រអប់លើអត្ថបទដើម្បីរំលេច។ ជ្រើស ដោយដៃ នៅខាងស្តាំ ដើម្បីគូរខ្សែវិញ។",
+  "Moved {count} captures to the Recycle Bin.": "បានផ្លាស់ទីការចាប់យក {count} ទៅធុងសំរាម។",
+  "Moved {count} captures to the Trash.": "បានផ្លាស់ទីការចាប់យក {count} ទៅធុងសំរាម។",
+  "Brought back {path}.": "បាននាំ {path} ត្រឡប់មកវិញ។",
+  "Brought back {count} captures.": "បាននាំការចាប់យក {count} ត្រឡប់មកវិញ។",
+  "Couldn't bring it back: {error}": "មិនអាចនាំវាត្រឡប់មកវិញបានទេ៖ {error}"
  }
 }

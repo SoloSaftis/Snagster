@@ -988,6 +988,11 @@
   "Recording saved": "Zapisano nagranie",
   "box": "ramka",
   "freehand": "odręcznie",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Przeciągnij ramkę nad tekstem, aby go zaznaczyć. Wybierz po prawej odręcznie, aby zamiast tego rysować pociągnięcia."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Przeciągnij ramkę nad tekstem, aby go zaznaczyć. Wybierz po prawej odręcznie, aby zamiast tego rysować pociągnięcia.",
+  "Moved {count} captures to the Recycle Bin.": "Przeniesiono do Kosza przechwycenia: {count}.",
+  "Moved {count} captures to the Trash.": "Przeniesiono do kosza przechwycenia: {count}.",
+  "Brought back {path}.": "Przywrócono {path}.",
+  "Brought back {count} captures.": "Przywrócono przechwycenia: {count}.",
+  "Couldn't bring it back: {error}": "Nie udało się przywrócić: {error}"
  }
 }

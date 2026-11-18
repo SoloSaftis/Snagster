@@ -988,6 +988,11 @@
   "Recording saved": "錄製內容已儲存",
   "box": "方框",
   "freehand": "手繪",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖曳方框即可醒目提示。選擇右側的「手繪」可改為繪製筆劃。"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖曳方框即可醒目提示。選擇右側的「手繪」可改為繪製筆劃。",
+  "Moved {count} captures to the Recycle Bin.": "已將 {count} 個擷取移到資源回收筒。",
+  "Moved {count} captures to the Trash.": "已將 {count} 個擷取移到垃圾桶。",
+  "Brought back {path}.": "已還原 {path}。",
+  "Brought back {count} captures.": "已還原 {count} 個擷取。",
+  "Couldn't bring it back: {error}": "無法還原：{error}"
  }
 }

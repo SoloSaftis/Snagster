@@ -988,6 +988,11 @@
   "Recording saved": "Жазба сақталды",
   "box": "жәшік",
   "freehand": "еркін",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Мәтінді бөлектеу үшін оның үстінен жәшік сүйреңіз. Сызықтар салу үшін оң жақтан еркін таңдаңыз."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Мәтінді бөлектеу үшін оның үстінен жәшік сүйреңіз. Сызықтар салу үшін оң жақтан еркін таңдаңыз.",
+  "Moved {count} captures to the Recycle Bin.": "{count} түсіру себетке жылжытылды.",
+  "Moved {count} captures to the Trash.": "{count} түсіру қоқыс шелегіне жылжытылды.",
+  "Brought back {path}.": "{path} қалпына келтірілді.",
+  "Brought back {count} captures.": "{count} түсіру қалпына келтірілді.",
+  "Couldn't bring it back: {error}": "Қалпына келтіру мүмкін болмады: {error}"
  }
 }

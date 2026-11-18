@@ -988,6 +988,11 @@
   "Recording saved": "录制已保存",
   "box": "方框",
   "freehand": "手绘",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖动方框即可高亮显示。选择右侧的“手绘”可改为绘制笔画。"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖动方框即可高亮显示。选择右侧的“手绘”可改为绘制笔画。",
+  "Moved {count} captures to the Recycle Bin.": "已将 {count} 张截图移到回收站。",
+  "Moved {count} captures to the Trash.": "已将 {count} 张截图移到回收站。",
+  "Brought back {path}.": "已恢复 {path}。",
+  "Brought back {count} captures.": "已恢复 {count} 张截图。",
+  "Couldn't bring it back: {error}": "无法恢复：{error}"
  }
 }

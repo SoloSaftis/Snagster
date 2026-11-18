@@ -988,6 +988,11 @@
   "Recording saved": "Gravação salva",
   "box": "caixa",
   "freehand": "à mão livre",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arraste uma caixa sobre o texto para destacá-lo. Escolha à mão livre à direita para desenhar traços."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arraste uma caixa sobre o texto para destacá-lo. Escolha à mão livre à direita para desenhar traços.",
+  "Moved {count} captures to the Recycle Bin.": "{count} capturas movidas para a Lixeira.",
+  "Moved {count} captures to the Trash.": "{count} capturas movidas para a Lixeira.",
+  "Brought back {path}.": "{path} restaurado.",
+  "Brought back {count} captures.": "{count} capturas restauradas.",
+  "Couldn't bring it back: {error}": "Não foi possível restaurar: {error}"
  }
 }

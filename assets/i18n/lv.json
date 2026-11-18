@@ -988,6 +988,11 @@
   "Recording saved": "Ieraksts saglabāts",
   "box": "lodziņš",
   "freehand": "brīvroku",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Velciet lodziņu pāri tekstam, lai to izceltu. Labajā pusē izvēlieties brīvroku, lai zīmētu vilcienus."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Velciet lodziņu pāri tekstam, lai to izceltu. Labajā pusē izvēlieties brīvroku, lai zīmētu vilcienus.",
+  "Moved {count} captures to the Recycle Bin.": "Uz atkritni pārvietotas tveršanas: {count}.",
+  "Moved {count} captures to the Trash.": "Uz miskasti pārvietotas tveršanas: {count}.",
+  "Brought back {path}.": "{path} atjaunots.",
+  "Brought back {count} captures.": "Atjaunotas tveršanas: {count}.",
+  "Couldn't bring it back: {error}": "Neizdevās atjaunot: {error}"
  }
 }

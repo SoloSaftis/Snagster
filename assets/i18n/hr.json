@@ -988,6 +988,11 @@
   "Recording saved": "Snimka je spremljena",
   "box": "okvir",
   "freehand": "slobodnom rukom",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Povucite okvir preko teksta da ga istaknete. Odaberite slobodnom rukom desno da umjesto toga crtate poteze."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Povucite okvir preko teksta da ga istaknete. Odaberite slobodnom rukom desno da umjesto toga crtate poteze.",
+  "Moved {count} captures to the Recycle Bin.": "Snimaka premješteno u koš za smeće: {count}.",
+  "Moved {count} captures to the Trash.": "Snimaka premješteno u smeće: {count}.",
+  "Brought back {path}.": "{path} vraćeno.",
+  "Brought back {count} captures.": "Vraćeno snimaka: {count}.",
+  "Couldn't bring it back: {error}": "Nije moguće vratiti: {error}"
  }
 }

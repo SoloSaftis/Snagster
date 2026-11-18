@@ -988,6 +988,11 @@
   "Recording saved": "Opname opgeslagen",
   "box": "kader",
   "freehand": "vrije hand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep een kader over tekst om die te markeren. Kies rechts vrije hand om in plaats daarvan streken te tekenen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep een kader over tekst om die te markeren. Kies rechts vrije hand om in plaats daarvan streken te tekenen.",
+  "Moved {count} captures to the Recycle Bin.": "{count} opnamen naar de Prullenbak verplaatst.",
+  "Moved {count} captures to the Trash.": "{count} opnamen naar de prullenbak verplaatst.",
+  "Brought back {path}.": "{path} teruggezet.",
+  "Brought back {count} captures.": "{count} opnamen teruggezet.",
+  "Couldn't bring it back: {error}": "Kan het niet terugzetten: {error}"
  }
 }

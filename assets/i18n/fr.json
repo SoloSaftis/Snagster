@@ -988,6 +988,11 @@
   "Recording saved": "Enregistrement terminé",
   "box": "boîte",
   "freehand": "à main levée",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Faites glisser une boîte sur le texte pour le surligner. Choisissez à main levée à droite pour tracer des traits."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Faites glisser une boîte sur le texte pour le surligner. Choisissez à main levée à droite pour tracer des traits.",
+  "Moved {count} captures to the Recycle Bin.": "{count} captures déplacées vers la corbeille.",
+  "Moved {count} captures to the Trash.": "{count} captures mises à la corbeille.",
+  "Brought back {path}.": "{path} restauré.",
+  "Brought back {count} captures.": "{count} captures restaurées.",
+  "Couldn't bring it back: {error}": "Impossible de restaurer : {error}"
  }
 }

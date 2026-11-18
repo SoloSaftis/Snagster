@@ -988,6 +988,11 @@
   "Recording saved": "ضبط ذخیره شد",
   "box": "کادر",
   "freehand": "آزاد",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "برای هایلایت کردن متن، یک کادر روی آن بکشید. برای کشیدن خط‌ها، در سمت راست آزاد را انتخاب کنید."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "برای هایلایت کردن متن، یک کادر روی آن بکشید. برای کشیدن خط‌ها، در سمت راست آزاد را انتخاب کنید.",
+  "Moved {count} captures to the Recycle Bin.": "{count} ضبط به سطل بازیافت منتقل شد.",
+  "Moved {count} captures to the Trash.": "{count} ضبط به زباله‌دان منتقل شد.",
+  "Brought back {path}.": "{path} بازگردانده شد.",
+  "Brought back {count} captures.": "{count} ضبط بازگردانده شد.",
+  "Couldn't bring it back: {error}": "بازگردانی انجام نشد: {error}"
  }
 }

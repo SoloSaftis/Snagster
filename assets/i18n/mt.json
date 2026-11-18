@@ -988,6 +988,11 @@
   "Recording saved": "Rekording salvat",
   "box": "kaxxa",
   "freehand": "b'idejk",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kaxxa fuq it-test biex tenfasizzah. Agħżel b'idejk fuq il-lemin biex tfassal strixxi minflok."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kaxxa fuq it-test biex tenfasizzah. Agħżel b'idejk fuq il-lemin biex tfassal strixxi minflok.",
+  "Moved {count} captures to the Recycle Bin.": "Ġew iċċaqilqu {count} qbid għar-Recycle Bin.",
+  "Moved {count} captures to the Trash.": "Ġew iċċaqilqu {count} qbid għat-Trash.",
+  "Brought back {path}.": "{path} ġie rkuprat.",
+  "Brought back {count} captures.": "Ġew irkuprati {count} qbid.",
+  "Couldn't bring it back: {error}": "Ma setax jiġi rkuprat: {error}"
  }
 }

@@ -988,6 +988,11 @@
   "Recording saved": "Снимак је сачуван",
   "box": "оквир",
   "freehand": "слободном руком",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Превуците оквир преко текста да га истакнете. Изаберите слободном руком десно да уместо тога цртате потезе."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Превуците оквир преко текста да га истакнете. Изаберите слободном руком десно да уместо тога цртате потезе.",
+  "Moved {count} captures to the Recycle Bin.": "Снимака премјештено у корпу за отпатке: {count}.",
+  "Moved {count} captures to the Trash.": "Снимака премјештено у смеће: {count}.",
+  "Brought back {path}.": "{path} је враћено.",
+  "Brought back {count} captures.": "Враћено снимака: {count}.",
+  "Couldn't bring it back: {error}": "Враћање није успјело: {error}"
  }
 }

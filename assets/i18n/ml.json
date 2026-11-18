@@ -988,6 +988,11 @@
   "Recording saved": "റെക്കോർഡിംഗ് സംരക്ഷിച്ചു",
   "box": "ബോക്സ്",
   "freehand": "ഫ്രീഹാൻഡ്",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "വാചകം ഹൈലൈറ്റ് ചെയ്യാൻ അതിനു മുകളിലൂടെ ഒരു ബോക്സ് വലിക്കുക. പകരം വരകൾ വരയ്ക്കാൻ വലതുവശത്ത് ഫ്രീഹാൻഡ് തിരഞ്ഞെടുക്കുക."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "വാചകം ഹൈലൈറ്റ് ചെയ്യാൻ അതിനു മുകളിലൂടെ ഒരു ബോക്സ് വലിക്കുക. പകരം വരകൾ വരയ്ക്കാൻ വലതുവശത്ത് ഫ്രീഹാൻഡ് തിരഞ്ഞെടുക്കുക.",
+  "Moved {count} captures to the Recycle Bin.": "{count} ക്യാപ്ചറുകൾ റീസൈക്കിൾ ബിന്നിലേക്ക് നീക്കി.",
+  "Moved {count} captures to the Trash.": "{count} ക്യാപ്ചറുകൾ ട്രാഷിലേക്ക് നീക്കി.",
+  "Brought back {path}.": "{path} തിരികെ കൊണ്ടുവന്നു.",
+  "Brought back {count} captures.": "{count} ക്യാപ്ചറുകൾ തിരികെ കൊണ്ടുവന്നു.",
+  "Couldn't bring it back: {error}": "തിരികെ കൊണ്ടുവരാനായില്ല: {error}"
  }
 }

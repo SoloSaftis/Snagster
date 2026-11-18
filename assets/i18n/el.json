@@ -988,6 +988,11 @@
   "Recording saved": "Η εγγραφή αποθηκεύτηκε",
   "box": "πλαίσιο",
   "freehand": "ελεύθερο",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Σύρετε ένα πλαίσιο πάνω από το κείμενο για να το επισημάνετε. Επιλέξτε ελεύθερο στα δεξιά για να σχεδιάσετε γραμμές."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Σύρετε ένα πλαίσιο πάνω από το κείμενο για να το επισημάνετε. Επιλέξτε ελεύθερο στα δεξιά για να σχεδιάσετε γραμμές.",
+  "Moved {count} captures to the Recycle Bin.": "{count} λήψεις μετακινήθηκαν στον Κάδο Ανακύκλωσης.",
+  "Moved {count} captures to the Trash.": "{count} λήψεις μετακινήθηκαν στον Κάδο.",
+  "Brought back {path}.": "Έγινε επαναφορά του {path}.",
+  "Brought back {count} captures.": "Έγινε επαναφορά {count} λήψεων.",
+  "Couldn't bring it back: {error}": "Δεν ήταν δυνατή η επαναφορά: {error}"
  }
 }

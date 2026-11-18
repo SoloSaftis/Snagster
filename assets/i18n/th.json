@@ -988,6 +988,11 @@
   "Recording saved": "บันทึกการบันทึกแล้ว",
   "box": "กล่อง",
   "freehand": "อิสระ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ลากกล่องคร่อมข้อความเพื่อไฮไลต์ เลือก อิสระ ทางขวาเพื่อวาดเส้นแทน"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ลากกล่องคร่อมข้อความเพื่อไฮไลต์ เลือก อิสระ ทางขวาเพื่อวาดเส้นแทน",
+  "Moved {count} captures to the Recycle Bin.": "ย้ายการแคปเจอร์ {count} รายการไปถังขยะแล้ว",
+  "Moved {count} captures to the Trash.": "ย้ายการแคปเจอร์ {count} รายการไปถังขยะแล้ว",
+  "Brought back {path}.": "นำ {path} กลับมาแล้ว",
+  "Brought back {count} captures.": "นำการแคปเจอร์ {count} รายการกลับมาแล้ว",
+  "Couldn't bring it back: {error}": "นำกลับมาไม่ได้: {error}"
  }
 }

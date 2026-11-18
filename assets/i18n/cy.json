@@ -988,6 +988,11 @@
   "Recording saved": "Recordiad wedi'i chadw",
   "box": "blwch",
   "freehand": "llawrydd",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Llusgwch flwch dros destun i'w amlygu. Dewiswch llawrydd ar y dde i dynnu llinellau yn lle hynny."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Llusgwch flwch dros destun i'w amlygu. Dewiswch llawrydd ar y dde i dynnu llinellau yn lle hynny.",
+  "Moved {count} captures to the Recycle Bin.": "Symudwyd {count} dalfa i'r Bin Ailgylchu.",
+  "Moved {count} captures to the Trash.": "Symudwyd {count} dalfa i'r Sbwriel.",
+  "Brought back {path}.": "Daethpwyd â {path} yn ôl.",
+  "Brought back {count} captures.": "Daethpwyd â {count} dalfa yn ôl.",
+  "Couldn't bring it back: {error}": "Methu dod ag ef yn ôl: {error}"
  }
 }

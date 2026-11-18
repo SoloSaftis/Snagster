@@ -988,6 +988,11 @@
   "Recording saved": "ରେକର୍ଡିଂ ସେଭ୍ ହେଲା",
   "box": "ବାକ୍ସ",
   "freehand": "ଫ୍ରିହ୍ୟାଣ୍ଡ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ପାଠକୁ ହାଇଲାଇଟ୍ କରିବାକୁ ଏହା ଉପରେ ଏକ ବାକ୍ସ ଟାଣନ୍ତୁ। ବଦଳରେ ରେଖା ଆଙ୍କିବାକୁ ଡାହାଣରେ ଫ୍ରିହ୍ୟାଣ୍ଡ ବାଛନ୍ତୁ।"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ପାଠକୁ ହାଇଲାଇଟ୍ କରିବାକୁ ଏହା ଉପରେ ଏକ ବାକ୍ସ ଟାଣନ୍ତୁ। ବଦଳରେ ରେଖା ଆଙ୍କିବାକୁ ଡାହାଣରେ ଫ୍ରିହ୍ୟାଣ୍ଡ ବାଛନ୍ତୁ।",
+  "Moved {count} captures to the Recycle Bin.": "{count}ଟି କ୍ୟାପଚର୍ ରିସାଇକଲ୍ ବିନ୍‌କୁ ନିଆଗଲା।",
+  "Moved {count} captures to the Trash.": "{count}ଟି କ୍ୟାପଚର୍ ଆବର୍ଜନାକୁ ନିଆଗଲା।",
+  "Brought back {path}.": "{path} ଫେରାଇ ଅଣାଗଲା।",
+  "Brought back {count} captures.": "{count}ଟି କ୍ୟାପଚର୍ ଫେରାଇ ଅଣାଗଲା।",
+  "Couldn't bring it back: {error}": "ଫେରାଇ ଆଣିହେଲା ନାହିଁ: {error}"
  }
 }

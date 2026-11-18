@@ -988,6 +988,11 @@
   "Recording saved": "Regjistrimi u ruajt",
   "box": "kuti",
   "freehand": "dorë e lirë",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tërhiqni një kuti mbi tekst për ta theksuar. Zgjidhni dorë e lirë djathtas për të vizatuar vija."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tërhiqni një kuti mbi tekst për ta theksuar. Zgjidhni dorë e lirë djathtas për të vizatuar vija.",
+  "Moved {count} captures to the Recycle Bin.": "{count} kapje u zhvendosën në Koshin e riciklimit.",
+  "Moved {count} captures to the Trash.": "{count} kapje u zhvendosën në Kosh.",
+  "Brought back {path}.": "{path} u rikthye.",
+  "Brought back {count} captures.": "U rikthyen {count} kapje.",
+  "Couldn't bring it back: {error}": "Nuk u rikthye dot: {error}"
  }
 }

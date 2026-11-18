@@ -988,6 +988,11 @@
   "Recording saved": "Qeyd saxlanıldı",
   "box": "qutu",
   "freehand": "sərbəst",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Mətni vurğulamaq üçün üzərinə qutu çəkin. Əvəzinə xətlər çəkmək üçün sağda sərbəst seçin."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Mətni vurğulamaq üçün üzərinə qutu çəkin. Əvəzinə xətlər çəkmək üçün sağda sərbəst seçin.",
+  "Moved {count} captures to the Recycle Bin.": "{count} çəkiliş Zibil qutusuna köçürüldü.",
+  "Moved {count} captures to the Trash.": "{count} çəkiliş Zibil qutusuna köçürüldü.",
+  "Brought back {path}.": "{path} geri qaytarıldı.",
+  "Brought back {count} captures.": "{count} çəkiliş geri qaytarıldı.",
+  "Couldn't bring it back: {error}": "Geri qaytarmaq alınmadı: {error}"
  }
 }

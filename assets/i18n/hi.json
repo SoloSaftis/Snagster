@@ -988,6 +988,11 @@
   "Recording saved": "रिकॉर्डिंग सहेजी गई",
   "box": "बॉक्स",
   "freehand": "फ्रीहैंड",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "टेक्स्ट को हाइलाइट करने के लिए उस पर बॉक्स खींचें। इसके बजाय रेखाएँ खींचने के लिए दाईं ओर फ्रीहैंड चुनें।"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "टेक्स्ट को हाइलाइट करने के लिए उस पर बॉक्स खींचें। इसके बजाय रेखाएँ खींचने के लिए दाईं ओर फ्रीहैंड चुनें।",
+  "Moved {count} captures to the Recycle Bin.": "{count} कैप्चर रीसायकल बिन में ले जाए गए।",
+  "Moved {count} captures to the Trash.": "{count} कैप्चर ट्रैश में ले जाए गए।",
+  "Brought back {path}.": "{path} वापस लाया गया।",
+  "Brought back {count} captures.": "{count} कैप्चर वापस लाए गए।",
+  "Couldn't bring it back: {error}": "वापस नहीं लाया जा सका: {error}"
  }
 }

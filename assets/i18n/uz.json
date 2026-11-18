@@ -988,6 +988,11 @@
   "Recording saved": "Yozuv saqlandi",
   "box": "quti",
   "freehand": "erkin",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Matnni ajratib ko'rsatish uchun uning ustiga quti torting. Chiziqlar chizish uchun o'ngda erkin tanlang."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Matnni ajratib ko'rsatish uchun uning ustiga quti torting. Chiziqlar chizish uchun o'ngda erkin tanlang.",
+  "Moved {count} captures to the Recycle Bin.": "{count} ta rasm savatga tashlandi.",
+  "Moved {count} captures to the Trash.": "{count} ta rasm savatga tashlandi.",
+  "Brought back {path}.": "{path} qaytarildi.",
+  "Brought back {count} captures.": "{count} ta rasm qaytarildi.",
+  "Couldn't bring it back: {error}": "Qaytarib bo‘lmadi: {error}"
  }
 }

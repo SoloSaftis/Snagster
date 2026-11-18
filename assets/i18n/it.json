@@ -988,6 +988,11 @@
   "Recording saved": "Registrazione salvata",
   "box": "riquadro",
   "freehand": "a mano libera",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trascina un riquadro sul testo per evidenziarlo. Scegli a mano libera a destra per disegnare tratti."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trascina un riquadro sul testo per evidenziarlo. Scegli a mano libera a destra per disegnare tratti.",
+  "Moved {count} captures to the Recycle Bin.": "{count} catture spostate nel Cestino.",
+  "Moved {count} captures to the Trash.": "{count} catture spostate nel Cestino.",
+  "Brought back {path}.": "{path} ripristinato.",
+  "Brought back {count} captures.": "{count} catture ripristinate.",
+  "Couldn't bring it back: {error}": "Impossibile ripristinare: {error}"
  }
 }

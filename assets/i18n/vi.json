@@ -988,6 +988,11 @@
   "Recording saved": "Đã lưu bản quay",
   "box": "khung",
   "freehand": "tự do",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kéo một khung qua văn bản để làm nổi bật. Chọn tự do ở bên phải để thay vào đó vẽ nét."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kéo một khung qua văn bản để làm nổi bật. Chọn tự do ở bên phải để thay vào đó vẽ nét.",
+  "Moved {count} captures to the Recycle Bin.": "Đã chuyển {count} ảnh chụp vào Thùng rác.",
+  "Moved {count} captures to the Trash.": "Đã chuyển {count} ảnh chụp vào Thùng rác.",
+  "Brought back {path}.": "Đã khôi phục {path}.",
+  "Brought back {count} captures.": "Đã khôi phục {count} ảnh chụp.",
+  "Couldn't bring it back: {error}": "Không khôi phục được: {error}"
  }
 }

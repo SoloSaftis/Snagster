@@ -988,6 +988,11 @@
   "Recording saved": "রেকর্ডিং সংরক্ষিত হয়েছে",
   "box": "বাক্স",
   "freehand": "ফ্রিহ্যান্ড",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লেখা হাইলাইট করতে তার উপর দিয়ে একটি বাক্স টানুন। এর বদলে দাগ আঁকতে ডানদিকে ফ্রিহ্যান্ড বেছে নিন।"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লেখা হাইলাইট করতে তার উপর দিয়ে একটি বাক্স টানুন। এর বদলে দাগ আঁকতে ডানদিকে ফ্রিহ্যান্ড বেছে নিন।",
+  "Moved {count} captures to the Recycle Bin.": "{count}টি ক্যাপচার রিসাইকেল বিনে সরানো হয়েছে।",
+  "Moved {count} captures to the Trash.": "{count}টি ক্যাপচার ট্র্যাশে সরানো হয়েছে।",
+  "Brought back {path}.": "{path} ফিরিয়ে আনা হয়েছে।",
+  "Brought back {count} captures.": "{count}টি ক্যাপচার ফিরিয়ে আনা হয়েছে।",
+  "Couldn't bring it back: {error}": "ফিরিয়ে আনা যায়নি: {error}"
  }
 }

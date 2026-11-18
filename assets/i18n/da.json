@@ -988,6 +988,11 @@
   "Recording saved": "Optagelse gemt",
   "box": "boks",
   "freehand": "frihånd",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Træk en boks over teksten for at fremhæve den. Vælg frihånd til højre for i stedet at tegne streger."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Træk en boks over teksten for at fremhæve den. Vælg frihånd til højre for i stedet at tegne streger.",
+  "Moved {count} captures to the Recycle Bin.": "Flyttede {count} optagelser til papirkurven.",
+  "Moved {count} captures to the Trash.": "Flyttede {count} optagelser til papirkurven.",
+  "Brought back {path}.": "Hentede {path} tilbage.",
+  "Brought back {count} captures.": "Hentede {count} optagelser tilbage.",
+  "Couldn't bring it back: {error}": "Kunne ikke hente den tilbage: {error}"
  }
 }

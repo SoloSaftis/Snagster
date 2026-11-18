@@ -988,6 +988,11 @@
   "Recording saved": "Grabay waqaychasqa",
   "box": "kaja",
   "freehand": "sapaq makiwan",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Qillqa patapi kaja chutay chaytaqa k'anchachinaykipaq. Paña kinraypi sapaq makiwan akllay siq'iykunata ruwanaykipaq."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Qillqa patapi kaja chutay chaytaqa k'anchachinaykipaq. Paña kinraypi sapaq makiwan akllay siq'iykunata ruwanaykipaq.",
+  "Moved {count} captures to the Recycle Bin.": "{count} hap'iykuna papelerman astasqa.",
+  "Moved {count} captures to the Trash.": "{count} hap'iykuna q'upa wasiman astasqa.",
+  "Brought back {path}.": "{path} kutichisqa.",
+  "Brought back {count} captures.": "{count} hap'iykuna kutichisqa.",
+  "Couldn't bring it back: {error}": "Mana kutichiyta atirqanchu: {error}"
  }
 }

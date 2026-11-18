@@ -988,6 +988,11 @@
   "Recording saved": "Opnam gespäichert",
   "box": "Këscht",
   "freehand": "fräihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Zitt eng Këscht iwwer den Text, fir en ervirzehiewen. Wielt riets fräihand, fir amplaz Stréch ze zeechnen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Zitt eng Këscht iwwer den Text, fir en ervirzehiewen. Wielt riets fräihand, fir amplaz Stréch ze zeechnen.",
+  "Moved {count} captures to the Recycle Bin.": "{count} Erfaassungen an de Pabeierkuerf geréckelt.",
+  "Moved {count} captures to the Trash.": "{count} Erfaassungen an de Pabeierkuerf geréckelt.",
+  "Brought back {path}.": "{path} zréckgeholl.",
+  "Brought back {count} captures.": "{count} Erfaassungen zréckgeholl.",
+  "Couldn't bring it back: {error}": "Konnt et net zréckhuelen: {error}"
  }
 }

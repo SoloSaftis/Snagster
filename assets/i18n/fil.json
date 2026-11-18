@@ -988,6 +988,11 @@
   "Recording saved": "Na-save ang recording",
   "box": "kahon",
   "freehand": "freehand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "I-drag ang isang kahon sa ibabaw ng teksto para i-highlight ito. Piliin ang freehand sa kanan para gumuhit ng mga guhit."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "I-drag ang isang kahon sa ibabaw ng teksto para i-highlight ito. Piliin ang freehand sa kanan para gumuhit ng mga guhit.",
+  "Moved {count} captures to the Recycle Bin.": "Inilipat ang {count} capture sa Recycle Bin.",
+  "Moved {count} captures to the Trash.": "Inilipat ang {count} capture sa Basurahan.",
+  "Brought back {path}.": "Naibalik ang {path}.",
+  "Brought back {count} captures.": "Naibalik ang {count} capture.",
+  "Couldn't bring it back: {error}": "Hindi ito maibalik: {error}"
  }
 }

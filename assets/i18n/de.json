@@ -988,6 +988,11 @@
   "Recording saved": "Aufzeichnung gespeichert",
   "box": "Rechteck",
   "freehand": "freihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Ziehen Sie ein Rechteck über den Text, um ihn hervorzuheben. Wählen Sie rechts freihand, um stattdessen Striche zu zeichnen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Ziehen Sie ein Rechteck über den Text, um ihn hervorzuheben. Wählen Sie rechts freihand, um stattdessen Striche zu zeichnen.",
+  "Moved {count} captures to the Recycle Bin.": "{count} Aufnahmen in den Papierkorb verschoben.",
+  "Moved {count} captures to the Trash.": "{count} Aufnahmen in den Papierkorb verschoben.",
+  "Brought back {path}.": "{path} wiederhergestellt.",
+  "Brought back {count} captures.": "{count} Aufnahmen wiederhergestellt.",
+  "Couldn't bring it back: {error}": "Konnte nicht wiederhergestellt werden: {error}"
  }
 }

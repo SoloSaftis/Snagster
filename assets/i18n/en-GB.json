@@ -988,6 +988,11 @@
   "Recording saved": "Recording saved",
   "box": "box",
   "freehand": "freehand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.",
+  "Moved {count} captures to the Recycle Bin.": "Moved {count} captures to the Recycle Bin.",
+  "Moved {count} captures to the Trash.": "Moved {count} captures to the Bin.",
+  "Brought back {path}.": "Brought back {path}.",
+  "Brought back {count} captures.": "Brought back {count} captures.",
+  "Couldn't bring it back: {error}": "Couldn't bring it back: {error}"
  }
 }

@@ -988,6 +988,11 @@
   "Recording saved": "Запис збережено",
   "box": "рамка",
   "freehand": "від руки",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протягніть рамку над текстом, щоб виділити його. Виберіть праворуч «від руки», щоб малювати штрихи."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протягніть рамку над текстом, щоб виділити його. Виберіть праворуч «від руки», щоб малювати штрихи.",
+  "Moved {count} captures to the Recycle Bin.": "Знімків переміщено в кошик: {count}.",
+  "Moved {count} captures to the Trash.": "Знімків переміщено до смітника: {count}.",
+  "Brought back {path}.": "{path} відновлено.",
+  "Brought back {count} captures.": "Відновлено знімків: {count}.",
+  "Couldn't bring it back: {error}": "Не вдалося відновити: {error}"
  }
 }

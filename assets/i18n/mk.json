@@ -988,6 +988,11 @@
   "Recording saved": "Снимката е зачувана",
   "box": "поле",
   "freehand": "слободна рака",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Повлечете поле врз текстот за да го истакнете. Изберете слободна рака десно за да цртате потези."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Повлечете поле врз текстот за да го истакнете. Изберете слободна рака десно за да цртате потези.",
+  "Moved {count} captures to the Recycle Bin.": "{count} снимки се преместени во Корпата за отпадоци.",
+  "Moved {count} captures to the Trash.": "{count} снимки се преместени во Корпата за отпадоци.",
+  "Brought back {path}.": "{path} е вратено.",
+  "Brought back {count} captures.": "Вратени се {count} снимки.",
+  "Couldn't bring it back: {error}": "Не успеа враќањето: {error}"
  }
 }

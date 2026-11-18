@@ -988,6 +988,11 @@
   "Recording saved": "Inspelning sparad",
   "box": "ruta",
   "freehand": "frihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra en ruta över texten för att markera den. Välj frihand till höger för att rita streck i stället."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra en ruta över texten för att markera den. Välj frihand till höger för att rita streck i stället.",
+  "Moved {count} captures to the Recycle Bin.": "Flyttade {count} fångster till papperskorgen.",
+  "Moved {count} captures to the Trash.": "Flyttade {count} fångster till papperskorgen.",
+  "Brought back {path}.": "Tog tillbaka {path}.",
+  "Brought back {count} captures.": "Tog tillbaka {count} fångster.",
+  "Couldn't bring it back: {error}": "Kunde inte ta tillbaka den: {error}"
  }
 }

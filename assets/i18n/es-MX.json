@@ -988,6 +988,11 @@
   "Recording saved": "Grabación guardada",
   "box": "cuadro",
   "freehand": "a mano alzada",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastre un cuadro sobre el texto para resaltarlo. Elija a mano alzada a la derecha para dibujar trazos."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastre un cuadro sobre el texto para resaltarlo. Elija a mano alzada a la derecha para dibujar trazos.",
+  "Moved {count} captures to the Recycle Bin.": "Se movieron {count} capturas a la Papelera de reciclaje.",
+  "Moved {count} captures to the Trash.": "Se movieron {count} capturas a la papelera.",
+  "Brought back {path}.": "Se recuperó {path}.",
+  "Brought back {count} captures.": "Se recuperaron {count} capturas.",
+  "Couldn't bring it back: {error}": "No se pudo recuperar: {error}"
  }
 }

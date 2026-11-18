@@ -988,6 +988,11 @@
   "Recording saved": "Posnetek shranjen",
   "box": "okvir",
   "freehand": "prosta roka",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Povlecite okvir čez besedilo, da ga označite. Izberite prosta roka na desni, da namesto tega rišete poteze."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Povlecite okvir čez besedilo, da ga označite. Izberite prosta roka na desni, da namesto tega rišete poteze.",
+  "Moved {count} captures to the Recycle Bin.": "Premaknjenih zajemov v koš: {count}.",
+  "Moved {count} captures to the Trash.": "Premaknjenih zajemov v smeti: {count}.",
+  "Brought back {path}.": "{path} obnovljeno.",
+  "Brought back {count} captures.": "Obnovljenih zajemov: {count}.",
+  "Couldn't bring it back: {error}": "Ni bilo mogoče obnoviti: {error}"
  }
 }

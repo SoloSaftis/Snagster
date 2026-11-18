@@ -988,6 +988,11 @@
   "Recording saved": "Nahrávka uložená",
   "box": "rámček",
   "freehand": "voľnou rukou",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Potiahnutím rámčeka cez text ho zvýrazníte. Ak chcete kresliť ťahy, vyberte vpravo voľnou rukou."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Potiahnutím rámčeka cez text ho zvýrazníte. Ak chcete kresliť ťahy, vyberte vpravo voľnou rukou.",
+  "Moved {count} captures to the Recycle Bin.": "Zachytenia presunuté do koša: {count}.",
+  "Moved {count} captures to the Trash.": "Zachytenia presunuté do koša: {count}.",
+  "Brought back {path}.": "{path} obnovené.",
+  "Brought back {count} captures.": "Obnovené zachytenia: {count}.",
+  "Couldn't bring it back: {error}": "Nepodarilo sa obnoviť: {error}"
  }
 }

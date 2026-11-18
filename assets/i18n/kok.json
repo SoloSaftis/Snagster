@@ -988,6 +988,11 @@
   "Recording saved": "रेकॉर्डिंग सेव्ह केलें",
   "box": "बॉक्स",
   "freehand": "फ्रीहँड",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "मजकूर हायलाइट करपाक ताचेर बॉक्स ओड. ताचे बदला रेषा काडपाक उजव्या वटेन फ्रीहँड वेंच."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "मजकूर हायलाइट करपाक ताचेर बॉक्स ओड. ताचे बदला रेषा काडपाक उजव्या वटेन फ्रीहँड वेंच.",
+  "Moved {count} captures to the Recycle Bin.": "{count} कॅप्चर रिसायकल बिनांत हालयले.",
+  "Moved {count} captures to the Trash.": "{count} कॅप्चर कचरापेटयेंत हालयले.",
+  "Brought back {path}.": "{path} परत हाडलें.",
+  "Brought back {count} captures.": "{count} कॅप्चर परत हाडले.",
+  "Couldn't bring it back: {error}": "परत हाडूंक जालें ना: {error}"
  }
 }

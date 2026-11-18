@@ -988,6 +988,11 @@
   "Recording saved": "ቀረጻ ተቀምጧል",
   "box": "ሳጥን",
   "freehand": "በነጻ እጅ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ጽሑፍን ለማጉላት ሳጥን ይጎትቱ። በምትኩ መስመሮችን ለመሳል በቀኝ በኩል በነጻ እጅ ይምረጡ።"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ጽሑፍን ለማጉላት ሳጥን ይጎትቱ። በምትኩ መስመሮችን ለመሳል በቀኝ በኩል በነጻ እጅ ይምረጡ።",
+  "Moved {count} captures to the Recycle Bin.": "{count} ቀረጻዎች ወደ ሪሳይክል ቢን ተወስደዋል።",
+  "Moved {count} captures to the Trash.": "{count} ቀረጻዎች ወደ መጣያ ተወስደዋል።",
+  "Brought back {path}.": "{path} ተመልሷል።",
+  "Brought back {count} captures.": "{count} ቀረጻዎች ተመልሰዋል።",
+  "Couldn't bring it back: {error}": "መመለስ አልተቻለም፦ {error}"
  }
 }

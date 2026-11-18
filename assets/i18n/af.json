@@ -988,6 +988,11 @@
   "Recording saved": "Opname gestoor",
   "box": "blok",
   "freehand": "vryhand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep 'n blok oor teks om dit te merk. Kies vryhand regs om eerder met streke te teken."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep 'n blok oor teks om dit te merk. Kies vryhand regs om eerder met streke te teken.",
+  "Moved {count} captures to the Recycle Bin.": "{count} vasvangings is na die Herwinningsblik geskuif.",
+  "Moved {count} captures to the Trash.": "{count} vasvangings is na die asblik geskuif.",
+  "Brought back {path}.": "{path} is teruggebring.",
+  "Brought back {count} captures.": "{count} vasvangings is teruggebring.",
+  "Couldn't bring it back: {error}": "Kon dit nie terugbring nie: {error}"
  }
 }

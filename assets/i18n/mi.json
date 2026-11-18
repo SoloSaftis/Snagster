@@ -988,6 +988,11 @@
   "Recording saved": "Kua tiakina te rekoatanga",
   "box": "pouaka",
   "freehand": "ringaringa-noa",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Toia he pouaka ki runga i te kuputuhi hei whakaatu. Kōwhiria te ringaringa-noa ki te taha matau hei tā rārangi."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Toia he pouaka ki runga i te kuputuhi hei whakaatu. Kōwhiria te ringaringa-noa ki te taha matau hei tā rārangi.",
+  "Moved {count} captures to the Recycle Bin.": "Kua nekehia ngā hopu {count} ki te Ipu Para.",
+  "Moved {count} captures to the Trash.": "Kua nekehia ngā hopu {count} ki te Para.",
+  "Brought back {path}.": "Kua whakahokia mai a {path}.",
+  "Brought back {count} captures.": "Kua whakahokia mai ngā hopu {count}.",
+  "Couldn't bring it back: {error}": "Kāore i taea te whakahoki mai: {error}"
  }
 }

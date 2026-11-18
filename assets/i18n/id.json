@@ -988,6 +988,11 @@
   "Recording saved": "Rekaman disimpan",
   "box": "kotak",
   "freehand": "bebas",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Seret kotak di atas teks untuk menyorotnya. Pilih bebas di kanan untuk menggambar goresan."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Seret kotak di atas teks untuk menyorotnya. Pilih bebas di kanan untuk menggambar goresan.",
+  "Moved {count} captures to the Recycle Bin.": "{count} tangkapan dipindahkan ke Recycle Bin.",
+  "Moved {count} captures to the Trash.": "{count} tangkapan dipindahkan ke Tong Sampah.",
+  "Brought back {path}.": "{path} dikembalikan.",
+  "Brought back {count} captures.": "{count} tangkapan dikembalikan.",
+  "Couldn't bring it back: {error}": "Tidak dapat mengembalikannya: {error}"
  }
 }

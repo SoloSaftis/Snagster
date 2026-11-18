@@ -988,6 +988,11 @@
   "Recording saved": "Innspeling lagra",
   "box": "boks",
   "freehand": "frihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra ei boks over teksten for å utheve han. Vel frihand til høgre for å teikne strekar i staden."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra ei boks over teksten for å utheve han. Vel frihand til høgre for å teikne strekar i staden.",
+  "Moved {count} captures to the Recycle Bin.": "Flytte {count} opptak til papirkorga.",
+  "Moved {count} captures to the Trash.": "Flytte {count} opptak til papirkorga.",
+  "Brought back {path}.": "Henta tilbake {path}.",
+  "Brought back {count} captures.": "Henta tilbake {count} opptak.",
+  "Couldn't bring it back: {error}": "Kunne ikkje hente det tilbake: {error}"
  }
 }

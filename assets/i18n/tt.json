@@ -988,6 +988,11 @@
   "Recording saved": "Язма саклана",
   "box": "рамка",
   "freehand": "иректән",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Тексты билгеләү өчен аның өстенә рамка сөйрәгез. Сызыклар сызу өчен уңда иректән сайлагыз."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Тексты билгеләү өчен аның өстенә рамка сөйрәгез. Сызыклар сызу өчен уңда иректән сайлагыз.",
+  "Moved {count} captures to the Recycle Bin.": "{count} төшерү себергә күчерелде.",
+  "Moved {count} captures to the Trash.": "{count} төшерү чүп савытына күчерелде.",
+  "Brought back {path}.": "{path} кире кайтарылды.",
+  "Brought back {count} captures.": "{count} төшерү кире кайтарылды.",
+  "Couldn't bring it back: {error}": "Кире кайтарып булмады: {error}"
  }
 }

@@ -988,6 +988,11 @@
   "Recording saved": "Ձայնագրությունը պահպանվել է",
   "box": "տուփ",
   "freehand": "ազատ ձեռքով",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Տեքստը ընդգծելու համար քաշեք վանդակ դրա վրայով։ Աջից ընտրեք ազատ ձեռքով՝ գծեր գծելու համար։"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Տեքստը ընդգծելու համար քաշեք վանդակ դրա վրայով։ Աջից ընտրեք ազատ ձեռքով՝ գծեր գծելու համար։",
+  "Moved {count} captures to the Recycle Bin.": "{count} նկարահանում տեղափոխվեց Աղբարկղ։",
+  "Moved {count} captures to the Trash.": "{count} նկարահանում տեղափոխվեց Աղբարկղ։",
+  "Brought back {path}.": "{path}-ը վերականգնվեց։",
+  "Brought back {count} captures.": "Վերականգնվեց {count} նկարահանում։",
+  "Couldn't bring it back: {error}": "Չհաջողվեց վերականգնել. {error}"
  }
 }

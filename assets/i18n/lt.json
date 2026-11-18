@@ -988,6 +988,11 @@
   "Recording saved": "Įrašas išsaugotas",
   "box": "langelis",
   "freehand": "laisva ranka",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Nutempkite langelį ant teksto, kad jį paryškintumėte. Pasirinkite dešinėje laisva ranka, kad pieštumėte brūkšnius."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Nutempkite langelį ant teksto, kad jį paryškintumėte. Pasirinkite dešinėje laisva ranka, kad pieštumėte brūkšnius.",
+  "Moved {count} captures to the Recycle Bin.": "Į šiukšlinę perkelta fiksavimų: {count}.",
+  "Moved {count} captures to the Trash.": "Į šiukšlinę perkelta fiksavimų: {count}.",
+  "Brought back {path}.": "{path} grąžintas.",
+  "Brought back {count} captures.": "Grąžinta fiksavimų: {count}.",
+  "Couldn't bring it back: {error}": "Nepavyko grąžinti: {error}"
  }
 }

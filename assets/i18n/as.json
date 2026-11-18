@@ -988,6 +988,11 @@
   "Recording saved": "ৰেকৰ্ডিং সংৰক্ষণ কৰা হ’ল",
   "box": "বাক্স",
   "freehand": "মুক্ত হাত",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লিখনি হাইলাইট কৰিবলৈ ইয়াৰ ওপৰেৰে এটা বাক্স টানি নিয়ক। ইয়াৰ সলনি ৰেখা আঁকিবলৈ সোঁফালে মুক্ত হাত বাছক।"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লিখনি হাইলাইট কৰিবলৈ ইয়াৰ ওপৰেৰে এটা বাক্স টানি নিয়ক। ইয়াৰ সলনি ৰেখা আঁকিবলৈ সোঁফালে মুক্ত হাত বাছক।",
+  "Moved {count} captures to the Recycle Bin.": "{count}টা কেপচাৰ ৰিচাইকেল বিনলৈ নিয়া হ'ল।",
+  "Moved {count} captures to the Trash.": "{count}টা কেপচাৰ আবৰ্জনালৈ নিয়া হ'ল।",
+  "Brought back {path}.": "{path} ঘূৰাই অনা হ'ল।",
+  "Brought back {count} captures.": "{count}টা কেপচাৰ ঘূৰাই অনা হ'ল।",
+  "Couldn't bring it back: {error}": "ঘূৰাই আনিব পৰা নগ'ল: {error}"
  }
 }

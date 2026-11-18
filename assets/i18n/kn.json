@@ -988,6 +988,11 @@
   "Recording saved": "ರೆಕಾರ್ಡಿಂಗ್ ಉಳಿಸಲಾಗಿದೆ",
   "box": "ಬಾಕ್ಸ್",
   "freehand": "ಫ್ರೀಹ್ಯಾಂಡ್",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ಪಠ್ಯವನ್ನು ಹೈಲೈಟ್ ಮಾಡಲು ಅದರ ಮೇಲೆ ಬಾಕ್ಸ್ ಎಳೆಯಿರಿ. ಬದಲಿಗೆ ಗೆರೆಗಳನ್ನು ಬರೆಯಲು ಬಲಭಾಗದಲ್ಲಿ ಫ್ರೀಹ್ಯಾಂಡ್ ಆಯ್ಕೆಮಾಡಿ."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ಪಠ್ಯವನ್ನು ಹೈಲೈಟ್ ಮಾಡಲು ಅದರ ಮೇಲೆ ಬಾಕ್ಸ್ ಎಳೆಯಿರಿ. ಬದಲಿಗೆ ಗೆರೆಗಳನ್ನು ಬರೆಯಲು ಬಲಭಾಗದಲ್ಲಿ ಫ್ರೀಹ್ಯಾಂಡ್ ಆಯ್ಕೆಮಾಡಿ.",
+  "Moved {count} captures to the Recycle Bin.": "{count} ಸೆರೆಹಿಡಿದವುಗಳನ್ನು ಮರುಬಳಕೆ ಬುಟ್ಟಿಗೆ ಸರಿಸಲಾಗಿದೆ.",
+  "Moved {count} captures to the Trash.": "{count} ಸೆರೆಹಿಡಿದವುಗಳನ್ನು ಕಸದ ಬುಟ್ಟಿಗೆ ಸರಿಸಲಾಗಿದೆ.",
+  "Brought back {path}.": "{path} ಅನ್ನು ಮರಳಿ ತರಲಾಗಿದೆ.",
+  "Brought back {count} captures.": "{count} ಸೆರೆಹಿಡಿದವುಗಳನ್ನು ಮರಳಿ ತರಲಾಗಿದೆ.",
+  "Couldn't bring it back: {error}": "ಮರಳಿ ತರಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ: {error}"
  }
 }

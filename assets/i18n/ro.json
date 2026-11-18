@@ -988,6 +988,11 @@
   "Recording saved": "Înregistrare salvată",
   "box": "casetă",
   "freehand": "mână liberă",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trageți o casetă peste text pentru a-l evidenția. Alegeți mână liberă în dreapta pentru a desena în schimb linii."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trageți o casetă peste text pentru a-l evidenția. Alegeți mână liberă în dreapta pentru a desena în schimb linii.",
+  "Moved {count} captures to the Recycle Bin.": "Capturi mutate în Coșul de reciclare: {count}.",
+  "Moved {count} captures to the Trash.": "Capturi mutate în Coșul de gunoi: {count}.",
+  "Brought back {path}.": "S-a restaurat {path}.",
+  "Brought back {count} captures.": "Capturi restaurate: {count}.",
+  "Couldn't bring it back: {error}": "Nu s-a putut restaura: {error}"
  }
 }

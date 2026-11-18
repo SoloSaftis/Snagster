@@ -988,6 +988,11 @@
   "Recording saved": "Felvétel elmentve",
   "box": "doboz",
   "freehand": "szabadkéz",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Húzzon egy dobozt a szöveg fölé a kiemeléséhez. Jobbra válassza a szabadkéz lehetőséget a vonalak rajzolásához."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Húzzon egy dobozt a szöveg fölé a kiemeléséhez. Jobbra válassza a szabadkéz lehetőséget a vonalak rajzolásához.",
+  "Moved {count} captures to the Recycle Bin.": "{count} felvétel áthelyezve a Lomtárba.",
+  "Moved {count} captures to the Trash.": "{count} felvétel áthelyezve a Kukába.",
+  "Brought back {path}.": "{path} visszaállítva.",
+  "Brought back {count} captures.": "{count} felvétel visszaállítva.",
+  "Couldn't bring it back: {error}": "Nem sikerült visszaállítani: {error}"
  }
 }

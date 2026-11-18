@@ -988,6 +988,11 @@
   "Recording saved": "Запіс захаваны",
   "box": "поле",
   "freehand": "ад рукі",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Перацягніце поле над тэкстам, каб вылучыць яго. Выберыце «ад рукі» справа, каб малявць штрыхі."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Перацягніце поле над тэкстам, каб вылучыць яго. Выберыце «ад рукі» справа, каб малявць штрыхі.",
+  "Moved {count} captures to the Recycle Bin.": "Здымкаў перамешчана ў Сметніцу: {count}.",
+  "Moved {count} captures to the Trash.": "Здымкаў перамешчана ў сметніцу: {count}.",
+  "Brought back {path}.": "{path} адноўлена.",
+  "Brought back {count} captures.": "Адноўлена здымкаў: {count}.",
+  "Couldn't bring it back: {error}": "Не ўдалося аднавіць: {error}"
  }
 }

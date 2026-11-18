@@ -988,6 +988,11 @@
   "Recording saved": "Nauhoitus tallennettu",
   "box": "laatikko",
   "freehand": "vapaa käsi",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Korosta teksti vetämällä sen päälle laatikko. Valitse oikealta vapaa käsi piirtääksesi vetoja."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Korosta teksti vetämällä sen päälle laatikko. Valitse oikealta vapaa käsi piirtääksesi vetoja.",
+  "Moved {count} captures to the Recycle Bin.": "{count} kaappausta siirrettiin roskakoriin.",
+  "Moved {count} captures to the Trash.": "{count} kaappausta siirrettiin roskakoriin.",
+  "Brought back {path}.": "{path} palautettiin.",
+  "Brought back {count} captures.": "{count} kaappausta palautettiin.",
+  "Couldn't bring it back: {error}": "Palauttaminen epäonnistui: {error}"
  }
 }

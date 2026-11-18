@@ -988,6 +988,11 @@
   "Recording saved": "ההקלטה נשמרה",
   "box": "תיבה",
   "freehand": "יד חופשית",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "גררו תיבה מעל הטקסט כדי להדגיש אותו. בחרו יד חופשית מימין כדי לצייר קווים."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "גררו תיבה מעל הטקסט כדי להדגיש אותו. בחרו יד חופשית מימין כדי לצייר קווים.",
+  "Moved {count} captures to the Recycle Bin.": "{count} צילומים הועברו לסל המיחזור.",
+  "Moved {count} captures to the Trash.": "{count} צילומים הועברו לאשפה.",
+  "Brought back {path}.": "{path} שוחזר.",
+  "Brought back {count} captures.": "{count} צילומים שוחזרו.",
+  "Couldn't bring it back: {error}": "לא ניתן לשחזר: {error}"
  }
 }

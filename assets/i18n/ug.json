@@ -988,6 +988,11 @@
   "Recording saved": "خاتىرە ساقلاندى",
   "box": "رامكا",
   "freehand": "ئەركىن",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "تېكىستنى گەۋدىلەندۈرۈش ئۈچۈن ئۈستىگە رامكا سۆرەڭ. سىزىق سىزىش ئۈچۈن ئوڭ تەرەپتىن ئەركىن تاللاڭ."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "تېكىستنى گەۋدىلەندۈرۈش ئۈچۈن ئۈستىگە رامكا سۆرەڭ. سىزىق سىزىش ئۈچۈن ئوڭ تەرەپتىن ئەركىن تاللاڭ.",
+  "Moved {count} captures to the Recycle Bin.": "{count} سۈرەت ئەخلەت ساندۇقىغا يۆتكەلدى.",
+  "Moved {count} captures to the Trash.": "{count} سۈرەت ئەخلەت ساندۇقىغا يۆتكەلدى.",
+  "Brought back {path}.": "{path} ئەسلىگە كەلتۈرۈلدى.",
+  "Brought back {count} captures.": "{count} سۈرەت ئەسلىگە كەلتۈرۈلدى.",
+  "Couldn't bring it back: {error}": "ئەسلىگە كەلتۈرگىلى بولمىدى: {error}"
  }
 }

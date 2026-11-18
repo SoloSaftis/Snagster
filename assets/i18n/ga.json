@@ -988,6 +988,11 @@
   "Recording saved": "Taifead sábháilte",
   "box": "bosca",
   "freehand": "saorláimhe",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tarraing bosca thar théacs chun é a aibhsiú. Roghnaigh saorláimhe ar dheis chun stríoca a tharraingt ina ionad."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tarraing bosca thar théacs chun é a aibhsiú. Roghnaigh saorláimhe ar dheis chun stríoca a tharraingt ina ionad.",
+  "Moved {count} captures to the Recycle Bin.": "Bogadh {count} gabháil go dtí an Bosca Athchúrsála.",
+  "Moved {count} captures to the Trash.": "Bogadh {count} gabháil go dtí an Bruscar.",
+  "Brought back {path}.": "Tugadh {path} ar ais.",
+  "Brought back {count} captures.": "Tugadh {count} gabháil ar ais.",
+  "Couldn't bring it back: {error}": "Níorbh fhéidir é a thabhairt ar ais: {error}"
  }
 }

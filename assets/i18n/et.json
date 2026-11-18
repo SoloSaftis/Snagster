@@ -988,6 +988,11 @@
   "Recording saved": "Lindistus salvestatud",
   "box": "kast",
   "freehand": "vabakäsi",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Teksti esiletõstmiseks lohistage selle kohale kast. Joonte joonistamiseks valige paremalt vabakäsi."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Teksti esiletõstmiseks lohistage selle kohale kast. Joonte joonistamiseks valige paremalt vabakäsi.",
+  "Moved {count} captures to the Recycle Bin.": "{count} jäädvustust teisaldati prügikasti.",
+  "Moved {count} captures to the Trash.": "{count} jäädvustust teisaldati prügikasti.",
+  "Brought back {path}.": "{path} toodi tagasi.",
+  "Brought back {count} captures.": "{count} jäädvustust toodi tagasi.",
+  "Couldn't bring it back: {error}": "Seda ei saanud tagasi tuua: {error}"
  }
 }

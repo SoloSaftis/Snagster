@@ -988,6 +988,11 @@
   "Recording saved": "ჩანაწერი შენახულია",
   "box": "ყუთი",
   "freehand": "თავისუფალი",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ტექსტის გამოსაყოფად გადაათრიეთ მასზე ყუთი. ხაზების დასახატად მარჯვნივ აირჩიეთ თავისუფალი."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ტექსტის გამოსაყოფად გადაათრიეთ მასზე ყუთი. ხაზების დასახატად მარჯვნივ აირჩიეთ თავისუფალი.",
+  "Moved {count} captures to the Recycle Bin.": "{count} გადაღება გადატანილია ნაგვის ყუთში.",
+  "Moved {count} captures to the Trash.": "{count} გადაღება გადატანილია ნაგავში.",
+  "Brought back {path}.": "{path} აღდგენილია.",
+  "Brought back {count} captures.": "აღდგენილია {count} გადაღება.",
+  "Couldn't bring it back: {error}": "აღდგენა ვერ მოხერხდა: {error}"
  }
 }
