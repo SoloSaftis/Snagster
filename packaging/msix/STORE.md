@@ -63,6 +63,11 @@ If certification refuses `unvirtualizedResources`, the Store edition can leave o
 package's private AppData, and Help > Problem reports (which opens the folder in Explorer) would
 need to open the package's real folder instead.
 
+## Status
+
+Submitted for certification on 2026-11-18 (version 0.10.6.0, listing in all 86 languages,
+built from `main` after PR #2). Store page: https://apps.microsoft.com/detail/9MVZGNTS547Z
+
 ## Later (not done)
 
 - Submitting from CI with the Microsoft Store Developer CLI (`msstore`, MIT) and a Partner Center
