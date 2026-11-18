@@ -63,6 +63,21 @@ If certification refuses `unvirtualizedResources`, the Store edition can leave o
 package's private AppData, and Help > Problem reports (which opens the folder in Explorer) would
 need to open the package's real folder instead.
 
+## The listing in every language
+
+`listing/<store-code>.json` holds the Store texts (description, features, captions, search
+terms, release notes) in all 86 languages (AI-translated, like the interface packs).
+`node packaging/msix/make-listing.js store-listing` (after
+`snagster --icon-png store-listing/store-logo-300.png 300`) makes the folder to upload under
+Store listings > Import listings > **Upload folder**: `listings.csv` plus the five screenshots
+and the logo. `listing-fields.csv` is Partner Center's own export (its Field and ID columns must
+not change). For a new version, change `ReleaseNotes` in every language, rebuild and import.
+
+## Status
+
+Submitted for certification on 2026-11-18 (version 0.10.6.0, listing in all 86 languages,
+built from `main` after PR #2). Store page: https://apps.microsoft.com/detail/9MVZGNTS547Z
+
 ## Later (not done)
 
 - Submitting from CI with the Microsoft Store Developer CLI (`msstore`, MIT) and a Partner Center

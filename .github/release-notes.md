@@ -9,6 +9,7 @@ Pick your computer and click **Download**. Nothing to install.
 | Your computer | Download | Then |
 |---|---|---|
 | 🪟 **Windows** 10 or 11 | **[⬇️ Download for Windows](https://github.com/SoloSaftis/Snagster/releases/download/__TAG__/Snagster-windows-x64-portable.zip)** | Open the downloaded folder and double-click **Snagster** |
+| 🪟 **Windows**, Microsoft Store | **[Get it from the Microsoft Store](https://apps.microsoft.com/detail/9MVZGNTS547Z)** | Click **Get**; no security warning, and the Store keeps it up to date |
 | 🍎 **Mac** with Apple chip (M1 or newer) | **[⬇️ Download for Mac](https://github.com/SoloSaftis/Snagster/releases/download/__TAG__/Snagster-macos-arm64.zip)** | Open the download and drag **Snagster** to Applications |
 | 🐧 **Linux** | **[⬇️ Download for Linux](https://github.com/SoloSaftis/Snagster/releases/download/__TAG__/Snagster-linux-x86_64.AppImage)** | Right-click the file → Properties → allow running as a program, then double-click it |
 | 🐧 **Linux, sandboxed** (Flatpak) | **[⬇️ Download the Flatpak](https://github.com/SoloSaftis/Snagster/releases/download/__TAG__/Snagster-linux-x86_64.flatpak)** | Run `flatpak install --user Snagster-linux-x86_64.flatpak`, then start Snagster from your apps menu |
@@ -17,5 +18,5 @@ Pick your computer and click **Download**. Nothing to install.
 
 The app is not signed yet, so your computer may warn you once:
 
-- **Windows** says "Windows protected your PC": click **More info**, then **Run anyway**.
+- **Windows** says "Windows protected your PC": click **More info**, then **Run anyway** (the Microsoft Store edition doesn't ask).
 - **Mac** says Apple "could not verify" Snagster: click **Done**, open System Settings → Privacy & Security, scroll down and click **Open Anyway**. Then allow Snagster under **Screen Recording**.
