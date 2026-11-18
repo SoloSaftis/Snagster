@@ -43,6 +43,8 @@ pub static UI_TEST: AtomicBool = AtomicBool::new(false);
 pub static SCREENSHOT_VIEW: Mutex<String> = Mutex::new(String::new());
 
 mod uitest;
+#[cfg(test)]
+mod tool_tests;
 pub(crate) mod access_ui;
 pub(crate) mod earlier;
 pub(crate) mod work;
@@ -4724,8 +4726,8 @@ fn paint_one(p: &egui::Painter, s: &Shape, to: &dyn Fn(Pos2) -> Pos2, scale: f32
                 let uvc = pos2(center.x / size.x, center.y / size.y);
                 let uvr = vec2(radius / zoom.max(1.0) / size.x, radius / zoom.max(1.0) / size.y);
                 let mut mesh = egui::epaint::Mesh::with_texture(tex);
-                mesh.colored_vertex(c, Color32::WHITE);
-                mesh.vertices[0].uv = uvc;
+                // The centre, sampling the picture (a textured mesh takes only textured points).
+                mesh.vertices.push(egui::epaint::Vertex { pos: c, uv: uvc, color: Color32::WHITE });
                 let n = 64;
                 for i in 0..=n {
                     let a = i as f32 / n as f32 * std::f32::consts::TAU;
