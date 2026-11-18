@@ -988,6 +988,17 @@
   "Recording saved": "রেকর্ডিং সংরক্ষিত হয়েছে",
   "box": "বাক্স",
   "freehand": "ফ্রিহ্যান্ড",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লেখা হাইলাইট করতে তার উপর দিয়ে একটি বাক্স টানুন। এর বদলে দাগ আঁকতে ডানদিকে ফ্রিহ্যান্ড বেছে নিন।"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লেখা হাইলাইট করতে তার উপর দিয়ে একটি বাক্স টানুন। এর বদলে দাগ আঁকতে ডানদিকে ফ্রিহ্যান্ড বেছে নিন।",
+  "Cut": "কাট করুন",
+  "Select All": "সব নির্বাচন করুন",
+  "Show in Finder": "Finder-এ দেখান",
+  "Close Window": "উইন্ডো বন্ধ করুন",
+  "Services": "পরিষেবা",
+  "Hide Snagster": "Snagster লুকান",
+  "Hide Others": "অন্যগুলি লুকান",
+  "Show All": "সব দেখান",
+  "Minimize": "ছোট করুন",
+  "Enter Full Screen": "পূর্ণ স্ক্রিনে যান",
+  "Bring All to Front": "সব সামনে আনুন"
  }
 }

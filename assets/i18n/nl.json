@@ -988,6 +988,17 @@
   "Recording saved": "Opname opgeslagen",
   "box": "kader",
   "freehand": "vrije hand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep een kader over tekst om die te markeren. Kies rechts vrije hand om in plaats daarvan streken te tekenen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep een kader over tekst om die te markeren. Kies rechts vrije hand om in plaats daarvan streken te tekenen.",
+  "Cut": "Knip",
+  "Select All": "Selecteer alles",
+  "Show in Finder": "Toon in Finder",
+  "Close Window": "Sluit venster",
+  "Services": "Diensten",
+  "Hide Snagster": "Verberg Snagster",
+  "Hide Others": "Verberg andere",
+  "Show All": "Toon alles",
+  "Minimize": "Minimaliseer",
+  "Enter Full Screen": "Schakel naar volledig scherm",
+  "Bring All to Front": "Alles naar voren halen"
  }
 }

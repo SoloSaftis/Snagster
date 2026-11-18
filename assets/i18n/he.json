@@ -988,6 +988,17 @@
   "Recording saved": "ההקלטה נשמרה",
   "box": "תיבה",
   "freehand": "יד חופשית",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "גררו תיבה מעל הטקסט כדי להדגיש אותו. בחרו יד חופשית מימין כדי לצייר קווים."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "גררו תיבה מעל הטקסט כדי להדגיש אותו. בחרו יד חופשית מימין כדי לצייר קווים.",
+  "Cut": "גזור",
+  "Select All": "בחר הכול",
+  "Show in Finder": "הצג ב-Finder",
+  "Close Window": "סגור חלון",
+  "Services": "שירותים",
+  "Hide Snagster": "הסתר את Snagster",
+  "Hide Others": "הסתר אחרים",
+  "Show All": "הצג הכול",
+  "Minimize": "מזער",
+  "Enter Full Screen": "כניסה למסך מלא",
+  "Bring All to Front": "הבא הכול לחזית"
  }
 }

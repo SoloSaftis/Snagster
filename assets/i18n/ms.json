@@ -988,6 +988,17 @@
   "Recording saved": "Rakaman disimpan",
   "box": "kotak",
   "freehand": "tangan bebas",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Seret kotak di atas teks untuk menyerlahkannya. Pilih tangan bebas di sebelah kanan untuk melukis coretan."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Seret kotak di atas teks untuk menyerlahkannya. Pilih tangan bebas di sebelah kanan untuk melukis coretan.",
+  "Cut": "Potong",
+  "Select All": "Pilih Semua",
+  "Show in Finder": "Tunjukkan dalam Finder",
+  "Close Window": "Tutup Tetingkap",
+  "Services": "Perkhidmatan",
+  "Hide Snagster": "Sembunyikan Snagster",
+  "Hide Others": "Sembunyikan Lain-lain",
+  "Show All": "Tunjukkan Semua",
+  "Minimize": "Minimumkan",
+  "Enter Full Screen": "Masuk Skrin Penuh",
+  "Bring All to Front": "Bawa Semua ke Hadapan"
  }
 }

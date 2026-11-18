@@ -988,6 +988,17 @@
   "Recording saved": "Innspeling lagra",
   "box": "boks",
   "freehand": "frihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra ei boks over teksten for å utheve han. Vel frihand til høgre for å teikne strekar i staden."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra ei boks over teksten for å utheve han. Vel frihand til høgre for å teikne strekar i staden.",
+  "Cut": "Klipp ut",
+  "Select All": "Vel alt",
+  "Show in Finder": "Vis i Finder",
+  "Close Window": "Lukk vindauge",
+  "Services": "Tenester",
+  "Hide Snagster": "Skjul Snagster",
+  "Hide Others": "Skjul andre",
+  "Show All": "Vis alle",
+  "Minimize": "Minimer",
+  "Enter Full Screen": "Gå til fullskjerm",
+  "Bring All to Front": "Flytt alle fremst"
  }
 }

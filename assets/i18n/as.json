@@ -988,6 +988,17 @@
   "Recording saved": "ৰেকৰ্ডিং সংৰক্ষণ কৰা হ’ল",
   "box": "বাক্স",
   "freehand": "মুক্ত হাত",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লিখনি হাইলাইট কৰিবলৈ ইয়াৰ ওপৰেৰে এটা বাক্স টানি নিয়ক। ইয়াৰ সলনি ৰেখা আঁকিবলৈ সোঁফালে মুক্ত হাত বাছক।"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লিখনি হাইলাইট কৰিবলৈ ইয়াৰ ওপৰেৰে এটা বাক্স টানি নিয়ক। ইয়াৰ সলনি ৰেখা আঁকিবলৈ সোঁফালে মুক্ত হাত বাছক।",
+  "Cut": "কাট",
+  "Select All": "সকলো বাছনি কৰক",
+  "Show in Finder": "Finder ত দেখুৱাওক",
+  "Close Window": "উইণ্ড' বন্ধ কৰক",
+  "Services": "সেৱাসমূহ",
+  "Hide Snagster": "Snagster লুকুৱাওক",
+  "Hide Others": "আনবোৰ লুকুৱাওক",
+  "Show All": "সকলো দেখুৱাওক",
+  "Minimize": "মিনিমাইজ কৰক",
+  "Enter Full Screen": "সম্পূৰ্ণ পর্দা কৰক",
+  "Bring All to Front": "সকলো আগলৈ আনক"
  }
 }

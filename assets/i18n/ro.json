@@ -988,6 +988,17 @@
   "Recording saved": "Înregistrare salvată",
   "box": "casetă",
   "freehand": "mână liberă",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trageți o casetă peste text pentru a-l evidenția. Alegeți mână liberă în dreapta pentru a desena în schimb linii."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trageți o casetă peste text pentru a-l evidenția. Alegeți mână liberă în dreapta pentru a desena în schimb linii.",
+  "Cut": "Decupează",
+  "Select All": "Selectează tot",
+  "Show in Finder": "Afișează în Finder",
+  "Close Window": "Închide fereastra",
+  "Services": "Servicii",
+  "Hide Snagster": "Ascunde Snagster",
+  "Hide Others": "Ascunde celelalte",
+  "Show All": "Afișează tot",
+  "Minimize": "Minimizează",
+  "Enter Full Screen": "Intră în ecran complet",
+  "Bring All to Front": "Adu totul în față"
  }
 }

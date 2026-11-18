@@ -988,6 +988,17 @@
   "Recording saved": "Recording saved",
   "box": "box",
   "freehand": "freehand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.",
+  "Cut": "Cut",
+  "Select All": "Select All",
+  "Show in Finder": "Show in Finder",
+  "Close Window": "Close Window",
+  "Services": "Services",
+  "Hide Snagster": "Hide Snagster",
+  "Hide Others": "Hide Others",
+  "Show All": "Show All",
+  "Minimize": "Minimise",
+  "Enter Full Screen": "Enter Full Screen",
+  "Bring All to Front": "Bring All to Front"
  }
 }

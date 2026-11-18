@@ -988,6 +988,17 @@
   "Recording saved": "Įrašas išsaugotas",
   "box": "langelis",
   "freehand": "laisva ranka",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Nutempkite langelį ant teksto, kad jį paryškintumėte. Pasirinkite dešinėje laisva ranka, kad pieštumėte brūkšnius."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Nutempkite langelį ant teksto, kad jį paryškintumėte. Pasirinkite dešinėje laisva ranka, kad pieštumėte brūkšnius.",
+  "Cut": "Iškirpti",
+  "Select All": "Pasirinkti viską",
+  "Show in Finder": "Rodyti programoje Finder",
+  "Close Window": "Uždaryti langą",
+  "Services": "Paslaugos",
+  "Hide Snagster": "Slėpti Snagster",
+  "Hide Others": "Slėpti kitas",
+  "Show All": "Rodyti viską",
+  "Minimize": "Sutraukti",
+  "Enter Full Screen": "Įjungti viso ekrano režimą",
+  "Bring All to Front": "Perkelti viską į priekį"
  }
 }

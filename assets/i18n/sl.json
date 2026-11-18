@@ -988,6 +988,17 @@
   "Recording saved": "Posnetek shranjen",
   "box": "okvir",
   "freehand": "prosta roka",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Povlecite okvir čez besedilo, da ga označite. Izberite prosta roka na desni, da namesto tega rišete poteze."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Povlecite okvir čez besedilo, da ga označite. Izberite prosta roka na desni, da namesto tega rišete poteze.",
+  "Cut": "Izreži",
+  "Select All": "Izberi vse",
+  "Show in Finder": "Pokaži v Finderju",
+  "Close Window": "Zapri okno",
+  "Services": "Storitve",
+  "Hide Snagster": "Skrij Snagster",
+  "Hide Others": "Skrij ostale",
+  "Show All": "Pokaži vse",
+  "Minimize": "Minimiraj",
+  "Enter Full Screen": "Preklopi v celozaslonski način",
+  "Bring All to Front": "Vse v ospredje"
  }
 }

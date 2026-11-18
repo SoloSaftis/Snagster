@@ -988,6 +988,17 @@
   "Recording saved": "Снимката е зачувана",
   "box": "поле",
   "freehand": "слободна рака",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Повлечете поле врз текстот за да го истакнете. Изберете слободна рака десно за да цртате потези."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Повлечете поле врз текстот за да го истакнете. Изберете слободна рака десно за да цртате потези.",
+  "Cut": "Исечи",
+  "Select All": "Избери сè",
+  "Show in Finder": "Прикажи во Finder",
+  "Close Window": "Затвори го прозорецот",
+  "Services": "Услуги",
+  "Hide Snagster": "Сокриј го Snagster",
+  "Hide Others": "Сокриј ги другите",
+  "Show All": "Прикажи ги сите",
+  "Minimize": "Минимизирај",
+  "Enter Full Screen": "Влези во цел екран",
+  "Bring All to Front": "Донеси ги сите напред"
  }
 }

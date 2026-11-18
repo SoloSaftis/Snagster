@@ -53,6 +53,8 @@ pub(crate) mod studio_ui;
 pub(crate) mod stream_ui;
 pub(crate) mod updates_ui;
 pub(crate) mod commands_ui;
+#[cfg(any(target_os = "macos", test))]
+pub(crate) mod menubar_ui;
 /// The editor window's smallest size (lifted while it is the panel or the recording bar).
 pub const MIN_SIZE: Vec2 = Vec2::new(900.0, 560.0);
 
@@ -557,6 +559,9 @@ impl SnagApp {
             app.status = "Sample picture loaded. Pick a tool on the left and draw on it.".into();
         } else {
             app.apply_hotkeys(&cc.egui_ctx);
+            // The tray's menu and the Mac menu bar send their items here, tray icon or not.
+            let ctx2 = cc.egui_ctx.clone();
+            crate::tray::listen(app.tray_tx.clone(), move || ctx2.request_repaint());
             app.apply_tray(&cc.egui_ctx);
         }
         if let Some(p) = open {
@@ -4169,6 +4174,8 @@ impl SnagApp {
         }
         self.poll_hotkeys(ctx);
         self.poll_tray(ctx);
+        #[cfg(target_os = "macos")]
+        self.apply_menu_bar();
         // Close keeps Snagster in the tray only where there is a tray to come back from (stock
         // GNOME has none), and only when the person chose it.
         let keep_running = !self.quitting && self.tray.is_some() && self.settings.close_to_tray && crate::platform::has_tray();
@@ -5000,6 +5007,8 @@ impl SnagApp {
                     self.quitting = true;
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
+                #[cfg(any(target_os = "macos", test))]
+                TrayCmd::Menu(run) => self.run_menu(ctx, run),
             }
         }
     }

@@ -984,5 +984,16 @@
  "Recording saved",
  "box",
  "freehand",
- "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead."
+ "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.",
+ "Cut",
+ "Select All",
+ "Show in Finder",
+ "Close Window",
+ "Services",
+ "Hide Snagster",
+ "Hide Others",
+ "Show All",
+ "Minimize",
+ "Enter Full Screen",
+ "Bring All to Front"
 ]

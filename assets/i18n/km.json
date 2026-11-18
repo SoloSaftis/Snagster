@@ -988,6 +988,17 @@
   "Recording saved": "បានរក្សាទុកការថត",
   "box": "ប្រអប់",
   "freehand": "ដោយដៃ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "អូសប្រអប់លើអត្ថបទដើម្បីរំលេច។ ជ្រើស ដោយដៃ នៅខាងស្តាំ ដើម្បីគូរខ្សែវិញ។"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "អូសប្រអប់លើអត្ថបទដើម្បីរំលេច។ ជ្រើស ដោយដៃ នៅខាងស្តាំ ដើម្បីគូរខ្សែវិញ។",
+  "Cut": "កាត់",
+  "Select All": "ជ្រើសរើសទាំងអស់",
+  "Show in Finder": "បង្ហាញនៅក្នុង Finder",
+  "Close Window": "បិទវីនដូ",
+  "Services": "សេវាកម្ម",
+  "Hide Snagster": "លាក់ Snagster",
+  "Hide Others": "លាក់ផ្សេងទៀត",
+  "Show All": "បង្ហាញទាំងអស់",
+  "Minimize": "បង្រួម",
+  "Enter Full Screen": "ចូលអេក្រង់ពេញ",
+  "Bring All to Front": "នាំទាំងអស់មកមុខ"
  }
 }

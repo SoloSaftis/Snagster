@@ -988,6 +988,17 @@
   "Recording saved": "خاتىرە ساقلاندى",
   "box": "رامكا",
   "freehand": "ئەركىن",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "تېكىستنى گەۋدىلەندۈرۈش ئۈچۈن ئۈستىگە رامكا سۆرەڭ. سىزىق سىزىش ئۈچۈن ئوڭ تەرەپتىن ئەركىن تاللاڭ."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "تېكىستنى گەۋدىلەندۈرۈش ئۈچۈن ئۈستىگە رامكا سۆرەڭ. سىزىق سىزىش ئۈچۈن ئوڭ تەرەپتىن ئەركىن تاللاڭ.",
+  "Cut": "كېسىش",
+  "Select All": "ھەممىنى تاللاش",
+  "Show in Finder": "Finder دا كۆرسىتىش",
+  "Close Window": "كۆزنەكنى تاقاش",
+  "Services": "مۇلازىمەتلەر",
+  "Hide Snagster": "Snagster نى يوشۇرۇش",
+  "Hide Others": "باشقىلارنى يوشۇرۇش",
+  "Show All": "ھەممىنى كۆرسىتىش",
+  "Minimize": "كىچىكلىتىش",
+  "Enter Full Screen": "تولۇق ئېكرانغا ئۆتۈش",
+  "Bring All to Front": "ھەممىنى ئالدىغا ئېلىپ چىقىش"
  }
 }

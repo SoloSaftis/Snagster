@@ -988,6 +988,17 @@
   "Recording saved": "Lindistus salvestatud",
   "box": "kast",
   "freehand": "vabakäsi",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Teksti esiletõstmiseks lohistage selle kohale kast. Joonte joonistamiseks valige paremalt vabakäsi."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Teksti esiletõstmiseks lohistage selle kohale kast. Joonte joonistamiseks valige paremalt vabakäsi.",
+  "Cut": "Lõika",
+  "Select All": "Vali kõik",
+  "Show in Finder": "Näita Finderis",
+  "Close Window": "Sulge aken",
+  "Services": "Teenused",
+  "Hide Snagster": "Peida Snagster",
+  "Hide Others": "Peida teised",
+  "Show All": "Näita kõiki",
+  "Minimize": "Minimeeri",
+  "Enter Full Screen": "Lülita täisekraanile",
+  "Bring All to Front": "Too kõik ette"
  }
 }

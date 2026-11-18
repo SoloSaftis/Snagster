@@ -988,6 +988,17 @@
   "Recording saved": "Запіс захаваны",
   "box": "поле",
   "freehand": "ад рукі",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Перацягніце поле над тэкстам, каб вылучыць яго. Выберыце «ад рукі» справа, каб малявць штрыхі."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Перацягніце поле над тэкстам, каб вылучыць яго. Выберыце «ад рукі» справа, каб малявць штрыхі.",
+  "Cut": "Выразаць",
+  "Select All": "Выбраць усё",
+  "Show in Finder": "Паказаць у Finder",
+  "Close Window": "Закрыць акно",
+  "Services": "Службы",
+  "Hide Snagster": "Схаваць Snagster",
+  "Hide Others": "Схаваць іншыя",
+  "Show All": "Паказаць усё",
+  "Minimize": "Згарнуць",
+  "Enter Full Screen": "Перайсці ў поўнаэкранны рэжым",
+  "Bring All to Front": "Перанесці ўсё на пярэдні план"
  }
 }

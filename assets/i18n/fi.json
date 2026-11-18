@@ -988,6 +988,17 @@
   "Recording saved": "Nauhoitus tallennettu",
   "box": "laatikko",
   "freehand": "vapaa käsi",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Korosta teksti vetämällä sen päälle laatikko. Valitse oikealta vapaa käsi piirtääksesi vetoja."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Korosta teksti vetämällä sen päälle laatikko. Valitse oikealta vapaa käsi piirtääksesi vetoja.",
+  "Cut": "Leikkaa",
+  "Select All": "Valitse kaikki",
+  "Show in Finder": "Näytä Finderissä",
+  "Close Window": "Sulje ikkuna",
+  "Services": "Palvelut",
+  "Hide Snagster": "Piilota Snagster",
+  "Hide Others": "Piilota muut",
+  "Show All": "Näytä kaikki",
+  "Minimize": "Minimoi",
+  "Enter Full Screen": "Siirry koko näytön tilaan",
+  "Bring All to Front": "Tuo kaikki eteen"
  }
 }

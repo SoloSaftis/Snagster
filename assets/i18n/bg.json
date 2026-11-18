@@ -988,6 +988,17 @@
   "Recording saved": "Записът е запазен",
   "box": "поле",
   "freehand": "свободно",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Плъзнете поле върху текста, за да го маркирате. Изберете свободно отдясно, за да рисувате щрихи."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Плъзнете поле върху текста, за да го маркирате. Изберете свободно отдясно, за да рисувате щрихи.",
+  "Cut": "Изрязване",
+  "Select All": "Избиране на всичко",
+  "Show in Finder": "Показване във Finder",
+  "Close Window": "Затваряне на прозореца",
+  "Services": "Услуги",
+  "Hide Snagster": "Скриване на Snagster",
+  "Hide Others": "Скриване на другите",
+  "Show All": "Показване на всички",
+  "Minimize": "Минимизиране",
+  "Enter Full Screen": "Цял екран",
+  "Bring All to Front": "Изнасяне на всички отпред"
  }
 }

@@ -988,6 +988,17 @@
   "Recording saved": "錄製內容已儲存",
   "box": "方框",
   "freehand": "手繪",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖曳方框即可醒目提示。選擇右側的「手繪」可改為繪製筆劃。"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖曳方框即可醒目提示。選擇右側的「手繪」可改為繪製筆劃。",
+  "Cut": "剪下",
+  "Select All": "全選",
+  "Show in Finder": "在 Finder 中顯示",
+  "Close Window": "關閉視窗",
+  "Services": "服務",
+  "Hide Snagster": "隱藏 Snagster",
+  "Hide Others": "隱藏其他",
+  "Show All": "顯示全部",
+  "Minimize": "縮小",
+  "Enter Full Screen": "進入全螢幕",
+  "Bring All to Front": "將所有視窗移到最前"
  }
 }

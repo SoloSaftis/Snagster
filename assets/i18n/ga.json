@@ -988,6 +988,17 @@
   "Recording saved": "Taifead sábháilte",
   "box": "bosca",
   "freehand": "saorláimhe",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tarraing bosca thar théacs chun é a aibhsiú. Roghnaigh saorláimhe ar dheis chun stríoca a tharraingt ina ionad."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tarraing bosca thar théacs chun é a aibhsiú. Roghnaigh saorláimhe ar dheis chun stríoca a tharraingt ina ionad.",
+  "Cut": "Gearr",
+  "Select All": "Roghnaigh Gach Rud",
+  "Show in Finder": "Taispeáin sa Finder",
+  "Close Window": "Dún an Fhuinneog",
+  "Services": "Seirbhísí",
+  "Hide Snagster": "Folaigh Snagster",
+  "Hide Others": "Folaigh na Cinn Eile",
+  "Show All": "Taispeáin Uile",
+  "Minimize": "Íoslaghdaigh",
+  "Enter Full Screen": "Téigh go Lánscáileán",
+  "Bring All to Front": "Tabhair Gach Rud chun Tosaigh"
  }
 }

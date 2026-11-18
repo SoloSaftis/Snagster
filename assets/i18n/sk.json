@@ -988,6 +988,17 @@
   "Recording saved": "Nahrávka uložená",
   "box": "rámček",
   "freehand": "voľnou rukou",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Potiahnutím rámčeka cez text ho zvýrazníte. Ak chcete kresliť ťahy, vyberte vpravo voľnou rukou."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Potiahnutím rámčeka cez text ho zvýrazníte. Ak chcete kresliť ťahy, vyberte vpravo voľnou rukou.",
+  "Cut": "Vystrihnúť",
+  "Select All": "Vybrať všetko",
+  "Show in Finder": "Zobraziť vo Finderi",
+  "Close Window": "Zavrieť okno",
+  "Services": "Služby",
+  "Hide Snagster": "Skryť Snagster",
+  "Hide Others": "Skryť ostatné",
+  "Show All": "Zobraziť všetko",
+  "Minimize": "Minimalizovať",
+  "Enter Full Screen": "Prejsť do režimu celej obrazovky",
+  "Bring All to Front": "Presunúť všetko do popredia"
  }
 }

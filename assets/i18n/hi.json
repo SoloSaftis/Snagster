@@ -988,6 +988,17 @@
   "Recording saved": "रिकॉर्डिंग सहेजी गई",
   "box": "बॉक्स",
   "freehand": "फ्रीहैंड",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "टेक्स्ट को हाइलाइट करने के लिए उस पर बॉक्स खींचें। इसके बजाय रेखाएँ खींचने के लिए दाईं ओर फ्रीहैंड चुनें।"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "टेक्स्ट को हाइलाइट करने के लिए उस पर बॉक्स खींचें। इसके बजाय रेखाएँ खींचने के लिए दाईं ओर फ्रीहैंड चुनें।",
+  "Cut": "कट करें",
+  "Select All": "सभी चुनें",
+  "Show in Finder": "Finder में दिखाएँ",
+  "Close Window": "विंडो बंद करें",
+  "Services": "सेवाएँ",
+  "Hide Snagster": "Snagster छिपाएँ",
+  "Hide Others": "अन्य छिपाएँ",
+  "Show All": "सभी दिखाएँ",
+  "Minimize": "छोटा करें",
+  "Enter Full Screen": "फ़ुल स्क्रीन में जाएँ",
+  "Bring All to Front": "सभी को सामने लाएँ"
  }
 }

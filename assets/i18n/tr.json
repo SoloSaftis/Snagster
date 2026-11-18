@@ -988,6 +988,17 @@
   "Recording saved": "Kayıt kaydedildi",
   "box": "kutu",
   "freehand": "serbest",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Metni vurgulamak için üzerine bir kutu sürükleyin. Bunun yerine çizgi çizmek için sağdan serbest seçin."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Metni vurgulamak için üzerine bir kutu sürükleyin. Bunun yerine çizgi çizmek için sağdan serbest seçin.",
+  "Cut": "Kes",
+  "Select All": "Tümünü Seç",
+  "Show in Finder": "Finder'da Göster",
+  "Close Window": "Pencereyi Kapat",
+  "Services": "Servisler",
+  "Hide Snagster": "Snagster'ı Gizle",
+  "Hide Others": "Diğerlerini Gizle",
+  "Show All": "Tümünü Göster",
+  "Minimize": "Küçült",
+  "Enter Full Screen": "Tam Ekrana Geç",
+  "Bring All to Front": "Tümünü Öne Getir"
  }
 }

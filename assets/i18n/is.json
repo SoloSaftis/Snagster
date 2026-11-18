@@ -988,6 +988,17 @@
   "Recording saved": "Upptaka vistuð",
   "box": "kassi",
   "freehand": "frjáls hönd",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dragðu kassa yfir texta til að auðkenna hann. Veldu frjáls hönd til hægri til að teikna strik."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dragðu kassa yfir texta til að auðkenna hann. Veldu frjáls hönd til hægri til að teikna strik.",
+  "Cut": "Klippa",
+  "Select All": "Velja allt",
+  "Show in Finder": "Sýna í Finder",
+  "Close Window": "Loka glugga",
+  "Services": "Þjónustur",
+  "Hide Snagster": "Fela Snagster",
+  "Hide Others": "Fela önnur",
+  "Show All": "Sýna allt",
+  "Minimize": "Minnka",
+  "Enter Full Screen": "Fara í heilskjá",
+  "Bring All to Front": "Færa allt fremst"
  }
 }

@@ -988,6 +988,17 @@
   "Recording saved": "Жазба сақталды",
   "box": "жәшік",
   "freehand": "еркін",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Мәтінді бөлектеу үшін оның үстінен жәшік сүйреңіз. Сызықтар салу үшін оң жақтан еркін таңдаңыз."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Мәтінді бөлектеу үшін оның үстінен жәшік сүйреңіз. Сызықтар салу үшін оң жақтан еркін таңдаңыз.",
+  "Cut": "Қиып алу",
+  "Select All": "Барлығын таңдау",
+  "Show in Finder": "Finder-де көрсету",
+  "Close Window": "Терезені жабу",
+  "Services": "Қызметтер",
+  "Hide Snagster": "Snagster-ді жасыру",
+  "Hide Others": "Басқаларын жасыру",
+  "Show All": "Барлығын көрсету",
+  "Minimize": "Жию",
+  "Enter Full Screen": "Толық экранға ауысу",
+  "Bring All to Front": "Барлығын алдыңғы жоспарға шығару"
  }
 }

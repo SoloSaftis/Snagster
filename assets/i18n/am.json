@@ -988,6 +988,17 @@
   "Recording saved": "ቀረጻ ተቀምጧል",
   "box": "ሳጥን",
   "freehand": "በነጻ እጅ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ጽሑፍን ለማጉላት ሳጥን ይጎትቱ። በምትኩ መስመሮችን ለመሳል በቀኝ በኩል በነጻ እጅ ይምረጡ።"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ጽሑፍን ለማጉላት ሳጥን ይጎትቱ። በምትኩ መስመሮችን ለመሳል በቀኝ በኩል በነጻ እጅ ይምረጡ።",
+  "Cut": "ቁረጥ",
+  "Select All": "ሁሉንም ምረጥ",
+  "Show in Finder": "በFinder አሳይ",
+  "Close Window": "መስኮት ዝጋ",
+  "Services": "አገልግሎቶች",
+  "Hide Snagster": "Snagster ደብቅ",
+  "Hide Others": "ሌሎችን ደብቅ",
+  "Show All": "ሁሉንም አሳይ",
+  "Minimize": "አሳንስ",
+  "Enter Full Screen": "ሙሉ ማያ ገጽ ግባ",
+  "Bring All to Front": "ሁሉንም ወደ ፊት አምጣ"
  }
 }

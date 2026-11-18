@@ -988,6 +988,17 @@
   "Recording saved": "Yozuv saqlandi",
   "box": "quti",
   "freehand": "erkin",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Matnni ajratib ko'rsatish uchun uning ustiga quti torting. Chiziqlar chizish uchun o'ngda erkin tanlang."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Matnni ajratib ko'rsatish uchun uning ustiga quti torting. Chiziqlar chizish uchun o'ngda erkin tanlang.",
+  "Cut": "Kesish",
+  "Select All": "Barchasini tanlash",
+  "Show in Finder": "Finder’da ko‘rsatish",
+  "Close Window": "Oynani yopish",
+  "Services": "Xizmatlar",
+  "Hide Snagster": "Snagster’ni yashirish",
+  "Hide Others": "Boshqalarni yashirish",
+  "Show All": "Barchasini ko‘rsatish",
+  "Minimize": "Yig‘ish",
+  "Enter Full Screen": "To‘liq ekranga o‘tish",
+  "Bring All to Front": "Barchasini oldinga chiqarish"
  }
 }

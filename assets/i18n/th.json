@@ -988,6 +988,17 @@
   "Recording saved": "บันทึกการบันทึกแล้ว",
   "box": "กล่อง",
   "freehand": "อิสระ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ลากกล่องคร่อมข้อความเพื่อไฮไลต์ เลือก อิสระ ทางขวาเพื่อวาดเส้นแทน"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ลากกล่องคร่อมข้อความเพื่อไฮไลต์ เลือก อิสระ ทางขวาเพื่อวาดเส้นแทน",
+  "Cut": "ตัด",
+  "Select All": "เลือกทั้งหมด",
+  "Show in Finder": "แสดงใน Finder",
+  "Close Window": "ปิดหน้าต่าง",
+  "Services": "บริการ",
+  "Hide Snagster": "ซ่อน Snagster",
+  "Hide Others": "ซ่อนอื่นๆ",
+  "Show All": "แสดงทั้งหมด",
+  "Minimize": "ย่อ",
+  "Enter Full Screen": "เข้าสู่โหมดเต็มหน้าจอ",
+  "Bring All to Front": "นำทั้งหมดมาไว้ข้างหน้า"
  }
 }

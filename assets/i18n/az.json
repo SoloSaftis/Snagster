@@ -988,6 +988,17 @@
   "Recording saved": "Qeyd saxlanıldı",
   "box": "qutu",
   "freehand": "sərbəst",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Mətni vurğulamaq üçün üzərinə qutu çəkin. Əvəzinə xətlər çəkmək üçün sağda sərbəst seçin."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Mətni vurğulamaq üçün üzərinə qutu çəkin. Əvəzinə xətlər çəkmək üçün sağda sərbəst seçin.",
+  "Cut": "Kəs",
+  "Select All": "Hamısını seç",
+  "Show in Finder": "Finder-də göstər",
+  "Close Window": "Pəncərəni bağla",
+  "Services": "Xidmətlər",
+  "Hide Snagster": "Snagster-i gizlət",
+  "Hide Others": "Digərlərini gizlət",
+  "Show All": "Hamısını göstər",
+  "Minimize": "Yığ",
+  "Enter Full Screen": "Tam ekrana keç",
+  "Bring All to Front": "Hamısını önə gətir"
  }
 }

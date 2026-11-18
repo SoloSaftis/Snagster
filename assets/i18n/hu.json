@@ -988,6 +988,17 @@
   "Recording saved": "Felvétel elmentve",
   "box": "doboz",
   "freehand": "szabadkéz",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Húzzon egy dobozt a szöveg fölé a kiemeléséhez. Jobbra válassza a szabadkéz lehetőséget a vonalak rajzolásához."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Húzzon egy dobozt a szöveg fölé a kiemeléséhez. Jobbra válassza a szabadkéz lehetőséget a vonalak rajzolásához.",
+  "Cut": "Kivágás",
+  "Select All": "Összes kijelölése",
+  "Show in Finder": "Megjelenítés a Finderben",
+  "Close Window": "Ablak bezárása",
+  "Services": "Szolgáltatások",
+  "Hide Snagster": "Snagster elrejtése",
+  "Hide Others": "Többi elrejtése",
+  "Show All": "Összes megjelenítése",
+  "Minimize": "Kis méret",
+  "Enter Full Screen": "Belépés a teljes képernyőbe",
+  "Bring All to Front": "Összes előtérbe hozása"
  }
 }

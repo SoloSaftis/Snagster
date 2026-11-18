@@ -988,6 +988,17 @@
   "Recording saved": "రికార్డింగ్ సేవ్ అయింది",
   "box": "బాక్స్",
   "freehand": "ఫ్రీహ్యాండ్",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "వచనాన్ని హైలైట్ చేయడానికి దానిపై బాక్స్ లాగండి. బదులుగా గీతలు గీయడానికి కుడివైపు ఫ్రీహ్యాండ్ ఎంచుకోండి."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "వచనాన్ని హైలైట్ చేయడానికి దానిపై బాక్స్ లాగండి. బదులుగా గీతలు గీయడానికి కుడివైపు ఫ్రీహ్యాండ్ ఎంచుకోండి.",
+  "Cut": "కట్ చేయి",
+  "Select All": "అన్నీ ఎంచుకో",
+  "Show in Finder": "Finderలో చూపు",
+  "Close Window": "విండోను మూసివేయి",
+  "Services": "సేవలు",
+  "Hide Snagster": "Snagster దాచు",
+  "Hide Others": "ఇతరాలను దాచు",
+  "Show All": "అన్నీ చూపు",
+  "Minimize": "కుదించు",
+  "Enter Full Screen": "పూర్తి స్క్రీన్‌లోకి వెళ్లు",
+  "Bring All to Front": "అన్నింటినీ ముందుకు తీసుకురా"
  }
 }

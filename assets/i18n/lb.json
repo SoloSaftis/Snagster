@@ -988,6 +988,17 @@
   "Recording saved": "Opnam gespäichert",
   "box": "Këscht",
   "freehand": "fräihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Zitt eng Këscht iwwer den Text, fir en ervirzehiewen. Wielt riets fräihand, fir amplaz Stréch ze zeechnen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Zitt eng Këscht iwwer den Text, fir en ervirzehiewen. Wielt riets fräihand, fir amplaz Stréch ze zeechnen.",
+  "Cut": "Ausschneiden",
+  "Select All": "Alles auswielen",
+  "Show in Finder": "Am Finder weisen",
+  "Close Window": "Fënster zoumaachen",
+  "Services": "Servicer",
+  "Hide Snagster": "Snagster verstoppen",
+  "Hide Others": "Aner verstoppen",
+  "Show All": "Alles weisen",
+  "Minimize": "Minimiséieren",
+  "Enter Full Screen": "Vollbild aktivéieren",
+  "Bring All to Front": "Alles no vir bréngen"
  }
 }

@@ -988,6 +988,17 @@
   "Recording saved": "Kua tiakina te rekoatanga",
   "box": "pouaka",
   "freehand": "ringaringa-noa",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Toia he pouaka ki runga i te kuputuhi hei whakaatu. Kōwhiria te ringaringa-noa ki te taha matau hei tā rārangi."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Toia he pouaka ki runga i te kuputuhi hei whakaatu. Kōwhiria te ringaringa-noa ki te taha matau hei tā rārangi.",
+  "Cut": "Tuaina",
+  "Select All": "Tīpako Katoa",
+  "Show in Finder": "Whakaatu i Finder",
+  "Close Window": "Katia te Matapihi",
+  "Services": "Ratonga",
+  "Hide Snagster": "Huna i a Snagster",
+  "Hide Others": "Huna Atu Ētahi",
+  "Show All": "Whakaatu Katoa",
+  "Minimize": "Whakahōhonu",
+  "Enter Full Screen": "Tomo ki te Mata Katoa",
+  "Bring All to Front": "Kawe Katoa ki Mua"
  }
 }

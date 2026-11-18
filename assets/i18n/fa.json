@@ -988,6 +988,17 @@
   "Recording saved": "ضبط ذخیره شد",
   "box": "کادر",
   "freehand": "آزاد",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "برای هایلایت کردن متن، یک کادر روی آن بکشید. برای کشیدن خط‌ها، در سمت راست آزاد را انتخاب کنید."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "برای هایلایت کردن متن، یک کادر روی آن بکشید. برای کشیدن خط‌ها، در سمت راست آزاد را انتخاب کنید.",
+  "Cut": "برش",
+  "Select All": "انتخاب همه",
+  "Show in Finder": "نمایش در Finder",
+  "Close Window": "بستن پنجره",
+  "Services": "سرویس‌ها",
+  "Hide Snagster": "پنهان کردن Snagster",
+  "Hide Others": "پنهان کردن بقیه",
+  "Show All": "نمایش همه",
+  "Minimize": "کوچک کردن",
+  "Enter Full Screen": "ورود به حالت تمام‌صفحه",
+  "Bring All to Front": "آوردن همه به جلو"
  }
 }

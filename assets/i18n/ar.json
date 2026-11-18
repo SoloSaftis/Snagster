@@ -988,6 +988,17 @@
   "Recording saved": "تم حفظ التسجيل",
   "box": "مربع",
   "freehand": "يدوي",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "اسحب مربعًا فوق النص لتمييزه. اختر يدوي على اليمين لرسم خطوط بدلًا من ذلك."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "اسحب مربعًا فوق النص لتمييزه. اختر يدوي على اليمين لرسم خطوط بدلًا من ذلك.",
+  "Cut": "قص",
+  "Select All": "تحديد الكل",
+  "Show in Finder": "إظهار في Finder",
+  "Close Window": "إغلاق النافذة",
+  "Services": "الخدمات",
+  "Hide Snagster": "إخفاء Snagster",
+  "Hide Others": "إخفاء الآخرين",
+  "Show All": "إظهار الكل",
+  "Minimize": "تصغير",
+  "Enter Full Screen": "الدخول في وضع ملء الشاشة",
+  "Bring All to Front": "إحضار الكل إلى الأمام"
  }
 }

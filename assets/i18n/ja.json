@@ -988,6 +988,17 @@
   "Recording saved": "録画を保存しました",
   "box": "四角",
   "freehand": "フリーハンド",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "文字の上にドラッグして四角で囲み、ハイライトします。右の「フリーハンド」を選ぶと、代わりに線を描けます。"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "文字の上にドラッグして四角で囲み、ハイライトします。右の「フリーハンド」を選ぶと、代わりに線を描けます。",
+  "Cut": "カット",
+  "Select All": "すべてを選択",
+  "Show in Finder": "Finderで表示",
+  "Close Window": "ウインドウを閉じる",
+  "Services": "サービス",
+  "Hide Snagster": "Snagsterを隠す",
+  "Hide Others": "ほかを隠す",
+  "Show All": "すべてを表示",
+  "Minimize": "しまう",
+  "Enter Full Screen": "フルスクリーンにする",
+  "Bring All to Front": "すべてを手前に移動"
  }
 }

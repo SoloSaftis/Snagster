@@ -988,6 +988,17 @@
   "Recording saved": "ریکارڈنگ محفوظ ہو گئی",
   "box": "باکس",
   "freehand": "فری ہینڈ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "متن کو نمایاں کرنے کے لیے اس پر باکس کھینچیں۔ اس کے بجائے لکیریں کھینچنے کے لیے دائیں طرف فری ہینڈ منتخب کریں۔"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "متن کو نمایاں کرنے کے لیے اس پر باکس کھینچیں۔ اس کے بجائے لکیریں کھینچنے کے لیے دائیں طرف فری ہینڈ منتخب کریں۔",
+  "Cut": "کاٹیں",
+  "Select All": "سب منتخب کریں",
+  "Show in Finder": "Finder میں دکھائیں",
+  "Close Window": "ونڈو بند کریں",
+  "Services": "خدمات",
+  "Hide Snagster": "Snagster چھپائیں",
+  "Hide Others": "دوسروں کو چھپائیں",
+  "Show All": "سب دکھائیں",
+  "Minimize": "چھوٹا کریں",
+  "Enter Full Screen": "مکمل اسکرین میں داخل ہوں",
+  "Bring All to Front": "سب کو سامنے لائیں"
  }
 }

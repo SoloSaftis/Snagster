@@ -988,6 +988,17 @@
   "Recording saved": "Clàradh air a shàbhaladh",
   "box": "bogsa",
   "freehand": "làmh-shaor",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Slaod bogsa thairis air teacsa gus a sheulachadh. Tagh làmh-shaor air an taobh deas gus strìochan a tharraing."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Slaod bogsa thairis air teacsa gus a sheulachadh. Tagh làmh-shaor air an taobh deas gus strìochan a tharraing.",
+  "Cut": "Gearr",
+  "Select All": "Tagh na h-uile",
+  "Show in Finder": "Seall san Finder",
+  "Close Window": "Dùin an uinneag",
+  "Services": "Seirbheisean",
+  "Hide Snagster": "Falaich Snagster",
+  "Hide Others": "Falaich càch",
+  "Show All": "Seall na h-uile",
+  "Minimize": "Lùghdaich",
+  "Enter Full Screen": "Rach gu làn-sgrìn",
+  "Bring All to Front": "Thoir a h-uile gu aghaidh"
  }
 }

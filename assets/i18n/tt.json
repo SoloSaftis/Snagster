@@ -988,6 +988,17 @@
   "Recording saved": "Язма саклана",
   "box": "рамка",
   "freehand": "иректән",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Тексты билгеләү өчен аның өстенә рамка сөйрәгез. Сызыклар сызу өчен уңда иректән сайлагыз."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Тексты билгеләү өчен аның өстенә рамка сөйрәгез. Сызыклар сызу өчен уңда иректән сайлагыз.",
+  "Cut": "Киесү",
+  "Select All": "Барысын сайлау",
+  "Show in Finder": "Finder'да күрсәтү",
+  "Close Window": "Тәрәзәне ябу",
+  "Services": "Хезмәтләр",
+  "Hide Snagster": "Snagster'ны яшерү",
+  "Hide Others": "Башкаларын яшерү",
+  "Show All": "Барысын күрсәтү",
+  "Minimize": "Җыю",
+  "Enter Full Screen": "Тулы экранга күчү",
+  "Bring All to Front": "Барысын алга китерү"
  }
 }

@@ -27,6 +27,8 @@ mod overlay;
 mod portal;
 mod panel;
 mod tray;
+#[cfg(any(target_os = "macos", test))]
+mod menubar;
 mod settings;
 mod video;
 mod i18n;
@@ -464,6 +466,11 @@ fn main() -> eframe::Result {
         #[allow(unused_mut)]
         let mut options = eframe::NativeOptions { viewport: viewport.clone(), centered: true, ..Default::default() };
         drawing::apply(&mut options, *backend);
+        // The Mac menu bar's Edit items reach the window that has the keyboard.
+        #[cfg(target_os = "macos")]
+        {
+            options.viewport_hooks = Some(std::sync::Arc::new(menubar::KeyHooks));
+        }
         #[cfg(target_os = "macos")]
         if screenshot.is_some() {
             options.event_loop_builder = Some(Box::new(|b| {

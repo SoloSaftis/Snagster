@@ -988,6 +988,17 @@
   "Recording saved": "Запись сохранена",
   "box": "рамка",
   "freehand": "от руки",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протяните рамку поверх текста, чтобы выделить его. Выберите справа «от руки», чтобы рисовать штрихи."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протяните рамку поверх текста, чтобы выделить его. Выберите справа «от руки», чтобы рисовать штрихи.",
+  "Cut": "Вырезать",
+  "Select All": "Выбрать все",
+  "Show in Finder": "Показать в Finder",
+  "Close Window": "Закрыть окно",
+  "Services": "Службы",
+  "Hide Snagster": "Скрыть Snagster",
+  "Hide Others": "Скрыть остальные",
+  "Show All": "Показать все",
+  "Minimize": "Свернуть",
+  "Enter Full Screen": "Перейти в полноэкранный режим",
+  "Bring All to Front": "Все — на передний план"
  }
 }

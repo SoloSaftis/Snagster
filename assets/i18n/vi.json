@@ -988,6 +988,17 @@
   "Recording saved": "Đã lưu bản quay",
   "box": "khung",
   "freehand": "tự do",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kéo một khung qua văn bản để làm nổi bật. Chọn tự do ở bên phải để thay vào đó vẽ nét."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kéo một khung qua văn bản để làm nổi bật. Chọn tự do ở bên phải để thay vào đó vẽ nét.",
+  "Cut": "Cắt",
+  "Select All": "Chọn tất cả",
+  "Show in Finder": "Hiển thị trong Finder",
+  "Close Window": "Đóng cửa sổ",
+  "Services": "Dịch vụ",
+  "Hide Snagster": "Ẩn Snagster",
+  "Hide Others": "Ẩn các ứng dụng khác",
+  "Show All": "Hiển thị tất cả",
+  "Minimize": "Thu nhỏ",
+  "Enter Full Screen": "Vào chế độ toàn màn hình",
+  "Bring All to Front": "Đưa tất cả lên phía trước"
  }
 }

@@ -988,6 +988,17 @@
   "Recording saved": "Recordiad wedi'i chadw",
   "box": "blwch",
   "freehand": "llawrydd",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Llusgwch flwch dros destun i'w amlygu. Dewiswch llawrydd ar y dde i dynnu llinellau yn lle hynny."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Llusgwch flwch dros destun i'w amlygu. Dewiswch llawrydd ar y dde i dynnu llinellau yn lle hynny.",
+  "Cut": "Torri",
+  "Select All": "Dewis y Cyfan",
+  "Show in Finder": "Dangos yn y Finder",
+  "Close Window": "Cau'r Ffenest",
+  "Services": "Gwasanaethau",
+  "Hide Snagster": "Cuddio Snagster",
+  "Hide Others": "Cuddio'r Lleill",
+  "Show All": "Dangos y Cyfan",
+  "Minimize": "Lleihau",
+  "Enter Full Screen": "Mynd i'r Sgrin Lawn",
+  "Bring All to Front": "Dod â Phopeth i'r Blaen"
  }
 }

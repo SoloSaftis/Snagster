@@ -988,6 +988,17 @@
   "Recording saved": "Η εγγραφή αποθηκεύτηκε",
   "box": "πλαίσιο",
   "freehand": "ελεύθερο",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Σύρετε ένα πλαίσιο πάνω από το κείμενο για να το επισημάνετε. Επιλέξτε ελεύθερο στα δεξιά για να σχεδιάσετε γραμμές."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Σύρετε ένα πλαίσιο πάνω από το κείμενο για να το επισημάνετε. Επιλέξτε ελεύθερο στα δεξιά για να σχεδιάσετε γραμμές.",
+  "Cut": "Αποκοπή",
+  "Select All": "Επιλογή όλων",
+  "Show in Finder": "Εμφάνιση στο Finder",
+  "Close Window": "Κλείσιμο παραθύρου",
+  "Services": "Υπηρεσίες",
+  "Hide Snagster": "Απόκρυψη του Snagster",
+  "Hide Others": "Απόκρυψη των υπολοίπων",
+  "Show All": "Εμφάνιση όλων",
+  "Minimize": "Ελαχιστοποίηση",
+  "Enter Full Screen": "Είσοδος σε πλήρη οθόνη",
+  "Bring All to Front": "Μεταφορά όλων στο προσκήνιο"
  }
 }

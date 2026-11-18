@@ -988,6 +988,17 @@
   "Recording saved": "Gravação guardada",
   "box": "caixa",
   "freehand": "à mão livre",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arraste uma caixa sobre o texto para o realçar. Escolha à mão livre à direita para desenhar traços."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arraste uma caixa sobre o texto para o realçar. Escolha à mão livre à direita para desenhar traços.",
+  "Cut": "Cortar",
+  "Select All": "Selecionar Tudo",
+  "Show in Finder": "Mostrar no Finder",
+  "Close Window": "Fechar Janela",
+  "Services": "Serviços",
+  "Hide Snagster": "Ocultar Snagster",
+  "Hide Others": "Ocultar Outras",
+  "Show All": "Mostrar Tudo",
+  "Minimize": "Minimizar",
+  "Enter Full Screen": "Entrar em Ecrã Inteiro",
+  "Bring All to Front": "Trazer Tudo para a Frente"
  }
 }

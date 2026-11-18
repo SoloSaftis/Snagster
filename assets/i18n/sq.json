@@ -988,6 +988,17 @@
   "Recording saved": "Regjistrimi u ruajt",
   "box": "kuti",
   "freehand": "dorë e lirë",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tërhiqni një kuti mbi tekst për ta theksuar. Zgjidhni dorë e lirë djathtas për të vizatuar vija."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tërhiqni një kuti mbi tekst për ta theksuar. Zgjidhni dorë e lirë djathtas për të vizatuar vija.",
+  "Cut": "Prit",
+  "Select All": "Zgjidh të gjitha",
+  "Show in Finder": "Shfaq në Finder",
+  "Close Window": "Mbyll dritaren",
+  "Services": "Shërbimet",
+  "Hide Snagster": "Fshih Snagster",
+  "Hide Others": "Fshih të tjerat",
+  "Show All": "Shfaq të gjitha",
+  "Minimize": "Minimizo",
+  "Enter Full Screen": "Hyr në ekran të plotë",
+  "Bring All to Front": "Sill të gjitha përpara"
  }
 }

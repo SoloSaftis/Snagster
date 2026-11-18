@@ -988,6 +988,17 @@
   "Recording saved": "Enregistrement terminé",
   "box": "boîte",
   "freehand": "à main levée",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Faites glisser une boîte sur le texte pour le surligner. Choisissez à main levée à droite pour tracer des traits."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Faites glisser une boîte sur le texte pour le surligner. Choisissez à main levée à droite pour tracer des traits.",
+  "Cut": "Couper",
+  "Select All": "Tout sélectionner",
+  "Show in Finder": "Afficher dans le Finder",
+  "Close Window": "Fermer la fenêtre",
+  "Services": "Services",
+  "Hide Snagster": "Masquer Snagster",
+  "Hide Others": "Masquer les autres",
+  "Show All": "Tout afficher",
+  "Minimize": "Placer dans le Dock",
+  "Enter Full Screen": "Passer en plein écran",
+  "Bring All to Front": "Tout ramener au premier plan"
  }
 }

@@ -988,6 +988,17 @@
   "Recording saved": "ರೆಕಾರ್ಡಿಂಗ್ ಉಳಿಸಲಾಗಿದೆ",
   "box": "ಬಾಕ್ಸ್",
   "freehand": "ಫ್ರೀಹ್ಯಾಂಡ್",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ಪಠ್ಯವನ್ನು ಹೈಲೈಟ್ ಮಾಡಲು ಅದರ ಮೇಲೆ ಬಾಕ್ಸ್ ಎಳೆಯಿರಿ. ಬದಲಿಗೆ ಗೆರೆಗಳನ್ನು ಬರೆಯಲು ಬಲಭಾಗದಲ್ಲಿ ಫ್ರೀಹ್ಯಾಂಡ್ ಆಯ್ಕೆಮಾಡಿ."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ಪಠ್ಯವನ್ನು ಹೈಲೈಟ್ ಮಾಡಲು ಅದರ ಮೇಲೆ ಬಾಕ್ಸ್ ಎಳೆಯಿರಿ. ಬದಲಿಗೆ ಗೆರೆಗಳನ್ನು ಬರೆಯಲು ಬಲಭಾಗದಲ್ಲಿ ಫ್ರೀಹ್ಯಾಂಡ್ ಆಯ್ಕೆಮಾಡಿ.",
+  "Cut": "ಕತ್ತರಿಸಿ",
+  "Select All": "ಎಲ್ಲವನ್ನೂ ಆಯ್ಕೆಮಾಡಿ",
+  "Show in Finder": "Finder ನಲ್ಲಿ ತೋರಿಸಿ",
+  "Close Window": "ವಿಂಡೋ ಮುಚ್ಚಿ",
+  "Services": "ಸೇವೆಗಳು",
+  "Hide Snagster": "Snagster ಮರೆಮಾಡಿ",
+  "Hide Others": "ಇತರವುಗಳನ್ನು ಮರೆಮಾಡಿ",
+  "Show All": "ಎಲ್ಲವನ್ನೂ ತೋರಿಸಿ",
+  "Minimize": "ಕಿರಿದುಗೊಳಿಸಿ",
+  "Enter Full Screen": "ಪೂರ್ಣ ಪರದೆಗೆ ಹೋಗಿ",
+  "Bring All to Front": "ಎಲ್ಲವನ್ನೂ ಮುಂದೆ ತನ್ನಿ"
  }
 }

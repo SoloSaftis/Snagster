@@ -988,6 +988,17 @@
   "Recording saved": "Grabay waqaychasqa",
   "box": "kaja",
   "freehand": "sapaq makiwan",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Qillqa patapi kaja chutay chaytaqa k'anchachinaykipaq. Paña kinraypi sapaq makiwan akllay siq'iykunata ruwanaykipaq."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Qillqa patapi kaja chutay chaytaqa k'anchachinaykipaq. Paña kinraypi sapaq makiwan akllay siq'iykunata ruwanaykipaq.",
+  "Cut": "Kuchuy",
+  "Select All": "Llapanta akllay",
+  "Show in Finder": "Finder nisqapi rikuchiy",
+  "Close Window": "Wintanata wichqay",
+  "Services": "Llankaykuna",
+  "Hide Snagster": "Snagster pakay",
+  "Hide Others": "Wakkunata pakay",
+  "Show All": "Llapanta rikuchiy",
+  "Minimize": "Huch'uyachiy",
+  "Enter Full Screen": "Hunt'a pantallaman riy",
+  "Bring All to Front": "Llapanta ñawpaqman apamuy"
  }
 }

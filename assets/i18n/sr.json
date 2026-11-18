@@ -988,6 +988,17 @@
   "Recording saved": "Снимак је сачуван",
   "box": "оквир",
   "freehand": "слободном руком",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Превуците оквир преко текста да га истакнете. Изаберите слободном руком десно да уместо тога цртате потезе."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Превуците оквир преко текста да га истакнете. Изаберите слободном руком десно да уместо тога цртате потезе.",
+  "Cut": "Исеци",
+  "Select All": "Изабери све",
+  "Show in Finder": "Прикажи у Finder-у",
+  "Close Window": "Затвори прозор",
+  "Services": "Услуге",
+  "Hide Snagster": "Сакриј Snagster",
+  "Hide Others": "Сакриј остале",
+  "Show All": "Прикажи све",
+  "Minimize": "Умањи",
+  "Enter Full Screen": "Уђи у цео екран",
+  "Bring All to Front": "Пренеси све напред"
  }
 }

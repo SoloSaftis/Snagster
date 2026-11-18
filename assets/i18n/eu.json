@@ -988,6 +988,17 @@
   "Recording saved": "Grabaketa gordeta",
   "box": "koadroa",
   "freehand": "esku libre",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastatu koadro bat testuaren gainean nabarmentzeko. Aukeratu esku libre eskuinean trazuak marrazteko."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastatu koadro bat testuaren gainean nabarmentzeko. Aukeratu esku libre eskuinean trazuak marrazteko.",
+  "Cut": "Ebaki",
+  "Select All": "Hautatu dena",
+  "Show in Finder": "Erakutsi Finder-en",
+  "Close Window": "Itxi leihoa",
+  "Services": "Zerbitzuak",
+  "Hide Snagster": "Ezkutatu Snagster",
+  "Hide Others": "Ezkutatu besteak",
+  "Show All": "Erakutsi guztiak",
+  "Minimize": "Minimizatu",
+  "Enter Full Screen": "Sartu pantaila osoan",
+  "Bring All to Front": "Ekarri guztiak aurrera"
  }
 }
