@@ -112,8 +112,15 @@ fn fits_content(w: &Win) -> bool {
 /// The Settings window's title and whether it can be resized. On a Mac it is titled with the
 /// pane shown and keeps a fixed size, as Apple's settings guidelines ask; elsewhere it is
 /// "Settings" and resizable.
-fn settings_frame(sys: crate::platform::System, pane: &'static str) -> (&'static str, bool) {
-    if sys == crate::platform::System::Mac { (pane, false) } else { (crate::i18n::t("Settings"), true) }
+fn settings_frame(sys: crate::platform::System, pane: &'static str) -> (String, bool) {
+    if sys == crate::platform::System::Mac {
+        // Window titles are in Title Case on a Mac (in English).
+        #[cfg(any(target_os = "macos", test))]
+        return (crate::menubar::in_title_case(pane.to_string(), crate::i18n::current()), false);
+        #[cfg(not(any(target_os = "macos", test)))]
+        return (pane.to_string(), false);
+    }
+    (crate::i18n::t("Settings").to_string(), true)
 }
 
 /// Modifier boxes and a key list for one hotkey.
@@ -166,7 +173,7 @@ impl SnagApp {
         ];
         let pane = panes.iter().find(|p| p.0 == self.settings_tab).map_or(panes[0].1, |p| p.1);
         let (title, resizable) = settings_frame(crate::platform::system(), pane);
-        own_window(ctx, Win { key: SETTINGS_KEY, title, size: vec2(720.0, 600.0), resizable }, &mut open, |ui| {
+        own_window(ctx, Win { key: SETTINGS_KEY, title: &title, size: vec2(720.0, 600.0), resizable }, &mut open, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for (tab, label) in panes {
                         ui.selectable_value(&mut self.settings_tab, tab, label);
@@ -1946,7 +1953,10 @@ mod tests {
     #[test]
     fn mac_settings_is_fixed_and_named_after_its_pane() {
         use crate::platform::System;
-        assert_eq!(settings_frame(System::Mac, "Hotkeys"), ("Hotkeys", false));
+        assert_eq!(settings_frame(System::Mac, "Hotkeys"), ("Hotkeys".to_string(), false));
+        if crate::i18n::current() == "en" {
+            assert_eq!(settings_frame(System::Mac, "Saving & library").0, "Saving & Library");
+        }
         for sys in [System::Windows, System::Gnome, System::Kde, System::OtherLinux] {
             let (title, resizable) = settings_frame(sys, "Hotkeys");
             assert!(resizable, "{sys:?}");

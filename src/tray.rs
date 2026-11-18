@@ -70,16 +70,31 @@ fn parse(id: &str) -> Option<TrayCmd> {
 /// them even while its window is hidden.
 pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync + Clone + 'static) -> Result<Tray, String> {
     let menu = Menu::new();
-    let add = |m: &Menu, id: &str, text: &str| m.append(&MenuItem::with_id(id, crate::i18n::tr(text), true, None)).map_err(|e| e.to_string());
+    let add = |m: &Menu, id: &str, text: &str| m.append(&MenuItem::with_id(id, label(text), true, None)).map_err(|e| e.to_string());
     add(&menu, "panel", "Capture panel…")?;
     menu.append(&PredefinedMenuItem::separator()).map_err(|e| e.to_string())?;
     for a in ACTIONS {
         let combo = s.binding(a);
-        let text = if combo.is_set() { format!("{}\t{}", a.label(), combo.label()) } else { a.label().to_string() };
-        add(&menu, &format!("a:{a:?}"), &text)?;
+        // A Mac shows the hotkey as the item's own shortcut, right-aligned; elsewhere after a tab.
+        #[cfg(target_os = "macos")]
+        {
+            let keys = if combo.is_set() { crate::menubar::hotkey_accelerator(combo.ctrl, combo.alt, combo.shift, combo.win, &combo.key) } else { None };
+            let item = tray_icon::menu::MenuItemBuilder::new()
+                .id(tray_icon::menu::MenuId::new(format!("a:{a:?}")))
+                .text(label(a.label()))
+                .key_accelerator(keys)
+                .map_err(|e| e.to_string())?
+                .build();
+            menu.append(&item).map_err(|e| e.to_string())?;
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            let text = if combo.is_set() { format!("{}\t{}", a.label(), combo.label()) } else { a.label().to_string() };
+            add(&menu, &format!("a:{a:?}"), &text)?;
+        }
     }
     if !s.presets.is_empty() {
-        let sub = Submenu::new(crate::i18n::tr("Presets"), true);
+        let sub = Submenu::new(label("Presets"), true);
         for (i, p) in s.presets.iter().enumerate() {
             sub.append(&MenuItem::with_id(format!("p:{i}"), &p.name, true, None)).map_err(|e| e.to_string())?;
         }
@@ -88,7 +103,8 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
     menu.append(&PredefinedMenuItem::separator()).map_err(|e| e.to_string())?;
     add(&menu, "editor", "Open editor")?;
     add(&menu, "library", "Library")?;
-    add(&menu, "settings", "Settings")?;
+    // "Settings…" in a Mac's menus, as in the app menu.
+    add(&menu, "settings", if cfg!(target_os = "macos") { "Settings…" } else { "Settings" })?;
     menu.append(&PredefinedMenuItem::separator()).map_err(|e| e.to_string())?;
     // "Exit" in the Windows notification area, "Quit Snagster" elsewhere.
     add(&menu, "quit", if crate::platform::recycle_bin() { "Exit" } else { "Quit Snagster" })?;
@@ -124,6 +140,14 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
         }
     }));
     Ok(Tray { _icon: tray })
+}
+
+/// A menu text: translated, and on a Mac in Title Case for English.
+fn label(en: &str) -> String {
+    #[cfg(target_os = "macos")]
+    return crate::menubar::shown(en, crate::i18n::current());
+    #[cfg(not(target_os = "macos"))]
+    crate::i18n::tr(en)
 }
 
 /// Send the items of every muda menu (the tray's and the Mac menu bar's) to `tx`. muda has one

@@ -125,8 +125,9 @@ const fn edit(text: &'static str, keys: Option<Keys>, k: EditKey) -> Entry {
 use Entry::Separator as SEP;
 use Needs::{File, Mark, Nothing, Picture, Pictures};
 
-/// The menu bar, left to right. Custom menus (Capture) sit between View and Window, as the
-/// guidelines ask.
+/// The menu bar, left to right. Custom menus (Image, Capture) sit between View and Window, as
+/// the guidelines ask. Every ribbon command that works on the picture has a menu item, since the
+/// ribbon can be hidden.
 pub const MENUS: &[MenuDef] = &[
     MenuDef {
         title: "",
@@ -152,7 +153,7 @@ pub const MENUS: &[MenuDef] = &[
             item("New from clipboard", None, "capture_from_clipboard", Nothing),
             item("Open picture or project…", cmd('o'), "open", Nothing),
             item("Import pictures…", None, "import_pictures", Nothing),
-            item("Library…", cmd('l'), "library", Nothing),
+            item("Library", cmd('l'), "library", Nothing),
             SEP,
             Entry::System(System::CloseWindow),
             item("Save", cmd('s'), "save", Picture),
@@ -190,7 +191,8 @@ pub const MENUS: &[MenuDef] = &[
             SEP,
             item("Duplicate", None, "duplicate", Picture),
             item("Grab text…", None, "grab_text_picture", Picture),
-            item("Pin to screen", shift_cmd('p'), "pin", Picture),
+            // No shortcut on a Mac: Apple keeps ⇧⌘P for Page Setup.
+            item("Pin to screen", None, "pin", Picture),
         ],
     },
     MenuDef {
@@ -208,11 +210,25 @@ pub const MENUS: &[MenuDef] = &[
         ],
     },
     MenuDef {
+        title: "Image",
+        entries: &[
+            item("Crop", None, "crop", Picture),
+            item("Resize", None, "resize", Picture),
+            item("Canvas", None, "canvas", Picture),
+            item("Trim edges", None, "trim", Picture),
+            SEP,
+            item("Smart redact", None, "smart_redact", Picture),
+            item("Simplify", None, "simplify", Picture),
+        ],
+    },
+    MenuDef {
         title: "Capture",
         entries: &[
-            item("All-in-one", shift_cmd('a'), "capture_all_in_one", Nothing),
+            // No shortcuts for All-in-one and Window here: Apple keeps ⇧⌘A (Deselect All) and
+            // ⇧⌘W (Close File) for other things.
+            item("All-in-one", None, "capture_all_in_one", Nothing),
             item("Area", None, "capture_area", Nothing),
-            item("Window", shift_cmd('w'), "capture_window_click", Nothing),
+            item("Window", None, "capture_window_click", Nothing),
             item("Screen", shift_cmd('f'), "capture_screen", Nothing),
             item("All screens", None, "capture_all_screens", Nothing),
             item("Last area", None, "capture_last_area", Nothing),
@@ -236,8 +252,9 @@ pub const MENUS: &[MenuDef] = &[
     MenuDef {
         title: "Help",
         entries: &[
-            item("Getting started", None, "getting_started", Nothing),
-            item("Keyboard shortcuts", cmd('?'), "shortcuts", Nothing),
+            // "Snagster Help" on ⌘? comes first, as Apple asks.
+            item("Snagster Help", cmd('?'), "getting_started", Nothing),
+            item("Keyboard shortcuts", None, "shortcuts", Nothing),
             item("What's new", None, "whats_new", Nothing),
             SEP,
             item("AI apps", None, "ai_apps", Nothing),
@@ -334,35 +351,69 @@ fn deliver(raw: &mut eframe::egui::RawInput) {
     }
 }
 
-/// An English menu text in Apple's Title Case ("Save as…" → "Save As…"). Only for English:
-/// other languages keep their own rules.
+/// An English text in Apple's Title Case ("Open picture or project…" → "Open Picture or
+/// Project…"). Only for English: other languages keep their own rules.
 pub fn title_case(text: &str) -> String {
-    const SMALL: &[&str] = &["a", "an", "and", "at", "by", "for", "in", "nor", "of", "on", "or", "the", "to", "with"];
+    const SMALL: &[&str] = &["a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "nor", "of", "on", "onto", "or", "the", "to", "with"];
+    // Apple's own spelling of the standard item.
+    if text == "Save as…" {
+        return "Save As…".into();
+    }
+    let cap = |w: &str| {
+        let bare = w.trim_start_matches('(');
+        let lead = &w[..w.len() - bare.len()];
+        let mut c = bare.chars();
+        match c.next() {
+            Some(f) => format!("{lead}{}{}", f.to_uppercase(), c.as_str()),
+            None => w.to_string(),
+        }
+    };
     let words: Vec<&str> = text.split(' ').collect();
     let last = words.len().saturating_sub(1);
     words
         .iter()
         .enumerate()
         .map(|(i, w)| {
-            let bare = w.trim_start_matches('(');
-            if i != 0 && i != last && SMALL.contains(&bare) {
-                return w.to_string();
-            }
-            let lead = &w[..w.len() - bare.len()];
-            let mut c = bare.chars();
-            match c.next() {
-                Some(f) => format!("{lead}{}{}", f.to_uppercase(), c.as_str()),
-                None => w.to_string(),
-            }
+            // Each part of a hyphenated word too ("All-in-One").
+            w.split('-')
+                .enumerate()
+                .map(|(j, part)| {
+                    let edge = (i == 0 && j == 0) || (i == last && j == w.split('-').count() - 1);
+                    if !edge && SMALL.contains(&part.trim_start_matches('(')) { part.to_string() } else { cap(part) }
+                })
+                .collect::<Vec<_>>()
+                .join("-")
         })
         .collect::<Vec<_>>()
         .join(" ")
 }
 
 /// A menu text as shown: translated, and in Title Case when Snagster is in English.
-pub fn shown(en: &'static str, lang: &str) -> String {
-    let text = crate::i18n::tr(en);
+pub fn shown(en: &str, lang: &str) -> String {
+    in_title_case(crate::i18n::tr(en), lang)
+}
+
+/// A translated menu or window title, in Title Case when Snagster is in English.
+pub fn in_title_case(text: String, lang: &str) -> String {
     if lang == "en" || lang.starts_with("en-") { title_case(&text) } else { text }
+}
+
+/// A global hotkey as a muda key accelerator ("Ctrl+Alt+Shift+Cmd+F9"), so a menu bar extra's
+/// menu shows it the Mac way, right-aligned. Ctrl is the Control key and Win the Command key.
+pub fn hotkey_accelerator(ctrl: bool, alt: bool, shift: bool, win: bool, key: &str) -> Option<String> {
+    if key.is_empty() {
+        return None;
+    }
+    let mut s = String::new();
+    for (on, name) in [(ctrl, "Ctrl+"), (alt, "Alt+"), (shift, "Shift+"), (win, "Cmd+")] {
+        if on {
+            s.push_str(name);
+        }
+    }
+    // A letter in lower case: an upper-case one would add Shift on its own.
+    let key = if key.chars().count() == 1 { key.to_lowercase() } else { key.to_string() };
+    let s = s + &key;
+    s.parse::<tray_icon::menu::accelerator::KeyAccelerator>().is_ok().then_some(s)
 }
 
 /// The English text of a system item (each is its own sentence in the packs).
@@ -482,7 +533,7 @@ mod tests {
     #[test]
     fn the_bar_has_apples_menus_in_order() {
         let titles: Vec<&str> = MENUS.iter().map(|m| m.title).collect();
-        assert_eq!(titles, ["", "File", "Edit", "View", "Capture", "Window", "Help"]);
+        assert_eq!(titles, ["", "File", "Edit", "View", "Image", "Capture", "Window", "Help"]);
     }
 
     #[test]
@@ -533,6 +584,11 @@ mod tests {
         // The system items' own keys: ⌘H, ⌥⌘H, ⌘W, ⌘M, ⌃⌘F.
         assert!(!seen.contains(&(false, false, 'h')) && !seen.contains(&(false, true, 'h')));
         assert!(!seen.contains(&(false, false, 'w')) && !seen.contains(&(false, false, 'm')));
+        // Standard Mac shortcuts Apple keeps for other commands: Deselect All, Close File,
+        // Page Setup.
+        for k in ['a', 'w', 'p'] {
+            assert!(!seen.contains(&(true, false, k)), "⇧⌘{k} is Apple's");
+        }
     }
 
     #[test]
@@ -559,11 +615,11 @@ mod tests {
         assert!(has(Run::Command("save_as"), shift_cmd('s')));
         assert!(has(Run::Command("quick_save"), opt_cmd('s')));
         assert!(has(Run::Command("print"), cmd('p')));
-        assert!(has(Run::Command("pin"), shift_cmd('p')));
+
         assert!(has(Run::Command("new_image"), cmd('n')));
         assert!(has(Run::Command("open"), cmd('o')));
         assert!(has(Run::Command("library"), cmd('l')));
-        assert!(has(Run::Command("capture_all_in_one"), shift_cmd('a')));
+        assert!(has(Run::Command("getting_started"), cmd('?')), "⌘? opens Snagster Help");
     }
 
     #[test]
@@ -615,6 +671,18 @@ mod tests {
     }
 
     #[test]
+    fn hotkeys_read_as_accelerators() {
+        assert_eq!(hotkey_accelerator(true, false, true, true, "A").as_deref(), Some("Ctrl+Shift+Cmd+a"));
+        assert_eq!(hotkey_accelerator(false, true, false, true, "F9").as_deref(), Some("Alt+Cmd+F9"));
+        assert_eq!(hotkey_accelerator(false, false, false, true, "2").as_deref(), Some("Cmd+2"));
+        assert_eq!(hotkey_accelerator(true, false, false, false, ""), None);
+        // Every key the hotkey editor offers either reads or is left out (never a broken menu).
+        for (name, _, _) in crate::hotkeys::KEYS {
+            let _ = hotkey_accelerator(false, false, true, true, name);
+        }
+    }
+
+    #[test]
     fn menu_texts_are_title_case_only_in_english() {
         assert_eq!(shown("Save as…", "en"), "Save As…");
         assert_eq!(shown("Save as…", "en-GB"), "Save As…");
@@ -627,10 +695,12 @@ mod tests {
         assert_eq!(title_case("Save as…"), "Save As…");
         assert_eq!(title_case("Open picture or project…"), "Open Picture or Project…");
         assert_eq!(title_case("Move to Trash"), "Move to Trash");
-        assert_eq!(title_case("Save as Snagster project (editable marks)…"), "Save As Snagster Project (Editable Marks)…");
+        assert_eq!(title_case("Save as Snagster project (editable marks)…"), "Save as Snagster Project (Editable Marks)…");
+        assert_eq!(title_case("New from clipboard"), "New from Clipboard");
         assert_eq!(title_case("What's new"), "What's New");
-        assert_eq!(title_case("All-in-one"), "All-in-one");
-        assert_eq!(title_case("Paste a picture onto this one"), "Paste a Picture Onto This One");
+        assert_eq!(title_case("All-in-one"), "All-in-One");
+        assert_eq!(title_case("Paste a picture onto this one"), "Paste a Picture onto This One");
+        assert_eq!(title_case("Saving & library"), "Saving & Library");
         assert_eq!(title_case("Zoom in"), "Zoom In", "the last word is capitalised");
     }
 
