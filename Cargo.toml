@@ -108,8 +108,8 @@ winit = { version = "0.30", default-features = false, features = ["wayland-csd-a
 winit = "0.30"
 # The live-stream key in the login Keychain (MIT/Apache-2.0).
 security-framework = "3"
-# Accessibility → Display → Increase contrast (MIT; already in the tree through winit, tray-icon).
-objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSAccessibility", "NSWorkspace"] }
+# Increase contrast and the accent colour (MIT; already in the tree through winit, tray-icon).
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSAccessibility", "NSWorkspace", "NSColor", "NSColorSpace", "objc2-core-foundation"] }
 
 # egui 0.37 with right-to-left text (Arabic, Hebrew, Persian, Urdu), fallback-font alignment for
 # CJK and Indian scripts, and shortcuts on non-Latin keyboards: the same patched egui CVBuilder uses.
