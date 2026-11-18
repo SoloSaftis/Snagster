@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Η επιφάνεια εργασίας δεν όρισε τις συντομεύσεις: {error}",
   "Super": "Super",
   "GIF saved": "Το GIF αποθηκεύτηκε",
-  "Recording saved": "Η εγγραφή αποθηκεύτηκε"
+  "Recording saved": "Η εγγραφή αποθηκεύτηκε",
+  "box": "πλαίσιο",
+  "freehand": "ελεύθερο",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Σύρετε ένα πλαίσιο πάνω από το κείμενο για να το επισημάνετε. Επιλέξτε ελεύθερο στα δεξιά για να σχεδιάσετε γραμμές."
  }
 }

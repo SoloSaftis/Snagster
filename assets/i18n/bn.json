@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "ডেস্কটপ হটকি সেট করেনি: {error}",
   "Super": "Super",
   "GIF saved": "GIF সংরক্ষিত হয়েছে",
-  "Recording saved": "রেকর্ডিং সংরক্ষিত হয়েছে"
+  "Recording saved": "রেকর্ডিং সংরক্ষিত হয়েছে",
+  "box": "বাক্স",
+  "freehand": "ফ্রিহ্যান্ড",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লেখা হাইলাইট করতে তার উপর দিয়ে একটি বাক্স টানুন। এর বদলে দাগ আঁকতে ডানদিকে ফ্রিহ্যান্ড বেছে নিন।"
  }
 }

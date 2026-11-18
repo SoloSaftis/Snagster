@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Het bureaublad heeft de sneltoetsen niet ingesteld: {error}",
   "Super": "Super",
   "GIF saved": "GIF opgeslagen",
-  "Recording saved": "Opname opgeslagen"
+  "Recording saved": "Opname opgeslagen",
+  "box": "kader",
+  "freehand": "vrije hand",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep een kader over tekst om die te markeren. Kies rechts vrije hand om in plaats daarvan streken te tekenen."
  }
 }

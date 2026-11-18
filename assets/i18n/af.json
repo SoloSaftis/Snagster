@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Die lessenaar het nie die sneltoetse gestel nie: {error}",
   "Super": "Super",
   "GIF saved": "GIF gestoor",
-  "Recording saved": "Opname gestoor"
+  "Recording saved": "Opname gestoor",
+  "box": "blok",
+  "freehand": "vryhand",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Sleep 'n blok oor teks om dit te merk. Kies vryhand regs om eerder met streke te teken."
  }
 }

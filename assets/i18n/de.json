@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Die Desktop-Umgebung hat die Tastenkombinationen nicht festgelegt: {error}",
   "Super": "Super",
   "GIF saved": "GIF gespeichert",
-  "Recording saved": "Aufzeichnung gespeichert"
+  "Recording saved": "Aufzeichnung gespeichert",
+  "box": "Rechteck",
+  "freehand": "freihand",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Ziehen Sie ein Rechteck über den Text, um ihn hervorzuheben. Wählen Sie rechts freihand, um stattdessen Striche zu zeichnen."
  }
 }

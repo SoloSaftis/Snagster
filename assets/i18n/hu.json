@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Az asztali környezet nem állította be a gyorsbillentyűket: {error}",
   "Super": "Super",
   "GIF saved": "GIF elmentve",
-  "Recording saved": "Felvétel elmentve"
+  "Recording saved": "Felvétel elmentve",
+  "box": "doboz",
+  "freehand": "szabadkéz",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Húzzon egy dobozt a szöveg fölé a kiemeléséhez. Jobbra válassza a szabadkéz lehetőséget a vonalak rajzolásához."
  }
 }

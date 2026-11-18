@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "데스크톱이 단축키를 설정하지 못했습니다: {error}",
   "Super": "Super",
   "GIF saved": "GIF 저장됨",
-  "Recording saved": "녹화 저장됨"
+  "Recording saved": "녹화 저장됨",
+  "box": "상자",
+  "freehand": "자유형",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "텍스트 위로 상자를 끌어 강조 표시하세요. 대신 획을 그리려면 오른쪽에서 자유형을 선택하세요."
  }
 }

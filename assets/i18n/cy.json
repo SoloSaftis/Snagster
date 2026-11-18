@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Ni osododd y bwrdd gwaith y bysellau poeth: {error}",
   "Super": "Super",
   "GIF saved": "GIF wedi'i gadw",
-  "Recording saved": "Recordiad wedi'i chadw"
+  "Recording saved": "Recordiad wedi'i chadw",
+  "box": "blwch",
+  "freehand": "llawrydd",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Llusgwch flwch dros destun i'w amlygu. Dewiswch llawrydd ar y dde i dynnu llinellau yn lle hynny."
  }
 }

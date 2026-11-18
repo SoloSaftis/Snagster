@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Masaüstü kısayol tuşlarını ayarlamadı: {error}",
   "Super": "Super",
   "GIF saved": "GIF kaydedildi",
-  "Recording saved": "Kayıt kaydedildi"
+  "Recording saved": "Kayıt kaydedildi",
+  "box": "kutu",
+  "freehand": "serbest",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Metni vurgulamak için üzerine bir kutu sürükleyin. Bunun yerine çizgi çizmek için sağdan serbest seçin."
  }
 }

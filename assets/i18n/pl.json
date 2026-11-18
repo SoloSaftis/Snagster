@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Pulpit nie ustawił skrótów klawiszowych: {error}",
   "Super": "Super",
   "GIF saved": "Zapisano GIF",
-  "Recording saved": "Zapisano nagranie"
+  "Recording saved": "Zapisano nagranie",
+  "box": "ramka",
+  "freehand": "odręcznie",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Przeciągnij ramkę nad tekstem, aby go zaznaczyć. Wybierz po prawej odręcznie, aby zamiast tego rysować pociągnięcia."
  }
 }

@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Skrivebordet sette ikkje hurtigtastane: {error}",
   "Super": "Super",
   "GIF saved": "GIF lagra",
-  "Recording saved": "Innspeling lagra"
+  "Recording saved": "Innspeling lagra",
+  "box": "boks",
+  "freehand": "frihand",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra ei boks over teksten for å utheve han. Vel frihand til høgre for å teikne strekar i staden."
  }
 }

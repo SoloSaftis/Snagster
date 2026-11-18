@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Desktop tidak mengatur pintasan: {error}",
   "Super": "Super",
   "GIF saved": "GIF disimpan",
-  "Recording saved": "Rekaman disimpan"
+  "Recording saved": "Rekaman disimpan",
+  "box": "kotak",
+  "freehand": "bebas",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Seret kotak di atas teks untuk menyorotnya. Pilih bebas di kanan untuk menggambar goresan."
  }
 }

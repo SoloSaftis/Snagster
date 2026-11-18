@@ -121,6 +121,57 @@ enum Drag {
     None,
     Draw { start: Pos2, cur: Pos2, points: Vec<Pos2> },
     Move { idx: usize, last: Pos2, pushed: bool },
+    /// Reshaping a mark by one of its handles; `orig` is the mark as it was when taken.
+    Grip { idx: usize, grip: doc::Grip, orig: Box<Shape>, pushed: bool },
+}
+
+/// How near (in screen points) the pointer must be to take a mark's handle.
+const GRIP_REACH: f32 = 8.0;
+
+/// Tools that can take and adjust marks, not only draw new ones.
+fn grabs(tool: Tool) -> bool {
+    matches!(tool, Tool::Select | Tool::Arrow | Tool::Line | Tool::Rect | Tool::Ellipse | Tool::Highlight | Tool::Spotlight | Tool::Magnify | Tool::Callout)
+}
+
+/// Whether a drawing tool owns this mark: pressing on it with that tool picks it up to move or
+/// reshape it instead of drawing a new one (the selection tool owns every mark).
+fn tool_owns(tool: Tool, s: &Shape) -> bool {
+    match tool {
+        Tool::Select => true,
+        Tool::Arrow => matches!(s, Shape::Arrow { .. }),
+        Tool::Line => matches!(s, Shape::Line { .. }),
+        Tool::Rect => matches!(s, Shape::Rect { .. }),
+        Tool::Ellipse => matches!(s, Shape::Ellipse { .. }),
+        Tool::Highlight => matches!(s, Shape::Marker { .. }),
+        Tool::Spotlight => matches!(s, Shape::Spotlight { .. }),
+        Tool::Magnify => matches!(s, Shape::Magnify { .. }),
+        Tool::Callout => matches!(s, Shape::Callout { .. }),
+        _ => false,
+    }
+}
+
+/// The pointer shape over a handle.
+fn grip_cursor(g: doc::Grip) -> egui::CursorIcon {
+    use doc::Grip;
+    match g {
+        Grip::Corner(0 | 2) => egui::CursorIcon::ResizeNwSe,
+        Grip::Corner(_) => egui::CursorIcon::ResizeNeSw,
+        Grip::Side(0 | 2) => egui::CursorIcon::ResizeVertical,
+        Grip::Side(_) => egui::CursorIcon::ResizeHorizontal,
+        _ => egui::CursorIcon::Grab,
+    }
+}
+
+/// Take a press of Enter that finishes typing. Shift+Enter is left for the text box, which
+/// starts a new line with it (egui's `consume_key` ignores Shift, so it can't tell them apart).
+fn take_finishing_enter(events: &mut Vec<egui::Event>) -> bool {
+    let mut hit = false;
+    events.retain(|e| {
+        let m = matches!(e, egui::Event::Key { key: Key::Enter, pressed: true, modifiers, .. } if !modifiers.shift);
+        hit |= m;
+        !m
+    });
+    hit
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -2008,6 +2059,11 @@ impl SnagApp {
     }
 
     fn finish_draw(&mut self, start: Pos2, cur: Pos2, points: Vec<Pos2>, shift: bool) {
+        self.finish_draw_from(start, cur, points, shift, false);
+    }
+
+    /// `finish_draw`; with `centred` (Alt) boxes grow from the press outwards.
+    fn finish_draw_from(&mut self, start: Pos2, cur: Pos2, points: Vec<Pos2>, shift: bool, centred: bool) {
         let (tool, color, width) = (self.tool, self.color(), self.settings.width);
         let (fill, radius, shadow, block) =
             (self.settings.fill, self.settings.corner_radius, self.settings.shadow, self.settings.blur_block);
@@ -2024,7 +2080,7 @@ impl SnagApp {
             }
             Tool::Rect | Tool::Ellipse if far => {
                 let b = if shift { doc::square(start, cur) } else { cur };
-                let rect = Rect::from_two_pos(start, b);
+                let rect = doc::drag_box(start, b, centred);
                 Some(if tool == Tool::Rect {
                     Shape::Rect { rect, color, width, fill, radius, shadow }
                 } else {
@@ -2034,6 +2090,7 @@ impl SnagApp {
             Tool::Spotlight if far => Some(Shape::Spotlight { rect: Rect::from_two_pos(start, cur) }),
             Tool::Magnify if far => Some(Shape::Magnify { center: start, radius: start.distance(cur), zoom: self.settings.magnify_zoom }),
             Tool::Pen if !points.is_empty() => Some(Shape::Pen { points, color, width, shadow }),
+            Tool::Highlight if self.settings.highlight_box => far.then(|| Shape::Marker { rect: doc::drag_box(start, cur, centred), color }),
             Tool::Highlight if !points.is_empty() => {
                 let points = if shift { vec![start, pos2(cur.x, start.y)] } else { points };
                 Some(Shape::Highlight { points, color, width })
@@ -2100,9 +2157,81 @@ impl SnagApp {
             _ => None,
         };
         if let Some(s) = shape {
+            // A mark with handles stays picked, so it can be adjusted straight away.
+            let adjustable = !s.grips().is_empty();
             let e = &mut self.entries[ci];
             e.push_undo();
             e.doc.shapes.push(s);
+            if adjustable {
+                self.selected = Some(e.doc.shapes.len() - 1);
+            }
+        }
+    }
+
+    /// The handle of the picked mark under `p` (within `reach`, in picture pixels), nearest first.
+    fn grip_at(&self, p: Pos2, reach: f32) -> Option<(usize, doc::Grip)> {
+        let idx = self.selected?;
+        let s = self.entries.get(self.current?)?.doc.shapes.get(idx)?;
+        s.grips()
+            .into_iter()
+            .map(|(g, q)| (g, q.distance(p)))
+            .filter(|(_, d)| *d <= reach)
+            .min_by(|a, b| a.1.total_cmp(&b.1))
+            .map(|(g, _)| (idx, g))
+    }
+
+    /// The topmost mark under `p` that the current tool owns (see `tool_owns`).
+    fn pick_own(&self, p: Pos2) -> Option<usize> {
+        let i = self.pick(p)?;
+        tool_owns(self.tool, &self.entries[self.current?].doc.shapes[i]).then_some(i)
+    }
+
+    /// A press that starts a drag at `p`: take the picked mark's handle, pick up a mark the
+    /// tool owns, or start drawing.
+    fn begin_drag(&mut self, p: Pos2, reach: f32) {
+        if grabs(self.tool)
+            && let Some((idx, grip)) = self.grip_at(p, reach)
+            && let Some(ci) = self.current
+        {
+            let orig = Box::new(self.entries[ci].doc.shapes[idx].clone());
+            self.drag = Drag::Grip { idx, grip, orig, pushed: false };
+            return;
+        }
+        match self.tool {
+            Tool::Select => {
+                self.selected = self.pick(p);
+                self.drag = match self.selected {
+                    Some(idx) => Drag::Move { idx, last: p, pushed: false },
+                    None => Drag::None,
+                };
+            }
+            Tool::Text | Tool::Step | Tool::Stamp | Tool::Fill => {}
+            t => match self.pick_own(p).filter(|_| grabs(t)) {
+                Some(idx) => {
+                    self.selected = Some(idx);
+                    self.drag = Drag::Move { idx, last: p, pushed: false };
+                }
+                None => {
+                    self.selected = None;
+                    self.drag = Drag::Draw { start: p, cur: p, points: vec![p] };
+                }
+            },
+        }
+    }
+
+    /// Move the taken handle to `p` (the first move is undoable as one step).
+    fn drag_grip(&mut self, p: Pos2, keep: bool) {
+        let Some(ci) = self.current else { return };
+        if let Drag::Grip { idx, grip, orig, pushed } = &mut self.drag {
+            let new = orig.with_grip(*grip, p, keep);
+            let e = &mut self.entries[ci];
+            if !*pushed {
+                *pushed = true;
+                e.push_undo();
+            }
+            if let Some(s) = e.doc.shapes.get_mut(*idx) {
+                *s = new;
+            }
         }
     }
 
@@ -2197,11 +2326,14 @@ impl SnagApp {
             )
         });
         let cut_ev = ctx.input(|i| i.events.iter().any(|e| matches!(e, egui::Event::Cut))) || consume(Modifiers::COMMAND, Key::X);
-        if cut_ev {
+        // A mark just drawn stays picked to adjust it, but copying then still means the picture:
+        // marks are copied and cut with the selection tool.
+        let mark_picked = self.selected.is_some() && self.tool == Tool::Select;
+        if cut_ev && mark_picked {
             self.cut_mark();
         }
         if (copy_ev || consume(Modifiers::COMMAND, Key::C)) && self.current.is_some() {
-            if self.selected.is_some() {
+            if mark_picked {
                 self.copy_mark();
             } else {
                 self.mark_clip = None;
@@ -3484,22 +3616,14 @@ impl SnagApp {
         let img_rect = Rect::from_min_size(origin, size * scale);
 
         let pointer = resp.interact_pointer_pos().or(resp.hover_pos());
+        let alt = ui.input(|i| i.modifiers.alt);
+        // A drag is noticed a few pixels after the press: it starts where the button went down.
+        let pressed = ui.input(|i| i.pointer.press_origin()).filter(|q| area.contains(*q));
         if resp.drag_started_by(PointerButton::Primary)
-            && let Some(pp) = pointer
+            && let Some(pp) = pressed.or(pointer)
         {
             self.commit_text();
-            let p = to_img(pp);
-            match self.tool {
-                Tool::Select => {
-                    self.selected = self.pick(p);
-                    self.drag = match self.selected {
-                        Some(idx) => Drag::Move { idx, last: p, pushed: false },
-                        None => Drag::None,
-                    };
-                }
-                Tool::Text | Tool::Step | Tool::Stamp | Tool::Fill => {}
-                _ => self.drag = Drag::Draw { start: p, cur: p, points: vec![p] },
-            }
+            self.begin_drag(to_img(pp), GRIP_REACH / scale);
         }
         if resp.dragged_by(PointerButton::Primary)
             && let Some(pp) = pointer
@@ -3512,6 +3636,7 @@ impl SnagApp {
                         points.push(p);
                     }
                 }
+                Drag::Grip { .. } => self.drag_grip(p, shift),
                 Drag::Move { idx, last, pushed } => {
                     let (idx, delta) = (*idx, p - *last);
                     *last = p;
@@ -3530,7 +3655,7 @@ impl SnagApp {
         }
         if resp.drag_stopped_by(PointerButton::Primary) {
             if let Drag::Draw { start, cur, points } = std::mem::replace(&mut self.drag, Drag::None) {
-                self.finish_draw(start, cur, points, shift);
+                self.finish_draw_from(start, cur, points, shift, alt);
             }
             self.drag = Drag::None;
         }
@@ -3542,6 +3667,7 @@ impl SnagApp {
             self.commit_text();
             match self.tool {
                 Tool::Select => self.selected = self.pick(p),
+                t if grabs(t) && t != Tool::Callout => self.selected = self.pick_own(p),
                 Tool::Text if !had_text => {
                     let hit = self.pick(p).filter(|&i| matches!(self.entries[ci].doc.shapes[i], Shape::Text { .. }));
                     self.start_text(ci, p, hit);
@@ -3618,10 +3744,20 @@ impl SnagApp {
         });
 
         if resp.hovered() {
-            let icon = match self.tool {
-                Tool::Select => egui::CursorIcon::Default,
-                Tool::Text => egui::CursorIcon::Text,
-                _ => egui::CursorIcon::Crosshair,
+            let at = resp.hover_pos().map(to_img);
+            let grip = match &self.drag {
+                Drag::Grip { grip, .. } => Some(*grip),
+                _ => at.filter(|_| grabs(self.tool)).and_then(|p| self.grip_at(p, GRIP_REACH / scale)).map(|(_, g)| g),
+            };
+            let over_own = matches!(self.drag, Drag::None) && grabs(self.tool) && at.and_then(|p| self.pick_own(p)).is_some();
+            let icon = match grip {
+                Some(g) => grip_cursor(g),
+                None if over_own || matches!(self.drag, Drag::Move { .. }) => egui::CursorIcon::Move,
+                None => match self.tool {
+                    Tool::Select => egui::CursorIcon::Default,
+                    Tool::Text => egui::CursorIcon::Text,
+                    _ => egui::CursorIcon::Crosshair,
+                },
             };
             ui.ctx().set_cursor_icon(icon);
         }
@@ -3646,9 +3782,18 @@ impl SnagApp {
         if let Some(sel) = self.selected
             && let Some(s) = shapes.get(sel)
         {
-            let b = s.bounds();
-            let r = Rect::from_two_pos(to_scr(b.min), to_scr(b.max)).expand(4.0);
-            dashed_rect(&painter, r, accent());
+            let grips = s.grips();
+            if let Some(b) = s.boxed() {
+                dashed_rect(&painter, Rect::from_two_pos(to_scr(b.min), to_scr(b.max)), accent());
+            } else if grips.is_empty() {
+                let b = s.bounds();
+                dashed_rect(&painter, Rect::from_two_pos(to_scr(b.min), to_scr(b.max)).expand(4.0), accent());
+            }
+            for (_, q) in grips {
+                let r = Rect::from_center_size(to_scr(q), Vec2::splat(9.0));
+                painter.rect_filled(r, CornerRadius::same(2), Color32::WHITE);
+                painter.rect_stroke(r, CornerRadius::same(2), Stroke::new(1.5, accent()), StrokeKind::Middle);
+            }
         }
         self.entries[ci].doc.shapes = shapes;
         if let Drag::Draw { start, cur, points } = &self.drag {
@@ -3660,11 +3805,13 @@ impl SnagApp {
                 Tool::Rect | Tool::Ellipse if shift => cur = doc::square(start, cur),
                 _ => {}
             }
+            let boxed = doc::drag_box(start, cur, alt && matches!(self.tool, Tool::Rect | Tool::Ellipse | Tool::Highlight));
             let preview = match self.tool {
                 Tool::Arrow => Some(Shape::Arrow { a: start, b: cur, color, width, shadow, heads: self.settings.arrow_heads }),
                 Tool::Line => Some(Shape::Line { a: start, b: cur, color, width, shadow }),
-                Tool::Rect => Some(Shape::Rect { rect: Rect::from_two_pos(start, cur), color, width, fill, radius, shadow }),
-                Tool::Ellipse => Some(Shape::Ellipse { rect: Rect::from_two_pos(start, cur), color, width, fill, shadow }),
+                Tool::Rect => Some(Shape::Rect { rect: boxed, color, width, fill, radius, shadow }),
+                Tool::Ellipse => Some(Shape::Ellipse { rect: boxed, color, width, fill, shadow }),
+                Tool::Highlight if self.settings.highlight_box => Some(Shape::Marker { rect: boxed, color }),
                 Tool::Pen => Some(Shape::Pen { points: points.clone(), color, width, shadow }),
                 Tool::Spotlight => Some(Shape::Spotlight { rect: Rect::from_two_pos(start, cur) }),
                 Tool::Magnify => Some(Shape::Magnify { center: start, radius: start.distance(cur), zoom: self.settings.magnify_zoom }),
@@ -3790,7 +3937,7 @@ impl SnagApp {
         let ctx = ui.ctx().clone();
         let family = self.ui_fonts.family(&ctx, &t.font.clone(), t.bold, t.italic);
         let Some(t) = &mut self.text_edit else { return };
-        let enter = ui.input_mut(|i| i.consume_key(Modifiers::NONE, Key::Enter));
+        let enter = ui.input_mut(|i| take_finishing_enter(&mut i.events));
         let escape = ui.input_mut(|i| i.consume_key(Modifiers::NONE, Key::Escape));
         let at = to_scr(t.pos);
         if let TextKind::Callout { tail } = t.kind {
@@ -4476,6 +4623,9 @@ fn paint_one(p: &egui::Painter, s: &Shape, to: &dyn Fn(Pos2) -> Pos2, scale: f32
                 }
                 p.add(egui::Shape::line(pts, st(*width, *color)));
             }
+        }
+        Shape::Marker { rect, color } => {
+            p.rect_filled(Rect::from_two_pos(to(rect.min), to(rect.max)), CornerRadius::ZERO, doc::highlight_color(*color));
         }
         Shape::Highlight { points, color, width } => {
             let pts: Vec<Pos2> = points.iter().map(|q| to(*q)).collect();
@@ -5258,6 +5408,13 @@ impl SnagApp {
                 self.run_ocr(OcrPurpose::Redact(i), img);
             }
         }
+        if t == Tool::Highlight {
+            ui.horizontal_wrapped(|ui| {
+                ui.label(RichText::new(crate::i18n::t("Shape")).color(TEXT_DIM));
+                ui.selectable_value(&mut self.settings.highlight_box, true, crate::i18n::t("box"));
+                ui.selectable_value(&mut self.settings.highlight_box, false, crate::i18n::t("freehand"));
+            });
+        }
         if t == Tool::Eraser {
             ui.label(RichText::new(format!("Eraser width {:.0} px", self.settings.width * 3.0)).color(TEXT_DIM));
         }
@@ -5780,7 +5937,7 @@ mod tests {
             (Tool::Spotlight, |s| matches!(s, Shape::Spotlight { .. })),
             (Tool::Magnify, |s| matches!(s, Shape::Magnify { .. })),
             (Tool::Pen, |s| matches!(s, Shape::Pen { .. })),
-            (Tool::Highlight, |s| matches!(s, Shape::Highlight { .. })),
+            (Tool::Highlight, |s| matches!(s, Shape::Marker { .. })),
         ];
         for (tool, is) in cases {
             let mut a = app();
@@ -5791,6 +5948,101 @@ mod tests {
             assert!(is(&shapes(&a)[0]), "{tool:?} made {:?}", shapes(&a)[0]);
             assert_eq!(a.entries[0].undo.len(), 1, "{tool:?} is undoable");
         }
+    }
+
+    #[test]
+    fn the_highlighter_draws_a_box_or_a_freehand_stroke() {
+        let mut a = app();
+        a.tool = Tool::Highlight;
+        a.finish_draw(pos2(10.0, 10.0), pos2(90.0, 30.0), vec![pos2(10.0, 10.0), pos2(90.0, 30.0)], false);
+        let Shape::Marker { rect, .. } = &shapes(&a)[0] else { panic!("{:?}", shapes(&a)[0]) };
+        assert_eq!(*rect, Rect::from_min_max(pos2(10.0, 10.0), pos2(90.0, 30.0)));
+        // A click is no box.
+        a.finish_draw(pos2(10.0, 10.0), pos2(11.0, 11.0), vec![pos2(10.0, 10.0)], false);
+        assert_eq!(shapes(&a).len(), 1);
+        a.settings.highlight_box = false;
+        a.finish_draw(pos2(10.0, 50.0), pos2(90.0, 50.0), vec![pos2(10.0, 50.0), pos2(90.0, 50.0)], false);
+        assert!(matches!(shapes(&a)[1], Shape::Highlight { .. }));
+    }
+
+    #[test]
+    fn alt_draws_a_box_around_the_press() {
+        let mut a = app();
+        a.tool = Tool::Rect;
+        a.finish_draw_from(pos2(50.0, 50.0), pos2(70.0, 60.0), vec![], false, true);
+        let Shape::Rect { rect, .. } = &shapes(&a)[0] else { panic!() };
+        assert_eq!(*rect, Rect::from_min_max(pos2(30.0, 40.0), pos2(70.0, 60.0)));
+    }
+
+    #[test]
+    fn a_new_mark_stays_picked_and_its_handles_adjust_it_with_the_same_tool() {
+        let mut a = app();
+        a.tool = Tool::Arrow;
+        a.finish_draw(pos2(20.0, 20.0), pos2(80.0, 60.0), vec![], false);
+        assert_eq!(a.selected, Some(0), "the new arrow is picked");
+        // Pressing on its point (still with the arrow tool) takes that handle, not a new arrow.
+        a.begin_drag(pos2(79.0, 61.0), 4.0);
+        assert!(matches!(a.drag, Drag::Grip { idx: 0, grip: doc::Grip::End, .. }));
+        a.drag_grip(pos2(120.0, 30.0), false);
+        a.drag_grip(pos2(150.0, 40.0), false);
+        let Shape::Arrow { a: tail, b: point, .. } = &shapes(&a)[0] else { panic!() };
+        assert_eq!((*tail, *point), (pos2(20.0, 20.0), pos2(150.0, 40.0)));
+        assert_eq!(shapes(&a).len(), 1, "no second arrow");
+        assert_eq!(a.entries[0].undo.len(), 2, "drawing and reshaping are one undo each");
+        a.undo();
+        let Shape::Arrow { b, .. } = &shapes(&a)[0] else { panic!() };
+        assert_eq!(*b, pos2(80.0, 60.0));
+    }
+
+    #[test]
+    fn a_drawing_tool_picks_up_its_own_marks_and_draws_past_others() {
+        let mut a = app();
+        a.tool = Tool::Rect;
+        a.finish_draw(pos2(20.0, 20.0), pos2(80.0, 60.0), vec![], false);
+        a.tool = Tool::Arrow;
+        a.selected = None;
+        // On the box's edge with the arrow tool: a new arrow starts there.
+        a.begin_drag(pos2(20.0, 40.0), 4.0);
+        assert!(matches!(a.drag, Drag::Draw { .. }));
+        a.drag = Drag::None;
+        // With the box tool the same press picks the box up to move it.
+        a.tool = Tool::Rect;
+        a.begin_drag(pos2(20.0, 40.0), 4.0);
+        assert!(matches!(a.drag, Drag::Move { idx: 0, .. }));
+        assert_eq!(a.selected, Some(0));
+        a.drag = Drag::None;
+        // A corner of the picked box reshapes it.
+        a.begin_drag(pos2(80.0, 60.0), 4.0);
+        assert!(matches!(a.drag, Drag::Grip { grip: doc::Grip::Corner(2), .. }));
+        a.drag_grip(pos2(100.0, 90.0), false);
+        let Shape::Rect { rect, .. } = &shapes(&a)[0] else { panic!() };
+        assert_eq!(*rect, Rect::from_min_max(pos2(20.0, 20.0), pos2(100.0, 90.0)));
+    }
+
+    #[test]
+    fn copy_after_drawing_still_copies_the_picture() {
+        let mut a = app();
+        a.tool = Tool::Arrow;
+        a.finish_draw(pos2(20.0, 20.0), pos2(80.0, 60.0), vec![], false);
+        assert!(a.selected.is_some());
+        assert!(!(a.selected.is_some() && a.tool == Tool::Select), "a fresh mark isn't what Ctrl+C copies");
+    }
+
+    #[test]
+    fn shift_enter_is_left_for_a_new_line_and_enter_finishes() {
+        let key = |shift: bool| egui::Event::Key {
+            key: Key::Enter,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: if shift { Modifiers::SHIFT } else { Modifiers::NONE },
+        };
+        let mut events = vec![key(true)];
+        assert!(!take_finishing_enter(&mut events), "Shift+Enter doesn't finish");
+        assert_eq!(events.len(), 1, "the text box still gets it");
+        let mut events = vec![key(false)];
+        assert!(take_finishing_enter(&mut events));
+        assert!(events.is_empty());
     }
 
     #[test]
@@ -5813,6 +6065,7 @@ mod tests {
         let Shape::Rect { rect, .. } = &shapes(&a)[0] else { panic!() };
         assert_eq!(rect.width(), rect.height());
         a.tool = Tool::Highlight;
+        a.settings.highlight_box = false;
         a.finish_draw(pos2(10.0, 10.0), pos2(90.0, 40.0), vec![pos2(10.0, 10.0), pos2(50.0, 30.0), pos2(90.0, 40.0)], true);
         let Shape::Highlight { points, .. } = &shapes(&a)[1] else { panic!() };
         assert_eq!(points, &vec![pos2(10.0, 10.0), pos2(90.0, 10.0)]);

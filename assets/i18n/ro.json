@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Desktopul nu a setat tastele rapide: {error}",
   "Super": "Super",
   "GIF saved": "GIF salvat",
-  "Recording saved": "Înregistrare salvată"
+  "Recording saved": "Înregistrare salvată",
+  "box": "casetă",
+  "freehand": "mână liberă",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trageți o casetă peste text pentru a-l evidenția. Alegeți mână liberă în dreapta pentru a desena în schimb linii."
  }
 }

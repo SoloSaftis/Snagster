@@ -65,6 +65,19 @@ impl UiTest {
                 a.undo();
             }));
         }
+        s.push(once("draw an arrow, then drag its point by the handle", |a, _| {
+            a.tool = Tool::Arrow;
+            let ci = cur(a);
+            a.finish_draw(pos2(300.0, 300.0), pos2(420.0, 380.0), vec![], false);
+            let idx = a.entries[ci].doc.shapes.len() - 1;
+            assert_eq!(a.selected, Some(idx), "the new arrow is picked");
+            a.begin_drag(pos2(421.0, 379.0), 6.0);
+            a.drag_grip(pos2(460.0, 300.0), false);
+            a.drag = Drag::None;
+            let Shape::Arrow { b, .. } = &a.entries[ci].doc.shapes[idx] else { panic!("not an arrow") };
+            assert_eq!(*b, pos2(460.0, 300.0));
+            // Left picked, so the next frames paint its handles.
+        }));
         s.push(once("text tool: type and commit", |a, _| {
             let ci = cur(a);
             a.tool = Tool::Text;

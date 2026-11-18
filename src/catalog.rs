@@ -503,6 +503,7 @@ pub const SETTINGS: &[SettingKey] = &[
     k("allow_many", Kind::Bool, "Allow more than one Snagster (then app_command can't reach the window)."),
     k("blur_mode", Kind::Choice(&["Pixelate", "Blur", "Solid"]), "How the blur tool hides things."),
     k("arrow_heads", Kind::Int(0, 3), "Arrow heads: 0 none, 1 end, 2 start, 3 both."),
+    k("highlight_box", Kind::Bool, "The highlighter draws see-through boxes (true) or freehand strokes (false)."),
     k("text_outline", Kind::Bool, "Text has an outline."),
     k("text_align", Kind::Int(0, 2), "Text alignment: 0 left, 1 center, 2 right."),
     k("callout_shape", Kind::Choice(&["Rounded", "Rectangle", "Oval"]), "Callout bubble shape."),

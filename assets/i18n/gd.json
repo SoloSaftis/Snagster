@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Cha do shuidhich an deasg na h-iuchraichean luatha: {error}",
   "Super": "Super",
   "GIF saved": "GIF air a shàbhaladh",
-  "Recording saved": "Clàradh air a shàbhaladh"
+  "Recording saved": "Clàradh air a shàbhaladh",
+  "box": "bogsa",
+  "freehand": "làmh-shaor",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Slaod bogsa thairis air teacsa gus a sheulachadh. Tagh làmh-shaor air an taobh deas gus strìochan a tharraing."
  }
 }

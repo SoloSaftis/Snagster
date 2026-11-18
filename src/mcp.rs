@@ -1091,7 +1091,7 @@ fn kind_name(s: &Shape) -> &'static str {
         Shape::Rect { .. } => "box",
         Shape::Ellipse { .. } => "oval",
         Shape::Pen { .. } => "pen",
-        Shape::Highlight { .. } => "highlight",
+        Shape::Highlight { .. } | Shape::Marker { .. } => "highlight",
         Shape::Text { .. } => "text",
         Shape::Callout { .. } => "callout",
         Shape::Step { .. } => "step",
@@ -1111,7 +1111,7 @@ fn describe(s: &Shape) -> String {
         Shape::Rect { .. } => "box",
         Shape::Ellipse { .. } => "oval",
         Shape::Pen { .. } => "pen",
-        Shape::Highlight { .. } => "highlight",
+        Shape::Highlight { .. } | Shape::Marker { .. } => "highlight",
         Shape::Text { text, .. } => return format!("text \"{text}\" at {:.0},{:.0}", b.min.x, b.min.y),
         Shape::Callout { text, .. } => return format!("callout \"{text}\" at {:.0},{:.0}", b.min.x, b.min.y),
         Shape::Step { n, style, .. } => return format!("step {} at {:.0},{:.0}", style.format(*n), b.center().x, b.center().y),
@@ -1337,10 +1337,8 @@ fn make_mark(a: &Value, d: &Doc) -> Result<Shape, String> {
         "line" => Shape::Line { a: p1, b: need2()?, color, width, shadow },
         "box" => Shape::Rect { rect: Rect::from_two_pos(p1, need2()?), color, width, fill, radius: num(a, "radius").unwrap_or(0.0).clamp(0.0, 1000.0) as f32, shadow },
         "oval" => Shape::Ellipse { rect: Rect::from_two_pos(p1, need2()?), color, width, fill, shadow },
-        "highlight" => {
-            let b = need2()?;
-            Shape::Highlight { points: vec![pos2(p1.x, (p1.y + b.y) / 2.0), pos2(b.x, (p1.y + b.y) / 2.0)], color, width: ((b.y - p1.y).abs() / doc::HIGHLIGHT_WIDTH_FACTOR).max(1.0) }
-        }
+        // A see-through box of highlighter colour over the area (text, usually).
+        "highlight" => Shape::Marker { rect: Rect::from_two_pos(p1, need2()?), color },
         "spotlight" => Shape::Spotlight { rect: Rect::from_two_pos(p1, need2()?) },
         "text" => Shape::Text {
             pos: p1,

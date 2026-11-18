@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "O ambiente de trabalho não definiu os atalhos: {error}",
   "Super": "Super",
   "GIF saved": "GIF guardado",
-  "Recording saved": "Gravação guardada"
+  "Recording saved": "Gravação guardada",
+  "box": "caixa",
+  "freehand": "à mão livre",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arraste uma caixa sobre o texto para o realçar. Escolha à mão livre à direita para desenhar traços."
  }
 }

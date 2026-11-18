@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "ഡെസ്ക്ടോപ്പ് ഹോട്ട്കീകൾ സജ്ജമാക്കിയില്ല: {error}",
   "Super": "Super",
   "GIF saved": "GIF സംരക്ഷിച്ചു",
-  "Recording saved": "റെക്കോർഡിംഗ് സംരക്ഷിച്ചു"
+  "Recording saved": "റെക്കോർഡിംഗ് സംരക്ഷിച്ചു",
+  "box": "ബോക്സ്",
+  "freehand": "ഫ്രീഹാൻഡ്",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "വാചകം ഹൈലൈറ്റ് ചെയ്യാൻ അതിനു മുകളിലൂടെ ഒരു ബോക്സ് വലിക്കുക. പകരം വരകൾ വരയ്ക്കാൻ വലതുവശത്ത് ഫ്രീഹാൻഡ് തിരഞ്ഞെടുക്കുക."
  }
 }

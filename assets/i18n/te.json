@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "డెస్క్‌టాప్ హాట్‌కీలను సెట్ చేయలేదు: {error}",
   "Super": "Super",
   "GIF saved": "GIF సేవ్ అయింది",
-  "Recording saved": "రికార్డింగ్ సేవ్ అయింది"
+  "Recording saved": "రికార్డింగ్ సేవ్ అయింది",
+  "box": "బాక్స్",
+  "freehand": "ఫ్రీహ్యాండ్",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "వచనాన్ని హైలైట్ చేయడానికి దానిపై బాక్స్ లాగండి. బదులుగా గీతలు గీయడానికి కుడివైపు ఫ్రీహ్యాండ్ ఎంచుకోండి."
  }
 }

@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Le bureau n'a pas défini les raccourcis : {error}",
   "Super": "Super",
   "GIF saved": "GIF enregistré",
-  "Recording saved": "Enregistrement terminé"
+  "Recording saved": "Enregistrement terminé",
+  "box": "boîte",
+  "freehand": "à main levée",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Faites glisser une boîte sur le texte pour le surligner. Choisissez à main levée à droite pour tracer des traits."
  }
 }

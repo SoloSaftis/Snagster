@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Kīhai te papamahi i tautuhi i ngā ara poto: {error}",
   "Super": "Super",
   "GIF saved": "Kua tiakina te GIF",
-  "Recording saved": "Kua tiakina te rekoatanga"
+  "Recording saved": "Kua tiakina te rekoatanga",
+  "box": "pouaka",
+  "freehand": "ringaringa-noa",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Toia he pouaka ki runga i te kuputuhi hei whakaatu. Kōwhiria te ringaringa-noa ki te taha matau hei tā rārangi."
  }
 }

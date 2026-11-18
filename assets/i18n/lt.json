@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Darbalaukis nenustatė sparčiųjų klavišų: {error}",
   "Super": "Super",
   "GIF saved": "GIF išsaugotas",
-  "Recording saved": "Įrašas išsaugotas"
+  "Recording saved": "Įrašas išsaugotas",
+  "box": "langelis",
+  "freehand": "laisva ranka",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Nutempkite langelį ant teksto, kad jį paryškintumėte. Pasirinkite dešinėje laisva ranka, kad pieštumėte brūkšnius."
  }
 }

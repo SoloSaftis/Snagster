@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "دسکتاپ کلیدهای میان‌بر را تنظیم نکرد: {error}",
   "Super": "Super",
   "GIF saved": "GIF ذخیره شد",
-  "Recording saved": "ضبط ذخیره شد"
+  "Recording saved": "ضبط ذخیره شد",
+  "box": "کادر",
+  "freehand": "آزاد",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "برای هایلایت کردن متن، یک کادر روی آن بکشید. برای کشیدن خط‌ها، در سمت راست آزاد را انتخاب کنید."
  }
 }

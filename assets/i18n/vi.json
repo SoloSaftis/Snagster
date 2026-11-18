@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Môi trường màn hình nền không đặt được phím tắt: {error}",
   "Super": "Super",
   "GIF saved": "Đã lưu GIF",
-  "Recording saved": "Đã lưu bản quay"
+  "Recording saved": "Đã lưu bản quay",
+  "box": "khung",
+  "freehand": "tự do",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kéo một khung qua văn bản để làm nổi bật. Chọn tự do ở bên phải để thay vào đó vẽ nét."
  }
 }

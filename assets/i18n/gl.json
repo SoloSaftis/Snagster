@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "O escritorio non estableceu os atallos: {error}",
   "Super": "Super",
   "GIF saved": "GIF gardado",
-  "Recording saved": "Gravación gardada"
+  "Recording saved": "Gravación gardada",
+  "box": "caixa",
+  "freehand": "a man alzada",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastra unha caixa sobre o texto para realzalo. Escolle a man alzada á dereita para debuxar trazos."
  }
 }

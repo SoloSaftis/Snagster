@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "டெஸ்க்டாப் ஹாட்கீகளை அமைக்கவில்லை: {error}",
   "Super": "Super",
   "GIF saved": "GIF சேமிக்கப்பட்டது",
-  "Recording saved": "பதிவு சேமிக்கப்பட்டது"
+  "Recording saved": "பதிவு சேமிக்கப்பட்டது",
+  "box": "பெட்டி",
+  "freehand": "கைவரைவு",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "உரையை முன்னிலைப்படுத்த அதன் மேல் ஒரு பெட்டியை இழுக்கவும். அதற்குப் பதிலாக கோடுகள் வரைய வலதுபுறம் கைவரைவைத் தேர்ந்தெடுக்கவும்."
  }
 }

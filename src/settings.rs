@@ -567,6 +567,8 @@ pub struct Settings {
     pub allow_many: bool,
     pub blur_mode: BlurMode,
     pub arrow_heads: u8,
+    /// The highlighter draws see-through boxes (true) or freehand strokes (false).
+    pub highlight_box: bool,
     pub text_outline: bool,
     pub text_align: u8,
     pub callout_shape: CalloutShape,
@@ -676,6 +678,7 @@ impl Default for Settings {
             allow_many: false,
             blur_mode: BlurMode::Pixelate,
             arrow_heads: 1,
+            highlight_box: true,
             text_outline: true,
             text_align: 0,
             callout_shape: CalloutShape::Rounded,

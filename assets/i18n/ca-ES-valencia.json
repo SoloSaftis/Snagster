@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "L'escriptori no ha establit les dreceres: {error}",
   "Super": "Super",
   "GIF saved": "GIF guardat",
-  "Recording saved": "Gravació guardada"
+  "Recording saved": "Gravació guardada",
+  "box": "requadre",
+  "freehand": "a mà alçada",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrossegueu un requadre sobre el text per ressaltar-lo. Trieu a mà alçada a la dreta per dibuixar traços."
  }
 }

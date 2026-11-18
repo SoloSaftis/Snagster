@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "ಡೆಸ್ಕ್‌ಟಾಪ್ ಹಾಟ್‌ಕೀಗಳನ್ನು ಹೊಂದಿಸಲಿಲ್ಲ: {error}",
   "Super": "Super",
   "GIF saved": "GIF ಉಳಿಸಲಾಗಿದೆ",
-  "Recording saved": "ರೆಕಾರ್ಡಿಂಗ್ ಉಳಿಸಲಾಗಿದೆ"
+  "Recording saved": "ರೆಕಾರ್ಡಿಂಗ್ ಉಳಿಸಲಾಗಿದೆ",
+  "box": "ಬಾಕ್ಸ್",
+  "freehand": "ಫ್ರೀಹ್ಯಾಂಡ್",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ಪಠ್ಯವನ್ನು ಹೈಲೈಟ್ ಮಾಡಲು ಅದರ ಮೇಲೆ ಬಾಕ್ಸ್ ಎಳೆಯಿರಿ. ಬದಲಿಗೆ ಗೆರೆಗಳನ್ನು ಬರೆಯಲು ಬಲಭಾಗದಲ್ಲಿ ಫ್ರೀಹ್ಯಾಂಡ್ ಆಯ್ಕೆಮಾಡಿ."
  }
 }

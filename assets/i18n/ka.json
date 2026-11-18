@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "დესკტოპმა ცხელი კლავიშები არ დააყენა: {error}",
   "Super": "Super",
   "GIF saved": "GIF შენახულია",
-  "Recording saved": "ჩანაწერი შენახულია"
+  "Recording saved": "ჩანაწერი შენახულია",
+  "box": "ყუთი",
+  "freehand": "თავისუფალი",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ტექსტის გამოსაყოფად გადაათრიეთ მასზე ყუთი. ხაზების დასახატად მარჯვნივ აირჩიეთ თავისუფალი."
  }
 }

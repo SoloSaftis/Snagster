@@ -378,6 +378,11 @@ fn draw_shape(pm: &mut ts::Pixmap, base: &RgbaImage, s: &Shape, as_shadow: bool)
                 pm.stroke_path(&p, &paint(col(*color)), &stroke(*width), ID, None);
             }
         }
+        Shape::Marker { rect, color } => {
+            if let Some(p) = rounded_rect(*rect, 0.0) {
+                pm.fill_path(&p, &paint(doc::highlight_color(*color)), ts::FillRule::Winding, ID, None);
+            }
+        }
         Shape::Highlight { points, color, width } => {
             if let Some(p) = polyline(points) {
                 let mut st = stroke(width * doc::HIGHLIGHT_WIDTH_FACTOR);
@@ -745,6 +750,15 @@ mod tests {
         let p = px(&out, 20, 10);
         // See-through yellow over black: partly yellow, still dark blue.
         assert!(p[0] > 60 && p[0] < 200 && p[0] == p[1] && p[2] == 0, "{p:?}");
+    }
+
+    #[test]
+    fn a_highlighter_box_tints_its_area_and_nothing_else() {
+        let m = Shape::Marker { rect: r(4.0, 4.0, 16.0, 10.0), color: Color32::from_rgb(255, 255, 0) };
+        let out = compose(&doc_with(solid(20, 20, [0, 0, 0, 255]), vec![m]));
+        let p = px(&out, 10, 7);
+        assert!(p[0] > 60 && p[0] < 200 && p[0] == p[1] && p[2] == 0, "see-through yellow: {p:?}");
+        assert_eq!(px(&out, 2, 2), [0, 0, 0, 255], "outside the box");
     }
 
     #[test]

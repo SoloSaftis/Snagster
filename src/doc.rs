@@ -110,7 +110,7 @@ impl Tool {
             Tool::Rect => "Drag to draw a box. Shift makes a square. Set rounded corners on the right.",
             Tool::Ellipse => "Drag to draw an oval. Shift makes a circle.",
             Tool::Pen => "Drag to draw freehand.",
-            Tool::Highlight => "Drag over text to highlight it. Shift keeps it level.",
+            Tool::Highlight => "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.",
             Tool::Text => "Click where the text should go, type, then press Enter. Shift+Enter starts a new line.",
             Tool::Callout => "Press on the thing to point at, drag to where the bubble goes, then type.",
             Tool::Step => "Click to drop the next step: numbers, letters or roman numerals.",
@@ -149,6 +149,8 @@ pub enum Shape {
     Ellipse { rect: Rect, color: Color32, width: f32, fill: bool, shadow: bool },
     Pen { points: Vec<Pos2>, color: Color32, width: f32, shadow: bool },
     Highlight { points: Vec<Pos2>, color: Color32, width: f32 },
+    /// A see-through box of highlighter colour, for marking text or a part of the picture.
+    Marker { rect: Rect, color: Color32 },
     Text {
         pos: Pos2,
         text: String,
@@ -384,6 +386,7 @@ impl Shape {
             | Shape::Ellipse { color, .. }
             | Shape::Pen { color, .. }
             | Shape::Highlight { color, .. }
+            | Shape::Marker { color, .. }
             | Shape::Text { color, .. }
             | Shape::Callout { color, .. }
             | Shape::Stamp { color, .. }
@@ -402,7 +405,7 @@ impl Shape {
             Shape::Step { radius, .. } => *radius = step_radius(w),
             Shape::Stamp { size, .. } => *size = text_size(w) * STAMP_FACTOR,
             Shape::Pointer { size, .. } => *size = pointer_size(w),
-            Shape::Magnify { .. } | Shape::Spotlight { .. } | Shape::Image { .. } => return false,
+            Shape::Magnify { .. } | Shape::Spotlight { .. } | Shape::Image { .. } | Shape::Marker { .. } => return false,
         }
         true
     }
@@ -466,7 +469,7 @@ impl Shape {
             Shape::Stamp { center, size, .. } => Rect::from_center_size(*center, Vec2::splat(*size)),
             Shape::Magnify { center, radius, .. } => Rect::from_center_size(*center, Vec2::splat(radius * 2.0)),
             Shape::Pointer { pos, size } => Rect::from_points(&pointer_outline(*pos, *size)),
-            Shape::Spotlight { rect } | Shape::Image { rect, .. } => *rect,
+            Shape::Spotlight { rect } | Shape::Image { rect, .. } | Shape::Marker { rect, .. } => *rect,
         }
     }
 
@@ -476,7 +479,7 @@ impl Shape {
                 *a += d;
                 *b += d;
             }
-            Shape::Rect { rect, .. } | Shape::Ellipse { rect, .. } | Shape::Spotlight { rect } | Shape::Image { rect, .. } => *rect = rect.translate(d),
+            Shape::Rect { rect, .. } | Shape::Ellipse { rect, .. } | Shape::Spotlight { rect } | Shape::Image { rect, .. } | Shape::Marker { rect, .. } => *rect = rect.translate(d),
             Shape::Pen { points, .. } | Shape::Highlight { points, .. } => {
                 for p in points {
                     *p += d;
@@ -500,7 +503,7 @@ impl Shape {
                 sp(a);
                 sp(b);
             }
-            Shape::Rect { rect, .. } | Shape::Ellipse { rect, .. } | Shape::Spotlight { rect } | Shape::Image { rect, .. } => {
+            Shape::Rect { rect, .. } | Shape::Ellipse { rect, .. } | Shape::Spotlight { rect } | Shape::Image { rect, .. } | Shape::Marker { rect, .. } => {
                 *rect = Rect::from_center_size(rect.center(), rect.size() * f)
             }
             Shape::Pen { points, .. } | Shape::Highlight { points, .. } => points.iter_mut().for_each(sp),
@@ -538,6 +541,109 @@ impl Shape {
             _ => self.bounds().expand(tol).contains(p),
         }
     }
+
+    /// The box of a mark drawn as a box (rectangle, ellipse, highlighter box, spotlight,
+    /// picture piece).
+    pub fn boxed(&self) -> Option<Rect> {
+        match self {
+            Shape::Rect { rect, .. } | Shape::Ellipse { rect, .. } | Shape::Spotlight { rect } | Shape::Image { rect, .. } | Shape::Marker { rect, .. } => Some(*rect),
+            _ => None,
+        }
+    }
+
+    /// The handles that reshape the mark, and where they are: both ends of an arrow or line,
+    /// the corners and sides of a box, a callout's tip, a magnifier's rim.
+    pub fn grips(&self) -> Vec<(Grip, Pos2)> {
+        if let Some(r) = self.boxed() {
+            let c = box_corners(r);
+            let mid = |a: Pos2, b: Pos2| a + (b - a) * 0.5;
+            let mut g: Vec<(Grip, Pos2)> = (0..4).map(|i| (Grip::Corner(i as u8), c[i])).collect();
+            g.extend((0..4).map(|i| (Grip::Side(i as u8), mid(c[i], c[(i + 1) % 4]))));
+            return g;
+        }
+        match self {
+            Shape::Arrow { a, b, .. } | Shape::Line { a, b, .. } => vec![(Grip::Start, *a), (Grip::End, *b)],
+            Shape::Callout { tail, .. } => vec![(Grip::Tail, *tail)],
+            Shape::Magnify { center, radius, .. } => vec![(Grip::Rim, *center + vec2(*radius, 0.0))],
+            _ => Vec::new(),
+        }
+    }
+
+    /// This mark (as it was when the handle was taken) with handle `g` moved to `to`. With
+    /// `keep` (Shift): an end snaps to 45° steps and a box stays square (a picture piece keeps
+    /// its proportions).
+    pub fn with_grip(&self, g: Grip, to: Pos2, keep: bool) -> Shape {
+        let mut s = self.clone();
+        match (&mut s, g) {
+            (Shape::Arrow { a, b, .. } | Shape::Line { a, b, .. }, Grip::Start) => *a = if keep { snap45(*b, to) } else { to },
+            (Shape::Arrow { a, b, .. } | Shape::Line { a, b, .. }, Grip::End) => *b = if keep { snap45(*a, to) } else { to },
+            (Shape::Callout { tail, .. }, Grip::Tail) => *tail = to,
+            (Shape::Magnify { center, radius, .. }, Grip::Rim) => *radius = center.distance(to).max(4.0),
+            (_, Grip::Corner(i)) => {
+                if let Some(r) = self.boxed() {
+                    let fixed = box_corners(r)[(i as usize + 2) % 4];
+                    let to = match self {
+                        _ if !keep => to,
+                        Shape::Image { .. } => keep_aspect(fixed, to, r.size()),
+                        _ => square(fixed, to),
+                    };
+                    s.set_box(Rect::from_two_pos(fixed, to));
+                }
+            }
+            (_, Grip::Side(i)) => {
+                if let Some(r) = self.boxed() {
+                    let n = match i {
+                        0 => Rect::from_two_pos(pos2(r.min.x, to.y), r.max),
+                        1 => Rect::from_two_pos(r.min, pos2(to.x, r.max.y)),
+                        2 => Rect::from_two_pos(r.min, pos2(r.max.x, to.y)),
+                        _ => Rect::from_two_pos(pos2(to.x, r.min.y), r.max),
+                    };
+                    s.set_box(n);
+                }
+            }
+            _ => {}
+        }
+        s
+    }
+
+    fn set_box(&mut self, n: Rect) {
+        if let Shape::Rect { rect, .. } | Shape::Ellipse { rect, .. } | Shape::Spotlight { rect } | Shape::Image { rect, .. } | Shape::Marker { rect, .. } = self {
+            *rect = n;
+        }
+    }
+}
+
+/// A handle of a mark (see `Shape::grips`). Corners and sides count clockwise from the top
+/// left and the top.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Grip {
+    Start,
+    End,
+    Corner(u8),
+    Side(u8),
+    Tail,
+    Rim,
+}
+
+/// A box's corners clockwise from the top left.
+fn box_corners(r: Rect) -> [Pos2; 4] {
+    [r.min, pos2(r.max.x, r.min.y), r.max, pos2(r.min.x, r.max.y)]
+}
+
+/// `to` moved so the box from `fixed` keeps the proportions of `size`.
+fn keep_aspect(fixed: Pos2, to: Pos2, size: Vec2) -> Pos2 {
+    if size.x <= 0.0 || size.y <= 0.0 {
+        return to;
+    }
+    let d = to - fixed;
+    let f = (d.x.abs() / size.x).max(d.y.abs() / size.y);
+    fixed + vec2(size.x * f * d.x.signum(), size.y * f * d.y.signum())
+}
+
+/// The box a drag from `start` to `cur` makes: from corner to corner, or with `centred`
+/// (Alt held) around the press.
+pub fn drag_box(start: Pos2, cur: Pos2, centred: bool) -> Rect {
+    if centred { Rect::from_center_size(start, (cur - start).abs() * 2.0) } else { Rect::from_two_pos(start, cur) }
 }
 
 #[derive(Clone)]
@@ -1352,5 +1458,80 @@ mod tests {
         let Some(Shape::Image { rect, image }) = l.shapes.last() else { panic!("no piece") };
         assert!(rect.max.x <= 10.0 && rect.max.y <= 10.0, "{rect:?}");
         assert_eq!((image.0.width() as f32, image.0.height() as f32), (rect.width(), rect.height()));
+    }
+
+    fn arrow(a: Pos2, b: Pos2) -> Shape {
+        Shape::Arrow { a, b, color: Color32::RED, width: 4.0, shadow: false, heads: 1 }
+    }
+
+    #[test]
+    fn marks_have_handles_where_they_can_be_reshaped() {
+        let ends: Vec<Grip> = arrow(pos2(0.0, 0.0), pos2(10.0, 0.0)).grips().into_iter().map(|g| g.0).collect();
+        assert_eq!(ends, vec![Grip::Start, Grip::End]);
+        let marker = Shape::Marker { rect: Rect::from_min_max(pos2(0.0, 0.0), pos2(10.0, 20.0)), color: Color32::YELLOW };
+        let g = marker.grips();
+        assert_eq!(g.len(), 8, "four corners and four sides");
+        assert!(g.contains(&(Grip::Corner(2), pos2(10.0, 20.0))));
+        assert!(g.contains(&(Grip::Side(3), pos2(0.0, 10.0))));
+        let pen = Shape::Pen { points: vec![pos2(0.0, 0.0), pos2(5.0, 5.0)], color: Color32::RED, width: 2.0, shadow: false };
+        assert!(pen.grips().is_empty(), "a freehand line is moved, not reshaped");
+    }
+
+    #[test]
+    fn moving_a_handle_reshapes_the_mark() {
+        let a = arrow(pos2(0.0, 0.0), pos2(10.0, 0.0));
+        let Shape::Arrow { a: t, b, .. } = a.with_grip(Grip::End, pos2(30.0, 7.0), false) else { panic!() };
+        assert_eq!((t, b), (pos2(0.0, 0.0), pos2(30.0, 7.0)));
+        let Shape::Arrow { a: t, .. } = a.with_grip(Grip::Start, pos2(-5.0, 5.0), false) else { panic!() };
+        assert_eq!(t, pos2(-5.0, 5.0));
+        // Shift snaps the moved end to 45 degree steps around the other end.
+        let Shape::Arrow { b, .. } = a.with_grip(Grip::End, pos2(30.0, 2.0), true) else { panic!() };
+        assert_eq!(b.y, 0.0);
+
+        let r = Shape::Rect { rect: Rect::from_min_max(pos2(10.0, 10.0), pos2(50.0, 30.0)), color: Color32::RED, width: 2.0, fill: false, radius: 0.0, shadow: false };
+        let boxed = |s: Shape| s.boxed().unwrap();
+        // The corner opposite the taken one stays put, even when dragged past it.
+        assert_eq!(boxed(r.with_grip(Grip::Corner(2), pos2(70.0, 60.0), false)), Rect::from_min_max(pos2(10.0, 10.0), pos2(70.0, 60.0)));
+        assert_eq!(boxed(r.with_grip(Grip::Corner(2), pos2(0.0, 0.0), false)), Rect::from_min_max(pos2(0.0, 0.0), pos2(10.0, 10.0)));
+        assert_eq!(boxed(r.with_grip(Grip::Corner(0), pos2(0.0, 5.0), true)).size(), Vec2::splat(50.0), "Shift: a square");
+        // A side moves only its own edge.
+        assert_eq!(boxed(r.with_grip(Grip::Side(0), pos2(99.0, 0.0), false)), Rect::from_min_max(pos2(10.0, 0.0), pos2(50.0, 30.0)));
+        assert_eq!(boxed(r.with_grip(Grip::Side(1), pos2(80.0, 99.0), false)), Rect::from_min_max(pos2(10.0, 10.0), pos2(80.0, 30.0)));
+        assert_eq!(boxed(r.with_grip(Grip::Side(2), pos2(0.0, 45.0), false)), Rect::from_min_max(pos2(10.0, 10.0), pos2(50.0, 45.0)));
+        assert_eq!(boxed(r.with_grip(Grip::Side(3), pos2(-10.0, 0.0), false)), Rect::from_min_max(pos2(-10.0, 10.0), pos2(50.0, 30.0)));
+
+        let m = Shape::Magnify { center: pos2(0.0, 0.0), radius: 10.0, zoom: 2.0 };
+        let Shape::Magnify { radius, .. } = m.with_grip(Grip::Rim, pos2(0.0, 25.0), false) else { panic!() };
+        assert_eq!(radius, 25.0);
+        // A handle the mark doesn't have changes nothing.
+        let Shape::Arrow { a: t, b, .. } = a.with_grip(Grip::Corner(1), pos2(99.0, 99.0), false) else { panic!() };
+        assert_eq!((t, b), (pos2(0.0, 0.0), pos2(10.0, 0.0)));
+    }
+
+    #[test]
+    fn a_picture_piece_keeps_its_proportions_with_shift() {
+        assert_eq!(keep_aspect(pos2(0.0, 0.0), pos2(40.0, 5.0), vec2(20.0, 10.0)), pos2(40.0, 20.0));
+        assert_eq!(keep_aspect(pos2(0.0, 0.0), pos2(-4.0, -30.0), vec2(20.0, 10.0)), pos2(-60.0, -30.0));
+        assert_eq!(keep_aspect(pos2(1.0, 1.0), pos2(5.0, 5.0), Vec2::ZERO), pos2(5.0, 5.0));
+    }
+
+    #[test]
+    fn a_drag_makes_a_box_from_corner_to_corner_or_around_the_press() {
+        assert_eq!(drag_box(pos2(10.0, 10.0), pos2(4.0, 30.0), false), Rect::from_min_max(pos2(4.0, 10.0), pos2(10.0, 30.0)));
+        assert_eq!(drag_box(pos2(10.0, 10.0), pos2(14.0, 30.0), true), Rect::from_min_max(pos2(6.0, -10.0), pos2(14.0, 30.0)));
+    }
+
+    #[test]
+    fn a_highlighter_box_moves_scales_and_is_hit_inside() {
+        let mut m = Shape::Marker { rect: Rect::from_min_max(pos2(0.0, 0.0), pos2(20.0, 10.0)), color: Color32::YELLOW };
+        assert!(m.hit(pos2(10.0, 5.0), 0.0), "anywhere inside, like the text under it");
+        assert!(!m.hit(pos2(30.0, 5.0), 2.0));
+        m.translate(vec2(5.0, 5.0));
+        assert_eq!(m.bounds(), Rect::from_min_max(pos2(5.0, 5.0), pos2(25.0, 15.0)));
+        m.scale(2.0);
+        assert_eq!(m.bounds().size(), vec2(40.0, 20.0));
+        m.set_color(Color32::GREEN);
+        assert!(matches!(m, Shape::Marker { color: Color32::GREEN, .. }));
+        assert!(!m.set_width(9.0), "a box has no line width");
     }
 }

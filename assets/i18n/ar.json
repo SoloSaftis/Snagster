@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "لم يعيّن سطح المكتب مفاتيح الاختصار: {error}",
   "Super": "Super",
   "GIF saved": "تم حفظ GIF",
-  "Recording saved": "تم حفظ التسجيل"
+  "Recording saved": "تم حفظ التسجيل",
+  "box": "مربع",
+  "freehand": "يدوي",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "اسحب مربعًا فوق النص لتمييزه. اختر يدوي على اليمين لرسم خطوط بدلًا من ذلك."
  }
 }

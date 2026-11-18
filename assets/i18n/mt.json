@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Id-desktop ma ssettjax it-tasti shortcut: {error}",
   "Super": "Super",
   "GIF saved": "GIF salvat",
-  "Recording saved": "Rekording salvat"
+  "Recording saved": "Rekording salvat",
+  "box": "kaxxa",
+  "freehand": "b'idejk",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Kaxxa fuq it-test biex tenfasizzah. Agħżel b'idejk fuq il-lemin biex tfassal strixxi minflok."
  }
 }

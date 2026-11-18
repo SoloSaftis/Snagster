@@ -4,6 +4,20 @@ What changed for people using Snagster, per version.
 
 ## Not released yet
 
+Marking up pictures (every system):
+
+- **Adjust a mark right after drawing it**: a new arrow, line, box, oval, highlighter box,
+  spotlight or magnifier stays picked with handles: drag an end of an arrow, or a corner or
+  side of a box, to reshape it without switching tools. With a drawing tool, pressing on a mark
+  that tool made picks it up to move it; anywhere else draws a new one.
+- **Shapes start exactly where you press**: a box, arrow or line used to start a few pixels on
+  from the click. Alt draws a box or oval out from its centre.
+- **A box highlighter** for marking text: drag a see-through yellow box over it. Freehand
+  strokes are one click away in the tool's options.
+- **Shift+Enter starts a new line in text**, as the hint said; Enter finishes.
+- Copying right after drawing still copies the picture; marks are copied with the selection
+  tool.
+
 Windows:
 
 - **A Microsoft Store edition** is ready to submit: the Store signs it (no SmartScreen or

@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Жұмыс үстелі жылдам пернелерді орнатпады: {error}",
   "Super": "Super",
   "GIF saved": "GIF сақталды",
-  "Recording saved": "Жазба сақталды"
+  "Recording saved": "Жазба сақталды",
+  "box": "жәшік",
+  "freehand": "еркін",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Мәтінді бөлектеу үшін оның үстінен жәшік сүйреңіз. Сызықтар салу үшін оң жақтан еркін таңдаңыз."
  }
 }

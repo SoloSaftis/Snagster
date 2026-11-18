@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Mahaigainak ez ditu laster-teklak ezarri: {error}",
   "Super": "Super",
   "GIF saved": "GIFa gordeta",
-  "Recording saved": "Grabaketa gordeta"
+  "Recording saved": "Grabaketa gordeta",
+  "box": "koadroa",
+  "freehand": "esku libre",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastatu koadro bat testuaren gainean nabarmentzeko. Aukeratu esku libre eskuinean trazuak marrazteko."
  }
 }

@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Den Desktop huet d'Tastekombinatiounen net festgeluecht: {error}",
   "Super": "Super",
   "GIF saved": "GIF gespäichert",
-  "Recording saved": "Opnam gespäichert"
+  "Recording saved": "Opnam gespäichert",
+  "box": "Këscht",
+  "freehand": "fräihand",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Zitt eng Këscht iwwer den Text, fir en ervirzehiewen. Wielt riets fräihand, fir amplaz Stréch ze zeechnen."
  }
 }

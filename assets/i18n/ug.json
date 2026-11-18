@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "ئۈستەل يۈزى تېز كۇنۇپكىلارنى تەڭشىمىدى: {error}",
   "Super": "Super",
   "GIF saved": "GIF ساقلاندى",
-  "Recording saved": "خاتىرە ساقلاندى"
+  "Recording saved": "خاتىرە ساقلاندى",
+  "box": "رامكا",
+  "freehand": "ئەركىن",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "تېكىستنى گەۋدىلەندۈرۈش ئۈچۈن ئۈستىگە رامكا سۆرەڭ. سىزىق سىزىش ئۈچۈن ئوڭ تەرەپتىن ئەركىن تاللاڭ."
  }
 }

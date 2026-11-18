@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "שולחן העבודה לא הגדיר את מקשי הקיצור: {error}",
   "Super": "Super",
   "GIF saved": "ה-GIF נשמר",
-  "Recording saved": "ההקלטה נשמרה"
+  "Recording saved": "ההקלטה נשמרה",
+  "box": "תיבה",
+  "freehand": "יד חופשית",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "גררו תיבה מעל הטקסט כדי להדגיש אותו. בחרו יד חופשית מימין כדי לצייר קווים."
  }
 }

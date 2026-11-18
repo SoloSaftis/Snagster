@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Skjáborðið stillti ekki flýtilyklana: {error}",
   "Super": "Super",
   "GIF saved": "GIF vistað",
-  "Recording saved": "Upptaka vistuð"
+  "Recording saved": "Upptaka vistuð",
+  "box": "kassi",
+  "freehand": "frjáls hönd",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dragðu kassa yfir texta til að auðkenna hann. Veldu frjáls hönd til hægri til að teikna strik."
  }
 }

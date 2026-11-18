@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "ዴስክቶፑ ፈጣን ቁልፎችን አላዘጋጀም፦ {error}",
   "Super": "Super",
   "GIF saved": "GIF ተቀምጧል",
-  "Recording saved": "ቀረጻ ተቀምጧል"
+  "Recording saved": "ቀረጻ ተቀምጧል",
+  "box": "ሳጥን",
+  "freehand": "በነጻ እጅ",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ጽሑፍን ለማጉላት ሳጥን ይጎትቱ። በምትኩ መስመሮችን ለመሳል በቀኝ በኩል በነጻ እጅ ይምረጡ።"
  }
 }

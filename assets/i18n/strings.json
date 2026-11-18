@@ -981,5 +981,8 @@
  "The desktop didn't set the hotkeys: {error}",
  "Super",
  "GIF saved",
- "Recording saved"
+ "Recording saved",
+ "box",
+ "freehand",
+ "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead."
 ]

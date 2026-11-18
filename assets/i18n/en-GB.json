@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "The desktop didn't set the hotkeys: {error}",
   "Super": "Super",
   "GIF saved": "GIF saved",
-  "Recording saved": "Recording saved"
+  "Recording saved": "Recording saved",
+  "box": "box",
+  "freehand": "freehand",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead."
  }
 }

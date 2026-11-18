@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Աշխատասեղանը չսահմանեց թեժ ստեղները՝ {error}",
   "Super": "Super",
   "GIF saved": "GIF-ը պահպանվել է",
-  "Recording saved": "Ձայնագրությունը պահպանվել է"
+  "Recording saved": "Ձայնագրությունը պահպանվել է",
+  "box": "տուփ",
+  "freehand": "ազատ ձեռքով",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Տեքստը ընդգծելու համար քաշեք վանդակ դրա վրայով։ Աջից ընտրեք ազատ ձեռքով՝ գծեր գծելու համար։"
  }
 }

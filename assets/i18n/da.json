@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Skrivebordet indstillede ikke genvejstasterne: {error}",
   "Super": "Super",
   "GIF saved": "GIF gemt",
-  "Recording saved": "Optagelse gemt"
+  "Recording saved": "Optagelse gemt",
+  "box": "boks",
+  "freehand": "frihånd",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Træk en boks over teksten for at fremhæve den. Vælg frihånd til højre for i stedet at tegne streger."
  }
 }

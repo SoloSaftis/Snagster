@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Työpöytä ei asettanut pikanäppäimiä: {error}",
   "Super": "Super",
   "GIF saved": "GIF tallennettu",
-  "Recording saved": "Nauhoitus tallennettu"
+  "Recording saved": "Nauhoitus tallennettu",
+  "box": "laatikko",
+  "freehand": "vapaa käsi",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Korosta teksti vetämällä sen päälle laatikko. Valitse oikealta vapaa käsi piirtääksesi vetoja."
  }
 }

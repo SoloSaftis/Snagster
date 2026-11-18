@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Radna površina nije postavila prečace: {error}",
   "Super": "Super",
   "GIF saved": "GIF je spremljen",
-  "Recording saved": "Snimka je spremljena"
+  "Recording saved": "Snimka je spremljena",
+  "box": "okvir",
+  "freehand": "slobodnom rukom",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Povucite okvir preko teksta da ga istaknete. Odaberite slobodnom rukom desno da umjesto toga crtate poteze."
  }
 }

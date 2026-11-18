@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Il desktop non ha impostato le scorciatoie: {error}",
   "Super": "Super",
   "GIF saved": "GIF salvata",
-  "Recording saved": "Registrazione salvata"
+  "Recording saved": "Registrazione salvata",
+  "box": "riquadro",
+  "freehand": "a mano libera",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trascina un riquadro sul testo per evidenziarlo. Scegli a mano libera a destra per disegnare tratti."
  }
 }

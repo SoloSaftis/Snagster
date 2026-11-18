@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Працоўны стол не задаў гарачыя клавішы: {error}",
   "Super": "Super",
   "GIF saved": "GIF захавана",
-  "Recording saved": "Запіс захаваны"
+  "Recording saved": "Запіс захаваны",
+  "box": "поле",
+  "freehand": "ад рукі",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Перацягніце поле над тэкстам, каб вылучыць яго. Выберыце «ад рукі» справа, каб малявць штрыхі."
  }
 }

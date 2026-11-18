@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "桌面未能设置热键：{error}",
   "Super": "Super",
   "GIF saved": "GIF 已保存",
-  "Recording saved": "录制已保存"
+  "Recording saved": "录制已保存",
+  "box": "方框",
+  "freehand": "手绘",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "在文字上拖动方框即可高亮显示。选择右侧的“手绘”可改为绘制笔画。"
  }
 }

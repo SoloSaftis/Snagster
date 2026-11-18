@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Эш өстәле кайнар төймәләрне көйләмәде: {error}",
   "Super": "Super",
   "GIF saved": "GIF саклана",
-  "Recording saved": "Язма саклана"
+  "Recording saved": "Язма саклана",
+  "box": "рамка",
+  "freehand": "иректән",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Тексты билгеләү өчен аның өстенә рамка сөйрәгез. Сызыклар сызу өчен уңда иректән сайлагыз."
  }
 }

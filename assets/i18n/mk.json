@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Работната површина не ги постави кратенките: {error}",
   "Super": "Super",
   "GIF saved": "GIF е зачуван",
-  "Recording saved": "Снимката е зачувана"
+  "Recording saved": "Снимката е зачувана",
+  "box": "поле",
+  "freehand": "слободна рака",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Повлечете поле врз текстот за да го истакнете. Изберете слободна рака десно за да цртате потези."
  }
 }

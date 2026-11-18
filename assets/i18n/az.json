@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "İş masası qısayol düymələrini təyin etmədi: {error}",
   "Super": "Super",
   "GIF saved": "GIF saxlanıldı",
-  "Recording saved": "Qeyd saxlanıldı"
+  "Recording saved": "Qeyd saxlanıldı",
+  "box": "qutu",
+  "freehand": "sərbəst",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Mətni vurğulamaq üçün üzərinə qutu çəkin. Əvəzinə xətlər çəkmək üçün sağda sərbəst seçin."
  }
 }

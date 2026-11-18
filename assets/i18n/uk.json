@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Робочий стіл не задав гарячі клавіші: {error}",
   "Super": "Super",
   "GIF saved": "GIF збережено",
-  "Recording saved": "Запис збережено"
+  "Recording saved": "Запис збережено",
+  "box": "рамка",
+  "freehand": "від руки",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протягніть рамку над текстом, щоб виділити його. Виберіть праворуч «від руки», щоб малювати штрихи."
  }
 }

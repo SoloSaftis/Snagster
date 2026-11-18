@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Desktopi nuk i caktoi tastet e shpejta: {error}",
   "Super": "Super",
   "GIF saved": "GIF u ruajt",
-  "Recording saved": "Regjistrimi u ruajt"
+  "Recording saved": "Regjistrimi u ruajt",
+  "box": "kuti",
+  "freehand": "dorë e lirë",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tërhiqni një kuti mbi tekst për ta theksuar. Zgjidhni dorë e lirë djathtas për të vizatuar vija."
  }
 }

@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Skrivbordet ställde inte in snabbtangenterna: {error}",
   "Super": "Super",
   "GIF saved": "GIF sparad",
-  "Recording saved": "Inspelning sparad"
+  "Recording saved": "Inspelning sparad",
+  "box": "ruta",
+  "freehand": "frihand",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra en ruta över texten för att markera den. Välj frihand till höger för att rita streck i stället."
  }
 }

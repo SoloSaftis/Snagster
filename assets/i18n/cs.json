@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Plocha klávesové zkratky nenastavila: {error}",
   "Super": "Super",
   "GIF saved": "GIF uložen",
-  "Recording saved": "Nahrávka uložena"
+  "Recording saved": "Nahrávka uložena",
+  "box": "rámeček",
+  "freehand": "od ruky",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Přetažením rámečku přes text jej zvýrazníte. Chcete-li kreslit tahy, vyberte vpravo od ruky."
  }
 }

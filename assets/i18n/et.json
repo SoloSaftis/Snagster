@@ -985,6 +985,9 @@
   "The desktop didn't set the hotkeys: {error}": "Töölaud ei määranud kiirklahve: {error}",
   "Super": "Super",
   "GIF saved": "GIF salvestatud",
-  "Recording saved": "Lindistus salvestatud"
+  "Recording saved": "Lindistus salvestatud",
+  "box": "kast",
+  "freehand": "vabakäsi",
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Teksti esiletõstmiseks lohistage selle kohale kast. Joonte joonistamiseks valige paremalt vabakäsi."
  }
 }
