@@ -43,7 +43,12 @@ New-Item -ItemType Directory -Force "$stage/Assets" | Out-Null
 Copy-Item $Exe "$stage/Snagster.exe"
 Copy-Item "$root/LICENSE-MIT", "$root/LICENSE-APACHE" $stage
 $esc = { param($s) [Security.SecurityElement]::Escape($s) }
-(Get-Content "$here/AppxManifest.xml" -Raw).Replace("__VERSION__", $version).Replace("__IDENTITY_NAME__", (& $esc $IdentityName)).Replace("__PUBLISHER_DISPLAY_NAME__", (& $esc $PublisherDisplayName)).Replace("__PUBLISHER__", (& $esc $Publisher)) |
+# The languages Snagster speaks, as Windows language codes, English (the default) first.
+$langs = (Get-Content "$here/store-languages.json" -Raw | ConvertFrom-Json).PSObject.Properties |
+    Where-Object { $_.Name -ne "_comment" } | ForEach-Object { $_.Value }
+$langs = @("en-us") + @($langs | Where-Object { $_ -ne "en-us" })
+$resources = ($langs | ForEach-Object { "    <Resource Language=`"$_`" />" }) -join "`r`n"
+(Get-Content "$here/AppxManifest.xml" -Raw).Replace("__RESOURCES__", $resources).Replace("__VERSION__", $version).Replace("__IDENTITY_NAME__", (& $esc $IdentityName)).Replace("__PUBLISHER_DISPLAY_NAME__", (& $esc $PublisherDisplayName)).Replace("__PUBLISHER__", (& $esc $Publisher)) |
     Set-Content "$stage/AppxManifest.xml" -Encoding utf8
 
 # The logos, drawn by Snagster itself (the same icon as the window and the portable exe).
