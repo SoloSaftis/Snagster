@@ -322,7 +322,8 @@ pub fn recording_live() -> bool {
     RECORDING_LIVE.load(Ordering::Relaxed)
 }
 
-/// How many frames the recording that is running (or last ran) has put in its file. Starting
+/// How many frames the recording that is running (or last ran) has written (on Linux and macOS:
+/// handed to the encoder, which may put them in the file a little later). Starting
 /// the encoder can take seconds (Quick Sync on Windows), so "live" doesn't yet mean frames are
 /// coming; `--ui-test` waits on this before it pauses and stops.
 static RECORDING_FRAMES: AtomicU64 = AtomicU64::new(0);

@@ -312,6 +312,9 @@ impl UiTest {
         s.push((
             "Record: the video is saved and plays back".to_string(),
             Box::new(move |a: &mut SnagApp, _: &egui::Context| {
+                // Stop was pressed already; this ends the recording too when a step before failed,
+                // so it doesn't run on to the 30 s backstop.
+                a.stop_job();
                 let Some(v) = a.videos.first() else { return false };
                 assert!(v.result.is_ok(), "{:?}", v.result);
                 let p = crate::video::probe(&v.path).expect("can't read the video back");
