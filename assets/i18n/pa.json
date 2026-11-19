@@ -989,6 +989,16 @@
   "box": "ਬਾਕਸ",
   "freehand": "ਫ੍ਰੀਹੈਂਡ",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ਟੈਕਸਟ ਨੂੰ ਹਾਈਲਾਈਟ ਕਰਨ ਲਈ ਉਸ ਉੱਤੇ ਬਾਕਸ ਖਿੱਚੋ। ਇਸ ਦੀ ਥਾਂ ਲਕੀਰਾਂ ਵਾਹੁਣ ਲਈ ਸੱਜੇ ਪਾਸੇ ਫ੍ਰੀਹੈਂਡ ਚੁਣੋ।",
+  "Moved {count} captures to the Recycle Bin.": "{count} ਕੈਪਚਰ ਰੀਸਾਈਕਲ ਬਿਨ ਵਿੱਚ ਭੇਜੇ।",
+  "Moved {count} captures to the Trash.": "{count} ਕੈਪਚਰ ਰੱਦੀ ਵਿੱਚ ਭੇਜੇ।",
+  "Restored {name}.": "{name} ਮੁੜ-ਬਹਾਲ ਕੀਤਾ।",
+  "Restored {count} captures.": "{count} ਕੈਪਚਰ ਮੁੜ-ਬਹਾਲ ਕੀਤੇ।",
+  "Couldn't restore {name}: {error}": "{name} ਮੁੜ-ਬਹਾਲ ਨਹੀਂ ਕਰ ਸਕੇ: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} ਵਿੱਚੋਂ {count} ਕੈਪਚਰ ਮੁੜ-ਬਹਾਲ ਕੀਤੇ। {name} ਮੁੜ-ਬਹਾਲ ਨਹੀਂ ਕਰ ਸਕੇ: {error}",
+  "a new file has taken its name": "ਹੁਣ ਇੱਕ ਨਵੀਂ ਫਾਈਲ ਦਾ ਇਹੀ ਨਾਮ ਹੈ",
+  "it isn't in the Recycle Bin any more": "ਇਹ ਹੁਣ ਰੀਸਾਈਕਲ ਬਿਨ ਵਿੱਚ ਨਹੀਂ ਹੈ",
+  "it isn't in the Trash any more": "ਇਹ ਹੁਣ ਰੱਦੀ ਵਿੱਚ ਨਹੀਂ ਹੈ",
+  "this system can't bring files back from the Trash": "ਇਹ ਸਿਸਟਮ ਰੱਦੀ ਵਿੱਚੋਂ ਫਾਈਲਾਂ ਮੁੜ-ਬਹਾਲ ਨਹੀਂ ਕਰ ਸਕਦਾ",
   "More tabs": "ਹੋਰ ਟੈਬਾਂ",
   "The groups that don't fit the window": "ਉਹ ਸਮੂਹ ਜੋ ਵਿੰਡੋ ਵਿੱਚ ਨਹੀਂ ਸਮਾਉਂਦੇ"
  }

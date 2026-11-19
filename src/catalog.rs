@@ -110,6 +110,7 @@ pub const COMMANDS: &[Command] = &[
     c("quick_save", "Share > Save, File and Share menus", &["Quick save", "Quick save to folder", "Save to the save folder"], "quick_save", true, "", Safe),
     c("rename", "File menu", &["Rename..."], "library_tag", true, "", Asks),
     c("recycle", "File menu", &["Move to Recycle Bin"], "library_delete", true, "", Destructive),
+    c("undo_delete", "Library and the status line, for a few seconds after a delete", &["Undo"], "undo_delete", true, "", Safe),
     c("export_pictures", "File menu", &["Export pictures..."], "save", true, "", Asks),
     c("print", "Share > Send, File and Share menus", &["Print", "Print..."], "", true, "", Outside),
     c("export_guide", "Share > Documents, File menu > Export guide", &["PDF guide", "Web page guide", "Export guide", "PDF document...", "Web page...", "One-page picture", "One-page guide from Recent"], "make_guide", true, "pdf, html or page", Asks),

@@ -989,6 +989,16 @@
   "box": "상자",
   "freehand": "자유형",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "텍스트 위로 상자를 끌어 강조 표시하세요. 대신 획을 그리려면 오른쪽에서 자유형을 선택하세요.",
+  "Moved {count} captures to the Recycle Bin.": "캡처 {count}개를 휴지통으로 이동했습니다.",
+  "Moved {count} captures to the Trash.": "캡처 {count}개를 휴지통으로 이동했습니다.",
+  "Restored {name}.": "{name}을(를) 복원했습니다.",
+  "Restored {count} captures.": "캡처 {count}개를 복원했습니다.",
+  "Couldn't restore {name}: {error}": "{name}을(를) 복원할 수 없습니다: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "캡처 {total}개 중 {count}개를 복원했습니다. {name}을(를) 복원할 수 없습니다: {error}",
+  "a new file has taken its name": "같은 이름의 새 파일이 생겼습니다",
+  "it isn't in the Recycle Bin any more": "더 이상 휴지통에 없습니다",
+  "it isn't in the Trash any more": "더 이상 휴지통에 없습니다",
+  "this system can't bring files back from the Trash": "이 시스템에서는 휴지통에서 파일을 복원할 수 없습니다",
   "More tabs": "탭 더 보기",
   "The groups that don't fit the window": "창에 들어가지 않는 그룹"
  }

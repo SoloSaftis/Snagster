@@ -989,6 +989,16 @@
   "box": "рамка",
   "freehand": "від руки",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протягніть рамку над текстом, щоб виділити його. Виберіть праворуч «від руки», щоб малювати штрихи.",
+  "Moved {count} captures to the Recycle Bin.": "Знімків переміщено в кошик: {count}.",
+  "Moved {count} captures to the Trash.": "Знімків переміщено до смітника: {count}.",
+  "Restored {name}.": "Відновлено: {name}.",
+  "Restored {count} captures.": "Відновлено знімків: {count}.",
+  "Couldn't restore {name}: {error}": "Не вдалося відновити {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Відновлено знімків: {count} з {total}. Не вдалося відновити {name}: {error}",
+  "a new file has taken its name": "його назву вже має новий файл",
+  "it isn't in the Recycle Bin any more": "його більше немає в кошику",
+  "it isn't in the Trash any more": "його більше немає в смітнику",
+  "this system can't bring files back from the Trash": "ця система не може відновлювати файли зі смітника",
   "More tabs": "Інші вкладки",
   "The groups that don't fit the window": "Групи, які не вміщаються у вікні"
  }

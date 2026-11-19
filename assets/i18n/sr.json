@@ -989,6 +989,16 @@
   "box": "оквир",
   "freehand": "слободном руком",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Превуците оквир преко текста да га истакнете. Изаберите слободном руком десно да уместо тога цртате потезе.",
+  "Moved {count} captures to the Recycle Bin.": "Снимака премештено у корпу за отпатке: {count}.",
+  "Moved {count} captures to the Trash.": "Снимака премештено у смеће: {count}.",
+  "Restored {name}.": "Враћено: {name}.",
+  "Restored {count} captures.": "Враћено снимака: {count}.",
+  "Couldn't restore {name}: {error}": "Није могуће вратити {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Враћено снимака: {count} од {total}. Није могуће вратити {name}: {error}",
+  "a new file has taken its name": "нова датотека сада носи то име",
+  "it isn't in the Recycle Bin any more": "више није у корпи за отпатке",
+  "it isn't in the Trash any more": "више није у смећу",
+  "this system can't bring files back from the Trash": "овај систем не може да враћа датотеке из смећа",
   "More tabs": "Још картица",
   "The groups that don't fit the window": "Групе које не стају у прозор"
  }

@@ -989,6 +989,16 @@
   "box": "lodziņš",
   "freehand": "brīvroku",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Velciet lodziņu pāri tekstam, lai to izceltu. Labajā pusē izvēlieties brīvroku, lai zīmētu vilcienus.",
+  "Moved {count} captures to the Recycle Bin.": "Uz atkritni pārvietotas tveršanas: {count}.",
+  "Moved {count} captures to the Trash.": "Uz miskasti pārvietotas tveršanas: {count}.",
+  "Restored {name}.": "Atjaunots: {name}.",
+  "Restored {count} captures.": "Atjaunotas tveršanas: {count}.",
+  "Couldn't restore {name}: {error}": "Neizdevās atjaunot {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Atjaunotas tveršanas: {count} no {total}. Neizdevās atjaunot {name}: {error}",
+  "a new file has taken its name": "jauns fails tagad izmanto tā nosaukumu",
+  "it isn't in the Recycle Bin any more": "tas vairs nav atkritnē",
+  "it isn't in the Trash any more": "tas vairs nav miskastē",
+  "this system can't bring files back from the Trash": "šī sistēma nevar atjaunot failus no miskastes",
   "More tabs": "Vairāk cilņu",
   "The groups that don't fit the window": "Grupas, kas neietilpst logā"
  }

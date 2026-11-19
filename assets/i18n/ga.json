@@ -989,6 +989,16 @@
   "box": "bosca",
   "freehand": "saorláimhe",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Tarraing bosca thar théacs chun é a aibhsiú. Roghnaigh saorláimhe ar dheis chun stríoca a tharraingt ina ionad.",
+  "Moved {count} captures to the Recycle Bin.": "Bogadh {count} gabháil go dtí an Bosca Athchúrsála.",
+  "Moved {count} captures to the Trash.": "Bogadh {count} gabháil go dtí an Bruscar.",
+  "Restored {name}.": "Athchóiríodh {name}.",
+  "Restored {count} captures.": "Athchóiríodh {count} gabháil.",
+  "Couldn't restore {name}: {error}": "Níorbh fhéidir {name} a athchóiriú: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Athchóiríodh {count} as {total} gabháil. Níorbh fhéidir {name} a athchóiriú: {error}",
+  "a new file has taken its name": "tá a ainm ar chomhad nua anois",
+  "it isn't in the Recycle Bin any more": "níl sé sa Bhosca Athchúrsála a thuilleadh",
+  "it isn't in the Trash any more": "níl sé sa Bhruscar a thuilleadh",
+  "this system can't bring files back from the Trash": "ní féidir leis an gcóras seo comhaid a athchóiriú ón mBruscar",
   "More tabs": "Tuilleadh cluaisíní",
   "The groups that don't fit the window": "Na grúpaí nach n-oireann don fhuinneog"
  }

@@ -989,6 +989,16 @@
   "box": "kassi",
   "freehand": "frjáls hönd",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dragðu kassa yfir texta til að auðkenna hann. Veldu frjáls hönd til hægri til að teikna strik.",
+  "Moved {count} captures to the Recycle Bin.": "Færði {count} myndatökur í ruslafötuna.",
+  "Moved {count} captures to the Trash.": "Færði {count} myndatökur í ruslið.",
+  "Restored {name}.": "Endurheimti {name}.",
+  "Restored {count} captures.": "Endurheimti {count} myndatökur.",
+  "Couldn't restore {name}: {error}": "Ekki tókst að endurheimta {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Endurheimti {count} af {total} myndatökum. Ekki tókst að endurheimta {name}: {error}",
+  "a new file has taken its name": "ný skrá ber nú nafn hennar",
+  "it isn't in the Recycle Bin any more": "hún er ekki lengur í ruslafötunni",
+  "it isn't in the Trash any more": "hún er ekki lengur í ruslinu",
+  "this system can't bring files back from the Trash": "þetta kerfi getur ekki endurheimt skrár úr ruslinu",
   "More tabs": "Fleiri flipar",
   "The groups that don't fit the window": "Hóparnir sem komast ekki fyrir í glugganum"
  }

@@ -989,6 +989,16 @@
   "box": "பெட்டி",
   "freehand": "கைவரைவு",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "உரையை முன்னிலைப்படுத்த அதன் மேல் ஒரு பெட்டியை இழுக்கவும். அதற்குப் பதிலாக கோடுகள் வரைய வலதுபுறம் கைவரைவைத் தேர்ந்தெடுக்கவும்.",
+  "Moved {count} captures to the Recycle Bin.": "{count} பிடிப்புகள் மறுசுழற்சித் தொட்டிக்கு நகர்த்தப்பட்டன.",
+  "Moved {count} captures to the Trash.": "{count} பிடிப்புகள் குப்பைத்தொட்டிக்கு நகர்த்தப்பட்டன.",
+  "Restored {name}.": "{name} மீட்டமைக்கப்பட்டது.",
+  "Restored {count} captures.": "{count} பிடிப்புகள் மீட்டமைக்கப்பட்டன.",
+  "Couldn't restore {name}: {error}": "{name} ஐ மீட்டமைக்க முடியவில்லை: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} இல் {count} பிடிப்புகள் மீட்டமைக்கப்பட்டன. {name} ஐ மீட்டமைக்க முடியவில்லை: {error}",
+  "a new file has taken its name": "இப்போது ஒரு புதிய கோப்பு அதே பெயரைக் கொண்டுள்ளது",
+  "it isn't in the Recycle Bin any more": "அது இனி மறுசுழற்சித் தொட்டியில் இல்லை",
+  "it isn't in the Trash any more": "அது இனி குப்பைத்தொட்டியில் இல்லை",
+  "this system can't bring files back from the Trash": "இந்த அமைப்பால் குப்பைத்தொட்டியிலிருந்து கோப்புகளை மீட்டமைக்க முடியாது",
   "More tabs": "மேலும் தாவல்கள்",
   "The groups that don't fit the window": "சாளரத்தில் பொருந்தாத குழுக்கள்"
  }

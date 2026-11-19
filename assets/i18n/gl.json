@@ -989,6 +989,16 @@
   "box": "caixa",
   "freehand": "a man alzada",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastra unha caixa sobre o texto para realzalo. Escolle a man alzada á dereita para debuxar trazos.",
+  "Moved {count} captures to the Recycle Bin.": "Movéronse {count} capturas ao lixo.",
+  "Moved {count} captures to the Trash.": "Movéronse {count} capturas ao lixo.",
+  "Restored {name}.": "Restaurouse {name}.",
+  "Restored {count} captures.": "Restauráronse {count} capturas.",
+  "Couldn't restore {name}: {error}": "Non se puido restaurar {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Restauráronse {count} de {total} capturas. Non se puido restaurar {name}: {error}",
+  "a new file has taken its name": "un ficheiro novo xa ten o seu nome",
+  "it isn't in the Recycle Bin any more": "xa non está no lixo",
+  "it isn't in the Trash any more": "xa non está no lixo",
+  "this system can't bring files back from the Trash": "este sistema non pode restaurar ficheiros do lixo",
   "More tabs": "Máis lapelas",
   "The groups that don't fit the window": "Os grupos que non caben na xanela"
  }

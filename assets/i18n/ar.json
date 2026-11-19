@@ -989,6 +989,16 @@
   "box": "مربع",
   "freehand": "يدوي",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "اسحب مربعًا فوق النص لتمييزه. اختر يدوي على اليمين لرسم خطوط بدلًا من ذلك.",
+  "Moved {count} captures to the Recycle Bin.": "تم نقل اللقطات ({count}) إلى سلة المحذوفات.",
+  "Moved {count} captures to the Trash.": "تم نقل اللقطات ({count}) إلى سلة المهملات.",
+  "Restored {name}.": "تمت استعادة {name}.",
+  "Restored {count} captures.": "تمت استعادة اللقطات ({count}).",
+  "Couldn't restore {name}: {error}": "تعذرت استعادة {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "تمت استعادة اللقطات: {count} من {total}. تعذرت استعادة {name}: {error}",
+  "a new file has taken its name": "ملف جديد يحمل اسمه الآن",
+  "it isn't in the Recycle Bin any more": "لم يعد موجودًا في سلة المحذوفات",
+  "it isn't in the Trash any more": "لم يعد موجودًا في سلة المهملات",
+  "this system can't bring files back from the Trash": "لا يمكن لهذا النظام استعادة الملفات من سلة المهملات",
   "More tabs": "مزيد من علامات التبويب",
   "The groups that don't fit the window": "المجموعات التي لا تتسع لها النافذة"
  }

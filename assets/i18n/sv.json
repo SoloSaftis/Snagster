@@ -989,6 +989,16 @@
   "box": "ruta",
   "freehand": "frihand",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Dra en ruta över texten för att markera den. Välj frihand till höger för att rita streck i stället.",
+  "Moved {count} captures to the Recycle Bin.": "Flyttade {count} fångster till papperskorgen.",
+  "Moved {count} captures to the Trash.": "Flyttade {count} fångster till papperskorgen.",
+  "Restored {name}.": "Återställde {name}.",
+  "Restored {count} captures.": "Återställde {count} fångster.",
+  "Couldn't restore {name}: {error}": "Kunde inte återställa {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Återställde {count} av {total} fångster. Kunde inte återställa {name}: {error}",
+  "a new file has taken its name": "en ny fil har nu samma namn",
+  "it isn't in the Recycle Bin any more": "den finns inte längre i papperskorgen",
+  "it isn't in the Trash any more": "den finns inte längre i papperskorgen",
+  "this system can't bring files back from the Trash": "det här systemet kan inte återställa filer från papperskorgen",
   "More tabs": "Fler flikar",
   "The groups that don't fit the window": "Grupperna som inte får plats i fönstret"
  }

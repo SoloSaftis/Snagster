@@ -989,6 +989,16 @@
   "box": "рамка",
   "freehand": "иректән",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Тексты билгеләү өчен аның өстенә рамка сөйрәгез. Сызыклар сызу өчен уңда иректән сайлагыз.",
+  "Moved {count} captures to the Recycle Bin.": "{count} төшерү себергә күчерелде.",
+  "Moved {count} captures to the Trash.": "{count} төшерү чүп савытына күчерелде.",
+  "Restored {name}.": "{name} торгызылды.",
+  "Restored {count} captures.": "{count} төшерү торгызылды.",
+  "Couldn't restore {name}: {error}": "{name} торгызып булмады: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} төшерүдән {count} торгызылды. {name} торгызып булмады: {error}",
+  "a new file has taken its name": "аның исемен хәзер яңа файл йөртә",
+  "it isn't in the Recycle Bin any more": "ул инде себердә юк",
+  "it isn't in the Trash any more": "ул инде чүп савытында юк",
+  "this system can't bring files back from the Trash": "бу система чүп савытыннан файлларны торгыза алмый",
   "More tabs": "Күбрәк кыстырма",
   "The groups that don't fit the window": "Тәрәзәгә сыймаган төркемнәр"
  }

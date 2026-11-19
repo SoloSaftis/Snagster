@@ -989,6 +989,16 @@
   "box": "box",
   "freehand": "freehand",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.",
+  "Moved {count} captures to the Recycle Bin.": "Moved {count} captures to the Recycle Bin.",
+  "Moved {count} captures to the Trash.": "Moved {count} captures to the Bin.",
+  "Restored {name}.": "Restored {name}.",
+  "Restored {count} captures.": "Restored {count} captures.",
+  "Couldn't restore {name}: {error}": "Couldn't restore {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Restored {count} of {total} captures. Couldn't restore {name}: {error}",
+  "a new file has taken its name": "a new file has taken its name",
+  "it isn't in the Recycle Bin any more": "it isn't in the Recycle Bin any more",
+  "it isn't in the Trash any more": "it isn't in the Bin any more",
+  "this system can't bring files back from the Trash": "this system can't bring files back from the Bin",
   "More tabs": "More tabs",
   "The groups that don't fit the window": "The groups that don't fit the window"
  }

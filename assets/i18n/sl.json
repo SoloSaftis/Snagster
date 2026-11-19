@@ -989,6 +989,16 @@
   "box": "okvir",
   "freehand": "prosta roka",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Povlecite okvir čez besedilo, da ga označite. Izberite prosta roka na desni, da namesto tega rišete poteze.",
+  "Moved {count} captures to the Recycle Bin.": "Premaknjenih zajemov v koš: {count}.",
+  "Moved {count} captures to the Trash.": "Premaknjenih zajemov v smeti: {count}.",
+  "Restored {name}.": "Obnovljeno: {name}.",
+  "Restored {count} captures.": "Obnovljenih zajemov: {count}.",
+  "Couldn't restore {name}: {error}": "{name} ni bilo mogoče obnoviti: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Obnovljenih zajemov: {count} od {total}. {name} ni bilo mogoče obnoviti: {error}",
+  "a new file has taken its name": "nova datoteka ima zdaj isto ime",
+  "it isn't in the Recycle Bin any more": "ni več v košu",
+  "it isn't in the Trash any more": "ni več v smeteh",
+  "this system can't bring files back from the Trash": "ta sistem ne more obnoviti datotek iz smeti",
   "More tabs": "Več zavihkov",
   "The groups that don't fit the window": "Skupine, ki ne gredo v okno"
  }

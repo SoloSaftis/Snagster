@@ -989,6 +989,16 @@
   "box": "ramka",
   "freehand": "odręcznie",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Przeciągnij ramkę nad tekstem, aby go zaznaczyć. Wybierz po prawej odręcznie, aby zamiast tego rysować pociągnięcia.",
+  "Moved {count} captures to the Recycle Bin.": "Przeniesiono do Kosza przechwycenia: {count}.",
+  "Moved {count} captures to the Trash.": "Przeniesiono do kosza przechwycenia: {count}.",
+  "Restored {name}.": "Przywrócono {name}.",
+  "Restored {count} captures.": "Przywrócono przechwycenia: {count}.",
+  "Couldn't restore {name}: {error}": "Nie udało się przywrócić {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Przywrócono przechwycenia: {count} z {total}. Nie udało się przywrócić {name}: {error}",
+  "a new file has taken its name": "nowy plik ma już tę samą nazwę",
+  "it isn't in the Recycle Bin any more": "nie ma go już w Koszu",
+  "it isn't in the Trash any more": "nie ma go już w koszu",
+  "this system can't bring files back from the Trash": "ten system nie potrafi przywracać plików z kosza",
   "More tabs": "Więcej kart",
   "The groups that don't fit the window": "Grupy, które nie mieszczą się w oknie"
  }

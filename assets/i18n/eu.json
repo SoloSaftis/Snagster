@@ -989,6 +989,16 @@
   "box": "koadroa",
   "freehand": "esku libre",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Arrastatu koadro bat testuaren gainean nabarmentzeko. Aukeratu esku libre eskuinean trazuak marrazteko.",
+  "Moved {count} captures to the Recycle Bin.": "{count} kaptura zakarrontzira mugitu dira.",
+  "Moved {count} captures to the Trash.": "{count} kaptura zakarrontzira mugitu dira.",
+  "Restored {name}.": "{name} leheneratu da.",
+  "Restored {count} captures.": "{count} kaptura leheneratu dira.",
+  "Couldn't restore {name}: {error}": "Ezin izan da {name} leheneratu: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} kapturetatik {count} leheneratu dira. Ezin izan da {name} leheneratu: {error}",
+  "a new file has taken its name": "fitxategi berri batek du orain bere izena",
+  "it isn't in the Recycle Bin any more": "jada ez dago zakarrontzian",
+  "it isn't in the Trash any more": "jada ez dago zakarrontzian",
+  "this system can't bring files back from the Trash": "sistema honek ezin ditu fitxategiak zakarrontzitik leheneratu",
   "More tabs": "Fitxa gehiago",
   "The groups that don't fit the window": "Leihoan sartzen ez diren taldeak"
  }

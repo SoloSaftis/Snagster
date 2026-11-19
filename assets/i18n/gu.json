@@ -989,6 +989,16 @@
   "box": "બોક્સ",
   "freehand": "ફ્રીહેન્ડ",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ટેક્સ્ટને હાઇલાઇટ કરવા તેના પર બોક્સ ખેંચો. તેના બદલે લીટીઓ દોરવા જમણી બાજુ ફ્રીહેન્ડ પસંદ કરો.",
+  "Moved {count} captures to the Recycle Bin.": "{count} કૅપ્ચર રિસાયકલ બિનમાં ખસેડ્યા.",
+  "Moved {count} captures to the Trash.": "{count} કૅપ્ચર કચરાપેટીમાં ખસેડ્યા.",
+  "Restored {name}.": "{name} પુનઃસ્થાપિત કર્યું.",
+  "Restored {count} captures.": "{count} કૅપ્ચર પુનઃસ્થાપિત કર્યા.",
+  "Couldn't restore {name}: {error}": "{name} પુનઃસ્થાપિત કરી શકાયું નહીં: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total}માંથી {count} કૅપ્ચર પુનઃસ્થાપિત કર્યા. {name} પુનઃસ્થાપિત કરી શકાયું નહીં: {error}",
+  "a new file has taken its name": "હવે એક નવી ફાઇલનું નામ પણ એ જ છે",
+  "it isn't in the Recycle Bin any more": "તે હવે રિસાયકલ બિનમાં નથી",
+  "it isn't in the Trash any more": "તે હવે કચરાપેટીમાં નથી",
+  "this system can't bring files back from the Trash": "આ સિસ્ટમ કચરાપેટીમાંથી ફાઇલો પુનઃસ્થાપિત કરી શકતી નથી",
   "More tabs": "વધુ ટૅબ",
   "The groups that don't fit the window": "જે જૂથો વિન્ડોમાં સમાતા નથી"
  }

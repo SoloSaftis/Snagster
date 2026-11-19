@@ -989,6 +989,16 @@
   "box": "casetă",
   "freehand": "mână liberă",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Trageți o casetă peste text pentru a-l evidenția. Alegeți mână liberă în dreapta pentru a desena în schimb linii.",
+  "Moved {count} captures to the Recycle Bin.": "Capturi mutate în Coșul de reciclare: {count}.",
+  "Moved {count} captures to the Trash.": "Capturi mutate în Coșul de gunoi: {count}.",
+  "Restored {name}.": "S-a restaurat {name}.",
+  "Restored {count} captures.": "Capturi restaurate: {count}.",
+  "Couldn't restore {name}: {error}": "Nu s-a putut restaura {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Capturi restaurate: {count} din {total}. Nu s-a putut restaura {name}: {error}",
+  "a new file has taken its name": "un fișier nou are acum același nume",
+  "it isn't in the Recycle Bin any more": "nu mai este în Coșul de reciclare",
+  "it isn't in the Trash any more": "nu mai este în Coșul de gunoi",
+  "this system can't bring files back from the Trash": "acest sistem nu poate restaura fișiere din Coșul de gunoi",
   "More tabs": "Mai multe file",
   "The groups that don't fit the window": "Grupurile care nu încap în fereastră"
  }

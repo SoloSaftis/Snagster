@@ -989,6 +989,16 @@
   "box": "ಬಾಕ್ಸ್",
   "freehand": "ಫ್ರೀಹ್ಯಾಂಡ್",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ಪಠ್ಯವನ್ನು ಹೈಲೈಟ್ ಮಾಡಲು ಅದರ ಮೇಲೆ ಬಾಕ್ಸ್ ಎಳೆಯಿರಿ. ಬದಲಿಗೆ ಗೆರೆಗಳನ್ನು ಬರೆಯಲು ಬಲಭಾಗದಲ್ಲಿ ಫ್ರೀಹ್ಯಾಂಡ್ ಆಯ್ಕೆಮಾಡಿ.",
+  "Moved {count} captures to the Recycle Bin.": "{count} ಸೆರೆಹಿಡಿದವುಗಳನ್ನು ಮರುಬಳಕೆ ಬುಟ್ಟಿಗೆ ಸರಿಸಲಾಗಿದೆ.",
+  "Moved {count} captures to the Trash.": "{count} ಸೆರೆಹಿಡಿದವುಗಳನ್ನು ಕಸದ ಬುಟ್ಟಿಗೆ ಸರಿಸಲಾಗಿದೆ.",
+  "Restored {name}.": "{name} ಅನ್ನು ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ.",
+  "Restored {count} captures.": "{count} ಸೆರೆಹಿಡಿದವುಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ.",
+  "Couldn't restore {name}: {error}": "{name} ಅನ್ನು ಮರುಸ್ಥಾಪಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} ರಲ್ಲಿ {count} ಸೆರೆಹಿಡಿದವುಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ. {name} ಅನ್ನು ಮರುಸ್ಥಾಪಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ: {error}",
+  "a new file has taken its name": "ಹೊಸ ಫೈಲ್ ಈಗ ಅದೇ ಹೆಸರನ್ನು ಹೊಂದಿದೆ",
+  "it isn't in the Recycle Bin any more": "ಅದು ಇನ್ನು ಮರುಬಳಕೆ ಬುಟ್ಟಿಯಲ್ಲಿ ಇಲ್ಲ",
+  "it isn't in the Trash any more": "ಅದು ಇನ್ನು ಕಸದ ಬುಟ್ಟಿಯಲ್ಲಿ ಇಲ್ಲ",
+  "this system can't bring files back from the Trash": "ಈ ಸಿಸ್ಟಂ ಕಸದ ಬುಟ್ಟಿಯಿಂದ ಫೈಲ್‌ಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ",
   "More tabs": "ಇನ್ನಷ್ಟು ಟ್ಯಾಬ್‌ಗಳು",
   "The groups that don't fit the window": "ವಿಂಡೋದಲ್ಲಿ ಹಿಡಿಸದ ಗುಂಪುಗಳು"
  }

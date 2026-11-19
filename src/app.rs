@@ -53,6 +53,7 @@ pub(crate) mod studio_ui;
 pub(crate) mod stream_ui;
 pub(crate) mod updates_ui;
 pub(crate) mod commands_ui;
+pub(crate) mod deleted_ui;
 /// The editor window's smallest size (lifted while it is the panel or the recording bar).
 /// Narrow enough for Windows' Snap layouts to put it in half or a third of the screen
 /// (Microsoft asks for 500 or less); the ribbon and the side panel fold up to fit.
@@ -489,6 +490,12 @@ pub struct SnagApp {
     hk_tx: Sender<u32>,
     hotkeys_for: Option<(bool, Vec<(Target, crate::settings::Combo)>)>,
     pub(crate) status: String,
+    /// What was just deleted, while its Undo shows (`deleted_ui`).
+    pub(crate) deleted: crate::recycle::Pending,
+    /// The pictures' histories when the last delete happened (`deleted_ui::edits_mark`).
+    pub(crate) deleted_edits: (usize, usize, usize, u64),
+    /// Whether the Library window has the keyboard (the Undo waits while neither window has).
+    pub(crate) lib_focused: bool,
     counter: u32,
     screenshot: Option<ScreenshotJob>,
     last_scale: f32,
@@ -533,6 +540,10 @@ impl SnagApp {
         // Start looking for cloud folders now, so the Share tab has them when it opens.
         crate::settings::cloud_folders_now(Some(&cc.egui_ctx));
         let mut app = Self::blank(settings, !check_run, screenshot);
+        if !check_run {
+            // Files an earlier Snagster left waiting for an Undo (it closed first) go on to the Trash.
+            std::thread::spawn(|| crate::recycle::finish_leftovers(&crate::recycle::SystemBin));
+        }
         if check_run {
             let mut second = Doc::new(sample::sample_image(1));
             second.shapes.push(Shape::Ellipse {
@@ -665,6 +676,9 @@ impl SnagApp {
             hk_tx,
             hotkeys_for: None,
             status: "Ready. Press Print Screen, use the Capture menu, or paste a picture with Ctrl+V.".into(),
+            deleted: Default::default(),
+            deleted_edits: (0, 0, 0, 0),
+            lib_focused: false,
             counter: 0,
             screenshot: screenshot.map(|path| ScreenshotJob {
                 path,
@@ -2268,8 +2282,14 @@ impl SnagApp {
         if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z) || consume(Modifiers::COMMAND, Key::Y) {
             self.redo();
         }
+        // Right after a delete, Ctrl+Z / ⌘Z brings the file back (until something else is done;
+        // never while typing).
         if consume(Modifiers::COMMAND, Key::Z) {
-            self.undo();
+            if typing {
+                self.undo();
+            } else {
+                self.undo_any();
+            }
         }
         // Every system's standard keys (docs/DESIGN-GUIDELINES.md in the private notes): Save,
         // Save as with Shift, Print; the menus show these same keys.
@@ -2725,8 +2745,8 @@ impl SnagApp {
             self.settings_open = true;
         }
         ui.separator();
-        if item_on(ui, can_undo, "Undo", "Ctrl+Z") {
-            self.undo();
+        if item_on(ui, self.can_undo_any(can_undo), "Undo", "Ctrl+Z") {
+            self.undo_any();
         }
         if item_on(ui, can_redo, "Redo", redo_keys()) {
             self.redo();
@@ -3355,19 +3375,24 @@ impl SnagApp {
                         self.switch_tab(&ctx, ribbon::RibbonTab::Stream);
                     }
                 });
-                // Two lines at most (a narrow window or bigger text would push the pictures
-                // beside it out of the bar); the whole message is in the tooltip.
-                let status = crate::i18n::tr(&self.status);
-                let text = egui::WidgetText::from(RichText::new(status.clone()).color(TEXT_DIM).size(12.5));
-                let mut job = (*text.into_layout_job(ui.style(), egui::FontSelection::Default, egui::Align::LEFT)).clone();
-                job.wrap.max_width = ui.available_width();
-                job.wrap.max_rows = 2;
-                job.wrap.overflow_character = Some('…');
-                let galley = ui.painter().layout_job(job);
-                let cut = galley.elided;
-                let r = ui.add(egui::Label::new(galley));
-                if cut {
-                    r.on_hover_text(status);
+                // The Undo after a delete, until a newer message takes the line.
+                if self.delete_undo_showing() && self.status == self.deleted_text() {
+                    self.delete_undo_bar(ui, 24);
+                } else {
+                    // Two lines at most (a narrow window or bigger text would push the pictures
+                    // beside it out of the bar); the whole message is in the tooltip.
+                    let status = crate::i18n::tr(&self.status);
+                    let text = egui::WidgetText::from(RichText::new(status.clone()).color(TEXT_DIM).size(12.5));
+                    let mut job = (*text.into_layout_job(ui.style(), egui::FontSelection::Default, egui::Align::LEFT)).clone();
+                    job.wrap.max_width = ui.available_width();
+                    job.wrap.max_rows = 2;
+                    job.wrap.overflow_character = Some('…');
+                    let galley = ui.painter().layout_job(job);
+                    let cut = galley.elided;
+                    let r = ui.add(egui::Label::new(galley));
+                    if cut {
+                        r.on_hover_text(status);
+                    }
                 }
                 self.screen_access_link(ui);
             });
@@ -4157,6 +4182,7 @@ impl SnagApp {
 impl SnagApp {
     fn logic_body(&mut self, ctx: &egui::Context) {
         self.jobs.wake(ctx);
+        self.tick_deleted(ctx);
         self.apply_language(ctx);
         self.poll_updates(ctx);
         // The HTTP server for AI apps runs while it's switched on in Settings.
@@ -5270,22 +5296,29 @@ impl SnagApp {
         };
         // The shell's Recycle Bin can take seconds (a file on a cloud or network drive): on the
         // job queue, and the picture leaves Recent only once its file has gone.
+        // Undo brings it back (with its library tags, when it has them) and opens it again.
         let id = self.entries[i].id;
+        let bin = self.deleted.bin();
         self.jobs.queue(move || {
-            let r = trash::delete(&p).map_err(|e| e.to_string());
+            let meta = std::fs::read_to_string(p.with_extension("json")).ok().and_then(|s| serde_json::from_str::<library::Meta>(&s).ok());
+            let r = crate::recycle::remove(&p, meta, crate::recycle::way_here(), bin.as_ref());
             Box::new(move |app: &mut SnagApp, _: &egui::Context| app.recycled(id, &p, r))
         });
     }
 
-    fn recycled(&mut self, id: u64, p: &std::path::Path, r: Result<(), String>) {
-        if let Err(e) = r {
-            self.status = crate::i18n::tf(crate::platform::trash_text("Couldn't move it to the Recycle Bin: {error}", "Couldn't move it to the Trash: {error}"), &[("error", &e)]);
-            return;
-        }
+    fn recycled(&mut self, id: u64, p: &std::path::Path, r: Result<crate::recycle::Gone, String>) {
+        let mut g = match r {
+            Ok(g) => g,
+            Err(e) => {
+                self.status = crate::i18n::tf(crate::platform::trash_text("Couldn't move it to the Recycle Bin: {error}", "Couldn't move it to the Trash: {error}"), &[("error", &e)]);
+                return;
+            }
+        };
         let s = p.display().to_string();
         self.settings.recent_files.retain(|f| *f != s);
         self.lib_loaded = false;
-        self.status = crate::i18n::tf(crate::platform::trash_text("Moved {path} to the Recycle Bin.", "Moved {path} to the Trash."), &[("path", &s)]);
+        g.reopen = true;
+        self.deleted(g);
         if let Some(i) = self.entries.iter().position(|e| e.id == id) {
             let keep = self.current.filter(|&c| c != i).map(|c| self.entries[c].id);
             self.current = Some(i);
@@ -5746,6 +5779,12 @@ impl SnagApp {
             }
             "language" => {
                 self.x.lang_open = true;
+            }
+            "deleted" => {
+                // The Undo after a delete, in the status area and the Library (no file is touched).
+                let p = PathBuf::from(&self.settings.library_folder).join("2026-11").join("2026-11-19_10-24-31.png");
+                self.deleted(crate::recycle::Gone::in_bin(&p));
+                self.library_open = true;
             }
             _ => {}
         }
@@ -6662,11 +6701,13 @@ mod tests {
         a.recycled(first, p, Err("in use".into()));
         assert_eq!(a.entries.len(), 3, "kept when the file couldn't go");
         assert!(a.status.contains("in use"), "{}", a.status);
-        a.recycled(first, p, Ok(()));
+        a.recycled(first, p, Ok(crate::recycle::Gone::in_bin(p)));
         assert_eq!(a.entries.len(), 2);
         assert_eq!(a.current.map(|c| a.entries[c].id), Some(third), "the open picture stays open");
         assert!(a.status.starts_with("Moved "), "{}", a.status);
-        a.recycled(first, p, Ok(()));
+        assert!(a.delete_undo_showing(), "an Undo shows right away");
+        assert!(a.deleted.only().is_some_and(|g| g.reopen), "Undo opens it in the editor again");
+        a.recycled(first, p, Ok(crate::recycle::Gone::in_bin(p)));
         assert_eq!(a.entries.len(), 2, "an id that is gone removes nothing");
     }
 

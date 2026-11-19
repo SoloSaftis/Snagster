@@ -33,7 +33,7 @@ library_add or open_in_snagster keep it. Text recognition (Windows only): read_t
 simplify. Recording: record_video (MP4 with H.264 everywhere; HEVC and WMV on Windows; 1-120 frames per second; sound \
 on Windows), record_gif, and Studio scenes (studio_scenes, studio_add_scene, studio_add_source, studio_update_source, \
 studio_record). Guides: make_guide (PDF, web page, Word or one tall picture). Library: library_search, library_tag, \
-library_delete. Live streaming: stream_services, stream_start (Twitch, YouTube, Kick, Facebook, Restream or any RTMP/RTMPS \
+library_delete (to the Recycle Bin / Trash; undo_delete brings it back for 2 minutes). Live streaming: stream_services, stream_start (Twitch, YouTube, Kick, Facebook, Restream or any RTMP/RTMPS \
 server; the screen, a window, an area or the Studio scene; the stream key saved in Snagster is used and never shown), \
 stream_status and stream_stop. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
 set_setting checks kind and range). Everything else a person can press in the window is in list_commands: app_command \
@@ -66,6 +66,9 @@ pub struct Workspace {
     fixed: Option<Settings>,
     /// The last desktop area captured in this session, for capture_last_area.
     last_area: Option<(i32, i32, u32, u32)>,
+    /// The library pictures library_delete took, until undo_delete brings them back or the time runs out
+    /// (made on the first delete).
+    deleted: Option<crate::recycle::Pending>,
 }
 
 /// A tool's answer: MCP content items, or an error message.
@@ -294,8 +297,8 @@ fn base_tools() -> Vec<Tool> {
 const MARK_KINDS: [&str; 14] = ["arrow", "line", "box", "oval", "highlight", "pen", "text", "callout", "step", "stamp", "pointer", "spotlight", "magnify", "image"];
 
 /// Tools that change something outside the current picture (files, clipboard, settings, screen).
-const SIDE: [&str; 30] = [
-    "save", "quick_save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "library_delete", "library_tag",
+const SIDE: [&str; 31] = [
+    "save", "quick_save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "library_delete", "undo_delete", "library_tag",
     "set_setting", "set_language", "open_in_snagster", "studio_add_source", "studio_remove_source", "studio_update_source",
     "studio_add_scene", "studio_remove_scene", "studio_set_current", "studio_record", "capture_scrolling", "paste_from_clipboard",
     "capture_screen", "capture_region", "capture_window", "stream_start", "stream_stop", "app_command", "save_to_cloud", "gif_edit", "studio_edit",

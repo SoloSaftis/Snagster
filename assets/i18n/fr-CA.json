@@ -989,6 +989,16 @@
   "box": "boîte",
   "freehand": "à main levée",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Faites glisser une boîte sur le texte pour le surligner. Choisissez à main levée à droite pour tracer des traits.",
+  "Moved {count} captures to the Recycle Bin.": "{count} captures déplacées vers la corbeille.",
+  "Moved {count} captures to the Trash.": "{count} captures mises à la corbeille.",
+  "Restored {name}.": "{name} restauré.",
+  "Restored {count} captures.": "{count} captures restaurées.",
+  "Couldn't restore {name}: {error}": "Impossible de restaurer {name} : {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{count} captures sur {total} restaurées. Impossible de restaurer {name} : {error}",
+  "a new file has taken its name": "un nouveau fichier porte désormais son nom",
+  "it isn't in the Recycle Bin any more": "il n'est plus dans la corbeille",
+  "it isn't in the Trash any more": "il n'est plus dans la corbeille",
+  "this system can't bring files back from the Trash": "ce système ne peut pas restaurer de fichiers depuis la corbeille",
   "More tabs": "Plus d'onglets",
   "The groups that don't fit the window": "Les groupes qui n'entrent pas dans la fenêtre"
  }

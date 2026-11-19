@@ -989,6 +989,16 @@
   "box": "תיבה",
   "freehand": "יד חופשית",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "גררו תיבה מעל הטקסט כדי להדגיש אותו. בחרו יד חופשית מימין כדי לצייר קווים.",
+  "Moved {count} captures to the Recycle Bin.": "{count} צילומים הועברו לסל המיחזור.",
+  "Moved {count} captures to the Trash.": "{count} צילומים הועברו לאשפה.",
+  "Restored {name}.": "{name} שוחזר.",
+  "Restored {count} captures.": "{count} צילומים שוחזרו.",
+  "Couldn't restore {name}: {error}": "לא ניתן לשחזר את {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{count} מתוך {total} צילומים שוחזרו. לא ניתן לשחזר את {name}: {error}",
+  "a new file has taken its name": "קובץ חדש נושא כעת את שמו",
+  "it isn't in the Recycle Bin any more": "הוא כבר לא בסל המיחזור",
+  "it isn't in the Trash any more": "הוא כבר לא באשפה",
+  "this system can't bring files back from the Trash": "מערכת זו לא יכולה לשחזר קבצים מהאשפה",
   "More tabs": "כרטיסיות נוספות",
   "The groups that don't fit the window": "הקבוצות שלא נכנסות לחלון"
  }

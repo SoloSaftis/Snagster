@@ -989,6 +989,16 @@
   "box": "बॉक्स",
   "freehand": "फ्रीहैंड",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "टेक्स्ट को हाइलाइट करने के लिए उस पर बॉक्स खींचें। इसके बजाय रेखाएँ खींचने के लिए दाईं ओर फ्रीहैंड चुनें।",
+  "Moved {count} captures to the Recycle Bin.": "{count} कैप्चर रीसायकल बिन में ले जाए गए।",
+  "Moved {count} captures to the Trash.": "{count} कैप्चर ट्रैश में ले जाए गए।",
+  "Restored {name}.": "{name} पुनर्स्थापित किया गया।",
+  "Restored {count} captures.": "{count} कैप्चर पुनर्स्थापित किए गए।",
+  "Couldn't restore {name}: {error}": "{name} पुनर्स्थापित नहीं किया जा सका: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total} में से {count} कैप्चर पुनर्स्थापित किए गए। {name} पुनर्स्थापित नहीं किया जा सका: {error}",
+  "a new file has taken its name": "अब एक नई फ़ाइल का यही नाम है",
+  "it isn't in the Recycle Bin any more": "यह अब रीसायकल बिन में नहीं है",
+  "it isn't in the Trash any more": "यह अब ट्रैश में नहीं है",
+  "this system can't bring files back from the Trash": "यह सिस्टम ट्रैश से फ़ाइलें पुनर्स्थापित नहीं कर सकता",
   "More tabs": "और टैब",
   "The groups that don't fit the window": "वे समूह जो विंडो में नहीं समाते"
  }

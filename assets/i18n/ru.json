@@ -989,6 +989,16 @@
   "box": "рамка",
   "freehand": "от руки",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Протяните рамку поверх текста, чтобы выделить его. Выберите справа «от руки», чтобы рисовать штрихи.",
+  "Moved {count} captures to the Recycle Bin.": "Снимков перемещено в корзину: {count}.",
+  "Moved {count} captures to the Trash.": "Снимков перемещено в корзину: {count}.",
+  "Restored {name}.": "Восстановлено: {name}.",
+  "Restored {count} captures.": "Восстановлено снимков: {count}.",
+  "Couldn't restore {name}: {error}": "Не удалось восстановить {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Восстановлено снимков: {count} из {total}. Не удалось восстановить {name}: {error}",
+  "a new file has taken its name": "его имя уже занял новый файл",
+  "it isn't in the Recycle Bin any more": "его больше нет в корзине",
+  "it isn't in the Trash any more": "его больше нет в корзине",
+  "this system can't bring files back from the Trash": "эта система не может восстанавливать файлы из корзины",
   "More tabs": "Другие вкладки",
   "The groups that don't fit the window": "Группы, которые не помещаются в окне"
  }

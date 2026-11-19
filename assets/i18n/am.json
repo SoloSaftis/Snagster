@@ -989,6 +989,16 @@
   "box": "ሳጥን",
   "freehand": "በነጻ እጅ",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ጽሑፍን ለማጉላት ሳጥን ይጎትቱ። በምትኩ መስመሮችን ለመሳል በቀኝ በኩል በነጻ እጅ ይምረጡ።",
+  "Moved {count} captures to the Recycle Bin.": "{count} ቀረጻዎች ወደ ሪሳይክል ቢን ተወስደዋል።",
+  "Moved {count} captures to the Trash.": "{count} ቀረጻዎች ወደ መጣያ ተወስደዋል።",
+  "Restored {name}.": "{name} ወደነበረበት ተመልሷል።",
+  "Restored {count} captures.": "{count} ቀረጻዎች ወደነበሩበት ተመልሰዋል።",
+  "Couldn't restore {name}: {error}": "{name} ወደነበረበት መመለስ አልተቻለም፦ {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "ከ{total} ቀረጻዎች {count} ወደነበሩበት ተመልሰዋል። {name} ወደነበረበት መመለስ አልተቻለም፦ {error}",
+  "a new file has taken its name": "አዲስ ፋይል ስሙን ወስዷል",
+  "it isn't in the Recycle Bin any more": "ከአሁን በኋላ በሪሳይክል ቢን ውስጥ የለም",
+  "it isn't in the Trash any more": "ከአሁን በኋላ በመጣያ ውስጥ የለም",
+  "this system can't bring files back from the Trash": "ይህ ሥርዓት ፋይሎችን ከመጣያ መመለስ አይችልም",
   "More tabs": "ተጨማሪ ትሮች",
   "The groups that don't fit the window": "በመስኮቱ ውስጥ የማይገቡ ቡድኖች"
  }

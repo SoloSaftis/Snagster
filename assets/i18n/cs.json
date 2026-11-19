@@ -989,6 +989,16 @@
   "box": "rámeček",
   "freehand": "od ruky",
   "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Přetažením rámečku přes text jej zvýrazníte. Chcete-li kreslit tahy, vyberte vpravo od ruky.",
+  "Moved {count} captures to the Recycle Bin.": "Přesunuto do Koše zachycení: {count}.",
+  "Moved {count} captures to the Trash.": "Přesunuto do koše zachycení: {count}.",
+  "Restored {name}.": "Obnoveno: {name}.",
+  "Restored {count} captures.": "Obnoveno zachycení: {count}.",
+  "Couldn't restore {name}: {error}": "{name} nelze obnovit: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Obnoveno zachycení: {count} z {total}. {name} nelze obnovit: {error}",
+  "a new file has taken its name": "jeho název už má nový soubor",
+  "it isn't in the Recycle Bin any more": "už není v Koši",
+  "it isn't in the Trash any more": "už není v koši",
+  "this system can't bring files back from the Trash": "tento systém neumí obnovovat soubory z koše",
   "More tabs": "Další karty",
   "The groups that don't fit the window": "Skupiny, které se do okna nevejdou"
  }
