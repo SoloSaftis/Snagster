@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "„Зголеми контраст“ е вклучено во Системски поставки, па текстот и рабовите се појаки.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Споделувањето на екранот е откажано во дијалогот на работната површина: ништо не е споделено.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Споделувањето на екранот не започна: беше откажано во дијалогот на работната површина или работната површина не наведе причина. Ништо не е споделено.",
-  "The desktop's screen-sharing portal said no: {error}": "Порталот за споделување на екранот на работната површина одби: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Порталот за споделување на екранот на работната површина одби: {error}",
+  "Undo Move to Trash": "Откажи го преместувањето во Корпа за отпадоци",
+  "Hide ribbon": "Скриј ја лентата",
+  "Show ribbon": "Прикажи ја лентата",
+  "Stop recording": "Запри го снимањето",
+  "Editor": "Уредник"
  }
 }

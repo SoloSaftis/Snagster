@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Auk kontrast er slått på i Systeminnstillingar, så tekst og kantar er tydelegare.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skjermdelinga vart avbroten i dialogen til skrivebordet: ingenting vart delt.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skjermdelinga starta ikkje: ho vart avbroten i dialogen til skrivebordet, eller skrivebordet oppgav inga årsak. Ingenting vart delt.",
-  "The desktop's screen-sharing portal said no: {error}": "Skjermdelingsportalen til skrivebordet sa nei: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Skjermdelingsportalen til skrivebordet sa nei: {error}",
+  "Undo Move to Trash": "Angre flytting til papirkorga",
+  "Hide ribbon": "Skjul båndet",
+  "Show ribbon": "Vis båndet",
+  "Stop recording": "Stopp opptak",
+  "Editor": "Redigering"
  }
 }

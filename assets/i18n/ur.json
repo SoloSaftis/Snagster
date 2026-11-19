@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "سسٹم کی ترتیبات میں “تضاد بڑھائیں” آن ہے، اس لیے متن اور کناروں کا تضاد زیادہ ہے۔",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ڈیسک ٹاپ کے ڈائیلاگ میں اسکرین شیئرنگ منسوخ کر دی گئی: کچھ بھی شیئر نہیں کیا گیا۔",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "اسکرین شیئرنگ شروع نہیں ہوئی: اسے ڈیسک ٹاپ کے ڈائیلاگ میں منسوخ کر دیا گیا تھا، یا ڈیسک ٹاپ نے کوئی وجہ نہیں بتائی۔ کچھ بھی شیئر نہیں کیا گیا۔",
-  "The desktop's screen-sharing portal said no: {error}": "ڈیسک ٹاپ کے اسکرین شیئرنگ portal نے انکار کر دیا: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "ڈیسک ٹاپ کے اسکرین شیئرنگ portal نے انکار کر دیا: {error}",
+  "Undo Move to Trash": "ردی کی ٹوکری میں منتقل کرنا کالعدم کریں",
+  "Hide ribbon": "ربن چھپائیں",
+  "Show ribbon": "ربن دکھائیں",
+  "Stop recording": "ریکارڈنگ روکیں",
+  "Editor": "ایڈیٹر"
  }
 }

@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "เปิด “เพิ่มความคมชัด” ไว้ในการตั้งค่าระบบ ข้อความและเส้นขอบจึงเด่นชัดขึ้น",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "การแชร์หน้าจอถูกยกเลิกในกล่องโต้ตอบของเดสก์ท็อป: ไม่มีการแชร์สิ่งใด",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "การแชร์หน้าจอไม่ได้เริ่มขึ้น: ถูกยกเลิกในกล่องโต้ตอบของเดสก์ท็อป หรือเดสก์ท็อปไม่ได้ระบุเหตุผล ไม่มีการแชร์สิ่งใด",
-  "The desktop's screen-sharing portal said no: {error}": "พอร์ทัล (portal) แชร์หน้าจอของเดสก์ท็อปปฏิเสธ: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "พอร์ทัล (portal) แชร์หน้าจอของเดสก์ท็อปปฏิเสธ: {error}",
+  "Undo Move to Trash": "เลิกทำการย้ายไปถังขยะ",
+  "Hide ribbon": "ซ่อนริบบิน",
+  "Show ribbon": "แสดงริบบิน",
+  "Stop recording": "หยุดบันทึก",
+  "Editor": "ตัวแก้ไข"
  }
 }

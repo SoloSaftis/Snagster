@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "« Augmenter le contraste » est activé dans Réglages Système, le texte et les bordures sont donc plus marqués.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Le partage d'écran a été annulé dans la boîte de dialogue du bureau : rien n'a été partagé.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Le partage d'écran n'a pas démarré : il a été annulé dans la boîte de dialogue du bureau, ou le bureau n'a donné aucune raison. Rien n'a été partagé.",
-  "The desktop's screen-sharing portal said no: {error}": "Le portail de partage d'écran du bureau a refusé : {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Le portail de partage d'écran du bureau a refusé : {error}",
+  "Undo Move to Trash": "Annuler la mise à la corbeille",
+  "Hide ribbon": "Masquer le ruban",
+  "Show ribbon": "Afficher le ruban",
+  "Stop recording": "Arrêter l'enregistrement",
+  "Editor": "Éditeur"
  }
 }

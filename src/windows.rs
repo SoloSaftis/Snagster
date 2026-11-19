@@ -124,6 +124,77 @@ fn settings_frame(sys: crate::platform::System, pane: &'static str) -> (String, 
     (crate::i18n::t("Settings").to_string(), true)
 }
 
+/// Settings on a Mac: a toolbar of seven icons, as Apple's Settings windows have, each a group
+/// of panes that belong together (English name, icon, panes). A group of more than one pane
+/// picks between them with a row of buttons under the toolbar.
+pub(crate) const MAC_GROUPS: [(&str, &str, &[SettingsTab]); 7] = {
+    use crate::look::ph;
+    [
+        ("General", ph::GEAR, &[SettingsTab::Language, SettingsTab::AfterCapture]),
+        ("Capture", ph::CAMERA, &[SettingsTab::Capture, SettingsTab::Presets, SettingsTab::Saving]),
+        ("Recording", ph::VIDEO_CAMERA, &[SettingsTab::Recording]),
+        ("Editor", ph::PAINT_BRUSH, &[SettingsTab::Editor, SettingsTab::Effects, SettingsTab::Redact]),
+        ("Hotkeys", ph::KEYBOARD, &[SettingsTab::Hotkeys]),
+        ("Streaming", ph::BROADCAST, &[SettingsTab::Streaming]),
+        ("AI apps", ph::ROBOT, &[SettingsTab::Ai]),
+    ]
+};
+
+/// The Library item the delete key acts on: the picked one, when the grid shows it (`order`
+/// holds the shown items); a capture hidden by the search is never deleted unseen.
+fn picked_index(items: &[library::Item], order: &[usize], picked: Option<&std::path::Path>) -> Option<usize> {
+    let picked = picked?;
+    order.iter().copied().find(|&i| items.get(i).is_some_and(|it| it.path == picked))
+}
+
+/// A translated text in a Mac's Title Case (English only; other languages keep their rules).
+fn mac_title(text: &str) -> String {
+    #[cfg(any(target_os = "macos", test))]
+    return crate::menubar::in_title_case(text.to_string(), crate::i18n::current());
+    #[cfg(not(any(target_os = "macos", test)))]
+    text.to_string()
+}
+
+/// The toolbar group a pane belongs to (`MAC_GROUPS`).
+pub(crate) fn mac_group(tab: SettingsTab) -> usize {
+    MAC_GROUPS.iter().position(|g| g.2.contains(&tab)).unwrap_or(0)
+}
+
+/// A Mac Settings window's toolbar (`MAC_GROUPS`, centred) and, for a group of panes, the
+/// row that picks between them. `label` names a pane (translated).
+fn mac_settings_toolbar(ui: &mut egui::Ui, tab: &mut SettingsTab, label: &dyn Fn(SettingsTab) -> &'static str) {
+    let group = mac_group(*tab);
+    let gap = ui.spacing().item_spacing.x;
+    centered_row(ui, MAC_GROUPS.len() as f32 * (crate::look::PANE_TOOL_W + gap) - gap, |ui| {
+        for (i, (name, icon, tabs)) in MAC_GROUPS.iter().enumerate() {
+            let name = mac_title(crate::i18n::t(name));
+            if crate::look::pane_tool(ui, icon, &name, i == group).clicked() && i != group {
+                *tab = tabs[0];
+            }
+        }
+    });
+    let tabs = MAC_GROUPS[group].2;
+    if tabs.len() > 1 {
+        ui.add_space(4.0);
+        let font = egui::TextStyle::Button.resolve(ui.style());
+        let pad = ui.spacing().button_padding.x * 2.0 + gap;
+        let width: f32 = tabs.iter().map(|t| ui.fonts_mut(|f| f.layout_no_wrap(label(*t).to_string(), font.clone(), Color32::WHITE).size().x) + pad).sum::<f32>() - gap;
+        centered_row(ui, width, |ui| {
+            for &t in tabs {
+                ui.selectable_value(tab, t, label(t));
+            }
+        });
+    }
+}
+
+/// Lay out a row `width` wide in the middle of `ui`.
+fn centered_row(ui: &mut egui::Ui, width: f32, add: impl FnOnce(&mut egui::Ui)) {
+    ui.horizontal(|ui| {
+        ui.add_space(((ui.available_width() - width) / 2.0).max(0.0));
+        add(ui);
+    });
+}
+
 /// Modifier boxes and a key list for one hotkey.
 fn combo_editor(ui: &mut egui::Ui, id: String, c: &mut Combo) -> bool {
     let before = c.clone();
@@ -172,14 +243,21 @@ impl SnagApp {
             (SettingsTab::Streaming, crate::i18n::t("Streaming")),
             (SettingsTab::Language, crate::i18n::t("General")),
         ];
-        let pane = panes.iter().find(|p| p.0 == self.settings_tab).map_or(panes[0].1, |p| p.1);
+        let mac = crate::platform::system() == crate::platform::System::Mac;
+        let label_of = |tab: SettingsTab| panes.iter().find(|p| p.0 == tab).map_or(panes[0].1, |p| p.1);
+        // A Mac titles the window with the toolbar icon chosen.
+        let pane = if mac { crate::i18n::t(MAC_GROUPS[mac_group(self.settings_tab)].0) } else { label_of(self.settings_tab) };
         let (title, resizable) = settings_frame(crate::platform::system(), pane);
         own_window(ctx, Win { key: SETTINGS_KEY, title: &title, size: vec2(720.0, 600.0), resizable }, &mut open, |ui| {
-                ui.horizontal_wrapped(|ui| {
-                    for (tab, label) in panes {
-                        ui.selectable_value(&mut self.settings_tab, tab, label);
-                    }
-                });
+                if mac {
+                    mac_settings_toolbar(ui, &mut self.settings_tab, &label_of);
+                } else {
+                    ui.horizontal_wrapped(|ui| {
+                        for (tab, label) in panes {
+                            ui.selectable_value(&mut self.settings_tab, tab, label);
+                        }
+                    });
+                }
                 ui.separator();
                 egui::ScrollArea::vertical().show(ui, |ui| match self.settings_tab {
                     SettingsTab::AfterCapture => {
@@ -405,6 +483,10 @@ impl SnagApp {
         self.settings_open = open;
         if reset {
             self.settings = Settings::default();
+        }
+        // Settings opens on this pane next time, also after a restart.
+        if self.settings.settings_pane != self.settings_tab.key() {
+            self.settings.settings_pane = self.settings_tab.key().to_string();
         }
         if let Some(i) = run_preset {
             self.run_preset(ctx, i);
@@ -740,13 +822,16 @@ impl SnagApp {
                 ui.add_space(8.0);
                 ui.label(RichText::new(crate::i18n::t("In Snagster")).strong());
                 egui::Grid::new("keys").striped(true).spacing(vec2(16.0, 4.0)).show(ui, |ui| {
+                    use crate::platform::{AppKey, app_key_text};
+                    let capture_keys = format!("{} / {} / {}", app_key_text(AppKey::AllInOne), app_key_text(AppKey::Window), app_key_text(AppKey::Screen));
+                    let print_pin = format!("Ctrl+P, {}", app_key_text(AppKey::Pin));
                     let rows: Vec<(String, String)> = [
-                        ("Ctrl+Shift+A / W / F", "All-in-one / window / screen capture"),
+                        (capture_keys.as_str(), "All-in-one / window / screen capture"),
                         (if crate::platform::system() == crate::platform::System::Windows { "Ctrl+Z, Ctrl+Y" } else { "Ctrl+Z, Ctrl+Shift+Z" }, "Undo, redo"),
                         ("Ctrl+C, Ctrl+V", "Copy picture, paste a picture"),
                         ("Ctrl+S, Ctrl+Shift+S, Ctrl+Alt+S", "Save, save as, quick save to folder"),
                         ("Ctrl+N, Ctrl+O, Ctrl+L", "New picture, open a picture, open the library"),
-                        ("Ctrl+P, Ctrl+Shift+P", "Print, pin picture to screen"),
+                        (print_pin.as_str(), "Print, pin picture to screen"),
                         ("Ctrl+,", "Settings"),
                         ("Delete, [ and ]", "Delete, shrink or grow the selected mark"),
                         ("0, 1, +, -", "Fit, actual size, zoom in, zoom out"),
@@ -1037,6 +1122,11 @@ impl SnagApp {
             if !self.lib_app.is_empty() {
                 order.retain(|i| self.lib_items[*i].meta.app == self.lib_app);
             }
+            // Delete (⌘⌫ on a Mac) moves the picked capture to the Recycle Bin / Trash, unless
+            // a text box (the search) has the keys.
+            if !ui.ctx().egui_wants_keyboard_input() && ui.input(crate::platform::trash_key_pressed) {
+                delete_item = picked_index(&self.lib_items, &order, self.lib_picked.as_deref());
+            }
             if order.is_empty() {
                 ui.label(RichText::new(crate::i18n::t("Nothing here yet. Captures are added automatically (Settings > After capture).")).color(pal().dim));
             }
@@ -1065,8 +1155,18 @@ impl SnagApp {
                     for &i in members {
                         let item = &self.lib_items[i];
                         let (rect, resp) = ui.allocate_exact_size(vec2(192.0, 176.0), Sense::click());
+                        let picked = self.lib_picked.as_ref() == Some(&item.path);
+                        let title_for_reader = item.meta.title.clone();
+                        resp.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, picked, &title_for_reader));
                         let p = ui.painter();
                         p.rect_filled(rect, CornerRadius::same(8), if resp.hovered() { pal().card_hover } else { pal().card });
+                        if picked {
+                            p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(2.0, accent()), StrokeKind::Inside);
+                        }
+                        // A click picks it (as in Explorer, Files and Finder), a right click too.
+                        if resp.clicked() || resp.secondary_clicked() {
+                            self.lib_picked = Some(item.path.clone());
+                        }
                         let thumb_area = Rect::from_min_size(rect.min + vec2(6.0, 6.0), vec2(180.0, 110.0));
                         if let Some(t) = self.lib_thumbs.get(&item.path) {
                             let sz = t.size_vec2();
@@ -1148,7 +1248,10 @@ impl SnagApp {
             // An Undo shows right away, here and in the editor.
             match library::delete(&self.lib_items[i]) {
                 Ok(g) => {
-                    self.lib_items.remove(i);
+                    let gone = self.lib_items.remove(i);
+                    if self.lib_picked.as_ref() == Some(&gone.path) {
+                        self.lib_picked = None;
+                    }
                     self.deleted(g);
                 }
                 Err(e) => self.status = crate::i18n::tf(crate::platform::trash_text("Couldn't move it to the Recycle Bin: {error}", "Couldn't move it to the Trash: {error}"), &[("error", &e)]),
@@ -2040,6 +2143,84 @@ mod tests {
         assert!(fits_content(&dialog));
         let big = Win { key: "library", title: "Library", size: vec2(900.0, 600.0), resizable: true };
         assert!(!fits_content(&big));
+    }
+
+    #[test]
+    fn the_delete_key_takes_the_picked_capture_only_when_it_is_shown() {
+        let item = |p: &str| library::Item { path: PathBuf::from(p), meta: Default::default() };
+        let items = vec![item("a.png"), item("b.png"), item("c.png")];
+        assert_eq!(picked_index(&items, &[0, 1, 2], Some(Path::new("b.png"))), Some(1));
+        assert_eq!(picked_index(&items, &[2, 0], Some(Path::new("c.png"))), Some(2), "in any order");
+        assert_eq!(picked_index(&items, &[0, 2], Some(Path::new("b.png"))), None, "hidden by the search: never deleted unseen");
+        assert_eq!(picked_index(&items, &[0, 1, 2], None), None, "nothing picked");
+        assert_eq!(picked_index(&items, &[0, 1, 2], Some(Path::new("gone.png"))), None);
+        assert_eq!(picked_index(&items, &[7], Some(Path::new("a.png"))), None);
+    }
+
+    #[test]
+    fn the_mac_settings_toolbar_holds_every_pane_once() {
+        assert!(MAC_GROUPS.len() <= 7, "about seven icons, as Apple's Settings windows have");
+        for tab in SettingsTab::ALL {
+            let n = MAC_GROUPS.iter().filter(|g| g.2.contains(&tab)).count();
+            assert_eq!(n, 1, "{:?} is in {n} groups", tab.key());
+            assert!(MAC_GROUPS[mac_group(tab)].2.contains(&tab));
+        }
+        let en: std::collections::HashSet<String> = serde_json::from_str::<Vec<String>>(include_str!("../assets/i18n/strings.json")).unwrap().into_iter().collect();
+        let mut icons = std::collections::HashSet::new();
+        for (name, icon, tabs) in MAC_GROUPS {
+            assert!(!tabs.is_empty());
+            assert!(en.contains(name), "{name} isn't in strings.json");
+            assert!(icons.insert(icon), "{name}: an icon of its own");
+        }
+        // The toolbar fits the fixed 720-point window.
+        assert!(MAC_GROUPS.len() as f32 * (crate::look::PANE_TOOL_W + 8.0) < 700.0);
+    }
+
+    #[test]
+    fn the_mac_settings_toolbar_draws_every_group_and_keeps_the_pane() {
+        let ctx = egui::Context::default();
+        for start in SettingsTab::ALL {
+            let mut tab = start;
+            let mut height = 0.0;
+            let _ = ctx.run_ui(Default::default(), |ui| {
+                let r = ui.scope(|ui| mac_settings_toolbar(ui, &mut tab, &|t| t.key()));
+                height = r.response.rect.height();
+            });
+            assert!(tab == start, "drawing alone never changes the pane ({})", start.key());
+            let row = MAC_GROUPS[mac_group(start)].2.len() > 1;
+            assert!(height >= 54.0, "{}: the icons are drawn", start.key());
+            assert!(!row || height > 70.0, "{}: a group of panes gets its row", start.key());
+        }
+    }
+
+    #[test]
+    fn settings_reopens_on_the_pane_shown_last_after_a_restart() {
+        for tab in SettingsTab::ALL {
+            assert!(SettingsTab::from_key(tab.key()) == tab, "{}", tab.key());
+        }
+        assert!(SettingsTab::from_key("") == SettingsTab::AfterCapture, "a new settings file starts on the first pane");
+        assert!(SettingsTab::from_key("gone") == SettingsTab::AfterCapture);
+        // Every key is one the catalogue (and so AI apps) accept.
+        let k = crate::catalog::SETTINGS.iter().find(|k| k.key == "settings_pane").expect("in the catalogue");
+        let crate::catalog::Kind::Choice(names) = k.kind else { panic!("a choice") };
+        assert_eq!(names.len(), SettingsTab::ALL.len());
+        for tab in SettingsTab::ALL {
+            assert!(names.contains(&tab.key()), "{}", tab.key());
+        }
+        // The window writes the pane it shows into the settings, which are saved to disk.
+        let ctx = egui::Context::default();
+        ctx.set_embed_viewports(true);
+        let mut s = Settings::default();
+        s.settings_pane = "hotkeys".into();
+        let mut a = SnagApp::blank(s, false, None);
+        assert!(a.settings_tab == SettingsTab::Hotkeys, "started on the pane saved last time");
+        a.settings_open = true;
+        a.settings_tab = SettingsTab::Streaming;
+        let _ = ctx.run_ui(Default::default(), |ui| a.settings_window(ui.ctx()));
+        assert_eq!(a.settings.settings_pane, "streaming");
+        let json = serde_json::to_string(&a.settings).unwrap();
+        let back: Settings = serde_json::from_str(&json).unwrap();
+        assert!(SettingsTab::from_key(&back.settings_pane) == SettingsTab::Streaming);
     }
 
     /// A box opens in the middle of Snagster's window, but never off the screen.

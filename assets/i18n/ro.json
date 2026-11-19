@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Opțiunea Creșterea contrastului este activată în Setările de sistem, deci textul și marginile sunt mai pronunțate.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Partajarea ecranului a fost anulată în dialogul desktopului: nu s-a partajat nimic.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Partajarea ecranului nu a pornit: a fost anulată în dialogul desktopului sau desktopul nu a dat niciun motiv. Nu s-a partajat nimic.",
-  "The desktop's screen-sharing portal said no: {error}": "Portalul desktopului pentru partajarea ecranului a refuzat: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Portalul desktopului pentru partajarea ecranului a refuzat: {error}",
+  "Undo Move to Trash": "Anulează mutarea în Coșul de gunoi",
+  "Hide ribbon": "Ascunde panglica",
+  "Show ribbon": "Afișează panglica",
+  "Stop recording": "Oprește înregistrarea",
+  "Editor": "Editor"
  }
 }

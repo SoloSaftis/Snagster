@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Increase contrast is on in System Settings, so text and borders are stronger.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Screen sharing was cancelled in the desktop's dialogue: nothing was shared.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Screen sharing didn't start: it was cancelled in the desktop's dialogue, or the desktop gave no reason. Nothing was shared.",
-  "The desktop's screen-sharing portal said no: {error}": "The desktop's screen-sharing portal said no: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "The desktop's screen-sharing portal said no: {error}",
+  "Undo Move to Trash": "Undo Move to Bin",
+  "Hide ribbon": "Hide ribbon",
+  "Show ribbon": "Show ribbon",
+  "Stop recording": "Stop recording",
+  "Editor": "Editor"
  }
 }

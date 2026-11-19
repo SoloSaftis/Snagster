@@ -18,6 +18,8 @@ pub enum TrayCmd {
     Library,
     Settings,
     Quit,
+    /// Stop the recording that is running (the menu shows it only then).
+    StopRecording,
     /// An item of the Mac menu bar (`crate::menubar`): its menus and the tray's share muda's
     /// one event handler.
     #[cfg(any(target_os = "macos", test))]
@@ -25,7 +27,38 @@ pub enum TrayCmd {
 }
 
 pub struct Tray {
-    _icon: TrayIcon,
+    icon: TrayIcon,
+    menu: Menu,
+    /// "Stop recording" and its separator, at the top of the menu while a recording runs.
+    stop: (MenuItem, PredefinedMenuItem),
+    recording: bool,
+}
+
+impl Tray {
+    /// Show whether a recording runs: "Stop recording" at the top of the menu and, on a Mac,
+    /// a stop square in the menu bar instead of the viewfinder. Cheap when nothing changed.
+    pub fn show_recording(&mut self, on: bool) {
+        if self.recording == on {
+            return;
+        }
+        self.recording = on;
+        let (item, sep) = &self.stop;
+        if on {
+            let _ = self.menu.prepend_items(&[item, sep]);
+        } else {
+            let _ = self.menu.remove(item);
+            let _ = self.menu.remove(sep);
+        }
+        #[cfg(target_os = "macos")]
+        {
+            let (rgba, size) = if on { stop_icon(TEMPLATE_PX) } else { template_icon(TEMPLATE_PX) };
+            if let Ok(ic) = tray_icon::Icon::from_rgba(rgba, size, size) {
+                let _ = self.icon.set_icon_with_as_template(Some(ic), true);
+            }
+        }
+        #[cfg(not(target_os = "macos"))]
+        let _ = &self.icon;
+    }
 }
 
 const ACTIONS: [Action; 14] = [
@@ -62,6 +95,7 @@ fn parse(id: &str) -> Option<TrayCmd> {
         "library" => TrayCmd::Library,
         "settings" => TrayCmd::Settings,
         "quit" => TrayCmd::Quit,
+        "stop" => TrayCmd::StopRecording,
         _ => return None,
     })
 }
@@ -112,8 +146,9 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
     // A Mac's menu bar extra is a template: black and transparency only, which macOS tints to
     // match the menu bar. Elsewhere the coloured app icon.
     let mac = cfg!(target_os = "macos");
+    let stop = (MenuItem::with_id("stop", label("Stop recording"), true, None), PredefinedMenuItem::separator());
     let builder = TrayIconBuilder::new()
-        .with_menu(Box::new(menu))
+        .with_menu(Box::new(menu.clone()))
         // Just the name: the guidelines keep instructions out of tray tooltips.
         .with_tooltip("Snagster")
         // A menu bar extra opens its menu on a click; the capture panel is in the menu.
@@ -139,7 +174,7 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
             wake();
         }
     }));
-    Ok(Tray { _icon: tray })
+    Ok(Tray { icon: tray, menu, stop, recording: false })
 }
 
 /// A menu text: translated, and on a Mac in Title Case for English.
@@ -195,6 +230,35 @@ pub fn template_icon(px: u32) -> (Vec<u8>, u32) {
     (pm.data().to_vec(), px)
 }
 
+/// The menu bar extra's template picture while recording, `px` square: a stop square with
+/// round corners in black, the rest transparent (macOS tints it like `template_icon`).
+#[cfg(any(target_os = "macos", test))]
+pub fn stop_icon(px: u32) -> (Vec<u8>, u32) {
+    use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Transform};
+    let mut pm = Pixmap::new(px, px).expect("icon size");
+    let s = px as f32 / 36.0;
+    let mut paint = Paint::default();
+    paint.set_color(Color::BLACK);
+    paint.anti_alias = true;
+    // A square 22 of 36 wide with round corners, in the middle.
+    let (lo, hi, r) = (7.0 * s, 29.0 * s, 4.0 * s);
+    let mut pb = PathBuilder::new();
+    pb.move_to(lo + r, lo);
+    pb.line_to(hi - r, lo);
+    pb.quad_to(hi, lo, hi, lo + r);
+    pb.line_to(hi, hi - r);
+    pb.quad_to(hi, hi, hi - r, hi);
+    pb.line_to(lo + r, hi);
+    pb.quad_to(lo, hi, lo, hi - r);
+    pb.line_to(lo, lo + r);
+    pb.quad_to(lo, lo, lo + r, lo);
+    pb.close();
+    if let Some(path) = pb.finish() {
+        pm.fill_path(&path, &paint, FillRule::Winding, Transform::identity(), None);
+    }
+    (pm.data().to_vec(), px)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -234,6 +298,21 @@ mod tests {
         assert_eq!(parse("library"), Some(TrayCmd::Library));
         assert_eq!(parse("settings"), Some(TrayCmd::Settings));
         assert_eq!(parse("quit"), Some(TrayCmd::Quit));
+        assert_eq!(parse("stop"), Some(TrayCmd::StopRecording));
+    }
+
+    #[test]
+    fn the_recording_icon_is_a_stop_square_template() {
+        let (rgba, px) = stop_icon(TEMPLATE_PX);
+        assert_eq!(rgba.len(), (px * px * 4) as usize);
+        let alpha = |x: u32, y: u32| rgba[((y * px + x) * 4 + 3) as usize];
+        for p in rgba.chunks(4) {
+            assert_eq!(&p[..3], &[0, 0, 0], "one colour: black, shaped by transparency");
+        }
+        assert_eq!(alpha(px / 2, px / 2), 255, "the middle is filled (a square, not a ring)");
+        assert_eq!(alpha(0, 0), 0, "a glyph, not a filled tile");
+        assert_eq!(alpha(px / 2, 1), 0, "a margin above the square");
+        assert_ne!(rgba, template_icon(TEMPLATE_PX).0, "not the viewfinder");
     }
 
     #[test]

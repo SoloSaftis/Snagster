@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "«Augmenta el contrast» està activat en Configuració del Sistema, així que el text i les vores són més marcats.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "S'ha cancel·lat la compartició de pantalla al diàleg de l'escriptori: no s'ha compartit res.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "La compartició de pantalla no ha començat: s'ha cancel·lat al diàleg de l'escriptori, o l'escriptori no n'ha donat cap motiu. No s'ha compartit res.",
-  "The desktop's screen-sharing portal said no: {error}": "El portal de compartició de pantalla de l'escriptori ha dit que no: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "El portal de compartició de pantalla de l'escriptori ha dit que no: {error}",
+  "Undo Move to Trash": "Desfés el moviment a la paperera",
+  "Hide ribbon": "Amaga la cinta",
+  "Show ribbon": "Mostra la cinta",
+  "Stop recording": "Atura la gravació",
+  "Editor": "Editor"
  }
 }

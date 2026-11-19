@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Lisää kontrastia on päällä Järjestelmäasetuksissa, joten teksti ja reunat ovat vahvempia.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Näytön jakaminen peruttiin työpöydän valintaikkunassa: mitään ei jaettu.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Näytön jakaminen ei käynnistynyt: se peruttiin työpöydän valintaikkunassa, tai työpöytä ei kertonut syytä. Mitään ei jaettu.",
-  "The desktop's screen-sharing portal said no: {error}": "Työpöydän näytönjakoportaali kieltäytyi: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Työpöydän näytönjakoportaali kieltäytyi: {error}",
+  "Undo Move to Trash": "Kumoa siirto roskakoriin",
+  "Hide ribbon": "Piilota nauha",
+  "Show ribbon": "Näytä nauha",
+  "Stop recording": "Lopeta tallennus",
+  "Editor": "Muokkain"
  }
 }

@@ -303,6 +303,32 @@ pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, 
     resp
 }
 
+/// The width of one `pane_tool`.
+pub const PANE_TOOL_W: f32 = 76.0;
+
+/// One icon of a Mac Settings window's toolbar: the icon over the pane's name, the pane shown
+/// sitting on a soft filled square (as in Apple's own Settings windows).
+pub fn pane_tool(ui: &mut Ui, icon: &str, label: &str, on: bool) -> Response {
+    let font = FontId::proportional(11.5);
+    let galley = ui.painter().layout_no_wrap(label.to_string(), font, pal().text);
+    let (rect, resp) = ui.allocate_exact_size(vec2(PANE_TOOL_W, 54.0), Sense::click());
+    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Tab, true, on, label));
+    let p = ui.painter();
+    let pal = pal();
+    if on {
+        p.rect_filled(rect.shrink(2.0), CornerRadius::same(7), pal.pressed);
+    } else if resp.hovered() {
+        p.rect_filled(rect.shrink(2.0), CornerRadius::same(7), pal.hover);
+    }
+    let icol = if pal.high_contrast { if on { pal.selected_text } else { pal.text } } else if on { pal.link } else { pal.dim };
+    p.text(pos2(rect.center().x, rect.top() + 19.0), Align2::CENTER_CENTER, icon, FontId::new(22.0, icons()), icol);
+    let tcol = if on { pal.strong } else { pal.text };
+    // A long name (another language) is squeezed into the button rather than overflowing it.
+    let pos = pos2(rect.center().x - galley.size().x.min(PANE_TOOL_W - 4.0) / 2.0, rect.top() + 35.0);
+    p.with_clip_rect(rect).galley(pos, galley, tcol);
+    resp
+}
+
 /// A small ribbon tool: icon and name side by side (three fit in a column).
 pub fn small_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool) -> Response {
     let font = FontId::proportional(12.5);

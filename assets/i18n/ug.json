@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "سىستېما تەڭشەكلىرىدە «سېلىشتۇرمىنى ئاشۇرۇش» ئوچۇق، شۇڭا تېكىست ۋە گىرۋەكلەر روشەنرەك.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ئېكران ھەمبەھىرلەش ئۈستەل يۈزىنىڭ سۆزلەشكۈ كۆزنىكىدە بىكار قىلىندى: ھېچنېمە ھەمبەھىرلەنمىدى.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ئېكران ھەمبەھىرلەش باشلانمىدى: ئۇ ئۈستەل يۈزىنىڭ سۆزلەشكۈ كۆزنىكىدە بىكار قىلىندى ياكى ئۈستەل يۈزى سەۋەب كۆرسەتمىدى. ھېچنېمە ھەمبەھىرلەنمىدى.",
-  "The desktop's screen-sharing portal said no: {error}": "ئۈستەل يۈزىنىڭ ئېكران ھەمبەھىرلەش portal رەت قىلدى: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "ئۈستەل يۈزىنىڭ ئېكران ھەمبەھىرلەش portal رەت قىلدى: {error}",
+  "Undo Move to Trash": "ئەخلەت ساندۇقىغا يۆتكەشنى ئەمەلدىن قالدۇرۇش",
+  "Hide ribbon": "لېنتىنى يوشۇرۇش",
+  "Show ribbon": "لېنتىنى كۆرسىتىش",
+  "Stop recording": "خاتىرىلەشنى توختىتىش",
+  "Editor": "تەھرىرلىگۈچ"
  }
 }

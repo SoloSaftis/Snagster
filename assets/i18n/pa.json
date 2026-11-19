@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ ਵਿੱਚ “ਕੰਟ੍ਰਾਸਟ ਵਧਾਓ” ਚਾਲੂ ਹੈ, ਇਸ ਲਈ ਟੈਕਸਟ ਅਤੇ ਬਾਰਡਰ ਵਧੇਰੇ ਸਪੱਸ਼ਟ ਹਨ।",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ਡੈਸਕਟਾਪ ਦੇ ਡਾਇਲਾਗ ਵਿੱਚ ਸਕ੍ਰੀਨ ਸ਼ੇਅਰਿੰਗ ਰੱਦ ਕਰ ਦਿੱਤੀ ਗਈ: ਕੁਝ ਵੀ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਗਿਆ।",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ਸਕ੍ਰੀਨ ਸ਼ੇਅਰਿੰਗ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋਈ: ਇਹ ਡੈਸਕਟਾਪ ਦੇ ਡਾਇਲਾਗ ਵਿੱਚ ਰੱਦ ਕੀਤੀ ਗਈ ਸੀ, ਜਾਂ ਡੈਸਕਟਾਪ ਨੇ ਕੋਈ ਕਾਰਨ ਨਹੀਂ ਦੱਸਿਆ। ਕੁਝ ਵੀ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਗਿਆ।",
-  "The desktop's screen-sharing portal said no: {error}": "ਡੈਸਕਟਾਪ ਦੇ ਸਕ੍ਰੀਨ ਸ਼ੇਅਰਿੰਗ portal ਨੇ ਮਨ੍ਹਾ ਕਰ ਦਿੱਤਾ: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "ਡੈਸਕਟਾਪ ਦੇ ਸਕ੍ਰੀਨ ਸ਼ੇਅਰਿੰਗ portal ਨੇ ਮਨ੍ਹਾ ਕਰ ਦਿੱਤਾ: {error}",
+  "Undo Move to Trash": "ਰੱਦੀ ਵਿੱਚ ਭੇਜਣਾ ਅਣਕੀਤਾ ਕਰੋ",
+  "Hide ribbon": "ਰਿਬਨ ਲੁਕਾਓ",
+  "Show ribbon": "ਰਿਬਨ ਦਿਖਾਓ",
+  "Stop recording": "ਰਿਕਾਰਡਿੰਗ ਰੋਕੋ",
+  "Editor": "ਐਡੀਟਰ"
  }
 }
