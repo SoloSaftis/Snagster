@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Էկրանի համօգտագործումը չեղարկվել է աշխատասեղանի երկխոսության մեջ. ոչինչ չի համօգտագործվել։",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Էկրանի համօգտագործումը չսկսվեց. այն չեղարկվել է աշխատասեղանի երկխոսության մեջ, կամ աշխատասեղանը պատճառ չի նշել։ Ոչինչ չի համօգտագործվել։",
   "The desktop's screen-sharing portal said no: {error}": "Աշխատասեղանի էկրանի համօգտագործման պորտալը մերժեց. {error}",
+  "More tabs": "Այլ ներդիրներ",
+  "The groups that don't fit the window": "Խմբերը, որոնք չեն տեղավորվում պատուհանում",
   "Replays are kept without sound: {reason}": "Կրկնությունները պահվում են առանց ձայնի՝ {reason}",
   "Nothing to save yet: replay has only just started.": "Դեռ պահելու բան չկա․ կրկնությունը նոր է սկսվել։",
   "Replay is already on.": "Կրկնությունն արդեն միացված է։",

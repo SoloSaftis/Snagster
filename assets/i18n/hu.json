@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "A képernyőmegosztást megszakították az asztal párbeszédablakában: semmi sem lett megosztva.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "A képernyőmegosztás nem indult el: megszakították az asztal párbeszédablakában, vagy az asztal nem adott okot. Semmi sem lett megosztva.",
   "The desktop's screen-sharing portal said no: {error}": "Az asztal képernyőmegosztási portálja nemet mondott: {error}",
+  "More tabs": "További lapok",
+  "The groups that don't fit the window": "Az ablakba nem férő csoportok",
   "Replays are kept without sound: {reason}": "A visszajátszások hang nélkül kerülnek mentésre: {reason}",
   "Nothing to save yet: replay has only just started.": "Még nincs mit menteni: a visszajátszás épp csak elindult.",
   "Replay is already on.": "A visszajátszás már be van kapcsolva.",

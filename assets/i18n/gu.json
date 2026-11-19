@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ડેસ્કટૉપના ડાયલૉગમાં સ્ક્રીન શેરિંગ રદ કરવામાં આવ્યું: કંઈ શેર થયું નથી.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "સ્ક્રીન શેરિંગ શરૂ થયું નહીં: તે ડેસ્કટૉપના ડાયલૉગમાં રદ કરવામાં આવ્યું હતું, અથવા ડેસ્કટૉપે કોઈ કારણ આપ્યું નહીં. કંઈ શેર થયું નથી.",
   "The desktop's screen-sharing portal said no: {error}": "ડેસ્કટૉપના સ્ક્રીન શેરિંગ portal એ ના પાડી: {error}",
+  "More tabs": "વધુ ટૅબ",
+  "The groups that don't fit the window": "જે જૂથો વિન્ડોમાં સમાતા નથી",
   "Replays are kept without sound: {reason}": "રીપ્લે અવાજ વિના રાખવામાં આવે છે: {reason}",
   "Nothing to save yet: replay has only just started.": "હજી સાચવવા માટે કંઈ નથી: રીપ્લે હમણાં જ શરૂ થયો છે.",
   "Replay is already on.": "રીપ્લે પહેલેથી ચાલુ છે.",

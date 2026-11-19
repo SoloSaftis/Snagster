@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ការចែករំលែកអេក្រង់ត្រូវបានបោះបង់នៅក្នុងប្រអប់នៃផ្ទៃតុ៖ គ្មានអ្វីត្រូវបានចែករំលែកទេ។",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ការចែករំលែកអេក្រង់មិនបានចាប់ផ្តើមទេ៖ វាត្រូវបានបោះបង់នៅក្នុងប្រអប់នៃផ្ទៃតុ ឬផ្ទៃតុមិនបានផ្តល់ហេតុផលទេ។ គ្មានអ្វីត្រូវបានចែករំលែកទេ។",
   "The desktop's screen-sharing portal said no: {error}": "portal ចែករំលែកអេក្រង់របស់ផ្ទៃតុបានបដិសេធ៖ {error}",
+  "More tabs": "ផ្ទាំងច្រើនទៀត",
+  "The groups that don't fit the window": "ក្រុមដែលមិនសមនឹងបង្អួច",
   "Replays are kept without sound: {reason}": "ការចាក់ឡើងវិញត្រូវបានរក្សាទុកដោយគ្មានសំឡេង៖ {reason}",
   "Nothing to save yet: replay has only just started.": "មិនទាន់មានអ្វីត្រូវរក្សាទុកទេ៖ ការចាក់ឡើងវិញទើបតែចាប់ផ្តើម។",
   "Replay is already on.": "ការចាក់ឡើងវិញបើកហើយ។",

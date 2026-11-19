@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekran paylaşımı masaüstünün iletişim kutusunda iptal edildi: hiçbir şey paylaşılmadı.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran paylaşımı başlamadı: masaüstünün iletişim kutusunda iptal edildi veya masaüstü bir neden belirtmedi. Hiçbir şey paylaşılmadı.",
   "The desktop's screen-sharing portal said no: {error}": "Masaüstünün ekran paylaşımı portalı hayır dedi: {error}",
+  "More tabs": "Diğer sekmeler",
+  "The groups that don't fit the window": "Pencereye sığmayan gruplar",
   "Replays are kept without sound: {reason}": "Tekrarlar sessiz saklanır: {reason}",
   "Nothing to save yet: replay has only just started.": "Henüz kaydedilecek bir şey yok: tekrar yeni başladı.",
   "Replay is already on.": "Tekrar zaten açık.",

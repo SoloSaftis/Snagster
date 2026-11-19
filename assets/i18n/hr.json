@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Dijeljenje zaslona otkazano je u dijaloškom okviru radne površine: ništa nije podijeljeno.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Dijeljenje zaslona nije započelo: otkazano je u dijaloškom okviru radne površine ili radna površina nije navela razlog. Ništa nije podijeljeno.",
   "The desktop's screen-sharing portal said no: {error}": "Portal radne površine za dijeljenje zaslona odbio je zahtjev: {error}",
+  "More tabs": "Više kartica",
+  "The groups that don't fit the window": "Grupe koje ne stanu u prozor",
   "Replays are kept without sound: {reason}": "Ponovci se spremaju bez zvuka: {reason}",
   "Nothing to save yet: replay has only just started.": "Još nema ničega za spremanje: ponovak je tek počeo.",
   "Replay is already on.": "Ponovak je već uključen.",

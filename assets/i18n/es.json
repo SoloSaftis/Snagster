@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Se canceló la pantalla compartida en el diálogo del escritorio: no se compartió nada.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "La pantalla compartida no se inició: se canceló en el diálogo del escritorio, o el escritorio no dio ningún motivo. No se compartió nada.",
   "The desktop's screen-sharing portal said no: {error}": "El portal de pantalla compartida del escritorio dijo que no: {error}",
+  "More tabs": "Más pestañas",
+  "The groups that don't fit the window": "Los grupos que no caben en la ventana",
   "Replays are kept without sound: {reason}": "Las repeticiones se guardan sin sonido: {reason}",
   "Nothing to save yet: replay has only just started.": "Todavía no hay nada que guardar: la repetición acaba de empezar.",
   "Replay is already on.": "La repetición ya está activada.",

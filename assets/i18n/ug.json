@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ئېكران ھەمبەھىرلەش ئۈستەل يۈزىنىڭ سۆزلەشكۈ كۆزنىكىدە بىكار قىلىندى: ھېچنېمە ھەمبەھىرلەنمىدى.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ئېكران ھەمبەھىرلەش باشلانمىدى: ئۇ ئۈستەل يۈزىنىڭ سۆزلەشكۈ كۆزنىكىدە بىكار قىلىندى ياكى ئۈستەل يۈزى سەۋەب كۆرسەتمىدى. ھېچنېمە ھەمبەھىرلەنمىدى.",
   "The desktop's screen-sharing portal said no: {error}": "ئۈستەل يۈزىنىڭ ئېكران ھەمبەھىرلەش portal رەت قىلدى: {error}",
+  "More tabs": "تېخىمۇ كۆپ بەتكۈچ",
+  "The groups that don't fit the window": "كۆزنەككە پاتمايدىغان گۇرۇپپىلار",
   "Replays are kept without sound: {reason}": "قايتا ئويناتمىلار ئاۋازسىز ساقلىنىدۇ: {reason}",
   "Nothing to save yet: replay has only just started.": "ساقلايدىغان نەرسە يوق: قايتا ئويناتما ھېلىلا باشلاندى.",
   "Replay is already on.": "قايتا ئويناتما ئاللىقاچان ئوچۇق.",

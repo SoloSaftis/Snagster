@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skærmdeling blev annulleret i skrivebordets dialog: intet blev delt.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skærmdeling startede ikke: den blev annulleret i skrivebordets dialog, eller skrivebordet gav ingen grund. Intet blev delt.",
   "The desktop's screen-sharing portal said no: {error}": "Skrivebordets portal til skærmdeling sagde nej: {error}",
+  "More tabs": "Flere faner",
+  "The groups that don't fit the window": "De grupper, der ikke kan være i vinduet",
   "Replays are kept without sound: {reason}": "Genafspilninger gemmes uden lyd: {reason}",
   "Nothing to save yet: replay has only just started.": "Der er endnu intet at gemme: genafspilningen er lige startet.",
   "Replay is already on.": "Genafspilning er allerede slået til.",

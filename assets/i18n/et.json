@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekraani jagamine tühistati töölaua dialoogis: midagi ei jagatud.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekraani jagamine ei käivitunud: see tühistati töölaua dialoogis või töölaud ei esitanud põhjust. Midagi ei jagatud.",
   "The desktop's screen-sharing portal said no: {error}": "Töölaua ekraanijagamise portaal ütles ei: {error}",
+  "More tabs": "Rohkem vahekaarte",
+  "The groups that don't fit the window": "Rühmad, mis aknasse ei mahu",
   "Replays are kept without sound: {reason}": "Kordused salvestatakse ilma helita: {reason}",
   "Nothing to save yet: replay has only just started.": "Salvestada pole veel midagi: kordus alles algas.",
   "Replay is already on.": "Kordus on juba sees.",

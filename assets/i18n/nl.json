@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Schermdelen is geannuleerd in het dialoogvenster van het bureaublad: er is niets gedeeld.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Schermdelen is niet gestart: het is geannuleerd in het dialoogvenster van het bureaublad, of het bureaublad gaf geen reden. Er is niets gedeeld.",
   "The desktop's screen-sharing portal said no: {error}": "De portal voor schermdelen van het bureaublad zei nee: {error}",
+  "More tabs": "Meer tabbladen",
+  "The groups that don't fit the window": "De groepen die niet in het venster passen",
   "Replays are kept without sound: {reason}": "Replays worden zonder geluid bewaard: {reason}",
   "Nothing to save yet: replay has only just started.": "Nog niets om op te slaan: de replay is net begonnen.",
   "Replay is already on.": "De replay staat al aan.",

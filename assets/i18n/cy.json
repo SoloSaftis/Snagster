@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Cafodd rhannu'r sgrin ei ganslo yn nialog y bwrdd gwaith: ni rannwyd dim.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ni ddechreuodd rhannu'r sgrin: fe'i canslwyd yn nialog y bwrdd gwaith, neu ni roddodd y bwrdd gwaith unrhyw reswm. Ni rannwyd dim.",
   "The desktop's screen-sharing portal said no: {error}": "Dywedodd porth rhannu sgrin y bwrdd gwaith na: {error}",
+  "More tabs": "Rhagor o dabiau",
+  "The groups that don't fit the window": "Y grwpiau nad ydynt yn ffitio yn y ffenestr",
   "Replays are kept without sound: {reason}": "Mae ailchwaraeon yn cael eu cadw heb sain: {reason}",
   "Nothing to save yet: replay has only just started.": "Dim i'w gadw eto: mae'r ailchwarae newydd ddechrau.",
   "Replay is already on.": "Mae'r ailchwarae eisoes ymlaen.",

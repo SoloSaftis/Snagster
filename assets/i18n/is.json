@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Hætt var við skjádeilingu í samskiptaglugga skjáborðsins: engu var deilt.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skjádeiling hófst ekki: hætt var við hana í samskiptaglugga skjáborðsins, eða skjáborðið gaf enga ástæðu. Engu var deilt.",
   "The desktop's screen-sharing portal said no: {error}": "Skjádeilingargátt skjáborðsins sagði nei: {error}",
+  "More tabs": "Fleiri flipar",
+  "The groups that don't fit the window": "Hóparnir sem komast ekki fyrir í glugganum",
   "Replays are kept without sound: {reason}": "Endurspilanir eru vistaðar án hljóðs: {reason}",
   "Nothing to save yet: replay has only just started.": "Ekkert að vista enn: endurspilunin var rétt að byrja.",
   "Replay is already on.": "Endurspilun er þegar í gangi.",

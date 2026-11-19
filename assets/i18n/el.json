@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Η κοινή χρήση οθόνης ακυρώθηκε στο παράθυρο διαλόγου της επιφάνειας εργασίας: δεν κοινοποιήθηκε τίποτα.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Η κοινή χρήση οθόνης δεν ξεκίνησε: ακυρώθηκε στο παράθυρο διαλόγου της επιφάνειας εργασίας ή η επιφάνεια εργασίας δεν έδωσε κανέναν λόγο. Δεν κοινοποιήθηκε τίποτα.",
   "The desktop's screen-sharing portal said no: {error}": "Το portal κοινής χρήσης οθόνης της επιφάνειας εργασίας αρνήθηκε: {error}",
+  "More tabs": "Περισσότερες καρτέλες",
+  "The groups that don't fit the window": "Οι ομάδες που δεν χωρούν στο παράθυρο",
   "Replays are kept without sound: {reason}": "Οι επαναλήψεις αποθηκεύονται χωρίς ήχο: {reason}",
   "Nothing to save yet: replay has only just started.": "Δεν υπάρχει ακόμη κάτι για αποθήκευση: η επανάληψη μόλις ξεκίνησε.",
   "Replay is already on.": "Η επανάληψη είναι ήδη ενεργή.",

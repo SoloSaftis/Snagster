@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "డెస్క్‌టాప్ డైలాగ్‌లో స్క్రీన్ షేరింగ్ రద్దు చేయబడింది: ఏదీ షేర్ చేయబడలేదు.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "స్క్రీన్ షేరింగ్ ప్రారంభం కాలేదు: అది డెస్క్‌టాప్ డైలాగ్‌లో రద్దు చేయబడింది, లేదా డెస్క్‌టాప్ ఏ కారణమూ ఇవ్వలేదు. ఏదీ షేర్ చేయబడలేదు.",
   "The desktop's screen-sharing portal said no: {error}": "డెస్క్‌టాప్ స్క్రీన్ షేరింగ్ portal నిరాకరించింది: {error}",
+  "More tabs": "మరిన్ని ట్యాబ్‌లు",
+  "The groups that don't fit the window": "విండోలో పట్టని సమూహాలు",
   "Replays are kept without sound: {reason}": "రీప్లేలు ధ్వని లేకుండా ఉంచబడతాయి: {reason}",
   "Nothing to save yet: replay has only just started.": "సేవ్ చేయడానికి ఇంకా ఏమీ లేదు: రీప్లే ఇప్పుడే ప్రారంభమైంది.",
   "Replay is already on.": "రీప్లే ఇప్పటికే ఆన్‌లో ఉంది.",

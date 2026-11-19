@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Perkongsian skrin dibatalkan dalam dialog desktop: tiada apa-apa yang dikongsi.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Perkongsian skrin tidak bermula: ia dibatalkan dalam dialog desktop, atau desktop tidak memberi sebarang sebab. Tiada apa-apa yang dikongsi.",
   "The desktop's screen-sharing portal said no: {error}": "Portal perkongsian skrin desktop menolak: {error}",
+  "More tabs": "Lagi tab",
+  "The groups that don't fit the window": "Kumpulan yang tidak muat dalam tetingkap",
   "Replays are kept without sound: {reason}": "Ulang tayang disimpan tanpa bunyi: {reason}",
   "Nothing to save yet: replay has only just started.": "Belum ada apa-apa untuk disimpan: ulang tayang baru sahaja bermula.",
   "Replay is already on.": "Ulang tayang sudah dihidupkan.",

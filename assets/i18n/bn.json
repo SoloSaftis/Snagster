@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ডেস্কটপের ডায়ালগে স্ক্রিন শেয়ারিং বাতিল করা হয়েছে: কিছুই শেয়ার করা হয়নি।",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "স্ক্রিন শেয়ারিং শুরু হয়নি: এটি ডেস্কটপের ডায়ালগে বাতিল করা হয়েছিল, অথবা ডেস্কটপ কোনো কারণ জানায়নি। কিছুই শেয়ার করা হয়নি।",
   "The desktop's screen-sharing portal said no: {error}": "ডেস্কটপের স্ক্রিন শেয়ারিং portal অস্বীকার করেছে: {error}",
+  "More tabs": "আরও ট্যাব",
+  "The groups that don't fit the window": "যে গ্রুপগুলো উইন্ডোতে আঁটে না",
   "Replays are kept without sound: {reason}": "রিপ্লে শব্দ ছাড়া রাখা হয়: {reason}",
   "Nothing to save yet: replay has only just started.": "এখনও সংরক্ষণ করার কিছু নেই: রিপ্লে মাত্র শুরু হয়েছে।",
   "Replay is already on.": "রিপ্লে আগে থেকেই চালু আছে।",

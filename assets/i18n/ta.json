@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "டெஸ்க்டாப்பின் உரையாடலில் திரைப் பகிர்வு ரத்து செய்யப்பட்டது: எதுவும் பகிரப்படவில்லை.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "திரைப் பகிர்வு தொடங்கவில்லை: அது டெஸ்க்டாப்பின் உரையாடலில் ரத்து செய்யப்பட்டது, அல்லது டெஸ்க்டாப் எந்தக் காரணத்தையும் தரவில்லை. எதுவும் பகிரப்படவில்லை.",
   "The desktop's screen-sharing portal said no: {error}": "டெஸ்க்டாப்பின் திரைப் பகிர்வு portal மறுத்துவிட்டது: {error}",
+  "More tabs": "மேலும் தாவல்கள்",
+  "The groups that don't fit the window": "சாளரத்தில் பொருந்தாத குழுக்கள்",
   "Replays are kept without sound: {reason}": "ரீப்ளேக்கள் ஒலி இல்லாமல் வைக்கப்படும்: {reason}",
   "Nothing to save yet: replay has only just started.": "சேமிக்க இன்னும் எதுவும் இல்லை: ரீப்ளே இப்போதுதான் தொடங்கியது.",
   "Replay is already on.": "ரீப்ளே ஏற்கனவே இயக்கத்தில் உள்ளது.",

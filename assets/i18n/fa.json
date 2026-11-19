@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "اشتراک‌گذاری صفحه در پنجره گفت‌وگوی دسکتاپ لغو شد: چیزی به اشتراک گذاشته نشد.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "اشتراک‌گذاری صفحه شروع نشد: در پنجره گفت‌وگوی دسکتاپ لغو شد، یا دسکتاپ دلیلی اعلام نکرد. چیزی به اشتراک گذاشته نشد.",
   "The desktop's screen-sharing portal said no: {error}": "پورتال اشتراک‌گذاری صفحه در دسکتاپ نپذیرفت: {error}",
+  "More tabs": "زبانه‌های بیشتر",
+  "The groups that don't fit the window": "گروه‌هایی که در پنجره جا نمی‌شوند",
   "Replays are kept without sound: {reason}": "بازپخش‌ها بدون صدا نگه داشته می‌شوند: {reason}",
   "Nothing to save yet: replay has only just started.": "هنوز چیزی برای ذخیره نیست: بازپخش تازه شروع شده است.",
   "Replay is already on.": "بازپخش از قبل روشن است.",

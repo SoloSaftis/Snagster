@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ეკრანის გაზიარება გაუქმდა სამუშაო მაგიდის დიალოგში: არაფერი გაზიარებულა.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ეკრანის გაზიარება არ დაწყებულა: ის გაუქმდა სამუშაო მაგიდის დიალოგში, ან სამუშაო მაგიდამ მიზეზი არ მიუთითა. არაფერი გაზიარებულა.",
   "The desktop's screen-sharing portal said no: {error}": "სამუშაო მაგიდის ეკრანის გაზიარების პორტალმა უარი თქვა: {error}",
+  "More tabs": "სხვა ჩანართები",
+  "The groups that don't fit the window": "ჯგუფები, რომლებიც ფანჯარაში არ ეტევა",
   "Replays are kept without sound: {reason}": "გამეორებები ინახება ხმის გარეშე: {reason}",
   "Nothing to save yet: replay has only just started.": "შესანახი ჯერ არაფერია: გამეორება ახლახან დაიწყო.",
   "Replay is already on.": "გამეორება უკვე ჩართულია.",

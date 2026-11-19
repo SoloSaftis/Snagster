@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Näytön jakaminen peruttiin työpöydän valintaikkunassa: mitään ei jaettu.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Näytön jakaminen ei käynnistynyt: se peruttiin työpöydän valintaikkunassa, tai työpöytä ei kertonut syytä. Mitään ei jaettu.",
   "The desktop's screen-sharing portal said no: {error}": "Työpöydän näytönjakoportaali kieltäytyi: {error}",
+  "More tabs": "Lisää välilehtiä",
+  "The groups that don't fit the window": "Ryhmät, jotka eivät mahdu ikkunaan",
   "Replays are kept without sound: {reason}": "Toistot tallennetaan ilman ääntä: {reason}",
   "Nothing to save yet: replay has only just started.": "Ei vielä mitään tallennettavaa: toisto on juuri alkanut.",
   "Replay is already on.": "Toisto on jo päällä.",

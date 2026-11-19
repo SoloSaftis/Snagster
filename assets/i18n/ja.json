@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "画面共有はデスクトップのダイアログでキャンセルされました。何も共有されていません。",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "画面共有を開始できませんでした。デスクトップのダイアログでキャンセルされたか、デスクトップから理由が示されませんでした。何も共有されていません。",
   "The desktop's screen-sharing portal said no: {error}": "デスクトップの画面共有ポータル（portal）が拒否しました: {error}",
+  "More tabs": "その他のタブ",
+  "The groups that don't fit the window": "ウィンドウに収まらないグループ",
   "Replays are kept without sound: {reason}": "リプレイは音声なしで保存されます: {reason}",
   "Nothing to save yet: replay has only just started.": "まだ保存するものがありません。リプレイは始まったばかりです。",
   "Replay is already on.": "リプレイはすでにオンです。",

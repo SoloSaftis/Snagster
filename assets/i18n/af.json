@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skermdeling is in die lessenaar se dialoog gekanselleer: niks is gedeel nie.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skermdeling het nie begin nie: dit is in die lessenaar se dialoog gekanselleer, of die lessenaar het geen rede gegee nie. Niks is gedeel nie.",
   "The desktop's screen-sharing portal said no: {error}": "Die lessenaar se skermdeling-portaal het nee gesê: {error}",
+  "More tabs": "Meer oortjies",
+  "The groups that don't fit the window": "Die groepe wat nie in die venster pas nie",
   "Replays are kept without sound: {reason}": "Herhalings word sonder klank gehou: {reason}",
   "Nothing to save yet: replay has only just started.": "Niks om te stoor nie: die herhaling het pas begin.",
   "Replay is already on.": "Herhaling is reeds aan.",

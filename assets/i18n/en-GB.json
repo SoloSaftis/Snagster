@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Screen sharing was cancelled in the desktop's dialogue: nothing was shared.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Screen sharing didn't start: it was cancelled in the desktop's dialogue, or the desktop gave no reason. Nothing was shared.",
   "The desktop's screen-sharing portal said no: {error}": "The desktop's screen-sharing portal said no: {error}",
+  "More tabs": "More tabs",
+  "The groups that don't fit the window": "The groups that don't fit the window",
   "Replays are kept without sound: {reason}": "Replays are kept without sound: {reason}",
   "Nothing to save yet: replay has only just started.": "Nothing to save yet: replay has only just started.",
   "Replay is already on.": "Replay is already on.",

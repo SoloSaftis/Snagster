@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "屏幕共享已在桌面的对话框中取消：未共享任何内容。",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "屏幕共享未启动：已在桌面的对话框中取消，或桌面未给出原因。未共享任何内容。",
   "The desktop's screen-sharing portal said no: {error}": "桌面的屏幕共享门户（portal）拒绝了：{error}",
+  "More tabs": "更多选项卡",
+  "The groups that don't fit the window": "窗口放不下的组",
   "Replays are kept without sound: {reason}": "回放不带声音保存：{reason}",
   "Nothing to save yet: replay has only just started.": "暂时没有可保存的内容：回放刚刚开始。",
   "Replay is already on.": "回放已开启。",

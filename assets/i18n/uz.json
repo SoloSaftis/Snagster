@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekran ulashish ish stolining dialog oynasida bekor qilindi: hech narsa ulashilmadi.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran ulashish boshlanmadi: u ish stolining dialog oynasida bekor qilindi yoki ish stoli sabab ko‘rsatmadi. Hech narsa ulashilmadi.",
   "The desktop's screen-sharing portal said no: {error}": "Ish stolining ekran ulashish portali rad etdi: {error}",
+  "More tabs": "Boshqa yorliqlar",
+  "The groups that don't fit the window": "Oynaga sig‘maydigan guruhlar",
   "Replays are kept without sound: {reason}": "Takrorlar ovozsiz saqlanadi: {reason}",
   "Nothing to save yet: replay has only just started.": "Hozircha saqlaydigan narsa yo‘q: takror hozirgina boshlandi.",
   "Replay is already on.": "Takror allaqachon yoqilgan.",
