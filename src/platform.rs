@@ -128,6 +128,7 @@ pub enum AppKey {
     Pin,
 }
 
+#[cfg(test)]
 impl AppKey {
     pub const ALL: [AppKey; 4] = [AppKey::AllInOne, AppKey::Window, AppKey::Screen, AppKey::Pin];
 }

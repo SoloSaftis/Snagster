@@ -14,10 +14,15 @@ pub(crate) struct MenuUi {
     built_for: Option<&'static str>,
 }
 
+/// Whether Snagster's main window is the key window (not Settings, the Library or a dialog).
+fn main_window_has_keys(ctx: &egui::Context) -> bool {
+    ctx.input(|i| i.viewport().focused.unwrap_or(true))
+}
+
 impl SnagApp {
     /// What the menus' items need, from the window's state. `typing`: a text box has the
     /// keyboard, here or in another of Snagster's windows (`text_has_keys`).
-    pub(crate) fn menu_state(&self, typing: bool) -> menubar::State {
+    pub(crate) fn menu_state(&self, typing: bool, main_focused: bool) -> menubar::State {
         let entry = self.current.map(|i| &self.entries[i]);
         let (can_undo, can_redo) = entry.map_or((false, false), |e| (!e.undo.is_empty(), !e.redo.is_empty()));
         let undo_trash = self.deleted.owns_shortcut(std::time::Instant::now());
@@ -27,6 +32,7 @@ impl SnagApp {
             mark: self.selected.is_some(),
             pictures: !self.entries.is_empty(),
             typing,
+            main_focused,
             undo: self.can_undo_any(can_undo),
             undo_trash,
             redo: can_redo,
@@ -37,11 +43,12 @@ impl SnagApp {
     }
 
     /// Whether the standard Edit items belong to a text box: one has the keyboard in
-    /// Snagster's window, a mark's text is being typed, or another Snagster window (Settings,
-    /// Library, a dialog) has the keyboard and may hold one.
+    /// Snagster's window (a focused button or slider doesn't count), a mark's text is being
+    /// typed, or another Snagster window (Settings, Library, a dialog) is the key window and a
+    /// text box there has the keys.
     pub(crate) fn text_has_keys(&self, ctx: &egui::Context) -> bool {
-        let here = self.text_edit.is_some() || ctx.memory(|m| m.focused().is_some());
-        let elsewhere = !ctx.input(|i| i.viewport().focused.unwrap_or(true));
+        let here = self.text_edit.is_some() || ctx.text_edit_focused();
+        let elsewhere = !main_window_has_keys(ctx) && crate::windows::TEXT_IN_OWN_WINDOW.load(std::sync::atomic::Ordering::Relaxed);
         here || elsewhere
     }
 
@@ -63,7 +70,7 @@ impl SnagApp {
                     Err(e) => crate::append_crash_log(&format!("menu bar couldn't be built: {e}\n")),
                 }
             }
-            let state = self.menu_state(self.text_has_keys(ctx));
+            let state = self.menu_state(self.text_has_keys(ctx), main_window_has_keys(ctx));
             if let Some(b) = &mut self.x.menu.bar {
                 b.update(state);
             }
@@ -126,14 +133,14 @@ mod tests {
     #[test]
     fn the_menus_follow_the_picture() {
         let mut a = SnagApp::blank(Settings::default(), false, None);
-        assert_eq!(a.menu_state(false), menubar::State::default());
+        assert_eq!(a.menu_state(false, false), menubar::State::default());
         a.add_entry("one".into(), Doc::new(RgbaImage::new(4, 4)));
-        let s = a.menu_state(false);
+        let s = a.menu_state(false, false);
         assert!(s.picture && s.pictures && !s.file, "a new picture has no file yet");
         assert!(!s.undo && !s.redo && !s.cut, "nothing done yet");
-        assert!(a.menu_state(true).typing);
+        assert!(a.menu_state(true, true).typing);
         a.settings.ribbon_folded = true;
-        assert!(a.menu_state(false).ribbon_folded);
+        assert!(a.menu_state(false, false).ribbon_folded);
     }
 
     #[test]
@@ -145,5 +152,26 @@ mod tests {
             typing = Some(a.text_has_keys(ui.ctx()));
         });
         assert_eq!(typing, Some(false), "no text box has the keyboard");
+        // A button reached with Tab (Full Keyboard Access) is not a text box: Move to Trash
+        // and the picture's Copy stay the menu's.
+        let mut button_focused = (false, None);
+        for _ in 0..2 {
+            let _ = ctx.run_ui(Default::default(), |ui| {
+                let b = ui.button("A button");
+                b.request_focus();
+                button_focused = (b.has_focus(), Some(a.text_has_keys(ui.ctx())));
+            });
+        }
+        assert_eq!(button_focused, (true, Some(false)));
+        // A text box with the keys is.
+        let mut text = String::new();
+        let mut in_text = None;
+        for _ in 0..2 {
+            let _ = ctx.run_ui(Default::default(), |ui| {
+                ui.text_edit_singleline(&mut text).request_focus();
+                in_text = Some(a.text_has_keys(ui.ctx()));
+            });
+        }
+        assert_eq!(in_text, Some(true));
     }
 }

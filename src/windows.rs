@@ -80,6 +80,10 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
             (r.inner, r.response.rect.height())
         });
         let (out, used) = panel.inner;
+        // The Mac menu bar asks whether this window's text box has the keys (`text_has_keys`).
+        if ui.input(|i| i.focused) {
+            TEXT_IN_OWN_WINDOW.store(ui.ctx().text_edit_focused(), std::sync::atomic::Ordering::Relaxed);
+        }
         // A box that can't be resized grows or shrinks to what it holds (not the Mac's
         // Settings, which keeps one size for every pane).
         if fits_content(&w) {
@@ -101,6 +105,10 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
     }
     out
 }
+
+/// Whether a text box has the keys in the `own_window` that has the keyboard (Settings, the
+/// Library, a dialog): set by that window each frame it draws while it is the key window.
+pub(crate) static TEXT_IN_OWN_WINDOW: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 /// The Settings window's `own_window` key.
 const SETTINGS_KEY: &str = "settings";
@@ -1124,7 +1132,7 @@ impl SnagApp {
             }
             // Delete (⌘⌫ on a Mac) moves the picked capture to the Recycle Bin / Trash, unless
             // a text box (the search) has the keys.
-            if !ui.ctx().egui_wants_keyboard_input() && ui.input(crate::platform::trash_key_pressed) {
+            if !ui.ctx().text_edit_focused() && ui.input(crate::platform::trash_key_pressed) {
                 delete_item = picked_index(&self.lib_items, &order, self.lib_picked.as_deref());
             }
             if order.is_empty() {

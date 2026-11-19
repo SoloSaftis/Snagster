@@ -320,6 +320,10 @@ pub fn pane_tool(ui: &mut Ui, icon: &str, label: &str, on: bool) -> Response {
     } else if resp.hovered() {
         p.rect_filled(rect.shrink(2.0), CornerRadius::same(7), pal.hover);
     }
+    // Reached with the keyboard (Full Keyboard Access): the focus ring.
+    if resp.has_focus() {
+        p.rect_stroke(rect.shrink(1.0), CornerRadius::same(8), Stroke::new(2.0, pal.link), egui::StrokeKind::Inside);
+    }
     let icol = if pal.high_contrast { if on { pal.selected_text } else { pal.text } } else if on { pal.link } else { pal.dim };
     p.text(pos2(rect.center().x, rect.top() + 19.0), Align2::CENTER_CENTER, icon, FontId::new(22.0, icons()), icol);
     let tcol = if on { pal.strong } else { pal.text };

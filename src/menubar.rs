@@ -98,8 +98,9 @@ pub enum Needs {
     Copy,
     /// Edit > Select All: only a text box has something to select.
     Typing,
-    /// File > Move to Trash (⌘⌫): a picture, and no text box with the keyboard, where ⌘⌫
-    /// deletes to the start of the line (a greyed item leaves the key to the text box).
+    /// File > Move to Trash (⌘⌫): a picture, the main window is the key window, and no text
+    /// box has the keyboard, where ⌘⌫ deletes to the start of the line (a greyed item leaves
+    /// the key to the text box, or to the Library).
     Trash,
 }
 
@@ -113,6 +114,8 @@ pub struct State {
     /// A text box has the keyboard (in Snagster's window or another of its windows), so the
     /// standard Edit items act on its text.
     pub typing: bool,
+    /// Snagster's main window is the key window (not Settings, the Library or a dialog).
+    pub main_focused: bool,
     /// Undo has something to undo: a step of the picture, or a file just moved to the Trash.
     pub undo: bool,
     /// What Undo undoes is the move to the Trash (Finder's "Undo Move to Trash").
@@ -137,7 +140,8 @@ impl Needs {
             Needs::Cut => s.typing || s.cut,
             Needs::Copy => s.typing || s.picture,
             Needs::Typing => s.typing,
-            Needs::Trash => s.picture && !s.typing,
+            // Only from the main window: in the Library ⌘⌫ moves the capture picked there.
+            Needs::Trash => s.picture && !s.typing && s.main_focused,
         }
     }
 }
@@ -699,7 +703,7 @@ mod tests {
     #[test]
     fn items_grey_out_without_what_they_need() {
         let none = State::default();
-        let all = State { picture: true, file: true, mark: true, pictures: true, undo: true, redo: true, cut: true, ..State::default() };
+        let all = State { picture: true, file: true, mark: true, pictures: true, undo: true, redo: true, cut: true, main_focused: true, ..State::default() };
         for needs in [Picture, File, Mark, Pictures, Needs::Undo, Needs::Redo, Needs::Cut, Needs::Copy, Needs::Trash] {
             assert!(!needs.met(none) && needs.met(all), "{needs:?}");
         }
@@ -742,9 +746,10 @@ mod tests {
     #[test]
     fn move_to_trash_leaves_command_delete_to_a_text_box() {
         let trash = needs_of(Run::Command("recycle"));
-        let picture = State { picture: true, ..State::default() };
+        let picture = State { picture: true, main_focused: true, ..State::default() };
         assert!(trash.met(picture));
         assert!(!trash.met(State { typing: true, ..picture }), "⌘⌫ deletes text in a text box, never the picture");
+        assert!(!trash.met(State { main_focused: false, ..picture }), "in the Library ⌘⌫ is the Library's own");
         assert!(!trash.met(State::default()));
         let k = items().find(|(r, ..)| *r == Run::Command("recycle")).unwrap().2.unwrap();
         assert_eq!(accelerator_text(k), "Cmd+Backspace", "Finder's ⌘⌫");
