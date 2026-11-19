@@ -146,6 +146,7 @@ fn main() -> eframe::Result {
     }
     let mut args = all.into_iter();
     let mut screenshot: Option<PathBuf> = None;
+    let mut window_size: Option<[f32; 2]> = None;
     let mut open: Option<PathBuf> = None;
     let mut new_window = false;
     let mut action: Option<String> = None;
@@ -174,6 +175,11 @@ fn main() -> eframe::Result {
         }
         if a == "--screenshot" {
             screenshot = args.next().map(PathBuf::from);
+        } else if a == "--window-size" {
+            // The window's size for --screenshot and --ui-test, as WIDTHxHEIGHT (e.g. 500x560).
+            if let Some(size) = args.next().as_deref().and_then(parse_window_size) {
+                window_size = Some(size);
+            }
         } else if a == "--view" {
             // What --screenshot shows: studio, settings-ai, settings-editor, settings-general, library, language,
             // new-image, record, or lang:<code>; light:<view> or dark:<view> in that palette.
@@ -446,8 +452,8 @@ fn main() -> eframe::Result {
         // Linux desktops match the window to its menu entry and icon by this name
         // (assets/linux/io.github.SoloSaftis.Snagster.desktop).
         .with_app_id(APP_ID)
-        .with_inner_size([1280.0, 800.0])
-        .with_min_inner_size([900.0, 560.0])
+        .with_inner_size(window_size.unwrap_or([1280.0, 800.0]))
+        .with_min_inner_size(app::MIN_SIZE)
         .with_icon(icon());
     if app::START_PANEL.load(std::sync::atomic::Ordering::Relaxed) {
         viewport = viewport.with_min_inner_size(panel::PANEL_SIZE).with_inner_size(panel::PANEL_SIZE).with_decorations(false);
@@ -514,6 +520,13 @@ fn main() -> eframe::Result {
 /// The word after `name` on the command line (`--port 8080` gives "8080").
 fn flag_value(args: &[String], name: &str) -> Option<String> {
     args.windows(2).find(|w| w[0] == name).map(|w| w[1].clone())
+}
+
+/// A window size given as WIDTHxHEIGHT (`500x560`), within sensible limits.
+fn parse_window_size(s: &str) -> Option<[f32; 2]> {
+    let (w, h) = s.trim().split_once(['x', 'X'])?;
+    let (w, h): (f32, f32) = (w.trim().parse().ok()?, h.trim().parse().ok()?);
+    ((200.0..=8000.0).contains(&w) && (150.0..=8000.0).contains(&h)).then_some([w, h])
 }
 
 /// Port and token for `mcp-http`: `--port N` and `--token T`, else the saved settings.
@@ -939,5 +952,20 @@ mod readme_tests {
         for link in local_links(include_str!("../README.md")) {
             assert!(root.join(&link).exists(), "README links to {link}, which isn't in the repository");
         }
+    }
+}
+
+#[cfg(test)]
+mod window_size_tests {
+    use super::parse_window_size;
+
+    #[test]
+    fn window_sizes_are_read_from_the_command_line() {
+        assert_eq!(parse_window_size("500x560"), Some([500.0, 560.0]));
+        assert_eq!(parse_window_size(" 1280X800 "), Some([1280.0, 800.0]));
+        assert_eq!(parse_window_size("500"), None);
+        assert_eq!(parse_window_size("wide x tall"), None);
+        assert_eq!(parse_window_size("10x10"), None, "too small to show anything");
+        assert_eq!(parse_window_size("99999x500"), None);
     }
 }

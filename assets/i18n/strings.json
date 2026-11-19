@@ -1021,6 +1021,8 @@
  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.",
  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.",
  "The desktop's screen-sharing portal said no: {error}",
+ "More tabs",
+ "The groups that don't fit the window",
  "Desktop",
  "The desktop's screenshot portal said no: {error}",
  "The desktop's screenshot portal gave an address Snagster can't open: {address}",

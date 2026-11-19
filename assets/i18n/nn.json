@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skjermdelinga vart avbroten i dialogen til skrivebordet: ingenting vart delt.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skjermdelinga starta ikkje: ho vart avbroten i dialogen til skrivebordet, eller skrivebordet oppgav inga årsak. Ingenting vart delt.",
   "The desktop's screen-sharing portal said no: {error}": "Skjermdelingsportalen til skrivebordet sa nei: {error}",
+  "More tabs": "Fleire faner",
+  "The groups that don't fit the window": "Gruppene som ikkje får plass i vindauget",
   "Desktop": "Skrivebord",
   "The desktop's screenshot portal said no: {error}": "Skjermbileteportalen til skrivebordet sa nei: {error}",
   "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Skjermbileteportalen til skrivebordet gav ei adresse som Snagster ikkje kan opne: {address}",

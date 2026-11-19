@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Показ екрана скасовано в діалоговому вікні робочого стола: нічого не було передано.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Показ екрана не розпочався: його скасовано в діалоговому вікні робочого стола, або робочий стіл не вказав причину. Нічого не було передано.",
   "The desktop's screen-sharing portal said no: {error}": "Портал показу екрана робочого стола відмовив: {error}",
+  "More tabs": "Інші вкладки",
+  "The groups that don't fit the window": "Групи, які не вміщаються у вікні",
   "Desktop": "Робочий стіл",
   "The desktop's screenshot portal said no: {error}": "Портал знімків екрана робочого стола відмовив: {error}",
   "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Портал знімків екрана робочого стола видав адресу, яку Snagster не може відкрити: {address}",

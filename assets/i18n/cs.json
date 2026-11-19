@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Sdílení obrazovky bylo zrušeno v dialogu plochy: nic se nesdílelo.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Sdílení obrazovky se nespustilo: bylo zrušeno v dialogu plochy, nebo plocha neuvedla žádný důvod. Nic se nesdílelo.",
   "The desktop's screen-sharing portal said no: {error}": "Portál plochy pro sdílení obrazovky odmítl: {error}",
+  "More tabs": "Další karty",
+  "The groups that don't fit the window": "Skupiny, které se do okna nevejdou",
   "Desktop": "Plocha",
   "The desktop's screenshot portal said no: {error}": "Portál plochy pro snímky obrazovky odmítl: {error}",
   "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Portál plochy pro snímky obrazovky vrátil adresu, kterou Snagster nemůže otevřít: {address}",

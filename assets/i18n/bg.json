@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Споделянето на екрана беше отменено в диалоговия прозорец на работния плот: нищо не беше споделено.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Споделянето на екрана не започна: било е отменено в диалоговия прозорец на работния плот или работният плот не е посочил причина. Нищо не беше споделено.",
   "The desktop's screen-sharing portal said no: {error}": "Порталът за споделяне на екрана на работния плот отказа: {error}",
+  "More tabs": "Още раздели",
+  "The groups that don't fit the window": "Групите, които не се побират в прозореца",
   "Desktop": "Работен плот",
   "The desktop's screenshot portal said no: {error}": "Порталът за снимки на екрана на работния плот отказа: {error}",
   "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Порталът за снимки на екрана на работния плот даде адрес, който Snagster не може да отвори: {address}",

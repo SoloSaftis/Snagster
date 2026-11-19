@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Էկրանի համօգտագործումը չեղարկվել է աշխատասեղանի երկխոսության մեջ. ոչինչ չի համօգտագործվել։",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Էկրանի համօգտագործումը չսկսվեց. այն չեղարկվել է աշխատասեղանի երկխոսության մեջ, կամ աշխատասեղանը պատճառ չի նշել։ Ոչինչ չի համօգտագործվել։",
   "The desktop's screen-sharing portal said no: {error}": "Աշխատասեղանի էկրանի համօգտագործման պորտալը մերժեց. {error}",
+  "More tabs": "Այլ ներդիրներ",
+  "The groups that don't fit the window": "Խմբերը, որոնք չեն տեղավորվում պատուհանում",
   "Desktop": "Աշխատասեղան",
   "The desktop's screenshot portal said no: {error}": "Աշխատասեղանի էկրանի նկարների պորտալը մերժեց. {error}",
   "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Աշխատասեղանի էկրանի նկարների պորտալը տվեց հասցե, որը Snagster-ը չի կարող բացել. {address}",

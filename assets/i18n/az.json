@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekran paylaşımı iş masasının dialoqunda ləğv edildi: heç nə paylaşılmadı.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran paylaşımı başlamadı: o, iş masasının dialoqunda ləğv edildi və ya iş masası heç bir səbəb göstərmədi. Heç nə paylaşılmadı.",
   "The desktop's screen-sharing portal said no: {error}": "İş masasının ekran paylaşımı portalı imtina etdi: {error}",
+  "More tabs": "Daha çox tab",
+  "The groups that don't fit the window": "Pəncərəyə sığmayan qruplar",
   "Desktop": "İş masası",
   "The desktop's screenshot portal said no: {error}": "İş masasının ekran görüntüsü portalı imtina etdi: {error}",
   "The desktop's screenshot portal gave an address Snagster can't open: {address}": "İş masasının ekran görüntüsü portalı Snagster-in aça bilmədiyi ünvan verdi: {address}",

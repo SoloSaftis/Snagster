@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Экранны уртаклашу эш өстәленең диалогында туктатылды: бернәрсә дә уртаклашылмады.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Экранны уртаклашу башланмады: ул эш өстәленең диалогында туктатылды яки эш өстәле сәбәп күрсәтмәде. Бернәрсә дә уртаклашылмады.",
   "The desktop's screen-sharing portal said no: {error}": "Эш өстәленең экранны уртаклашу порталы баш тартты: {error}",
+  "More tabs": "Күбрәк кыстырма",
+  "The groups that don't fit the window": "Тәрәзәгә сыймаган төркемнәр",
   "Desktop": "Эш өстәле",
   "The desktop's screenshot portal said no: {error}": "Эш өстәленең скриншот порталы баш тартты: {error}",
   "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Эш өстәленең скриншот порталы Snagster ача алмаган адрес бирде: {address}",
