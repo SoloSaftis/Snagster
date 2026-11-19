@@ -460,6 +460,19 @@ pub struct SnagApp {
     /// The window's size the last time it was shown normally (no overlay, no bar, not full
     /// screen): what comes back after the recording bar where the position is unknown.
     normal_size: Option<Vec2>,
+    /// The recording bar as a window of its own (Wayland), and bringing the main window back.
+    bar: BarWindow,
+    /// What the bar's own window shows and what was pressed on it (it draws on its own
+    /// repaints, apart from the main window's).
+    bar_shared: Arc<Mutex<BarShared>>,
+    /// Snagster's window is a native Wayland window (not X11 through XWayland).
+    native_wayland: bool,
+    /// The connection that asks the desktop to bring the main window back (Wayland), and
+    /// whether making it failed.
+    #[cfg(target_os = "linux")]
+    wl: Option<crate::wl_activate::Activator>,
+    #[cfg(target_os = "linux")]
+    wl_failed: bool,
     pub(crate) interval: Option<IntervalJob>,
     pub(crate) schedule: Option<(chrono::NaiveTime, CaptureKind)>,
     pub(crate) timer_open: bool,
@@ -653,6 +666,13 @@ impl SnagApp {
             mini_paused: None,
             mini_restore: None,
             normal_size: None,
+            bar: BarWindow::default(),
+            bar_shared: Arc::default(),
+            native_wayland: false,
+            #[cfg(target_os = "linux")]
+            wl: None,
+            #[cfg(target_os = "linux")]
+            wl_failed: false,
             interval: None,
             schedule: None,
             timer_open: false,
@@ -1132,6 +1152,19 @@ impl SnagApp {
     // ---------- background jobs: scrolling, GIF, steps, text ----------
 
     fn enter_mini(&mut self, ctx: &egui::Context, kind: Mini) {
+        if bar_in_own_window(self.native_wayland) {
+            // Wayland: a program can't place its window, so the main window stays where it is
+            // (minimized) and the bar is a small window of its own; neither has to be moved.
+            self.bar.start();
+            self.mini_restore = None;
+            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+            self.mini = Some(kind);
+            self.mini_since = Instant::now();
+            self.mini_entered = Instant::now();
+            // Opened in this pass: the minimized main window may not get another one.
+            self.bar_window(ctx);
+            return;
+        }
         let ppp = ctx.input(|i| i.viewport().native_pixels_per_point).unwrap_or(1.0);
         let (outer, inner) = ctx.input(|i| (i.viewport().outer_rect, i.viewport().inner_rect));
         self.mini_restore = match (outer, inner) {
@@ -1157,6 +1190,11 @@ impl SnagApp {
 
     fn leave_mini(&mut self, ctx: &egui::Context) {
         self.mini = None;
+        if self.bar.on {
+            // The main window was never changed: it is only asked back (see bar_window_tick).
+            self.bar.stop(Instant::now());
+            return;
+        }
         ctx.send_viewport_cmd(egui::ViewportCommand::Decorations(true));
         ctx.send_viewport_cmd(egui::ViewportCommand::MinInnerSize(MIN_SIZE));
         ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::Normal));
@@ -4013,10 +4051,9 @@ impl SnagApp {
         }
     }
 
-    fn mini_bar(&mut self, ui: &mut egui::Ui) {
-        let ctx = ui.ctx().clone();
-        // A video counts from its first picture (on Wayland the desktop's "Share screen" dialog
-        // comes first).
+    /// What the recording bar shows now. A video or GIF counts from its first picture (on
+    /// Wayland the desktop's "Share screen" dialog comes first).
+    fn bar_view(&mut self) -> BarView {
         let waiting = match self.mini {
             Some(Mini::Video) => !crate::video::recording_live(),
             Some(Mini::Gif) => !capture::gif_live(),
@@ -4024,76 +4061,183 @@ impl SnagApp {
         };
         if waiting {
             self.mini_since = Instant::now();
-            ctx.request_repaint_after(Duration::from_millis(200));
         }
         let secs = self.mini_since.elapsed().as_secs();
-        // Wayland: leaving the full-screen overlay restores the window's old size after the bar
+        let text = match self.mini {
+            // (Its own window stays a moment after Stop, until the main window is back.)
+            None if self.bar.on => crate::i18n::t("Stopping…").to_string(),
+            Some(Mini::Gif) if waiting => "Waiting for screen sharing...".to_string(),
+            Some(Mini::Gif) => format!("Recording GIF  {}:{:02}", secs / 60, secs % 60),
+            Some(Mini::Video) if self.paused() => "Paused".to_string(),
+            Some(Mini::Video) if waiting => "Waiting for screen sharing...".to_string(),
+            Some(Mini::Video) => format!("Recording {} at {} fps  {}:{:02}", self.settings.rec_format.ext().to_uppercase(), self.settings.video_fps, secs / 60, secs % 60),
+            Some(Mini::Steps) => format!("Recording steps: {} so far", self.guide.len()),
+            Some(Mini::Scroll) if self.scroll_manual => "Scroll it yourself, then press Stop".to_string(),
+            Some(Mini::Scroll) => match &self.scroll_progress {
+                Some(p) => crate::i18n::tf(
+                    "Scrolling: {frames} pictures, {height} pixels. Esc stops.",
+                    &[("frames", &p.frames.load(Ordering::Relaxed).to_string()), ("height", &p.length.load(Ordering::Relaxed).to_string())],
+                ),
+                None => "Scrolling and stitching...".to_string(),
+            },
+            None => String::new(),
+        };
+        BarView {
+            text,
+            since: Some(self.mini_since),
+            waiting,
+            buttons: self.mini.is_some(),
+            pause: (self.mini == Some(Mini::Video)).then_some(if self.paused() { "Resume" } else { "Pause" }),
+            esc_stops: self.mini == Some(Mini::Scroll),
+        }
+    }
+
+    /// Do what was pressed on the recording bar.
+    fn bar_act(&mut self, ctx: &egui::Context, act: BarAct) {
+        if act.stop {
+            // The main window is asked back with this click (the desktop honours that only
+            // right after a click on one of Snagster's windows).
+            self.bar.stop(Instant::now());
+            match self.mini {
+                Some(Mini::Steps) => self.stop_steps(ctx),
+                Some(_) => self.stop_job(),
+                None => {}
+            }
+        } else if act.escape && self.mini == Some(Mini::Scroll) {
+            self.stop_job();
+        }
+        if act.pause && self.mini == Some(Mini::Video) {
+            self.toggle_pause();
+        }
+    }
+
+    /// The main window shrunk to the recording bar (Windows, macOS, X11).
+    fn mini_bar(&mut self, ui: &mut egui::Ui) {
+        let ctx = ui.ctx().clone();
+        // Leaving the full-screen overlay may restore the window's old size after the bar
         // asked for its own, which left a big dark window over the area being recorded. Ask
         // again until the bar has its size.
-        // (The content area: on Wayland the window's position, and so its rectangle, is unknown.)
         let have = ctx.input(|i| i.content_rect().size());
         if resize_due(have, MINI_BAR_SIZE, self.mini_entered.elapsed()) {
             ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(MINI_BAR_SIZE));
         }
-        // The bar can be dragged by its free space (a Wayland app can't place its own window).
-        // (Click and drag: the drag starts once the pointer moves, so a press on Stop isn't
-        // handed to the desktop as a window move, which swallowed the click.)
-        let bg = ui.interact(ui.max_rect(), ui.make_persistent_id("mini-bar-drag"), Sense::click_and_drag());
-        if bg.drag_started() && bar_drag_allowed(ctx.input(|i| i.pointer.press_origin()), &self.mini_buttons) {
-            ctx.send_viewport_cmd(egui::ViewportCommand::StartDrag);
+        let view = self.bar_view();
+        if view.waiting {
+            ctx.request_repaint_after(Duration::from_millis(200));
         }
-        let mut buttons = Vec::new();
-        ui.horizontal_centered(|ui| {
-            ui.add_space(10.0);
-            let blink = (self.mini_since.elapsed().as_millis() / 500) % 2 == 0;
-            let (r, _) = ui.allocate_exact_size(vec2(14.0, 14.0), Sense::hover());
-            ui.painter().circle_filled(r.center(), 6.0, if blink { Color32::from_rgb(229, 72, 77) } else { Color32::from_rgb(120, 40, 44) });
-            let text = match self.mini {
-                Some(Mini::Gif) if waiting => "Waiting for screen sharing...".to_string(),
-                Some(Mini::Gif) => format!("Recording GIF  {}:{:02}", secs / 60, secs % 60),
-                Some(Mini::Video) if self.paused() => "Paused".to_string(),
-                Some(Mini::Video) if waiting => "Waiting for screen sharing...".to_string(),
-                Some(Mini::Video) => format!("Recording {} at {} fps  {}:{:02}", self.settings.rec_format.ext().to_uppercase(), self.settings.video_fps, secs / 60, secs % 60),
-                Some(Mini::Steps) => format!("Recording steps: {} so far", self.guide.len()),
-                Some(Mini::Scroll) if self.scroll_manual => "Scroll it yourself, then press Stop".to_string(),
-                Some(Mini::Scroll) => match &self.scroll_progress {
-                    Some(p) => crate::i18n::tf(
-                        "Scrolling: {frames} pictures, {height} pixels. Esc stops.",
-                        &[("frames", &p.frames.load(Ordering::Relaxed).to_string()), ("height", &p.length.load(Ordering::Relaxed).to_string())],
-                    ),
-                    None => "Scrolling and stitching...".to_string(),
-                },
-                None => String::new(),
-            };
-            ui.label(RichText::new(text).color(Color32::WHITE).strong());
-            // Esc stops a scrolling capture when this bar has the keyboard (on Windows it
-            // works anywhere: the capture itself watches the key).
-            if self.mini == Some(Mini::Scroll) && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                self.stop_job();
-            }
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.add_space(10.0);
-                let stop = egui::Button::new(RichText::new(crate::i18n::t("Stop")).color(Color32::WHITE).strong()).fill(Color32::from_rgb(229, 72, 77));
-                let stop = ui.add(stop);
-                buttons.push(stop.rect);
-                if stop.clicked() {
-                    match self.mini {
-                        Some(Mini::Steps) => self.stop_steps(&ctx),
-                        _ => self.stop_job(),
-                    }
-                }
-                if self.mini == Some(Mini::Video) {
-                    let label = if self.paused() { "Resume" } else { "Pause" };
-                    let pause = ui.button(RichText::new(label).strong());
-                    buttons.push(pause.rect);
-                    if pause.clicked() {
-                        self.toggle_pause();
-                    }
-                }
-            });
-        });
-        self.mini_buttons = buttons;
+        let act = draw_bar(ui, &view, &mut self.mini_buttons);
+        self.bar_act(&ctx, act);
         ctx.request_repaint_after(Duration::from_millis(250));
+    }
+
+    /// The recording bar in a small window of its own (Wayland). It draws itself from
+    /// `bar_shared` on its own repaints: the minimized main window gets no frames from the
+    /// desktop, so nothing drawn from its pass would show.
+    fn bar_window(&mut self, ctx: &egui::Context) {
+        let view = self.bar_view();
+        if let Ok(mut s) = self.bar_shared.lock() {
+            s.view = view;
+            s.closed = false;
+        }
+        let builder = egui::ViewportBuilder::default()
+            .with_title(crate::i18n::t("Recording"))
+            .with_app_id(crate::APP_ID)
+            .with_inner_size(MINI_BAR_SIZE)
+            .with_min_inner_size(vec2(200.0, 40.0))
+            .with_decorations(false)
+            .with_resizable(false)
+            .with_always_on_top();
+        let shared = self.bar_shared.clone();
+        ctx.show_viewport_deferred(egui::ViewportId::from_hash_of("recording-bar"), builder, move |ui, _| {
+            let ctx = ui.ctx().clone();
+            let Ok(mut s) = shared.lock() else { return };
+            if s.closed {
+                // Over, but the main window hasn't drawn since to take the bar away (the
+                // desktop didn't bring it back): out of sight until it does.
+                ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+                return;
+            }
+            let view = s.view.clone();
+            let mut buttons = std::mem::take(&mut s.buttons);
+            let act = egui::CentralPanel::default()
+                .frame(egui::Frame::new().fill(BG_DARK).stroke(Stroke::new(1.0, accent())))
+                .show(ui, |ui| draw_bar(ui, &view, &mut buttons))
+                .inner;
+            s.buttons = buttons;
+            if act.any() {
+                s.act.merge(act);
+                ctx.request_repaint_of(egui::ViewportId::ROOT);
+            }
+            ctx.request_repaint_after(Duration::from_millis(250));
+        });
+    }
+
+    /// Bring the main window back after the bar's own window (Wayland): the desktop is asked
+    /// with the click on Stop, and the bar closes once it has been asked.
+    fn bar_window_tick(&mut self, ctx: &egui::Context, frame: &eframe::Frame) {
+        if self.bar.on {
+            // The bar's own window runs apart from this one: what it shows is updated here,
+            // and what was pressed on it is done here.
+            let act = self.bar_shared.lock().map(|mut s| std::mem::take(&mut s.act)).unwrap_or_default();
+            self.bar_act(ctx, act);
+            let view = self.bar_view();
+            if let Ok(mut s) = self.bar_shared.lock() {
+                s.view = view;
+            }
+            ctx.request_repaint_of(egui::ViewportId::from_hash_of("recording-bar"));
+        }
+        #[cfg(target_os = "linux")]
+        use raw_window_handle::HasWindowHandle as _;
+        #[cfg(target_os = "linux")]
+        {
+            use raw_window_handle::{HasDisplayHandle as _, RawDisplayHandle};
+            let display = frame.display_handle().map(|h| h.as_raw());
+            self.native_wayland = matches!(display, Ok(RawDisplayHandle::Wayland(_)));
+            if self.bar.on && self.wl.is_none() && !self.wl_failed {
+                if let Ok(RawDisplayHandle::Wayland(d)) = display {
+                    // SAFETY: winit's display lives as long as the program's windows.
+                    self.wl = unsafe { crate::wl_activate::Activator::new(d.display.as_ptr()) };
+                }
+                self.wl_failed = self.wl.is_none();
+            }
+            if let Some(wl) = &mut self.wl
+                && wl.poll()
+            {
+                self.bar.done = true;
+            }
+        }
+        if self.bar.ask_due() {
+            self.bar.asked = true;
+            #[cfg(target_os = "linux")]
+            let asked = match (&mut self.wl, frame.window_handle().map(|h| h.as_raw())) {
+                // SAFETY: the main window's surface, alive while the program runs.
+                (Some(wl), Ok(raw_window_handle::RawWindowHandle::Wayland(w))) => unsafe { wl.activate(w.surface.as_ptr()) },
+                _ => false,
+            };
+            #[cfg(not(target_os = "linux"))]
+            let asked = false;
+            if !asked {
+                // The desktop then says Snagster is ready; that brings the window back.
+                ctx.send_viewport_cmd(egui::ViewportCommand::RequestUserAttention(egui::UserAttentionType::Informational));
+                self.bar.done = true;
+            }
+        }
+        #[cfg(not(target_os = "linux"))]
+        let _ = frame;
+        if self.bar.finished(self.mini.is_some(), Instant::now()) {
+            self.bar = BarWindow::default();
+            if let Ok(mut s) = self.bar_shared.lock() {
+                s.closed = true;
+            }
+            #[cfg(target_os = "linux")]
+            {
+                self.wl = None;
+                self.wl_failed = false;
+            }
+        }
+        if self.bar.on {
+            ctx.request_repaint_after(Duration::from_millis(50));
+        }
     }
 
     fn screenshot_tick(&mut self, ctx: &egui::Context) {
@@ -4186,7 +4330,7 @@ impl SnagApp {
             capture::remember_window_screen(((m.x * ppp).round() as u32, (m.y * ppp).round() as u32));
         }
         let full = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
-        if !full && self.mini.is_none() && self.overlay.is_none() && self.size_wanted.is_none() {
+        if !full && self.mini.is_none() && !self.bar.on && self.overlay.is_none() && self.size_wanted.is_none() {
             self.normal_size = Some(ctx.input(|i| i.content_rect().size()));
         }
         if let Some((want, since)) = self.size_wanted {
@@ -4283,7 +4427,10 @@ impl SnagApp {
         self.screen_access_window(&ctx);
             return;
         }
-        if self.mini.is_some() {
+        if self.bar.shown(self.mini.is_some(), Instant::now()) {
+            self.bar_window(&ctx);
+        }
+        if self.mini.is_some() && !self.bar.on {
             egui::CentralPanel::default()
                 .frame(egui::Frame::new().fill(BG_DARK).stroke(Stroke::new(1.0, accent())))
                 .show(ui, |ui| self.mini_bar(ui));
@@ -5514,12 +5661,13 @@ impl eframe::App for SnagApp {
     // A mistake in one frame must not close the window and lose the person's pictures: it is
     // written to crash.log (by the panic hook) and shown in the status line, and the next frame
     // carries on.
-    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn logic(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let started = Instant::now();
         crate::drawing::frame(ctx, self.persist);
         if let Err(e) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.logic_body(ctx))) {
             self.recovered(e);
         }
+        self.bar_window_tick(ctx, frame);
         self.sweep_textures(started);
         self.watchdog("logic", started.elapsed());
     }
@@ -5729,6 +5877,152 @@ impl SnagApp {
     }
 }
 
+/// What the recording bar shows.
+#[derive(Clone, Default)]
+struct BarView {
+    text: String,
+    /// Since when it records (the red dot blinks from then).
+    since: Option<Instant>,
+    /// Waiting for the desktop's screen sharing.
+    waiting: bool,
+    /// Stop (and Pause) are offered.
+    buttons: bool,
+    /// The Pause button's label, for a video.
+    pause: Option<&'static str>,
+    /// Escape stops (a scrolling capture).
+    esc_stops: bool,
+}
+
+/// What was pressed on the recording bar.
+#[derive(Clone, Copy, Default, PartialEq, Debug)]
+struct BarAct {
+    stop: bool,
+    pause: bool,
+    escape: bool,
+}
+
+impl BarAct {
+    fn any(self) -> bool {
+        self.stop || self.pause || self.escape
+    }
+
+    /// Presses not yet handled add up (two pauses cancel out: the bar shows one state).
+    fn merge(&mut self, other: BarAct) {
+        self.stop |= other.stop;
+        self.pause ^= other.pause;
+        self.escape |= other.escape;
+    }
+}
+
+/// Between the bar's own window and the main window.
+#[derive(Default)]
+struct BarShared {
+    view: BarView,
+    act: BarAct,
+    /// Where its buttons were last frame (a press there is never a drag of the bar).
+    buttons: Vec<egui::Rect>,
+    /// The recording is over; the bar goes out of sight.
+    closed: bool,
+}
+
+/// Draw the recording bar into `ui` (the main window shrunk to a bar, or the bar's own window)
+/// and say what was pressed. `buttons` holds where its buttons were last frame and gets where
+/// they are now.
+fn draw_bar(ui: &mut egui::Ui, view: &BarView, buttons: &mut Vec<egui::Rect>) -> BarAct {
+    let ctx = ui.ctx().clone();
+    let mut act = BarAct::default();
+    // The bar can be dragged by its free space (a Wayland app can't place its own window).
+    // (Click and drag: the drag starts once the pointer moves, so a press on Stop isn't
+    // handed to the desktop as a window move, which swallowed the click.)
+    let bg = ui.interact(ui.max_rect(), ui.make_persistent_id("mini-bar-drag"), Sense::click_and_drag());
+    if bg.drag_started() && bar_drag_allowed(ctx.input(|i| i.pointer.press_origin()), buttons) {
+        ctx.send_viewport_cmd(egui::ViewportCommand::StartDrag);
+    }
+    let mut now = Vec::new();
+    ui.horizontal_centered(|ui| {
+        ui.add_space(10.0);
+        let blink = view.since.is_none_or(|t| (t.elapsed().as_millis() / 500) % 2 == 0);
+        let (r, _) = ui.allocate_exact_size(vec2(14.0, 14.0), Sense::hover());
+        ui.painter().circle_filled(r.center(), 6.0, if blink { Color32::from_rgb(229, 72, 77) } else { Color32::from_rgb(120, 40, 44) });
+        ui.label(RichText::new(&view.text).color(Color32::WHITE).strong());
+        // Esc stops a scrolling capture when this bar has the keyboard (on Windows it works
+        // anywhere: the capture itself watches the key).
+        if view.esc_stops && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+            act.escape = true;
+        }
+        if !view.buttons {
+            return;
+        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.add_space(10.0);
+            let stop = egui::Button::new(RichText::new(crate::i18n::t("Stop")).color(Color32::WHITE).strong()).fill(Color32::from_rgb(229, 72, 77));
+            let stop = ui.add(stop);
+            now.push(stop.rect);
+            act.stop = stop.clicked();
+            if let Some(label) = view.pause {
+                let pause = ui.button(RichText::new(label).strong());
+                now.push(pause.rect);
+                act.pause = pause.clicked();
+            }
+        });
+    });
+    *buttons = now;
+    act
+}
+
+/// Whether the recording bar is a window of its own instead of the main window shrunk to a bar:
+/// on Wayland, where a program can't move its window back afterwards.
+fn bar_in_own_window(native_wayland: bool) -> bool {
+    native_wayland
+}
+
+/// How long the bar's own window may stay after Stop while the main window is asked back.
+const BAR_LINGER: Duration = Duration::from_millis(1500);
+
+/// The recording bar as a window of its own, next to the minimized main window (Wayland).
+#[derive(Default)]
+struct BarWindow {
+    /// The bar is a window of its own for the current recording.
+    on: bool,
+    /// Since when the main window is to come back (Stop pressed, or the recording ended).
+    back_since: Option<Instant>,
+    /// The desktop was asked for it (a token was requested).
+    asked: bool,
+    /// The main window was activated.
+    done: bool,
+}
+
+impl BarWindow {
+    fn start(&mut self) {
+        *self = BarWindow { on: true, ..Default::default() };
+    }
+
+    /// Stop was pressed or the recording ended: the main window is to come back. The first
+    /// call counts (the click on Stop, before the recording has finished saving).
+    fn stop(&mut self, now: Instant) {
+        if self.on {
+            self.back_since.get_or_insert(now);
+        }
+    }
+
+    /// Whether to ask the desktop for the main window now.
+    fn ask_due(&self) -> bool {
+        self.on && self.back_since.is_some() && !self.asked
+    }
+
+    /// Whether the bar's window is shown: while recording, and after Stop until the main
+    /// window is back (the request must come from a window that is still there), at most
+    /// [`BAR_LINGER`].
+    fn shown(&self, recording: bool, now: Instant) -> bool {
+        self.on && (recording || self.back_since.is_some_and(|t| !self.done && now.duration_since(t) < BAR_LINGER))
+    }
+
+    /// Whether it is all over (the bar gone, the main window asked back).
+    fn finished(&self, recording: bool, now: Instant) -> bool {
+        self.on && !recording && self.asked && !self.shown(recording, now)
+    }
+}
+
 /// Whether a press at `press` may move the recording bar: not when it was on one of its buttons.
 fn bar_drag_allowed(press: Option<egui::Pos2>, buttons: &[egui::Rect]) -> bool {
     press.is_some_and(|p| !buttons.iter().any(|r| r.expand(2.0).contains(p)))
@@ -5786,6 +6080,99 @@ mod tests {
         // The free space moves it; no press, no move.
         assert!(bar_drag_allowed(Some(pos2(120.0, 28.0)), &buttons));
         assert!(!bar_drag_allowed(None, &buttons));
+    }
+
+    /// On Wayland the bar is a window of its own and the main window stays where it is; the
+    /// main window is asked back with the click on Stop, and the bar stays until it was.
+    #[test]
+    fn on_wayland_the_bar_has_its_own_window_and_the_editor_comes_back() {
+        use super::{BAR_LINGER, BarWindow, bar_in_own_window};
+        use std::time::{Duration, Instant};
+        assert!(bar_in_own_window(true), "Wayland: the main window can't be moved back");
+        assert!(!bar_in_own_window(false), "Windows, macOS, X11: the main window becomes the bar");
+
+        let t0 = Instant::now();
+        let mut bar = BarWindow::default();
+        bar.stop(t0);
+        assert!(!bar.ask_due() && !bar.shown(false, t0), "nothing happens without a bar window");
+
+        bar.start();
+        assert!(bar.shown(true, t0), "shown while recording");
+        assert!(!bar.ask_due(), "the editor stays away while recording");
+        assert!(!bar.finished(true, t0));
+
+        // Stop pressed: the click counts, not the moment the recording finished saving.
+        bar.stop(t0);
+        bar.stop(t0 + Duration::from_millis(400));
+        assert_eq!(bar.back_since, Some(t0));
+        assert!(bar.ask_due(), "the editor is asked back right after the click");
+        bar.asked = true;
+        assert!(!bar.ask_due(), "asked once");
+        let later = t0 + Duration::from_millis(300);
+        assert!(bar.shown(false, later), "the bar stays while the desktop answers");
+        assert!(!bar.finished(false, later));
+        bar.done = true;
+        assert!(!bar.shown(false, later), "the editor is back: the bar goes");
+        assert!(bar.finished(false, later));
+
+        // No answer from the desktop: the bar goes anyway.
+        bar.start();
+        bar.stop(t0);
+        bar.asked = true;
+        assert!(bar.shown(false, t0 + BAR_LINGER - Duration::from_millis(1)));
+        assert!(bar.finished(false, t0 + BAR_LINGER));
+        // A new recording starts afresh.
+        bar.start();
+        assert!(bar.on && bar.back_since.is_none() && !bar.asked && !bar.done);
+    }
+
+    /// The bar drawn on its own (its own window on Wayland) reports a click on Stop and on
+    /// Pause, offers Pause only for a video, and no buttons once it is only saying "Stopping".
+    #[test]
+    fn the_bar_reports_what_was_pressed() {
+        use super::{BarAct, BarView, draw_bar};
+        let ctx = egui::Context::default();
+        let screen = egui::Rect::from_min_size(egui::Pos2::ZERO, super::MINI_BAR_SIZE);
+        let frame = |view: &BarView, buttons: &mut Vec<egui::Rect>, events: Vec<egui::Event>| {
+            let mut act = BarAct::default();
+            let input = egui::RawInput { screen_rect: Some(screen), events, ..Default::default() };
+            let mut out = ctx.run_ui(input, |ui| {
+                act = egui::CentralPanel::default().show(ui, |ui| draw_bar(ui, view, buttons)).inner;
+            });
+            out.textures_delta.clear();
+            act
+        };
+        let click = |p: egui::Pos2| {
+            vec![
+                egui::Event::PointerMoved(p),
+                egui::Event::PointerButton { pos: p, button: egui::PointerButton::Primary, pressed: true, modifiers: Default::default() },
+                egui::Event::PointerButton { pos: p, button: egui::PointerButton::Primary, pressed: false, modifiers: Default::default() },
+            ]
+        };
+        let video = BarView { text: "Recording MP4".into(), since: None, waiting: false, buttons: true, pause: Some("Pause"), esc_stops: false };
+        let mut buttons = Vec::new();
+        assert_eq!(frame(&video, &mut buttons, vec![]), BarAct::default());
+        assert_eq!(buttons.len(), 2, "Stop and Pause");
+        let (stop, pause) = (buttons[0].center(), buttons[1].center());
+        assert!(stop.x > pause.x, "Stop is the last button");
+        assert_eq!(frame(&video, &mut buttons, click(stop)), BarAct { stop: true, ..Default::default() });
+        assert_eq!(frame(&video, &mut buttons, click(pause)), BarAct { pause: true, ..Default::default() });
+
+        let gif = BarView { pause: None, ..video.clone() };
+        frame(&gif, &mut buttons, vec![]);
+        assert_eq!(buttons.len(), 1, "a GIF can't pause");
+        let stopping = BarView { text: "Stopping…".into(), buttons: false, pause: None, ..video };
+        frame(&stopping, &mut buttons, vec![]);
+        assert!(buttons.is_empty(), "nothing to press while the editor comes back");
+
+        // Presses waiting for the main window add up; two pauses cancel out.
+        let mut waiting = BarAct::default();
+        waiting.merge(BarAct { pause: true, ..Default::default() });
+        waiting.merge(BarAct { stop: true, ..Default::default() });
+        assert_eq!(waiting, BarAct { stop: true, pause: true, escape: false });
+        waiting.merge(BarAct { pause: true, ..Default::default() });
+        assert_eq!(waiting, BarAct { stop: true, pause: false, escape: false });
+        assert!(waiting.any() && !BarAct::default().any());
     }
 
     /// The recording bar re-asks for its size while the window is still the old size (Wayland
