@@ -2206,8 +2206,8 @@ mod tests {
     fn long_toolbar_names_show_whole_and_the_row_fits_the_window() {
         // Shrinks the type only when it must.
         assert_eq!(toolbar_fit(700.0, 8.0, |_| vec![76.0; 7]), (crate::look::PANE_TOOL_TEXT, 76.0 * 7.0 + 48.0));
-        let (size, w) = toolbar_fit(500.0, 8.0, |s| vec![10.0 * s; 7]);
-        assert!(size < crate::look::PANE_TOOL_TEXT && w <= 500.0, "{size} {w}");
+        let (size, w) = toolbar_fit(500.0, 8.0, |s| vec![6.0 * s; 7]);
+        assert!(size < crate::look::PANE_TOOL_TEXT && size > 9.0 && w <= 500.0, "{size} {w}");
         assert_eq!(toolbar_fit(10.0, 8.0, |s| vec![10.0 * s; 7]).0, 9.0, "never below 9 points");
         // The longest real names: every icon is wider than its name, and the row fits the
         // fixed 720-point window (less its margins).
