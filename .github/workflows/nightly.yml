@@ -1,0 +1,137 @@
+# Every night: each fuzz target (src/fuzz.rs) runs for minutes instead of the few hundred inputs
+# `cargo test` gives it. Pictures, .snag projects, settings.json, MCP messages and every MCP
+# tool's arguments, translations, single-instance messages, the updater's SHA256SUMS and
+# GitHub's answer, video files and what streaming servers send all get broken input from a
+# seeded random walk. A panic, an allocation over the target's budget, an input that takes too
+# long or a crash fails the job, and the inputs that did it are uploaded as an artifact.
+#
+# Separate from build.yml: nothing here builds downloads, and a failure here never blocks a push.
+# Run it by hand with Actions > Nightly fuzz > Run workflow (or `gh workflow run nightly.yml
+# --ref <branch> -f seconds=60`). DEVELOPING.md says how to replay a saved input.
+name: Nightly fuzz
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Seconds per target
+        default: "300"
+      targets:
+        description: Targets (comma list, or all)
+        default: all
+      seed:
+        description: Seed (empty for a new one each run)
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  fuzz:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Linux reads videos with the mp4 crate and Windows with Media Foundation; the single
+        # instance, paths and text recognition differ too.
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    env:
+      SECONDS_PER_TARGET: ${{ inputs.seconds || '300' }}
+      TARGETS: ${{ inputs.targets || 'all' }}
+      SEED: ${{ inputs.seed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: v1-nasm-fuzz
+      - name: Linux system libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config clang libclang-dev \
+            libpipewire-0.3-dev libspa-0.2-dev \
+            libwayland-dev libxkbcommon-dev libgbm-dev libegl1-mesa-dev libgl1-mesa-dev libdrm-dev \
+            libxcb1-dev libxcb-randr0-dev libxcb-shm0-dev libxcb-xfixes0-dev libxcb-shape0-dev \
+            libdbus-1-dev libva2 libva-drm2 nasm jq
+      - name: NASM (OpenH264's x86 assembly)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install nasm -y --no-progress
+          "C:\Program Files\NASM" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+      # The test build, not the release one: integer overflow is checked, so an odd number that
+      # wraps around is a failure here instead of a wrong answer.
+      - name: Build the tests
+        shell: bash
+        run: |
+          cargo test --locked --no-run --message-format=json > build.json
+          exe=$(jq -r 'select(.reason == "compiler-artifact" and .profile.test == true and .target.name == "snagster" and .executable != null) | .executable' build.json | tail -1)
+          [ -n "$exe" ] || { echo "the test program wasn't found"; exit 1; }
+          echo "TEST_EXE=$exe" >> "$GITHUB_ENV"
+          echo "test program: $exe"
+      - name: Fuzz every target
+        shell: bash
+        run: |
+          mkdir -p fuzz-out
+          export SNAGSTER_FUZZ_OUT="$PWD/fuzz-out" SNAGSTER_FUZZ_SECS="$SECONDS_PER_TARGET"
+          [ -n "$SEED" ] && export SNAGSTER_FUZZ_SEED="$SEED"
+          if [ "$TARGETS" = all ]; then
+            list=$("$TEST_EXE" fuzz::tests::fuzz_list --exact --ignored --nocapture | sed -n 's/^fuzz-target: //p')
+          else
+            list=$(echo "$TARGETS" | tr ',' '\n')
+          fi
+          [ -n "$list" ] || { echo "no fuzz targets"; exit 1; }
+          echo "targets: $(echo $list)"
+          # One process per target (a crash or an out-of-memory abort ends only that one), as many
+          # at once as there are processors.
+          jobs=$(nproc 2>/dev/null || echo 4)
+          echo "$list" | xargs -P "$jobs" -I{} bash -c '
+            SNAGSTER_FUZZ_TARGET={} "$TEST_EXE" fuzz::tests::fuzz_nightly --exact --ignored --nocapture > "fuzz-out/{}.log" 2>&1
+            echo $? > "fuzz-out/{}.exit"' || true
+          failed=0
+          {
+            echo "## Fuzz (${{ matrix.os }}): $SECONDS_PER_TARGET s per target"
+            echo
+            echo "| Target | Result |"
+            echo "|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for t in $list; do
+            code=$(cat "fuzz-out/$t.exit" 2>/dev/null || echo missing)
+            line=$(grep -E "^fuzz $t: [0-9]+ inputs" "fuzz-out/$t.log" | tail -1)
+            if [ "$code" = 0 ]; then
+              echo "| $t | ${line#fuzz $t: } |" >> "$GITHUB_STEP_SUMMARY"
+              echo "OK   $line"
+            else
+              failed=1
+              why=$(grep -m1 -E "^fuzz target $t|one input has run" "fuzz-out/$t.log" || echo "ended with code $code (a crash or out of memory: the input is in $t.current)")
+              echo "| $t | **failed**: ${why//|/\\|} |" >> "$GITHUB_STEP_SUMMARY"
+              echo "::error title=Fuzz target $t failed::$why"
+              echo "---- $t ----"
+              tail -n 60 "fuzz-out/$t.log"
+            fi
+          done
+          if [ "$failed" = 1 ]; then
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "The failing inputs are in the fuzz-inputs artifact. Replay one: SNAGSTER_FUZZ_TARGET=<target> SNAGSTER_FUZZ_INPUT=<file> cargo test fuzz_replay -- --ignored --nocapture" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit $failed
+      - name: Keep the inputs that failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-inputs-${{ matrix.os }}-${{ github.run_id }}
+          path: fuzz-out/
+          retention-days: 30

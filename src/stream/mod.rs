@@ -39,3 +39,37 @@ mod tests;
 pub use engine::{Encoders, PacketHook, State};
 pub use services::{PRESETS, Service, StreamTarget, mask};
 pub use source::Source;
+
+/// Fuzz targets (`src/fuzz.rs`): what servers send (`rtmp`), and what encoders hand over to be
+/// packed into FLV tags.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use crate::encode::Codec;
+    use crate::fuzz::Target;
+
+    pub fn targets() -> Vec<Target> {
+        let mut all = super::rtmp::fuzzing::targets();
+        all.push(Target {
+            name: "stream_flv",
+            seeds: || vec![[&[0u8, 0, 0, 1, 0x67, 0x42, 0xC0, 0x1F, 0xDA][..], &[0, 0, 1, 0x68, 0xCE, 0x3C, 0x80], &[0, 0, 0, 1, 0x65, 1, 2, 3], &[0, 0, 1, 0x40, 1, 0x0C, 0, 0, 0, 1, 0x42, 1, 1, 1, 0x60, 0, 0, 3, 0, 0, 1, 0x44]].concat()],
+            words: || ["\u{0}\u{0}\u{1}", "\u{0}\u{0}\u{0}\u{1}", "\u{0}\u{0}\u{3}", "g", "h", "e", "@", "B", "D"].iter().map(|s| s.to_string()).collect(),
+            run: |au| {
+                let nals = super::flv::split_annexb(au);
+                assert!(nals.iter().map(|n| n.len()).sum::<usize>() <= au.len());
+                for codec in [Codec::H264, Codec::Hevc] {
+                    let p = super::flv::ParamSets::find(codec, au);
+                    let _ = super::flv::video_sequence_header(codec, &p);
+                    let _ = super::flv::annexb_to_length_prefixed(codec, au);
+                    assert!(super::flv::video_frame(codec, au, au.len() % 2 == 0, au.len() as i32 - 100).len() <= 9 + au.len() + 4 * nals.len());
+                }
+                for n in nals {
+                    let _ = super::flv::unescape(n);
+                }
+                let _ = super::flv::audio_sequence_header(au);
+                let _ = super::flv::audio_frame(au);
+            },
+            budget: |n| 64 * 1024 + 16 * n,
+        });
+        all
+    }
+}

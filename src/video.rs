@@ -3195,16 +3195,60 @@ mod soft {
     pub fn probe(path: &std::path::Path) -> Result<Probe, String> {
         let f = std::fs::File::open(path).map_err(|e| e.to_string())?;
         let size = f.metadata().map_err(|e| e.to_string())?.len();
-        let r = mp4::Mp4Reader::read_header(std::io::BufReader::new(f), size).map_err(|e| e.to_string())?;
-        let t = r.tracks().get(&1).ok_or("no video track")?;
-        Ok(Probe {
-            width: t.width() as u32,
-            height: t.height() as u32,
-            frames: t.sample_count() as u64,
-            seconds: t.duration().as_secs_f64(),
-            first: None,
-            audio: r.tracks().len() > 1,
+        super::mp4_probe(std::io::BufReader::new(f), size)
+    }
+}
+
+/// What an MP4 file's header says, read with the mp4 crate (how Linux and macOS look at a
+/// video; Windows asks Media Foundation). Built into Windows tests too, for the fuzz target.
+#[cfg(any(not(windows), test))]
+fn mp4_probe<R: std::io::Read + std::io::Seek>(reader: R, size: u64) -> Result<Probe, String> {
+    let r = mp4::Mp4Reader::read_header(reader, size).map_err(|e| e.to_string())?;
+    let t = r.tracks().get(&1).ok_or("no video track")?;
+    Ok(Probe {
+        width: t.width() as u32,
+        height: t.height() as u32,
+        frames: t.sample_count() as u64,
+        seconds: t.duration().as_secs_f64(),
+        first: None,
+        audio: r.tracks().len() > 1,
+    })
+}
+
+/// Fuzz target (`src/fuzz.rs`): a video file someone hands to video_info or the editor.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::Target;
+
+    /// A small MP4 with two H.264 samples (the parameter sets are plausible, not decodable).
+    pub fn small_mp4() -> Vec<u8> {
+        let config = mp4::Mp4Config { major_brand: mp4::FourCC::from(*b"isom"), minor_version: 512, compatible_brands: vec![mp4::FourCC::from(*b"isom"), mp4::FourCC::from(*b"avc1")], timescale: 1000 };
+        let mut m = mp4::Mp4Writer::write_start(std::io::Cursor::new(Vec::new()), &config).unwrap();
+        m.add_track(&mp4::TrackConfig {
+            track_type: mp4::TrackType::Video,
+            timescale: 1000,
+            language: "und".into(),
+            media_conf: mp4::MediaConfig::AvcConfig(mp4::AvcConfig { width: 16, height: 16, seq_param_set: vec![0x67, 0x42, 0xC0, 0x1F, 0xDA], pic_param_set: vec![0x68, 0xCE, 0x3C, 0x80] }),
         })
+        .unwrap();
+        for i in 0..2u64 {
+            m.write_sample(1, &mp4::Mp4Sample { start_time: i * 33, duration: 33, rendering_offset: 0, is_sync: i == 0, bytes: vec![0, 0, 0, 4, 0x65, 1, 2, 3].into() }).unwrap();
+        }
+        m.write_end().unwrap();
+        m.into_writer().into_inner()
+    }
+
+    pub fn targets() -> Vec<Target> {
+        vec![Target {
+            name: "video_probe",
+            seeds: || vec![small_mp4()],
+            words: || ["ftyp", "moov", "mvhd", "trak", "tkhd", "mdia", "mdhd", "hdlr", "minf", "stbl", "stsd", "avc1", "avcC", "stts", "stsz", "stsc", "stco", "co64", "mdat", "\u{ff}\u{ff}\u{ff}\u{ff}"].iter().map(|s| s.to_string()).collect(),
+            run: |b| {
+                let _ = mp4_probe(std::io::Cursor::new(b), b.len() as u64);
+            },
+            budget: |n| (16 << 20) + 64 * n,
+        }]
     }
 }
 

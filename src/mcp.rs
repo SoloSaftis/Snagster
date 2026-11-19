@@ -1930,6 +1930,344 @@ pub fn run_cli(args: &[String]) -> Option<i32> {
     Some(code)
 }
 
+/// Fuzz targets (`src/fuzz.rs`): what an AI app sends. `mcp_jsonrpc` breaks whole JSON-RPC
+/// messages; `mcp_tools` calls every tool with broken arguments, built from each tool's own
+/// schema. Both run in a sandbox: settings that point every folder at a scratch folder, file
+/// paths in the arguments kept inside it, and no tool that reaches the screen, the clipboard,
+/// the network, sound devices or other programs.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::{Target, pin_folders, safe_name, sandboxed_settings, scratch};
+
+    /// Tools the fuzz never calls: they capture or record the screen, use the clipboard, the
+    /// network, sound or graphics devices, start or message other programs, or write outside
+    /// the sandbox (the cloud folders). Each has tests of its own arguments.
+    pub const OUTSIDE: [&str; 26] = [
+        "capture_screen",
+        "capture_region",
+        "capture_window",
+        "capture_active_window",
+        "capture_last_area",
+        "capture_scrolling",
+        "run_preset",
+        "pick_color",
+        "read_screen_text",
+        "list_windows",
+        "list_monitors",
+        "list_audio_devices",
+        "list_video_encoders",
+        "record_video",
+        "record_gif",
+        "studio_record",
+        "stream_start",
+        "stream_stop",
+        "copy_to_clipboard",
+        "paste_from_clipboard",
+        "check_for_update",
+        "open_in_snagster",
+        "app_command",
+        "save_to_cloud",
+        // Text recognition: the system's OCR (Windows) is slow and is fed pictures, not arguments.
+        "read_text",
+        "smart_redact",
+    ];
+
+    /// The tools the fuzz calls, with their argument schemas.
+    pub fn callable() -> Vec<(&'static str, Value)> {
+        tools().into_iter().filter(|t| !OUTSIDE.contains(&t.name)).map(|t| (t.name, t.schema)).collect()
+    }
+
+    /// Whether an argument names a file or folder (kept inside the sandbox).
+    fn is_path_key(k: &str) -> bool {
+        let k = k.to_ascii_lowercase();
+        k.contains("path") || k.contains("folder") || k.contains("file") || k == "out" || k == "uri" || k == "pictures" || k == "images"
+    }
+
+    /// Paths in `v` (under a path-like key) replaced by names inside `dir`.
+    fn sandbox_paths(v: &mut Value, dir: &Path, under_path: bool) {
+        match v {
+            Value::String(s) if under_path => *s = dir.join(safe_name(s)).to_string_lossy().into_owned(),
+            Value::Array(a) => a.iter_mut().for_each(|c| sandbox_paths(c, dir, under_path)),
+            Value::Object(m) => {
+                // set_setting: a folder or path setting's value is a path too.
+                let setting_is_path = m.get("key").and_then(Value::as_str).is_some_and(is_path_key);
+                for (k, c) in m.iter_mut() {
+                    let p = is_path_key(k) || (k == "value" && setting_is_path);
+                    sandbox_paths(c, dir, under_path || p);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// A plausible value for one argument, from its schema and name.
+    fn example(name: &str, schema: &Value) -> Value {
+        if let Some(e) = schema.get("enum").and_then(Value::as_array).and_then(|e| e.first()) {
+            return e.clone();
+        }
+        let ty = schema.get("type").and_then(Value::as_str).unwrap_or("string");
+        match ty {
+            "number" | "integer" => json!(match name {
+                "x" | "y" | "index" | "number" | "first" | "scene" | "source" => 1,
+                "width" | "height" | "max_width" | "size" => 12,
+                _ => 2,
+            }),
+            "boolean" => json!(true),
+            "array" => match name {
+                "points" => json!([[1, 1], [8, 2], [4, 7]]),
+                "paths" | "pictures" | "images" => json!(["a.png", "b.png"]),
+                _ => json!([example("", schema.get("items").unwrap_or(&json!({})))]),
+            },
+            "object" => {
+                let mut m = serde_json::Map::new();
+                if let Some(p) = schema.get("properties").and_then(Value::as_object) {
+                    for (k, s) in p {
+                        m.insert(k.clone(), example(k, s));
+                    }
+                }
+                Value::Object(m)
+            }
+            _ => json!(match name {
+                "color" | "fill" | "background" => "#FF0000",
+                n if is_path_key(n) => "a.png",
+                "text" | "title" | "name" | "caption" => "Hi",
+                "key" => "jpeg_quality",
+                _ => "x",
+            }),
+        }
+    }
+
+    fn calls(list: Value) -> Vec<u8> {
+        serde_json::to_vec(&json!({ "calls": list })).unwrap()
+    }
+
+    /// For every tool: all its arguments, and only the required ones. Then a few sequences.
+    fn tool_seeds() -> Vec<Vec<u8>> {
+        let mut out = Vec::new();
+        for (name, schema) in callable() {
+            let all = example("", &schema);
+            out.push(calls(json!([{ "tool": name, "args": all }])));
+            let required: Vec<String> = schema.get("required").and_then(Value::as_array).map(|r| r.iter().filter_map(|s| s.as_str().map(String::from)).collect()).unwrap_or_default();
+            let only: serde_json::Map<String, Value> = all.as_object().map(|m| m.iter().filter(|(k, _)| required.contains(k)).map(|(k, v)| (k.clone(), v.clone())).collect()).unwrap_or_default();
+            out.push(calls(json!([{ "tool": name, "args": only }])));
+        }
+        for kind in ["arrow", "line", "box", "oval", "highlight", "spotlight", "text", "callout", "step", "stamp", "pointer", "magnify", "image"] {
+            out.push(calls(json!([
+                {"tool": "add_mark", "args": {"kind": kind, "x": 2, "y": 2, "width": 8, "height": 6, "x2": 9, "y2": 7, "text": "Hi", "color": "blue", "path": "a.png"}},
+                {"tool": "update_mark", "args": {"index": 2, "x": 3, "width": 4, "text": "Yo", "size": 30}},
+                {"tool": "list_marks", "args": {}},
+                {"tool": "undo", "args": {}},
+                {"tool": "redo", "args": {}},
+            ])));
+        }
+        for file in ["a.png", "b.gif", "c.snag", "d.jpg", "missing.png"] {
+            out.push(calls(json!([{"tool": "open_image", "args": {"path": file}}, {"tool": "save", "args": {"path": "out.snag"}}, {"tool": "save", "args": {"path": "out.pdf"}}])));
+        }
+        out.push(calls(json!([{"tool": "library_add", "args": {"title": "One", "tags": ["a"]}}, {"tool": "library_search", "args": {"query": "one"}}, {"tool": "library_delete", "args": {"path": "x.png"}}, {"tool": "undo_delete", "args": {}}])));
+        out.push(calls(json!([{"tool": "set_setting", "args": {"key": "save_folder", "value": "elsewhere"}}, {"tool": "quick_save", "args": {}}])));
+        out
+    }
+
+    fn tool_words() -> Vec<String> {
+        let mut w: Vec<String> = Vec::new();
+        fn props(v: &Value, w: &mut Vec<String>) {
+            match v {
+                Value::Object(m) => {
+                    for (k, c) in m {
+                        if k != "description" {
+                            w.push(k.clone());
+                        }
+                        props(c, w);
+                    }
+                }
+                Value::Array(a) => a.iter().for_each(|c| props(c, w)),
+                Value::String(s) if s.len() < 40 => w.push(s.clone()),
+                _ => {}
+            }
+        }
+        for (name, schema) in callable() {
+            w.push(name.to_string());
+            props(&schema, &mut w);
+        }
+        w.extend(crate::catalog::SETTINGS.iter().map(|s| s.key.to_string()));
+        w.extend(effect_names());
+        w.extend(["tool", "args", "calls", "a.png", "b.gif", "c.snag", "out.docx", "out.html", "out.webp", "out.gif"].map(String::from));
+        w.sort();
+        w.dedup();
+        w
+    }
+
+    /// The sandbox: pictures to open, a library picture, and the settings pointing here.
+    fn sandbox() -> PathBuf {
+        let dir = scratch("mcp_tools");
+        if !dir.join("a.png").exists() {
+            let img = RgbaImage::from_fn(10, 8, |x, y| image::Rgba([(x * 25) as u8, (y * 30) as u8, 90, 255]));
+            img.save(dir.join("a.png")).unwrap();
+            img.save(dir.join("b.png")).unwrap();
+            image::DynamicImage::ImageRgba8(img.clone()).to_rgb8().save(dir.join("d.jpg")).unwrap();
+            export::write_gif(&dir.join("b.gif"), &[(img.clone(), 100), (img.clone(), 100)]).unwrap();
+            export::save_project(&Doc::new(img.clone()), "c", &dir.join("c.snag")).unwrap();
+            library::add(&dir.join("library"), &img, library::Meta { title: "x".into(), ..Default::default() }).unwrap();
+        }
+        dir
+    }
+
+    fn workspace(dir: &Path) -> Workspace {
+        let mut ws = Workspace::with_settings(sandboxed_settings(dir));
+        let mut d = Doc::new(RgbaImage::from_fn(24, 16, |x, y| image::Rgba([(x * 10) as u8, (y * 15) as u8, 200, 255])));
+        d.shapes.push(Shape::Rect { rect: Rect::from_min_max(pos2(2.0, 2.0), pos2(12.0, 9.0)), color: Color32::RED, width: 2.0, fill: false, radius: 1.0, shadow: true });
+        d.shapes.push(Shape::Text { pos: pos2(3.0, 3.0), text: "Hi".into(), color: Color32::BLUE, size: 10.0, bg: false, shadow: false, font: String::new(), bold: false, italic: false, outline: true, align: 0 });
+        d.shapes.push(Shape::Step { center: pos2(20.0, 12.0), n: 1, color: Color32::RED, radius: 3.0, shadow: false, style: Default::default() });
+        ws.set(d, "Shot").unwrap();
+        ws.deleted = Some(crate::recycle::Pending::new(crate::recycle::MCP_UNDO_FOR, Arc::new(crate::recycle::tests::FolderBin::new(dir.join("bin")))));
+        ws
+    }
+
+    /// Pictures larger than this end a sequence of calls (the next call would only be slow).
+    const BIG: u64 = 4096 * 4096;
+
+    fn run_tools(b: &[u8]) {
+        let Ok(v) = serde_json::from_slice::<Value>(b) else { return };
+        let list = match v.get("calls").and_then(Value::as_array) {
+            Some(l) => l.clone(),
+            None => vec![v],
+        };
+        let names: Vec<&str> = callable().into_iter().map(|t| t.0).collect();
+        let dir = sandbox();
+        let mut ws = workspace(&dir);
+        for c in list.iter().take(5) {
+            let name = c.get("tool").and_then(Value::as_str).unwrap_or("");
+            // An unknown name takes the "no such tool" path; never one that reaches outside.
+            let name = if names.contains(&name) { name } else { "zz_no_such_tool" };
+            let mut args = c.get("args").cloned().unwrap_or(Value::Null);
+            sandbox_paths(&mut args, &dir, false);
+            let r = ws.call(name, &args);
+            if let Some(f) = ws.fixed.as_mut() {
+                pin_folders(f, &dir);
+            }
+            if let Ok(items) = r {
+                serde_json::to_string(&items).unwrap();
+            }
+            serde_json::to_string(&ws.structured).unwrap();
+            if ws.doc.as_ref().is_some_and(|d| d.image.width() as u64 * d.image.height() as u64 > BIG) {
+                break;
+            }
+        }
+    }
+
+    /// Tools a JSON-RPC message may call: they change only the picture in memory.
+    const IN_MEMORY: [&str; 22] = [
+        "picture_info",
+        "view_picture",
+        "add_mark",
+        "update_mark",
+        "list_marks",
+        "remove_mark",
+        "undo",
+        "redo",
+        "clear_marks",
+        "blur_area",
+        "crop",
+        "apply_effect",
+        "list_languages",
+        "app_info",
+        "get_settings",
+        "list_settings",
+        "list_commands",
+        "library_search",
+        "list_presets",
+        "stream_services",
+        "stream_status",
+        "studio_scenes",
+    ];
+
+    /// Whether a message could call a tool that isn't in memory only (then it is skipped).
+    fn calls_outside(v: &Value, known: &[&str]) -> bool {
+        match v {
+            Value::String(s) => known.contains(&s.as_str()) && !IN_MEMORY.contains(&s.as_str()),
+            Value::Array(a) => a.iter().any(|c| calls_outside(c, known)),
+            Value::Object(m) => m.iter().any(|(k, c)| known.contains(&k.as_str()) || calls_outside(c, known)),
+            _ => false,
+        }
+    }
+
+    fn jsonrpc_seeds() -> Vec<Vec<u8>> {
+        let m = |v: Value| v.to_string().into_bytes();
+        let mut out = vec![
+            m(json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"elicitation":{}},"clientInfo":{"name":"x","version":"1"}}})),
+            m(json!({"jsonrpc":"2.0","method":"notifications/initialized"})),
+            m(json!({"jsonrpc":"2.0","id":"a","method":"ping"})),
+            m(json!({"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"cursor":null}})),
+            m(json!({"jsonrpc":"2.0","id":3,"method":"prompts/list"})),
+            m(json!({"jsonrpc":"2.0","id":3,"method":"prompts/get","params":{"name":"annotate_screenshot","arguments":{"what":"the button"}}})),
+            m(json!({"jsonrpc":"2.0","id":4,"method":"resources/list"})),
+            m(json!({"jsonrpc":"2.0","id":4,"method":"resources/templates/list"})),
+            m(json!({"jsonrpc":"2.0","id":5,"method":"completion/complete","params":{"ref":{"type":"ref/prompt","name":"change_language"},"argument":{"name":"code","value":"p"}}})),
+            m(json!({"jsonrpc":"2.0","id":5,"method":"completion/complete","params":{"ref":{"type":"ref/resource","uri":"snagster://library/{path}"},"argument":{"name":"path","value":""}}})),
+            m(json!({"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":99}})),
+            m(json!({"jsonrpc":"2.0","id":6,"result":{}})),
+            m(json!({"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"add_mark","arguments":{"kind":"arrow","x":1,"y":1,"x2":9,"y2":9},"_meta":{"progressToken":1}}})),
+            m(json!({"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"zz_none","arguments":{}}})),
+        ];
+        for uri in ["snagster://settings", "snagster://library", "snagster://picture/current", "snagster://settings/jpeg_quality", "snagster://languages/pt-br", "snagster://library/a%20b.png"] {
+            out.push(m(json!({"jsonrpc":"2.0","id":9,"method":"resources/read","params":{"uri": uri}})));
+        }
+        for t in IN_MEMORY {
+            out.push(m(json!({"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name": t,"arguments":{}}})));
+        }
+        out
+    }
+
+    pub fn targets() -> Vec<Target> {
+        vec![
+            Target {
+                name: "mcp_jsonrpc",
+                seeds: jsonrpc_seeds,
+                words: || {
+                    let mut w: Vec<String> = ["jsonrpc", "2.0", "id", "method", "params", "arguments", "name", "uri", "ref", "argument", "value", "_meta", "progressToken", "requestId", "cursor", "result", "error"].map(String::from).to_vec();
+                    w.extend(IN_MEMORY.map(String::from));
+                    w
+                },
+                run: |b| {
+                    let Ok(text) = std::str::from_utf8(b) else { return };
+                    let known: Vec<&str> = tools().into_iter().map(|t| t.name).collect();
+                    if serde_json::from_str::<Value>(text).is_ok_and(|v| calls_outside(&v, &known)) {
+                        return;
+                    }
+                    let dir = sandbox();
+                    let s = Session::with_settings(sandboxed_settings(&dir));
+                    if let Some(reply) = s.handle(text) {
+                        let v: Value = serde_json::from_str(&reply).unwrap_or_else(|e| panic!("the reply isn't JSON ({e}): {reply}"));
+                        assert_eq!(v["jsonrpc"], "2.0", "{reply}");
+                        assert!(v.get("result").is_some() != v.get("error").is_some(), "{reply}");
+                    }
+                },
+                budget: |n| (256 << 20) + 64 * n,
+            },
+            Target { name: "mcp_tools", seeds: tool_seeds, words: tool_words, run: run_tools, budget: |n| (4 << 30) + 64 * n },
+        ]
+    }
+
+    #[test]
+    fn the_sandbox_keeps_paths_inside() {
+        let dir = Path::new("sandbox");
+        let mut a = json!({"path": "../../etc/passwd", "paths": ["/x/y.png", "C:\\z.png"], "out": "o.gif", "text": "../keep", "key": "video_folder", "value": "/tmp"});
+        sandbox_paths(&mut a, dir, false);
+        for p in [&a["path"], &a["paths"][0], &a["paths"][1], &a["out"], &a["value"]] {
+            let p = PathBuf::from(p.as_str().unwrap());
+            assert_eq!(p.parent(), Some(dir), "{p:?}");
+        }
+        assert_eq!(a["text"], "../keep", "only paths are touched");
+        // Every tool is either called or listed as reaching outside, and nothing outside is called.
+        let names: Vec<&str> = tools().iter().map(|t| t.name).collect();
+        assert!(OUTSIDE.iter().all(|n| names.contains(n)), "a tool in OUTSIDE was renamed");
+        assert!(callable().iter().all(|(n, _)| !OUTSIDE.contains(n)));
+        assert!(IN_MEMORY.iter().all(|n| names.contains(n) && !OUTSIDE.contains(n)));
+        assert!(callable().len() + OUTSIDE.len() == names.len(), "{} tools, {} called", names.len(), callable().len());
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

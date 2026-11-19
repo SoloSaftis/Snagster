@@ -474,6 +474,128 @@ pub fn slideshow_gif(images: &[RgbaImage], max_w: u32, seconds: f32, out: &Path)
     Ok(list.len())
 }
 
+/// Fuzz targets (`src/fuzz.rs`): pictures from files, animated GIFs, `.snag` projects.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::doc::ImgData;
+    use crate::fuzz::Target;
+    use eframe::egui::{Color32, Rect, pos2};
+    use std::sync::Arc;
+
+    fn picture(w: u32, h: u32) -> RgbaImage {
+        RgbaImage::from_fn(w, h, |x, y| image::Rgba([(x * 40) as u8, (y * 30) as u8, 120, if x == 0 { 128 } else { 255 }]))
+    }
+
+    /// One small picture in every format Snagster opens.
+    fn pictures() -> Vec<Vec<u8>> {
+        let img = image::DynamicImage::ImageRgba8(picture(6, 5));
+        let mut out = vec![png_bytes(&picture(6, 5)).unwrap(), gif_bytes(&picture(6, 5)).unwrap()];
+        for f in [image::ImageFormat::Bmp, image::ImageFormat::Tiff, image::ImageFormat::Ico, image::ImageFormat::WebP] {
+            let mut b = Vec::new();
+            img.write_to(&mut std::io::Cursor::new(&mut b), f).unwrap();
+            out.push(b);
+        }
+        let mut jpg = Vec::new();
+        image::DynamicImage::ImageRgb8(img.to_rgb8()).write_to(&mut std::io::Cursor::new(&mut jpg), image::ImageFormat::Jpeg).unwrap();
+        out.push(jpg);
+        out
+    }
+
+    fn gifs() -> Vec<Vec<u8>> {
+        let dir = crate::fuzz::scratch("gif-seeds");
+        let p = dir.join("a.gif");
+        write_gif(&p, &[(picture(7, 4), 100), (RgbaImage::from_pixel(7, 4, image::Rgba([0, 0, 255, 255])), 40)]).unwrap();
+        let out = vec![std::fs::read(&p).unwrap(), gif_bytes(&picture(3, 3)).unwrap()];
+        let _ = std::fs::remove_dir_all(&dir);
+        out
+    }
+
+    /// A project with one mark of every kind.
+    pub fn project() -> Vec<u8> {
+        let r = Rect::from_min_max(pos2(1.0, 1.0), pos2(9.0, 7.0));
+        let (c, p) = (Color32::RED, pos2(3.0, 3.0));
+        let mut d = Doc::new(picture(12, 9));
+        d.shapes = vec![
+            Shape::Arrow { a: p, b: pos2(9.0, 8.0), color: c, width: 3.0, shadow: true, heads: 2 },
+            Shape::Line { a: p, b: pos2(0.0, 8.0), color: c, width: 2.0, shadow: false },
+            Shape::Rect { rect: r, color: c, width: 3.0, fill: false, radius: 2.0, shadow: true },
+            Shape::Ellipse { rect: r, color: c, width: 2.0, fill: true, shadow: false },
+            Shape::Pen { points: vec![p, pos2(5.0, 6.0), pos2(8.0, 2.0)], color: c, width: 2.0, shadow: false },
+            Shape::Highlight { points: vec![p, pos2(6.0, 3.0)], color: Color32::YELLOW, width: 4.0 },
+            Shape::Marker { rect: r, color: Color32::YELLOW },
+            Shape::Text { pos: p, text: "Hi ü".into(), color: c, size: 12.0, bg: true, shadow: true, font: String::new(), bold: true, italic: false, outline: true, align: 1 },
+            Shape::Callout { pos: p, tail: pos2(10.0, 8.0), text: "Look".into(), color: c, size: 10.0, shadow: false, font: String::new(), bold: false, italic: true, shape: Default::default(), outline: false, align: 2 },
+            Shape::Step { center: p, n: 3, color: c, radius: 4.0, shadow: false, style: Default::default() },
+            Shape::Stamp { center: p, emoji: "👍".into(), size: 8.0, color: c },
+            Shape::Magnify { center: p, radius: 3.0, zoom: 2.0 },
+            Shape::Pointer { pos: p, size: 6.0 },
+            Shape::Spotlight { rect: r },
+            Shape::Image { rect: r, image: ImgData(Arc::new(picture(2, 2))) },
+        ];
+        let dir = crate::fuzz::scratch("project-seeds");
+        let path = dir.join("p.snag");
+        save_project(&d, "Shot", &path).unwrap();
+        let out = std::fs::read(&path).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        out
+    }
+
+    fn project_words() -> Vec<String> {
+        let kinds = ["Arrow", "Line", "Rect", "Ellipse", "Pen", "Highlight", "Marker", "Text", "Callout", "Step", "Stamp", "Magnify", "Pointer", "Spotlight", "Image"];
+        let fields = ["format", "version", "name", "image_png", "shapes", "rect", "min", "max", "x", "y", "points", "width", "size", "radius", "zoom", "text", "emoji", "font", "align", "heads", "n", "style", "shape", "image", "color", "snag-project"];
+        let mut w: Vec<String> = kinds.iter().chain(fields.iter()).map(|s| s.to_string()).collect();
+        // A picture inside a mark that claims to be huge.
+        w.push(b64(&super::tests::png_claiming(60_000, 60_000)));
+        w
+    }
+
+    pub fn targets() -> Vec<Target> {
+        vec![
+            Target {
+                name: "picture",
+                seeds: pictures,
+                words: Vec::new,
+                run: |b| {
+                    if let Ok(img) = decode_image(b) {
+                        let _ = img.to_rgba8();
+                    }
+                },
+                budget: |n| 2 * decode_limit(n) as usize,
+            },
+            Target {
+                name: "gif",
+                seeds: gifs,
+                words: Vec::new,
+                run: |b| {
+                    let p = crate::fuzz::scratch("gif").join("in.gif");
+                    std::fs::write(&p, b).unwrap();
+                    let _ = gif_frames(&p, 0);
+                    let _ = gif_frames(&p, 5);
+                },
+                budget: |n| (64 << 20) + 4096 * n,
+            },
+            Target {
+                name: "project",
+                seeds: || vec![project()],
+                words: project_words,
+                run: |b| {
+                    // Opening a project, then what opening leads to: drawing it, saving it.
+                    if let Ok((_, d)) = project_from_json(&String::from_utf8_lossy(b)) {
+                        for s in &d.shapes {
+                            let _ = s.bounds();
+                            let _ = s.hit(pos2(2.0, 2.0), 4.0);
+                        }
+                        let _ = crate::render::compose(&d);
+                        let _ = serde_json::to_string(&d.shapes);
+                    }
+                },
+                budget: |n| (64 << 20) + 64 * n,
+            },
+        ]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -799,7 +921,7 @@ mod tests {
     }
 
     /// A real 1 x 1 PNG whose header (with a correct checksum) claims `w` x `h` pixels.
-    fn png_claiming(w: u32, h: u32) -> Vec<u8> {
+    pub(super) fn png_claiming(w: u32, h: u32) -> Vec<u8> {
         let mut p = png_bytes(&solid(1, 1, [1, 2, 3, 255])).unwrap();
         assert_eq!(&p[12..16], b"IHDR");
         p[16..20].copy_from_slice(&w.to_be_bytes());
