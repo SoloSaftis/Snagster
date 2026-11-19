@@ -77,6 +77,8 @@ pub(crate) struct Extra {
     pub pickable: crate::app::work::ListCache<(crate::encode::Codec, crate::encode::EncoderName)>,
     pub stream: crate::app::stream_ui::StreamUi,
     pub access: crate::app::access_ui::AccessUi,
+    #[cfg(target_os = "macos")]
+    pub menu: crate::app::menubar_ui::MenuUi,
 }
 
 fn kbd(s: &Settings, a: Action) -> String {
@@ -90,7 +92,7 @@ impl SnagApp {
         let ctx = ui.ctx().clone();
         // ---- tab row ----
         let tabs_rect = ui.available_rect_before_wrap();
-        ui.painter().rect_filled(Rect::from_min_size(tabs_rect.min, vec2(tabs_rect.width(), 34.0)), CornerRadius::ZERO, look::TABS);
+        ui.painter().rect_filled(Rect::from_min_size(tabs_rect.min, vec2(tabs_rect.width(), 34.0)), CornerRadius::ZERO, look::pal().tabs);
         ui.horizontal(|ui| {
             ui.set_height(34.0);
             // The title bar shows Snagster's icon and name, so the tabs start at the edge.
@@ -141,7 +143,7 @@ impl SnagApp {
             return;
         }
         // ---- band ----
-        egui::Frame::new().fill(look::BAND).inner_margin(egui::Margin { left: 8, right: 8, top: 4, bottom: 2 }).show(ui, |ui| {
+        egui::Frame::new().fill(look::pal().band).inner_margin(egui::Margin { left: 8, right: 8, top: 4, bottom: 2 }).show(ui, |ui| {
             ui.set_width(ui.available_width());
             egui::ScrollArea::horizontal().id_salt("ribbon-band").scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden).show(ui, |ui| {
                 ui.horizontal_top(|ui| {
@@ -340,7 +342,7 @@ impl SnagApp {
 
     pub(crate) fn sound_menu(&mut self, ui: &mut egui::Ui) {
         if !crate::audio::AudioSource::supported() {
-            ui.label(RichText::new(t("Recording sound isn't available on this system yet.")).color(TEXT_DIM));
+            ui.label(RichText::new(t("Recording sound isn't available on this system yet.")).color(pal().dim));
             return;
         }
         for v in crate::audio::AudioSource::ALL {
@@ -363,7 +365,7 @@ impl SnagApp {
             self.x.mics.expire();
         }
         if self.settings.rec_format == crate::video::VideoFormat::Wmv || self.settings.rec_format == crate::video::VideoFormat::Gif {
-            ui.label(RichText::new(t("Sound is recorded into MP4 videos.")).color(TEXT_DIM));
+            ui.label(RichText::new(t("Sound is recorded into MP4 videos.")).color(pal().dim));
         }
     }
 
@@ -718,7 +720,7 @@ impl SnagApp {
             let clouds = crate::settings::cloud_folders_now(Some(ui.ctx()));
             look::small_menu(ui, ph::CLOUD_UP, t("Save to the cloud"), t("OneDrive, Dropbox, Google Drive or iCloud folders on this computer"), |ui| {
                 if clouds.is_empty() {
-                    ui.label(RichText::new(t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(TEXT_DIM));
+                    ui.label(RichText::new(t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(pal().dim));
                 }
                 for (name, p) in clouds {
                     if ui.add_enabled(has, egui::Button::new(tf("Save to {name}", &[("name", &name)]))).clicked()

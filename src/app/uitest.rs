@@ -431,7 +431,7 @@ impl UiTest {
             (SettingsTab::Presets, "Presets"),
             (SettingsTab::Ai, "AI apps"),
             (SettingsTab::Streaming, "Streaming"),
-            (SettingsTab::Language, "Language & updates"),
+            (SettingsTab::Language, "General"),
         ];
         for (tab, name) in tabs {
             s.push(once(format!("Settings tab: {name}"), move |a, _| {

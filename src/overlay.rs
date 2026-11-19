@@ -12,11 +12,10 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Receiver;
 
-const ACCENT_DEFAULT: Color32 = Color32::from_rgb(79, 124, 255);
-
-/// The accent colour: the desktop's where it has one (`look::accent`), else Snagster's blue.
+/// The accent colour on top of a picture: the desktop's where it has one, else Snagster's blue.
+/// The overlay draws over any picture, so it keeps its own fixed colours, not the palette's.
 fn accent() -> Color32 {
-    crate::look::system_accent().unwrap_or(ACCENT_DEFAULT)
+    crate::theme::system_accent().unwrap_or(crate::theme::BRAND)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -345,8 +344,10 @@ impl Overlay {
                 .pivot(align)
                 .fixed_pos(anchor)
                 .show(ui.ctx(), |ui| {
+                    // An opaque bar in the interface's own palette: readable on any picture.
+                    let pal = crate::theme::pal();
                     egui::Frame::new()
-                        .fill(Color32::from_rgb(28, 30, 37))
+                        .fill(pal.panel)
                         .corner_radius(CornerRadius::same(10))
                         .inner_margin(egui::Margin::same(6))
                         .stroke(Stroke::new(1.0, accent()))
@@ -354,11 +355,11 @@ impl Overlay {
                             ui.horizontal(|ui| {
                                 ui.label(
                                     egui::RichText::new(format!("{} x {}", rect.width().round(), rect.height().round()))
-                                        .color(Color32::from_gray(170)),
+                                        .color(pal.dim),
                                 );
                                 let b = |ui: &mut egui::Ui, t: &str, tip: &str| ui.button(t).on_hover_text(tip).clicked();
                                 if ui
-                                    .add(egui::Button::new(egui::RichText::new(crate::i18n::t("Capture")).strong().color(Color32::WHITE)).fill(accent()))
+                                    .add(egui::Button::new(egui::RichText::new(crate::i18n::t("Capture")).strong().color(pal.on_accent)).fill(pal.accent))
                                     .on_hover_text("Open it in Snagster (Enter)")
                                     .clicked()
                                 {

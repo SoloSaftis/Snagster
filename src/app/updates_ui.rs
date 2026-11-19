@@ -144,7 +144,7 @@ impl SnagApp {
                     egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
                         // The first part of the release notes, without links and markup clutter.
                         let notes: String = rel.notes.lines().filter(|l| !l.contains("](http") && !l.starts_with('|')).take(30).collect::<Vec<_>>().join("\n");
-                        ui.label(RichText::new(notes).color(TEXT_DIM));
+                        ui.label(RichText::new(notes).color(pal().dim));
                     });
                 }
                 ui.add_space(8.0);
@@ -152,13 +152,13 @@ impl SnagApp {
                     let f = f32::from_bits(p.load(Ordering::Relaxed));
                     ui.add(egui::ProgressBar::new(f).show_percentage().text(t("Downloading…")));
                 } else if let Some(m) = &self.x.update.message {
-                    ui.label(RichText::new(m).color(Color32::from_rgb(240, 140, 120)));
+                    ui.label(RichText::new(m).color(pal().err));
                 }
                 ui.horizontal(|ui| {
                     let busy = self.x.update.install_rx.is_some();
                     let can = rel.asset.is_some();
                     if ui
-                        .add_enabled(!busy && can, egui::Button::new(RichText::new(t("Update now")).strong().color(Color32::WHITE)).fill(accent()))
+                        .add_enabled(!busy && can, egui::Button::new(RichText::new(t("Update now")).strong().color(pal().on_accent)).fill(pal().accent))
                         .on_hover_text(t("Download it, put it in place of this version and start it"))
                         .clicked()
                     {
@@ -191,7 +191,7 @@ impl SnagApp {
                     }
                 });
                 if !rel.asset.is_some() {
-                    ui.label(RichText::new(t("This release has no download for this kind of computer; get it from the release page.")).color(TEXT_DIM));
+                    ui.label(RichText::new(t("This release has no download for this kind of computer; get it from the release page.")).color(pal().dim));
                 }
             });
         if !open {

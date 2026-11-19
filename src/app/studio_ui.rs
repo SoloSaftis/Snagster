@@ -393,22 +393,22 @@ impl SnagApp {
         egui::Panel::left("studio-left")
             .exact_size(250.0)
             .resizable(false)
-            .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(10, 8)))
+            .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(10, 8)))
             .show(ui, |ui| self.studio_left(ui));
         egui::Panel::right("studio-right")
             .exact_size(270.0)
             .resizable(false)
-            .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(10, 8)))
+            .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(10, 8)))
             .show(ui, |ui| self.studio_right(ui));
         egui::Panel::bottom("studio-status")
             .exact_size(30.0)
-            .frame(egui::Frame::new().fill(look::TABS).inner_margin(egui::Margin::symmetric(10, 4)))
+            .frame(egui::Frame::new().fill(look::pal().tabs).inner_margin(egui::Margin::symmetric(10, 4)))
             .show(ui, |ui| self.studio_status(ui));
-        egui::CentralPanel::default().frame(egui::Frame::new().fill(BG_DARK)).show(ui, |ui| self.studio_preview(ui));
+        egui::CentralPanel::default().frame(egui::Frame::new().fill(pal().bg)).show(ui, |ui| self.studio_preview(ui));
     }
 
     fn studio_left(&mut self, ui: &mut egui::Ui) {
-        ui.label(RichText::new(t("Scenes")).strong().color(Color32::WHITE));
+        ui.label(RichText::new(t("Scenes")).strong().color(pal().strong));
         let mut switch = None;
         let recording = self.x.studio.as_ref().is_some_and(|s| s.recording());
         egui::ScrollArea::vertical().id_salt("scenes").max_height(170.0).show(ui, |ui| {
@@ -430,12 +430,12 @@ impl SnagApp {
             }
         }
         if recording {
-            ui.label(RichText::new(t("Switching scenes while recording cuts to the new scene.")).small().color(TEXT_DIM));
+            ui.label(RichText::new(t("Switching scenes while recording cuts to the new scene.")).small().color(pal().dim));
         }
         ui.add_space(8.0);
         ui.separator();
         ui.horizontal(|ui| {
-            ui.label(RichText::new(t("Sources")).strong().color(Color32::WHITE));
+            ui.label(RichText::new(t("Sources")).strong().color(pal().strong));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let mut add = None;
                 let r = look::icon_button(ui, ph::PLUS, t("Add source"));
@@ -451,7 +451,7 @@ impl SnagApp {
         let mut action: Option<(usize, i32)> = None; // (index, -1 up / 1 down / 0 delete)
         if let Some(scene) = self.settings.studio.scenes.get_mut(c) {
             if scene.items.is_empty() {
-                ui.label(RichText::new(t("No sources yet: add a screen, a window or a picture.")).color(TEXT_DIM));
+                ui.label(RichText::new(t("No sources yet: add a screen, a window or a picture.")).color(pal().dim));
             }
             // Top of the list is drawn on top: show the list in reverse.
             let n = scene.items.len();
@@ -502,7 +502,7 @@ impl SnagApp {
 
     fn studio_right(&mut self, ui: &mut egui::Ui) {
         egui::ScrollArea::vertical().show(ui, |ui| {
-            ui.label(RichText::new(t("Source")).strong().color(Color32::WHITE));
+            ui.label(RichText::new(t("Source")).strong().color(pal().strong));
             let c = self.settings.studio.current.min(self.settings.studio.scenes.len().saturating_sub(1));
             let sel = self.x.studio.as_ref().and_then(|s| s.selected);
             let (cw, ch) = (self.settings.studio.width as f32, self.settings.studio.height as f32);
@@ -513,7 +513,7 @@ impl SnagApp {
             let windows = self.x.studio.as_ref().map(|s| s.windows.clone()).unwrap_or_default();
             match sel.and_then(|i| self.settings.studio.scenes.get_mut(c).and_then(|s| s.items.get_mut(i))) {
                 None => {
-                    ui.label(RichText::new(t("Click a source in the list or the preview to change it.")).color(TEXT_DIM));
+                    ui.label(RichText::new(t("Click a source in the list or the preview to change it.")).color(pal().dim));
                 }
                 Some(it) => {
                     ui.horizontal(|ui| {
@@ -595,7 +595,7 @@ impl SnagApp {
                         }
                         SourceKind::Image { path } => {
                             let shown = std::path::Path::new(path.as_str()).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
-                            ui.label(RichText::new(shown).small().color(TEXT_DIM)).on_hover_text(path.as_str());
+                            ui.label(RichText::new(shown).small().color(pal().dim)).on_hover_text(path.as_str());
                             if ui.button(t("Choose another picture…")).clicked()
                                 && let Some(p) = rfd::FileDialog::new().add_filter(t("Pictures"), &["png", "jpg", "jpeg", "bmp", "gif", "webp"]).pick_file()
                             {
@@ -645,15 +645,15 @@ impl SnagApp {
             if let Some((started, paused, path)) = &rec {
                 let blink = (started.elapsed().as_millis() / 500) % 2 == 0;
                 ui.label(RichText::new(if *paused { "⏸" } else if blink { "●" } else { "○" }).color(look::REC));
-                ui.label(RichText::new(format!("{} {}:{:02}:{:02}", if *paused { t("Paused") } else { t("Recording") }, secs / 3600, secs / 60 % 60, secs % 60)).strong().color(Color32::WHITE));
+                ui.label(RichText::new(format!("{} {}:{:02}:{:02}", if *paused { t("Paused") } else { t("Recording") }, secs / 3600, secs / 60 % 60, secs % 60)).strong().color(pal().strong));
                 let size = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
-                ui.label(RichText::new(format!("{:.1} MB", size as f64 / 1_048_576.0)).color(TEXT_DIM));
+                ui.label(RichText::new(format!("{:.1} MB", size as f64 / 1_048_576.0)).color(pal().dim));
                 ui.ctx().request_repaint_after(Duration::from_millis(250));
             } else {
-                ui.label(RichText::new(t("Ready")).color(TEXT_DIM));
+                ui.label(RichText::new(t("Ready")).color(pal().dim));
             }
             ui.separator();
-            ui.label(RichText::new(tf("{w} x {h}, {fps} fps; a frame takes {ms} ms to draw", &[("w", &w.to_string()), ("h", &h.to_string()), ("fps", &fps.to_string()), ("ms", &ms.to_string())])).color(TEXT_DIM));
+            ui.label(RichText::new(tf("{w} x {h}, {fps} fps; a frame takes {ms} ms to draw", &[("w", &w.to_string()), ("h", &h.to_string()), ("fps", &fps.to_string()), ("ms", &ms.to_string())])).color(pal().dim));
             if let Some(p) = &last {
                 ui.separator();
                 if ui.link(tf("Last: {file}", &[("file", &p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default())])).on_hover_text(t("Play it")).clicked() {
@@ -700,7 +700,7 @@ impl SnagApp {
         if let Some(tex) = &st.tex {
             p.image(tex.id(), rect, Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
         }
-        p.rect_stroke(rect, CornerRadius::ZERO, Stroke::new(1.0, Color32::from_gray(70)), egui::StrokeKind::Outside);
+        p.rect_stroke(rect, CornerRadius::ZERO, Stroke::new(1.0, pal().border), egui::StrokeKind::Outside);
         if st.recording() {
             p.circle_filled(rect.left_top() + vec2(18.0, 18.0), 7.0, look::REC);
         }
@@ -752,7 +752,7 @@ impl SnagApp {
             st.selected = (0..scene.items.len()).rev().find(|i| scene.items[*i].visible && item_rect(&scene.items[*i]).contains(at));
         }
         let hint = if st.grab.is_some() { t("Shift: resize freely") } else { t("Drag a source to move it, its corner to resize it") };
-        ui.painter().text(pos2(rect.left(), rect.bottom() + 4.0), Align2::LEFT_TOP, hint, FontId::proportional(11.5), TEXT_DIM);
+        ui.painter().text(pos2(rect.left(), rect.bottom() + 4.0), Align2::LEFT_TOP, hint, FontId::proportional(11.5), pal().dim);
     }
 }
 
@@ -798,14 +798,14 @@ fn sound_row(ui: &mut egui::Ui, s: &mut crate::studio::SceneSound, shared: bool,
     });
     // The meter: green, then yellow, then red near the top; a dash when the input isn't running.
     let (r, _) = ui.allocate_exact_size(vec2(ui.available_width(), 8.0), Sense::hover());
-    ui.painter().rect_filled(r, CornerRadius::same(3), Color32::from_gray(40));
+    ui.painter().rect_filled(r, CornerRadius::same(3), pal().panel_hi);
     match level {
         Some(level) if !s.muted => {
             let f = meter_fill(level, s.volume);
-            ui.painter().rect_filled(Rect::from_min_size(r.min, vec2(r.width() * f, r.height())), CornerRadius::same(3), meter_color(f));
+            ui.painter().rect_filled(Rect::from_min_size(r.min, vec2(r.width() * f, r.height())), CornerRadius::same(3), meter_color_on(f, pal().dark));
         }
         None => {
-            ui.painter().line_segment([r.left_center(), r.right_center()], Stroke::new(1.0, Color32::from_rgb(200, 110, 90)));
+            ui.painter().line_segment([r.left_center(), r.right_center()], Stroke::new(1.0, pal().err));
         }
         _ => {}
     }
@@ -821,7 +821,7 @@ fn add_sound_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<crate::studio:
     use crate::studio::SceneSound;
     let mut out = None;
     if !crate::audio::AudioSource::supported() {
-        ui.label(RichText::new(t("Computer sound and microphones work on Windows so far; sound files work everywhere.")).color(TEXT_DIM));
+        ui.label(RichText::new(t("Computer sound and microphones work on Windows so far; sound files work everywhere.")).color(pal().dim));
     }
     if ui.add_enabled(crate::audio::AudioSource::supported(), egui::Button::new(format!("{}  {}", ph::SPEAKER, t("Computer sound")))).on_hover_text(t("Everything the computer plays")).clicked() {
         out = Some(SceneSound::new(SoundInput::Computer, "Computer sound"));
@@ -892,8 +892,8 @@ impl SnagApp {
         let c = self.settings.studio.current.min(self.settings.studio.scenes.len().saturating_sub(1));
         let n = self.settings.studio.scene_sounds(c).len();
         ui.horizontal(|ui| {
-            ui.label(RichText::new(t("Sound of this scene")).strong().color(Color32::WHITE));
-            ui.label(RichText::new(format!("{n}/{}", crate::studio::MAX_SOUNDS)).color(TEXT_DIM));
+            ui.label(RichText::new(t("Sound of this scene")).strong().color(pal().strong));
+            ui.label(RichText::new(format!("{n}/{}", crate::studio::MAX_SOUNDS)).color(pal().dim));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let r = look::icon_button(ui, ph::PLUS, t("Add sound"));
                 let mut add = None;
@@ -928,11 +928,11 @@ impl SnagApp {
             self.status = why;
         }
         if n == 0 {
-            ui.label(RichText::new(t("No sound in this scene: add the computer sound, a microphone or a sound file.")).color(TEXT_DIM));
+            ui.label(RichText::new(t("No sound in this scene: add the computer sound, a microphone or a sound file.")).color(pal().dim));
         }
         let notes = self.x.studio.as_ref().and_then(|s| s.meters.as_ref()).map(|m| m.notes().to_vec()).unwrap_or_default();
         for note in notes {
-            ui.label(RichText::new(note).small().color(Color32::from_rgb(240, 160, 110)));
+            ui.label(RichText::new(note).small().color(pal().warn));
         }
     }
 }
@@ -1007,6 +1007,13 @@ pub(crate) fn meter_fill(level: f32, volume: f32) -> f32 {
     let l = (level * volume).clamp(0.0, 1.0);
     let db = if l > 0.0 { (20.0 * l.log10()).max(-60.0) } else { -60.0 };
     (db + 60.0) / 60.0
+}
+
+/// The meter's colour on the palette in use: on a light track the green and yellow are darkened
+/// so the bar stands 3:1 against it.
+pub(crate) fn meter_color_on(f: f32, dark: bool) -> Color32 {
+    let c = meter_color(f);
+    if dark { c } else { crate::theme::readable_on(c, crate::theme::LIGHT.panel_hi, 3.0) }
 }
 
 /// Green, then yellow, then red near the top.
@@ -1128,6 +1135,12 @@ mod tests {
         assert_eq!(meter_color(0.5), Color32::from_rgb(80, 200, 120));
         assert_eq!(meter_color(0.8), Color32::from_rgb(240, 200, 70));
         assert_eq!(meter_color(0.95), Color32::from_rgb(240, 80, 70));
+        // On the light palette's track every colour stands 3:1; on the dark one they are kept.
+        for f in [0.5, 0.8, 0.95] {
+            let light = meter_color_on(f, false);
+            assert!(crate::theme::contrast(light, crate::theme::LIGHT.panel_hi) >= 3.0, "{f}: {light:?}");
+            assert_eq!(meter_color_on(f, true), meter_color(f));
+        }
     }
 
     #[test]

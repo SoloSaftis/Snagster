@@ -3792,6 +3792,7 @@ dependencies = [
  "libc",
  "libloading",
  "mp4",
+ "objc2-app-kit 0.3.2",
  "openh264",
  "openh264-sys2",
  "pipewire",
