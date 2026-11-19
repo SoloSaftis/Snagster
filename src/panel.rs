@@ -87,6 +87,8 @@ fn tab_icon(p: &egui::Painter, c: Pos2, tab: u8, color: Color32) {
 
 impl SnagApp {
     pub(crate) fn panel_ui(&mut self, ui: &mut egui::Ui) {
+        // The panel is laid out to fixed places: its text keeps its size (see fonts::fixed_family).
+        crate::fonts::use_fixed_fonts(ui);
         let ctx = ui.ctx().clone();
         let full = ui.max_rect();
         // Drag the panel by any empty spot.
@@ -121,7 +123,7 @@ impl SnagApp {
             }
             let col = if sel { accent() } else { pal().text };
             tab_icon(ui.painter(), r.center() - vec2(0.0, 7.0), i as u8, col);
-            ui.painter().text(r.center() + vec2(0.0, 13.0), Align2::CENTER_CENTER, *name, FontId::proportional(12.0), col);
+            ui.painter().text(r.center() + vec2(0.0, 13.0), Align2::CENTER_CENTER, *name, FontId::new(12.0, crate::fonts::fixed_family()), col);
             if resp.clicked() {
                 self.settings.panel.tab = i as u8;
             }
@@ -301,7 +303,7 @@ impl SnagApp {
             2 => "Record",
             _ => "Capture",
         };
-        ui.painter().text(big.center(), Align2::CENTER_CENTER, label, FontId::proportional(17.0), Color32::WHITE);
+        ui.painter().text(big.center(), Align2::CENTER_CENTER, label, FontId::new(17.0, crate::fonts::fixed_family()), Color32::WHITE);
         let tip = if tab == 3 { crate::i18n::t("Start or stop the live stream") } else { "Print Screen does the same" };
         if br.on_hover_text(tip).clicked() {
             if tab == 3 {

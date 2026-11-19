@@ -4240,6 +4240,8 @@ impl SnagApp {
 
     /// The main window shrunk to the recording bar (Windows, macOS, X11).
     fn mini_bar(&mut self, ui: &mut egui::Ui) {
+        // A bar of a fixed size: its text keeps its size (see fonts::fixed_family).
+        crate::fonts::use_fixed_fonts(ui);
         let ctx = ui.ctx().clone();
         // Leaving the full-screen overlay may restore the window's old size after the bar
         // asked for its own, which left a big dark window over the area being recorded. Ask
@@ -4600,7 +4602,7 @@ impl SnagApp {
             .show(ui, |ui| self.tool_bar(ui, narrow && self.settings.show_side_panel));
         if self.settings.show_side_panel && (!narrow || self.x.narrow_options) {
             egui::Panel::right("props")
-                .exact_size(grown(230.0, 140.0))
+                .exact_size(grown(230.0, 180.0))
                 .resizable(false)
                 .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(14, 6)))
                 .show(ui, |ui| self.side_panel(ui));

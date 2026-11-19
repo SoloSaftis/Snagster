@@ -130,9 +130,12 @@ pub(crate) mod fit {
     }
 
     /// Group `i` took `width` (with its gap) and ends at `right`.
+    /// Only the band measures: the More menu lays groups out with its own spacing.
     pub fn measured(i: usize, width: f32, right: f32) {
         FIT.with(|f| {
-            if let Some(s) = f.borrow_mut().as_mut() {
+            if let Some(s) = f.borrow_mut().as_mut()
+                && s.pass == Pass::Band
+            {
                 if s.widths.len() <= i {
                     s.widths.resize(i + 1, 0.0);
                 }
@@ -308,7 +311,7 @@ impl SnagApp {
             ui.set_width(ui.available_width());
             // Groups that don't fit the width go, in order, into a menu at the end of the band
             // (Office's ribbon folds the same way), so nothing is cut off in a narrow window.
-            let widths_id = egui::Id::unique(("ribbon-group-widths", self.x.tab as usize));
+            let widths_id = egui::Id::unique(("ribbon-group-widths", self.x.tab as usize, crate::i18n::current(), crate::fonts::text_scale().to_bits()));
             let mut widths: Vec<f32> = ctx.data(|d| d.get_temp(widths_id)).unwrap_or_default();
             let room = ui.available_width();
             let more_w = overflow_width(ui);
@@ -1267,5 +1270,49 @@ mod tests {
             assert!(shown <= count);
             assert!(right <= band_right + 0.5, "{tab:?}: the band is cut off ({right} > {band_right})");
         }
+    }
+
+    /// Ctrl+2 still switches the streamed Studio scene when the Scenes group is in More (a
+    /// narrow window), and switches once, not again while the More menu is drawn.
+    #[test]
+    fn scene_keys_work_with_the_scenes_group_folded_away() {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.settings.stream.source = crate::stream::Source::Studio;
+        a.settings.studio.add_scene(Some("Two"));
+        a.x.tab = RibbonTab::Stream;
+        let ctx = egui::Context::default();
+        let mut defs = crate::look::base_fonts(false, "en");
+        crate::fonts::interface_fonts(&mut defs, None, 100);
+        ctx.set_fonts(defs);
+        let key = egui::Event::Key { key: egui::Key::Num2, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::COMMAND };
+        let raw = egui::RawInput { events: vec![egui::Event::ModifiersChanged(egui::Modifiers::COMMAND), key], ..Default::default() };
+        let mut out = ctx.run_ui(raw, |ui| {
+            // Every group in More, as in the narrowest window, and the menu open.
+            fit::begin(fit::Pass::Band, 0, Vec::new());
+            a.band_groups(ui, &ui.ctx().clone());
+            fit::end();
+            fit::begin(fit::Pass::Overflow, 0, Vec::new());
+            a.settings.studio.current = 0;
+            a.band_groups(ui, &ui.ctx().clone());
+            fit::end();
+        });
+        out.textures_delta.clear();
+        assert_eq!(a.settings.studio.current, 0, "the key acted in the band pass, not again in More");
+        let mut b = SnagApp::blank(Settings::default(), false, None);
+        b.settings.stream.source = crate::stream::Source::Studio;
+        b.settings.studio.add_scene(Some("Two"));
+        b.x.tab = RibbonTab::Stream;
+        let raw = egui::RawInput { events: vec![egui::Event::ModifiersChanged(egui::Modifiers::COMMAND), key_event()], ..Default::default() };
+        let mut out = ctx.run_ui(raw, |ui| {
+            fit::begin(fit::Pass::Band, 0, Vec::new());
+            b.band_groups(ui, &ui.ctx().clone());
+            fit::end();
+        });
+        out.textures_delta.clear();
+        assert_eq!(b.settings.studio.current, 1, "Ctrl+2 picked the second scene with Scenes folded away");
+    }
+
+    fn key_event() -> egui::Event {
+        egui::Event::Key { key: egui::Key::Num2, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::COMMAND }
     }
 }

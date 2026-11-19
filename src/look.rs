@@ -348,9 +348,12 @@ pub fn group(ui: &mut Ui, name: &str, body: impl FnOnce(&mut Ui)) {
     // In a narrow window the ribbon shows some groups in the band and the rest in its More menu.
     let Some(index) = crate::app::ribbon::fit::next_group() else { return };
     let r = ui.vertical(|ui| {
-        ui.set_min_height(86.0);
+        // Every group as tall as three small tools (taller with bigger text), so names line up.
+        let row = ui.painter().layout_no_wrap("Hg".into(), FontId::proportional(12.5), pal().text).size().y.max(20.0);
+        let body_h = (row * 3.0 + 4.0).max(64.0);
+        ui.set_min_height(body_h + 22.0);
         ui.horizontal(|ui| {
-            ui.set_min_height(64.0);
+            ui.set_min_height(body_h);
             ui.spacing_mut().item_spacing.x = 2.0;
             body(ui);
         });

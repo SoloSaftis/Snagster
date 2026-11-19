@@ -329,6 +329,22 @@ pub fn canvas_family() -> eframe::egui::FontFamily {
 /// The first Windows 11 build. Windows 11 still says "10.0" in its version number.
 const WINDOWS_11_BUILD: u32 = 22000;
 
+/// The egui family for windows laid out to fixed sizes (the compact panel, the recording bar):
+/// the interface font (the system's where there is one) at its normal size, whatever Windows'
+/// Text size says, so their text stays inside its places.
+pub fn fixed_family() -> eframe::egui::FontFamily {
+    eframe::egui::FontFamily::Name("fixed".into())
+}
+
+/// Draw `ui`'s widgets with `fixed_family` (labels, buttons, boxes without a family of their own).
+pub fn use_fixed_fonts(ui: &mut eframe::egui::Ui) {
+    for font in ui.style_mut().text_styles.values_mut() {
+        if font.family == eframe::egui::FontFamily::Proportional {
+            font.family = fixed_family();
+        }
+    }
+}
+
 /// The file of Windows' interface font in the Fonts folder: Segoe UI Variable on Windows 11,
 /// Segoe UI on Windows 10 (and on 11 if the variable font is missing). `has` says whether a
 /// file is there. None when neither is.
@@ -412,7 +428,18 @@ fn system_ui_font() -> Option<Arc<eframe::egui::FontData>> {
 pub fn interface_fonts(defs: &mut eframe::egui::FontDefinitions, system: Option<Arc<eframe::egui::FontData>>, percent: u32) {
     use eframe::egui::FontFamily;
     let canvas = defs.families.get(&FontFamily::Proportional).cloned().unwrap_or_default();
-    defs.families.insert(canvas_family(), canvas);
+    defs.families.insert(canvas_family(), canvas.clone());
+    // The interface fonts at their own size: the system's first, then the rest as they were.
+    let mut fixed = canvas;
+    if let Some(sys) = &system {
+        defs.font_data.insert("system-ui".into(), sys.clone());
+        fixed.insert(0, "system-ui".into());
+        if let Some(i) = fixed.iter().position(|n| n == "Phosphor") {
+            let p = fixed.remove(i);
+            fixed.insert(1, p);
+        }
+    }
+    defs.families.insert(fixed_family(), fixed);
     let scale = percent as f32 / 100.0;
     let sized = |defs: &mut eframe::egui::FontDefinitions, name: &str, data: Arc<eframe::egui::FontData>| -> String {
         if percent == 100 {
@@ -764,5 +791,38 @@ mod tests {
             let c = char::from_u32(cp).unwrap();
             assert!(face.glyph_index(c).is_none(), "the system font has U+{cp:X}");
         }
+    }
+
+    #[test]
+    fn fixed_size_windows_get_the_interface_font_at_its_own_size() {
+        use eframe::egui::FontFamily;
+        let mut defs = crate::look::base_fonts(false, "en");
+        let before = defs.families[&FontFamily::Proportional].clone();
+        interface_fonts(&mut defs, Some(system_font()), 200);
+        let fixed = &defs.families[&fixed_family()];
+        assert_eq!(fixed[0], "system-ui", "the system's font first");
+        assert_eq!(fixed[1], "Phosphor", "icons second, as everywhere");
+        assert_eq!(fixed.len(), before.len() + 1);
+        for n in fixed {
+            let own = crate::look::base_fonts(false, "en").font_data.get(n).map_or(1.0, |d| d.tweak.scale);
+            assert_eq!(defs.font_data[n].tweak.scale, own, "{n} keeps its size");
+        }
+        // Without a system font it is egui's fonts as they were.
+        let mut plain = crate::look::base_fonts(false, "en");
+        interface_fonts(&mut plain, None, 175);
+        assert_eq!(plain.families[&fixed_family()], before);
+    }
+
+    #[test]
+    fn fixed_fonts_replace_only_the_interface_family() {
+        let ctx = eframe::egui::Context::default();
+        let mut out = ctx.run_ui(Default::default(), |ui| {
+            use_fixed_fonts(ui);
+            for font in ui.style().text_styles.values() {
+                assert_ne!(font.family, eframe::egui::FontFamily::Proportional);
+            }
+            assert!(ui.style().text_styles.values().any(|f| f.family == eframe::egui::FontFamily::Monospace), "code text keeps its font");
+        });
+        out.textures_delta.clear();
     }
 }
