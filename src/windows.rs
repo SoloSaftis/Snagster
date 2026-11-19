@@ -80,8 +80,9 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
             (r.inner, r.response.rect.height())
         });
         let (out, used) = panel.inner;
-        // A box that can't be resized grows or shrinks to what it holds.
-        if !w.resizable {
+        // A box that can't be resized grows or shrinks to what it holds (not the Mac's
+        // Settings, which keeps one size for every pane).
+        if fits_content(&w) {
             let want = (used + 16.0).max(80.0).ceil();
             let have = ui.ctx().input(|i| i.viewport().inner_rect.map(|r| r.height()));
             if have.is_some_and(|h| (h - want).abs() > 2.0) {
@@ -99,6 +100,28 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
         ctx.data_mut(|d| d.remove::<Pos2>(at_id));
     }
     out
+}
+
+/// The Settings window's `own_window` key.
+const SETTINGS_KEY: &str = "settings";
+
+/// Whether a window without a resize edge takes the height of what it holds.
+fn fits_content(w: &Win) -> bool {
+    !w.resizable && w.key != SETTINGS_KEY
+}
+
+/// The Settings window's title and whether it can be resized. On a Mac it is titled with the
+/// pane shown and keeps a fixed size, as Apple's settings guidelines ask; elsewhere it is
+/// "Settings" and resizable.
+fn settings_frame(sys: crate::platform::System, pane: &'static str) -> (String, bool) {
+    if sys == crate::platform::System::Mac {
+        // Window titles are in Title Case on a Mac (in English).
+        #[cfg(any(target_os = "macos", test))]
+        return (crate::menubar::in_title_case(pane.to_string(), crate::i18n::current()), false);
+        #[cfg(not(any(target_os = "macos", test)))]
+        return (pane.to_string(), false);
+    }
+    (crate::i18n::t("Settings").to_string(), true)
 }
 
 /// Modifier boxes and a key list for one hotkey.
@@ -135,22 +158,25 @@ impl SnagApp {
         let mut open = self.settings_open;
         let mut reset = false;
         let mut run_preset = None;
-        own_window(ctx, Win { key: "settings", title: crate::i18n::t("Settings"), size: vec2(720.0, 600.0), resizable: true }, &mut open, |ui| {
+        let panes = [
+            (SettingsTab::AfterCapture, crate::i18n::t("After capture")),
+            (SettingsTab::Saving, crate::i18n::t("Saving & library")),
+            (SettingsTab::Capture, crate::i18n::t("Capture")),
+            (SettingsTab::Recording, crate::i18n::t("Recording")),
+            (SettingsTab::Editor, crate::i18n::t("Editor & themes")),
+            (SettingsTab::Effects, crate::i18n::t("Effects")),
+            (SettingsTab::Redact, crate::i18n::t("Smart redact")),
+            (SettingsTab::Hotkeys, crate::i18n::t("Hotkeys")),
+            (SettingsTab::Presets, crate::i18n::t("Presets")),
+            (SettingsTab::Ai, crate::i18n::t("AI apps")),
+            (SettingsTab::Streaming, crate::i18n::t("Streaming")),
+            (SettingsTab::Language, crate::i18n::t("General")),
+        ];
+        let pane = panes.iter().find(|p| p.0 == self.settings_tab).map_or(panes[0].1, |p| p.1);
+        let (title, resizable) = settings_frame(crate::platform::system(), pane);
+        own_window(ctx, Win { key: SETTINGS_KEY, title: &title, size: vec2(720.0, 600.0), resizable }, &mut open, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    for (tab, label) in [
-                        (SettingsTab::AfterCapture, crate::i18n::t("After capture")),
-                        (SettingsTab::Saving, crate::i18n::t("Saving & library")),
-                        (SettingsTab::Capture, crate::i18n::t("Capture")),
-                        (SettingsTab::Recording, crate::i18n::t("Recording")),
-                        (SettingsTab::Editor, crate::i18n::t("Editor & themes")),
-                        (SettingsTab::Effects, crate::i18n::t("Effects")),
-                        (SettingsTab::Redact, crate::i18n::t("Smart redact")),
-                        (SettingsTab::Hotkeys, crate::i18n::t("Hotkeys")),
-                        (SettingsTab::Presets, crate::i18n::t("Presets")),
-                        (SettingsTab::Ai, crate::i18n::t("AI apps")),
-                        (SettingsTab::Streaming, crate::i18n::t("Streaming")),
-                        (SettingsTab::Language, crate::i18n::t("General")),
-                    ] {
+                    for (tab, label) in panes {
                         ui.selectable_value(&mut self.settings_tab, tab, label);
                     }
                 });
@@ -1952,6 +1978,28 @@ impl SnagApp {
 mod tests {
     use super::*;
     use std::path::Path;
+
+    #[test]
+    fn mac_settings_is_fixed_and_named_after_its_pane() {
+        use crate::platform::System;
+        assert_eq!(settings_frame(System::Mac, "Hotkeys"), ("Hotkeys".to_string(), false));
+        if crate::i18n::current() == "en" {
+            assert_eq!(settings_frame(System::Mac, "Saving & library").0, "Saving & Library");
+        }
+        for sys in [System::Windows, System::Gnome, System::Kde, System::OtherLinux] {
+            let (title, resizable) = settings_frame(sys, "Hotkeys");
+            assert!(resizable, "{sys:?}");
+            assert_eq!(title, crate::i18n::t("Settings"));
+        }
+        // A fixed Settings window keeps its size for every pane; other fixed boxes fit what
+        // they hold.
+        let settings = Win { key: SETTINGS_KEY, title: "Hotkeys", size: vec2(720.0, 600.0), resizable: false };
+        assert!(!fits_content(&settings));
+        let dialog = Win { key: "rename", title: "Rename", size: vec2(400.0, 160.0), resizable: false };
+        assert!(fits_content(&dialog));
+        let big = Win { key: "library", title: "Library", size: vec2(900.0, 600.0), resizable: true };
+        assert!(!fits_content(&big));
+    }
 
     /// A box opens in the middle of Snagster's window, but never off the screen.
     #[test]

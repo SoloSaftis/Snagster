@@ -77,6 +77,8 @@ pub(crate) struct Extra {
     pub pickable: crate::app::work::ListCache<(crate::encode::Codec, crate::encode::EncoderName)>,
     pub stream: crate::app::stream_ui::StreamUi,
     pub access: crate::app::access_ui::AccessUi,
+    #[cfg(target_os = "macos")]
+    pub menu: crate::app::menubar_ui::MenuUi,
 }
 
 fn kbd(s: &Settings, a: Action) -> String {
