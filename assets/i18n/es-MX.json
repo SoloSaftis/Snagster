@@ -1026,6 +1026,10 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "El uso compartido de pantalla no se inició: se canceló en el diálogo del escritorio, o el escritorio no dio ningún motivo. No se compartió nada.",
   "The desktop's screen-sharing portal said no: {error}": "El portal de uso compartido de pantalla del escritorio dijo que no: {error}",
   "More tabs": "Más pestañas",
-  "The groups that don't fit the window": "Los grupos que no caben en la ventana"
+  "The groups that don't fit the window": "Los grupos que no caben en la ventana",
+  "Desktop": "Escritorio",
+  "The desktop's screenshot portal said no: {error}": "El portal de capturas de pantalla del escritorio dijo que no: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "El portal de capturas de pantalla del escritorio dio una dirección que Snagster no puede abrir: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Se canceló la captura de pantalla en el diálogo del escritorio."
  }
 }

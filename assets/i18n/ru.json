@@ -1026,6 +1026,10 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Показ экрана не начался: он был отменён в диалоговом окне рабочего стола, либо рабочий стол не указал причину. Ничего не было передано.",
   "The desktop's screen-sharing portal said no: {error}": "Портал показа экрана рабочего стола отказал: {error}",
   "More tabs": "Другие вкладки",
-  "The groups that don't fit the window": "Группы, которые не помещаются в окне"
+  "The groups that don't fit the window": "Группы, которые не помещаются в окне",
+  "Desktop": "Рабочий стол",
+  "The desktop's screenshot portal said no: {error}": "Портал снимков экрана рабочего стола отказал: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Портал снимков экрана рабочего стола выдал адрес, который Snagster не может открыть: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Снимок экрана отменён в диалоговом окне рабочего стола."
  }
 }

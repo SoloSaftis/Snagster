@@ -1026,6 +1026,10 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Hindi nagsimula ang pagbabahagi ng screen: kinansela ito sa dialog ng desktop, o walang ibinigay na dahilan ang desktop. Walang naibahagi.",
   "The desktop's screen-sharing portal said no: {error}": "Tumanggi ang portal ng desktop para sa pagbabahagi ng screen: {error}",
   "More tabs": "Higit pang tab",
-  "The groups that don't fit the window": "Ang mga grupong hindi kasya sa window"
+  "The groups that don't fit the window": "Ang mga grupong hindi kasya sa window",
+  "Desktop": "Desktop",
+  "The desktop's screenshot portal said no: {error}": "Tumanggi ang portal ng desktop para sa screenshot: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Nagbigay ang portal ng desktop para sa screenshot ng address na hindi mabuksan ng Snagster: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Kinansela ang screenshot sa dialog ng desktop."
  }
 }

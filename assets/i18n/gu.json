@@ -1026,6 +1026,10 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "સ્ક્રીન શેરિંગ શરૂ થયું નહીં: તે ડેસ્કટૉપના ડાયલૉગમાં રદ કરવામાં આવ્યું હતું, અથવા ડેસ્કટૉપે કોઈ કારણ આપ્યું નહીં. કંઈ શેર થયું નથી.",
   "The desktop's screen-sharing portal said no: {error}": "ડેસ્કટૉપના સ્ક્રીન શેરિંગ portal એ ના પાડી: {error}",
   "More tabs": "વધુ ટૅબ",
-  "The groups that don't fit the window": "જે જૂથો વિન્ડોમાં સમાતા નથી"
+  "The groups that don't fit the window": "જે જૂથો વિન્ડોમાં સમાતા નથી",
+  "Desktop": "ડેસ્કટૉપ",
+  "The desktop's screenshot portal said no: {error}": "ડેસ્કટૉપના સ્ક્રીનશૉટ portal એ ના પાડી: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "ડેસ્કટૉપના સ્ક્રીનશૉટ portal એ એવું સરનામું આપ્યું જે Snagster ખોલી શકતું નથી: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "ડેસ્કટૉપના ડાયલૉગમાં સ્ક્રીનશૉટ રદ કરવામાં આવ્યો."
  }
 }

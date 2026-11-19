@@ -1026,6 +1026,10 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ಸ್ಕ್ರೀನ್ ಹಂಚಿಕೆ ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ: ಅದನ್ನು ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಡೈಲಾಗ್‌ನಲ್ಲಿ ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ, ಅಥವಾ ಡೆಸ್ಕ್‌ಟಾಪ್ ಯಾವುದೇ ಕಾರಣ ನೀಡಲಿಲ್ಲ. ಏನನ್ನೂ ಹಂಚಿಕೊಂಡಿಲ್ಲ.",
   "The desktop's screen-sharing portal said no: {error}": "ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಸ್ಕ್ರೀನ್ ಹಂಚಿಕೆ portal ನಿರಾಕರಿಸಿತು: {error}",
   "More tabs": "ಇನ್ನಷ್ಟು ಟ್ಯಾಬ್‌ಗಳು",
-  "The groups that don't fit the window": "ವಿಂಡೋದಲ್ಲಿ ಹಿಡಿಸದ ಗುಂಪುಗಳು"
+  "The groups that don't fit the window": "ವಿಂಡೋದಲ್ಲಿ ಹಿಡಿಸದ ಗುಂಪುಗಳು",
+  "Desktop": "ಡೆಸ್ಕ್‌ಟಾಪ್",
+  "The desktop's screenshot portal said no: {error}": "ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ portal ನಿರಾಕರಿಸಿತು: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ portal Snagster ತೆರೆಯಲಾಗದ ವಿಳಾಸವನ್ನು ನೀಡಿತು: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಡೈಲಾಗ್‌ನಲ್ಲಿ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಅನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ."
  }
 }

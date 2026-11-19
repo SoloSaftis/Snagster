@@ -1026,6 +1026,10 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "屏幕共享未启动：已在桌面的对话框中取消，或桌面未给出原因。未共享任何内容。",
   "The desktop's screen-sharing portal said no: {error}": "桌面的屏幕共享门户（portal）拒绝了：{error}",
   "More tabs": "更多选项卡",
-  "The groups that don't fit the window": "窗口放不下的组"
+  "The groups that don't fit the window": "窗口放不下的组",
+  "Desktop": "桌面",
+  "The desktop's screenshot portal said no: {error}": "桌面的截图门户（portal）拒绝了：{error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "桌面的截图门户（portal）给出了 Snagster 无法打开的地址：{address}",
+  "The screenshot was cancelled in the desktop's dialog.": "截图已在桌面的对话框中取消。"
  }
 }

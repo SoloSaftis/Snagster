@@ -1026,6 +1026,10 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Il-qsim tal-iskrin ma bediex: ġie kkanċellat fid-djalogu tad-desktop, jew id-desktop ma ta ebda raġuni. Ma ġie kondiviż xejn.",
   "The desktop's screen-sharing portal said no: {error}": "Il-portal tad-desktop għall-qsim tal-iskrin qal le: {error}",
   "More tabs": "Aktar tabs",
-  "The groups that don't fit the window": "Il-gruppi li ma joqogħdux fit-tieqa"
+  "The groups that don't fit the window": "Il-gruppi li ma joqogħdux fit-tieqa",
+  "Desktop": "Desktop",
+  "The desktop's screenshot portal said no: {error}": "Il-portal tad-desktop għall-iscreenshots qal le: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Il-portal tad-desktop għall-iscreenshots ta indirizz li Snagster ma jistax jiftaħ: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "L-iscreenshot ġie kkanċellat fid-djalogu tad-desktop."
  }
 }

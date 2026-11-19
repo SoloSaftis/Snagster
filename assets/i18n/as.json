@@ -1026,6 +1026,10 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "স্ক্ৰীন শ্বেয়াৰিং আৰম্ভ নহ'ল: ই ডেস্কটপৰ ডায়লগত বাতিল কৰা হৈছিল, বা ডেস্কটপে কোনো কাৰণ দিয়া নাছিল। একো শ্বেয়াৰ কৰা হোৱা নাই।",
   "The desktop's screen-sharing portal said no: {error}": "ডেস্কটপৰ স্ক্ৰীন শ্বেয়াৰিং portal-এ অসম্মতি জনালে: {error}",
   "More tabs": "অধিক টেব",
-  "The groups that don't fit the window": "উইণ্ড'ত নুসুমোৱা গোটসমূহ"
+  "The groups that don't fit the window": "উইণ্ড'ত নুসুমোৱা গোটসমূহ",
+  "Desktop": "ডেস্কটপ",
+  "The desktop's screenshot portal said no: {error}": "ডেস্কটপৰ স্ক্ৰীনশ্বট portal-এ অসম্মতি জনালে: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "ডেস্কটপৰ স্ক্ৰীনশ্বট portal-এ Snagster-এ খুলিব নোৱাৰা এটা ঠিকনা দিলে: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "স্ক্ৰীনশ্বট ডেস্কটপৰ ডায়লগত বাতিল কৰা হ'ল।"
  }
 }

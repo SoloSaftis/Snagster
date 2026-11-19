@@ -1026,6 +1026,10 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "স্ক্রিন শেয়ারিং শুরু হয়নি: এটি ডেস্কটপের ডায়ালগে বাতিল করা হয়েছিল, অথবা ডেস্কটপ কোনো কারণ জানায়নি। কিছুই শেয়ার করা হয়নি।",
   "The desktop's screen-sharing portal said no: {error}": "ডেস্কটপের স্ক্রিন শেয়ারিং portal অস্বীকার করেছে: {error}",
   "More tabs": "আরও ট্যাব",
-  "The groups that don't fit the window": "যে গ্রুপগুলো উইন্ডোতে আঁটে না"
+  "The groups that don't fit the window": "যে গ্রুপগুলো উইন্ডোতে আঁটে না",
+  "Desktop": "ডেস্কটপ",
+  "The desktop's screenshot portal said no: {error}": "ডেস্কটপের স্ক্রিনশট portal অস্বীকার করেছে: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "ডেস্কটপের স্ক্রিনশট portal এমন একটি ঠিকানা দিয়েছে যা Snagster খুলতে পারে না: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "ডেস্কটপের ডায়ালগে স্ক্রিনশট বাতিল করা হয়েছে।"
  }
 }

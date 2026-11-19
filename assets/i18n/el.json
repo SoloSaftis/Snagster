@@ -1026,6 +1026,10 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Η κοινή χρήση οθόνης δεν ξεκίνησε: ακυρώθηκε στο παράθυρο διαλόγου της επιφάνειας εργασίας ή η επιφάνεια εργασίας δεν έδωσε κανέναν λόγο. Δεν κοινοποιήθηκε τίποτα.",
   "The desktop's screen-sharing portal said no: {error}": "Το portal κοινής χρήσης οθόνης της επιφάνειας εργασίας αρνήθηκε: {error}",
   "More tabs": "Περισσότερες καρτέλες",
-  "The groups that don't fit the window": "Οι ομάδες που δεν χωρούν στο παράθυρο"
+  "The groups that don't fit the window": "Οι ομάδες που δεν χωρούν στο παράθυρο",
+  "Desktop": "Επιφάνεια εργασίας",
+  "The desktop's screenshot portal said no: {error}": "Το portal στιγμιότυπων οθόνης της επιφάνειας εργασίας αρνήθηκε: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Το portal στιγμιότυπων οθόνης της επιφάνειας εργασίας έδωσε μια διεύθυνση που το Snagster δεν μπορεί να ανοίξει: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Το στιγμιότυπο οθόνης ακυρώθηκε στο παράθυρο διαλόγου της επιφάνειας εργασίας."
  }
 }
