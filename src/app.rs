@@ -77,14 +77,23 @@ pub(crate) struct Entry {
     pub redo: Vec<Doc>,
     tex: Option<(Arc<RgbaImage>, TextureHandle)>,
     drawn: Instant,
+    /// The file it was opened from or saved to.
     pub path: Option<PathBuf>,
+    /// Its copy in the library, once the library has it.
+    pub kept: Option<PathBuf>,
 }
 
 impl Entry {
     pub fn new(name: String, doc: Doc) -> Self {
         static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
         let id = NEXT.fetch_add(1, Ordering::Relaxed);
-        Self { id, name, doc, undo: Vec::new(), redo: Vec::new(), tex: None, drawn: Instant::now(), path: None }
+        Self { id, name, doc, undo: Vec::new(), redo: Vec::new(), tex: None, drawn: Instant::now(), path: None, kept: None }
+    }
+
+    /// The file "Show in folder" shows: the one it was saved to or opened from, else its copy
+    /// in the library.
+    pub fn file(&self) -> Option<&std::path::Path> {
+        self.path.as_deref().or(self.kept.as_deref())
     }
 
     /// Let go of the texture when it hasn't been drawn for `keep`.
@@ -1007,7 +1016,8 @@ impl SnagApp {
         // written by the job queue in this order (an error shows in the status line).
         if self.settings.after_library {
             let meta = library::Meta { title: title.to_string(), app: app.to_string(), kind: kind.into(), ..Default::default() };
-            self.add_to_library(move || img, meta);
+            let id = self.entry().map(|e| e.id);
+            self.add_to_library_for(id, move || img, meta);
         }
         let (copy, save, pin) = match &preset {
             Some(p) => (p.copy, p.save, p.pin),
@@ -1291,8 +1301,12 @@ impl SnagApp {
         let r = std::process::Command::new("explorer").arg(format!("/select,{}", path.display())).spawn();
         #[cfg(target_os = "macos")]
         let r = std::process::Command::new("open").arg("-R").arg(path).spawn();
+        // The desktop's file manager with the file selected; else just its folder.
         #[cfg(all(unix, not(target_os = "macos")))]
-        let r = std::process::Command::new("xdg-open").arg(path.parent().unwrap_or(path)).spawn();
+        let r = match crate::portal::show_file(path) {
+            Ok(()) => return,
+            Err(_) => std::process::Command::new("xdg-open").arg(path.parent().unwrap_or(path)).spawn(),
+        };
         if let Err(e) = r {
             self.status = crate::i18n::tf("Couldn't open the folder: {error}", &[("error", &e.to_string())]);
         }
@@ -1451,16 +1465,21 @@ impl SnagApp {
     /// Add a picture (made by `make`, on the worker) to the library. The open library gets
     /// the new item without reading the whole folder again.
     pub(crate) fn add_to_library(&mut self, make: impl FnOnce() -> RgbaImage + Send + 'static, meta: library::Meta) {
+        self.add_to_library_for(None, make, meta);
+    }
+
+    /// `add_to_library`; the Recent picture `entry` (by id) learns where its copy went.
+    pub(crate) fn add_to_library_for(&mut self, entry: Option<u64>, make: impl FnOnce() -> RgbaImage + Send + 'static, meta: library::Meta) {
         let folder = self.settings.library_folder.clone();
         self.jobs.queue(move || {
             let img = make();
             let r = library::add_item(std::path::Path::new(&folder), &img, meta);
             let thumb = r.as_ref().ok().and_then(|it| library::thumbnail_of(&it.path, &img, 192));
-            Box::new(move |app: &mut SnagApp, ctx: &egui::Context| app.library_added(ctx, &folder, r, thumb))
+            Box::new(move |app: &mut SnagApp, ctx: &egui::Context| app.library_added(ctx, &folder, r, thumb, entry))
         });
     }
 
-    fn library_added(&mut self, ctx: &egui::Context, folder: &str, r: Result<library::Item, String>, thumb: Option<RgbaImage>) {
+    fn library_added(&mut self, ctx: &egui::Context, folder: &str, r: Result<library::Item, String>, thumb: Option<RgbaImage>, entry: Option<u64>) {
         let item = match r {
             Ok(item) => item,
             Err(e) => {
@@ -1468,6 +1487,9 @@ impl SnagApp {
                 return;
             }
         };
+        if let Some(e) = self.entries.iter_mut().find(|e| Some(e.id) == entry) {
+            e.kept = Some(item.path.clone());
+        }
         if folder != self.settings.library_folder {
             return;
         }
@@ -1748,7 +1770,13 @@ impl SnagApp {
         }
     }
 
+    /// Open a folder in the file manager; given a file, its folder with the file selected
+    /// (`xdg-open` and `open` would open the file itself).
     pub(crate) fn open_folder(&mut self, target: &std::path::Path) {
+        if target.is_file() {
+            self.reveal(target);
+            return;
+        }
         if target.is_dir() || target.extension().is_none() {
             let _ = std::fs::create_dir_all(target);
         }
@@ -3355,6 +3383,7 @@ impl SnagApp {
             let mut switch = None;
             let mut remove = None;
             let mut pin = None;
+            let mut show = None;
             let mut open_earlier = None;
             let ctx = ui.ctx().clone();
             // Earlier pictures and videos on this computer (read on a worker, every minute).
@@ -3406,6 +3435,12 @@ impl SnagApp {
                                 pin = Some(i);
                                 ui.close();
                             }
+                            if let Some(f) = self.entries[i].file()
+                                && ui.button(crate::i18n::t("Show in folder")).clicked()
+                            {
+                                show = Some(f.to_path_buf());
+                                ui.close();
+                            }
                             if ui.button(crate::i18n::t("Remove from Recent")).clicked() {
                                 remove = Some(i);
                                 ui.close();
@@ -3436,6 +3471,9 @@ impl SnagApp {
             if let Some(i) = remove {
                 self.current = Some(i);
                 self.remove_current();
+            }
+            if let Some(f) = show {
+                self.reveal(&f);
             }
         });
     }
@@ -3758,6 +3796,12 @@ impl SnagApp {
             }
             if ui.button(crate::i18n::t("Pin to screen")).clicked() {
                 self.pin_current();
+                ui.close();
+            }
+            if let Some(f) = self.entries[ci].file().map(|f| f.to_path_buf())
+                && ui.button(crate::i18n::t("Show in folder")).clicked()
+            {
+                self.reveal(&f);
                 ui.close();
             }
             if self.selected.is_some() && ui.button(crate::i18n::t("Delete mark")).clicked() {
@@ -5878,6 +5922,36 @@ mod tests {
     }
 
     #[test]
+    fn show_in_folder_shows_the_saved_file_before_the_library_copy() {
+        let mut a = app();
+        assert_eq!(a.entries[0].file(), None, "a picture that is in no file yet");
+        a.entries[0].kept = Some(PathBuf::from("lib/1.png"));
+        assert_eq!(a.entries[0].file(), Some(std::path::Path::new("lib/1.png")));
+        a.entries[0].path = Some(PathBuf::from("Pictures/shot.png"));
+        assert_eq!(a.entries[0].file(), Some(std::path::Path::new("Pictures/shot.png")));
+    }
+
+    #[test]
+    fn a_library_copy_finds_its_picture_even_after_recent_changed() {
+        let ctx = egui::Context::default();
+        let mut a = app();
+        let id = a.entries[0].id;
+        a.add_entry("Second".into(), Doc::new(RgbaImage::new(4, 4)));
+        // The first picture went; the library's answer still reaches the right one.
+        a.current = Some(0);
+        a.remove_current();
+        a.add_entry("Third".into(), Doc::new(RgbaImage::new(4, 4)));
+        let folder = a.settings.library_folder.clone();
+        let item = |p: &str| library::Item { path: PathBuf::from(p), meta: Default::default() };
+        a.library_added(&ctx, &folder, Ok(item("lib/gone.png")), None, Some(id));
+        assert!(a.entries.iter().all(|e| e.kept.is_none()), "nobody else takes a gone picture's copy");
+        let second = a.entries[0].id;
+        a.library_added(&ctx, &folder, Ok(item("lib/2.png")), None, Some(second));
+        assert_eq!(a.entries[0].kept, Some(PathBuf::from("lib/2.png")));
+        assert_eq!(a.entries[1].kept, None);
+    }
+
+    #[test]
     fn add_entry_selects_the_new_picture_and_resets_the_view() {
         let mut a = app();
         a.zoom = Some(3.0);
@@ -6487,6 +6561,8 @@ mod tests {
         assert_eq!(a.lib_items[0].meta.app, "Notes");
         assert!(a.lib_items[0].path.exists());
         assert!(a.lib_thumbs.contains_key(&a.lib_items[0].path), "its thumbnail is ready");
+        assert_eq!(a.entries[0].kept.as_ref(), Some(&a.lib_items[0].path), "the Recent picture knows its library copy (Show in folder)");
+        assert_eq!(a.entries[0].file(), Some(a.lib_items[0].path.as_path()));
         assert!(a.lib_loaded, "no rescan was asked for");
         let _ = std::fs::remove_dir_all(&dir);
     }

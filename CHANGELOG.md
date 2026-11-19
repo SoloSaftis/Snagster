@@ -17,6 +17,10 @@ Marking up pictures (every system):
 - **Shift+Enter starts a new line in text**, as the hint said; Enter finishes.
 - Copying right after drawing still copies the picture; marks are copied with the selection
   tool.
+- **Show in folder** on a right-click of a picture in Recent and on the picture itself (a new
+  capture shows its library copy). On Linux and macOS, Show in folder for videos and Library
+  items opened the file itself; it now opens its folder with the file selected (on Linux
+  through the desktop's portal, so also in the Flatpak).
 
 Windows:
 
