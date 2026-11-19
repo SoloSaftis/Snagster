@@ -1024,6 +1024,8 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "სისტემის პარამეტრებში ჩართულია „კონტრასტის გაზრდა“, ამიტომ ტექსტი და საზღვრები უფრო მკვეთრია.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ეკრანის გაზიარება გაუქმდა სამუშაო მაგიდის დიალოგში: არაფერი გაზიარებულა.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ეკრანის გაზიარება არ დაწყებულა: ის გაუქმდა სამუშაო მაგიდის დიალოგში, ან სამუშაო მაგიდამ მიზეზი არ მიუთითა. არაფერი გაზიარებულა.",
-  "The desktop's screen-sharing portal said no: {error}": "სამუშაო მაგიდის ეკრანის გაზიარების პორტალმა უარი თქვა: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "სამუშაო მაგიდის ეკრანის გაზიარების პორტალმა უარი თქვა: {error}",
+  "More tabs": "სხვა ჩანართები",
+  "The groups that don't fit the window": "ჯგუფები, რომლებიც ფანჯარაში არ ეტევა"
  }
 }

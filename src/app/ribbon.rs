@@ -56,6 +56,128 @@ impl RibbonTab {
     }
 }
 
+/// "More" (three dots), for the tabs and groups that don't fit.
+const DOTS: &str = "\u{e1fe}";
+/// Room kept at the end of the band for the More button when groups don't fit: the button
+/// (as `look::big_tool` sizes it) and a gap.
+fn overflow_width(ui: &egui::Ui) -> f32 {
+    let name = ui.painter().layout_no_wrap(t("More").to_string(), egui::FontId::proportional(12.0), egui::Color32::WHITE).size().x;
+    name.max(34.0) + 14.0 + 12.0
+}
+
+/// Which of the ribbon's tabs and groups fit the window's width. When the band doesn't all fit
+/// it is drawn twice: once in the band (the groups that fit) and once in the More menu (the
+/// rest); `look::group` asks `next_group` whether each group belongs to this pass.
+pub(crate) mod fit {
+    use std::cell::RefCell;
+
+    #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+    pub enum Pass {
+        /// The band: the first `shown` groups.
+        Band,
+        /// The More menu: the groups after them.
+        Overflow,
+    }
+
+    struct State {
+        pass: Pass,
+        shown: usize,
+        index: usize,
+        widths: Vec<f32>,
+        right: f32,
+    }
+
+    thread_local! {
+        static FIT: RefCell<Option<State>> = const { RefCell::new(None) };
+    }
+
+    /// Start drawing the band's groups for `pass`. `widths` are the groups' widths measured
+    /// before (kept for the groups this pass doesn't draw).
+    pub fn begin(pass: Pass, shown: usize, widths: Vec<f32>) {
+        FIT.with(|f| *f.borrow_mut() = Some(State { pass, shown, index: 0, widths, right: f32::NEG_INFINITY }));
+    }
+
+    /// Done: the groups' widths (one per group) and the right edge of the last group drawn.
+    pub fn end() -> (Vec<f32>, f32) {
+        FIT.with(|f| match f.borrow_mut().take() {
+            Some(mut s) => {
+                s.widths.resize(s.index, 0.0);
+                (s.widths, s.right)
+            }
+            None => (Vec::new(), f32::NEG_INFINITY),
+        })
+    }
+
+    /// Whether the More menu is being drawn (things outside groups happen once, in the band).
+    pub fn in_overflow() -> bool {
+        FIT.with(|f| f.borrow().as_ref().is_some_and(|s| s.pass == Pass::Overflow))
+    }
+
+    /// The next group: its number when it is drawn in this pass, None when it belongs to the
+    /// other one. Outside the ribbon every group is drawn.
+    pub fn next_group() -> Option<usize> {
+        FIT.with(|f| {
+            let mut f = f.borrow_mut();
+            let Some(s) = f.as_mut() else { return Some(0) };
+            let i = s.index;
+            s.index += 1;
+            let here = match s.pass {
+                Pass::Band => i < s.shown,
+                Pass::Overflow => i >= s.shown,
+            };
+            here.then_some(i)
+        })
+    }
+
+    /// Group `i` took `width` (with its gap) and ends at `right`.
+    /// Only the band measures: the More menu lays groups out with its own spacing.
+    pub fn measured(i: usize, width: f32, right: f32) {
+        FIT.with(|f| {
+            if let Some(s) = f.borrow_mut().as_mut()
+                && s.pass == Pass::Band
+            {
+                if s.widths.len() <= i {
+                    s.widths.resize(i + 1, 0.0);
+                }
+                s.widths[i] = width;
+                s.right = s.right.max(right);
+            }
+        })
+    }
+
+    /// How many leading items of `widths` fit in `room` beside something `more` wide.
+    fn leading(widths: &[f32], room: f32, more: f32) -> usize {
+        let mut used = more;
+        widths
+            .iter()
+            .take_while(|w| {
+                used += **w;
+                used <= room
+            })
+            .count()
+    }
+
+    /// How many of the first groups fit in `room`: all when they do (also before anything was
+    /// measured), else as many as fit beside the More button (`more` wide).
+    pub fn groups_shown(widths: &[f32], room: f32, more: f32) -> usize {
+        if widths.is_empty() || widths.iter().sum::<f32>() <= room {
+            return usize::MAX;
+        }
+        leading(widths, room, more)
+    }
+
+    /// How many tabs fit in `room`: all when they do, else as many as fit beside the More tab,
+    /// which is `dots` wide, or `named` wide when it carries the current tab's name (the current
+    /// tab, number `current`, is then one of those in the menu).
+    pub fn tabs_shown(widths: &[f32], current: usize, room: f32, dots: f32, named: f32) -> usize {
+        if widths.iter().sum::<f32>() <= room {
+            return widths.len();
+        }
+        let n = leading(widths, room, dots);
+        if current < n { n } else { leading(widths, room, named).min(current) }
+    }
+}
+
 /// Window state added with the ribbon: Studio, languages, updates, the HTTP server for AI apps.
 #[derive(Default)]
 pub(crate) struct Extra {
@@ -77,6 +199,8 @@ pub(crate) struct Extra {
     pub pickable: crate::app::work::ListCache<(crate::encode::Codec, crate::encode::EncoderName)>,
     pub stream: crate::app::stream_ui::StreamUi,
     pub access: crate::app::access_ui::AccessUi,
+    /// The options panel is shown although the window is narrow (it folds away by itself).
+    pub narrow_options: bool,
     #[cfg(target_os = "macos")]
     pub menu: crate::app::menubar_ui::MenuUi,
 }
@@ -92,9 +216,13 @@ impl SnagApp {
         let ctx = ui.ctx().clone();
         // ---- tab row ----
         let tabs_rect = ui.available_rect_before_wrap();
-        ui.painter().rect_filled(Rect::from_min_size(tabs_rect.min, vec2(tabs_rect.width(), 34.0)), CornerRadius::ZERO, look::pal().tabs);
+        let row_h = look::tab_height(ui) + 4.0;
+        ui.painter().rect_filled(Rect::from_min_size(tabs_rect.min, vec2(tabs_rect.width(), row_h)), CornerRadius::ZERO, look::pal().tabs);
+        // The buttons at the right end of the tab row, as wide as they were last time.
+        let right_id = egui::Id::unique("ribbon-tabs-right");
+        let right_w: f32 = ctx.data(|d| d.get_temp(right_id)).unwrap_or(130.0);
         ui.horizontal(|ui| {
-            ui.set_height(34.0);
+            ui.set_height(row_h);
             // The title bar shows Snagster's icon and name, so the tabs start at the edge.
             ui.add_space(6.0);
             // File: a menu, like Word's.
@@ -103,7 +231,16 @@ impl SnagApp {
                     ui.set_min_width(260.0);
                     self.file_menu(ui);
                 });
-            for tab in RibbonTab::ALL {
+            // Tabs that don't fit the window's width go into a menu at the end of the row.
+            let gap = ui.spacing().item_spacing.x;
+            let widths: Vec<f32> = RibbonTab::ALL.iter().map(|tab| look::tab_width(ui, tab.name()) + gap).collect();
+            let room = ui.available_width() - right_w - gap;
+            let current = RibbonTab::ALL.iter().position(|t| *t == self.x.tab).unwrap_or(0);
+            let named = format!("{} {}", self.x.tab.name(), ph::CARET_DOWN);
+            // Words, not just dots: an icon stays small beside big text.
+            let more_tabs = format!("{} {}", t("More"), ph::CARET_DOWN);
+            let shown = fit::tabs_shown(&widths, current, room, look::tab_width(ui, &more_tabs) + gap, look::tab_width(ui, &named) + gap);
+            for tab in RibbonTab::ALL.into_iter().take(shown) {
                 let on = self.x.tab == tab && !self.settings.ribbon_folded;
                 if look::tab(ui, tab.name(), tab.tip(), on || (tab == RibbonTab::Studio && self.x.tab == RibbonTab::Studio)).clicked() {
                     if self.x.tab == tab {
@@ -114,7 +251,28 @@ impl SnagApp {
                     }
                 }
             }
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if shown < RibbonTab::ALL.len() {
+                // The current tab, when it is one of those in the menu, names the menu.
+                let hidden_current = current >= shown;
+                let label = if hidden_current { named } else { more_tabs.clone() };
+                let more = look::tab(ui, &label, t("More tabs"), hidden_current && !self.settings.ribbon_folded);
+                let mut pick = None;
+                egui::Popup::menu(&more).show(|ui| {
+                    ui.set_min_width(180.0);
+                    for tab in RibbonTab::ALL.into_iter().skip(shown) {
+                        if ui.selectable_label(self.x.tab == tab, tab.name()).on_hover_text(tab.tip()).clicked() {
+                            pick = Some(tab);
+                            ui.close();
+                        }
+                    }
+                });
+                if let Some(tab) = pick {
+                    self.settings.ribbon_folded = false;
+                    self.switch_tab(&ctx, tab);
+                }
+            }
+            let tabs_end = ui.cursor().min.x;
+            let right = ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(6.0);
                 let snap = self.x.stream.snap.clone();
                 if snap.on_air() && crate::app::stream_ui::live_badge(ui, &snap).clicked() {
@@ -137,6 +295,12 @@ impl SnagApp {
                 if self.x.update.available().is_some() && look::icon_button(ui, ph::DOWNLOAD, t("A new version of Snagster is out")).clicked() {
                     self.x.update.dialog = true;
                 }
+                ui.min_rect().width()
+            });
+            let row_right = ui.max_rect().right();
+            ctx.data_mut(|d| {
+                d.insert_temp(right_id, right.inner);
+                d.insert_temp(egui::Id::unique("ribbon-tabs-fit"), (shown, tabs_end, row_right - right.inner));
             });
         });
         if self.settings.ribbon_folded {
@@ -145,24 +309,54 @@ impl SnagApp {
         // ---- band ----
         egui::Frame::new().fill(look::pal().band).inner_margin(egui::Margin { left: 8, right: 8, top: 4, bottom: 2 }).show(ui, |ui| {
             ui.set_width(ui.available_width());
+            // Groups that don't fit the width go, in order, into a menu at the end of the band
+            // (Office's ribbon folds the same way), so nothing is cut off in a narrow window.
+            let widths_id = egui::Id::unique(("ribbon-group-widths", self.x.tab as usize, crate::i18n::current(), crate::fonts::text_scale().to_bits()));
+            let mut widths: Vec<f32> = ctx.data(|d| d.get_temp(widths_id)).unwrap_or_default();
+            let room = ui.available_width();
+            let more_w = overflow_width(ui);
+            let shown = fit::groups_shown(&widths, room, more_w);
+            let band_right = ui.max_rect().right();
             egui::ScrollArea::horizontal().id_salt("ribbon-band").scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden).show(ui, |ui| {
                 ui.horizontal_top(|ui| {
-                    match self.x.tab {
-                    RibbonTab::Home => self.band_home(ui, &ctx),
-                    RibbonTab::Capture => self.band_capture(ui, &ctx),
-                    RibbonTab::Record => self.band_record(ui, &ctx),
-                    RibbonTab::Studio => self.band_studio(ui, &ctx),
-                    RibbonTab::Stream => crate::app::stream_ui::band(self, ui, &ctx),
-                    RibbonTab::Edit => self.band_edit(ui),
-                    RibbonTab::Image => self.band_image(ui),
-                    RibbonTab::Share => self.band_share(ui),
-                    RibbonTab::View => self.band_view(ui, &ctx),
-                    RibbonTab::Help => self.band_help(ui),
+                    fit::begin(fit::Pass::Band, shown, std::mem::take(&mut widths));
+                    self.band_groups(ui, &ctx);
+                    let (measured, mut right) = fit::end();
+                    widths = measured;
+                    if shown < widths.len() {
+                        let more = look::big_tool(ui, DOTS, t("More"), t("The groups that don't fit the window"), true, false);
+                        right = right.max(more.rect.right());
+                        egui::Popup::menu(&more).show(|ui| {
+                            fit::begin(fit::Pass::Overflow, shown, std::mem::take(&mut widths));
+                            self.band_groups(ui, &ctx);
+                            widths = fit::end().0;
+                        });
                     }
-                    self.more_group(ui, &ctx);
+                    ctx.data_mut(|d| d.insert_temp(egui::Id::unique("ribbon-band-fit"), (shown.min(widths.len()), widths.len(), right, band_right)));
                 });
             });
+            if fit::groups_shown(&widths, room, more_w) != shown {
+                ctx.request_repaint();
+            }
+            ctx.data_mut(|d| d.insert_temp(widths_id, widths));
         });
+    }
+
+    /// The current tab's groups, then More.
+    fn band_groups(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        match self.x.tab {
+            RibbonTab::Home => self.band_home(ui, ctx),
+            RibbonTab::Capture => self.band_capture(ui, ctx),
+            RibbonTab::Record => self.band_record(ui, ctx),
+            RibbonTab::Studio => self.band_studio(ui, ctx),
+            RibbonTab::Stream => crate::app::stream_ui::band(self, ui, ctx),
+            RibbonTab::Edit => self.band_edit(ui),
+            RibbonTab::Image => self.band_image(ui),
+            RibbonTab::Share => self.band_share(ui),
+            RibbonTab::View => self.band_view(ui, ctx),
+            RibbonTab::Help => self.band_help(ui),
+        }
+        self.more_group(ui, ctx);
     }
 
     pub(crate) fn switch_tab(&mut self, ctx: &egui::Context, tab: RibbonTab) {
@@ -986,5 +1180,139 @@ mod tests {
                 assert!(k.is_empty());
             }
         }
+    }
+    #[test]
+    fn groups_fold_into_more_only_when_they_do_not_fit() {
+        let w = [100.0, 80.0, 60.0, 40.0];
+        assert_eq!(fit::groups_shown(&[], 10.0, 64.0), usize::MAX, "nothing measured yet: draw all");
+        assert_eq!(fit::groups_shown(&w, 280.0, 64.0), usize::MAX, "all fit exactly");
+        assert_eq!(fit::groups_shown(&w, 279.0, 64.0), 2, "two beside More (64 + 100 + 80 = 244; + 60 = 304)");
+        assert_eq!(fit::groups_shown(&w, 164.0, 64.0), 1);
+        assert_eq!(fit::groups_shown(&w, 100.0, 64.0), 0, "everything in More");
+    }
+
+    #[test]
+    fn tabs_fold_into_more_and_the_current_tab_names_it() {
+        let w = [50.0; 10];
+        assert_eq!(fit::tabs_shown(&w, 0, 500.0, 20.0, 70.0), 10, "all fit");
+        // 20 + 9 * 50 = 470: nine tabs beside the dots.
+        assert_eq!(fit::tabs_shown(&w, 3, 499.0, 20.0, 70.0), 9);
+        // The current tab is the tenth: the menu carries its name (70), so eight fit.
+        assert_eq!(fit::tabs_shown(&w, 9, 499.0, 20.0, 70.0), 8);
+        // Room for three beside the dots, so the second tab stays in the row; the sixth goes to
+        // the menu and names it, leaving room for two.
+        assert_eq!(fit::tabs_shown(&w, 1, 200.0, 20.0, 70.0), 3);
+        assert_eq!(fit::tabs_shown(&w, 5, 200.0, 20.0, 70.0), 2);
+        assert_eq!(fit::tabs_shown(&w, 0, 10.0, 20.0, 70.0), 0);
+    }
+
+    #[test]
+    fn each_group_is_drawn_in_the_band_or_in_more_never_both() {
+        for shown in [0, 1, 3, usize::MAX] {
+            let mut seen = Vec::new();
+            for pass in [fit::Pass::Band, fit::Pass::Overflow] {
+                fit::begin(pass, shown, Vec::new());
+                assert_eq!(fit::in_overflow(), pass == fit::Pass::Overflow);
+                for _ in 0..5 {
+                    if let Some(i) = fit::next_group() {
+                        fit::measured(i, 10.0, 0.0);
+                        seen.push(i);
+                    }
+                }
+                let (widths, _) = fit::end();
+                assert_eq!(widths.len(), 5, "every group is counted in both passes");
+            }
+            seen.sort();
+            assert_eq!(seen, vec![0, 1, 2, 3, 4], "shown {shown}");
+        }
+        assert!(!fit::in_overflow());
+        assert_eq!(fit::next_group(), Some(0), "outside the ribbon every group draws");
+    }
+
+    /// The ribbon drawn headless in a window `width` wide: what fitted in the tab row and band.
+    fn ribbon_at(a: &mut SnagApp, width: f32) -> ((usize, f32, f32), (usize, usize, f32, f32)) {
+        let ctx = egui::Context::default();
+        let mut defs = crate::look::base_fonts(false, "en");
+        crate::fonts::interface_fonts(&mut defs, None, 100);
+        ctx.set_fonts(defs);
+        for _ in 0..4 {
+            let raw = egui::RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(width, 600.0))), ..Default::default() };
+            let mut out = ctx.run_ui(raw, |ui| {
+                egui::Panel::top("ribbon").frame(egui::Frame::new().fill(look::pal().band)).show(ui, |ui| a.ribbon(ui));
+            });
+            out.textures_delta.clear();
+        }
+        let tabs = ctx.data(|d| d.get_temp(egui::Id::unique("ribbon-tabs-fit"))).expect("tab row drawn");
+        let band = ctx.data(|d| d.get_temp(egui::Id::unique("ribbon-band-fit"))).expect("band drawn");
+        (tabs, band)
+    }
+
+    #[test]
+    fn a_wide_window_shows_every_tab_and_group() {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        let ((tabs, _, _), (shown, count, right, band_right)) = ribbon_at(&mut a, 1600.0);
+        assert_eq!(tabs, RibbonTab::ALL.len());
+        assert!(count > 3);
+        assert_eq!(shown, count, "Home's groups all fit at 1600");
+        assert!(right <= band_right + 0.5);
+    }
+
+    /// Snap layouts put the window in half or a third of the screen: at the smallest width every
+    /// tab's band, and the tab row, still fit, with the rest in the More menus.
+    #[test]
+    fn a_narrow_window_folds_tabs_and_groups_and_cuts_nothing_off() {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        for tab in RibbonTab::ALL.into_iter().filter(|t| *t != RibbonTab::Studio) {
+            a.switch_tab(&egui::Context::default(), tab);
+            let ((tabs, tabs_end, buttons_start), (shown, count, right, band_right)) = ribbon_at(&mut a, crate::app::MIN_SIZE.x);
+            assert!(tabs < RibbonTab::ALL.len(), "{tab:?}: some tabs go to the menu");
+            assert!(tabs_end <= buttons_start + 0.5, "{tab:?}: the tabs run into the buttons ({tabs_end} > {buttons_start})");
+            assert!(shown <= count);
+            assert!(right <= band_right + 0.5, "{tab:?}: the band is cut off ({right} > {band_right})");
+        }
+    }
+
+    /// Ctrl+2 still switches the streamed Studio scene when the Scenes group is in More (a
+    /// narrow window), and switches once, not again while the More menu is drawn.
+    #[test]
+    fn scene_keys_work_with_the_scenes_group_folded_away() {
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.settings.stream.source = crate::stream::Source::Studio;
+        a.settings.studio.add_scene(Some("Two"));
+        a.x.tab = RibbonTab::Stream;
+        let ctx = egui::Context::default();
+        let mut defs = crate::look::base_fonts(false, "en");
+        crate::fonts::interface_fonts(&mut defs, None, 100);
+        ctx.set_fonts(defs);
+        let key = egui::Event::Key { key: egui::Key::Num2, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::COMMAND };
+        let raw = egui::RawInput { events: vec![egui::Event::ModifiersChanged(egui::Modifiers::COMMAND), key], ..Default::default() };
+        let mut out = ctx.run_ui(raw, |ui| {
+            // Every group in More, as in the narrowest window, and the menu open.
+            fit::begin(fit::Pass::Band, 0, Vec::new());
+            a.band_groups(ui, &ui.ctx().clone());
+            fit::end();
+            fit::begin(fit::Pass::Overflow, 0, Vec::new());
+            a.settings.studio.current = 0;
+            a.band_groups(ui, &ui.ctx().clone());
+            fit::end();
+        });
+        out.textures_delta.clear();
+        assert_eq!(a.settings.studio.current, 0, "the key acted in the band pass, not again in More");
+        let mut b = SnagApp::blank(Settings::default(), false, None);
+        b.settings.stream.source = crate::stream::Source::Studio;
+        b.settings.studio.add_scene(Some("Two"));
+        b.x.tab = RibbonTab::Stream;
+        let raw = egui::RawInput { events: vec![egui::Event::ModifiersChanged(egui::Modifiers::COMMAND), key_event()], ..Default::default() };
+        let mut out = ctx.run_ui(raw, |ui| {
+            fit::begin(fit::Pass::Band, 0, Vec::new());
+            b.band_groups(ui, &ui.ctx().clone());
+            fit::end();
+        });
+        out.textures_delta.clear();
+        assert_eq!(b.settings.studio.current, 1, "Ctrl+2 picked the second scene with Scenes folded away");
+    }
+
+    fn key_event() -> egui::Event {
+        egui::Event::Key { key: egui::Key::Num2, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::COMMAND }
     }
 }

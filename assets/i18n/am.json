@@ -1024,6 +1024,8 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "በስርዓት ቅንብሮች ውስጥ ንፅፅርን ጨምር በርቷል፣ ስለዚህ ጽሑፍና ድንበሮች ጠንካራ ናቸው።",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "የማያ ገጽ ማጋራት በዴስክቶፑ መገናኛ ውስጥ ተሰርዟል፦ ምንም አልተጋራም።",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "የማያ ገጽ ማጋራት አልጀመረም፦ በዴስክቶፑ መገናኛ ውስጥ ተሰርዟል፣ ወይም ዴስክቶፑ ምንም ምክንያት አልሰጠም። ምንም አልተጋራም።",
-  "The desktop's screen-sharing portal said no: {error}": "የዴስክቶፑ የማያ ገጽ ማጋራት portal እምቢ አለ፦ {error}"
+  "The desktop's screen-sharing portal said no: {error}": "የዴስክቶፑ የማያ ገጽ ማጋራት portal እምቢ አለ፦ {error}",
+  "More tabs": "ተጨማሪ ትሮች",
+  "The groups that don't fit the window": "በመስኮቱ ውስጥ የማይገቡ ቡድኖች"
  }
 }

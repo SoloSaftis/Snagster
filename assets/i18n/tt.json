@@ -1024,6 +1024,8 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Система көйләүләрендә «Контрастны арттыру» кабызылган, шуңа күрә текст һәм чикләр ачыграк.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Экранны уртаклашу эш өстәленең диалогында туктатылды: бернәрсә дә уртаклашылмады.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Экранны уртаклашу башланмады: ул эш өстәленең диалогында туктатылды яки эш өстәле сәбәп күрсәтмәде. Бернәрсә дә уртаклашылмады.",
-  "The desktop's screen-sharing portal said no: {error}": "Эш өстәленең экранны уртаклашу порталы баш тартты: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Эш өстәленең экранны уртаклашу порталы баш тартты: {error}",
+  "More tabs": "Күбрәк кыстырма",
+  "The groups that don't fit the window": "Тәрәзәгә сыймаган төркемнәр"
  }
 }

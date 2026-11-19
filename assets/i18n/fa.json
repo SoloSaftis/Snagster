@@ -1024,6 +1024,8 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "گزینه «افزایش کنتراست» در تنظیمات سیستم روشن است، بنابراین متن و حاشیه‌ها پررنگ‌ترند.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "اشتراک‌گذاری صفحه در پنجره گفت‌وگوی دسکتاپ لغو شد: چیزی به اشتراک گذاشته نشد.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "اشتراک‌گذاری صفحه شروع نشد: در پنجره گفت‌وگوی دسکتاپ لغو شد، یا دسکتاپ دلیلی اعلام نکرد. چیزی به اشتراک گذاشته نشد.",
-  "The desktop's screen-sharing portal said no: {error}": "پورتال اشتراک‌گذاری صفحه در دسکتاپ نپذیرفت: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "پورتال اشتراک‌گذاری صفحه در دسکتاپ نپذیرفت: {error}",
+  "More tabs": "زبانه‌های بیشتر",
+  "The groups that don't fit the window": "گروه‌هایی که در پنجره جا نمی‌شوند"
  }
 }

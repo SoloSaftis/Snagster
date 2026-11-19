@@ -1024,6 +1024,8 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "У Сістэмных наладах уключана «Павялічыць кантраснасць», таму тэкст і межы выразнейшыя.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Абагульванне экрана скасавана ў дыялогу працоўнага стала: нічога не было абагулена.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Абагульванне экрана не пачалося: яго скасавалі ў дыялогу працоўнага стала, або працоўны стол не паведаміў прычыну. Нічога не было абагулена.",
-  "The desktop's screen-sharing portal said no: {error}": "Парталь абагульвання экрана працоўнага стала адмовіў: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Парталь абагульвання экрана працоўнага стала адмовіў: {error}",
+  "More tabs": "Больш укладак",
+  "The groups that don't fit the window": "Групы, якія не змяшчаюцца ў акне"
  }
 }
