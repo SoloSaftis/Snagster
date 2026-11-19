@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "直近 {seconds} 秒を動画として保存",
   "Save replay": "リプレイを保存",
   "How much to keep": "保持する長さ",
-  "Keep the last": "直近の保持時間",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "現在の画質 (フルHD画面) でメモリを約 {mb} MB 使用します。",
   "Sound kept with replays": "リプレイと一緒に保持する音声",
   "Turn replay on when Snagster starts": "Snagster の起動時にリプレイをオンにする",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "オンにするまでリプレイはオフです。オンの間は画面を常にエンコードし (可能ならグラフィックチップで)、直近の数秒だけを保持します。",
   "Replay on": "リプレイ オン",
-  "Turn replay on / off": "リプレイのオン / オフ"
+  "Turn replay on / off": "リプレイのオン / オフ",
+  "Replay didn't start: {e}": "リプレイを開始できませんでした: {e}"
  }
 }

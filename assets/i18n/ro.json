@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Salvează ultimele {seconds} s ca videoclip",
   "Save replay": "Salvează reluarea",
   "How much to keep": "Cât să se păstreze",
-  "Keep the last": "Păstrează ultimele",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Folosește aproximativ {mb} MB de memorie la calitatea curentă (un ecran Full HD).",
   "Sound kept with replays": "Sunet păstrat cu reluările",
   "Turn replay on when Snagster starts": "Pornește reluarea la pornirea Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Reluarea rămâne oprită până o pornești. Cât timp este pornită, ecranul este codificat permanent (pe cipul grafic, când se poate) și se păstrează doar ultimele secunde.",
   "Replay on": "Reluare pornită",
-  "Turn replay on / off": "Pornește / oprește reluarea"
+  "Turn replay on / off": "Pornește / oprește reluarea",
+  "Replay didn't start: {e}": "Reluarea nu a pornit: {e}"
  }
 }

@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "שמירת {seconds} השניות האחרונות כסרטון",
   "Save replay": "שמירת הילוך חוזר",
   "How much to keep": "כמה לשמור",
-  "Keep the last": "שמור את האחרונות",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "משתמש בכ-{mb} MB של זיכרון באיכות הנוכחית (מסך Full HD).",
   "Sound kept with replays": "צליל שנשמר עם הילוכים חוזרים",
   "Turn replay on when Snagster starts": "הפעל הילוך חוזר כש-Snagster מתחיל",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "ההילוך החוזר כבוי עד שתפעיל אותו. כשהוא פועל, המסך מקודד כל הזמן (בשבב הגרפי כשאפשר) ורק השניות האחרונות נשמרות.",
   "Replay on": "הילוך חוזר פועל",
-  "Turn replay on / off": "הפעלה / כיבוי של הילוך חוזר"
+  "Turn replay on / off": "הפעלה / כיבוי של הילוך חוזר",
+  "Replay didn't start: {e}": "ההילוך החוזר לא התחיל: {e}"
  }
 }

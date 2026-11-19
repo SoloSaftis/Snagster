@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Зачувај ги последните {seconds} с како видео",
   "Save replay": "Зачувај повторување",
   "How much to keep": "Колку да се чува",
-  "Keep the last": "Чувај ги последните",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Користи околу {mb} MB меморија при тековниот квалитет (екран Full HD).",
   "Sound kept with replays": "Звук што се чува со повторувањата",
   "Turn replay on when Snagster starts": "Вклучи го повторувањето кога ќе се стартува Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Повторувањето е исклучено додека не го вклучите. Додека е вклучено, екранот постојано се кодира (на графичкиот чип кога е можно) и се чуваат само последните секунди.",
   "Replay on": "Повторувањето е вклучено",
-  "Turn replay on / off": "Вклучи / исклучи го повторувањето"
+  "Turn replay on / off": "Вклучи / исклучи го повторувањето",
+  "Replay didn't start: {e}": "Повторувањето не започна: {e}"
  }
 }

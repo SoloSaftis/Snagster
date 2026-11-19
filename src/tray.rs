@@ -154,10 +154,11 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
 
 impl Tray {
     /// Show whether the replay buffer is on: the item ticked, Save replay usable, a dot on the
-    /// icon (the accent colour, not red: red means recording) and the tooltip saying so.
-    pub fn set_replay(&self, on: bool) {
+    /// icon (the accent colour, not red: red means recording) and the tooltip saying so. Save
+    /// replay works once it is `ready` (not while it is still starting).
+    pub fn set_replay(&self, on: bool, ready: bool) {
         self.replay.set_checked(on);
-        self.save_replay.set_enabled(on);
+        self.save_replay.set_enabled(ready);
         let tip = if on { format!("Snagster – {}", crate::i18n::tr("Replay on")) } else { "Snagster".to_string() };
         let _ = self.icon.set_tooltip(Some(tip));
         #[cfg(target_os = "macos")]
@@ -167,7 +168,7 @@ impl Tray {
                 add_dot(&mut rgba, size, size, [0, 0, 0, 255]);
             }
             if let Ok(i) = tray_icon::Icon::from_rgba(rgba, size, size) {
-                let _ = self.icon.set_icon_with_as_template(Some(i), true);
+                let _ = self.icon.set_icon_templated(Some(i));
             }
         }
         #[cfg(not(target_os = "macos"))]

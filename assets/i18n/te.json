@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "చివరి {seconds} సె. వీడియోగా సేవ్ చేయి",
   "Save replay": "రీప్లే సేవ్ చేయి",
   "How much to keep": "ఎంత ఉంచాలి",
-  "Keep the last": "చివరిది ఉంచు",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "ప్రస్తుత నాణ్యతలో (ఫుల్-HD స్క్రీన్) సుమారు {mb} MB మెమరీని ఉపయోగిస్తుంది.",
   "Sound kept with replays": "రీప్లేలతో ఉంచబడే ధ్వని",
   "Turn replay on when Snagster starts": "Snagster ప్రారంభమైనప్పుడు రీప్లే ఆన్ చేయి",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "మీరు ఆన్ చేసే వరకు రీప్లే ఆఫ్‌లో ఉంటుంది. ఆన్‌లో ఉన్నప్పుడు స్క్రీన్ ఎల్లప్పుడూ ఎన్‌కోడ్ అవుతుంది (వీలైతే గ్రాఫిక్స్ చిప్‌పై) మరియు చివరి కొన్ని సెకన్లు మాత్రమే ఉంచబడతాయి.",
   "Replay on": "రీప్లే ఆన్",
-  "Turn replay on / off": "రీప్లే ఆన్ / ఆఫ్ చేయి"
+  "Turn replay on / off": "రీప్లే ఆన్ / ఆఫ్ చేయి",
+  "Replay didn't start: {e}": "రీప్లే ప్రారంభం కాలేదు: {e}"
  }
 }

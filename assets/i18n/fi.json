@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Tallenna viimeiset {seconds} s videona",
   "Save replay": "Tallenna toisto",
   "How much to keep": "Kuinka paljon säilytetään",
-  "Keep the last": "Säilytä viimeiset",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Käyttää noin {mb} Mt muistia nykyisellä laadulla (Full HD -näyttö).",
   "Sound kept with replays": "Toistojen mukana säilytettävä ääni",
   "Turn replay on when Snagster starts": "Kytke toisto päälle, kun Snagster käynnistyy",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Toisto on pois päältä, kunnes kytket sen päälle. Kun se on päällä, näyttö koodataan koko ajan (mahdollisuuksien mukaan grafiikkapiirillä) ja vain viimeiset sekunnit säilytetään.",
   "Replay on": "Toisto päällä",
-  "Turn replay on / off": "Kytke toisto päälle / pois"
+  "Turn replay on / off": "Kytke toisto päälle / pois",
+  "Replay didn't start: {e}": "Toisto ei käynnistynyt: {e}"
  }
 }

@@ -676,7 +676,7 @@ impl Streamer {
                 Ok(a) => aenc = Some(a),
                 Err(e) => {
                     sound = None;
-                    notes.push(format!("Streaming without sound: {e}"));
+                    notes.push(if why == "Live streaming" { format!("Streaming without sound: {e}") } else { format!("Kept without sound: {e}") });
                 }
             }
         }

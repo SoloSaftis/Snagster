@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Lưu {seconds} giây gần nhất thành video",
   "Save replay": "Lưu bản phát lại",
   "How much to keep": "Giữ bao nhiêu",
-  "Keep the last": "Giữ khoảng gần nhất",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Dùng khoảng {mb} MB bộ nhớ ở chất lượng hiện tại (màn hình Full HD).",
   "Sound kept with replays": "Âm thanh được giữ cùng bản phát lại",
   "Turn replay on when Snagster starts": "Bật phát lại khi Snagster khởi động",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Phát lại tắt cho đến khi bạn bật. Khi đang bật, màn hình được mã hóa liên tục (trên chip đồ họa nếu có thể) và chỉ giữ vài giây gần nhất.",
   "Replay on": "Phát lại đang bật",
-  "Turn replay on / off": "Bật / tắt phát lại"
+  "Turn replay on / off": "Bật / tắt phát lại",
+  "Replay didn't start: {e}": "Phát lại không bắt đầu: {e}"
  }
 }

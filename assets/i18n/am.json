@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "የመጨረሻዎቹን {seconds} ሰ እንደ ቪዲዮ አስቀምጥ",
   "Save replay": "ድጋሚ ማጫወትን አስቀምጥ",
   "How much to keep": "ምን ያህል ማቆየት",
-  "Keep the last": "የመጨረሻዎቹን አቆይ",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "አሁን ባለው ጥራት (ሙሉ-HD ማያ ገጽ) ወደ {mb} ሜባ የሚሆን ማህደረ ትውስታ ይጠቀማል።",
   "Sound kept with replays": "ከድጋሚ ማጫወቶች ጋር የሚቀመጥ ድምፅ",
   "Turn replay on when Snagster starts": "Snagster ሲጀምር ድጋሚ ማጫወትን አብራ",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "እስኪያበሩት ድረስ ድጋሚ ማጫወት ጠፍቷል። በርቶ እያለ ማያ ገጹ ሁልጊዜ ይቀየራል (ከተቻለ በግራፊክስ ቺፑ ላይ) እና የመጨረሻዎቹ ሰከንዶች ብቻ ይቀመጣሉ።",
   "Replay on": "ድጋሚ ማጫወት በርቷል",
-  "Turn replay on / off": "ድጋሚ ማጫወትን አብራ / አጥፋ"
+  "Turn replay on / off": "ድጋሚ ማጫወትን አብራ / አጥፋ",
+  "Replay didn't start: {e}": "ድጋሚ ማጫወት አልጀመረም፦ {e}"
  }
 }

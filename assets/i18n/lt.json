@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Išsaugoti paskutines {seconds} s kaip vaizdo įrašą",
   "Save replay": "Išsaugoti pakartojimą",
   "How much to keep": "Kiek saugoti",
-  "Keep the last": "Saugoti paskutines",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Esama kokybe (Full HD ekranas) naudoja apie {mb} MB atminties.",
   "Sound kept with replays": "Garsas, saugomas su pakartojimais",
   "Turn replay on when Snagster starts": "Įjungti pakartojimą paleidus Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Pakartojimas išjungtas, kol jo neįjungsite. Kol jis įjungtas, ekranas nuolat koduojamas (jei įmanoma, grafikos lustu) ir saugomos tik paskutinės sekundės.",
   "Replay on": "Pakartojimas įjungtas",
-  "Turn replay on / off": "Įjungti / išjungti pakartojimą"
+  "Turn replay on / off": "Įjungti / išjungti pakartojimą",
+  "Replay didn't start: {e}": "Pakartojimas nepasileido: {e}"
  }
 }

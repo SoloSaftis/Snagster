@@ -740,6 +740,13 @@ fn use_portal(wayland: bool, flatpak: bool) -> bool {
     wayland || flatpak
 }
 
+/// Whether recordings, streams and the replay buffer on this desktop copy the screen through
+/// the desktop's screen share (which may ask the person which screen to share).
+#[cfg(target_os = "linux")]
+pub fn copies_through_screen_share() -> bool {
+    use_portal(x11::is_wayland(), crate::update::managed_by() == Some("Flatpak"))
+}
+
 /// Linux on Wayland or in a Flatpak: the pictures of a screen share (`crate::portal::Cast`),
 /// cut to the recorded area. The desktop asks the person which screen to share when it opens.
 #[cfg(target_os = "linux")]

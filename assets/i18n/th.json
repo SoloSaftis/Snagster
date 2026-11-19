@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "บันทึก {seconds} วิ ล่าสุดเป็นวิดีโอ",
   "Save replay": "บันทึกรีเพลย์",
   "How much to keep": "จะเก็บไว้เท่าไร",
-  "Keep the last": "เก็บล่าสุด",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "ใช้หน่วยความจำประมาณ {mb} MB ที่คุณภาพปัจจุบัน (หน้าจอ Full HD)",
   "Sound kept with replays": "เสียงที่เก็บไว้กับรีเพลย์",
   "Turn replay on when Snagster starts": "เปิดรีเพลย์เมื่อ Snagster เริ่มทำงาน",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "รีเพลย์จะปิดอยู่จนกว่าคุณจะเปิด ขณะที่เปิดอยู่ หน้าจอจะถูกเข้ารหัสตลอดเวลา (บนชิปกราฟิกหากทำได้) และเก็บไว้เฉพาะไม่กี่วินาทีล่าสุด",
   "Replay on": "รีเพลย์เปิดอยู่",
-  "Turn replay on / off": "เปิด / ปิดรีเพลย์"
+  "Turn replay on / off": "เปิด / ปิดรีเพลย์",
+  "Replay didn't start: {e}": "รีเพลย์ไม่เริ่มทำงาน: {e}"
  }
 }

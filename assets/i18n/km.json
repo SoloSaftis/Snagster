@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "រក្សាទុក {seconds} វិនាទីចុងក្រោយជាវីដេអូ",
   "Save replay": "រក្សាទុកការចាក់ឡើងវិញ",
   "How much to keep": "ត្រូវរក្សាប៉ុន្មាន",
-  "Keep the last": "រក្សាចុងក្រោយ",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "ប្រើអង្គចងចាំប្រហែល {mb} MB ក្នុងគុណភាពបច្ចុប្បន្ន (អេក្រង់ Full HD)។",
   "Sound kept with replays": "សំឡេងដែលរក្សាជាមួយការចាក់ឡើងវិញ",
   "Turn replay on when Snagster starts": "បើកការចាក់ឡើងវិញនៅពេល Snagster ចាប់ផ្តើម",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "ការចាក់ឡើងវិញនៅបិទរហូតដល់អ្នកបើកវា។ ពេលបើក អេក្រង់ត្រូវបានអ៊ិនកូដជានិច្ច (នៅលើឈីបក្រាហ្វិកប្រសិនបើអាច) ហើយរក្សាតែវិនាទីចុងក្រោយប៉ុណ្ណោះ។",
   "Replay on": "ការចាក់ឡើងវិញបានបើក",
-  "Turn replay on / off": "បើក / បិទការចាក់ឡើងវិញ"
+  "Turn replay on / off": "បើក / បិទការចាក់ឡើងវិញ",
+  "Replay didn't start: {e}": "ការចាក់ឡើងវិញមិនបានចាប់ផ្តើម៖ {e}"
  }
 }

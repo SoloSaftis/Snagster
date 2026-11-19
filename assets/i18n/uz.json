@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Oxirgi {seconds} s ni video sifatida saqlash",
   "Save replay": "Takrorni saqlash",
   "How much to keep": "Qancha saqlash kerak",
-  "Keep the last": "Oxirgisini saqlash",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Joriy sifatda (Full HD ekran) taxminan {mb} MB xotira ishlatadi.",
   "Sound kept with replays": "Takrorlar bilan saqlanadigan ovoz",
   "Turn replay on when Snagster starts": "Snagster ishga tushganda takrorni yoqish",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Takror siz yoqmaguningizcha o‘chiq turadi. Yoqilgan paytda ekran doim kodlanadi (imkon bo‘lsa grafik chipda) va faqat oxirgi soniyalar saqlanadi.",
   "Replay on": "Takror yoqilgan",
-  "Turn replay on / off": "Takrorni yoqish / o‘chirish"
+  "Turn replay on / off": "Takrorni yoqish / o‘chirish",
+  "Replay didn't start: {e}": "Takror boshlanmadi: {e}"
  }
 }

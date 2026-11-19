@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Lagre dei siste {seconds} s som video",
   "Save replay": "Lagre reprise",
   "How much to keep": "Kor mykje som blir halde på",
-  "Keep the last": "Hald på dei siste",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Brukar omtrent {mb} MB minne med gjeldande kvalitet (ein Full HD-skjerm).",
   "Sound kept with replays": "Lyd som blir halden på med reprisane",
   "Turn replay on when Snagster starts": "Slå på reprise når Snagster startar",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Reprisen er av til du slår henne på. Medan ho er på, blir skjermen koda heile tida (på grafikkbrikka når det går) og berre dei siste sekunda blir haldne på.",
   "Replay on": "Reprise på",
-  "Turn replay on / off": "Slå reprise på / av"
+  "Turn replay on / off": "Slå reprise på / av",
+  "Replay didn't start: {e}": "Reprisen starta ikkje: {e}"
  }
 }

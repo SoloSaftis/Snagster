@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Simpan {seconds} dtk terakhir sebagai video",
   "Save replay": "Simpan replay",
   "How much to keep": "Berapa banyak yang disimpan",
-  "Keep the last": "Simpan yang terakhir",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Menggunakan sekitar {mb} MB memori pada kualitas saat ini (layar Full HD).",
   "Sound kept with replays": "Suara yang disimpan bersama replay",
   "Turn replay on when Snagster starts": "Aktifkan replay saat Snagster dimulai",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Replay nonaktif sampai Anda mengaktifkannya. Saat aktif, layar terus dienkode (di chip grafis jika bisa) dan hanya beberapa detik terakhir yang disimpan.",
   "Replay on": "Replay aktif",
-  "Turn replay on / off": "Aktifkan / nonaktifkan replay"
+  "Turn replay on / off": "Aktifkan / nonaktifkan replay",
+  "Replay didn't start: {e}": "Replay tidak dimulai: {e}"
  }
 }

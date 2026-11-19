@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "শেষ {seconds} সে. ভিডিও হিসেবে সংরক্ষণ করুন",
   "Save replay": "রিপ্লে সংরক্ষণ করুন",
   "How much to keep": "কতটা রাখবেন",
-  "Keep the last": "শেষ যতটা রাখবেন",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "বর্তমান মানে (একটি ফুল-HD স্ক্রিন) প্রায় {mb} MB মেমরি ব্যবহার করে।",
   "Sound kept with replays": "রিপ্লের সাথে রাখা শব্দ",
   "Turn replay on when Snagster starts": "Snagster শুরু হলে রিপ্লে চালু করুন",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "আপনি চালু না করা পর্যন্ত রিপ্লে বন্ধ থাকে। চালু থাকলে স্ক্রিন সব সময় এনকোড হয় (সম্ভব হলে গ্রাফিক্স চিপে) এবং শুধু শেষ কয়েক সেকেন্ড রাখা হয়।",
   "Replay on": "রিপ্লে চালু",
-  "Turn replay on / off": "রিপ্লে চালু / বন্ধ করুন"
+  "Turn replay on / off": "রিপ্লে চালু / বন্ধ করুন",
+  "Replay didn't start: {e}": "রিপ্লে শুরু হয়নি: {e}"
  }
 }

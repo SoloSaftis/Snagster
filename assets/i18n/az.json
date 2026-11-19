@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Son {seconds} san.-ni video kimi saxla",
   "Save replay": "Təkrarı saxla",
   "How much to keep": "Nə qədər saxlanılsın",
-  "Keep the last": "Son saxlanılan müddət",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Cari keyfiyyətdə (tam HD ekran) təxminən {mb} MB yaddaş istifadə edir.",
   "Sound kept with replays": "Təkrarlarla saxlanılan səs",
   "Turn replay on when Snagster starts": "Snagster başlayanda təkrarı aktiv et",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Təkrar siz onu aktiv edənə qədər söndürülüdür. Aktiv olduqda ekran daim kodlaşdırılır (mümkünsə qrafik çipdə) və yalnız son saniyələr saxlanılır.",
   "Replay on": "Təkrar aktivdir",
-  "Turn replay on / off": "Təkrarı aktiv et / söndür"
+  "Turn replay on / off": "Təkrarı aktiv et / söndür",
+  "Replay didn't start: {e}": "Təkrar başlamadı: {e}"
  }
 }

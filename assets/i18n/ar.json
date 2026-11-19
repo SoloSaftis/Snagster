@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "حفظ آخر {seconds} ث كفيديو",
   "Save replay": "حفظ إعادة التشغيل",
   "How much to keep": "مقدار الاحتفاظ",
-  "Keep the last": "الاحتفاظ بآخر",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "يستخدم نحو {mb} ميغابايت من الذاكرة بالجودة الحالية (شاشة Full HD).",
   "Sound kept with replays": "الصوت المحفوظ مع إعادة التشغيل",
   "Turn replay on when Snagster starts": "تشغيل إعادة التشغيل عند بدء Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "إعادة التشغيل متوقفة حتى تشغّلها. أثناء تشغيلها، يتم ترميز الشاشة طوال الوقت (على شريحة الرسومات إن أمكن) ويُحتفظ بآخر الثواني فقط.",
   "Replay on": "إعادة التشغيل قيد التشغيل",
-  "Turn replay on / off": "تشغيل / إيقاف إعادة التشغيل"
+  "Turn replay on / off": "تشغيل / إيقاف إعادة التشغيل",
+  "Replay didn't start: {e}": "لم تبدأ إعادة التشغيل: {e}"
  }
 }

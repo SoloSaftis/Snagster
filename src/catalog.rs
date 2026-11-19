@@ -217,7 +217,7 @@ pub const COMMANDS: &[Command] = &[
     s("gif_cursor", "Record > Video", &["Mouse pointer"], "gif_cursor"),
     s("audio_source", "Record > Video", &["Sound to record with videos"], "audio_source"),
     s("audio_mic", "Record > Video > sound", &["Microphone", "The computer's default microphone"], "audio_mic"),
-    s("replay_s", "Record > Replay, Settings > Recording", &["How much to keep", "Keep the last"], "replay_s"),
+    s("replay_s", "Record > Replay, Settings > Recording", &["How much to keep"], "replay_s"),
     s("replay_audio", "Settings > Recording > Replay", &["Sound kept with replays"], "replay_audio"),
     s("replay_at_start", "Settings > Recording > Replay", &["Turn replay on when Snagster starts"], "replay_at_start"),
     s("show_side_panel", "View > Show, View menu", &["Options panel", "Show options panel"], "show_side_panel"),

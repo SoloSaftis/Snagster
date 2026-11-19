@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Gem de sidste {seconds} s som video",
   "Save replay": "Gem genafspilning",
   "How much to keep": "Hvor meget der skal gemmes",
-  "Keep the last": "Behold de sidste",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Bruger omkring {mb} MB hukommelse i den nuværende kvalitet (en Full HD-skærm).",
   "Sound kept with replays": "Lyd, der gemmes med genafspilninger",
   "Turn replay on when Snagster starts": "Slå genafspilning til, når Snagster starter",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Genafspilning er slået fra, indtil du slår den til. Mens den er slået til, bliver skærmen kodet hele tiden (på grafikchippen, når det er muligt), og kun de sidste sekunder gemmes.",
   "Replay on": "Genafspilning til",
-  "Turn replay on / off": "Slå genafspilning til / fra"
+  "Turn replay on / off": "Slå genafspilning til / fra",
+  "Replay didn't start: {e}": "Genafspilning startede ikke: {e}"
  }
 }

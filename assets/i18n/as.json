@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "শেষৰ {seconds} ছে. ভিডিঅ’ হিচাপে সংৰক্ষণ কৰক",
   "Save replay": "ৰিপ্লে সংৰক্ষণ কৰক",
   "How much to keep": "কিমান ৰাখিব",
-  "Keep the last": "শেষৰ ইমান ৰাখক",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "বৰ্তমানৰ গুণমানত (এখন ফুল-HD স্ক্ৰীন) প্ৰায় {mb} MB মেমৰি ব্যৱহাৰ কৰে।",
   "Sound kept with replays": "ৰিপ্লেৰ সৈতে ৰখা শব্দ",
   "Turn replay on when Snagster starts": "Snagster আৰম্ভ হোৱাৰ সময়ত ৰিপ্লে অন কৰক",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "আপুনি অন নকৰালৈকে ৰিপ্লে অফ থাকে। অন থাকোতে স্ক্ৰীন সদায় এনকোড কৰা হয় (সম্ভৱ হ’লে গ্ৰাফিক্স চিপত) আৰু কেৱল শেষৰ কেইচেকেণ্ড ৰখা হয়।",
   "Replay on": "ৰিপ্লে অন",
-  "Turn replay on / off": "ৰিপ্লে অন / অফ কৰক"
+  "Turn replay on / off": "ৰিপ্লে অন / অফ কৰক",
+  "Replay didn't start: {e}": "ৰিপ্লে আৰম্ভ নহ’ল: {e}"
  }
 }

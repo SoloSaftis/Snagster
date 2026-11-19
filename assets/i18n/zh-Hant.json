@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "將最近 {seconds} 秒儲存為影片",
   "Save replay": "儲存重播",
   "How much to keep": "保留多久",
-  "Keep the last": "保留最近",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "以目前畫質（全高畫質螢幕）約佔用 {mb} MB 記憶體。",
   "Sound kept with replays": "隨重播保留的聲音",
   "Turn replay on when Snagster starts": "Snagster 啟動時開啟重播",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "在你開啟之前，重播保持關閉。開啟後，螢幕會持續編碼（可能時在顯示晶片上），只保留最近幾秒。",
   "Replay on": "重播已開啟",
-  "Turn replay on / off": "開啟 / 關閉重播"
+  "Turn replay on / off": "開啟 / 關閉重播",
+  "Replay didn't start: {e}": "重播未能啟動：{e}"
  }
 }

@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Déi lescht {seconds} s als Video späicheren",
   "Save replay": "Replay späicheren",
   "How much to keep": "Wéi vill behalen",
-  "Keep the last": "Déi lescht behalen",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Brauch bei der aktueller Qualitéit ongeféier {mb} MB Späicher (e Full-HD-Écran).",
   "Sound kept with replays": "Toun, deen mat de Replays behale gëtt",
   "Turn replay on when Snagster starts": "Replay uschalten, wann Snagster start",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "De Replay ass aus, bis du en uschalts. Wann en un ass, gëtt den Écran ëmmer kodéiert (um Grafikchip, wann et geet) a just déi lescht Sekonne ginn behalen.",
   "Replay on": "Replay un",
-  "Turn replay on / off": "Replay un- / ausschalten"
+  "Turn replay on / off": "Replay un- / ausschalten",
+  "Replay didn't start: {e}": "Replay huet net ugefaang: {e}"
  }
 }

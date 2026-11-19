@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Αποθήκευση των τελευταίων {seconds} δ ως βίντεο",
   "Save replay": "Αποθήκευση επανάληψης",
   "How much to keep": "Πόσο να διατηρείται",
-  "Keep the last": "Διατήρηση των τελευταίων",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Χρησιμοποιεί περίπου {mb} MB μνήμης στην τρέχουσα ποιότητα (οθόνη Full HD).",
   "Sound kept with replays": "Ήχος που διατηρείται με τις επαναλήψεις",
   "Turn replay on when Snagster starts": "Ενεργοποίηση επανάληψης κατά την εκκίνηση του Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Η επανάληψη είναι απενεργοποιημένη μέχρι να την ενεργοποιήσετε. Όσο είναι ενεργή, η οθόνη κωδικοποιείται συνεχώς (στο γραφικό τσιπ όταν γίνεται) και διατηρούνται μόνο τα τελευταία δευτερόλεπτα.",
   "Replay on": "Επανάληψη ενεργή",
-  "Turn replay on / off": "Ενεργοποίηση / απενεργοποίηση επανάληψης"
+  "Turn replay on / off": "Ενεργοποίηση / απενεργοποίηση επανάληψης",
+  "Replay didn't start: {e}": "Η επανάληψη δεν ξεκίνησε: {e}"
  }
 }

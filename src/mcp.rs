@@ -35,7 +35,7 @@ on Windows), record_gif, and Studio scenes (studio_scenes, studio_add_scene, stu
 studio_record). Guides: make_guide (PDF, web page, Word or one tall picture). Library: library_search, library_tag, \
 library_delete (to the Recycle Bin / Trash; undo_delete brings it back for 2 minutes). Live streaming: stream_services, stream_start (Twitch, YouTube, Kick, Facebook, Restream or any RTMP/RTMPS \
 server; the screen, a window, an area or the Studio scene; the stream key saved in Snagster is used and never shown), \
-stream_status and stream_stop. Replay buffer (keep the last 30-120 s of the screen, save a moment after it happened): \r
+stream_status and stream_stop. Replay buffer (keep the last 30-120 s of the screen, save a moment after it happened): \
 replay_start, replay_save, replay_status and replay_stop. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
 set_setting checks kind and range). Everything else a person can press in the window is in list_commands: app_command \
 presses it in the open window (zoom, pins, Recent, dialogs, email, print, Studio and stream buttons...); editor_apply \

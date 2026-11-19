@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "De laatste {seconds} s als video opslaan",
   "Save replay": "Replay opslaan",
   "How much to keep": "Hoeveel bewaren",
-  "Keep the last": "De laatste bewaren",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Gebruikt ongeveer {mb} MB geheugen bij de huidige kwaliteit (een Full HD-scherm).",
   "Sound kept with replays": "Geluid dat met replays wordt bewaard",
   "Turn replay on when Snagster starts": "Replay aanzetten wanneer Snagster start",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "De replay staat uit tot je hem aanzet. Zolang hij aan staat, wordt het scherm voortdurend gecodeerd (op de grafische chip als dat kan) en worden alleen de laatste seconden bewaard.",
   "Replay on": "Replay aan",
-  "Turn replay on / off": "Replay aan- / uitzetten"
+  "Turn replay on / off": "Replay aan- / uitzetten",
+  "Replay didn't start: {e}": "Replay is niet gestart: {e}"
  }
 }

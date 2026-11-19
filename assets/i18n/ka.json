@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "ბოლო {seconds} წმ-ის ვიდეოდ შენახვა",
   "Save replay": "გამეორების შენახვა",
   "How much to keep": "რამდენი შეინახოს",
-  "Keep the last": "შეინახოს ბოლო",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "მიმდინარე ხარისხზე (Full HD ეკრანი) იყენებს დაახლოებით {mb} მბ მეხსიერებას.",
   "Sound kept with replays": "გამეორებებთან ერთად შენახული ხმა",
   "Turn replay on when Snagster starts": "გამეორების ჩართვა Snagster-ის გაშვებისას",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "გამეორება გამორთულია, სანამ არ ჩართავთ. ჩართვისას ეკრანი მუდმივად კოდირდება (შესაძლებლობისას გრაფიკულ ჩიპზე) და ინახება მხოლოდ ბოლო წამები.",
   "Replay on": "გამეორება ჩართულია",
-  "Turn replay on / off": "გამეორების ჩართვა / გამორთვა"
+  "Turn replay on / off": "გამეორების ჩართვა / გამორთვა",
+  "Replay didn't start: {e}": "გამეორება ვერ დაიწყო: {e}"
  }
 }

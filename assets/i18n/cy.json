@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Cadw'r {seconds} s olaf fel fideo",
   "Save replay": "Cadw'r ailchwarae",
   "How much to keep": "Faint i'w gadw",
-  "Keep the last": "Cadw'r",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Yn defnyddio tua {mb} MB o gof ar yr ansawdd presennol (sgrin Full HD).",
   "Sound kept with replays": "Sain a gedwir gydag ailchwaraeon",
   "Turn replay on when Snagster starts": "Troi'r ailchwarae ymlaen pan fydd Snagster yn dechrau",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Mae'r ailchwarae i ffwrdd nes i chi ei droi ymlaen. Tra bydd ymlaen, caiff y sgrin ei hamgodio drwy'r amser (ar y sglodyn graffeg os gall) a dim ond yr eiliadau olaf a gedwir.",
   "Replay on": "Ailchwarae ymlaen",
-  "Turn replay on / off": "Troi'r ailchwarae ymlaen / i ffwrdd"
+  "Turn replay on / off": "Troi'r ailchwarae ymlaen / i ffwrdd",
+  "Replay didn't start: {e}": "Ni ddechreuodd yr ailchwarae: {e}"
  }
 }

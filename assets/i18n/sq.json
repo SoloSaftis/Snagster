@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Ruaj {seconds} s e fundit si video",
   "Save replay": "Ruaj përsëritjen",
   "How much to keep": "Sa të ruhet",
-  "Keep the last": "Ruaj të fundit",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Përdor rreth {mb} MB memorie me cilësinë aktuale (një ekran Full HD).",
   "Sound kept with replays": "Zëri që ruhet me përsëritjet",
   "Turn replay on when Snagster starts": "Ndize përsëritjen kur nis Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Përsëritja është e fikur derisa ta ndezësh. Kur është e ndezur, ekrani kodohet gjatë gjithë kohës (në çipin grafik kur është e mundur) dhe ruhen vetëm sekondat e fundit.",
   "Replay on": "Përsëritja ndezur",
-  "Turn replay on / off": "Ndiz / fik përsëritjen"
+  "Turn replay on / off": "Ndiz / fik përsëritjen",
+  "Replay didn't start: {e}": "Përsëritja nuk filloi: {e}"
  }
 }

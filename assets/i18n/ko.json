@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "마지막 {seconds}초를 비디오로 저장",
   "Save replay": "리플레이 저장",
   "How much to keep": "보관할 길이",
-  "Keep the last": "마지막 보관 시간",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "현재 화질(풀HD 화면)에서 메모리를 약 {mb}MB 사용합니다.",
   "Sound kept with replays": "리플레이와 함께 보관할 소리",
   "Turn replay on when Snagster starts": "Snagster 시작 시 리플레이 켜기",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "켜기 전까지 리플레이는 꺼져 있습니다. 켜져 있는 동안 화면은 항상 인코딩되며(가능하면 그래픽 칩에서) 마지막 몇 초만 보관됩니다.",
   "Replay on": "리플레이 켜짐",
-  "Turn replay on / off": "리플레이 켜기 / 끄기"
+  "Turn replay on / off": "리플레이 켜기 / 끄기",
+  "Replay didn't start: {e}": "리플레이를 시작하지 못했습니다: {e}"
  }
 }

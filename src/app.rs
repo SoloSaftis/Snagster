@@ -5193,7 +5193,8 @@ impl SnagApp {
         let ctx2 = ctx.clone();
         match crate::tray::create(&self.settings, self.tray_tx.clone(), move || ctx2.request_repaint()) {
             Ok(t) => {
-                t.set_replay(crate::replay::status().on());
+                let s = crate::replay::status();
+                t.set_replay(s.on(), s.phase == crate::replay::Phase::On);
                 self.tray = Some(t);
                 self.tray_for = Some(key);
             }

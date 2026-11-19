@@ -127,11 +127,19 @@ impl Ring {
 
     pub fn push_video(&mut self, v: VideoPacket) {
         if v.keyframe {
+            let mut changed = false;
             if let Some((s, p)) = crate::encode::sps_pps(&v.data) {
+                changed = !self.sps.is_empty() && (s != self.sps || p != self.pps);
                 (self.sps, self.pps) = (s, p);
             }
             if let Some(g) = self.open.take() {
                 self.closed.push_back(Arc::new(g));
+            }
+            if changed {
+                // Another encoder took over (the first one failed): one MP4 track has one set of
+                // parameter sets, so what the old encoder made can't be saved with the new.
+                self.closed.clear();
+                self.bytes = 0;
             }
             if self.sps.is_empty() {
                 // Nothing decodes without the parameter sets: wait for a keyframe with them.
@@ -224,15 +232,21 @@ impl Ring {
         let want = seconds.map_or(self.keep_us, |s| s.max(1) as i64 * 1_000_000);
         let from = end - want;
         let first = gops.iter().rposition(|g| g.start_us <= from).unwrap_or(0);
-        let gops = gops.split_off(first);
-        let start_us = gops.first()?.start_us;
-        Some(Clip { gops, start_us, end_us: end, frame_us: self.frame_us })
+        let mut gops = gops;
+        let kept = gops.split_off(first);
+        let start_us = kept.first()?.start_us;
+        // Sound timed from the first keyframe on that came in before it (the video encoder may
+        // hand its packets over later than the sound one) sits in the group before.
+        let lead_audio = gops.last().map(|g| g.audio.iter().filter(|a| a.pts_us >= start_us).cloned().collect()).unwrap_or_default();
+        Some(Clip { gops: kept, lead_audio, start_us, end_us: end, frame_us: self.frame_us })
     }
 }
 
 /// Keyframe groups taken from the ring, ready to be written.
 pub struct Clip {
     pub gops: Vec<Arc<Gop>>,
+    /// Sound from the group before the first one that belongs to the clip.
+    pub lead_audio: Vec<AudioPacket>,
     pub start_us: i64,
     pub end_us: i64,
     frame_us: i64,
@@ -266,7 +280,7 @@ pub fn write_mp4<W: std::io::Write + std::io::Seek>(out: W, clip: &Clip, width: 
     }
     let base = clip.start_us;
     let video: Vec<&VideoPacket> = clip.gops.iter().flat_map(|g| g.video.iter()).collect();
-    let mut audio: Vec<&AudioPacket> = clip.gops.iter().flat_map(|g| g.audio.iter()).filter(|a| a.pts_us >= base && a.pts_us < clip.end_us).collect();
+    let mut audio: Vec<&AudioPacket> = clip.lead_audio.iter().chain(clip.gops.iter().flat_map(|g| g.audio.iter())).filter(|a| a.pts_us >= base && a.pts_us < clip.end_us).collect();
     audio.sort_by_key(|a| a.pts_us);
     let sound = asc.is_some() && !audio.is_empty();
     let config = mp4::Mp4Config {
@@ -311,6 +325,8 @@ pub fn write_mp4<W: std::io::Write + std::io::Seek>(out: W, clip: &Clip, width: 
         }
     }
     m.write_end().map_err(|e| e.to_string())?;
+    // The last bytes go out here: a full disk must fail the save, not leave a file that won't play.
+    m.into_writer().flush().map_err(|e| e.to_string())?;
     Ok(Written { frames, seconds: clip.seconds(), audio: sound })
 }
 
@@ -349,7 +365,8 @@ impl ReplayOptions {
             hardware: s.video_hardware,
             encoder: s.video_encoder.clone(),
             cursor: s.gif_cursor,
-            audio: s.replay_audio,
+            // Linux and macOS record no sound yet: no note about it every time.
+            audio: if crate::audio::AudioSource::supported() { s.replay_audio } else { crate::audio::AudioSource::None },
             mic: s.audio_mic.clone(),
             folder: s.video_folder.clone(),
         }
@@ -612,9 +629,11 @@ fn begin_with(o: ReplayOptions, start: impl FnOnce(&ReplayOptions, &AtomicBool) 
     let spawned = std::thread::Builder::new().name("snagster-replay-start".into()).spawn(move || {
         let r = start(&o, &c);
         let mut g = global();
+        // Only this start's own slot is touched: turned off meanwhile (and maybe on again by a
+        // newer start), it neither reports an error nor takes the newer start's place.
+        let ours = matches!(&g.slot, Slot::Starting(x) if Arc::ptr_eq(x, &c)) && !c.load(Ordering::Relaxed);
         match r {
-            Ok(r) if c.load(Ordering::Relaxed) => {
-                g.slot = Slot::Off;
+            Ok(r) if !ours => {
                 drop(g);
                 r.stop();
             }
@@ -622,6 +641,7 @@ fn begin_with(o: ReplayOptions, start: impl FnOnce(&ReplayOptions, &AtomicBool) 
                 r.set_seconds(g.seconds);
                 g.slot = Slot::On(Box::new(r));
             }
+            Err(_) if !ours => {}
             Err(e) => {
                 g.slot = Slot::Off;
                 g.error = Some(e);
@@ -725,6 +745,28 @@ pub fn wait_started(d: Duration) -> Status {
 /// Linux through the screen-share portal only when a share is remembered (its restore token
 /// is saved); everywhere else always.
 pub fn can_resume_quietly() -> bool {
+    quietly(uses_screen_share(), || remembered_share())
+}
+
+/// Through the desktop's screen share only with a remembered share (asked only then).
+fn quietly(share: bool, remembered: impl FnOnce() -> bool) -> bool {
+    !share || remembered()
+}
+
+/// Whether the screen is copied through the desktop's screen share here (Linux on Wayland or
+/// in a Flatpak), which may ask the person which screen to share.
+pub fn uses_screen_share() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        crate::video::copies_through_screen_share()
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
+    }
+}
+
+fn remembered_share() -> bool {
     #[cfg(target_os = "linux")]
     {
         crate::portal::screencast_remembered()
@@ -1018,6 +1060,87 @@ mod tests {
         let s = wait_started(Duration::from_secs(5));
         assert_eq!(s.phase, Phase::Off);
         assert_eq!(s.error.as_deref(), Some("The share was cancelled."));
+    }
+
+    #[test]
+    fn turning_off_while_starting_gives_no_error_and_never_undoes_a_newer_start() {
+        let _l = TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        end();
+        let o = opts(&std::env::temp_dir());
+        // A start that only ends once cancelled (the share dialog answered after "Stop replay").
+        let (tx, rx) = std::sync::mpsc::channel::<()>();
+        begin_with(o.clone(), move |_, c| {
+            while !c.load(Ordering::Relaxed) {
+                std::thread::sleep(Duration::from_millis(5));
+            }
+            let _ = rx.recv_timeout(Duration::from_secs(5));
+            Err("The screen couldn't be copied.".into())
+        })
+        .unwrap();
+        assert!(end());
+        // On again before the first start has given up: the newer start keeps its place.
+        let (tx2, rx2) = std::sync::mpsc::channel::<()>();
+        begin_with(o, move |_, _| {
+            let _ = rx2.recv_timeout(Duration::from_secs(5));
+            Err("second".into())
+        })
+        .unwrap();
+        tx.send(()).unwrap();
+        std::thread::sleep(Duration::from_millis(100));
+        let s = status();
+        assert_eq!(s.phase, Phase::Starting, "the first start's end took the newer one's place");
+        assert_eq!(s.error, None, "turning it off is not an error");
+        tx2.send(()).unwrap();
+        let s = wait_started(Duration::from_secs(5));
+        assert_eq!((s.phase, s.error.as_deref()), (Phase::Off, Some("second")));
+    }
+
+    #[test]
+    fn launch_is_quiet_except_through_a_screen_share_nobody_remembers() {
+        // X11 and Windows and macOS: no screen share, nothing asks.
+        assert!(quietly(false, || panic!("not asked")));
+        assert!(quietly(true, || true));
+        assert!(!quietly(true, || false));
+        if cfg!(not(target_os = "linux")) {
+            assert!(!uses_screen_share() && can_resume_quietly());
+        }
+    }
+
+    #[test]
+    fn another_encoders_parameter_sets_start_the_ring_again() {
+        let mut r = Ring::new(30, MAX_BYTES, 10);
+        fill(&mut r, 10, 0);
+        assert!(r.groups() >= 5);
+        // The encoder was replaced (a driver reset): a keyframe with other parameter sets.
+        let mut k = frame(10_000, true, 0);
+        k.data = [&[0, 0, 0, 1, 0x67, 0x64, 0, 0x28, 1][..], &[0, 0, 0, 1, 0x68, 0xEE][..], &[0, 0, 0, 1, 0x65, 9][..]].concat();
+        r.push_video(k);
+        r.push_video(frame(10_100, false, 0));
+        let c = r.clip(None).unwrap();
+        assert_eq!((c.gops.len(), c.start_us), (1, 10_000_000));
+        assert_eq!(c.gops[0].sps, vec![0x67, 0x64, 0, 0x28, 1]);
+        let held: usize = r.open.as_ref().map_or(0, |g| g.bytes);
+        assert_eq!(r.bytes(), held);
+    }
+
+    #[test]
+    fn sound_that_came_before_its_keyframe_is_saved_with_it() {
+        let mut r = Ring::new(30, MAX_BYTES, 10);
+        r.push_video(frame(0, true, 0));
+        r.push_video(frame(100, false, 0));
+        // Timed 2.0 s, but handed over before the keyframe at 2.0 s (a slow video encoder).
+        r.push_audio(AudioPacket { data: vec![1, 2], pts_us: 2_000_000 });
+        r.push_video(frame(2000, true, 0));
+        r.push_audio(AudioPacket { data: vec![3, 4], pts_us: 2_021_333 });
+        for ms in (2100..4000).step_by(100) {
+            r.push_video(frame(ms, false, 0));
+        }
+        let c = r.clip(Some(1)).unwrap();
+        assert_eq!(c.start_us, 2_000_000);
+        assert_eq!(c.lead_audio.len(), 1);
+        let mut out = std::io::Cursor::new(Vec::new());
+        assert!(write_mp4(&mut out, &c, 64, 64, Some(&[0x11, 0x90])).unwrap().audio);
+        assert_eq!(probe(out.get_ref()).3, 2);
     }
 
     #[test]

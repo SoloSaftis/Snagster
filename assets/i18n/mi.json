@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Tiakina ngā hēkona {seconds} whakamutunga hei ataata",
   "Save replay": "Tiaki te whakahoki",
   "How much to keep": "Hia te nui hei pupuri",
-  "Keep the last": "Puritia te",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "E whakamahi ana i te {mb} MB te mahara i te kounga o nāianei (he mata Full HD).",
   "Sound kept with replays": "Te oro e puritia ana me ngā whakahoki",
   "Turn replay on when Snagster starts": "Whakaarahia te whakahoki ina tīmata a Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Kua monoa te whakahoki kia whakaarahia e koe. I a ia e whakaarahia ana, ka whakawaeheretia te mata i ngā wā katoa (ki te maramataka whakairoiro mēnā e taea) ā, ko ngā hēkona whakamutunga anake ka puritia.",
   "Replay on": "Kua whakaarahia te whakahoki",
-  "Turn replay on / off": "Whakaara / monoa te whakahoki"
+  "Turn replay on / off": "Whakaara / monoa te whakahoki",
+  "Replay didn't start: {e}": "Kīhai te whakahoki i tīmata: {e}"
  }
 }

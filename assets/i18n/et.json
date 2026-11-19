@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Salvesta viimased {seconds} s videona",
   "Save replay": "Salvesta kordus",
   "How much to keep": "Kui palju säilitada",
-  "Keep the last": "Säilita viimast",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Kasutab praeguse kvaliteedi juures umbes {mb} MB mälu (Full HD ekraan).",
   "Sound kept with replays": "Korduste juures säilitatav heli",
   "Turn replay on when Snagster starts": "Lülita kordus sisse, kui Snagster käivitub",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Kordus on väljas, kuni sa selle sisse lülitad. Sisselülitatuna kodeeritakse ekraani kogu aeg (võimaluse korral graafikkiibil) ja säilitatakse vaid viimased sekundid.",
   "Replay on": "Kordus sees",
-  "Turn replay on / off": "Lülita kordus sisse / välja"
+  "Turn replay on / off": "Lülita kordus sisse / välja",
+  "Replay didn't start: {e}": "Kordus ei käivitunud: {e}"
  }
 }

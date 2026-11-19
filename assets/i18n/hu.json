@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Az utolsó {seconds} mp mentése videóként",
   "Save replay": "Visszajátszás mentése",
   "How much to keep": "Mennyit őrizzen meg",
-  "Keep the last": "Az utolsó megőrzése",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "A jelenlegi minőségben körülbelül {mb} MB memóriát használ (Full HD képernyő).",
   "Sound kept with replays": "A visszajátszásokkal megőrzött hang",
   "Turn replay on when Snagster starts": "Visszajátszás bekapcsolása a Snagster indulásakor",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "A visszajátszás ki van kapcsolva, amíg be nem kapcsolja. Bekapcsolva a képernyő folyamatosan kódolva van (ha lehet, a grafikus chipen), és csak az utolsó másodpercek maradnak meg.",
   "Replay on": "Visszajátszás be",
-  "Turn replay on / off": "Visszajátszás be- / kikapcsolása"
+  "Turn replay on / off": "Visszajátszás be- / kikapcsolása",
+  "Replay didn't start: {e}": "A visszajátszás nem indult el: {e}"
  }
 }

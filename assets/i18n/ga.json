@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Sábháil na {seconds} s dheireanacha mar fhíseán",
   "Save replay": "Sábháil an athsheinm",
   "How much to keep": "Cé mhéad le coimeád",
-  "Keep the last": "Coinnigh na",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Úsáideann sé thart ar {mb} MB cuimhne ag an gcáilíocht reatha (scáileán Full HD).",
   "Sound kept with replays": "Fuaim a choinnítear le hathsheinmeacha",
   "Turn replay on when Snagster starts": "Cuir an athsheinm ar siúl nuair a thosaíonn Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Tá an athsheinm as go dtí go gcuirfidh tú ar siúl í. Nuair atá sí ar siúl, déantar an scáileán a ionchódú an t-am ar fad (ar an sliseanna grafaice nuair is féidir) agus ní choinnítear ach na soicindí deireanacha.",
   "Replay on": "Athsheinm ar siúl",
-  "Turn replay on / off": "Cuir an athsheinm ar siúl / as"
+  "Turn replay on / off": "Cuir an athsheinm ar siúl / as",
+  "Replay didn't start: {e}": "Níor thosaigh an athsheinm: {e}"
  }
 }

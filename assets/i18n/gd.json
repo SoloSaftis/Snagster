@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Sàbhail an {seconds} s mu dheireadh mar bhidio",
   "Save replay": "Sàbhail an ath-chluich",
   "How much to keep": "Dè na chumar",
-  "Keep the last": "Cùm an",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Cleachdaidh e mu {mb} MB de chuimhne aig a' chàileachd làithreach (sgrìon Full HD).",
   "Sound kept with replays": "Fuaim a thèid a chumail leis na h-ath-chluichean",
   "Turn replay on when Snagster starts": "Cuir an ath-chluich air nuair a thòisicheas Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Tha an ath-chluich dheth gus an cuir thu air i. Fhad 's a tha i air, thèid an sgrìon a ionchòdadh fad na h-ùine (air a' chip grafaigeachd ma ghabhas) agus cha chumar ach na diogan mu dheireadh.",
   "Replay on": "Ath-chluich air",
-  "Turn replay on / off": "Cuir an ath-chluich air / dheth"
+  "Turn replay on / off": "Cuir an ath-chluich air / dheth",
+  "Replay didn't start: {e}": "Cha deach an ath-chluich a thòiseachadh: {e}"
  }
 }

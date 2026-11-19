@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Соңғы {seconds} с бейне ретінде сақтау",
   "Save replay": "Қайталауды сақтау",
   "How much to keep": "Қанша сақтау керек",
-  "Keep the last": "Соңғысын сақтау",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Ағымдағы сапада (Full HD экран) шамамен {mb} МБ жад пайдаланады.",
   "Sound kept with replays": "Қайталаулармен бірге сақталатын дыбыс",
   "Turn replay on when Snagster starts": "Snagster іске қосылғанда қайталауды қосу",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Қайталау сіз қосқанша өшірулі болады. Қосулы кезде экран үнемі кодталады (мүмкін болса графикалық чипте) және тек соңғы секундтар сақталады.",
   "Replay on": "Қайталау қосулы",
-  "Turn replay on / off": "Қайталауды қосу / өшіру"
+  "Turn replay on / off": "Қайталауды қосу / өшіру",
+  "Replay didn't start: {e}": "Қайталау басталмады: {e}"
  }
 }

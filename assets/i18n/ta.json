@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "கடைசி {seconds} வி. வீடியோவாகச் சேமி",
   "Save replay": "ரீப்ளேவைச் சேமி",
   "How much to keep": "எவ்வளவு வைக்க வேண்டும்",
-  "Keep the last": "கடைசியை வை",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "தற்போதைய தரத்தில் (முழு-HD திரை) சுமார் {mb} MB நினைவகத்தைப் பயன்படுத்தும்.",
   "Sound kept with replays": "ரீப்ளேக்களுடன் வைக்கப்படும் ஒலி",
   "Turn replay on when Snagster starts": "Snagster தொடங்கும்போது ரீப்ளேவை இயக்கு",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "நீங்கள் இயக்கும் வரை ரீப்ளே முடக்கத்தில் இருக்கும். இயக்கத்தில் இருக்கும்போது திரை எப்போதும் குறியாக்கப்படும் (முடிந்தால் கிராபிக்ஸ் சிப்பில்) மற்றும் கடைசி சில வினாடிகள் மட்டுமே வைக்கப்படும்.",
   "Replay on": "ரீப்ளே இயக்கத்தில்",
-  "Turn replay on / off": "ரீப்ளேவை இயக்கு / முடக்கு"
+  "Turn replay on / off": "ரீப்ளேவை இயக்கு / முடக்கு",
+  "Replay didn't start: {e}": "ரீப்ளே தொடங்கவில்லை: {e}"
  }
 }

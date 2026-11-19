@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "ذخیرهٔ {seconds} ثانیهٔ آخر به‌صورت ویدیو",
   "Save replay": "ذخیره بازپخش",
   "How much to keep": "مقدار نگه‌داشتن",
-  "Keep the last": "نگه‌داشتن آخرین",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "با کیفیت فعلی (صفحهٔ Full HD) حدود {mb} مگابایت از حافظه را استفاده می‌کند.",
   "Sound kept with replays": "صدای نگه‌داشته‌شده با بازپخش‌ها",
   "Turn replay on when Snagster starts": "روشن کردن بازپخش هنگام شروع Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "بازپخش تا وقتی آن را روشن نکنید خاموش است. تا زمانی که روشن است، صفحه همیشه کدگذاری می‌شود (در صورت امکان روی تراشهٔ گرافیکی) و فقط ثانیه‌های آخر نگه داشته می‌شود.",
   "Replay on": "بازپخش روشن",
-  "Turn replay on / off": "روشن / خاموش کردن بازپخش"
+  "Turn replay on / off": "روشن / خاموش کردن بازپخش",
+  "Replay didn't start: {e}": "بازپخش شروع نشد: {e}"
  }
 }

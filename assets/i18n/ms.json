@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Simpan {seconds} s terakhir sebagai video",
   "Save replay": "Simpan ulang tayang",
   "How much to keep": "Berapa banyak untuk disimpan",
-  "Keep the last": "Simpan yang terakhir",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Menggunakan kira-kira {mb} MB memori pada kualiti semasa (skrin Full HD).",
   "Sound kept with replays": "Bunyi yang disimpan bersama ulang tayang",
   "Turn replay on when Snagster starts": "Hidupkan ulang tayang apabila Snagster bermula",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Ulang tayang dimatikan sehingga anda menghidupkannya. Semasa hidup, skrin sentiasa dikodkan (pada cip grafik jika boleh) dan hanya saat terakhir disimpan.",
   "Replay on": "Ulang tayang dihidupkan",
-  "Turn replay on / off": "Hidupkan / matikan ulang tayang"
+  "Turn replay on / off": "Hidupkan / matikan ulang tayang",
+  "Replay didn't start: {e}": "Ulang tayang tidak bermula: {e}"
  }
 }

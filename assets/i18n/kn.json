@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "ಕೊನೆಯ {seconds} ಸೆ. ಅನ್ನು ವೀಡಿಯೊ ಆಗಿ ಉಳಿಸಿ",
   "Save replay": "ರಿಪ್ಲೇ ಉಳಿಸಿ",
   "How much to keep": "ಎಷ್ಟು ಇರಿಸಬೇಕು",
-  "Keep the last": "ಕೊನೆಯದನ್ನು ಇರಿಸಿ",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "ಪ್ರಸ್ತುತ ಗುಣಮಟ್ಟದಲ್ಲಿ (ಫುಲ್-HD ಪರದೆ) ಸುಮಾರು {mb} MB ಮೆಮೊರಿ ಬಳಸುತ್ತದೆ.",
   "Sound kept with replays": "ರಿಪ್ಲೇಗಳೊಂದಿಗೆ ಇರಿಸಿದ ಧ್ವನಿ",
   "Turn replay on when Snagster starts": "Snagster ಪ್ರಾರಂಭವಾದಾಗ ರಿಪ್ಲೇ ಆನ್ ಮಾಡಿ",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "ನೀವು ಆನ್ ಮಾಡುವವರೆಗೆ ರಿಪ್ಲೇ ಆಫ್ ಆಗಿರುತ್ತದೆ. ಆನ್ ಇರುವಾಗ ಪರದೆಯನ್ನು ಯಾವಾಗಲೂ ಎನ್‌ಕೋಡ್ ಮಾಡಲಾಗುತ್ತದೆ (ಸಾಧ್ಯವಾದರೆ ಗ್ರಾಫಿಕ್ಸ್ ಚಿಪ್‌ನಲ್ಲಿ) ಮತ್ತು ಕೊನೆಯ ಕೆಲವು ಸೆಕೆಂಡುಗಳನ್ನು ಮಾತ್ರ ಇರಿಸಲಾಗುತ್ತದೆ.",
   "Replay on": "ರಿಪ್ಲೇ ಆನ್",
-  "Turn replay on / off": "ರಿಪ್ಲೇ ಆನ್ / ಆಫ್ ಮಾಡಿ"
+  "Turn replay on / off": "ರಿಪ್ಲೇ ಆನ್ / ಆಫ್ ಮಾಡಿ",
+  "Replay didn't start: {e}": "ರಿಪ್ಲೇ ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ: {e}"
  }
 }

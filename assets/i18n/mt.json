@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Sejvja l-aħħar {seconds} s bħala vidjo",
   "Save replay": "Issejvja r-replay",
   "How much to keep": "Kemm iżżomm",
-  "Keep the last": "Żomm l-aħħar",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Juża madwar {mb} MB ta' memorja bil-kwalità attwali (skrin Full HD).",
   "Sound kept with replays": "Ħoss li jinżamm mar-replays",
   "Turn replay on when Snagster starts": "Ixgħel ir-replay meta jibda Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Ir-replay huwa mitfi sakemm tixgħelu int. Waqt li jkun mixgħul, l-iskrin jiġi kkodifikat il-ħin kollu (fuq iċ-ċippa tal-grafika meta jkun possibbli) u jinżammu biss l-aħħar sekondi.",
   "Replay on": "Replay mixgħul",
-  "Turn replay on / off": "Ixgħel / tfi r-replay"
+  "Turn replay on / off": "Ixgħel / tfi r-replay",
+  "Replay didn't start: {e}": "Ir-replay ma bediex: {e}"
  }
 }

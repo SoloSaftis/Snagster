@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Saglabāt pēdējās {seconds} s kā video",
   "Save replay": "Saglabāt atkārtojumu",
   "How much to keep": "Cik paturēt",
-  "Keep the last": "Paturēt pēdējās",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Pašreizējā kvalitātē (Full HD ekrāns) izmanto apmēram {mb} MB atmiņas.",
   "Sound kept with replays": "Skaņa, kas tiek saglabāta kopā ar atkārtojumiem",
   "Turn replay on when Snagster starts": "Ieslēgt atkārtojumu, kad Snagster startē",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Atkārtojums ir izslēgts, līdz to ieslēdzat. Kamēr tas ir ieslēgts, ekrāns tiek pastāvīgi kodēts (ja iespējams, grafikas mikroshēmā) un tiek paturētas tikai pēdējās sekundes.",
   "Replay on": "Atkārtojums ieslēgts",
-  "Turn replay on / off": "Ieslēgt / izslēgt atkārtojumu"
+  "Turn replay on / off": "Ieslēgt / izslēgt atkārtojumu",
+  "Replay didn't start: {e}": "Atkārtojums nesākās: {e}"
  }
 }

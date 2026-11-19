@@ -72,13 +72,18 @@ impl SnagApp {
         } else {
             self.replay_on(ctx);
         }
+        // A tray tick the click set itself goes back to the real state (a start that failed at once).
+        if let Some(tr) = &self.tray {
+            let s = replay::status();
+            tr.set_replay(s.on(), s.phase == Phase::On);
+        }
         ctx.request_repaint();
     }
 
     fn replay_on(&mut self, ctx: &egui::Context) {
         match replay::begin(replay::ReplayOptions::from_settings(&self.settings)) {
             Ok(()) => {
-                self.status = if cfg!(target_os = "linux") { t("Turning replay on: the desktop may ask which screen to share.").into() } else { t("Turning replay on…").into() };
+                self.status = if replay::uses_screen_share() { t("Turning replay on: the desktop may ask which screen to share.").into() } else { t("Turning replay on…").into() };
             }
             Err(e) => self.status = e,
         }
@@ -117,7 +122,12 @@ impl SnagApp {
         }
         if s.error.is_some() && s.error != was.error {
             let e = self.grab_failed("{error}", s.error.as_deref().unwrap_or_default());
-            self.status = tf("Replay stopped: {e}", &[("e", &e)]);
+            let ran = s.phase == Phase::On || was.phase == Phase::On;
+            if s.phase == Phase::On {
+                // The encoders stopped: nothing more is kept, so it is off (the pill and the tray say so).
+                replay::end();
+            }
+            self.status = tf(if ran { "Replay stopped: {e}" } else { "Replay didn't start: {e}" }, &[("e", &e)]);
         }
         if s.saved_no != was.saved_no {
             match &s.saved {
@@ -150,10 +160,10 @@ impl SnagApp {
             // The pill's seconds count up.
             ctx.request_repaint_after(Duration::from_millis(1000));
         }
-        if s.on() != was.on()
+        if (s.on(), s.phase) != (was.on(), was.phase)
             && let Some(tr) = &self.tray
         {
-            tr.set_replay(s.on());
+            tr.set_replay(s.on(), s.phase == Phase::On);
         }
         self.x.replay.snap = s;
     }
@@ -201,7 +211,7 @@ pub(crate) fn settings_section(ui: &mut egui::Ui, s: &mut crate::settings::Setti
     ui.add_space(6.0);
     ui.label(egui::RichText::new(t("Replay")).strong());
     ui.horizontal(|ui| {
-        ui.label(t("Keep the last"));
+        ui.label(t("How much to keep"));
         for v in replay::LENGTHS {
             if ui.selectable_label(s.replay_s == v, format!("{v} s")).clicked() {
                 s.replay_s = v;

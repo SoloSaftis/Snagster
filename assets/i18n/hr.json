@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Spremi zadnjih {seconds} s kao videozapis",
   "Save replay": "Spremi ponovak",
   "How much to keep": "Koliko čuvati",
-  "Keep the last": "Čuvaj zadnjih",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Koristi oko {mb} MB memorije pri trenutačnoj kvaliteti (Full HD zaslon).",
   "Sound kept with replays": "Zvuk koji se čuva uz ponovke",
   "Turn replay on when Snagster starts": "Uključi ponovak kad se Snagster pokrene",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Ponovak je isključen dok ga ne uključite. Dok je uključen, zaslon se stalno kodira (na grafičkom čipu kad je moguće) i čuva se samo zadnjih nekoliko sekundi.",
   "Replay on": "Ponovak uključen",
-  "Turn replay on / off": "Uključi / isključi ponovak"
+  "Turn replay on / off": "Uključi / isključi ponovak",
+  "Replay didn't start: {e}": "Ponovak nije započeo: {e}"
  }
 }

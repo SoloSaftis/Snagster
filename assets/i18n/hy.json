@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Պահել վերջին {seconds} վ-ը որպես տեսանյութ",
   "Save replay": "Պահել կրկնությունը",
   "How much to keep": "Որքան պահել",
-  "Keep the last": "Պահել վերջին",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Ընթացիկ որակի դեպքում օգտագործում է մոտ {mb} ՄԲ հիշողություն (Full HD էկրան)։",
   "Sound kept with replays": "Կրկնությունների հետ պահվող ձայն",
   "Turn replay on when Snagster starts": "Միացնել կրկնությունը Snagster-ի գործարկման ժամանակ",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Կրկնությունն անջատված է, մինչև չմիացնեք։ Միացված ժամանակ էկրանը անընդհատ կոդավորվում է (հնարավորության դեպքում գրաֆիկական չիպում), և պահվում են միայն վերջին վայրկյանները։",
   "Replay on": "Կրկնությունը միացված է",
-  "Turn replay on / off": "Միացնել / անջատել կրկնությունը"
+  "Turn replay on / off": "Միացնել / անջատել կրկնությունը",
+  "Replay didn't start: {e}": "Կրկնությունը չսկսվեց՝ {e}"
  }
 }

@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Guardar os últimos {seconds} s como vídeo",
   "Save replay": "Guardar repetição",
   "How much to keep": "Quanto manter",
-  "Keep the last": "Manter os últimos",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Usa cerca de {mb} MB de memória com a qualidade atual (um ecrã Full HD).",
   "Sound kept with replays": "Som mantido com as repetições",
   "Turn replay on when Snagster starts": "Ativar a repetição quando o Snagster iniciar",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "A repetição fica desativada até a ativar. Enquanto está ativada, o ecrã é codificado o tempo todo (no chip gráfico, quando possível) e só os últimos segundos são mantidos.",
   "Replay on": "Repetição ativada",
-  "Turn replay on / off": "Ativar / desativar a repetição"
+  "Turn replay on / off": "Ativar / desativar a repetição",
+  "Replay didn't start: {e}": "A repetição não foi iniciada: {e}"
  }
 }

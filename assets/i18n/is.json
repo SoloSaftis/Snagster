@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Vista síðustu {seconds} sek. sem myndband",
   "Save replay": "Vista endurspilun",
   "How much to keep": "Hversu mikið á að geyma",
-  "Keep the last": "Geyma síðustu",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Notar um {mb} MB af minni miðað við núverandi gæði (Full HD skjár).",
   "Sound kept with replays": "Hljóð sem er geymt með endurspilunum",
   "Turn replay on when Snagster starts": "Kveikja á endurspilun þegar Snagster ræsist",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Slökkt er á endurspilun þar til þú kveikir á henni. Meðan kveikt er á henni er skjárinn kóðaður allan tímann (á skjákortinu þegar hægt er) og aðeins síðustu sekúndurnar eru geymdar.",
   "Replay on": "Kveikt á endurspilun",
-  "Turn replay on / off": "Kveikja / slökkva á endurspilun"
+  "Turn replay on / off": "Kveikja / slökkva á endurspilun",
+  "Replay didn't start: {e}": "Endurspilun fór ekki af stað: {e}"
  }
 }

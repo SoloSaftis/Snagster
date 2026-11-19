@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Uložiť posledných {seconds} s ako video",
   "Save replay": "Uložiť záznam späť",
   "How much to keep": "Koľko uchovávať",
-  "Keep the last": "Uchovávať posledných",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Používa približne {mb} MB pamäte pri súčasnej kvalite (obrazovka Full HD).",
   "Sound kept with replays": "Zvuk uchovávaný so záznamami späť",
   "Turn replay on when Snagster starts": "Zapnúť záznam späť pri spustení Snagsteru",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Záznam späť je vypnutý, kým ho nezapnete. Keď je zapnutý, obrazovka sa neustále kóduje (ak je to možné, na grafickom čipe) a uchováva sa iba posledných pár sekúnd.",
   "Replay on": "Záznam späť zapnutý",
-  "Turn replay on / off": "Zapnúť / vypnúť záznam späť"
+  "Turn replay on / off": "Zapnúť / vypnúť záznam späť",
+  "Replay didn't start: {e}": "Záznam späť sa nespustil: {e}"
  }
 }

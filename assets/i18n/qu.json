@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Qhipa {seconds} s video hina waqaychay",
   "Save replay": "Kutichiyta waqaychay",
   "How much to keep": "Hayk'a waqaychana",
-  "Keep the last": "Qhipata waqaychay",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Kunan allin kayninwan (Full HD pantalla) {mb} MB hina yuyayniyta llamkachin.",
   "Sound kept with replays": "Kutichiykunawan waqaychasqa uyariy",
   "Turn replay on when Snagster starts": "Snagster qallariqtin kutichiyta kichay",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Kutichiyqa wañusqa kachkan qanmi kichanaykikama. Kichasqa kashaqtinqa pantallaqa sapa kutillan codificasqa (atikuqtinqa gráfico chippi) hinaspa qhipa sekundokunallam waqaychasqa.",
   "Replay on": "Kutichiy kichasqa",
-  "Turn replay on / off": "Kutichiyta kichay / wañuchiy"
+  "Turn replay on / off": "Kutichiyta kichay / wañuchiy",
+  "Replay didn't start: {e}": "Kutichiy manam qallarirqanchu: {e}"
  }
 }

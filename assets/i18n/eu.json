@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Gorde azken {seconds} s bideo gisa",
   "Save replay": "Gorde errepikapena",
   "How much to keep": "Zenbat gorde",
-  "Keep the last": "Gorde azken",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Gaur egungo kalitatean {mb} MB inguru erabiltzen ditu memorian (Full HD pantaila).",
   "Sound kept with replays": "Errepikapenekin gordetako soinua",
   "Turn replay on when Snagster starts": "Aktibatu errepikapena Snagster abiatzean",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Errepikapena desaktibatuta dago aktibatu arte. Aktibatuta dagoenean, pantaila etengabe kodetzen da (ahal denean txip grafikoan) eta azken segundoak soilik gordetzen dira.",
   "Replay on": "Errepikapena aktibatuta",
-  "Turn replay on / off": "Aktibatu / desaktibatu errepikapena"
+  "Turn replay on / off": "Aktibatu / desaktibatu errepikapena",
+  "Replay didn't start: {e}": "Errepikapena ez da hasi: {e}"
  }
 }

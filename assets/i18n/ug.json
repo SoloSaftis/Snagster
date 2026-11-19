@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "ئاخىرقى {seconds} سېكۇنتنى ۋىدېئو قىلىپ ساقلاش",
   "Save replay": "قايتا ئويناتمىنى ساقلاش",
   "How much to keep": "قانچىلىك ساقلاش",
-  "Keep the last": "ئاخىرقىسىنى ساقلاش",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "نۆۋەتتىكى سۈپەتتە (Full HD ئېكران) تەخمىنەن {mb} MB ئەسلەك ئىشلىتىدۇ.",
   "Sound kept with replays": "قايتا ئويناتمىلار بىلەن ساقلىنىدىغان ئاۋاز",
   "Turn replay on when Snagster starts": "Snagster باشلانغاندا قايتا ئويناتمىنى ئېچىش",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "سىز ئاچمىغىچە قايتا ئويناتما تاقاقلىق بولىدۇ. ئوچۇق ۋاقتىدا ئېكران ھەمىشە كودلىنىدۇ (مۇمكىن بولسا گرافىكا چىپىدا) ھەمدە پەقەت ئاخىرقى بىرنەچچە سېكۇنت ساقلىنىدۇ.",
   "Replay on": "قايتا ئويناتما ئوچۇق",
-  "Turn replay on / off": "قايتا ئويناتمىنى ئېچىش / تاقاش"
+  "Turn replay on / off": "قايتا ئويناتمىنى ئېچىش / تاقاش",
+  "Replay didn't start: {e}": "قايتا ئويناتما باشلانمىدى: {e}"
  }
 }

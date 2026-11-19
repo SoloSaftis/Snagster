@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Захаваць апошнія {seconds} с як відэа",
   "Save replay": "Захаваць паўтор",
   "How much to keep": "Колькі захоўваць",
-  "Keep the last": "Захоўваць апошнія",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Выкарыстоўвае каля {mb} МБ памяці пры бягучай якасці (экран Full HD).",
   "Sound kept with replays": "Гук, які захоўваецца з паўторамі",
   "Turn replay on when Snagster starts": "Уключаць паўтор пры запуску Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Паўтор выключаны, пакуль вы яго не ўключыце. Пакуль ён уключаны, экран увесь час кадуецца (па магчымасці на відэачыпе), а захоўваюцца толькі апошнія секунды.",
   "Replay on": "Паўтор уключаны",
-  "Turn replay on / off": "Уключыць / выключыць паўтор"
+  "Turn replay on / off": "Уключыць / выключыць паўтор",
+  "Replay didn't start: {e}": "Паўтор не пачаўся: {e}"
  }
 }

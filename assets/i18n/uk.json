@@ -1051,12 +1051,12 @@
   "Save the last {seconds} s as a video": "Зберегти останні {seconds} с як відео",
   "Save replay": "Зберегти повтор",
   "How much to keep": "Скільки зберігати",
-  "Keep the last": "Зберігати останні",
   "Uses about {mb} MB of memory at the current quality (a full-HD screen).": "Використовує приблизно {mb} МБ пам’яті за поточної якості (екран Full HD).",
   "Sound kept with replays": "Звук, що зберігається разом із повторами",
   "Turn replay on when Snagster starts": "Вмикати повтор під час запуску Snagster",
   "Replay is off until you turn it on. While it is on, the screen is encoded all the time (on the graphics chip when it can) and only the last seconds are kept.": "Повтор вимкнено, доки ви його не ввімкнете. Поки він увімкнений, екран постійно кодується (за можливості на графічному чипі), а зберігаються лише останні секунди.",
   "Replay on": "Повтор увімкнено",
-  "Turn replay on / off": "Увімкнути / вимкнути повтор"
+  "Turn replay on / off": "Увімкнути / вимкнути повтор",
+  "Replay didn't start: {e}": "Повтор не запустився: {e}"
  }
 }
