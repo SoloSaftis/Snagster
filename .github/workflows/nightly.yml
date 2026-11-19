@@ -113,7 +113,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           for t in $list; do
             code=$(cat "fuzz-out/$t.exit" 2>/dev/null || echo missing)
-            line=$(grep -E "^fuzz $t: [0-9]+ inputs" "fuzz-out/$t.log" | tail -1)
+            line=$(grep -E "^fuzz $t: [0-9]+ inputs" "fuzz-out/$t.log" | tail -1 || true)
             if [ "$code" = 0 ]; then
               echo "| $t | ${line#fuzz $t: } |" >> "$GITHUB_STEP_SUMMARY"
               echo "OK   $line"

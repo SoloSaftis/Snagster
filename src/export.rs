@@ -294,10 +294,65 @@ fn decode_limit(len: usize) -> u64 {
     ((64u64 << 20) + len as u64 * 4096).min(512 << 20)
 }
 
+/// Whether every entry of a TIFF's directories claims no more data than the file holds. The
+/// tiff decoder reads the first directory before it is given any limit, and reserves room for
+/// as many values as an entry claims (up to 256 MB): 335 bytes claiming 8 million values made
+/// it reserve 258 MB. A real TIFF's values are always in the file.
+fn tiff_entries_fit(b: &[u8]) -> Result<(), String> {
+    let broken = || "the TIFF picture is broken".to_string();
+    let le = match b.get(..2) {
+        Some(b"II") => true,
+        Some(b"MM") => false,
+        _ => return Err(broken()),
+    };
+    let num = |at: usize, n: usize| -> Option<u64> {
+        let s = b.get(at..at.checked_add(n)?)?;
+        Some(if le { s.iter().rev().fold(0u64, |v, x| v << 8 | *x as u64) } else { s.iter().fold(0u64, |v, x| v << 8 | *x as u64) })
+    };
+    // Classic TIFF: 2-byte entry counts, 12-byte entries, 4-byte counts and offsets; BigTIFF 8.
+    let big = match num(2, 2) {
+        Some(42) => false,
+        Some(43) => true,
+        _ => return Err(broken()),
+    };
+    let (word, first) = if big { (8, num(8, 8)) } else { (4, num(4, 4)) };
+    let mut next = first.ok_or_else(broken)?;
+    let mut seen = Vec::new();
+    while next != 0 {
+        // A directory chain that loops, or one too long to be real.
+        if seen.contains(&next) || seen.len() >= 64 {
+            return Err(broken());
+        }
+        seen.push(next);
+        let at = usize::try_from(next).map_err(|_| broken())?;
+        let (count_len, entry_len) = if big { (8, 20) } else { (2, 12) };
+        let n = num(at, count_len).ok_or_else(broken)? as usize;
+        let entries = at + count_len;
+        for i in 0..n {
+            let e = entries.checked_add(i.checked_mul(entry_len).ok_or_else(broken)?).ok_or_else(broken)?;
+            let (Some(kind), Some(count)) = (num(e + 2, 2), num(e + 4, word)) else { return Err(broken()) };
+            let size: u64 = match kind {
+                3 | 8 => 2,
+                4 | 9 | 11 | 13 => 4,
+                5 | 10 | 12 | 16 | 17 | 18 => 8,
+                _ => 1,
+            };
+            if count.saturating_mul(size) > b.len() as u64 {
+                return Err(broken());
+            }
+        }
+        next = num(entries + n * entry_len, word).unwrap_or(0);
+    }
+    Ok(())
+}
+
 /// Decode a picture from bytes that came from a file (project files, pictures inside marks),
 /// with the memory it may take bounded by its size.
 pub fn decode_image(bytes: &[u8]) -> Result<image::DynamicImage, String> {
     let mut r = image::ImageReader::new(std::io::Cursor::new(bytes)).with_guessed_format().map_err(|e| e.to_string())?;
+    if r.format() == Some(image::ImageFormat::Tiff) {
+        tiff_entries_fit(bytes)?;
+    }
     let mut limits = image::Limits::default();
     limits.max_alloc = Some(decode_limit(bytes.len()));
     r.limits(limits);
@@ -945,6 +1000,40 @@ mod tests {
         let png = png_bytes(&plain).unwrap();
         assert_eq!(decode_image(&png).unwrap().to_rgba8(), plain);
         assert!(decode_limit(10) >= 64 << 20 && decode_limit(usize::MAX / 8192) == 512 << 20);
+    }
+
+    /// Bug (found by the fuzz test): a 335-byte TIFF whose SampleFormat entry claimed 8060932
+    /// values made the tiff decoder reserve 258 MB before Snagster's limit applied.
+    #[test]
+    fn a_tiff_entry_claiming_more_than_the_file_is_refused_cheaply() {
+        let mut good = Vec::new();
+        image::DynamicImage::ImageRgba8(gradient(6, 5)).write_to(&mut std::io::Cursor::new(&mut good), image::ImageFormat::Tiff).unwrap();
+        assert_eq!(decode_image(&good).unwrap().to_rgba8(), gradient(6, 5));
+        assert!(tiff_entries_fit(&good).is_ok());
+        // The first directory's last entry (little-endian TIFF: II, 42, then its offset).
+        assert_eq!(&good[..4], b"II*\0");
+        let ifd = u32::from_le_bytes(good[4..8].try_into().unwrap()) as usize;
+        let n = u16::from_le_bytes(good[ifd..ifd + 2].try_into().unwrap()) as usize;
+        let last = ifd + 2 + (n - 1) * 12;
+        for (count, ok) in [(8_060_932u32, false), (u32::MAX, false), (1, true)] {
+            let mut b = good.clone();
+            b[last + 4..last + 8].copy_from_slice(&count.to_le_bytes());
+            let (r, largest, _) = crate::testalloc::measure(|| decode_image(&b));
+            assert!(largest < 1 << 20, "count {count}: reserved {largest} bytes");
+            assert_eq!(tiff_entries_fit(&b).is_ok(), ok, "count {count}");
+            if !ok {
+                assert!(r.unwrap_err().contains("TIFF"));
+            }
+        }
+        // Directories that loop, or point outside the file.
+        let mut looped = good.clone();
+        let after = ifd + 2 + n * 12;
+        looped[after..after + 4].copy_from_slice(&(ifd as u32).to_le_bytes());
+        assert!(tiff_entries_fit(&looped).is_err());
+        let mut outside = good.clone();
+        outside[4..8].copy_from_slice(&u32::MAX.to_le_bytes());
+        assert!(tiff_entries_fit(&outside).is_err());
+        assert!(tiff_entries_fit(b"MM\0+\0\0\0\0\0\0\0\0\0\0\0\0").is_ok(), "an empty BigTIFF has nothing to claim");
     }
 
     #[test]

@@ -14,10 +14,28 @@ thread_local! {
     static TOTAL: Cell<usize> = const { Cell::new(0) };
 }
 
+/// Allocations of this many bytes or more print where they came from (`trace_from`).
+static TRACE_FROM: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(usize::MAX);
+
+thread_local! {
+    static TRACING: Cell<bool> = const { Cell::new(false) };
+}
+
+/// From now on, print the call stack of every allocation of at least `bytes` (the fuzz replay
+/// uses it to show where an allocation over the budget comes from).
+pub fn trace_from(bytes: usize) {
+    TRACE_FROM.store(bytes, std::sync::atomic::Ordering::Relaxed);
+}
+
 fn note(n: usize) {
     // `try_with`: allocations while the thread is being torn down are simply not counted.
     let _ = LARGEST.try_with(|c| c.set(c.get().max(n)));
     let _ = TOTAL.try_with(|c| c.set(c.get().saturating_add(n)));
+    if n >= TRACE_FROM.load(std::sync::atomic::Ordering::Relaxed) && TRACING.try_with(|t| !t.replace(true)).unwrap_or(false) {
+        // (The trace allocates too; TRACING keeps that from tracing itself.)
+        eprintln!("allocation of {n} bytes:\n{}", std::backtrace::Backtrace::force_capture());
+        let _ = TRACING.try_with(|t| t.set(false));
+    }
 }
 
 unsafe impl GlobalAlloc for Counting {

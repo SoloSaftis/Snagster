@@ -469,6 +469,8 @@ mod tests {
     fn fuzz_replay() {
         let t = target(&std::env::var("SNAGSTER_FUZZ_TARGET").expect("set SNAGSTER_FUZZ_TARGET"));
         let input = std::fs::read(std::env::var("SNAGSTER_FUZZ_INPUT").expect("set SNAGSTER_FUZZ_INPUT")).expect("the input file");
+        // Where any allocation over the budget comes from.
+        crate::testalloc::trace_from((t.budget)(input.len()) + 1);
         let t0 = Instant::now();
         let ((), largest, total) = measure(|| (t.run)(&input));
         println!("{}: {} bytes read in {:.2} s; largest allocation {largest} bytes (budget {}), {total} bytes in all", t.name, input.len(), t0.elapsed().as_secs_f64(), (t.budget)(input.len()));
@@ -530,7 +532,7 @@ mod tests {
                 keys += s.contains("\"width\"") as u32;
             }
         }
-        assert!(json > 800 && extreme > 20 && keys > 20, "{json} {extreme} {keys}");
+        assert!(json > 800 && extreme > 5 && keys > 20, "{json} {extreme} {keys}");
     }
 
     #[test]

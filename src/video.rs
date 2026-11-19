@@ -3203,7 +3203,7 @@ mod soft {
 /// video; Windows asks Media Foundation). Built into Windows tests too, for the fuzz target.
 #[cfg(any(not(windows), test))]
 fn mp4_probe<R: std::io::Read + std::io::Seek>(reader: R, size: u64) -> Result<Probe, String> {
-    let r = mp4::Mp4Reader::read_header(reader, size).map_err(|e| e.to_string())?;
+    let r = mp4::Mp4Reader::read_header(Bounded::new(reader, size), size).map_err(|e| e.to_string())?;
     let t = r.tracks().get(&1).ok_or("no video track")?;
     Ok(Probe {
         width: t.width() as u32,
@@ -3213,6 +3213,52 @@ fn mp4_probe<R: std::io::Read + std::io::Seek>(reader: R, size: u64) -> Result<P
         first: None,
         audio: r.tracks().len() > 1,
     })
+}
+
+/// A file read for the mp4 crate that fails once far more was read, or the place moved far
+/// more often, than reading a file of this size can need. The crate reads some broken files in
+/// circles for ever (a box of size 0 inside `moov` sends it back to the same header again and
+/// again); this turns that into an error.
+#[cfg(any(not(windows), test))]
+struct Bounded<R> {
+    inner: R,
+    read_left: u64,
+    seeks_left: u64,
+}
+
+#[cfg(any(not(windows), test))]
+impl<R> Bounded<R> {
+    fn new(inner: R, size: u64) -> Self {
+        // Every byte read about once, every box looked at a few times, and room to spare.
+        Bounded { inner, read_left: size.saturating_mul(2).saturating_add(64 * 1024), seeks_left: (size / 2).saturating_add(4096) }
+    }
+
+    fn circles() -> std::io::Error {
+        std::io::Error::new(std::io::ErrorKind::InvalidData, "the file is broken (reading it goes round in circles)")
+    }
+}
+
+#[cfg(any(not(windows), test))]
+impl<R: std::io::Read> std::io::Read for Bounded<R> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        if self.read_left == 0 {
+            return Err(Self::circles());
+        }
+        let n = self.inner.read(buf)?;
+        self.read_left = self.read_left.saturating_sub(n.max(1) as u64);
+        Ok(n)
+    }
+}
+
+#[cfg(any(not(windows), test))]
+impl<R: std::io::Seek> std::io::Seek for Bounded<R> {
+    fn seek(&mut self, to: std::io::SeekFrom) -> std::io::Result<u64> {
+        if self.seeks_left == 0 {
+            return Err(Self::circles());
+        }
+        self.seeks_left -= 1;
+        self.inner.seek(to)
+    }
 }
 
 /// Fuzz target (`src/fuzz.rs`): a video file someone hands to video_info or the editor.
@@ -3249,6 +3295,27 @@ pub(crate) mod fuzzing {
             },
             budget: |n| (16 << 20) + 64 * n,
         }]
+    }
+
+    /// Bug (found by the fuzz test): a 658-byte file whose `moov` held a box of size 0 after
+    /// `mvhd` made the mp4 crate read the same header for ever, so video_info (and opening the
+    /// video on Linux and macOS) never came back.
+    #[test]
+    fn a_box_of_size_zero_is_an_error_not_a_hang() {
+        let good = small_mp4();
+        assert_eq!(mp4_probe(std::io::Cursor::new(&good), good.len() as u64).unwrap().width, 16);
+        let at = |name: &[u8]| good.windows(4).position(|w| w == name).unwrap() - 4;
+        let size = |o: usize| u32::from_be_bytes(good[o..o + 4].try_into().unwrap()) as usize;
+        let (moov, mvhd) = (at(b"moov"), at(b"mvhd"));
+        let mut broken = good[..moov].to_vec();
+        let inner = [&good[mvhd..mvhd + size(mvhd)], &[0, 0, 0, 0, b'f', b'r', b'e', b'e'][..]].concat();
+        broken.extend(((inner.len() + 8) as u32).to_be_bytes());
+        broken.extend(b"moov");
+        broken.extend(inner);
+        let t0 = std::time::Instant::now();
+        let e = mp4_probe(std::io::Cursor::new(&broken), broken.len() as u64).unwrap_err();
+        assert!(t0.elapsed() < std::time::Duration::from_secs(5), "{:?}", t0.elapsed());
+        assert!(e.contains("circles"), "{e}");
     }
 }
 

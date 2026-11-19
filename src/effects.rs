@@ -381,29 +381,38 @@ pub fn guide_page(title: &str, items: &[(String, RgbaImage)], width: u32) -> Opt
         parts.push((cap.clone(), img));
     }
     let cap_h = (cap_size * 1.6) as u32;
-    let mut height = margin + (title_size * 1.6) as u32 + 16;
+    let top = margin + (title_size * 1.6) as u32 + 16;
+    // Where each caption and picture goes; a page over GUIDE_PAGE_MAX pixels isn't made.
+    let mut tops = Vec::with_capacity(parts.len());
+    let mut height = top as u64;
     for (_, img) in &parts {
-        height += cap_h + img.height() + 36;
+        tops.push(height as u32);
+        height += (cap_h + 36) as u64 + img.height() as u64;
+        if height * width as u64 > GUIDE_PAGE_MAX {
+            return None;
+        }
     }
-    height += margin;
-    let mut out = RgbaImage::from_pixel(width, height, Rgba([255, 255, 255, 255]));
+    let height = (height + margin as u64) as u32;
+    let out = RgbaImage::from_pixel(width, height, Rgba([255, 255, 255, 255]));
+    // All the text in one pass (going to and from a pixmap for each step took time that grew
+    // with the square of the number of steps), then the pictures.
     let mut pm = render::to_pixmap(&out)?;
     let ink = Color32::from_rgb(28, 30, 38);
     render::draw_text(&mut pm, title, pos2(margin as f32, margin as f32), title_size, ink, None, false);
-    out = render::from_pixmap(pm);
-    let mut y = margin + (title_size * 1.6) as u32 + 16;
-    for (i, (cap, img)) in parts.iter().enumerate() {
-        let mut pm = render::to_pixmap(&out)?;
-        render::draw_text(&mut pm, &format!("{}.  {}", i + 1, cap), pos2(margin as f32, y as f32), cap_size, ink, None, false);
-        out = render::from_pixmap(pm);
-        y += cap_h;
+    for (i, ((cap, _), y)) in parts.iter().zip(&tops).enumerate() {
+        render::draw_text(&mut pm, &format!("{}.  {}", i + 1, cap), pos2(margin as f32, *y as f32), cap_size, ink, None, false);
+    }
+    let mut out = render::from_pixmap(pm);
+    for ((_, img), y) in parts.iter().zip(&tops) {
         // A light frame around each picture.
         let framed = border(img, 1, [210, 214, 222]);
-        imageops::overlay(&mut out, &framed, (margin - 1) as i64, (y - 1) as i64);
-        y += img.height() + 36;
+        imageops::overlay(&mut out, &framed, (margin - 1) as i64, (y + cap_h - 1) as i64);
     }
     Some(out)
 }
+
+/// The most pixels a one-page guide may have (a gigabyte of picture).
+pub const GUIDE_PAGE_MAX: u64 = 1 << 28;
 
 /// The capture-info text: the date and time now, then each part (app, title or picture name),
 /// three spaces apart. The window and the MCP server both use this.
@@ -803,6 +812,23 @@ mod tests {
         // The first picture sits at the left margin under its caption.
         let y = 48 + 64 + 16 + 38;
         assert_eq!(page.get_pixel(48 + 10, y + 10).0, [255, 0, 0, 255]);
+        // And the second under its own caption, with the caption's text drawn above it.
+        let y2 = y + 50 + 36 + 38;
+        assert_eq!(page.get_pixel(48 + 10, y2 + 2).0, [0, 255, 0, 255]);
+        assert!((y2 - 38..y2 - 2).any(|yy| (48..200).any(|x| page.get_pixel(x, yy).0[0] < 128)), "the caption is drawn");
+    }
+
+    /// Bug (found by the fuzz test): an AI app's guide of 250 small steps took over 30 seconds
+    /// (the whole page was copied twice for every step), and nothing bounded the page's size.
+    #[test]
+    fn long_guides_are_quick_and_huge_ones_are_refused() {
+        let items: Vec<(String, RgbaImage)> = (0..400).map(|i| (format!("Step {i}"), solid(10, 8, [0, 0, 255, 255]))).collect();
+        let t0 = std::time::Instant::now();
+        let page = guide_page("Guide", &items, 1200).unwrap();
+        assert!(t0.elapsed() < std::time::Duration::from_secs(10), "{:?}", t0.elapsed());
+        assert_eq!(page.height(), 48 + 64 + 16 + 400 * (38 + 8 + 36) + 48);
+        let tall = vec![("Tall".to_string(), solid(1, 60_000, [0, 0, 0, 255])); 6];
+        assert!(guide_page("Too big", &tall, 3000).is_none(), "over GUIDE_PAGE_MAX pixels");
     }
 
     #[test]

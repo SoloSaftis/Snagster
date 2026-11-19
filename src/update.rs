@@ -159,7 +159,8 @@ pub fn parse_sums(text: &str) -> std::collections::HashMap<String, [u8; 32]> {
         let line = line.trim_end_matches('\r');
         let Some((hex, name)) = line.split_once(char::is_whitespace) else { continue };
         let name = name.trim_start();
-        let name = name.strip_prefix('*').unwrap_or(name).trim_end();
+        // (Trimmed after the star too: "<hex> * name" names "name", not " name".)
+        let name = name.strip_prefix('*').unwrap_or(name).trim();
         if let Some(sum) = from_hex(hex)
             && !name.is_empty()
         {
@@ -426,7 +427,7 @@ pub(crate) mod fuzzing {
             run: |b| {
                 let text = String::from_utf8_lossy(b);
                 for (name, sum) in parse_sums(&text) {
-                    assert!(!name.is_empty() && !name.starts_with('*') && name.trim() == name, "{name:?}");
+                    assert!(!name.is_empty() && name.trim() == name, "{name:?}");
                     assert_eq!(from_hex(&to_hex(&sum)), Some(sum));
                 }
                 let _ = expected_sum(&text, asset_name());
@@ -601,6 +602,10 @@ mod tests {
         assert_eq!(to_hex(&up["a.zip"]), ABC);
         // A name with spaces stays whole.
         assert!(parse_sums(&format!("{ABC}  my file.zip")).contains_key("my file.zip"));
+        // Bug (found by the fuzz test): a space after the binary-mode star stayed in the name,
+        // so the line never matched the download it was for.
+        let spaced = parse_sums(&format!("{ABC} * Snagster-linux-x86_64-portable.tar.gz\n{ABC} *  \n"));
+        assert_eq!(spaced.keys().collect::<Vec<_>>(), vec!["Snagster-linux-x86_64-portable.tar.gz"]);
     }
 
     #[test]

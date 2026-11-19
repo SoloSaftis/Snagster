@@ -713,7 +713,8 @@ impl Doc {
         } else {
             (band.min.x.max(0.0) as u32, (band.max.x.ceil() as u32).min(w))
         };
-        if b <= a + 1 {
+        // (Saturating: a band starting far outside the picture is nothing to cut.)
+        if b <= a.saturating_add(1) {
             return None;
         }
         let cut = b - a;
@@ -1388,6 +1389,16 @@ mod tests {
         assert!(d.cut_out(Rect::from_min_max(pos2(3.0, 0.0), pos2(3.5, 10.0))).is_none());
         assert!(d.cut_out(Rect::from_min_max(pos2(0.0, -1.0), pos2(10.0, 20.0))).is_none());
         assert!(d.cut_out(Rect::from_min_max(pos2(-5.0, -2.0), pos2(20.0, 15.0))).is_none());
+    }
+
+    /// Bug (found by the fuzz test): an AI app's cut_out band at y = 5909000937 overflowed
+    /// (the band's start, as a whole number, was the largest there is, and one more wrapped).
+    #[test]
+    fn cut_out_far_outside_the_picture_is_nothing() {
+        let d = Doc::new(cols_image(10, 10));
+        assert!(d.cut_out(Rect::from_min_size(pos2(1.0, 5909000937.0), vec2(12.0, 12.0))).is_none());
+        assert!(d.cut_out(Rect::from_min_size(pos2(5909000937.0, 1.0), vec2(1.0, 12.0))).is_none());
+        assert!(d.cut_out(Rect::from_min_max(pos2(0.0, f32::MAX), pos2(10.0, f32::INFINITY))).is_none());
     }
 
     #[test]
