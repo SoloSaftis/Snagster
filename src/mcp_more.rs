@@ -1657,7 +1657,8 @@ mod tests {
         let r = ws.call("library_delete", &json!({"path": before[1].0})).unwrap();
         assert!(r[0]["text"].as_str().unwrap().contains("2 pictures"), "{r:?}");
         assert!(library::scan(&lib).is_empty());
-        assert_eq!(bin.holds(), 2);
+        let in_bin = if crate::recycle::way_here() == crate::recycle::Way::Restore { 2 } else { 0 };
+        assert_eq!(bin.holds(), in_bin, "in the Recycle Bin, or waiting beside it on the Mac and in the Flatpak");
         let r = ws.call("undo_delete", &json!({})).unwrap();
         assert!(r[0]["text"].as_str().unwrap().starts_with("Restored"), "{r:?}");
         assert_eq!(r.iter().filter(|c| c["type"] == "resource_link").count(), 2);
