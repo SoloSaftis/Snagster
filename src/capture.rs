@@ -338,9 +338,10 @@ fn x11_desktop_windows(ids: impl Iterator<Item = u32>) -> std::collections::Hash
     let Ok((conn, _)) = x11rb::connect(None) else { return out };
     let atom = |name: &[u8]| conn.intern_atom(false, name).ok().and_then(|c| c.reply().ok()).map(|r| r.atom);
     let (Some(kind), Some(desktop)) = (atom(b"_NET_WM_WINDOW_TYPE"), atom(b"_NET_WM_WINDOW_TYPE_DESKTOP")) else { return out };
-    for id in ids {
-        let types = conn.get_property(false, id, kind, AtomEnum::ATOM, 0, 16).ok().and_then(|c| c.reply().ok());
-        if types.is_some_and(|t| t.value32().is_some_and(|mut v| v.any(|a| a == desktop))) {
+    // Every question is sent before any answer is awaited: one round trip, not one per window.
+    let asked: Vec<_> = ids.filter_map(|id| conn.get_property(false, id, kind, AtomEnum::ATOM, 0, 16).ok().map(|c| (id, c))).collect();
+    for (id, cookie) in asked {
+        if cookie.reply().is_ok_and(|t| t.value32().is_some_and(|mut v| v.any(|a| a == desktop))) {
             out.insert(id);
         }
     }
