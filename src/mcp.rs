@@ -35,7 +35,7 @@ on Windows), record_gif, and Studio scenes (studio_scenes, studio_add_scene, stu
 studio_record). Guides: make_guide (PDF, web page, Word or one tall picture). Library: library_search, library_tag, \
 library_delete (to the Recycle Bin / Trash; undo_delete brings it back for 2 minutes). Live streaming: stream_services, stream_start (Twitch, YouTube, Kick, Facebook, Restream or any RTMP/RTMPS \
 server; the screen, a window, an area or the Studio scene; the stream key saved in Snagster is used and never shown), \
-stream_status and stream_stop. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
+stream_status, stream_stats (dropped frames, upload and encoder health, warnings) and stream_stop. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
 set_setting checks kind and range). Everything else a person can press in the window is in list_commands: app_command \
 presses it in the open window (zoom, pins, Recent, dialogs, email, print, Studio and stream buttons...); editor_apply \
 (cut out, fill, erase, lift, resize or copy a mark), gif_edit, studio_edit and save_to_cloud do the rest here. Long calls send progress when the \
@@ -352,6 +352,12 @@ fn output_schema(name: &str) -> Option<Value> {
         "studio_scenes" => json!({"type": "object", "properties": {"scenes": {"type": "array", "items": {"type": "object"}}, "current": num, "width": num, "height": num, "fps": num}, "required": ["scenes", "current"]}),
         "library_tag" => json!({"type": "object", "properties": {"path": st, "title": st, "tags": strings}, "required": ["path", "title", "tags"]}),
         "stream_services" => items(props(json!({"service": st, "name": st, "url": st, "key_help": st, "max_width": num, "max_height": num, "max_fps": num, "max_video_kbps": num, "max_pixel_rate": num, "keyframe_s": num, "audio_kbps": num, "hevc": bo}))),
+        "stream_stats" => json!({"type": "object", "properties": {
+            "live": bo, "state": st, "level": {"type": "string", "enum": ["ok", "warning", "bad"]}, "measuring": bo, "window_s": num, "uptime_s": num, "set_kbps": num, "encoder": st, "message": st,
+            "computer": {"type": "object", "properties": {"dropped_frames": num, "dropped_share": num, "encode_ms": num, "frame_budget_ms": num, "encoder_load": num}},
+            "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "state": st, "measuring": bo, "sent_kbps": num, "network_dropped_frames": num, "network_dropped_share": num, "queue_ms": num, "connected_s": num, "reconnects": num, "reconnects_last_10_min": num}}},
+            "warnings": {"type": "array", "items": {"type": "object", "properties": {"problem": {"type": "string", "enum": ["upload", "computer", "connection"]}, "level": {"type": "string", "enum": ["warning", "bad"]}, "service": {"type": ["string", "null"]}, "message": st}}}
+        }, "required": ["live"]}),
         "stream_status" => json!({"type": "object", "properties": {"phase": st, "live": bo, "state": st, "uptime_s": num, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num, "service": st, "address": st, "source": st, "width": num, "height": num, "fps": num, "also": {"type": "array", "items": st}, "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "address": st, "state": st, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num}}}}, "required": ["phase", "live"]}),
         _ => return None,
     })
@@ -3111,11 +3117,20 @@ mod stream_tests {
         assert_eq!(st["phase"], "running");
         assert_eq!((st["width"].as_u64(), st["fps"].as_u64()), (Some(64), Some(15)));
         assert!(!st.to_string().contains("sk_mcp_secret_2"));
+        w.call("stream_stats", &json!({})).unwrap();
+        let st = w.structured.clone().unwrap();
+        assert_eq!(st["live"], true, "{st}");
+        assert_eq!(st["outputs"][0]["service"], "Custom server", "{st}");
+        assert!(st["computer"]["frame_budget_ms"].as_f64().is_some_and(|b| (b - 66.67).abs() < 0.1), "15 fps: {st}");
+        assert!(st["warnings"].is_array() && st["set_kbps"].as_u64().is_some_and(|k| k > 0), "{st}");
+        assert!(!st.to_string().contains("sk_mcp_secret_2"));
         let t = text_of(w.call("stream_stop", &json!({})));
         assert!(t.starts_with("The stream stopped"), "{t}");
         assert_eq!(text_of(w.call("stream_stop", &json!({}))), "Nothing is being streamed.");
         w.call("stream_status", &json!({})).unwrap();
         assert_eq!(w.structured.clone().unwrap()["phase"], "idle");
+        w.call("stream_stats", &json!({})).unwrap();
+        assert_eq!(w.structured.clone().unwrap(), json!({"live": false, "message": "Nothing is being streamed."}));
     }
 
     /// Multistreaming from an AI app: two local servers get the same stream, each with its own

@@ -6,6 +6,8 @@ use super::*;
 use crate::i18n::{t, tf};
 use crate::look::{self, ph};
 use crate::stream::live::{self, LiveOptions, Phase, Snapshot, StudioFrames};
+use crate::stream::engine::Stats;
+use crate::stream::health::{Level, Steady, Warning};
 use crate::stream::{Encoders, PRESETS, Service, Source, State, StreamTarget, keystore, mask};
 
 pub(crate) const LIVE_RED: Color32 = Color32::from_rgb(200, 36, 44);
@@ -33,6 +35,141 @@ pub(crate) struct StreamUi {
     /// their key boxes show.
     also_keys: std::collections::HashMap<u32, String>,
     also_edit: std::collections::HashMap<u32, String>,
+    /// The one stream warning shown, held steady (no flicker).
+    steady: Steady,
+    /// What the band and the panel say about how the stream goes (None: all is well).
+    pub health_line: Option<HealthLine>,
+}
+
+/// The band's and the panel's line about how the stream goes when something is wrong: a few
+/// words, and the advice for hovering and the details.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct HealthLine {
+    pub short: String,
+    pub advice: String,
+    pub bad: bool,
+}
+
+/// What to say about the stream's health: a service of several that is reconnecting or has
+/// failed (bad), else the warning `Steady` shows.
+pub(crate) fn health_line(snap: &Snapshot, shown: Option<&Warning>) -> Option<HealthLine> {
+    let s = snap.stats.as_ref().filter(|_| snap.phase == Phase::Running)?;
+    if s.outputs.len() > 1
+        && s.state != State::Failed
+        && let Some(o) = s.outputs.iter().find(|o| matches!(o.state, State::Reconnecting | State::Failed))
+    {
+        let short = format!("{}: {}", o.service, output_word(o.state).0);
+        return Some(HealthLine { advice: o.error.clone().unwrap_or_else(|| short.clone()), short, bad: true });
+    }
+    let w = shown?;
+    Some(HealthLine { short: w.fill(t(w.short())), advice: w.fill(t(w.advice())), bad: w.level == Level::Bad })
+}
+
+/// The icon and colour of a warning (bad: red octagon), so colour is never the only sign.
+pub(crate) fn health_icon(bad: bool) -> (&'static str, Color32) {
+    if bad { (ph::WARNING_OCTAGON, pal().err) } else { (ph::WARNING, pal().warn) }
+}
+
+/// The health line as a label, the advice on hover.
+pub(crate) fn health_label(ui: &mut egui::Ui, l: &HealthLine, size: f32) -> egui::Response {
+    let (icon, color) = health_icon(l.bad);
+    ui.label(RichText::new(format!("{icon} {}", l.short)).size(size).color(color)).on_hover_text(&l.advice)
+}
+
+/// A share as a percentage: one decimal below 10 %, whole from there.
+pub(crate) fn percent(share: f32) -> String {
+    let p = (share * 100.0).max(0.0);
+    let n = if p < 10.0 { format!("{p:.1}") } else { format!("{p:.0}") };
+    tf("{pct}%", &[("pct", &n)])
+}
+
+/// "4.1 Mbit/s of 6.2 Mbit/s": what the services that are measured sent against what was set
+/// for them (video plus sound), or "Measuring…".
+pub(crate) fn sent_of_set(s: &Stats) -> String {
+    let measured: Vec<_> = s.health.outputs.iter().filter(|o| o.measured).collect();
+    if measured.is_empty() {
+        return t("Measuring…").to_string();
+    }
+    let sent: u64 = measured.iter().map(|o| o.sent_kbps as u64 * 1000).sum();
+    let set = s.health.set_kbps as u64 * 1000 * measured.len() as u64;
+    tf("{sent} of {set}", &[("sent", &rate(sent)), ("set", &rate(set))])
+}
+
+/// The video encoder in words: "NVENC H.264 (graphics chip)".
+fn encoder_text(s: &Stats) -> String {
+    s.video_encoder.as_ref().map(|e| format!("{} ({})", e.name, if e.hardware { t("graphics chip") } else { t("processor") })).unwrap_or_default()
+}
+
+/// The stream's numbers in full, for the details popover: a column per service, then the
+/// computer's, then the warning's advice.
+pub(crate) fn stream_details(ui: &mut egui::Ui, s: &Stats, line: Option<&HealthLine>) {
+    let h = &s.health;
+    let measuring = t("Measuring…");
+    let dim = |t: String| RichText::new(t).color(pal().dim);
+    ui.set_min_width(280.0);
+    egui::Grid::new("stream-details-services").num_columns(1 + h.outputs.len()).spacing(vec2(16.0, 4.0)).show(ui, |ui| {
+        if h.outputs.len() > 1 {
+            ui.label("");
+            for o in &h.outputs {
+                ui.label(RichText::new(&o.service).strong());
+            }
+            ui.end_row();
+        }
+        ui.label(t("Sent"));
+        for o in &h.outputs {
+            ui.label(if o.measured { tf("{sent} of {set}", &[("sent", &rate(o.sent_kbps as u64 * 1000)), ("set", &rate(h.set_kbps as u64 * 1000))]) } else { measuring.to_string() });
+        }
+        ui.end_row();
+        ui.label(t("Waiting to send"));
+        for o in &h.outputs {
+            let text = tf("{ms} ms", &[("ms", &o.queue_ms.to_string())]);
+            let c = if o.queue_ms >= crate::stream::health::QUEUE_BAD_MS {
+                pal().err
+            } else if o.queue_ms >= crate::stream::health::QUEUE_WARN_MS {
+                pal().warn
+            } else {
+                pal().text
+            };
+            ui.label(RichText::new(text).color(c));
+        }
+        ui.end_row();
+        ui.label(t("Dropped by the network"));
+        for o in &h.outputs {
+            let pct = if o.measured { percent(o.dropped_share) } else { measuring.to_string() };
+            ui.label(tf("{n} ({pct})", &[("n", &o.dropped.to_string()), ("pct", &pct)]));
+        }
+        ui.end_row();
+        ui.label(t("Connected for"));
+        for (o, out) in h.outputs.iter().zip(&s.outputs) {
+            ui.label(if out.state == State::Live { clock(o.connected_s) } else { output_word(out.state).0.to_string() });
+        }
+        ui.end_row();
+        ui.label(t("Reconnects"));
+        for o in &h.outputs {
+            ui.label(o.reconnects.to_string());
+        }
+        ui.end_row();
+    });
+    ui.separator();
+    egui::Grid::new("stream-details-computer").num_columns(2).spacing(vec2(16.0, 4.0)).show(ui, |ui| {
+        ui.label(t("Dropped by the computer"));
+        let pct = if h.window_s > 0.0 { percent(h.encoder_lost_share) } else { measuring.to_string() };
+        ui.label(tf("{n} ({pct})", &[("n", &h.encoder_lost.to_string()), ("pct", &pct)]));
+        ui.end_row();
+        ui.label(t("Encoder"));
+        ui.label(encoder_text(s));
+        ui.end_row();
+        ui.label(t("Time per frame"));
+        ui.label(if h.window_s > 0.0 { tf("{ms} of {budget} ms", &[("ms", &format!("{:.0}", h.encode_ms)), ("budget", &format!("{:.0}", h.frame_budget_ms))]) } else { measuring.to_string() });
+        ui.end_row();
+    });
+    ui.label(dim(t("Percentages: last 10 seconds").to_string()).size(11.0));
+    if let Some(l) = line {
+        let (icon, color) = health_icon(l.bad);
+        ui.add_space(4.0);
+        ui.label(RichText::new(format!("{icon} {}", l.advice)).color(color));
+    }
+    ui.ctx().request_repaint_after(Duration::from_millis(500));
 }
 
 /// A service's name as shown (only "Custom server" is ours to translate).
@@ -293,7 +430,27 @@ impl SnagApp {
         if snap.phase == Phase::Idle {
             self.x.stream.uses_studio = false;
         }
+        self.health_tick(ctx.input(|i| i.time), &snap);
         self.x.stream.snap = snap;
+    }
+
+    /// The health line for this frame (`secs`: the window's clock), held steady; a bad one that
+    /// is new also goes to the status line, so it is read out and seen in the panel.
+    pub(crate) fn health_tick(&mut self, secs: f64, snap: &Snapshot) {
+        let shown = match &snap.stats {
+            Some(s) if snap.phase == Phase::Running => self.x.stream.steady.update((secs * 1000.0) as u64, &s.health.warnings).cloned(),
+            _ => {
+                self.x.stream.steady.reset();
+                None
+            }
+        };
+        let line = health_line(snap, shown.as_ref());
+        if let Some(l) = line.as_ref().filter(|l| l.bad)
+            && self.x.stream.health_line.as_ref().is_none_or(|p| !p.bad || p.short != l.short)
+        {
+            self.status = l.advice.clone();
+        }
+        self.x.stream.health_line = line;
     }
 
     /// The first time in a session: "Go live on Twitch?".
@@ -580,30 +737,36 @@ impl SnagApp {
     /// The live numbers for the band.
     fn stream_status(&mut self, ui: &mut egui::Ui) {
         let snap = self.x.stream.snap.clone();
+        let line = self.x.stream.health_line.clone();
         look::column(ui, |ui| {
+            // Numbers change every second: a steady width keeps the ribbon from jumping.
+            ui.set_min_width(230.0);
             ui.horizontal(|ui| {
                 if snap.on_air() {
                     live_badge(ui, &snap);
                 }
                 ui.label(RichText::new(state_label(&snap)).strong().color(if snap.live() { look::pal().err } else { look::pal().text }));
+                if let Some(s) = snap.stats.as_ref().filter(|_| snap.on_air()) {
+                    let r = look::icon_button(ui, ph::CHART_LINE, t("Stream details"));
+                    egui::Popup::from_toggle_button_response(&r).close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside).show(|ui| stream_details(ui, s, line.as_ref()));
+                }
             });
             match (&snap.stats, &snap.info) {
                 (Some(s), Some(i)) => {
-                    ui.label(RichText::new(tf("{w} x {h}, {fps} fps, {rate}", &[("w", &i.width.to_string()), ("h", &i.height.to_string()), ("fps", &format!("{:.0}", s.fps)), ("rate", &rate(s.bitrate_bps))])).size(11.5).color(pal().dim));
-                    let enc = s.video_encoder.as_ref().map(|e| format!("{} ({})", e.name, if e.hardware { t("graphics chip") } else { t("processor") })).unwrap_or_default();
-                    ui.label(RichText::new(tf("{dropped} dropped frames · {enc}", &[("dropped", &s.frames_dropped.to_string()), ("enc", &enc)])).size(11.5).color(pal().dim));
-                    if s.outputs.len() > 1 {
-                        // One short line per service when multistreaming.
-                        for o in &s.outputs {
-                            let (word, warn) = output_word(o.state);
-                            let line = format!("{}: {} · {}", o.service, word, rate(o.bitrate_bps));
-                            let r = ui.label(RichText::new(line).size(11.5).color(if warn { pal().warn } else { pal().dim }));
-                            if let Some(e) = &o.error {
-                                r.on_hover_text(e);
+                    ui.label(RichText::new(tf("{w} x {h}, {fps} fps, {rate}", &[("w", &i.width.to_string()), ("h", &i.height.to_string()), ("fps", &format!("{:.0}", s.fps)), ("rate", &sent_of_set(s))])).size(11.5).color(pal().dim));
+                    // All is well: the frames dropped (by the network and the computer) and the
+                    // encoder. Else the one warning, with its advice on hover.
+                    match &line {
+                        Some(l) => {
+                            health_label(ui, l, 11.5);
+                        }
+                        None => {
+                            let dropped = s.frames_dropped + s.health.encoder_lost;
+                            ui.label(RichText::new(tf("{dropped} dropped frames · {enc}", &[("dropped", &dropped.to_string()), ("enc", &encoder_text(s))])).size(11.5).color(pal().dim));
+                            if let Some(e) = s.error.as_ref().or(s.notice.as_ref()) {
+                                ui.label(RichText::new(e).size(11.5).color(pal().warn));
                             }
                         }
-                    } else if let Some(e) = s.error.as_ref().or(s.notice.as_ref()) {
-                        ui.label(RichText::new(e).size(11.5).color(pal().warn));
                     }
                 }
                 _ => {
@@ -879,6 +1042,75 @@ mod tests {
         assert_eq!((a.settings.studio.current, a.status.as_str()), (1, "Scene: Game"));
         switch_scene(&mut a, 5);
         assert_eq!(a.settings.studio.current, 1, "no such scene: nothing changes");
+    }
+
+    fn live_snap(outputs: &[(&str, State)], warnings: Vec<Warning>) -> Snapshot {
+        use crate::stream::engine::OutputStats;
+        use crate::stream::health::{Health, OutHealth};
+        let outs = outputs.iter().map(|(s, st)| OutputStats { service: s.to_string(), state: *st, error: Some(format!("{s} said no")), ..Default::default() }).collect();
+        let hs = outputs.iter().map(|(s, _)| OutHealth { service: s.to_string(), measured: true, sent_kbps: 4000, ..Default::default() }).collect();
+        Snapshot { phase: Phase::Running, stats: Some(Stats { state: State::Live, outputs: outs, health: Health { set_kbps: 6000, outputs: hs, warnings, ..Default::default() }, ..Default::default() }), ..Default::default() }
+    }
+
+    #[test]
+    fn the_health_line_says_the_warning_in_a_few_words_with_its_advice() {
+        use crate::stream::health::Problem;
+        let up = Warning { problem: Problem::Upload, level: Level::Bad, service: Some("Twitch".into()) };
+        let snap = live_snap(&[("Twitch", State::Live)], vec![up.clone()]);
+        assert_eq!(health_line(&snap, None), None, "nothing shown yet");
+        let l = health_line(&snap, Some(&up)).unwrap();
+        assert_eq!((l.short.as_str(), l.bad), ("Upload to Twitch too slow", true));
+        assert_eq!(l.advice, "Your upload to Twitch can't keep up: lower the bitrate or the resolution.");
+        let pc = Warning { problem: Problem::Computer, level: Level::Warning, service: None };
+        let l = health_line(&snap, Some(&pc)).unwrap();
+        assert_eq!((l.short.as_str(), l.bad), ("Computer too slow to encode", false));
+        // Multistreaming: a service that is reconnecting is bad, with its own error.
+        let snap = live_snap(&[("Twitch", State::Live), ("YouTube", State::Reconnecting)], vec![]);
+        let l = health_line(&snap, None).unwrap();
+        assert_eq!((l.short.as_str(), l.advice.as_str(), l.bad), ("YouTube: Reconnecting…", "YouTube said no", true));
+        // Off the air: nothing.
+        assert_eq!(health_line(&Snapshot::default(), Some(&up)), None);
+    }
+
+    #[test]
+    fn rates_and_shares_read_well() {
+        assert_eq!(percent(0.004), "0.4%");
+        assert_eq!(percent(0.0), "0.0%");
+        assert_eq!(percent(0.123), "12%");
+        assert_eq!(percent(-1.0), "0.0%");
+        let snap = live_snap(&[("Twitch", State::Live)], vec![]);
+        let s = snap.stats.unwrap();
+        assert_eq!(sent_of_set(&s), "4.0 Mbit/s of 6.0 Mbit/s");
+        let two = live_snap(&[("Twitch", State::Live), ("Kick", State::Live)], vec![]).stats.unwrap();
+        assert_eq!(sent_of_set(&two), "8.0 Mbit/s of 12.0 Mbit/s", "every service it goes to");
+        let mut early = s.clone();
+        early.health.outputs[0].measured = false;
+        assert_eq!(sent_of_set(&early), "Measuring…");
+    }
+
+    /// The window's tick: the warning is held steady, and a new bad one goes to the status
+    /// line once (screen readers and the panel see it there).
+    #[test]
+    fn a_new_bad_warning_reaches_the_status_line_once() {
+        use crate::stream::health::Problem;
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        let warn = Warning { problem: Problem::Upload, level: Level::Warning, service: Some("Twitch".into()) };
+        let snap = live_snap(&[("Twitch", State::Live)], vec![warn.clone()]);
+        a.status = String::new();
+        a.health_tick(0.0, &snap);
+        assert!(a.x.stream.health_line.is_none(), "a warning waits three seconds");
+        a.health_tick(3.0, &snap);
+        assert_eq!(a.x.stream.health_line.as_ref().map(|l| l.bad), Some(false));
+        assert!(a.status.is_empty(), "a warning doesn't take the status line: {}", a.status);
+        let bad = Warning { level: Level::Bad, ..warn };
+        a.health_tick(3.5, &live_snap(&[("Twitch", State::Live)], vec![bad]));
+        assert_eq!(a.status, "Your upload to Twitch can't keep up: lower the bitrate or the resolution.");
+        a.status = "something else".into();
+        a.health_tick(4.0, &live_snap(&[("Twitch", State::Live)], vec![Warning { problem: Problem::Upload, level: Level::Bad, service: Some("Twitch".into()) }]));
+        assert_eq!(a.status, "something else", "said once");
+        // The stream ends: the line goes at once.
+        a.health_tick(5.0, &Snapshot::default());
+        assert!(a.x.stream.health_line.is_none());
     }
 
     #[test]
