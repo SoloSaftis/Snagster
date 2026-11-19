@@ -35,7 +35,8 @@ on Windows), record_gif, and Studio scenes (studio_scenes, studio_add_scene, stu
 studio_record). Guides: make_guide (PDF, web page, Word or one tall picture). Library: library_search, library_tag, \
 library_delete (to the Recycle Bin / Trash; undo_delete brings it back for 2 minutes). Live streaming: stream_services, stream_start (Twitch, YouTube, Kick, Facebook, Restream or any RTMP/RTMPS \
 server; the screen, a window, an area or the Studio scene; the stream key saved in Snagster is used and never shown), \
-stream_status and stream_stop. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
+stream_status and stream_stop. Replay buffer (keep the last 30-120 s of the screen, save a moment after it happened): \r
+replay_start, replay_save, replay_status and replay_stop. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
 set_setting checks kind and range). Everything else a person can press in the window is in list_commands: app_command \
 presses it in the open window (zoom, pins, Recent, dialogs, email, print, Studio and stream buttons...); editor_apply \
 (cut out, fill, erase, lift, resize or copy a mark), gif_edit, studio_edit and save_to_cloud do the rest here. Long calls send progress when the \
@@ -297,11 +298,12 @@ fn base_tools() -> Vec<Tool> {
 const MARK_KINDS: [&str; 14] = ["arrow", "line", "box", "oval", "highlight", "pen", "text", "callout", "step", "stamp", "pointer", "spotlight", "magnify", "image"];
 
 /// Tools that change something outside the current picture (files, clipboard, settings, screen).
-const SIDE: [&str; 31] = [
+const SIDE: [&str; 34] = [
     "save", "quick_save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "library_delete", "undo_delete", "library_tag",
     "set_setting", "set_language", "open_in_snagster", "studio_add_source", "studio_remove_source", "studio_update_source",
     "studio_add_scene", "studio_remove_scene", "studio_set_current", "studio_record", "capture_scrolling", "paste_from_clipboard",
     "capture_screen", "capture_region", "capture_window", "stream_start", "stream_stop", "app_command", "save_to_cloud", "gif_edit", "studio_edit",
+    "replay_start", "replay_save", "replay_stop",
 ];
 
 /// Tools that may delete or replace something (a mark, a source or scene, a library picture,
@@ -317,7 +319,7 @@ const OPEN_WORLD: [&str; 4] = ["check_for_update", "stream_start", "app_command"
 
 /// Tools that change something but leave the same result when called again with the same
 /// arguments.
-const IDEMPOTENT: [&str; 11] = ["stream_stop", "save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
+const IDEMPOTENT: [&str; 12] = ["stream_stop", "replay_stop", "save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
 
 /// What a tool's structured answer looks like, for the tools that always give one.
 fn output_schema(name: &str) -> Option<Value> {
@@ -352,6 +354,7 @@ fn output_schema(name: &str) -> Option<Value> {
         "studio_scenes" => json!({"type": "object", "properties": {"scenes": {"type": "array", "items": {"type": "object"}}, "current": num, "width": num, "height": num, "fps": num}, "required": ["scenes", "current"]}),
         "library_tag" => json!({"type": "object", "properties": {"path": st, "title": st, "tags": strings}, "required": ["path", "title", "tags"]}),
         "stream_services" => items(props(json!({"service": st, "name": st, "url": st, "key_help": st, "max_width": num, "max_height": num, "max_fps": num, "max_video_kbps": num, "max_pixel_rate": num, "keyframe_s": num, "audio_kbps": num, "hevc": bo}))),
+        "replay_status" => json!({"type": "object", "properties": {"phase": st, "on": bo, "seconds": num, "held_s": num, "width": num, "height": num, "fps": num, "encoder": st, "hardware": bo, "sound": bo, "error": st}, "required": ["phase", "on", "seconds", "held_s"]}),
         "stream_status" => json!({"type": "object", "properties": {"phase": st, "live": bo, "state": st, "uptime_s": num, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num, "service": st, "address": st, "source": st, "width": num, "height": num, "fps": num, "also": {"type": "array", "items": st}, "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "address": st, "state": st, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num}}}}, "required": ["phase", "live"]}),
         _ => return None,
     })
@@ -3082,6 +3085,29 @@ mod stream_tests {
         assert_eq!(items.len(), crate::stream::PRESETS.len());
         assert_eq!(items[0]["service"], "twitch");
         assert!(items.iter().all(|i| i["max_fps"].as_u64().unwrap() >= 30 && i["keyframe_s"] == 2));
+    }
+
+    #[test]
+    fn replay_tools_check_their_arguments_and_say_when_replay_is_off() {
+        let _g = crate::replay::TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        crate::replay::end();
+        let mut w = ws();
+        assert!(w.call("replay_start", &json!({"seconds": 10})).unwrap_err().contains("30 to 120"));
+        assert!(w.call("replay_start", &json!({"seconds": 45.5})).unwrap_err().contains("whole number"));
+        assert!(w.call("replay_save", &json!({"seconds": 1})).unwrap_err().contains("2 to 120"));
+        assert_eq!(w.call("replay_save", &json!({})).unwrap_err(), "Replay is off; call replay_start first.");
+        assert_eq!(text_of(w.call("replay_stop", &json!({}))), "Replay was already off.");
+        w.call("replay_status", &json!({})).unwrap();
+        let st = w.structured.take().unwrap();
+        assert_eq!((st["phase"].as_str(), st["on"].as_bool()), (Some("off"), Some(false)));
+        assert!(!crate::replay::status().on(), "nothing started");
+        // Listed with their schemas and marked as changing things outside the picture.
+        let names: Vec<String> = tools().iter().map(|t| t.name.to_string()).collect();
+        for n in ["replay_start", "replay_save", "replay_stop", "replay_status"] {
+            assert!(names.iter().any(|x| x == n), "{n}");
+        }
+        assert!(SIDE.contains(&"replay_save") && !SIDE.contains(&"replay_status"));
+        assert!(output_schema("replay_status").is_some());
     }
 
     #[test]

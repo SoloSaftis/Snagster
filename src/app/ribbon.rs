@@ -76,12 +76,13 @@ pub(crate) struct Extra {
     /// The encoders the person can choose (`encode::available`).
     pub pickable: crate::app::work::ListCache<(crate::encode::Codec, crate::encode::EncoderName)>,
     pub stream: crate::app::stream_ui::StreamUi,
+    pub replay: crate::app::replay_ui::ReplayUi,
     pub access: crate::app::access_ui::AccessUi,
     #[cfg(target_os = "macos")]
     pub menu: crate::app::menubar_ui::MenuUi,
 }
 
-fn kbd(s: &Settings, a: Action) -> String {
+pub(crate) fn kbd(s: &Settings, a: Action) -> String {
     let c = s.binding(a);
     if c.is_set() { format!(" ({})", c.label()) } else { String::new() }
 }
@@ -116,6 +117,7 @@ impl SnagApp {
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(6.0);
+                self.replay_pill(ui, &ctx);
                 let snap = self.x.stream.snap.clone();
                 if snap.on_air() && crate::app::stream_ui::live_badge(ui, &snap).clicked() {
                     self.switch_tab(&ctx, RibbonTab::Stream);
@@ -472,6 +474,7 @@ impl SnagApp {
                 self.toggle_pause();
             }
         });
+        self.replay_group(ui, ctx);
         look::group(ui, t("Video"), |ui| {
             look::column(ui, |ui| self.record_choices(ui));
             look::column(ui, |ui| {

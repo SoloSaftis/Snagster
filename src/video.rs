@@ -465,8 +465,7 @@ impl Spacer {
 
 /// An Annex-B access unit as an MP4 sample (4-byte lengths), without the SPS and PPS (which
 /// go into the track header), and the SPS and PPS when it carried them.
-#[cfg(any(not(windows), test))]
-fn avcc_sample(au: &[u8]) -> (Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>) {
+pub(crate) fn avcc_sample(au: &[u8]) -> (Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>) {
     use crate::encode::{Codec, nal_type, split_annex_b};
     let (mut data, mut sps, mut pps) = (Vec::with_capacity(au.len() + 16), None, None);
     for n in split_annex_b(au) {
