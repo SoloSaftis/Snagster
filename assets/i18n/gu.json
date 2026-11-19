@@ -1048,6 +1048,7 @@
   "Encoder": "એન્કોડર",
   "Time per frame": "ફ્રેમ દીઠ સમય",
   "{ms} of {budget} ms": "{budget} મિસે માંથી {ms}",
-  "Percentages: last 10 seconds": "ટકાવારી: છેલ્લી 10 સેકન્ડ"
+  "Percentages: last 10 seconds": "ટકાવારી: છેલ્લી 10 સેકન્ડ",
+  "The stream is fine again.": "સ્ટ્રીમ ફરીથી બરાબર છે."
  }
 }

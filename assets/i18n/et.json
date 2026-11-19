@@ -1048,6 +1048,7 @@
   "Encoder": "Kodeerija",
   "Time per frame": "Aeg kaadri kohta",
   "{ms} of {budget} ms": "{ms} / {budget} ms",
-  "Percentages: last 10 seconds": "Protsendid: viimased 10 sekundit"
+  "Percentages: last 10 seconds": "Protsendid: viimased 10 sekundit",
+  "The stream is fine again.": "Voogedastus on taas korras."
  }
 }

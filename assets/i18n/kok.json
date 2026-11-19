@@ -1048,6 +1048,7 @@
   "Encoder": "एन्कोडर",
   "Time per frame": "फ्रेमाक लागपी वेळ",
   "{ms} of {budget} ms": "{budget} ms पैकी {ms}",
-  "Percentages: last 10 seconds": "टक्केवारी: शेवटले 10 सेकंद"
+  "Percentages: last 10 seconds": "टक्केवारी: शेवटले 10 सेकंद",
+  "The stream is fine again.": "स्ट्रीम परत बरो जाला."
  }
 }

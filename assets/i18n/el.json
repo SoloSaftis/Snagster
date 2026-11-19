@@ -1048,6 +1048,7 @@
   "Encoder": "Κωδικοποιητής",
   "Time per frame": "Χρόνος ανά καρέ",
   "{ms} of {budget} ms": "{ms} από {budget} ms",
-  "Percentages: last 10 seconds": "Ποσοστά: τα τελευταία 10 δευτερόλεπτα"
+  "Percentages: last 10 seconds": "Ποσοστά: τα τελευταία 10 δευτερόλεπτα",
+  "The stream is fine again.": "Η ροή είναι πάλι εντάξει."
  }
 }

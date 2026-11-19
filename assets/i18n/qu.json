@@ -1048,6 +1048,7 @@
   "Encoder": "Encoder",
   "Time per frame": "Frame sapaq pachan",
   "{ms} of {budget} ms": "{budget} ms-manta {ms}",
-  "Percentages: last 10 seconds": "Pachakmanta kaqkuna: qhipa 10 segundo"
+  "Percentages: last 10 seconds": "Pachakmanta kaqkuna: qhipa 10 segundo",
+  "The stream is fine again.": "Streamqa musuqmanta allinmi."
  }
 }

@@ -1048,6 +1048,7 @@
   "Encoder": "എൻകോഡർ",
   "Time per frame": "ഓരോ ഫ്രെയിമിനും സമയം",
   "{ms} of {budget} ms": "{budget} ms-ൽ {ms}",
-  "Percentages: last 10 seconds": "ശതമാനങ്ങൾ: കഴിഞ്ഞ 10 സെക്കൻഡ്"
+  "Percentages: last 10 seconds": "ശതമാനങ്ങൾ: കഴിഞ്ഞ 10 സെക്കൻഡ്",
+  "The stream is fine again.": "സ്ട്രീം വീണ്ടും ശരിയായി."
  }
 }

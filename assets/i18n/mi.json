@@ -1048,6 +1048,7 @@
   "Encoder": "Kaiwhakawaehere",
   "Time per frame": "Wā mō ia anga",
   "{ms} of {budget} ms": "{ms} o te {budget} ms",
-  "Percentages: last 10 seconds": "Ngā ōrau: ngā hēkona 10 whakamutunga"
+  "Percentages: last 10 seconds": "Ngā ōrau: ngā hēkona 10 whakamutunga",
+  "The stream is fine again.": "Kua pai anō te rere."
  }
 }

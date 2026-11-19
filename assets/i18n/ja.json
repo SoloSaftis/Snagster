@@ -1048,6 +1048,7 @@
   "Encoder": "エンコーダー",
   "Time per frame": "1フレームあたりの時間",
   "{ms} of {budget} ms": "{ms} / {budget} ミリ秒",
-  "Percentages: last 10 seconds": "割合：直近10秒"
+  "Percentages: last 10 seconds": "割合：直近10秒",
+  "The stream is fine again.": "配信は正常に戻りました。"
  }
 }

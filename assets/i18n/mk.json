@@ -1048,6 +1048,7 @@
   "Encoder": "Кодер",
   "Time per frame": "Време по кадар",
   "{ms} of {budget} ms": "{ms} од {budget} ms",
-  "Percentages: last 10 seconds": "Проценти: последни 10 секунди"
+  "Percentages: last 10 seconds": "Проценти: последни 10 секунди",
+  "The stream is fine again.": "Стримот повторно е во ред."
  }
 }

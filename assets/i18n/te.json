@@ -1048,6 +1048,7 @@
   "Encoder": "ఎన్‌కోడర్",
   "Time per frame": "ఫ్రేమ్‌కు సమయం",
   "{ms} of {budget} ms": "{budget} ms లో {ms}",
-  "Percentages: last 10 seconds": "శాతాలు: చివరి 10 సెకన్లు"
+  "Percentages: last 10 seconds": "శాతాలు: చివరి 10 సెకన్లు",
+  "The stream is fine again.": "స్ట్రీమ్ మళ్లీ బాగుంది."
  }
 }

@@ -1048,6 +1048,7 @@
   "Encoder": "ኢንኮደር",
   "Time per frame": "በአንድ ክፈፍ ጊዜ",
   "{ms} of {budget} ms": "{ms} ከ{budget} ሚሴ",
-  "Percentages: last 10 seconds": "መቶኛዎች፦ ያለፉት 10 ሰከንዶች"
+  "Percentages: last 10 seconds": "መቶኛዎች፦ ያለፉት 10 ሰከንዶች",
+  "The stream is fine again.": "ስርጭቱ እንደገና ደህና ነው።"
  }
 }

@@ -1034,7 +1034,7 @@
   "{service} keeps reconnecting": "{service} blijft opnieuw verbinden",
   "The connection to {service} keeps dropping: check your network.": "De verbinding met {service} valt steeds weg: controleer je netwerk.",
   "Stream details": "Streamdetails",
-  "Measuring…": "Meten…",
+  "Measuring…": "Wordt gemeten…",
   "{sent} of {set}": "{sent} van {set}",
   "Sent": "Verzonden",
   "Waiting to send": "Wacht op verzending",
@@ -1048,6 +1048,7 @@
   "Encoder": "Encoder",
   "Time per frame": "Tijd per frame",
   "{ms} of {budget} ms": "{ms} van {budget} ms",
-  "Percentages: last 10 seconds": "Percentages: laatste 10 seconden"
+  "Percentages: last 10 seconds": "Percentages: laatste 10 seconden",
+  "The stream is fine again.": "De stream is weer in orde."
  }
 }

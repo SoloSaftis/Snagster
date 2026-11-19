@@ -1048,6 +1048,7 @@
   "Encoder": "Koder",
   "Time per frame": "Vrijeme po sličici",
   "{ms} of {budget} ms": "{ms} od {budget} ms",
-  "Percentages: last 10 seconds": "Postoci: zadnjih 10 sekundi"
+  "Percentages: last 10 seconds": "Postoci: zadnjih 10 sekundi",
+  "The stream is fine again.": "Prijenos je opet u redu."
  }
 }

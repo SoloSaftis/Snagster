@@ -1048,6 +1048,7 @@
   "Encoder": "ಎನ್‌ಕೋಡರ್",
   "Time per frame": "ಪ್ರತಿ ಫ್ರೇಮ್‌ಗೆ ಸಮಯ",
   "{ms} of {budget} ms": "{budget} ಮಿಸೆಯಲ್ಲಿ {ms}",
-  "Percentages: last 10 seconds": "ಶೇಕಡಾವಾರು: ಕಳೆದ 10 ಸೆಕೆಂಡುಗಳು"
+  "Percentages: last 10 seconds": "ಶೇಕಡಾವಾರು: ಕಳೆದ 10 ಸೆಕೆಂಡುಗಳು",
+  "The stream is fine again.": "ಸ್ಟ್ರೀಮ್ ಮತ್ತೆ ಸರಿಯಾಗಿದೆ."
  }
 }

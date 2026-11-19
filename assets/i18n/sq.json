@@ -1048,6 +1048,7 @@
   "Encoder": "Kodues",
   "Time per frame": "Koha për kuadër",
   "{ms} of {budget} ms": "{ms} nga {budget} ms",
-  "Percentages: last 10 seconds": "Përqindjet: 10 sekondat e fundit"
+  "Percentages: last 10 seconds": "Përqindjet: 10 sekondat e fundit",
+  "The stream is fine again.": "Transmetimi është sërish në rregull."
  }
 }

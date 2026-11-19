@@ -1048,6 +1048,7 @@
   "Encoder": "Enkodeerder",
   "Time per frame": "Tyd per raam",
   "{ms} of {budget} ms": "{ms} van {budget} ms",
-  "Percentages: last 10 seconds": "Persentasies: laaste 10 sekondes"
+  "Percentages: last 10 seconds": "Persentasies: laaste 10 sekondes",
+  "The stream is fine again.": "Die stroom is weer in orde."
  }
 }

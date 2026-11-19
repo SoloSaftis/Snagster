@@ -1048,6 +1048,7 @@
   "Encoder": "Kodér",
   "Time per frame": "Čas na snímku",
   "{ms} of {budget} ms": "{ms} z {budget} ms",
-  "Percentages: last 10 seconds": "Percentá: posledných 10 sekúnd"
+  "Percentages: last 10 seconds": "Percentá: posledných 10 sekúnd",
+  "The stream is fine again.": "Vysielanie je zasa v poriadku."
  }
 }

@@ -1048,6 +1048,7 @@
   "Encoder": "Koduotuvas",
   "Time per frame": "Laikas kadrui",
   "{ms} of {budget} ms": "{ms} iš {budget} ms",
-  "Percentages: last 10 seconds": "Procentai: paskutinės 10 sekundžių"
+  "Percentages: last 10 seconds": "Procentai: paskutinės 10 sekundžių",
+  "The stream is fine again.": "Transliacija vėl tvarkinga."
  }
 }

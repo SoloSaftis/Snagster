@@ -1048,6 +1048,7 @@
   "Encoder": "Kodētājs",
   "Time per frame": "Laiks kadram",
   "{ms} of {budget} ms": "{ms} no {budget} ms",
-  "Percentages: last 10 seconds": "Procenti: pēdējās 10 sekundes"
+  "Percentages: last 10 seconds": "Procenti: pēdējās 10 sekundes",
+  "The stream is fine again.": "Tiešraide atkal ir kārtībā."
  }
 }

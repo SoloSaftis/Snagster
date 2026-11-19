@@ -1048,6 +1048,7 @@
   "Encoder": "Koodaaja",
   "Time per frame": "Aika kuvaa kohden",
   "{ms} of {budget} ms": "{ms} / {budget} ms",
-  "Percentages: last 10 seconds": "Prosentit: viimeiset 10 sekuntia"
+  "Percentages: last 10 seconds": "Prosentit: viimeiset 10 sekuntia",
+  "The stream is fine again.": "Lähetys on taas kunnossa."
  }
 }

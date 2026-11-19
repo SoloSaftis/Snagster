@@ -1048,6 +1048,7 @@
   "Encoder": "Encoder",
   "Time per frame": "Timp pe cadru",
   "{ms} of {budget} ms": "{ms} din {budget} ms",
-  "Percentages: last 10 seconds": "Procente: ultimele 10 secunde"
+  "Percentages: last 10 seconds": "Procente: ultimele 10 secunde",
+  "The stream is fine again.": "Streamul este din nou în regulă."
  }
 }

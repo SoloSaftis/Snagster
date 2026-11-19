@@ -1034,7 +1034,7 @@
   "{service} keeps reconnecting": "{service} tengist sífellt aftur",
   "The connection to {service} keeps dropping: check your network.": "Tengingin við {service} rofnar sífellt: athugaðu netið þitt.",
   "Stream details": "Upplýsingar um streymi",
-  "Measuring…": "Mæli…",
+  "Measuring…": "Mæling í gangi…",
   "{sent} of {set}": "{sent} af {set}",
   "Sent": "Sent",
   "Waiting to send": "Bíður sendingar",
@@ -1048,6 +1048,7 @@
   "Encoder": "Kóðari",
   "Time per frame": "Tími á ramma",
   "{ms} of {budget} ms": "{ms} af {budget} ms",
-  "Percentages: last 10 seconds": "Hlutföll: síðustu 10 sekúndur"
+  "Percentages: last 10 seconds": "Hlutföll: síðustu 10 sekúndur",
+  "The stream is fine again.": "Streymið er í lagi á ný."
  }
 }

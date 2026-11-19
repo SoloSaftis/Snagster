@@ -1048,6 +1048,7 @@
   "Encoder": "Kódoló",
   "Time per frame": "Idő képkockánként",
   "{ms} of {budget} ms": "{ms} / {budget} ms",
-  "Percentages: last 10 seconds": "Százalékok: utolsó 10 másodperc"
+  "Percentages: last 10 seconds": "Százalékok: utolsó 10 másodperc",
+  "The stream is fine again.": "Az adás újra rendben van."
  }
 }

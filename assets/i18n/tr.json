@@ -1048,6 +1048,7 @@
   "Encoder": "Kodlayıcı",
   "Time per frame": "Kare başına süre",
   "{ms} of {budget} ms": "{ms} / {budget} ms",
-  "Percentages: last 10 seconds": "Yüzdeler: son 10 saniye"
+  "Percentages: last 10 seconds": "Yüzdeler: son 10 saniye",
+  "The stream is fine again.": "Yayın yeniden sorunsuz."
  }
 }

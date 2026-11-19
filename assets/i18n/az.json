@@ -1048,6 +1048,7 @@
   "Encoder": "Kodlayıcı",
   "Time per frame": "Kadr başına vaxt",
   "{ms} of {budget} ms": "{ms} / {budget} ms",
-  "Percentages: last 10 seconds": "Faizlər: son 10 saniyə"
+  "Percentages: last 10 seconds": "Faizlər: son 10 saniyə",
+  "The stream is fine again.": "Yayım yenidən qaydasındadır."
  }
 }

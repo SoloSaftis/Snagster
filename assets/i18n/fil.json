@@ -1048,6 +1048,7 @@
   "Encoder": "Encoder",
   "Time per frame": "Oras bawat frame",
   "{ms} of {budget} ms": "{ms} ng {budget} ms",
-  "Percentages: last 10 seconds": "Mga porsyento: huling 10 segundo"
+  "Percentages: last 10 seconds": "Mga porsyento: huling 10 segundo",
+  "The stream is fine again.": "Maayos na ulit ang stream."
  }
 }

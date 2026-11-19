@@ -1034,7 +1034,7 @@
   "{service} keeps reconnecting": "{service} kobler stadig til på nytt",
   "The connection to {service} keeps dropping: check your network.": "Tilkoblingen til {service} faller stadig ut: sjekk nettverket ditt.",
   "Stream details": "Strømdetaljer",
-  "Measuring…": "Måler…",
+  "Measuring…": "Måles…",
   "{sent} of {set}": "{sent} av {set}",
   "Sent": "Sendt",
   "Waiting to send": "Venter på sending",
@@ -1048,6 +1048,7 @@
   "Encoder": "Koder",
   "Time per frame": "Tid per bilde",
   "{ms} of {budget} ms": "{ms} av {budget} ms",
-  "Percentages: last 10 seconds": "Prosenter: siste 10 sekunder"
+  "Percentages: last 10 seconds": "Prosenter: siste 10 sekunder",
+  "The stream is fine again.": "Strømmen er i orden igjen."
  }
 }

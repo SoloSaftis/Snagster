@@ -1048,6 +1048,7 @@
   "Encoder": "என்கோடர்",
   "Time per frame": "ஒரு பிரேமுக்கான நேரம்",
   "{ms} of {budget} ms": "{budget} ms இல் {ms}",
-  "Percentages: last 10 seconds": "சதவீதங்கள்: கடந்த 10 வினாடிகள்"
+  "Percentages: last 10 seconds": "சதவீதங்கள்: கடந்த 10 வினாடிகள்",
+  "The stream is fine again.": "ஸ்ட்ரீம் மீண்டும் சரியாக உள்ளது."
  }
 }

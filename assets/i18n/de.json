@@ -1034,7 +1034,7 @@
   "{service} keeps reconnecting": "{service} verbindet sich ständig neu",
   "The connection to {service} keeps dropping: check your network.": "Die Verbindung zu {service} bricht immer wieder ab: Prüfe dein Netzwerk.",
   "Stream details": "Stream-Details",
-  "Measuring…": "Messe…",
+  "Measuring…": "Wird gemessen…",
   "{sent} of {set}": "{sent} von {set}",
   "Sent": "Gesendet",
   "Waiting to send": "Wartet auf Senden",
@@ -1048,6 +1048,7 @@
   "Encoder": "Encoder",
   "Time per frame": "Zeit pro Frame",
   "{ms} of {budget} ms": "{ms} von {budget} ms",
-  "Percentages: last 10 seconds": "Prozentwerte: letzte 10 Sekunden"
+  "Percentages: last 10 seconds": "Prozentwerte: letzte 10 Sekunden",
+  "The stream is fine again.": "Der Stream läuft wieder einwandfrei."
  }
 }

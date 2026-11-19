@@ -1048,6 +1048,7 @@
   "Encoder": "Kodirnik",
   "Time per frame": "Čas na sličico",
   "{ms} of {budget} ms": "{ms} od {budget} ms",
-  "Percentages: last 10 seconds": "Odstotki: zadnjih 10 sekund"
+  "Percentages: last 10 seconds": "Odstotki: zadnjih 10 sekund",
+  "The stream is fine again.": "Pretok je spet v redu."
  }
 }

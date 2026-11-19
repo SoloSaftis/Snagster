@@ -1048,6 +1048,7 @@
   "Encoder": "Amgodiwr",
   "Time per frame": "Amser fesul ffrâm",
   "{ms} of {budget} ms": "{ms} o {budget} ms",
-  "Percentages: last 10 seconds": "Canrannau: y 10 eiliad diwethaf"
+  "Percentages: last 10 seconds": "Canrannau: y 10 eiliad diwethaf",
+  "The stream is fine again.": "Mae'r ffrwd yn iawn eto."
  }
 }

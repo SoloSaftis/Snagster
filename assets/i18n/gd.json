@@ -1048,6 +1048,7 @@
   "Encoder": "Còdaichear",
   "Time per frame": "Ùine gach frèam",
   "{ms} of {budget} ms": "{ms} à {budget} ms",
-  "Percentages: last 10 seconds": "Ceudadan: an 10 diogan mu dheireadh"
+  "Percentages: last 10 seconds": "Ceudadan: an 10 diogan mu dheireadh",
+  "The stream is fine again.": "Tha an sruth ceart a-rithist."
  }
 }

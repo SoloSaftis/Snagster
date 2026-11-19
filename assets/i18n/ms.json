@@ -1048,6 +1048,7 @@
   "Encoder": "Pengekod",
   "Time per frame": "Masa setiap bingkai",
   "{ms} of {budget} ms": "{ms} daripada {budget} ms",
-  "Percentages: last 10 seconds": "Peratusan: 10 saat terakhir"
+  "Percentages: last 10 seconds": "Peratusan: 10 saat terakhir",
+  "The stream is fine again.": "Strim kembali baik."
  }
 }

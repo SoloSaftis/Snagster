@@ -1048,6 +1048,7 @@
   "Encoder": "Kodare",
   "Time per frame": "Tid per bildruta",
   "{ms} of {budget} ms": "{ms} av {budget} ms",
-  "Percentages: last 10 seconds": "Procent: senaste 10 sekunderna"
+  "Percentages: last 10 seconds": "Procent: senaste 10 sekunderna",
+  "The stream is fine again.": "Streamen fungerar bra igen."
  }
 }

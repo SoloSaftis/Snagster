@@ -1048,6 +1048,7 @@
   "Encoder": "رمزگذار",
   "Time per frame": "زمان هر فریم",
   "{ms} of {budget} ms": "{ms} از {budget} میلی‌ثانیه",
-  "Percentages: last 10 seconds": "درصدها: ۱۰ ثانیه اخیر"
+  "Percentages: last 10 seconds": "درصدها: ۱۰ ثانیه اخیر",
+  "The stream is fine again.": "پخش زنده دوباره درست شد."
  }
 }

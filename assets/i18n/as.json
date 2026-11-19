@@ -1048,6 +1048,7 @@
   "Encoder": "এনকোডাৰ",
   "Time per frame": "প্ৰতি ফ্ৰেমৰ সময়",
   "{ms} of {budget} ms": "{budget} মি.ছে.ৰ ভিতৰত {ms}",
-  "Percentages: last 10 seconds": "শতাংশ: যোৱা ১০ ছেকেণ্ড"
+  "Percentages: last 10 seconds": "শতাংশ: যোৱা ১০ ছেকেণ্ড",
+  "The stream is fine again.": "ষ্ট্ৰিমটো পুনৰ ভালে আছে।"
  }
 }

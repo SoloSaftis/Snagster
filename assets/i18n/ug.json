@@ -1048,6 +1048,7 @@
   "Encoder": "كودلىغۇچ",
   "Time per frame": "ھەر كادىر ۋاقتى",
   "{ms} of {budget} ms": "{budget} ms نىڭ {ms}",
-  "Percentages: last 10 seconds": "پىرسەنت: ئاخىرقى 10 سېكۇنت"
+  "Percentages: last 10 seconds": "پىرسەنت: ئاخىرقى 10 سېكۇنت",
+  "The stream is fine again.": "بىۋاسىتە ئوقۇم يەنە نورمال بولدى."
  }
 }

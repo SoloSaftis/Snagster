@@ -1048,6 +1048,7 @@
   "Encoder": "انکوڈر",
   "Time per frame": "فی فریم وقت",
   "{ms} of {budget} ms": "{budget} ms میں سے {ms}",
-  "Percentages: last 10 seconds": "فیصد: آخری 10 سیکنڈ"
+  "Percentages: last 10 seconds": "فیصد: آخری 10 سیکنڈ",
+  "The stream is fine again.": "اسٹریم دوبارہ ٹھیک ہے۔"
  }
 }

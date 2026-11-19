@@ -1048,6 +1048,7 @@
   "Encoder": "Ionchódóir",
   "Time per frame": "Am in aghaidh an fhráma",
   "{ms} of {budget} ms": "{ms} as {budget} ms",
-  "Percentages: last 10 seconds": "Céatadáin: an 10 soicind seo caite"
+  "Percentages: last 10 seconds": "Céatadáin: an 10 soicind seo caite",
+  "The stream is fine again.": "Tá an sruth ceart arís."
  }
 }

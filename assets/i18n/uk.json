@@ -1048,6 +1048,7 @@
   "Encoder": "Кодувальник",
   "Time per frame": "Час на кадр",
   "{ms} of {budget} ms": "{ms} із {budget} мс",
-  "Percentages: last 10 seconds": "Відсотки: останні 10 секунд"
+  "Percentages: last 10 seconds": "Відсотки: останні 10 секунд",
+  "The stream is fine again.": "Трансляція знову в нормі."
  }
 }

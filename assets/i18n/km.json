@@ -1048,6 +1048,7 @@
   "Encoder": "កម្មវិធីអ៊ិនកូដ",
   "Time per frame": "ពេលវេលាក្នុងមួយស៊ុម",
   "{ms} of {budget} ms": "{ms} ក្នុងចំណោម {budget} មីលីវិនាទី",
-  "Percentages: last 10 seconds": "ភាគរយ៖ ១០ វិនាទីចុងក្រោយ"
+  "Percentages: last 10 seconds": "ភាគរយ៖ ១០ វិនាទីចុងក្រោយ",
+  "The stream is fine again.": "ការផ្សាយបន្តផ្ទាល់ដំណើរការល្អវិញហើយ។"
  }
 }

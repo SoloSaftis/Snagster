@@ -1048,6 +1048,7 @@
   "Encoder": "ਇਨਕੋਡਰ",
   "Time per frame": "ਪ੍ਰਤੀ ਫ੍ਰੇਮ ਸਮਾਂ",
   "{ms} of {budget} ms": "{budget} ms ਵਿੱਚੋਂ {ms}",
-  "Percentages: last 10 seconds": "ਪ੍ਰਤੀਸ਼ਤ: ਆਖ਼ਰੀ 10 ਸਕਿੰਟ"
+  "Percentages: last 10 seconds": "ਪ੍ਰਤੀਸ਼ਤ: ਆਖ਼ਰੀ 10 ਸਕਿੰਟ",
+  "The stream is fine again.": "ਸਟ੍ਰੀਮ ਮੁੜ ਠੀਕ ਹੈ।"
  }
 }

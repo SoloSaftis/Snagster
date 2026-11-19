@@ -1048,6 +1048,7 @@
   "Encoder": "ตัวเข้ารหัส",
   "Time per frame": "เวลาต่อเฟรม",
   "{ms} of {budget} ms": "{ms} จาก {budget} ms",
-  "Percentages: last 10 seconds": "เปอร์เซ็นต์: 10 วินาทีล่าสุด"
+  "Percentages: last 10 seconds": "เปอร์เซ็นต์: 10 วินาทีล่าสุด",
+  "The stream is fine again.": "การถ่ายทอดสดกลับมาเป็นปกติแล้ว"
  }
 }

@@ -1048,6 +1048,7 @@
   "Encoder": "ଏନକୋଡର୍",
   "Time per frame": "ପ୍ରତି ଫ୍ରେମ୍ ସମୟ",
   "{ms} of {budget} ms": "{budget} ms ମଧ୍ୟରୁ {ms}",
-  "Percentages: last 10 seconds": "ଶତକଡ଼ା: ଶେଷ 10 ସେକେଣ୍ଡ"
+  "Percentages: last 10 seconds": "ଶତକଡ଼ା: ଶେଷ 10 ସେକେଣ୍ଡ",
+  "The stream is fine again.": "ଷ୍ଟ୍ରିମ୍ ପୁଣି ଠିକ୍ ଅଛି।"
  }
 }

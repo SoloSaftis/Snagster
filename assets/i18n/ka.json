@@ -1048,6 +1048,7 @@
   "Encoder": "ენკოდერი",
   "Time per frame": "დრო ერთ კადრზე",
   "{ms} of {budget} ms": "{ms} / {budget} მწმ",
-  "Percentages: last 10 seconds": "პროცენტები: ბოლო 10 წამი"
+  "Percentages: last 10 seconds": "პროცენტები: ბოლო 10 წამი",
+  "The stream is fine again.": "ტრანსლაცია ისევ რიგზეა."
  }
 }

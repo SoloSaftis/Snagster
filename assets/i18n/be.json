@@ -1048,6 +1048,7 @@
   "Encoder": "Кадавальнік",
   "Time per frame": "Час на кадр",
   "{ms} of {budget} ms": "{ms} з {budget} мс",
-  "Percentages: last 10 seconds": "Працэнты: апошнія 10 секунд"
+  "Percentages: last 10 seconds": "Працэнты: апошнія 10 секунд",
+  "The stream is fine again.": "Эфір зноў у парадку."
  }
 }

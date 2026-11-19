@@ -1048,6 +1048,7 @@
   "Encoder": "এনকোডার",
   "Time per frame": "প্রতি ফ্রেমের সময়",
   "{ms} of {budget} ms": "{budget} মি.সে.-এর মধ্যে {ms}",
-  "Percentages: last 10 seconds": "শতাংশ: গত ১০ সেকেন্ড"
+  "Percentages: last 10 seconds": "শতাংশ: গত ১০ সেকেন্ড",
+  "The stream is fine again.": "স্ট্রিম আবার ঠিক আছে।"
  }
 }

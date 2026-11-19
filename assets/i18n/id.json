@@ -1048,6 +1048,7 @@
   "Encoder": "Encoder",
   "Time per frame": "Waktu per frame",
   "{ms} of {budget} ms": "{ms} dari {budget} md",
-  "Percentages: last 10 seconds": "Persentase: 10 detik terakhir"
+  "Percentages: last 10 seconds": "Persentase: 10 detik terakhir",
+  "The stream is fine again.": "Siaran sudah lancar kembali."
  }
 }

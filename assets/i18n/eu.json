@@ -1048,6 +1048,7 @@
   "Encoder": "Kodetzailea",
   "Time per frame": "Denbora fotogramako",
   "{ms} of {budget} ms": "{ms} / {budget} ms",
-  "Percentages: last 10 seconds": "Ehunekoak: azken 10 segundoak"
+  "Percentages: last 10 seconds": "Ehunekoak: azken 10 segundoak",
+  "The stream is fine again.": "Zuzeneko emisioa berriro ondo dago."
  }
 }

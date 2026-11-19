@@ -1034,7 +1034,7 @@
   "{service} keeps reconnecting": "{service} verbënnt sech ëmmer erëm nei",
   "The connection to {service} keeps dropping: check your network.": "D'Verbindung zu {service} ënnerbrécht ëmmer erëm: Kontrolléier däin Netzwierk.",
   "Stream details": "Stream-Detailer",
-  "Measuring…": "Moosse…",
+  "Measuring…": "Gëtt gemooss…",
   "{sent} of {set}": "{sent} vun {set}",
   "Sent": "Geschéckt",
   "Waiting to send": "Waart op d'Schécken",
@@ -1048,6 +1048,7 @@
   "Encoder": "Encoder",
   "Time per frame": "Zäit pro Bild",
   "{ms} of {budget} ms": "{ms} vun {budget} ms",
-  "Percentages: last 10 seconds": "Prozenter: lescht 10 Sekonnen"
+  "Percentages: last 10 seconds": "Prozenter: lescht 10 Sekonnen",
+  "The stream is fine again.": "De Stream leeft erëm ouni Problemer."
  }
 }

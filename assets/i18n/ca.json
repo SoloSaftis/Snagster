@@ -1048,6 +1048,7 @@
   "Encoder": "Codificador",
   "Time per frame": "Temps per fotograma",
   "{ms} of {budget} ms": "{ms} de {budget} ms",
-  "Percentages: last 10 seconds": "Percentatges: darrers 10 segons"
+  "Percentages: last 10 seconds": "Percentatges: darrers 10 segons",
+  "The stream is fine again.": "L'emissió torna a anar bé."
  }
 }

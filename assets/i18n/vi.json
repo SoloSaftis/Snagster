@@ -1048,6 +1048,7 @@
   "Encoder": "Bộ mã hóa",
   "Time per frame": "Thời gian mỗi khung hình",
   "{ms} of {budget} ms": "{ms} trên {budget} ms",
-  "Percentages: last 10 seconds": "Phần trăm: 10 giây gần nhất"
+  "Percentages: last 10 seconds": "Phần trăm: 10 giây gần nhất",
+  "The stream is fine again.": "Luồng phát đã ổn trở lại."
  }
 }

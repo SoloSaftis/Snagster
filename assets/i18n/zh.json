@@ -1048,6 +1048,7 @@
   "Encoder": "编码器",
   "Time per frame": "每帧耗时",
   "{ms} of {budget} ms": "{ms} / {budget} 毫秒",
-  "Percentages: last 10 seconds": "百分比：最近 10 秒"
+  "Percentages: last 10 seconds": "百分比：最近 10 秒",
+  "The stream is fine again.": "直播已恢复正常。"
  }
 }

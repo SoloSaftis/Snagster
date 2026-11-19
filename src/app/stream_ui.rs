@@ -135,8 +135,8 @@ pub(crate) fn stream_details(ui: &mut egui::Ui, s: &Stats, line: Option<&HealthL
         ui.end_row();
         ui.label(t("Dropped by the network"));
         for o in &h.outputs {
-            let pct = if o.measured { percent(o.dropped_share) } else { measuring.to_string() };
-            ui.label(tf("{n} ({pct})", &[("n", &o.dropped.to_string()), ("pct", &pct)]));
+            // The count from the start; its share once it is measured.
+            ui.label(if o.measured { tf("{n} ({pct})", &[("n", &o.dropped.to_string()), ("pct", &percent(o.dropped_share))]) } else { o.dropped.to_string() });
         }
         ui.end_row();
         ui.label(t("Connected for"));
@@ -153,8 +153,7 @@ pub(crate) fn stream_details(ui: &mut egui::Ui, s: &Stats, line: Option<&HealthL
     ui.separator();
     egui::Grid::new("stream-details-computer").num_columns(2).spacing(vec2(16.0, 4.0)).show(ui, |ui| {
         ui.label(t("Dropped by the computer"));
-        let pct = if h.window_s > 0.0 { percent(h.encoder_lost_share) } else { measuring.to_string() };
-        ui.label(tf("{n} ({pct})", &[("n", &h.encoder_lost.to_string()), ("pct", &pct)]));
+        ui.label(if h.window_s > 0.0 { tf("{n} ({pct})", &[("n", &h.encoder_lost.to_string()), ("pct", &percent(h.encoder_lost_share))]) } else { h.encoder_lost.to_string() });
         ui.end_row();
         ui.label(t("Encoder"));
         ui.label(encoder_text(s));
@@ -449,6 +448,13 @@ impl SnagApp {
             && self.x.stream.health_line.as_ref().is_none_or(|p| !p.bad || p.short != l.short)
         {
             self.status = l.advice.clone();
+        }
+        // The status line still gives advice for a problem that has gone: say it's fine again.
+        if line.is_none()
+            && let Some(p) = &self.x.stream.health_line
+            && self.status == p.advice
+        {
+            self.status = t("The stream is fine again.").into();
         }
         self.x.stream.health_line = line;
     }
@@ -1112,9 +1118,18 @@ mod tests {
         a.status = "something else".into();
         a.health_tick(4.0, &live_snap(&[("Twitch", State::Live)], vec![Warning { problem: Problem::Upload, level: Level::Bad, service: Some("Twitch".into()) }]));
         assert_eq!(a.status, "something else", "said once");
-        // The stream ends: the line goes at once.
+        // The stream ends: the line goes at once (and other news in the status line stays).
         a.health_tick(5.0, &Snapshot::default());
         assert!(a.x.stream.health_line.is_none());
+        assert_eq!(a.status, "something else");
+        // The problem clears while the advice is still in the status line: it says so.
+        let bad = Warning { problem: Problem::Computer, level: Level::Bad, service: None };
+        a.health_tick(6.0, &live_snap(&[("Twitch", State::Live)], vec![bad]));
+        assert_eq!(a.status, "Your computer can't encode fast enough: lower the resolution or the frame rate.");
+        a.health_tick(15.0, &live_snap(&[("Twitch", State::Live)], vec![]));
+        assert!(a.x.stream.health_line.is_some(), "it stays ten seconds");
+        a.health_tick(16.0, &live_snap(&[("Twitch", State::Live)], vec![]));
+        assert_eq!(a.status, "The stream is fine again.");
     }
 
     #[test]

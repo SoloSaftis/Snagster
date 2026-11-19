@@ -1048,6 +1048,7 @@
   "Encoder": "Kodlovchi",
   "Time per frame": "Bir kadr uchun vaqt",
   "{ms} of {budget} ms": "{budget} ms dan {ms}",
-  "Percentages: last 10 seconds": "Foizlar: oxirgi 10 soniya"
+  "Percentages: last 10 seconds": "Foizlar: oxirgi 10 soniya",
+  "The stream is fine again.": "Translyatsiya yana joyida."
  }
 }

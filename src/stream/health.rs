@@ -334,8 +334,10 @@ impl Sampler {
 #[derive(Clone, Debug, Default)]
 pub struct Steady {
     shown: Option<Warning>,
-    /// When `shown` was last true.
+    /// When `shown` was last true, and last true at its level or worse (a milder level of the
+    /// same problem takes its place only `KEEP_MS` after that).
     seen_ms: u64,
+    level_seen_ms: u64,
     /// The top warning now, and since when it has held.
     held: Option<(Warning, u64)>,
 }
@@ -352,21 +354,26 @@ impl Steady {
                 let ready = c.level == Level::Bad || at_ms >= since + HOLD_MS;
                 let take = match &self.shown {
                     None => ready,
-                    Some(s) if s.same(c) => true,
+                    // The same problem: worse at once, milder once the worse level has gone.
+                    Some(s) if s.same(c) => c.level >= s.level || at_ms >= self.level_seen_ms + KEEP_MS,
                     Some(s) => ready && (c.level > s.level || at_ms >= self.seen_ms + KEEP_MS),
                 };
                 if take {
                     self.shown = Some(c.clone());
                     self.seen_ms = at_ms;
+                    self.level_seen_ms = at_ms;
                 }
             }
             None => self.held = None,
         }
         // The one shown is still true further down the list: it stays.
-        if let Some(s) = &self.shown
-            && warnings.iter().any(|w| w.same(s))
-        {
-            self.seen_ms = at_ms;
+        if let Some(s) = &self.shown {
+            for w in warnings.iter().filter(|w| w.same(s)) {
+                self.seen_ms = at_ms;
+                if w.level >= s.level {
+                    self.level_seen_ms = at_ms;
+                }
+            }
         }
         if self.shown.is_some() && at_ms >= self.seen_ms + KEEP_MS {
             self.shown = None;
@@ -648,9 +655,16 @@ mod tests {
         assert_eq!(st.update(4000, std::slice::from_ref(&up)), Some(&bad));
         assert_eq!(st.update(13_499, std::slice::from_ref(&up)), Some(&bad));
         assert_eq!(st.update(13_500, std::slice::from_ref(&up)), Some(&up));
-        // The same problem getting worse or milder is the same line, at once.
+        // The same problem getting worse shows at once…
         let up_bad = Warning { level: Level::Bad, ..up.clone() };
         assert_eq!(st.update(14_000, std::slice::from_ref(&up_bad)), Some(&up_bad));
+        // …milder only once it has stayed milder for ten seconds (no red, yellow, red).
+        assert_eq!(st.update(15_000, std::slice::from_ref(&up)), Some(&up_bad));
+        assert_eq!(st.update(16_000, std::slice::from_ref(&up_bad)), Some(&up_bad));
+        for t in (17_000..26_000).step_by(1000) {
+            assert_eq!(st.update(t, std::slice::from_ref(&up)), Some(&up_bad), "at {t}");
+        }
+        assert_eq!(st.update(26_000, std::slice::from_ref(&up)), Some(&up));
         st.reset();
         assert_eq!(st.update(15_000, &[]), None);
     }

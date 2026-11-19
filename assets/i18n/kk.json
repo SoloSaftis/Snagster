@@ -1048,6 +1048,7 @@
   "Encoder": "Кодтаушы",
   "Time per frame": "Бір кадрға кететін уақыт",
   "{ms} of {budget} ms": "{ms} / {budget} мс",
-  "Percentages: last 10 seconds": "Пайыздар: соңғы 10 секунд"
+  "Percentages: last 10 seconds": "Пайыздар: соңғы 10 секунд",
+  "The stream is fine again.": "Трансляция қайтадан дұрыс."
  }
 }

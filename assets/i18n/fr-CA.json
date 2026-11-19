@@ -1048,6 +1048,7 @@
   "Encoder": "Encodeur",
   "Time per frame": "Temps par image",
   "{ms} of {budget} ms": "{ms} sur {budget} ms",
-  "Percentages: last 10 seconds": "Pourcentages : 10 dernières secondes"
+  "Percentages: last 10 seconds": "Pourcentages : 10 dernières secondes",
+  "The stream is fine again.": "Le flux est de nouveau correct."
  }
 }

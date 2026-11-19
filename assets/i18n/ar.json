@@ -1048,6 +1048,7 @@
   "Encoder": "المُرمِّز",
   "Time per frame": "الوقت لكل إطار",
   "{ms} of {budget} ms": "{ms} من {budget} مللي ثانية",
-  "Percentages: last 10 seconds": "النسب المئوية: آخر 10 ثوانٍ"
+  "Percentages: last 10 seconds": "النسب المئوية: آخر 10 ثوانٍ",
+  "The stream is fine again.": "البث يعمل بشكل جيد مرة أخرى."
  }
 }

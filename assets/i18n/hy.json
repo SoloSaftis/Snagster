@@ -1048,6 +1048,7 @@
   "Encoder": "Կոդավորիչ",
   "Time per frame": "Ժամանակ մեկ կադրի համար",
   "{ms} of {budget} ms": "{ms} / {budget} մվ",
-  "Percentages: last 10 seconds": "Տոկոսներ՝ վերջին 10 վայրկյանը"
+  "Percentages: last 10 seconds": "Տոկոսներ՝ վերջին 10 վայրկյանը",
+  "The stream is fine again.": "Հեռարձակումը նորից կարգին է։"
  }
 }

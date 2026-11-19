@@ -1034,7 +1034,7 @@
   "{service} keeps reconnecting": "{service} מתחבר מחדש שוב ושוב",
   "The connection to {service} keeps dropping: check your network.": "החיבור אל {service} נותק שוב ושוב: בדוק את הרשת שלך.",
   "Stream details": "פרטי השידור",
-  "Measuring…": "מודד…",
+  "Measuring…": "מתבצעת מדידה…",
   "{sent} of {set}": "{sent} מתוך {set}",
   "Sent": "נשלח",
   "Waiting to send": "ממתין לשליחה",
@@ -1048,6 +1048,7 @@
   "Encoder": "מקודד",
   "Time per frame": "זמן לכל פריים",
   "{ms} of {budget} ms": "{ms} מתוך {budget} אלפיות שנייה",
-  "Percentages: last 10 seconds": "אחוזים: 10 השניות האחרונות"
+  "Percentages: last 10 seconds": "אחוזים: 10 השניות האחרונות",
+  "The stream is fine again.": "השידור תקין שוב."
  }
 }

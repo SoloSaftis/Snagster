@@ -1048,6 +1048,7 @@
   "Encoder": "Кодлаучы",
   "Time per frame": "Кадр өчен вакыт",
   "{ms} of {budget} ms": "{budget} мс эченнән {ms}",
-  "Percentages: last 10 seconds": "Процентлар: соңгы 10 секунд"
+  "Percentages: last 10 seconds": "Процентлар: соңгы 10 секунд",
+  "The stream is fine again.": "Трансляция тагын тәртиптә."
  }
 }

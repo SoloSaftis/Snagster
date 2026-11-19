@@ -1048,6 +1048,7 @@
   "Encoder": "인코더",
   "Time per frame": "프레임당 시간",
   "{ms} of {budget} ms": "{budget} ms 중 {ms}",
-  "Percentages: last 10 seconds": "백분율: 최근 10초"
+  "Percentages: last 10 seconds": "백분율: 최근 10초",
+  "The stream is fine again.": "스트림이 다시 정상입니다."
  }
 }
