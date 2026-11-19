@@ -248,8 +248,8 @@ impl SnagApp {
         let (can_undo, can_redo) = self.current.map(|i| (!self.entries[i].undo.is_empty(), !self.entries[i].redo.is_empty())).unwrap_or((false, false));
         look::group(ui, t("History"), |ui| {
             look::column(ui, |ui| {
-                if look::small_tool(ui, ph::UNDO, t("Undo"), "Ctrl+Z", can_undo).clicked() {
-                    self.undo();
+                if look::small_tool(ui, ph::UNDO, t("Undo"), "Ctrl+Z", self.can_undo_any(can_undo)).clicked() {
+                    self.undo_any();
                 }
                 if look::small_tool(ui, ph::REDO, t("Redo"), super::redo_keys(), can_redo).clicked() {
                     self.redo();
@@ -528,8 +528,8 @@ impl SnagApp {
         let has = self.current.is_some();
         let sel = self.selected.is_some();
         look::group(ui, t("History"), |ui| {
-            if look::big_tool(ui, ph::UNDO, t("Undo"), "Ctrl+Z", can_undo, false).clicked() {
-                self.undo();
+            if look::big_tool(ui, ph::UNDO, t("Undo"), "Ctrl+Z", self.can_undo_any(can_undo), false).clicked() {
+                self.undo_any();
             }
             if look::big_tool(ui, ph::REDO, t("Redo"), super::redo_keys(), can_redo, false).clicked() {
                 self.redo();

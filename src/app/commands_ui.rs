@@ -35,6 +35,7 @@ pub(crate) const SIMPLE: &[(&str, Run)] = &[
         }
     }),
     ("recycle", |a, _| a.recycle_current()),
+    ("undo_delete", |a, _| a.undo_delete()),
     ("export_pictures", |a, _| {
         if !a.entries.is_empty() {
             a.dialog = Some(crate::windows::Dialog::export(a.entries.len(), &a.settings));

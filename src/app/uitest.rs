@@ -188,6 +188,22 @@ impl UiTest {
             a.remove_current();
             assert_eq!(a.entries.len(), n);
         }));
+        // Deleting shows an Undo that brings the file back. The file waits beside itself, so the
+        // computer's own Recycle Bin / Trash isn't touched by the test.
+        let deleted_file = dir.join("deleted-then-undone.png");
+        let df = deleted_file.clone();
+        s.push(once("Delete: the Undo shows, and Undo brings the file back", move |a, _| {
+            std::fs::write(&df, b"picture").unwrap();
+            let g = crate::recycle::remove(&df, None, crate::recycle::Way::Hold, &crate::recycle::SystemBin).unwrap();
+            a.deleted(g);
+            assert!(a.delete_undo_showing() && !df.exists());
+            a.undo_delete();
+            assert!(!a.delete_undo_showing());
+        }));
+        s.push((
+            "Delete: the file is back".to_string(),
+            Box::new(move |a: &mut SnagApp, _: &egui::Context| deleted_file.exists() && a.status.starts_with("Restored")),
+        ));
         s.push(once("File: rename", |a, _| {
             a.rename_current("Renamed by test");
             assert_eq!(a.entries[cur(a)].name, "Renamed by test");

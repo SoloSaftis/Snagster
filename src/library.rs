@@ -150,23 +150,10 @@ pub fn thumbnail_of(path: &Path, img: &RgbaImage, size: u32) -> Option<RgbaImage
 }
 
 /// Move a capture to the Recycle Bin / Trash (so it can be brought back) and drop its tags
-/// and thumbnail. Every system's guidelines ask for this instead of deleting for good.
-pub fn delete(item: &Item) -> Result<(), String> {
-    delete_with(item, |p| trash::delete(p).map_err(|e| e.to_string()))
-}
-
-/// `delete`, with `remove` doing the picture itself (tests delete for real instead of
-/// using the system's Trash).
-fn delete_with(item: &Item, remove: impl FnOnce(&Path) -> Result<(), String>) -> Result<(), String> {
-    if !item.path.exists() {
-        return Err(format!("{} is gone", item.path.display()));
-    }
-    remove(&item.path)?;
-    let _ = std::fs::remove_file(item.meta_path());
-    if let (Some(dir), Some(name)) = (item.path.parent(), item.path.file_name()) {
-        let _ = std::fs::remove_file(dir.join(".thumbs").join(name));
-    }
-    Ok(())
+/// and thumbnail. Every system's guidelines ask for this instead of deleting for good; the
+/// answer is what an Undo needs to bring it back with its tags (`recycle::Pending`).
+pub fn delete(item: &Item) -> Result<crate::recycle::Gone, String> {
+    crate::recycle::remove(&item.path, Some(item.meta.clone()), crate::recycle::way_here(), &crate::recycle::SystemBin)
 }
 
 #[cfg(test)]
@@ -401,11 +388,12 @@ mod tests {
         let it = scan(&dir).pop().unwrap();
         let thumb = p.parent().unwrap().join(".thumbs").join(p.file_name().unwrap());
         assert!(thumb.exists() && it.meta_path().exists());
-        let real = |p: &Path| std::fs::remove_file(p).map_err(|e| e.to_string());
-        delete_with(&it, real).unwrap();
+        let bin = crate::recycle::tests::FolderBin::new(dir.join(".bin"));
+        let remove = |it: &Item| crate::recycle::remove(&it.path, Some(it.meta.clone()), crate::recycle::Way::Restore, &bin);
+        remove(&it).unwrap();
         assert!(!p.exists() && !it.meta_path().exists() && !thumb.exists());
         assert!(scan(&dir).is_empty());
-        assert!(delete_with(&it, real).is_err(), "deleting twice says so");
+        assert!(remove(&it).is_err(), "deleting twice says so");
         assert!(delete(&it).is_err(), "a capture that is gone isn't sent to the Trash");
         let _ = std::fs::remove_dir_all(&dir);
     }
