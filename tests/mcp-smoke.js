@@ -77,7 +77,7 @@ function stdio() {
         check(tools.length >= 45, `tools/list (${tools.length} tools)`);
         check(tools.every((t) => t.annotations && typeof t.annotations.readOnlyHint === 'boolean' && t.inputSchema), 'every tool has a schema and hints');
         const names = new Set(tools.map((t) => t.name));
-        const added = ['update_mark', 'run_preset', 'simplify', 'quick_save', 'capture_last_area', 'studio_add_scene', 'studio_remove_scene', 'studio_set_current', 'studio_update_source', 'library_delete', 'library_tag'];
+        const added = ['update_mark', 'run_preset', 'simplify', 'quick_save', 'capture_last_area', 'studio_add_scene', 'studio_remove_scene', 'studio_set_current', 'studio_update_source', 'library_delete', 'undo_delete', 'library_tag'];
         const missing = added.filter((n) => !names.has(n));
         check(missing.length === 0, 'tools/list has the newer tools', missing.join(', '));
         const byName = (n) => tools.find((t) => t.name === n) || {};

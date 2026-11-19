@@ -15,6 +15,7 @@ mod packaged;
 mod effects;
 mod export;
 mod library;
+mod recycle;
 mod catalog;
 mod mcp;
 mod ocr;

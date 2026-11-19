@@ -877,6 +877,7 @@ impl SnagApp {
 
     pub(crate) fn library_window(&mut self, ctx: &egui::Context) {
         if !self.library_open {
+            self.lib_focused = false;
             return;
         }
         // Reading the library folder (maybe a cloud folder with thousands of files) is done on
@@ -950,7 +951,20 @@ impl SnagApp {
         let mut delete_item = None;
         let mut show_item = None;
         let mut save_tags = None;
+        let mut undo = false;
         own_window(ctx, Win { key: "library", title: crate::i18n::t("Library"), size: vec2(900.0, 640.0), resizable: true }, &mut open, |ui| {
+            self.lib_focused = ui.input(|i| i.focused);
+            // Right after a delete: what went, with Undo, at the foot (so the list doesn't move
+            // under the pointer when it goes). Ctrl+Z / ⌘Z too, unless a text box has the keys.
+            if self.delete_undo_showing() {
+                let typing = ui.ctx().egui_wants_keyboard_input();
+                undo = !typing && self.deleted.owns_shortcut(std::time::Instant::now()) && ui.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, Key::Z));
+                egui::Panel::bottom("library-undo").show_separator_line(false).show(ui, |ui| {
+                    ui.add_space(6.0);
+                    // The button undoes on its own.
+                    self.delete_undo_bar(ui, 60);
+                });
+            }
             ui.horizontal(|ui| {
                 ui.label(crate::i18n::t("Search"));
                 ui.add(egui::TextEdit::singleline(&mut self.lib_query).hint_text("title, program, tag, date (2026-11)").desired_width(260.0));
@@ -1092,6 +1106,9 @@ impl SnagApp {
             }
             self.lib_tag_edit = None;
         }
+        if undo {
+            self.undo_delete();
+        }
         if let Some(i) = open_item {
             let p = self.lib_items[i].path.clone();
             self.open_path(&p);
@@ -1102,11 +1119,11 @@ impl SnagApp {
         }
         if let Some(i) = delete_item {
             // To the Recycle Bin / Trash, where it can be brought back (never deleted for good).
+            // An Undo shows right away, here and in the editor.
             match library::delete(&self.lib_items[i]) {
-                Ok(()) => {
-                    let s = self.lib_items[i].path.display().to_string();
-                    self.status = crate::i18n::tf(crate::platform::trash_text("Moved {path} to the Recycle Bin.", "Moved {path} to the Trash."), &[("path", &s)]);
+                Ok(g) => {
                     self.lib_items.remove(i);
+                    self.deleted(g);
                 }
                 Err(e) => self.status = crate::i18n::tf(crate::platform::trash_text("Couldn't move it to the Recycle Bin: {error}", "Couldn't move it to the Trash: {error}"), &[("error", &e)]),
             }
