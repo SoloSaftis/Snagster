@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "டெஸ்க்டாப்பின் உரையாடலில் திரைப் பகிர்வு ரத்து செய்யப்பட்டது: எதுவும் பகிரப்படவில்லை.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "திரைப் பகிர்வு தொடங்கவில்லை: அது டெஸ்க்டாப்பின் உரையாடலில் ரத்து செய்யப்பட்டது, அல்லது டெஸ்க்டாப் எந்தக் காரணத்தையும் தரவில்லை. எதுவும் பகிரப்படவில்லை.",
   "The desktop's screen-sharing portal said no: {error}": "டெஸ்க்டாப்பின் திரைப் பகிர்வு portal மறுத்துவிட்டது: {error}",
+  "More tabs": "மேலும் தாவல்கள்",
+  "The groups that don't fit the window": "சாளரத்தில் பொருந்தாத குழுக்கள்",
   "Waiting for screen sharing…": "திரைப் பகிர்வுக்காகக் காத்திருக்கிறது…",
   "Recording GIF  {time}": "GIF பதிவு செய்கிறது  {time}",
   "Recording {format} at {fps} fps  {time}": "{fps} fps-இல் {format} பதிவு செய்கிறது  {time}",

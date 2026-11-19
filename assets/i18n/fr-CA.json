@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Le partage d'écran a été annulé dans la boîte de dialogue du bureau : rien n'a été partagé.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Le partage d'écran n'a pas démarré : il a été annulé dans la boîte de dialogue du bureau, ou le bureau n'a donné aucune raison. Rien n'a été partagé.",
   "The desktop's screen-sharing portal said no: {error}": "Le portail de partage d'écran du bureau a refusé : {error}",
+  "More tabs": "Plus d'onglets",
+  "The groups that don't fit the window": "Les groupes qui n'entrent pas dans la fenêtre",
   "Waiting for screen sharing…": "En attente du partage d'écran…",
   "Recording GIF  {time}": "Enregistrement GIF  {time}",
   "Recording {format} at {fps} fps  {time}": "Enregistrement {format} à {fps} fps  {time}",

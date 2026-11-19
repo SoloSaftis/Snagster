@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Hætt var við skjádeilingu í samskiptaglugga skjáborðsins: engu var deilt.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skjádeiling hófst ekki: hætt var við hana í samskiptaglugga skjáborðsins, eða skjáborðið gaf enga ástæðu. Engu var deilt.",
   "The desktop's screen-sharing portal said no: {error}": "Skjádeilingargátt skjáborðsins sagði nei: {error}",
+  "More tabs": "Fleiri flipar",
+  "The groups that don't fit the window": "Hóparnir sem komast ekki fyrir í glugganum",
   "Waiting for screen sharing…": "Bíður eftir skjádeilingu…",
   "Recording GIF  {time}": "Tek upp GIF  {time}",
   "Recording {format} at {fps} fps  {time}": "Tek upp {format} á {fps} fps  {time}",

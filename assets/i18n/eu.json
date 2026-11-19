@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Pantaila partekatzea bertan behera utzi da mahaigainaren elkarrizketa-koadroan: ez da ezer partekatu.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Pantaila partekatzea ez da hasi: mahaigainaren elkarrizketa-koadroan bertan behera utzi da, edo mahaigainak ez du arrazoirik eman. Ez da ezer partekatu.",
   "The desktop's screen-sharing portal said no: {error}": "Mahaigainaren pantaila partekatzeko portalak ezetz esan du: {error}",
+  "More tabs": "Fitxa gehiago",
+  "The groups that don't fit the window": "Leihoan sartzen ez diren taldeak",
   "Waiting for screen sharing…": "Pantaila partekatzeari itxaroten…",
   "Recording GIF  {time}": "GIF grabatzen  {time}",
   "Recording {format} at {fps} fps  {time}": "{format} grabatzen {fps} fps-tan  {time}",

@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Berbagi layar dibatalkan di dialog desktop: tidak ada yang dibagikan.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Berbagi layar tidak dimulai: dibatalkan di dialog desktop, atau desktop tidak memberikan alasan. Tidak ada yang dibagikan.",
   "The desktop's screen-sharing portal said no: {error}": "Portal berbagi layar desktop menolak: {error}",
+  "More tabs": "Tab lainnya",
+  "The groups that don't fit the window": "Grup yang tidak muat di jendela",
   "Waiting for screen sharing…": "Menunggu berbagi layar…",
   "Recording GIF  {time}": "Merekam GIF  {time}",
   "Recording {format} at {fps} fps  {time}": "Merekam {format} pada {fps} fps  {time}",

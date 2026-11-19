@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Chaidh co-roinneadh na sgrìn a chur dheth ann an còmhradh an deasg: cha deach dad a cho-roinn.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Cha do thòisich co-roinneadh na sgrìn: chaidh a chur dheth ann an còmhradh an deasg, no cha tug an deasg adhbhar sam bith. Cha deach dad a cho-roinn.",
   "The desktop's screen-sharing portal said no: {error}": "Thuirt portal co-roinneadh sgrìn an deasg nach eil: {error}",
+  "More tabs": "Barrachd thabaichean",
+  "The groups that don't fit the window": "Na buidhnean nach eil a' freagairt air an uinneag",
   "Waiting for screen sharing…": "A' feitheamh ri co-roinneadh na sgrìn…",
   "Recording GIF  {time}": "A' clàradh GIF  {time}",
   "Recording {format} at {fps} fps  {time}": "A' clàradh {format} aig {fps} fps  {time}",

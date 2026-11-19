@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ਡੈਸਕਟਾਪ ਦੇ ਡਾਇਲਾਗ ਵਿੱਚ ਸਕ੍ਰੀਨ ਸ਼ੇਅਰਿੰਗ ਰੱਦ ਕਰ ਦਿੱਤੀ ਗਈ: ਕੁਝ ਵੀ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਗਿਆ।",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ਸਕ੍ਰੀਨ ਸ਼ੇਅਰਿੰਗ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋਈ: ਇਹ ਡੈਸਕਟਾਪ ਦੇ ਡਾਇਲਾਗ ਵਿੱਚ ਰੱਦ ਕੀਤੀ ਗਈ ਸੀ, ਜਾਂ ਡੈਸਕਟਾਪ ਨੇ ਕੋਈ ਕਾਰਨ ਨਹੀਂ ਦੱਸਿਆ। ਕੁਝ ਵੀ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਗਿਆ।",
   "The desktop's screen-sharing portal said no: {error}": "ਡੈਸਕਟਾਪ ਦੇ ਸਕ੍ਰੀਨ ਸ਼ੇਅਰਿੰਗ portal ਨੇ ਮਨ੍ਹਾ ਕਰ ਦਿੱਤਾ: {error}",
+  "More tabs": "ਹੋਰ ਟੈਬਾਂ",
+  "The groups that don't fit the window": "ਉਹ ਸਮੂਹ ਜੋ ਵਿੰਡੋ ਵਿੱਚ ਨਹੀਂ ਸਮਾਉਂਦੇ",
   "Waiting for screen sharing…": "ਸਕ੍ਰੀਨ ਸਾਂਝੀ ਕਰਨ ਦੀ ਉਡੀਕ…",
   "Recording GIF  {time}": "GIF ਰਿਕਾਰਡ ਹੋ ਰਿਹਾ ਹੈ  {time}",
   "Recording {format} at {fps} fps  {time}": "{fps} fps 'ਤੇ {format} ਰਿਕਾਰਡ ਹੋ ਰਿਹਾ ਹੈ  {time}",

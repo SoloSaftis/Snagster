@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skjermdelingen ble avbrutt i skrivebordets dialog: ingenting ble delt.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skjermdelingen startet ikke: den ble avbrutt i skrivebordets dialog, eller skrivebordet oppga ingen årsak. Ingenting ble delt.",
   "The desktop's screen-sharing portal said no: {error}": "Skrivebordets portal for skjermdeling sa nei: {error}",
+  "More tabs": "Flere faner",
+  "The groups that don't fit the window": "Gruppene som ikke får plass i vinduet",
   "Waiting for screen sharing…": "Venter på skjermdeling…",
   "Recording GIF  {time}": "Tar opp GIF  {time}",
   "Recording {format} at {fps} fps  {time}": "Tar opp {format} med {fps} fps  {time}",

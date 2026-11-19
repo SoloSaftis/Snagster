@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Показ экрана отменён в диалоговом окне рабочего стола: ничего не было передано.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Показ экрана не начался: он был отменён в диалоговом окне рабочего стола, либо рабочий стол не указал причину. Ничего не было передано.",
   "The desktop's screen-sharing portal said no: {error}": "Портал показа экрана рабочего стола отказал: {error}",
+  "More tabs": "Другие вкладки",
+  "The groups that don't fit the window": "Группы, которые не помещаются в окне",
   "Waiting for screen sharing…": "Ожидание демонстрации экрана…",
   "Recording GIF  {time}": "Запись GIF  {time}",
   "Recording {format} at {fps} fps  {time}": "Запись {format}, {fps} fps  {time}",

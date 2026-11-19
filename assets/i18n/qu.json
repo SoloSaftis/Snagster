@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Pantalla rakinakuy escritorio rimanakuy qhawanapi kutichisqa karqan: manaraq imapas rakisqachu.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Pantalla rakinakuy manam qallarirqachu: escritorio rimanakuy qhawanapi kutichisqa karqan, utaq escritorio manam imaraykuchus nirqachu. Manaraq imapas rakisqachu.",
   "The desktop's screen-sharing portal said no: {error}": "Escritorio pantalla rakinakuy portalqa mana nispa nirqa: {error}",
+  "More tabs": "Aswan pestañakuna",
+  "The groups that don't fit the window": "Ventanaman mana yaykuq huñukuna",
   "Waiting for screen sharing…": "Pantalla rakinakuyta suyashan…",
   "Recording GIF  {time}": "GIF grabashan  {time}",
   "Recording {format} at {fps} fps  {time}": "{format} grabashan {fps} fps-pi  {time}",

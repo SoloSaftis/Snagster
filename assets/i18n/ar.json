@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "أُلغيت مشاركة الشاشة في مربع حوار سطح المكتب: لم تتم مشاركة أي شيء.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "لم تبدأ مشاركة الشاشة: أُلغيت في مربع حوار سطح المكتب، أو لم يذكر سطح المكتب أي سبب. لم تتم مشاركة أي شيء.",
   "The desktop's screen-sharing portal said no: {error}": "رفضت بوابة (portal) مشاركة الشاشة في سطح المكتب الطلب: {error}",
+  "More tabs": "مزيد من علامات التبويب",
+  "The groups that don't fit the window": "المجموعات التي لا تتسع لها النافذة",
   "Waiting for screen sharing…": "بانتظار مشاركة الشاشة…",
   "Recording GIF  {time}": "جارٍ تسجيل GIF  {time}",
   "Recording {format} at {fps} fps  {time}": "جارٍ تسجيل {format} بمعدل {fps} fps  {time}",

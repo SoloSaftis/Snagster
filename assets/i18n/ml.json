@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ഡെസ്ക്ടോപ്പിന്റെ ഡയലോഗിൽ സ്ക്രീൻ പങ്കിടൽ റദ്ദാക്കി: ഒന്നും പങ്കിട്ടിട്ടില്ല.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "സ്ക്രീൻ പങ്കിടൽ ആരംഭിച്ചില്ല: ഡെസ്ക്ടോപ്പിന്റെ ഡയലോഗിൽ അത് റദ്ദാക്കി, അല്ലെങ്കിൽ ഡെസ്ക്ടോപ്പ് കാരണമൊന്നും നൽകിയില്ല. ഒന്നും പങ്കിട്ടിട്ടില്ല.",
   "The desktop's screen-sharing portal said no: {error}": "ഡെസ്ക്ടോപ്പിന്റെ സ്ക്രീൻ പങ്കിടൽ portal വിസമ്മതിച്ചു: {error}",
+  "More tabs": "കൂടുതൽ ടാബുകൾ",
+  "The groups that don't fit the window": "വിൻഡോയിൽ ഒതുങ്ങാത്ത ഗ്രൂപ്പുകൾ",
   "Waiting for screen sharing…": "സ്ക്രീൻ പങ്കിടലിനായി കാത്തിരിക്കുന്നു…",
   "Recording GIF  {time}": "GIF റെക്കോർഡ് ചെയ്യുന്നു  {time}",
   "Recording {format} at {fps} fps  {time}": "{fps} fps-ൽ {format} റെക്കോർഡ് ചെയ്യുന്നു  {time}",

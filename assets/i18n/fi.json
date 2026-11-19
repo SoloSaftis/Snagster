@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Näytön jakaminen peruttiin työpöydän valintaikkunassa: mitään ei jaettu.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Näytön jakaminen ei käynnistynyt: se peruttiin työpöydän valintaikkunassa, tai työpöytä ei kertonut syytä. Mitään ei jaettu.",
   "The desktop's screen-sharing portal said no: {error}": "Työpöydän näytönjakoportaali kieltäytyi: {error}",
+  "More tabs": "Lisää välilehtiä",
+  "The groups that don't fit the window": "Ryhmät, jotka eivät mahdu ikkunaan",
   "Waiting for screen sharing…": "Odotetaan näytön jakamista…",
   "Recording GIF  {time}": "Tallennetaan GIF  {time}",
   "Recording {format} at {fps} fps  {time}": "Tallennetaan {format}, {fps} fps  {time}",

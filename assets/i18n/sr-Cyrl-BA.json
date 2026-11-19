@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Дијељење екрана је отказано у дијалогу радне површине: ништа није подијељено.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Дијељење екрана није почело: отказано је у дијалогу радне површине или радна површина није навела разлог. Ништа није подијељено.",
   "The desktop's screen-sharing portal said no: {error}": "Портал радне површине за дијељење екрана је одбио: {error}",
+  "More tabs": "Још картица",
+  "The groups that don't fit the window": "Групе које не стају у прозор",
   "Waiting for screen sharing…": "Чека се дијељење екрана…",
   "Recording GIF  {time}": "Снимање GIF-а  {time}",
   "Recording {format} at {fps} fps  {time}": "Снимање {format} при {fps} fps  {time}",

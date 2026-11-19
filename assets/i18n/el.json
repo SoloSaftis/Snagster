@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Η κοινή χρήση οθόνης ακυρώθηκε στο παράθυρο διαλόγου της επιφάνειας εργασίας: δεν κοινοποιήθηκε τίποτα.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Η κοινή χρήση οθόνης δεν ξεκίνησε: ακυρώθηκε στο παράθυρο διαλόγου της επιφάνειας εργασίας ή η επιφάνεια εργασίας δεν έδωσε κανέναν λόγο. Δεν κοινοποιήθηκε τίποτα.",
   "The desktop's screen-sharing portal said no: {error}": "Το portal κοινής χρήσης οθόνης της επιφάνειας εργασίας αρνήθηκε: {error}",
+  "More tabs": "Περισσότερες καρτέλες",
+  "The groups that don't fit the window": "Οι ομάδες που δεν χωρούν στο παράθυρο",
   "Waiting for screen sharing…": "Αναμονή για κοινή χρήση οθόνης…",
   "Recording GIF  {time}": "Εγγραφή GIF  {time}",
   "Recording {format} at {fps} fps  {time}": "Εγγραφή {format} στα {fps} fps  {time}",

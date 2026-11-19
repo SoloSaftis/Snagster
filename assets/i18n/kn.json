@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಡೈಲಾಗ್‌ನಲ್ಲಿ ಸ್ಕ್ರೀನ್ ಹಂಚಿಕೆಯನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ: ಏನನ್ನೂ ಹಂಚಿಕೊಂಡಿಲ್ಲ.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ಸ್ಕ್ರೀನ್ ಹಂಚಿಕೆ ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ: ಅದನ್ನು ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಡೈಲಾಗ್‌ನಲ್ಲಿ ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ, ಅಥವಾ ಡೆಸ್ಕ್‌ಟಾಪ್ ಯಾವುದೇ ಕಾರಣ ನೀಡಲಿಲ್ಲ. ಏನನ್ನೂ ಹಂಚಿಕೊಂಡಿಲ್ಲ.",
   "The desktop's screen-sharing portal said no: {error}": "ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಸ್ಕ್ರೀನ್ ಹಂಚಿಕೆ portal ನಿರಾಕರಿಸಿತು: {error}",
+  "More tabs": "ಇನ್ನಷ್ಟು ಟ್ಯಾಬ್‌ಗಳು",
+  "The groups that don't fit the window": "ವಿಂಡೋದಲ್ಲಿ ಹಿಡಿಸದ ಗುಂಪುಗಳು",
   "Waiting for screen sharing…": "ಪರದೆ ಹಂಚಿಕೆಗಾಗಿ ಕಾಯುತ್ತಿದೆ…",
   "Recording GIF  {time}": "GIF ರೆಕಾರ್ಡ್ ಆಗುತ್ತಿದೆ  {time}",
   "Recording {format} at {fps} fps  {time}": "{fps} fps ನಲ್ಲಿ {format} ರೆಕಾರ್ಡ್ ಆಗುತ್ತಿದೆ  {time}",

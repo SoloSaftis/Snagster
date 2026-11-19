@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "የማያ ገጽ ማጋራት በዴስክቶፑ መገናኛ ውስጥ ተሰርዟል፦ ምንም አልተጋራም።",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "የማያ ገጽ ማጋራት አልጀመረም፦ በዴስክቶፑ መገናኛ ውስጥ ተሰርዟል፣ ወይም ዴስክቶፑ ምንም ምክንያት አልሰጠም። ምንም አልተጋራም።",
   "The desktop's screen-sharing portal said no: {error}": "የዴስክቶፑ የማያ ገጽ ማጋራት portal እምቢ አለ፦ {error}",
+  "More tabs": "ተጨማሪ ትሮች",
+  "The groups that don't fit the window": "በመስኮቱ ውስጥ የማይገቡ ቡድኖች",
   "Waiting for screen sharing…": "ማያ ገጽ ማጋራትን በመጠበቅ ላይ…",
   "Recording GIF  {time}": "GIF በመቅረጽ ላይ  {time}",
   "Recording {format} at {fps} fps  {time}": "{format} በ{fps} fps በመቅረጽ ላይ  {time}",
