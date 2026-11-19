@@ -26,6 +26,8 @@ mod hotkeys;
 mod overlay;
 #[cfg(target_os = "linux")]
 mod portal;
+#[cfg(target_os = "linux")]
+mod wl_activate;
 mod panel;
 mod tray;
 mod settings;

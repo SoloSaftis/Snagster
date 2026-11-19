@@ -84,6 +84,13 @@ mp4 = "0.14"
 # libva isn't installed.
 [target."cfg(target_os = \"linux\")".dependencies]
 libloading = "0.8"
+# Bringing the minimized window back after a recording on Wayland (xdg-activation over winit's own
+# connection). Already in the tree through winit (MIT); raw-window-handle (MIT/Apache-2.0/Zlib)
+# through eframe.
+wayland-client = "0.31"
+wayland-backend = { version = "0.3", features = ["client_system"] }
+wayland-protocols = { version = "0.32", features = ["client", "staging"] }
+raw-window-handle = "0.6"
 # Live-stream screen copies on X11: one connection kept open and MIT-SHM shared memory
 # (MIT/Apache-2.0; already in the tree for the window and the clipboard). libc for the System V
 # shared-memory segment (MIT/Apache-2.0).
