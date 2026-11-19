@@ -6406,6 +6406,26 @@ mod tests {
     }
 
     #[test]
+    fn the_trays_stop_recording_stops_only_a_recording() {
+        let ctx = egui::Context::default();
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        let stop = Arc::new(AtomicBool::new(false));
+        a.job_stop = Some(stop.clone());
+        // A scrolling capture isn't a recording: the tray's Stop recording leaves it alone.
+        a.mini = Some(Mini::Scroll);
+        a.tray_tx.send(crate::tray::TrayCmd::StopRecording).unwrap();
+        a.poll_tray(&ctx);
+        assert!(!stop.load(Ordering::Relaxed));
+        for m in [Mini::Video, Mini::Gif] {
+            stop.store(false, Ordering::Relaxed);
+            a.mini = Some(m);
+            a.tray_tx.send(crate::tray::TrayCmd::StopRecording).unwrap();
+            a.poll_tray(&ctx);
+            assert!(stop.load(Ordering::Relaxed), "a recording stops as with the bar's Stop");
+        }
+    }
+
+    #[test]
     fn blank_state_has_nothing_open_and_does_not_persist() {
         let a = SnagApp::blank(Settings::default(), false, None);
         assert!(a.entries.is_empty());

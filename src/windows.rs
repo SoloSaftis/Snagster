@@ -173,10 +173,11 @@ pub(crate) fn mac_group(tab: SettingsTab) -> usize {
 fn mac_settings_toolbar(ui: &mut egui::Ui, tab: &mut SettingsTab, label: &dyn Fn(SettingsTab) -> &'static str) {
     let group = mac_group(*tab);
     let gap = ui.spacing().item_spacing.x;
-    centered_row(ui, MAC_GROUPS.len() as f32 * (crate::look::PANE_TOOL_W + gap) - gap, |ui| {
-        for (i, (name, icon, tabs)) in MAC_GROUPS.iter().enumerate() {
-            let name = mac_title(crate::i18n::t(name));
-            if crate::look::pane_tool(ui, icon, &name, i == group).clicked() && i != group {
+    let names: Vec<String> = MAC_GROUPS.iter().map(|g| mac_title(crate::i18n::t(g.0))).collect();
+    let (size, width) = toolbar_fit(ui.available_width(), gap, |size| names.iter().map(|n| crate::look::pane_tool_width(ui, n, size)).collect());
+    centered_row(ui, width, |ui| {
+        for (i, (_, icon, tabs)) in MAC_GROUPS.iter().enumerate() {
+            if crate::look::pane_tool(ui, icon, &names[i], size, i == group).clicked() && i != group {
                 *tab = tabs[0];
             }
         }
@@ -193,6 +194,21 @@ fn mac_settings_toolbar(ui: &mut egui::Ui, tab: &mut SettingsTab, label: &dyn Fn
             }
         });
     }
+}
+
+/// The name size for the Mac Settings toolbar and the row's width: `widths(size)` gives each
+/// icon's width for a name size; when the row is wider than `room`, the names get smaller
+/// (down to 9 points, Apple's smallest readable size in a toolbar) until it fits.
+fn toolbar_fit(room: f32, gap: f32, widths: impl Fn(f32) -> Vec<f32>) -> (f32, f32) {
+    let row = |size: f32| {
+        let w = widths(size);
+        w.iter().sum::<f32>() + gap * (w.len().saturating_sub(1)) as f32
+    };
+    let mut size = crate::look::PANE_TOOL_TEXT;
+    while size > 9.0 && row(size) > room {
+        size -= 0.5;
+    }
+    (size, row(size))
 }
 
 /// Lay out a row `width` wide in the middle of `ui`.
@@ -1260,6 +1276,8 @@ impl SnagApp {
                     if self.lib_picked.as_ref() == Some(&gone.path) {
                         self.lib_picked = None;
                     }
+                    // The tag box holds an index into the list, which just moved.
+                    self.lib_tag_edit = None;
                     self.deleted(g);
                 }
                 Err(e) => self.status = crate::i18n::tf(crate::platform::trash_text("Couldn't move it to the Recycle Bin: {error}", "Couldn't move it to the Trash: {error}"), &[("error", &e)]),
@@ -2182,6 +2200,31 @@ mod tests {
         }
         // The toolbar fits the fixed 720-point window.
         assert!(MAC_GROUPS.len() as f32 * (crate::look::PANE_TOOL_W + 8.0) < 700.0);
+    }
+
+    #[test]
+    fn long_toolbar_names_show_whole_and_the_row_fits_the_window() {
+        // Shrinks the type only when it must.
+        assert_eq!(toolbar_fit(700.0, 8.0, |_| vec![76.0; 7]), (crate::look::PANE_TOOL_TEXT, 76.0 * 7.0 + 48.0));
+        let (size, w) = toolbar_fit(500.0, 8.0, |s| vec![10.0 * s; 7]);
+        assert!(size < crate::look::PANE_TOOL_TEXT && w <= 500.0, "{size} {w}");
+        assert_eq!(toolbar_fit(10.0, 8.0, |s| vec![10.0 * s; 7]).0, 9.0, "never below 9 points");
+        // The longest real names: every icon is wider than its name, and the row fits the
+        // fixed 720-point window (less its margins).
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/i18n");
+        let ctx = egui::Context::default();
+        for code in ["de", "et", "ar", "fr-CA", "fi", "hu", "ta"] {
+            let pack: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(dir.join(format!("{code}.json"))).unwrap()).unwrap();
+            let names: Vec<String> = MAC_GROUPS.iter().map(|g| pack["strings"][g.0].as_str().unwrap_or(g.0).to_string()).collect();
+            let _ = ctx.run_ui(Default::default(), |ui| {
+                let (size, width) = toolbar_fit(704.0, 8.0, |s| names.iter().map(|n| crate::look::pane_tool_width(ui, n, s)).collect());
+                assert!(width <= 704.0 || size == 9.0, "{code}: {width}");
+                for n in &names {
+                    let text = ui.fonts_mut(|f| f.layout_no_wrap(n.clone(), egui::FontId::proportional(size), Color32::WHITE).size().x);
+                    assert!(crate::look::pane_tool_width(ui, n, size) > text, "{code}: {n} is cut off");
+                }
+            });
+        }
     }
 
     #[test]

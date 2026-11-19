@@ -303,15 +303,26 @@ pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, 
     resp
 }
 
-/// The width of one `pane_tool`.
+/// The narrowest a `pane_tool` gets.
 pub const PANE_TOOL_W: f32 = 76.0;
 
-/// One icon of a Mac Settings window's toolbar: the icon over the pane's name, the pane shown
-/// sitting on a soft filled square (as in Apple's own Settings windows).
-pub fn pane_tool(ui: &mut Ui, icon: &str, label: &str, on: bool) -> Response {
-    let font = FontId::proportional(11.5);
+/// The name size of a `pane_tool` (points), which a row too wide for its window lowers.
+pub const PANE_TOOL_TEXT: f32 = 11.5;
+
+/// How wide a `pane_tool` with `label` at `size` points is: its name and a margin, at least
+/// `PANE_TOOL_W`, so a long name (German, Estonian, Arabic…) is never cut off.
+pub fn pane_tool_width(ui: &Ui, label: &str, size: f32) -> f32 {
+    let w = ui.fonts_mut(|f| f.layout_no_wrap(label.to_string(), FontId::proportional(size), Color32::WHITE).size().x);
+    (w + 14.0).max(PANE_TOOL_W).ceil()
+}
+
+/// One icon of a Mac Settings window's toolbar: the icon over the pane's name (at `size`
+/// points), the pane shown sitting on a soft filled square (as in Apple's own Settings windows).
+pub fn pane_tool(ui: &mut Ui, icon: &str, label: &str, size: f32, on: bool) -> Response {
+    let font = FontId::proportional(size);
     let galley = ui.painter().layout_no_wrap(label.to_string(), font, pal().text);
-    let (rect, resp) = ui.allocate_exact_size(vec2(PANE_TOOL_W, 54.0), Sense::click());
+    let width = pane_tool_width(ui, label, size);
+    let (rect, resp) = ui.allocate_exact_size(vec2(width, 54.0), Sense::click());
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Tab, true, on, label));
     let p = ui.painter();
     let pal = pal();
@@ -327,9 +338,9 @@ pub fn pane_tool(ui: &mut Ui, icon: &str, label: &str, on: bool) -> Response {
     let icol = if pal.high_contrast { if on { pal.selected_text } else { pal.text } } else if on { pal.link } else { pal.dim };
     p.text(pos2(rect.center().x, rect.top() + 19.0), Align2::CENTER_CENTER, icon, FontId::new(22.0, icons()), icol);
     let tcol = if on { pal.strong } else { pal.text };
-    // A long name (another language) is squeezed into the button rather than overflowing it.
-    let pos = pos2(rect.center().x - galley.size().x.min(PANE_TOOL_W - 4.0) / 2.0, rect.top() + 35.0);
-    p.with_clip_rect(rect).galley(pos, galley, tcol);
+    // The button is as wide as its name (`pane_tool_width`), so the name always shows whole.
+    let pos = pos2(rect.center().x - galley.size().x / 2.0, rect.top() + 35.0);
+    p.galley(pos, galley, tcol);
     resp
 }
 

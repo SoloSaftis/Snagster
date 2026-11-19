@@ -98,7 +98,8 @@ pub enum Needs {
     Copy,
     /// Edit > Select All: only a text box has something to select.
     Typing,
-    /// File > Move to Trash (⌘⌫): a picture, the main window is the key window, and no text
+    /// File > Move to Trash (⌘⌫): a picture saved in a file (a picture never saved would be
+    /// dropped with no Undo, as Preview greys the item), the main window is the key window, and no text
     /// box has the keyboard, where ⌘⌫ deletes to the start of the line (a greyed item leaves
     /// the key to the text box, or to the Library).
     Trash,
@@ -141,7 +142,7 @@ impl Needs {
             Needs::Copy => s.typing || s.picture,
             Needs::Typing => s.typing,
             // Only from the main window: in the Library ⌘⌫ moves the capture picked there.
-            Needs::Trash => s.picture && !s.typing && s.main_focused,
+            Needs::Trash => s.file && !s.typing && s.main_focused,
         }
     }
 }
@@ -746,8 +747,9 @@ mod tests {
     #[test]
     fn move_to_trash_leaves_command_delete_to_a_text_box() {
         let trash = needs_of(Run::Command("recycle"));
-        let picture = State { picture: true, main_focused: true, ..State::default() };
+        let picture = State { picture: true, file: true, main_focused: true, ..State::default() };
         assert!(trash.met(picture));
+        assert!(!trash.met(State { file: false, ..picture }), "a picture never saved isn't dropped by one ⌘⌫ (no Undo for it)");
         assert!(!trash.met(State { typing: true, ..picture }), "⌘⌫ deletes text in a text box, never the picture");
         assert!(!trash.met(State { main_focused: false, ..picture }), "in the Library ⌘⌫ is the Library's own");
         assert!(!trash.met(State::default()));
