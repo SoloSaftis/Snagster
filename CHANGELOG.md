@@ -23,8 +23,8 @@ Marking up pictures (every system):
   through the desktop's portal, so also in the Flatpak).
 - **KDE Plasma:** Snagster's dialogs, pins and recording bar show Snagster's icon and sit
   with Snagster in the taskbar (they showed another program's icon before).
-- **Cancelling screen sharing** in the desktop's dialog now says so plainly on GNOME and KDE;
-  when the desktop ends the share without a reason, the message says that too.
+- **Cancelling screen sharing** in the desktop's dialog now says so (on KDE, where Cancel looks
+  the same as a stop without a reason, the message names both).
 
 Windows:
 
