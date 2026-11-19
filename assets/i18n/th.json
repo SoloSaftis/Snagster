@@ -988,6 +988,16 @@
   "Recording saved": "บันทึกการบันทึกแล้ว",
   "box": "กล่อง",
   "freehand": "อิสระ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ลากกล่องคร่อมข้อความเพื่อไฮไลต์ เลือก อิสระ ทางขวาเพื่อวาดเส้นแทน"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "ลากกล่องคร่อมข้อความเพื่อไฮไลต์ เลือก อิสระ ทางขวาเพื่อวาดเส้นแทน",
+  "Moved {count} captures to the Recycle Bin.": "ย้ายการแคปเจอร์ {count} รายการไปถังขยะแล้ว",
+  "Moved {count} captures to the Trash.": "ย้ายการแคปเจอร์ {count} รายการไปถังขยะแล้ว",
+  "Restored {name}.": "คืนค่า {name} แล้ว",
+  "Restored {count} captures.": "คืนค่าการแคปเจอร์ {count} รายการแล้ว",
+  "Couldn't restore {name}: {error}": "คืนค่า {name} ไม่ได้: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "คืนค่าการแคปเจอร์ {count} จาก {total} รายการแล้ว คืนค่า {name} ไม่ได้: {error}",
+  "a new file has taken its name": "มีไฟล์ใหม่ใช้ชื่อนี้แล้ว",
+  "it isn't in the Recycle Bin any more": "ไม่อยู่ในถังขยะแล้ว",
+  "it isn't in the Trash any more": "ไม่อยู่ในถังขยะแล้ว",
+  "this system can't bring files back from the Trash": "ระบบนี้คืนค่าไฟล์จากถังขยะไม่ได้"
  }
 }

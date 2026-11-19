@@ -988,6 +988,16 @@
   "Recording saved": "Kua tiakina te rekoatanga",
   "box": "pouaka",
   "freehand": "ringaringa-noa",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Toia he pouaka ki runga i te kuputuhi hei whakaatu. Kōwhiria te ringaringa-noa ki te taha matau hei tā rārangi."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Toia he pouaka ki runga i te kuputuhi hei whakaatu. Kōwhiria te ringaringa-noa ki te taha matau hei tā rārangi.",
+  "Moved {count} captures to the Recycle Bin.": "Kua nekehia ngā hopu {count} ki te Ipu Para.",
+  "Moved {count} captures to the Trash.": "Kua nekehia ngā hopu {count} ki te Para.",
+  "Restored {name}.": "Kua whakaorangia a {name}.",
+  "Restored {count} captures.": "Kua whakaorangia ngā hopu {count}.",
+  "Couldn't restore {name}: {error}": "Kāore i taea te whakaora i a {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Kua whakaorangia ngā hopu {count} o te {total}. Kāore i taea te whakaora i a {name}: {error}",
+  "a new file has taken its name": "kua riro tōna ingoa i tētahi kōnae hou",
+  "it isn't in the Recycle Bin any more": "kua kore kē i te Ipu Para",
+  "it isn't in the Trash any more": "kua kore kē i te Para",
+  "this system can't bring files back from the Trash": "kāore e taea e tēnei pūnaha te whakaora kōnae mai i te Para"
  }
 }

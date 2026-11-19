@@ -105,8 +105,14 @@ pub(super) fn tools() -> Vec<Tool> {
         },
         Tool {
             name: "library_delete",
-            description: "Delete a picture from Snagster's library for good (by the path library_search gives). Only pictures in the library can be deleted.",
+            description: "Move a picture in Snagster's library to the Recycle Bin / Trash (by the path library_search gives), with its tags. Only pictures in the library can be deleted. undo_delete brings it back, with its tags, for 2 minutes after the last delete.",
             schema: obj(json!({"path": s("The picture's path from library_search.")}), &["path"]),
+            edits: false,
+        },
+        Tool {
+            name: "undo_delete",
+            description: "Bring back the library pictures library_delete moved to the Recycle Bin / Trash, with their tags, where they were. Works for 2 minutes after the last library_delete; every picture deleted in that time comes back together.",
+            schema: obj(json!({}), &[]),
             edits: false,
         },
         Tool { name: "list_recordings", description: "The videos and GIFs in Snagster's recordings folder, newest first.", schema: obj(json!({"limit": n("Default 20.")}), &[]), edits: false },
@@ -764,8 +770,22 @@ impl Workspace {
                     .find(|i| same_file(&i.path, &want))
                     .ok_or("that picture isn't in Snagster's library (library_search lists them)")?;
                 if name == "library_delete" {
-                    library::delete(&item)?;
-                    return Ok(vec![text(format!("Deleted {} from the library.", item.path.display()))]);
+                    let now = std::time::Instant::now();
+                    let deleted = self.deleted.get_or_insert_with(|| crate::recycle::Pending::new(crate::recycle::MCP_UNDO_FOR, std::sync::Arc::new(crate::recycle::SystemBin)));
+                    let bin = deleted.bin();
+                    let g = crate::recycle::remove(&item.path, Some(item.meta.clone()), crate::recycle::way_here(), bin.as_ref())?;
+                    for old in deleted.add(g, now) {
+                        let _ = crate::recycle::finish(&old, bin.as_ref());
+                    }
+                    let n = deleted.count();
+                    let where_to = crate::platform::trash_text("the Recycle Bin", "the Trash");
+                    let also = if n > 1 { format!(" ({n} pictures deleted in a row come back together)") } else { String::new() };
+                    self.structured = Some(json!({"path": item.path, "undo": "undo_delete", "undo_for_seconds": crate::recycle::MCP_UNDO_FOR.as_secs(), "waiting": n}));
+                    return Ok(vec![text(format!(
+                        "Moved {} to {where_to}. To undo, call undo_delete within {} seconds: it comes back where it was, with its tags{also}.",
+                        item.path.display(),
+                        crate::recycle::MCP_UNDO_FOR.as_secs()
+                    ))]);
                 }
                 if let Some(t) = str_arg(a, "title") {
                     item.meta.title = t.to_string();
@@ -783,6 +803,29 @@ impl Workspace {
                 item.save_meta()?;
                 self.structured = Some(json!({"path": item.path, "title": item.meta.title, "tags": item.meta.tags}));
                 Ok(vec![text(format!("\"{}\" has the tags: {}.", item.meta.title, if item.meta.tags.is_empty() { "none".into() } else { item.meta.tags.join(", ") })), link(&item.path)])
+            }
+            "undo_delete" => {
+                let now = std::time::Instant::now();
+                let Some(deleted) = self.deleted.as_mut().filter(|d| d.showing(now)) else {
+                    return Err(format!(
+                        "nothing to undo: no library_delete in the last {} seconds (the Recycle Bin / Trash still has what was deleted earlier)",
+                        crate::recycle::MCP_UNDO_FOR.as_secs()
+                    ));
+                };
+                let (back, failed) = deleted.undo_now(now);
+                let errors: Vec<String> = failed.iter().map(|(n, e)| format!("{n}: {e}")).collect();
+                self.structured = Some(json!({"restored": back, "errors": errors}));
+                let names = back.iter().map(|p| p.display().to_string()).collect::<Vec<_>>().join(", ");
+                if back.is_empty() {
+                    return Err(format!("couldn't restore it: {}", errors.join("; ")));
+                }
+                let mut out = vec![text(if errors.is_empty() {
+                    format!("Restored {names}, with its tags.")
+                } else {
+                    format!("Restored {names}, with its tags. Couldn't restore: {}", errors.join("; "))
+                })];
+                out.extend(back.iter().map(|p| link(p)));
+                Ok(out)
             }
             "list_recordings" => {
                 let s = self.settings();
@@ -1586,9 +1629,43 @@ mod tests {
             assert!(ws.call(tool, &json!({})).unwrap_err().contains("missing path"), "{tool}");
         }
         assert!(outside.exists());
+        // A folder stands in for the Recycle Bin.
+        ws.deleted = Some(crate::recycle::Pending::new(crate::recycle::MCP_UNDO_FOR, std::sync::Arc::new(crate::recycle::tests::FolderBin::new(dir.join("bin")))));
         ws.call("library_delete", &json!({"path": path})).unwrap();
         assert!(!path.exists() && !path.with_extension("json").exists());
         assert!(library::scan(&lib).is_empty());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn deleted_library_pictures_come_back_with_undo_delete() {
+        let (dir, mut ws) = fixed("undo-delete");
+        let bin = std::sync::Arc::new(crate::recycle::tests::FolderBin::new(dir.join("bin")));
+        ws.deleted = Some(crate::recycle::Pending::new(crate::recycle::MCP_UNDO_FOR, bin.clone()));
+        assert!(ws.call("undo_delete", &json!({})).unwrap_err().contains("nothing to undo"));
+        ws.set(Doc::new(image::RgbaImage::from_pixel(8, 8, image::Rgba([1, 2, 3, 255]))), "pic").unwrap();
+        ws.call("library_add", &json!({"title": "One", "tags": ["a"]})).unwrap();
+        // Two captures in the same second get different names.
+        ws.call("library_add", &json!({"title": "Two", "tags": ["b"]})).unwrap();
+        let lib = dir.join("lib");
+        let before: Vec<_> = library::scan(&lib).into_iter().map(|i| (i.path, i.meta.title, i.meta.tags)).collect();
+        assert_eq!(before.len(), 2);
+        let r = ws.call("library_delete", &json!({"path": before[0].0})).unwrap();
+        let said = r[0]["text"].as_str().unwrap();
+        assert!(said.contains("undo_delete") && said.contains("120 seconds"), "the answer says how to undo: {said}");
+        assert_eq!(ws.structured.as_ref().unwrap()["undo"], "undo_delete");
+        let r = ws.call("library_delete", &json!({"path": before[1].0})).unwrap();
+        assert!(r[0]["text"].as_str().unwrap().contains("2 pictures"), "{r:?}");
+        assert!(library::scan(&lib).is_empty());
+        let in_bin = if crate::recycle::way_here() == crate::recycle::Way::Restore { 2 } else { 0 };
+        assert_eq!(bin.holds(), in_bin, "in the Recycle Bin, or waiting beside it on the Mac and in the Flatpak");
+        let r = ws.call("undo_delete", &json!({})).unwrap();
+        assert!(r[0]["text"].as_str().unwrap().starts_with("Restored"), "{r:?}");
+        assert_eq!(r.iter().filter(|c| c["type"] == "resource_link").count(), 2);
+        let after: Vec<_> = library::scan(&lib).into_iter().map(|i| (i.path, i.meta.title, i.meta.tags)).collect();
+        assert_eq!(after, before, "both back, with their titles and tags");
+        assert_eq!(bin.holds(), 0);
+        assert!(ws.call("undo_delete", &json!({})).unwrap_err().contains("nothing to undo"), "once only");
         let _ = std::fs::remove_dir_all(&dir);
     }
 

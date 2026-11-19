@@ -988,6 +988,16 @@
   "Recording saved": "បានរក្សាទុកការថត",
   "box": "ប្រអប់",
   "freehand": "ដោយដៃ",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "អូសប្រអប់លើអត្ថបទដើម្បីរំលេច។ ជ្រើស ដោយដៃ នៅខាងស្តាំ ដើម្បីគូរខ្សែវិញ។"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "អូសប្រអប់លើអត្ថបទដើម្បីរំលេច។ ជ្រើស ដោយដៃ នៅខាងស្តាំ ដើម្បីគូរខ្សែវិញ។",
+  "Moved {count} captures to the Recycle Bin.": "បានផ្លាស់ទីការចាប់យក {count} ទៅធុងសំរាម។",
+  "Moved {count} captures to the Trash.": "បានផ្លាស់ទីការចាប់យក {count} ទៅធុងសំរាម។",
+  "Restored {name}.": "បានស្ដារ {name}។",
+  "Restored {count} captures.": "បានស្ដារការចាប់យក {count}។",
+  "Couldn't restore {name}: {error}": "មិនអាចស្ដារ {name} បានទេ៖ {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "បានស្ដារការចាប់យក {count} ក្នុងចំណោម {total}។ មិនអាចស្ដារ {name} បានទេ៖ {error}",
+  "a new file has taken its name": "ឯកសារថ្មីមួយបានយកឈ្មោះរបស់វា",
+  "it isn't in the Recycle Bin any more": "វាលែងនៅក្នុងធុងសំរាមទៀតហើយ",
+  "it isn't in the Trash any more": "វាលែងនៅក្នុងធុងសំរាមទៀតហើយ",
+  "this system can't bring files back from the Trash": "ប្រព័ន្ធនេះមិនអាចស្ដារឯកសារពីធុងសំរាមបានទេ"
  }
 }

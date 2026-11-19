@@ -988,6 +988,16 @@
   "Recording saved": "Запіс захаваны",
   "box": "поле",
   "freehand": "ад рукі",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Перацягніце поле над тэкстам, каб вылучыць яго. Выберыце «ад рукі» справа, каб малявць штрыхі."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Перацягніце поле над тэкстам, каб вылучыць яго. Выберыце «ад рукі» справа, каб малявць штрыхі.",
+  "Moved {count} captures to the Recycle Bin.": "Здымкаў перамешчана ў Сметніцу: {count}.",
+  "Moved {count} captures to the Trash.": "Здымкаў перамешчана ў сметніцу: {count}.",
+  "Restored {name}.": "Адноўлена: {name}.",
+  "Restored {count} captures.": "Адноўлена здымкаў: {count}.",
+  "Couldn't restore {name}: {error}": "Не ўдалося аднавіць {name}: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Адноўлена здымкаў: {count} з {total}. Не ўдалося аднавіць {name}: {error}",
+  "a new file has taken its name": "яго імя ўжо заняў новы файл",
+  "it isn't in the Recycle Bin any more": "яго больш няма ў Сметніцы",
+  "it isn't in the Trash any more": "яго больш няма ў сметніцы",
+  "this system can't bring files back from the Trash": "гэта сістэма не можа аднаўляць файлы са сметніцы"
  }
 }

@@ -988,6 +988,16 @@
   "Recording saved": "Nahrávka uložená",
   "box": "rámček",
   "freehand": "voľnou rukou",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Potiahnutím rámčeka cez text ho zvýrazníte. Ak chcete kresliť ťahy, vyberte vpravo voľnou rukou."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Potiahnutím rámčeka cez text ho zvýrazníte. Ak chcete kresliť ťahy, vyberte vpravo voľnou rukou.",
+  "Moved {count} captures to the Recycle Bin.": "Zachytenia presunuté do koša: {count}.",
+  "Moved {count} captures to the Trash.": "Zachytenia presunuté do koša: {count}.",
+  "Restored {name}.": "Obnovené: {name}.",
+  "Restored {count} captures.": "Obnovené zachytenia: {count}.",
+  "Couldn't restore {name}: {error}": "{name} sa nepodarilo obnoviť: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "Obnovené zachytenia: {count} z {total}. {name} sa nepodarilo obnoviť: {error}",
+  "a new file has taken its name": "jeho názov už má nový súbor",
+  "it isn't in the Recycle Bin any more": "už nie je v koši",
+  "it isn't in the Trash any more": "už nie je v koši",
+  "this system can't bring files back from the Trash": "tento systém nedokáže obnoviť súbory z koša"
  }
 }

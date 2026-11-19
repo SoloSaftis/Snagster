@@ -988,6 +988,16 @@
   "Recording saved": "Opnam gespäichert",
   "box": "Këscht",
   "freehand": "fräihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Zitt eng Këscht iwwer den Text, fir en ervirzehiewen. Wielt riets fräihand, fir amplaz Stréch ze zeechnen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Zitt eng Këscht iwwer den Text, fir en ervirzehiewen. Wielt riets fräihand, fir amplaz Stréch ze zeechnen.",
+  "Moved {count} captures to the Recycle Bin.": "{count} Erfaassungen an de Pabeierkuerf geréckelt.",
+  "Moved {count} captures to the Trash.": "{count} Erfaassungen an de Pabeierkuerf geréckelt.",
+  "Restored {name}.": "{name} restauréiert.",
+  "Restored {count} captures.": "{count} Erfaassungen restauréiert.",
+  "Couldn't restore {name}: {error}": "Konnt {name} net restauréieren: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{count} vun {total} Erfaassungen restauréiert. Konnt {name} net restauréieren: {error}",
+  "a new file has taken its name": "eng nei Datei huet elo hiren Numm",
+  "it isn't in the Recycle Bin any more": "si ass net méi am Pabeierkuerf",
+  "it isn't in the Trash any more": "si ass net méi am Pabeierkuerf",
+  "this system can't bring files back from the Trash": "dëse System kann keng Dateien aus dem Pabeierkuerf restauréieren"
  }
 }

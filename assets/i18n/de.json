@@ -988,6 +988,16 @@
   "Recording saved": "Aufzeichnung gespeichert",
   "box": "Rechteck",
   "freehand": "freihand",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Ziehen Sie ein Rechteck über den Text, um ihn hervorzuheben. Wählen Sie rechts freihand, um stattdessen Striche zu zeichnen."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "Ziehen Sie ein Rechteck über den Text, um ihn hervorzuheben. Wählen Sie rechts freihand, um stattdessen Striche zu zeichnen.",
+  "Moved {count} captures to the Recycle Bin.": "{count} Aufnahmen in den Papierkorb verschoben.",
+  "Moved {count} captures to the Trash.": "{count} Aufnahmen in den Papierkorb verschoben.",
+  "Restored {name}.": "{name} wiederhergestellt.",
+  "Restored {count} captures.": "{count} Aufnahmen wiederhergestellt.",
+  "Couldn't restore {name}: {error}": "{name} konnte nicht wiederhergestellt werden: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{count} von {total} Aufnahmen wiederhergestellt. {name} konnte nicht wiederhergestellt werden: {error}",
+  "a new file has taken its name": "eine neue Datei trägt jetzt ihren Namen",
+  "it isn't in the Recycle Bin any more": "sie ist nicht mehr im Papierkorb",
+  "it isn't in the Trash any more": "sie ist nicht mehr im Papierkorb",
+  "this system can't bring files back from the Trash": "dieses System kann keine Dateien aus dem Papierkorb wiederherstellen"
  }
 }

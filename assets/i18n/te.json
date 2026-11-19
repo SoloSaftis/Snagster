@@ -988,6 +988,16 @@
   "Recording saved": "రికార్డింగ్ సేవ్ అయింది",
   "box": "బాక్స్",
   "freehand": "ఫ్రీహ్యాండ్",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "వచనాన్ని హైలైట్ చేయడానికి దానిపై బాక్స్ లాగండి. బదులుగా గీతలు గీయడానికి కుడివైపు ఫ్రీహ్యాండ్ ఎంచుకోండి."
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "వచనాన్ని హైలైట్ చేయడానికి దానిపై బాక్స్ లాగండి. బదులుగా గీతలు గీయడానికి కుడివైపు ఫ్రీహ్యాండ్ ఎంచుకోండి.",
+  "Moved {count} captures to the Recycle Bin.": "{count} క్యాప్చర్‌లు రీసైకిల్ బిన్‌కు తరలించబడ్డాయి.",
+  "Moved {count} captures to the Trash.": "{count} క్యాప్చర్‌లు చెత్తబుట్టకు తరలించబడ్డాయి.",
+  "Restored {name}.": "{name} పునరుద్ధరించబడింది.",
+  "Restored {count} captures.": "{count} క్యాప్చర్‌లు పునరుద్ధరించబడ్డాయి.",
+  "Couldn't restore {name}: {error}": "{name} పునరుద్ధరించలేకపోయింది: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total}లో {count} క్యాప్చర్‌లు పునరుద్ధరించబడ్డాయి. {name} పునరుద్ధరించలేకపోయింది: {error}",
+  "a new file has taken its name": "ఇప్పుడు కొత్త ఫైల్‌కు అదే పేరు ఉంది",
+  "it isn't in the Recycle Bin any more": "అది ఇక రీసైకిల్ బిన్‌లో లేదు",
+  "it isn't in the Trash any more": "అది ఇక చెత్తబుట్టలో లేదు",
+  "this system can't bring files back from the Trash": "ఈ సిస్టమ్ చెత్తబుట్ట నుండి ఫైల్‌లను పునరుద్ధరించలేదు"
  }
 }

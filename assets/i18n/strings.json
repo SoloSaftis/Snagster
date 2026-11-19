@@ -984,5 +984,15 @@
  "Recording saved",
  "box",
  "freehand",
- "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead."
+ "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.",
+ "Moved {count} captures to the Recycle Bin.",
+ "Moved {count} captures to the Trash.",
+ "Restored {name}.",
+ "Restored {count} captures.",
+ "Couldn't restore {name}: {error}",
+ "Restored {count} of {total} captures. Couldn't restore {name}: {error}",
+ "a new file has taken its name",
+ "it isn't in the Recycle Bin any more",
+ "it isn't in the Trash any more",
+ "this system can't bring files back from the Trash"
 ]

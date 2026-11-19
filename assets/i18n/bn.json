@@ -988,6 +988,16 @@
   "Recording saved": "রেকর্ডিং সংরক্ষিত হয়েছে",
   "box": "বাক্স",
   "freehand": "ফ্রিহ্যান্ড",
-  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লেখা হাইলাইট করতে তার উপর দিয়ে একটি বাক্স টানুন। এর বদলে দাগ আঁকতে ডানদিকে ফ্রিহ্যান্ড বেছে নিন।"
+  "Drag a box over text to highlight it. Pick freehand on the right to draw strokes instead.": "লেখা হাইলাইট করতে তার উপর দিয়ে একটি বাক্স টানুন। এর বদলে দাগ আঁকতে ডানদিকে ফ্রিহ্যান্ড বেছে নিন।",
+  "Moved {count} captures to the Recycle Bin.": "{count}টি ক্যাপচার রিসাইকেল বিনে সরানো হয়েছে।",
+  "Moved {count} captures to the Trash.": "{count}টি ক্যাপচার ট্র্যাশে সরানো হয়েছে।",
+  "Restored {name}.": "{name} পুনরুদ্ধার করা হয়েছে।",
+  "Restored {count} captures.": "{count}টি ক্যাপচার পুনরুদ্ধার করা হয়েছে।",
+  "Couldn't restore {name}: {error}": "{name} পুনরুদ্ধার করা যায়নি: {error}",
+  "Restored {count} of {total} captures. Couldn't restore {name}: {error}": "{total}টির মধ্যে {count}টি ক্যাপচার পুনরুদ্ধার করা হয়েছে। {name} পুনরুদ্ধার করা যায়নি: {error}",
+  "a new file has taken its name": "একটি নতুন ফাইল এখন এর নাম নিয়েছে",
+  "it isn't in the Recycle Bin any more": "এটি আর রিসাইকেল বিনে নেই",
+  "it isn't in the Trash any more": "এটি আর ট্র্যাশে নেই",
+  "this system can't bring files back from the Trash": "এই সিস্টেম ট্র্যাশ থেকে ফাইল পুনরুদ্ধার করতে পারে না"
  }
 }
