@@ -158,18 +158,15 @@ fn share_refusal(raw: &str) -> String {
 
 /// Show a file in the file manager with it selected, through the desktop's OpenURI portal
 /// (inside a Flatpak too; the portal asks the file manager over org.freedesktop.FileManager1).
-/// At most two seconds; an error when no portal answers, so the caller can open the folder.
+/// Waits for the portal's answer (the file manager may take a moment to start), so call it off
+/// the window's thread. An error when there is no portal or it refused, so the caller can open
+/// the folder instead.
 pub fn show_file(path: &std::path::Path) -> Result<(), String> {
     let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
-    let (tx, rx) = std::sync::mpsc::channel();
-    std::thread::Builder::new()
-        .name("snagster-show-file".into())
-        .spawn(move || {
-            let r = pollster::block_on(async { ashpd::desktop::open_uri::OpenDirectoryRequest::default().send(&file).await.map(|_| ()).map_err(|e| e.to_string()) });
-            let _ = tx.send(r);
-        })
-        .map_err(|e| e.to_string())?;
-    rx.recv_timeout(std::time::Duration::from_secs(2)).map_err(|_| "the desktop didn't answer".to_string())?
+    pollster::block_on(async {
+        let request = ashpd::desktop::open_uri::OpenDirectoryRequest::default().send(&file).await.map_err(|e| e.to_string())?;
+        request.response().map_err(|e| e.to_string())
+    })
 }
 
 /// The pointer mode to ask for: in the picture when wanted and offered, else hidden when

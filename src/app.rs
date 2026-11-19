@@ -137,6 +137,32 @@ enum Drag {
     Grip { idx: usize, grip: doc::Grip, orig: Box<Shape>, pushed: bool },
 }
 
+/// What "Show in folder" / "Open folder" does with a path.
+#[derive(Debug, PartialEq)]
+enum FolderAction {
+    /// A file: its folder with it selected (opening it with xdg-open/open would open the file).
+    Reveal(PathBuf),
+    /// A folder (made first when it isn't there yet).
+    Open(PathBuf),
+    /// A file that has gone: the folder it was in.
+    Parent(PathBuf),
+    /// Nothing left to show.
+    Nothing,
+}
+
+fn folder_action(p: &std::path::Path) -> FolderAction {
+    if p.is_file() {
+        FolderAction::Reveal(p.to_path_buf())
+    } else if p.is_dir() || p.extension().is_none() {
+        FolderAction::Open(p.to_path_buf())
+    } else {
+        match p.parent().filter(|d| d.is_dir()) {
+            Some(d) => FolderAction::Parent(d.to_path_buf()),
+            None => FolderAction::Nothing,
+        }
+    }
+}
+
 /// How near (in screen points) the pointer must be to take a mark's handle.
 const GRIP_REACH: f32 = 8.0;
 
@@ -1335,16 +1361,33 @@ impl SnagApp {
 
     /// Show a file selected in the file manager.
     pub(crate) fn reveal(&mut self, path: &std::path::Path) {
+        // A file that has gone since (moved, deleted): its folder, if that is still there.
+        if !path.is_file() {
+            if let Some(dir) = path.parent().filter(|d| d.is_dir()) {
+                self.open_folder(dir);
+            }
+            return;
+        }
         #[cfg(windows)]
-        let r = std::process::Command::new("explorer").arg(format!("/select,{}", path.display())).spawn();
+        let r = std::process::Command::new("explorer").arg(format!("/select,{}", path.display())).spawn().map(|_| ());
         #[cfg(target_os = "macos")]
-        let r = std::process::Command::new("open").arg("-R").arg(path).spawn();
-        // The desktop's file manager with the file selected; else just its folder.
-        #[cfg(all(unix, not(target_os = "macos")))]
-        let r = match crate::portal::show_file(path) {
-            Ok(()) => return,
-            Err(_) => std::process::Command::new("xdg-open").arg(path.parent().unwrap_or(path)).spawn(),
+        let r = std::process::Command::new("open").arg("-R").arg(path).spawn().map(|_| ());
+        // The desktop's file manager with the file selected (the portal waits for the file
+        // manager, so off the window's thread); else just its folder.
+        #[cfg(target_os = "linux")]
+        let r: std::io::Result<()> = {
+            let path = path.to_path_buf();
+            std::thread::Builder::new()
+                .name("snagster-reveal".into())
+                .spawn(move || {
+                    if crate::portal::show_file(&path).is_err() {
+                        let _ = std::process::Command::new("xdg-open").arg(path.parent().unwrap_or(&path)).spawn();
+                    }
+                })
+                .map(|_| ())
         };
+        #[cfg(all(unix, not(any(target_os = "macos", target_os = "linux"))))]
+        let r = std::process::Command::new("xdg-open").arg(path.parent().unwrap_or(path)).spawn().map(|_| ());
         if let Err(e) = r {
             self.status = crate::i18n::tf("Couldn't open the folder: {error}", &[("error", &e.to_string())]);
         }
@@ -1811,19 +1854,18 @@ impl SnagApp {
     /// Open a folder in the file manager; given a file, its folder with the file selected
     /// (`xdg-open` and `open` would open the file itself).
     pub(crate) fn open_folder(&mut self, target: &std::path::Path) {
-        if target.is_file() {
-            self.reveal(target);
-            return;
-        }
-        if target.is_dir() || target.extension().is_none() {
-            let _ = std::fs::create_dir_all(target);
-        }
-        #[cfg(windows)]
-        let r = if target.is_file() {
-            std::process::Command::new("explorer").arg(format!("/select,{}", target.display())).spawn()
-        } else {
-            std::process::Command::new("explorer").arg(target).spawn()
+        let target = match folder_action(target) {
+            FolderAction::Reveal(file) => return self.reveal(&file),
+            FolderAction::Open(dir) => {
+                let _ = std::fs::create_dir_all(&dir);
+                dir
+            }
+            FolderAction::Parent(dir) => dir,
+            FolderAction::Nothing => return,
         };
+        let target = target.as_path();
+        #[cfg(windows)]
+        let r = std::process::Command::new("explorer").arg(target).spawn();
         #[cfg(target_os = "macos")]
         let r = std::process::Command::new("open").arg(target).spawn();
         #[cfg(all(unix, not(target_os = "macos")))]
@@ -3473,7 +3515,7 @@ impl SnagApp {
                                 pin = Some(i);
                                 ui.close();
                             }
-                            if let Some(f) = self.entries[i].file()
+                            if let Some(f) = self.entries[i].file().filter(|f| f.is_file())
                                 && ui.button(crate::i18n::t("Show in folder")).clicked()
                             {
                                 show = Some(f.to_path_buf());
@@ -3836,7 +3878,7 @@ impl SnagApp {
                 self.pin_current();
                 ui.close();
             }
-            if let Some(f) = self.entries[ci].file().map(|f| f.to_path_buf())
+            if let Some(f) = self.entries[ci].file().filter(|f| f.is_file()).map(|f| f.to_path_buf())
                 && ui.button(crate::i18n::t("Show in folder")).clicked()
             {
                 self.reveal(&f);
@@ -6306,6 +6348,25 @@ mod tests {
         assert!(!a.persist);
         assert!(a.screenshot.is_none());
         assert_eq!(a.x.tab, ribbon::RibbonTab::Home);
+    }
+
+    #[test]
+    fn show_in_folder_selects_a_file_instead_of_opening_it() {
+        let dir = temp("folder-action");
+        let _ = std::fs::create_dir_all(&dir);
+        let video = dir.join("Recording.mp4");
+        std::fs::write(&video, b"x").unwrap();
+        // A file is shown in its folder, never handed to xdg-open/open (which would play it).
+        assert_eq!(folder_action(&video), FolderAction::Reveal(video.clone()));
+        assert_eq!(folder_action(&dir), FolderAction::Open(dir.clone()));
+        // A folder that isn't there yet is made and opened (the save and video folders).
+        let new = dir.join("Snagster");
+        assert_eq!(folder_action(&new), FolderAction::Open(new.clone()));
+        // A file that has gone since: the folder it was in.
+        let gone = dir.join("deleted.png");
+        assert_eq!(folder_action(&gone), FolderAction::Parent(dir.clone()));
+        assert_eq!(folder_action(&dir.join("nowhere").join("x.png")), FolderAction::Nothing);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
