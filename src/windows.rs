@@ -63,7 +63,7 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
         ctx.data_mut(|d| d.insert_temp(at_id, p));
         p
     });
-    let mut builder = egui::ViewportBuilder::default()
+    let mut builder = snagster_viewport()
         .with_title(w.title)
         .with_inner_size(w.size)
         .with_min_inner_size(vec2(260.0, 120.0))
@@ -1324,7 +1324,7 @@ impl SnagApp {
             let (iw, ih) = (pin.image.width() as f32, pin.image.height() as f32);
             let fit = (900.0 / iw).min(700.0 / ih).min(1.0);
             let size = vec2(iw * fit / ppp, ih * fit / ppp);
-            let mut builder = egui::ViewportBuilder::default()
+            let mut builder = snagster_viewport()
                 .with_title(format!("Snagster pin: {}", pin.title))
                 .with_inner_size(size)
                 .with_decorations(false)
@@ -1400,6 +1400,13 @@ impl Dialog {
     pub fn export(n: usize, s: &Settings) -> Self {
         Dialog::Export { pick: vec![true; n], folder: s.save_folder.clone(), format: s.format }
     }
+}
+
+/// A new window of Snagster's own (dialog, pin, bar). It carries Snagster's app id, so the
+/// desktop shows Snagster's icon and groups it with the main window: without it, KDE Plasma
+/// guesses and may show another program's icon and a taskbar entry of its own.
+pub fn snagster_viewport() -> egui::ViewportBuilder {
+    egui::ViewportBuilder::default().with_app_id(crate::APP_ID)
 }
 
 /// A dialog's main button (`action`, English) and Cancel, in this system's order.
@@ -1976,6 +1983,12 @@ impl SnagApp {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn every_window_of_snagsters_own_says_it_is_snagster() {
+        // KDE Plasma shows another program's icon for a window without it.
+        assert_eq!(super::snagster_viewport().app_id.as_deref(), Some(crate::APP_ID));
+    }
+
     use super::*;
     use std::path::Path;
 

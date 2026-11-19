@@ -4220,9 +4220,8 @@ impl SnagApp {
             s.view = view;
             s.closed = false;
         }
-        let builder = egui::ViewportBuilder::default()
+        let builder = crate::windows::snagster_viewport()
             .with_title(crate::i18n::t("Recording"))
-            .with_app_id(crate::APP_ID)
             .with_inner_size(MINI_BAR_SIZE)
             .with_min_inner_size(vec2(200.0, 40.0))
             .with_decorations(false)

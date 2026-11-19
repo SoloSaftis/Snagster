@@ -149,7 +149,10 @@ pub fn notify(id: &str, title: &str, body: &str) {
 /// What to say when the screen share didn't start: plainly when the person pressed Cancel in
 /// the desktop's dialog, else the portal's own words.
 fn share_refusal(raw: &str) -> String {
-    if raw.trim() == "Cancelled" || raw.contains("Response(Cancelled)") {
+    // GNOME answers a Cancel as "cancelled"; KDE's dialog answers it with the portal's
+    // "other" response, which ashpd words as "didn't succeed with no information".
+    let cancelled = raw.trim() == "Cancelled" || raw.contains("Response(Cancelled)") || raw.contains("was cancelled") || raw.contains("didn't succeed with no information");
+    if cancelled {
         "Screen sharing was cancelled in the desktop's dialog: nothing was shared.".into()
     } else {
         format!("the desktop's screen-sharing portal said no ({raw})")
@@ -588,6 +591,9 @@ mod tests {
     #[test]
     fn a_cancelled_share_is_said_plainly() {
         assert!(share_refusal("Cancelled").starts_with("Screen sharing was cancelled"));
+        // ashpd's own wording, and KDE's answer to its dialog's Cancel button.
+        assert!(share_refusal("Portal request was cancelled").starts_with("Screen sharing was cancelled"));
+        assert!(share_refusal("Portal request didn't succeed with no information").starts_with("Screen sharing was cancelled"));
         let other = share_refusal("Portal request failed: org.freedesktop.portal.Error.NotAllowed");
         assert!(other.contains("NotAllowed") && other.starts_with("the desktop's screen-sharing portal said no"));
     }
