@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "« Augmenter le contraste » est activé dans Réglages Système, le texte et les bordures sont donc plus marqués.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Le partage d'écran a été annulé dans la boîte de dialogue du bureau : rien n'a été partagé.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Le partage d'écran n'a pas démarré : il a été annulé dans la boîte de dialogue du bureau, ou le bureau n'a donné aucune raison. Rien n'a été partagé.",
-  "The desktop's screen-sharing portal said no: {error}": "Le portail de partage d'écran du bureau a refusé : {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Le portail de partage d'écran du bureau a refusé : {error}",
+  "Waiting for screen sharing…": "En attente du partage d'écran…",
+  "Recording GIF  {time}": "Enregistrement GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Enregistrement {format} à {fps} fps  {time}",
+  "Recording steps: {count} so far": "Enregistrement des étapes : {count} pour l'instant",
+  "Scroll it yourself, then press Stop": "Faites défiler vous-même, puis appuyez sur Arrêter"
  }
 }

@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Süsteemisätetes on sisse lülitatud Suurenda kontrasti, mistõttu on tekst ja äärised selgemad.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekraani jagamine tühistati töölaua dialoogis: midagi ei jagatud.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekraani jagamine ei käivitunud: see tühistati töölaua dialoogis või töölaud ei esitanud põhjust. Midagi ei jagatud.",
-  "The desktop's screen-sharing portal said no: {error}": "Töölaua ekraanijagamise portaal ütles ei: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Töölaua ekraanijagamise portaal ütles ei: {error}",
+  "Waiting for screen sharing…": "Ootan ekraani jagamist…",
+  "Recording GIF  {time}": "Salvestan GIF-i  {time}",
+  "Recording {format} at {fps} fps  {time}": "Salvestan {format}, {fps} fps  {time}",
+  "Recording steps: {count} so far": "Samme salvestatakse: seni {count}",
+  "Scroll it yourself, then press Stop": "Keri ise, siis vajuta Peata"
  }
 }

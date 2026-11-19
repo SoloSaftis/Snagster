@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "ছিষ্টেম ছেটিংছত ‘কনট্ৰাষ্ট বঢ়াওক’ অন আছে, গতিকে লিখনি আৰু সীমা অধিক স্পষ্ট।",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "স্ক্ৰীন শ্বেয়াৰিং ডেস্কটপৰ ডায়লগত বাতিল কৰা হ'ল: একো শ্বেয়াৰ কৰা হোৱা নাই।",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "স্ক্ৰীন শ্বেয়াৰিং আৰম্ভ নহ'ল: ই ডেস্কটপৰ ডায়লগত বাতিল কৰা হৈছিল, বা ডেস্কটপে কোনো কাৰণ দিয়া নাছিল। একো শ্বেয়াৰ কৰা হোৱা নাই।",
-  "The desktop's screen-sharing portal said no: {error}": "ডেস্কটপৰ স্ক্ৰীন শ্বেয়াৰিং portal-এ অসম্মতি জনালে: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "ডেস্কটপৰ স্ক্ৰীন শ্বেয়াৰিং portal-এ অসম্মতি জনালে: {error}",
+  "Waiting for screen sharing…": "স্ক্ৰীণ শ্বেয়াৰিঙৰ বাবে অপেক্ষা কৰি আছে…",
+  "Recording GIF  {time}": "GIF ৰেকৰ্ড কৰি আছে  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps ত {format} ৰেকৰ্ড কৰি আছে  {time}",
+  "Recording steps: {count} so far": "পদক্ষেপ ৰেকৰ্ড কৰি আছে: এতিয়ালৈকে {count}",
+  "Scroll it yourself, then press Stop": "নিজে স্ক্ৰ’ল কৰক, তাৰ পিছত বন্ধ কৰক টিপক"
  }
 }

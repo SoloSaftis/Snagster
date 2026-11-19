@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistemos nustatymuose įjungta Didinti kontrastą, todėl tekstas ir kraštinės ryškesni.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekrano bendrinimas buvo atšauktas darbalaukio dialogo lange: niekas nebuvo bendrinama.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekrano bendrinimas nepasileido: jis buvo atšauktas darbalaukio dialogo lange arba darbalaukis nenurodė priežasties. Niekas nebuvo bendrinama.",
-  "The desktop's screen-sharing portal said no: {error}": "Darbalaukio ekrano bendrinimo portalas atsisakė: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Darbalaukio ekrano bendrinimo portalas atsisakė: {error}",
+  "Waiting for screen sharing…": "Laukiama ekrano bendrinimo…",
+  "Recording GIF  {time}": "Įrašomas GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Įrašomas {format}, {fps} fps  {time}",
+  "Recording steps: {count} so far": "Veiksmų įrašymas: kol kas {count}",
+  "Scroll it yourself, then press Stop": "Slinkite patys, tada spauskite Stop"
  }
 }

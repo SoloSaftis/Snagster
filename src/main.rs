@@ -28,6 +28,8 @@ mod overlay;
 mod portal;
 #[cfg(target_os = "linux")]
 mod wl_activate;
+#[cfg(target_os = "linux")]
+mod kwin;
 mod panel;
 mod tray;
 #[cfg(any(target_os = "macos", test))]

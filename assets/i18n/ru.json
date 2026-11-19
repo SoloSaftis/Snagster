@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "В Системных настройках включена опция «Увеличить контрастность», поэтому текст и границы выразительнее.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Показ экрана отменён в диалоговом окне рабочего стола: ничего не было передано.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Показ экрана не начался: он был отменён в диалоговом окне рабочего стола, либо рабочий стол не указал причину. Ничего не было передано.",
-  "The desktop's screen-sharing portal said no: {error}": "Портал показа экрана рабочего стола отказал: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Портал показа экрана рабочего стола отказал: {error}",
+  "Waiting for screen sharing…": "Ожидание демонстрации экрана…",
+  "Recording GIF  {time}": "Запись GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Запись {format}, {fps} fps  {time}",
+  "Recording steps: {count} so far": "Запись шагов: пока {count}",
+  "Scroll it yourself, then press Stop": "Прокрутите сами, затем нажмите «Стоп»"
  }
 }

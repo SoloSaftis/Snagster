@@ -83,6 +83,28 @@ impl Activator {
         false
     }
 
+    /// Bring back the window whose `wl_surface` is `surface` with a token the desktop handed
+    /// over (with a hotkey press).
+    ///
+    /// # Safety
+    /// `surface` must be a live `wl_surface` on the same connection.
+    pub unsafe fn activate_with_token(&mut self, token: String, surface: *mut c_void) -> bool {
+        // SAFETY: as the caller promises.
+        let Some(target) = (unsafe { self.surface(surface) }) else { return false };
+        self.activation.activate(token, &target);
+        self.conn.flush().is_ok()
+    }
+
+    /// The surface behind a raw pointer of winit's.
+    ///
+    /// # Safety
+    /// `surface` must be a live `wl_surface` on the same connection.
+    unsafe fn surface(&self, surface: *mut c_void) -> Option<wl_surface::WlSurface> {
+        // SAFETY: the caller hands over a live surface of this connection.
+        let id = unsafe { ObjectId::from_ptr(wl_surface::WlSurface::interface(), surface.cast()) }.ok()?;
+        wl_surface::WlSurface::from_id(&self.conn, id).ok()
+    }
+
     /// Ask the desktop to bring back the window whose `wl_surface` is `surface` (from the main
     /// window's raw window handle). The token is asked for with the pointer's last press on
     /// one of Snagster's windows (the Stop button), so call this while the bar still exists.
@@ -91,9 +113,8 @@ impl Activator {
     /// `surface` must be a live `wl_surface` on the same connection.
     pub unsafe fn activate(&mut self, surface: *mut c_void) -> bool {
         let _ = self.queue.dispatch_pending(&mut self.state);
-        // SAFETY: the caller hands over a live surface of this connection.
-        let Ok(id) = (unsafe { ObjectId::from_ptr(wl_surface::WlSurface::interface(), surface.cast()) }) else { return false };
-        let Ok(target) = wl_surface::WlSurface::from_id(&self.conn, id) else { return false };
+        // SAFETY: as the caller promises.
+        let Some(target) = (unsafe { self.surface(surface) }) else { return false };
         let qh = self.queue.handle();
         let token = self.activation.get_activation_token(&qh, ());
         if let Some(serial) = token_serial(self.state.over.as_ref().map(|o| o.1), self.state.pressed) {

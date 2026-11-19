@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "సిస్టమ్ సెట్టింగ్‌లలో “కాంట్రాస్ట్ పెంచండి” ఆన్‌లో ఉంది, కాబట్టి టెక్స్ట్ మరియు అంచులు మరింత స్పష్టంగా ఉన్నాయి.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "డెస్క్‌టాప్ డైలాగ్‌లో స్క్రీన్ షేరింగ్ రద్దు చేయబడింది: ఏదీ షేర్ చేయబడలేదు.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "స్క్రీన్ షేరింగ్ ప్రారంభం కాలేదు: అది డెస్క్‌టాప్ డైలాగ్‌లో రద్దు చేయబడింది, లేదా డెస్క్‌టాప్ ఏ కారణమూ ఇవ్వలేదు. ఏదీ షేర్ చేయబడలేదు.",
-  "The desktop's screen-sharing portal said no: {error}": "డెస్క్‌టాప్ స్క్రీన్ షేరింగ్ portal నిరాకరించింది: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "డెస్క్‌టాప్ స్క్రీన్ షేరింగ్ portal నిరాకరించింది: {error}",
+  "Waiting for screen sharing…": "స్క్రీన్ షేరింగ్ కోసం వేచి ఉంది…",
+  "Recording GIF  {time}": "GIF రికార్డ్ అవుతోంది  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps వద్ద {format} రికార్డ్ అవుతోంది  {time}",
+  "Recording steps: {count} so far": "దశలను రికార్డ్ చేస్తోంది: ఇప్పటివరకు {count}",
+  "Scroll it yourself, then press Stop": "మీరే స్క్రోల్ చేసి, ఆపై ఆపు నొక్కండి"
  }
 }

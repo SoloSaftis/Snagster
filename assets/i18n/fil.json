@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Naka-on ang Increase contrast sa System Settings, kaya mas matingkad ang text at mga hangganan.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Kinansela ang pagbabahagi ng screen sa dialog ng desktop: walang naibahagi.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Hindi nagsimula ang pagbabahagi ng screen: kinansela ito sa dialog ng desktop, o walang ibinigay na dahilan ang desktop. Walang naibahagi.",
-  "The desktop's screen-sharing portal said no: {error}": "Tumanggi ang portal ng desktop para sa pagbabahagi ng screen: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Tumanggi ang portal ng desktop para sa pagbabahagi ng screen: {error}",
+  "Waiting for screen sharing…": "Naghihintay sa screen sharing…",
+  "Recording GIF  {time}": "Nire-record ang GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Nire-record ang {format} sa {fps} fps  {time}",
+  "Recording steps: {count} so far": "Nire-record ang mga hakbang: {count} sa ngayon",
+  "Scroll it yourself, then press Stop": "Ikaw ang mag-scroll, saka pindutin ang Ihinto"
  }
 }

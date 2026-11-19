@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "સિસ્ટમ સેટિંગ્સમાં “કોન્ટ્રાસ્ટ વધારો” ચાલુ છે, તેથી ટેક્સ્ટ અને બોર્ડર વધુ સ્પષ્ટ છે.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ડેસ્કટૉપના ડાયલૉગમાં સ્ક્રીન શેરિંગ રદ કરવામાં આવ્યું: કંઈ શેર થયું નથી.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "સ્ક્રીન શેરિંગ શરૂ થયું નહીં: તે ડેસ્કટૉપના ડાયલૉગમાં રદ કરવામાં આવ્યું હતું, અથવા ડેસ્કટૉપે કોઈ કારણ આપ્યું નહીં. કંઈ શેર થયું નથી.",
-  "The desktop's screen-sharing portal said no: {error}": "ડેસ્કટૉપના સ્ક્રીન શેરિંગ portal એ ના પાડી: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "ડેસ્કટૉપના સ્ક્રીન શેરિંગ portal એ ના પાડી: {error}",
+  "Waiting for screen sharing…": "સ્ક્રીન શેરિંગની રાહ જોવાઈ રહી છે…",
+  "Recording GIF  {time}": "GIF રેકોર્ડ થઈ રહ્યું છે  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps પર {format} રેકોર્ડ થઈ રહ્યું છે  {time}",
+  "Recording steps: {count} so far": "પગલાં રેકોર્ડ થઈ રહ્યાં છે: અત્યાર સુધી {count}",
+  "Scroll it yourself, then press Stop": "જાતે સ્ક્રોલ કરો, પછી રોકો દબાવો"
  }
 }

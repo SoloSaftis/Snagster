@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Opcija Povećaj kontrast uključena je u Postavkama sistema, pa su tekst i ivice izraženiji.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Dijeljenje ekrana je otkazano u dijalogu radne površine: ništa nije podijeljeno.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Dijeljenje ekrana nije počelo: otkazano je u dijalogu radne površine ili radna površina nije navela razlog. Ništa nije podijeljeno.",
-  "The desktop's screen-sharing portal said no: {error}": "Portal radne površine za dijeljenje ekrana je odbio: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Portal radne površine za dijeljenje ekrana je odbio: {error}",
+  "Waiting for screen sharing…": "Čeka se dijeljenje ekrana…",
+  "Recording GIF  {time}": "Snimanje GIF-a  {time}",
+  "Recording {format} at {fps} fps  {time}": "Snimanje {format} pri {fps} fps  {time}",
+  "Recording steps: {count} so far": "Snimanje koraka: dosad {count}",
+  "Scroll it yourself, then press Stop": "Sami pomjerajte, pa pritisnite Zaustavi"
  }
 }

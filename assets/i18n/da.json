@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Øg kontrast er slået til i Systemindstillinger, så tekst og kanter er tydeligere.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skærmdeling blev annulleret i skrivebordets dialog: intet blev delt.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skærmdeling startede ikke: den blev annulleret i skrivebordets dialog, eller skrivebordet gav ingen grund. Intet blev delt.",
-  "The desktop's screen-sharing portal said no: {error}": "Skrivebordets portal til skærmdeling sagde nej: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Skrivebordets portal til skærmdeling sagde nej: {error}",
+  "Waiting for screen sharing…": "Venter på skærmdeling…",
+  "Recording GIF  {time}": "Optager GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Optager {format} med {fps} fps  {time}",
+  "Recording steps: {count} so far": "Optager trin: {count} indtil nu",
+  "Scroll it yourself, then press Stop": "Rul selv, og tryk så på Stop"
  }
 }

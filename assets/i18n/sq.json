@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Rritja e kontrastit është e aktivizuar te Cilësimet e Sistemit, ndaj teksti dhe kufijtë janë më të theksuar.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ndarja e ekranit u anulua në dialogun e desktopit: nuk u nda asgjë.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ndarja e ekranit nuk filloi: u anulua në dialogun e desktopit, ose desktopi nuk dha asnjë arsye. Nuk u nda asgjë.",
-  "The desktop's screen-sharing portal said no: {error}": "Portali i desktopit për ndarjen e ekranit tha jo: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Portali i desktopit për ndarjen e ekranit tha jo: {error}",
+  "Waiting for screen sharing…": "Në pritje të ndarjes së ekranit…",
+  "Recording GIF  {time}": "Po regjistrohet GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Po regjistrohet {format} me {fps} fps  {time}",
+  "Recording steps: {count} so far": "Po regjistrohen hapat: {count} deri tani",
+  "Scroll it yourself, then press Stop": "Rrëshqite vetë, pastaj shtyp Ndalo"
  }
 }

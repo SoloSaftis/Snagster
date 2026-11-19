@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "‘Verhoog contrast’ staat aan in Systeeminstellingen, dus tekst en randen zijn sterker.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Schermdelen is geannuleerd in het dialoogvenster van het bureaublad: er is niets gedeeld.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Schermdelen is niet gestart: het is geannuleerd in het dialoogvenster van het bureaublad, of het bureaublad gaf geen reden. Er is niets gedeeld.",
-  "The desktop's screen-sharing portal said no: {error}": "De portal voor schermdelen van het bureaublad zei nee: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "De portal voor schermdelen van het bureaublad zei nee: {error}",
+  "Waiting for screen sharing…": "Wachten op scherm delen…",
+  "Recording GIF  {time}": "GIF opnemen  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} opnemen met {fps} fps  {time}",
+  "Recording steps: {count} so far": "Stappen opnemen: tot nu toe {count}",
+  "Scroll it yourself, then press Stop": "Scroll zelf en druk dan op Stop"
  }
 }

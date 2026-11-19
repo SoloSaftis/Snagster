@@ -1020,5 +1020,10 @@
  "Increase contrast is on in System Settings, so text and borders are stronger.",
  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.",
  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.",
- "The desktop's screen-sharing portal said no: {error}"
+ "The desktop's screen-sharing portal said no: {error}",
+ "Waiting for screen sharing…",
+ "Recording GIF  {time}",
+ "Recording {format} at {fps} fps  {time}",
+ "Recording steps: {count} so far",
+ "Scroll it yourself, then press Stop"
 ]

@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Mae Cynyddu cyferbyniad wedi'i droi ymlaen yng Ngosodiadau'r System, felly mae testun ac ymylon yn gryfach.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Cafodd rhannu'r sgrin ei ganslo yn nialog y bwrdd gwaith: ni rannwyd dim.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ni ddechreuodd rhannu'r sgrin: fe'i canslwyd yn nialog y bwrdd gwaith, neu ni roddodd y bwrdd gwaith unrhyw reswm. Ni rannwyd dim.",
-  "The desktop's screen-sharing portal said no: {error}": "Dywedodd porth rhannu sgrin y bwrdd gwaith na: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Dywedodd porth rhannu sgrin y bwrdd gwaith na: {error}",
+  "Waiting for screen sharing…": "Yn aros am rannu sgrin…",
+  "Recording GIF  {time}": "Yn recordio GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Yn recordio {format} ar {fps} fps  {time}",
+  "Recording steps: {count} so far": "Yn recordio camau: {count} hyd yma",
+  "Scroll it yourself, then press Stop": "Sgroliwch hi eich hun, yna pwyswch Stopio"
  }
 }

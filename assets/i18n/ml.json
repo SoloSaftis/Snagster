@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "സിസ്റ്റം ക്രമീകരണങ്ങളിൽ “കോൺട്രാസ്റ്റ് വർധിപ്പിക്കുക” ഓണാണ്, അതിനാൽ ടെക്സ്റ്റും ബോർഡറുകളും കൂടുതൽ വ്യക്തമാണ്.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ഡെസ്ക്ടോപ്പിന്റെ ഡയലോഗിൽ സ്ക്രീൻ പങ്കിടൽ റദ്ദാക്കി: ഒന്നും പങ്കിട്ടിട്ടില്ല.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "സ്ക്രീൻ പങ്കിടൽ ആരംഭിച്ചില്ല: ഡെസ്ക്ടോപ്പിന്റെ ഡയലോഗിൽ അത് റദ്ദാക്കി, അല്ലെങ്കിൽ ഡെസ്ക്ടോപ്പ് കാരണമൊന്നും നൽകിയില്ല. ഒന്നും പങ്കിട്ടിട്ടില്ല.",
-  "The desktop's screen-sharing portal said no: {error}": "ഡെസ്ക്ടോപ്പിന്റെ സ്ക്രീൻ പങ്കിടൽ portal വിസമ്മതിച്ചു: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "ഡെസ്ക്ടോപ്പിന്റെ സ്ക്രീൻ പങ്കിടൽ portal വിസമ്മതിച്ചു: {error}",
+  "Waiting for screen sharing…": "സ്ക്രീൻ പങ്കിടലിനായി കാത്തിരിക്കുന്നു…",
+  "Recording GIF  {time}": "GIF റെക്കോർഡ് ചെയ്യുന്നു  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps-ൽ {format} റെക്കോർഡ് ചെയ്യുന്നു  {time}",
+  "Recording steps: {count} so far": "ഘട്ടങ്ങൾ റെക്കോർഡ് ചെയ്യുന്നു: ഇതുവരെ {count}",
+  "Scroll it yourself, then press Stop": "സ്വയം സ്ക്രോൾ ചെയ്യുക, തുടർന്ന് നിർത്തുക അമർത്തുക"
  }
 }

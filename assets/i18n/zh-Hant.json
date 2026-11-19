@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "系統設定中已開啟「提高對比」，因此文字與邊框更為鮮明。",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "螢幕分享已在桌面的對話方塊中取消：未分享任何內容。",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "螢幕分享未啟動：已在桌面的對話方塊中取消，或桌面未提供原因。未分享任何內容。",
-  "The desktop's screen-sharing portal said no: {error}": "桌面的螢幕分享入口（portal）拒絕了：{error}"
+  "The desktop's screen-sharing portal said no: {error}": "桌面的螢幕分享入口（portal）拒絕了：{error}",
+  "Waiting for screen sharing…": "正在等待螢幕分享…",
+  "Recording GIF  {time}": "正在錄製 GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "正在以 {fps} fps 錄製 {format}  {time}",
+  "Recording steps: {count} so far": "正在錄製步驟：已有 {count} 步",
+  "Scroll it yourself, then press Stop": "請自行捲動，然後按「停止」"
  }
 }

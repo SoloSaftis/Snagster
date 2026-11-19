@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "システム設定で「コントラストを上げる」がオンのため、文字と境界線が強調されます。",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "画面共有はデスクトップのダイアログでキャンセルされました。何も共有されていません。",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "画面共有を開始できませんでした。デスクトップのダイアログでキャンセルされたか、デスクトップから理由が示されませんでした。何も共有されていません。",
-  "The desktop's screen-sharing portal said no: {error}": "デスクトップの画面共有ポータル（portal）が拒否しました: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "デスクトップの画面共有ポータル（portal）が拒否しました: {error}",
+  "Waiting for screen sharing…": "画面共有を待っています…",
+  "Recording GIF  {time}": "GIF を録画中  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} を {fps} fps で録画中  {time}",
+  "Recording steps: {count} so far": "手順を記録中: これまで {count} 件",
+  "Scroll it yourself, then press Stop": "自分でスクロールし、「停止」を押します"
  }
 }

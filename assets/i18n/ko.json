@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "시스템 설정에서 ‘대비 증가’가 켜져 있어 텍스트와 테두리가 더 선명하게 표시됩니다.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "바탕 화면의 대화 상자에서 화면 공유가 취소되었습니다. 공유된 것은 없습니다.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "화면 공유가 시작되지 않았습니다. 바탕 화면의 대화 상자에서 취소되었거나 바탕 화면이 이유를 알려 주지 않았습니다. 공유된 것은 없습니다.",
-  "The desktop's screen-sharing portal said no: {error}": "바탕 화면의 화면 공유 포털(portal)이 거부했습니다: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "바탕 화면의 화면 공유 포털(portal)이 거부했습니다: {error}",
+  "Waiting for screen sharing…": "화면 공유를 기다리는 중…",
+  "Recording GIF  {time}": "GIF 녹화 중  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} 녹화 중 ({fps} fps)  {time}",
+  "Recording steps: {count} so far": "단계 기록 중: 지금까지 {count}개",
+  "Scroll it yourself, then press Stop": "직접 스크롤한 다음 중지를 누르세요"
  }
 }

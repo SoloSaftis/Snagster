@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "W Ustawieniach systemowych włączono opcję Zwiększ kontrast, więc tekst i obramowania są wyraźniejsze.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Udostępnianie ekranu zostało anulowane w oknie dialogowym pulpitu: nic nie zostało udostępnione.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Udostępnianie ekranu nie rozpoczęło się: zostało anulowane w oknie dialogowym pulpitu albo pulpit nie podał przyczyny. Nic nie zostało udostępnione.",
-  "The desktop's screen-sharing portal said no: {error}": "Portal udostępniania ekranu pulpitu odmówił: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Portal udostępniania ekranu pulpitu odmówił: {error}",
+  "Waiting for screen sharing…": "Oczekiwanie na udostępnienie ekranu…",
+  "Recording GIF  {time}": "Nagrywanie GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Nagrywanie {format} w {fps} fps  {time}",
+  "Recording steps: {count} so far": "Nagrywanie kroków: dotąd {count}",
+  "Scroll it yourself, then press Stop": "Przewijaj samodzielnie, potem naciśnij Stop"
  }
 }

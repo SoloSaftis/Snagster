@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "सिस्टीम सेटिंग्जांत “कॉन्ट्रास्ट वाडयात” चालू आसा, देखून मजकूर आनी कांठ चड ठळक आसात.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "डेस्कटॉपाच्या डायलॉगांत स्क्रीन शेयरींग रद्द जालें: कांयच शेयर केलें ना.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "स्क्रीन शेयरींग सुरू जालें ना: तें डेस्कटॉपाच्या डायलॉगांत रद्द जालें, वा डेस्कटॉपान कितेंच कारण दिलें ना. कांयच शेयर केलें ना.",
-  "The desktop's screen-sharing portal said no: {error}": "डेस्कटॉपाच्या स्क्रीन शेयरींग portalान न्हय म्हणलें: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "डेस्कटॉपाच्या स्क्रीन शेयरींग portalान न्हय म्हणलें: {error}",
+  "Waiting for screen sharing…": "स्क्रीन शेअरिंगाची वाट पळयता…",
+  "Recording GIF  {time}": "GIF रेकॉर्ड जाता  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps चेर {format} रेकॉर्ड जाता  {time}",
+  "Recording steps: {count} so far": "पावलां रेकॉर्ड जातात: आतां मेरेन {count}",
+  "Scroll it yourself, then press Stop": "स्वता स्क्रोल करात, मागीर थांबय दामात"
  }
 }

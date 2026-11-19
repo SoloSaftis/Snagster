@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Tizim sozlamalarida «Kontrastni oshirish» yoqilgan, shuning uchun matn va chegaralar yaqqolroq.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekran ulashish ish stolining dialog oynasida bekor qilindi: hech narsa ulashilmadi.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran ulashish boshlanmadi: u ish stolining dialog oynasida bekor qilindi yoki ish stoli sabab ko‘rsatmadi. Hech narsa ulashilmadi.",
-  "The desktop's screen-sharing portal said no: {error}": "Ish stolining ekran ulashish portali rad etdi: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Ish stolining ekran ulashish portali rad etdi: {error}",
+  "Waiting for screen sharing…": "Ekran ulashilishi kutilmoqda…",
+  "Recording GIF  {time}": "GIF yozilmoqda  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} {fps} fps bilan yozilmoqda  {time}",
+  "Recording steps: {count} so far": "Qadamlarni yozish: hozircha {count}",
+  "Scroll it yourself, then press Stop": "O‘zingiz aylantiring, so‘ng To‘xtatish tugmasini bosing"
  }
 }

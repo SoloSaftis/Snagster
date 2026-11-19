@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "A Rendszerbeállításokban be van kapcsolva a Kontraszt növelése, ezért a szöveg és a szegélyek erősebbek.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "A képernyőmegosztást megszakították az asztal párbeszédablakában: semmi sem lett megosztva.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "A képernyőmegosztás nem indult el: megszakították az asztal párbeszédablakában, vagy az asztal nem adott okot. Semmi sem lett megosztva.",
-  "The desktop's screen-sharing portal said no: {error}": "Az asztal képernyőmegosztási portálja nemet mondott: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Az asztal képernyőmegosztási portálja nemet mondott: {error}",
+  "Waiting for screen sharing…": "Várakozás a képernyőmegosztásra…",
+  "Recording GIF  {time}": "GIF felvétele  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} felvétele {fps} fps-sel  {time}",
+  "Recording steps: {count} so far": "Lépések rögzítése: eddig {count}",
+  "Scroll it yourself, then press Stop": "Görgess magad, majd nyomd meg: Leállítás"
  }
 }

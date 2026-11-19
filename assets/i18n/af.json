@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Verhoog kontras is aan in Stelselinstellings, dus teks en rande is sterker.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skermdeling is in die lessenaar se dialoog gekanselleer: niks is gedeel nie.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skermdeling het nie begin nie: dit is in die lessenaar se dialoog gekanselleer, of die lessenaar het geen rede gegee nie. Niks is gedeel nie.",
-  "The desktop's screen-sharing portal said no: {error}": "Die lessenaar se skermdeling-portaal het nee gesê: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Die lessenaar se skermdeling-portaal het nee gesê: {error}",
+  "Waiting for screen sharing…": "Wag vir skermdeling…",
+  "Recording GIF  {time}": "Neem GIF op  {time}",
+  "Recording {format} at {fps} fps  {time}": "Neem {format} op teen {fps} fps  {time}",
+  "Recording steps: {count} so far": "Neem stappe op: {count} tot dusver",
+  "Scroll it yourself, then press Stop": "Rol dit self, druk dan Stop"
  }
 }

@@ -118,6 +118,21 @@ pub fn start(wanted: Vec<Wanted>, tx: Sender<u32>, wake: Arc<dyn Fn() + Send + S
     PortalKeys { stop, state }
 }
 
+/// The activation token the desktop sent with the last hotkey press, and when (newer desktops
+/// send one, so the hotkey may bring Snagster's window forward).
+static LAST_TOKEN: std::sync::Mutex<Option<(String, std::time::Instant)>> = std::sync::Mutex::new(None);
+
+/// The token of a hotkey press made in the last `within`, once.
+pub fn take_activation_token(within: std::time::Duration) -> Option<String> {
+    let (token, at) = LAST_TOKEN.lock().ok()?.take()?;
+    (at.elapsed() <= within).then_some(token)
+}
+
+/// The activation token in a press's options, if the desktop sent one.
+fn press_token(options: &std::collections::HashMap<String, ashpd::wire::OwnedVariant>) -> Option<String> {
+    options.get("activation_token").and_then(|v| String::try_from(&**v).ok()).filter(|t| !t.is_empty())
+}
+
 async fn run(wanted: &[Wanted], tx: &Sender<u32>, stop: &AtomicBool, wake: &(dyn Fn() + Send + Sync), set: &dyn Fn(State)) -> Result<(), State> {
     use ashpd::desktop::global_shortcuts::{GlobalShortcuts, NewShortcut};
     use futures_util::StreamExt;
@@ -140,6 +155,11 @@ async fn run(wanted: &[Wanted], tx: &Sender<u32>, stop: &AtomicBool, wake: &(dyn
         let tick = async_io::Timer::after(std::time::Duration::from_millis(500));
         match futures_util::future::select(presses.next(), Box::pin(tick)).await {
             futures_util::future::Either::Left((Some(p), _)) => {
+                if let Some(t) = press_token(p.options())
+                    && let Ok(mut last) = LAST_TOKEN.lock()
+                {
+                    *last = Some((t, std::time::Instant::now()));
+                }
                 if let Ok(id) = p.shortcut_id().parse::<u32>() {
                     let _ = tx.send(id);
                     wake();
@@ -159,6 +179,27 @@ async fn run(wanted: &[Wanted], tx: &Sender<u32>, stop: &AtomicBool, wake: &(dyn
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A hotkey press may carry the desktop's activation token (it lets Snagster bring its
+    /// window back); none or an empty one counts as none, and a token is used once while fresh.
+    #[test]
+    fn a_hotkeys_activation_token_is_read_and_used_once() {
+        use ashpd::wire::{OwnedVariant, Str};
+        let mut options = std::collections::HashMap::new();
+        assert_eq!(press_token(&options), None);
+        options.insert("activation_token".to_string(), OwnedVariant::from(Str::from("")));
+        assert_eq!(press_token(&options), None, "empty");
+        options.insert("activation_token".to_string(), OwnedVariant::from(Str::from("kwin-42")));
+        assert_eq!(press_token(&options).as_deref(), Some("kwin-42"));
+        options.insert("activation_token".to_string(), OwnedVariant::from(7u32));
+        assert_eq!(press_token(&options), None, "not a string");
+
+        *LAST_TOKEN.lock().unwrap() = Some(("t1".into(), std::time::Instant::now()));
+        assert_eq!(take_activation_token(std::time::Duration::from_secs(10)).as_deref(), Some("t1"));
+        assert_eq!(take_activation_token(std::time::Duration::from_secs(10)), None, "used once");
+        *LAST_TOKEN.lock().unwrap() = Some(("old".into(), std::time::Instant::now() - std::time::Duration::from_secs(60)));
+        assert_eq!(take_activation_token(std::time::Duration::from_secs(10)), None, "too old: another press");
+    }
 
     fn combo(ctrl: bool, alt: bool, shift: bool, win: bool, key: &str) -> Combo {
         Combo { ctrl, alt, shift, win, key: key.into() }

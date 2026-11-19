@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistem Ayarlarında “Kontrastı artır” aktivdir, ona görə mətn və haşiyələr daha qabarıqdır.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekran paylaşımı iş masasının dialoqunda ləğv edildi: heç nə paylaşılmadı.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran paylaşımı başlamadı: o, iş masasının dialoqunda ləğv edildi və ya iş masası heç bir səbəb göstərmədi. Heç nə paylaşılmadı.",
-  "The desktop's screen-sharing portal said no: {error}": "İş masasının ekran paylaşımı portalı imtina etdi: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "İş masasının ekran paylaşımı portalı imtina etdi: {error}",
+  "Waiting for screen sharing…": "Ekran paylaşımı gözlənilir…",
+  "Recording GIF  {time}": "GIF qeydə alınır  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} {fps} fps ilə qeydə alınır  {time}",
+  "Recording steps: {count} so far": "Addımların yazılması: indiyədək {count}",
+  "Scroll it yourself, then press Stop": "Özünüz sürüşdürün, sonra Dayandır düyməsini basın"
  }
 }

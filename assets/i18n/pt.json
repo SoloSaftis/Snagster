@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "«Aumentar contraste» está ativado nas Definições do Sistema, pelo que o texto e os limites são mais marcados.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "A partilha de ecrã foi cancelada na caixa de diálogo do ambiente de trabalho: nada foi partilhado.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "A partilha de ecrã não foi iniciada: foi cancelada na caixa de diálogo do ambiente de trabalho, ou o ambiente de trabalho não deu qualquer motivo. Nada foi partilhado.",
-  "The desktop's screen-sharing portal said no: {error}": "O portal de partilha de ecrã do ambiente de trabalho recusou: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "O portal de partilha de ecrã do ambiente de trabalho recusou: {error}",
+  "Waiting for screen sharing…": "A aguardar a partilha de ecrã…",
+  "Recording GIF  {time}": "A gravar GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "A gravar {format} a {fps} fps  {time}",
+  "Recording steps: {count} so far": "A gravar passos: {count} até agora",
+  "Scroll it yourself, then press Stop": "Desloque você e depois prima Parar"
  }
 }

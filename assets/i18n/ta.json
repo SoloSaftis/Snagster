@@ -1024,6 +1024,11 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "கணினி அமைப்புகளில் “கான்ட்ராஸ்ட்டை அதிகரி” இயக்கத்தில் உள்ளது, எனவே உரையும் எல்லைகளும் அழுத்தமாக உள்ளன.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "டெஸ்க்டாப்பின் உரையாடலில் திரைப் பகிர்வு ரத்து செய்யப்பட்டது: எதுவும் பகிரப்படவில்லை.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "திரைப் பகிர்வு தொடங்கவில்லை: அது டெஸ்க்டாப்பின் உரையாடலில் ரத்து செய்யப்பட்டது, அல்லது டெஸ்க்டாப் எந்தக் காரணத்தையும் தரவில்லை. எதுவும் பகிரப்படவில்லை.",
-  "The desktop's screen-sharing portal said no: {error}": "டெஸ்க்டாப்பின் திரைப் பகிர்வு portal மறுத்துவிட்டது: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "டெஸ்க்டாப்பின் திரைப் பகிர்வு portal மறுத்துவிட்டது: {error}",
+  "Waiting for screen sharing…": "திரைப் பகிர்வுக்காகக் காத்திருக்கிறது…",
+  "Recording GIF  {time}": "GIF பதிவு செய்கிறது  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps-இல் {format} பதிவு செய்கிறது  {time}",
+  "Recording steps: {count} so far": "படிகளைப் பதிவு செய்கிறது: இதுவரை {count}",
+  "Scroll it yourself, then press Stop": "நீங்களே உருட்டுங்கள், பிறகு நிறுத்து அழுத்துங்கள்"
  }
 }
