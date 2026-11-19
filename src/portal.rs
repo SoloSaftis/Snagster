@@ -125,8 +125,8 @@ pub fn screenshot(interactive: bool) -> Result<RgbaImage, String> {
         let answer = request.response().map_err(|e| e.to_string())?;
         Ok::<_, String>(answer.uri().to_string())
     })
-    .map_err(|e| format!("the desktop's screenshot portal said no ({e})"))?;
-    let path = file_uri_path(&uri).ok_or_else(|| format!("the screenshot portal gave an address Snagster can't open ({uri})"))?;
+    .map_err(|e| screenshot_refusal(&e))?;
+    let path = file_uri_path(&uri).ok_or_else(|| crate::i18n::tf("The desktop's screenshot portal gave an address Snagster can't open: {address}", &[("address", &uri)]))?;
     let img = image::open(&path).map(|i| i.to_rgba8()).map_err(|e| e.to_string());
     let _ = std::fs::remove_file(&path);
     img
@@ -159,6 +159,17 @@ pub fn screencast_available() -> bool {
         let _ = tx.send(ok);
     });
     rx.recv_timeout(std::time::Duration::from_secs(1)).unwrap_or(false)
+}
+
+/// What to say when the Screenshot portal said no (translated, worded like the screen share's).
+/// Cancel in the desktop's screenshot dialog (GNOME's or KDE's) is said plainly, not as an error.
+fn screenshot_refusal(raw: &str) -> String {
+    use crate::i18n::{t, tf};
+    if raw.trim() == "Cancelled" || raw.contains("Response(Cancelled)") || raw.contains("was cancelled") {
+        t("The screenshot was cancelled in the desktop's dialog.").to_string()
+    } else {
+        tf("The desktop's screenshot portal said no: {error}", &[("error", raw)])
+    }
 }
 
 /// What to say when the screen share didn't start (translated).
@@ -623,6 +634,19 @@ mod tests {
         assert!(other_way.starts_with("Screen sharing didn't start") && other_way.contains("cancelled") && other_way.contains("no reason"), "{other_way}");
         let other = share_refusal("Portal request failed: org.freedesktop.portal.Error.NotAllowed");
         assert!(other.contains("NotAllowed") && other.starts_with("The desktop's screen-sharing portal said no: "), "{other}");
+    }
+
+    #[test]
+    fn a_refused_screenshot_is_said_like_a_refused_share() {
+        let raw = "Portal request failed: org.freedesktop.portal.Error.NotAllowed";
+        let said = screenshot_refusal(raw);
+        assert_eq!(said, format!("The desktop's screenshot portal said no: {raw}"));
+        // Through the language packs, like the screen-sharing message beside it.
+        assert!(include_str!("../assets/i18n/strings.json").contains("\"The desktop's screenshot portal said no: {error}\""));
+        // Cancel in the desktop's dialog isn't an error (ashpd's wording, and the bare answer).
+        for raw in ["Portal request was cancelled", "Cancelled"] {
+            assert_eq!(screenshot_refusal(raw), "The screenshot was cancelled in the desktop's dialog.");
+        }
     }
 
     #[test]

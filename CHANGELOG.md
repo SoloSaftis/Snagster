@@ -35,6 +35,16 @@ Marking up pictures (every system):
   through the desktop's portal, so also in the Flatpak).
 - **KDE Plasma:** Snagster's dialogs, pins and recording bar show Snagster's icon and sit
   with Snagster in the taskbar (they showed another program's icon before).
+- **Dialogs fit what they hold**: New image, Resize, Rename and the other small dialogs no
+  longer keep empty space below their buttons (on every system), and on KDE Plasma they no
+  longer offer Maximise.
+- **Black and white colours show on every panel**: a colour swatch or quick style that would
+  melt into the panel (black in dark mode, white or yellow in light mode) gets a thin edge.
+- **The desktop is called "Desktop"** when you point at it in the Area overlay on Linux (Plasma
+  showed "Desktop @ QRect(...)"), and it is no longer offered as a window to capture (nor is
+  Windows' Program Manager).
+- **Cancelling the desktop's screenshot dialog** says so plainly, and the screenshot portal's
+  other answers are translated.
 - **Cancelling screen sharing** in the desktop's dialog now says so (on KDE, where Cancel looks
   the same as a stop without a reason, the message names both).
 - **A cancelled recording on Wayland no longer saves a black video**: it fell back to XWayland,
