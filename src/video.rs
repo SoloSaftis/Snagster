@@ -287,7 +287,18 @@ pub fn record(opts: &VideoOpts, stop: &AtomicBool, pause: &AtomicBool) -> VideoD
     #[cfg(not(windows))]
     soft::record(opts, stop, pause, &mut done);
     RECORDING_LIVE.store(false, Ordering::Relaxed);
+    if done.result.is_err() {
+        remove_empty(&opts.path);
+    }
     done
+}
+
+/// A recording that failed before its first picture (the share was cancelled, say) leaves no
+/// empty file behind. A file with pictures in it is kept, whatever went wrong later.
+fn remove_empty(path: &std::path::Path) {
+    if std::fs::metadata(path).is_ok_and(|m| m.is_file() && m.len() == 0) {
+        let _ = std::fs::remove_file(path);
+    }
 }
 
 /// Whether the recording that is running has its screen and is counting time. On Wayland a
@@ -681,7 +692,9 @@ fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, 
                 Err(e) => why = Some(e),
             }
         }
-        if (!wayland || why.is_some())
+        // XWayland after the portal only where the desktop has no portal (WSLg): after a
+        // Cancel or a refusal it would record XWayland's own black screen and call it saved.
+        if x11_after_portal(wayland, why.is_some(), || crate::portal::screencast_available())
             && let Ok(g) = x11::X11Grab::open(rect, cursor)
         {
             return Ok(Box::new(g));
@@ -698,6 +711,15 @@ fn open_grab(rect: (i32, i32, u32, u32), cursor: bool) -> Result<Box<dyn Grab>, 
     }
     #[cfg(not(windows))]
     return Ok(Box::new(XcapGrab { rect, cursor }));
+}
+
+/// Whether to read the screen through X11: always on X11; on Wayland only when the screen share
+/// failed because the desktop has no portal (`portal_exists` is asked only then). A share the
+/// person cancelled or the desktop refused must not end in XWayland, which sees only X11
+/// windows on a black screen.
+#[cfg(any(target_os = "linux", test))]
+fn x11_after_portal(wayland: bool, portal_failed: bool, portal_exists: impl FnOnce() -> bool) -> bool {
+    !wayland || (portal_failed && !portal_exists())
 }
 
 /// Whether a recording or stream may fall back to one screenshot per picture (xcap): not on
@@ -3196,6 +3218,38 @@ mod tests {
         assert!(use_portal(false, true), "a Flatpak only gets the screen through the portal");
         assert!(per_picture_screenshots(false), "X11 copies are cheap: the last resort may grab per picture");
         assert!(!per_picture_screenshots(true), "never a desktop screenshot per picture on Wayland");
+    }
+
+    #[test]
+    fn a_failed_recording_leaves_no_empty_file() {
+        let dir = std::env::temp_dir().join(format!("snagster-empty-{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        let empty = dir.join("cancelled.mp4");
+        let kept = dir.join("half.mp4");
+        std::fs::write(&empty, b"").unwrap();
+        std::fs::write(&kept, b"some pictures").unwrap();
+        remove_empty(&empty);
+        remove_empty(&kept);
+        remove_empty(&dir.join("never-made.mp4"));
+        assert!(!empty.exists(), "nothing was recorded: no file");
+        assert!(kept.exists(), "pictures already written are kept");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Found on KDE Plasma: Cancel in the share dialog fell back to XWayland and saved a black
+    /// video. XWayland only where the desktop has no portal at all (WSLg).
+    #[test]
+    fn a_cancelled_share_never_records_xwaylands_black_screen() {
+        let asked = std::cell::Cell::new(false);
+        let has_portal = || {
+            asked.set(true);
+            true
+        };
+        assert!(!x11_after_portal(true, true, has_portal), "Cancel or a refusal on GNOME/KDE: no XWayland");
+        assert!(x11_after_portal(true, true, || false), "no portal at all (WSLg): XWayland is all there is");
+        asked.set(false);
+        assert!(x11_after_portal(false, false, has_portal), "X11 copies directly");
+        assert!(!asked.get(), "the portal is only asked about after it failed on Wayland");
     }
 
     fn solid_px(w: u32, h: u32, p: [u8; 4]) -> Vec<u8> {

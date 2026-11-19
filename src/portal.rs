@@ -146,6 +146,21 @@ pub fn notify(id: &str, title: &str, body: &str) {
     });
 }
 
+/// Whether the desktop has a screen-sharing portal at all (a quick D-Bus question, at most a
+/// second). WSLg and bare window managers have none; GNOME, KDE and the others do.
+pub fn screencast_available() -> bool {
+    let (tx, rx) = std::sync::mpsc::channel();
+    let _ = std::thread::Builder::new().name("snagster-portal-check".into()).spawn(move || {
+        let ok = pollster::block_on(async {
+            let proxy = ashpd::desktop::screencast::Screencast::new().await.ok()?;
+            proxy.available_source_types().await.ok()
+        })
+        .is_some();
+        let _ = tx.send(ok);
+    });
+    rx.recv_timeout(std::time::Duration::from_secs(1)).unwrap_or(false)
+}
+
 /// What to say when the screen share didn't start (translated).
 ///
 /// The portal answers 1 when the person pressed Cancel (GNOME's dialog; ashpd words it "was

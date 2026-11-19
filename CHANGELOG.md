@@ -25,6 +25,11 @@ Marking up pictures (every system):
   with Snagster in the taskbar (they showed another program's icon before).
 - **Cancelling screen sharing** in the desktop's dialog now says so (on KDE, where Cancel looks
   the same as a stop without a reason, the message names both).
+- **A cancelled recording on Wayland no longer saves a black video**: it fell back to XWayland,
+  which sees only a black screen, and said "Saved". It now stops and says it was cancelled, and
+  a recording that never got a picture leaves no empty file behind.
+- `snagster record`, `snagster capture` and AI apps over MCP tell the desktop they are
+  Snagster, so KDE remembers one screen-share answer for all of Snagster.
 
 Windows:
 
