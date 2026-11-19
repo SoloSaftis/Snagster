@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "கணினி அமைப்புகளில் “கான்ட்ராஸ்ட்டை அதிகரி” இயக்கத்தில் உள்ளது, எனவே உரையும் எல்லைகளும் அழுத்தமாக உள்ளன.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "டெஸ்க்டாப்பின் உரையாடலில் திரைப் பகிர்வு ரத்து செய்யப்பட்டது: எதுவும் பகிரப்படவில்லை.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "திரைப் பகிர்வு தொடங்கவில்லை: அது டெஸ்க்டாப்பின் உரையாடலில் ரத்து செய்யப்பட்டது, அல்லது டெஸ்க்டாப் எந்தக் காரணத்தையும் தரவில்லை. எதுவும் பகிரப்படவில்லை.",
-  "The desktop's screen-sharing portal said no: {error}": "டெஸ்க்டாப்பின் திரைப் பகிர்வு portal மறுத்துவிட்டது: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "டெஸ்க்டாப்பின் திரைப் பகிர்வு portal மறுத்துவிட்டது: {error}",
+  "Desktop": "டெஸ்க்டாப்",
+  "The desktop's screenshot portal said no: {error}": "டெஸ்க்டாப்பின் ஸ்கிரீன்ஷாட் portal மறுத்துவிட்டது: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "டெஸ்க்டாப்பின் ஸ்கிரீன்ஷாட் portal Snagster-ஆல் திறக்க முடியாத முகவரியைக் கொடுத்தது: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "டெஸ்க்டாப்பின் உரையாடலில் ஸ்கிரீன்ஷாட் ரத்து செய்யப்பட்டது."
  }
 }

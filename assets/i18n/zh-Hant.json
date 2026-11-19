@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "系統設定中已開啟「提高對比」，因此文字與邊框更為鮮明。",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "螢幕分享已在桌面的對話方塊中取消：未分享任何內容。",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "螢幕分享未啟動：已在桌面的對話方塊中取消，或桌面未提供原因。未分享任何內容。",
-  "The desktop's screen-sharing portal said no: {error}": "桌面的螢幕分享入口（portal）拒絕了：{error}"
+  "The desktop's screen-sharing portal said no: {error}": "桌面的螢幕分享入口（portal）拒絕了：{error}",
+  "Desktop": "桌面",
+  "The desktop's screenshot portal said no: {error}": "桌面的螢幕擷取入口（portal）拒絕了：{error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "桌面的螢幕擷取入口（portal）提供了 Snagster 無法開啟的位址：{address}",
+  "The screenshot was cancelled in the desktop's dialog.": "螢幕擷取已在桌面的對話方塊中取消。"
  }
 }

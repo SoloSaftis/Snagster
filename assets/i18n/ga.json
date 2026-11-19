@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Tá Méadaigh codarsnacht ar siúl i Socruithe an Chórais, mar sin tá téacs agus teorainneacha níos láidre.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Cuireadh an roinnt scáileáin ar ceal i ndialóg an deisce: níor roinneadh aon rud.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Níor thosaigh an roinnt scáileáin: cuireadh ar ceal í i ndialóg an deisce, nó níor thug an deasc aon chúis. Níor roinneadh aon rud.",
-  "The desktop's screen-sharing portal said no: {error}": "Dúirt tairseach roinnte scáileáin an deisce níl: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Dúirt tairseach roinnte scáileáin an deisce níl: {error}",
+  "Desktop": "Deasc",
+  "The desktop's screenshot portal said no: {error}": "Dúirt tairseach scáileánghraba an deisce níl: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Thug tairseach scáileánghraba an deisce seoladh nach féidir le Snagster a oscailt: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Cuireadh an scáileánghrab ar ceal i ndialóg an deisce."
  }
 }

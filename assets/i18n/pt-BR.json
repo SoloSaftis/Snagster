@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "“Aumentar contraste” está ativado em Ajustes do Sistema, então o texto e as bordas ficam mais fortes.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "O compartilhamento de tela foi cancelado na caixa de diálogo da área de trabalho: nada foi compartilhado.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "O compartilhamento de tela não foi iniciado: ele foi cancelado na caixa de diálogo da área de trabalho, ou a área de trabalho não deu nenhum motivo. Nada foi compartilhado.",
-  "The desktop's screen-sharing portal said no: {error}": "O portal de compartilhamento de tela da área de trabalho recusou: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "O portal de compartilhamento de tela da área de trabalho recusou: {error}",
+  "Desktop": "Área de trabalho",
+  "The desktop's screenshot portal said no: {error}": "O portal de capturas de tela da área de trabalho recusou: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "O portal de capturas de tela da área de trabalho informou um endereço que o Snagster não consegue abrir: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "A captura de tela foi cancelada na caixa de diálogo da área de trabalho."
  }
 }

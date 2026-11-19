@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "सिस्टीम सेटिंग्जांत “कॉन्ट्रास्ट वाडयात” चालू आसा, देखून मजकूर आनी कांठ चड ठळक आसात.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "डेस्कटॉपाच्या डायलॉगांत स्क्रीन शेयरींग रद्द जालें: कांयच शेयर केलें ना.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "स्क्रीन शेयरींग सुरू जालें ना: तें डेस्कटॉपाच्या डायलॉगांत रद्द जालें, वा डेस्कटॉपान कितेंच कारण दिलें ना. कांयच शेयर केलें ना.",
-  "The desktop's screen-sharing portal said no: {error}": "डेस्कटॉपाच्या स्क्रीन शेयरींग portalान न्हय म्हणलें: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "डेस्कटॉपाच्या स्क्रीन शेयरींग portalान न्हय म्हणलें: {error}",
+  "Desktop": "डेस्कटॉप",
+  "The desktop's screenshot portal said no: {error}": "डेस्कटॉपाच्या स्क्रीनशॉट portalान न्हय म्हणलें: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "डेस्कटॉपाच्या स्क्रीनशॉट portalान Snagster सुरू करूंक शकना अशें एक पत्तो दिलो: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "डेस्कटॉपाच्या डायलॉगांत स्क्रीनशॉट रद्द जालो."
  }
 }

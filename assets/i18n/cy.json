@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Mae Cynyddu cyferbyniad wedi'i droi ymlaen yng Ngosodiadau'r System, felly mae testun ac ymylon yn gryfach.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Cafodd rhannu'r sgrin ei ganslo yn nialog y bwrdd gwaith: ni rannwyd dim.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ni ddechreuodd rhannu'r sgrin: fe'i canslwyd yn nialog y bwrdd gwaith, neu ni roddodd y bwrdd gwaith unrhyw reswm. Ni rannwyd dim.",
-  "The desktop's screen-sharing portal said no: {error}": "Dywedodd porth rhannu sgrin y bwrdd gwaith na: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Dywedodd porth rhannu sgrin y bwrdd gwaith na: {error}",
+  "Desktop": "Bwrdd gwaith",
+  "The desktop's screenshot portal said no: {error}": "Dywedodd porth sgrinluniau y bwrdd gwaith na: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Rhoddodd porth sgrinluniau y bwrdd gwaith gyfeiriad na all Snagster ei agor: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Cafodd y sgrinlun ei ganslo yn nialog y bwrdd gwaith."
  }
 }

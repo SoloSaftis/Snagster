@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistēmas iestatījumos ir ieslēgta opcija Palielināt kontrastu, tāpēc teksts un apmales ir izteiksmīgākas.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekrāna kopīgošana tika atcelta darbvirsmas dialoglodziņā: nekas netika kopīgots.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekrāna kopīgošana nesākās: tā tika atcelta darbvirsmas dialoglodziņā vai darbvirsma nenorādīja iemeslu. Nekas netika kopīgots.",
-  "The desktop's screen-sharing portal said no: {error}": "Darbvirsmas ekrāna kopīgošanas portāls atteica: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Darbvirsmas ekrāna kopīgošanas portāls atteica: {error}",
+  "Desktop": "Darbvirsma",
+  "The desktop's screenshot portal said no: {error}": "Darbvirsmas ekrānuzņēmumu portāls atteica: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Darbvirsmas ekrānuzņēmumu portāls norādīja adresi, ko Snagster nevar atvērt: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Ekrānuzņēmums tika atcelts darbvirsmas dialoglodziņā."
  }
 }

@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Жүйе параметрлерінде «Контрастты арттыру» қосулы, сондықтан мәтін мен жиектер айқынырақ.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Экранды бөлісу жұмыс үстелінің диалогында тоқтатылды: ештеңе бөлісілген жоқ.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Экранды бөлісу басталмады: ол жұмыс үстелінің диалогында тоқтатылды немесе жұмыс үстелі себебін көрсетпеді. Ештеңе бөлісілген жоқ.",
-  "The desktop's screen-sharing portal said no: {error}": "Жұмыс үстелінің экранды бөлісу порталы бас тартты: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Жұмыс үстелінің экранды бөлісу порталы бас тартты: {error}",
+  "Desktop": "Жұмыс үстелі",
+  "The desktop's screenshot portal said no: {error}": "Жұмыс үстелінің скриншот порталы бас тартты: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Жұмыс үстелінің скриншот порталы Snagster аша алмайтын мекенжай берді: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Скриншот жұмыс үстелінің диалогында тоқтатылды."
  }
 }

@@ -268,20 +268,25 @@ pub fn monitor_under_cursor() -> Result<(i32, i32, u32, u32), String> {
 /// `xcap::Window::all` already lists windows front to back on Windows, macOS and Linux, so
 /// the order is kept as it comes (asking each window for its `z()` enumerates every window
 /// again, which made this O(n²)). The program name is looked up once per process.
+/// The desktop's own window (its wallpaper and icons) isn't one of them: it isn't a window to
+/// pick.
 pub fn list_windows() -> Vec<WindowInfo> {
-    windows_and_programs().into_iter().map(|(w, _)| w).collect()
+    windows_and_programs().into_iter().filter(|w| !w.2).map(|(w, ..)| w).collect()
 }
 
-/// The windows `list_windows` gives, each with its program's process id (0 when unknown).
-fn windows_and_programs() -> Vec<(WindowInfo, u32)> {
+/// The windows `list_windows` gives, each with its program's process id (0 when unknown) and
+/// whether it is the desktop itself (named "Desktop"; the Area overlay still snaps to it).
+fn windows_and_programs() -> Vec<(WindowInfo, u32, bool)> {
     guarded(|| Ok::<_, String>(windows_and_programs_raw())).unwrap_or_default()
 }
 
-fn windows_and_programs_raw() -> Vec<(WindowInfo, u32)> {
+fn windows_and_programs_raw() -> Vec<(WindowInfo, u32, bool)> {
     let me = std::process::id();
     let Ok(all) = guarded(xcap::Window::all) else { return Vec::new() };
     let mut apps = AppNames::default();
     let mut out = Vec::new();
+    #[cfg(target_os = "linux")]
+    let x11_desktops = x11_desktop_windows(all.iter().filter_map(|w| w.id().ok()));
     for w in all {
         let pid = w.pid().ok();
         if pid == Some(me) || w.is_minimized().unwrap_or(true) {
@@ -295,8 +300,12 @@ fn windows_and_programs_raw() -> Vec<(WindowInfo, u32)> {
             continue;
         }
         let app = apps.get(pid, || w.app_name().unwrap_or_default());
-        let label = window_label(title, &app);
-        out.push((WindowInfo { id, label, app, x, y, width, height }, pid.unwrap_or(0)));
+        #[cfg(target_os = "linux")]
+        let desktop = x11_desktops.contains(&id) || is_desktop_window(&title, &app);
+        #[cfg(not(target_os = "linux"))]
+        let desktop = is_desktop_window(&title, &app);
+        let label = if desktop { crate::i18n::t("Desktop").to_string() } else { window_label(title, &app) };
+        out.push((WindowInfo { id, label, app, x, y, width, height }, pid.unwrap_or(0), desktop));
     }
     out
 }
@@ -317,6 +326,46 @@ impl AppNames {
 /// Whether a window is worth listing: it has a title and isn't tiny.
 fn listable(title: &str, width: u32, height: u32) -> bool {
     !title.trim().is_empty() && width >= 60 && height >= 40
+}
+
+/// The X11 windows among `ids` that say they are the desktop (`_NET_WM_WINDOW_TYPE_DESKTOP`):
+/// Plasma's, Xfce's, MATE's, Cinnamon's, LXQt's and GNOME's desktop-icons windows all do, in
+/// any language. Empty without an X server (Wayland's own windows, or none at all).
+#[cfg(target_os = "linux")]
+fn x11_desktop_windows(ids: impl Iterator<Item = u32>) -> std::collections::HashSet<u32> {
+    use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
+    let mut out = std::collections::HashSet::new();
+    let Ok((conn, _)) = x11rb::connect(None) else { return out };
+    let atom = |name: &[u8]| conn.intern_atom(false, name).ok().and_then(|c| c.reply().ok()).map(|r| r.atom);
+    let (Some(kind), Some(desktop)) = (atom(b"_NET_WM_WINDOW_TYPE"), atom(b"_NET_WM_WINDOW_TYPE_DESKTOP")) else { return out };
+    for id in ids {
+        let types = conn.get_property(false, id, kind, AtomEnum::ATOM, 0, 16).ok().and_then(|c| c.reply().ok());
+        if types.is_some_and(|t| t.value32().is_some_and(|mut v| v.any(|a| a == desktop))) {
+            out.insert(id);
+        }
+    }
+    out
+}
+
+/// Whether a window is the desktop itself (the wallpaper and its icons), by its program and
+/// title, for where the window type can't be asked (Windows' Program Manager) or isn't set.
+/// Plasma calls it "Desktop @ QRect(0,0 1920x1080)"; GNOME's desktop icons (DING) give it a
+/// marker title such as "@!0,0;BDHF". A file manager showing the ~/Desktop folder, also titled
+/// "Desktop", is an ordinary window.
+fn is_desktop_window(title: &str, app: &str) -> bool {
+    let (title, app) = (title.trim(), app.trim().to_lowercase());
+    let app = app.strip_suffix(".exe").unwrap_or(&app);
+    if title.starts_with("@!") && title.ends_with(";BDHF") {
+        return true;
+    }
+    match app {
+        "plasmashell" => title.starts_with("Desktop @"),
+        "xfdesktop" | "nemo-desktop" | "nautilus-desktop" | "desktop-icons-ng" | "ding" => true,
+        "caja" => title == "x-caja-desktop",
+        "pcmanfm" | "pcmanfm-qt" => title == app,
+        "explorer" | "windows explorer" => title == "Program Manager",
+        _ => false,
+    }
 }
 
 /// The name shown for a window: its title, with the program added when the title doesn't
@@ -343,7 +392,7 @@ fn untitled_label(title: String, class: &str) -> String {
     } else if class == "#32768" {
         "Menu".into()
     } else if class == "Progman" || class == "WorkerW" {
-        "Desktop".into()
+        crate::i18n::t("Desktop").into()
     } else {
         class.to_string()
     }
@@ -515,7 +564,7 @@ pub fn objects() -> Vec<Object> {
     {
         windows_and_programs()
             .into_iter()
-            .map(|(w, pid)| Object { x: w.x, y: w.y, width: w.width, height: w.height, label: w.label, children: Vec::new(), handle: w.id as u64, pid })
+            .map(|(w, pid, _)| Object { x: w.x, y: w.y, width: w.width, height: w.height, label: w.label, children: Vec::new(), handle: w.id as u64, pid })
             .collect()
     }
 }
@@ -1850,6 +1899,28 @@ mod tests {
         assert!(l.ends_with("..."));
         let exact = "a".repeat(70);
         assert_eq!(window_label(exact.clone(), ""), exact);
+    }
+
+    /// Plasma's desktop on X11 is named "Desktop" in the Area overlay (not KDE's internal name)
+    /// and isn't offered as a window to pick; so are other desktops' wallpaper windows.
+    #[test]
+    fn the_desktops_own_window_is_called_desktop() {
+        assert!(is_desktop_window("Desktop @ QRect(0,0 2208x1401)", "plasmashell"));
+        assert!(is_desktop_window("Desktop", "xfdesktop"));
+        assert!(is_desktop_window("x-caja-desktop", "caja"));
+        assert!(is_desktop_window("Program Manager", "explorer.exe"));
+        assert!(is_desktop_window("pcmanfm", "pcmanfm"));
+        // Plasma's panels, a file-manager window and an ordinary window called Desktop are not it.
+        assert!(!is_desktop_window("Plasma", "plasmashell"));
+        assert!(!is_desktop_window("Home - Dolphin", "dolphin"));
+        assert!(!is_desktop_window("Documents", "caja"));
+        assert!(!is_desktop_window("Desktop", "code"));
+        // GNOME's desktop icons, and the ~/Desktop folder open in a file manager (not the desktop).
+        assert!(is_desktop_window("@!0,0;BDHF", "gjs"));
+        for fm in ["caja", "nemo", "nautilus", "pcmanfm"] {
+            assert!(!is_desktop_window("Desktop", fm), "{fm}");
+        }
+        assert!(!is_desktop_window("my-desktop", "caja"));
     }
 
     #[test]

@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Opcija Povećaj kontrast uključena je u Postavkama sustava, pa su tekst i rubovi izraženiji.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Dijeljenje zaslona otkazano je u dijaloškom okviru radne površine: ništa nije podijeljeno.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Dijeljenje zaslona nije započelo: otkazano je u dijaloškom okviru radne površine ili radna površina nije navela razlog. Ništa nije podijeljeno.",
-  "The desktop's screen-sharing portal said no: {error}": "Portal radne površine za dijeljenje zaslona odbio je zahtjev: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Portal radne površine za dijeljenje zaslona odbio je zahtjev: {error}",
+  "Desktop": "Radna površina",
+  "The desktop's screenshot portal said no: {error}": "Portal radne površine za snimke zaslona odbio je zahtjev: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Portal radne površine za snimke zaslona dao je adresu koju Snagster ne može otvoriti: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Snimka zaslona otkazana je u dijaloškom okviru radne površine."
  }
 }

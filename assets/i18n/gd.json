@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Tha Cuir barrachd iomsgaraidh air ann an Roghainnean an t-siostaim, mar sin tha teacsa is crìochan nas làidire.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Chaidh co-roinneadh na sgrìn a chur dheth ann an còmhradh an deasg: cha deach dad a cho-roinn.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Cha do thòisich co-roinneadh na sgrìn: chaidh a chur dheth ann an còmhradh an deasg, no cha tug an deasg adhbhar sam bith. Cha deach dad a cho-roinn.",
-  "The desktop's screen-sharing portal said no: {error}": "Thuirt portal co-roinneadh sgrìn an deasg nach eil: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Thuirt portal co-roinneadh sgrìn an deasg nach eil: {error}",
+  "Desktop": "Deasg",
+  "The desktop's screenshot portal said no: {error}": "Thuirt portal glacaidhean-sgrìn an deasg nach eil: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Thug portal glacaidhean-sgrìn an deasg seòladh nach urrainn dha Snagster fhosgladh: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Chaidh a’ ghlacadh-sgrìn a chur dheth ann an còmhradh an deasg."
  }
 }

@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistemos nustatymuose įjungta Didinti kontrastą, todėl tekstas ir kraštinės ryškesni.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekrano bendrinimas buvo atšauktas darbalaukio dialogo lange: niekas nebuvo bendrinama.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekrano bendrinimas nepasileido: jis buvo atšauktas darbalaukio dialogo lange arba darbalaukis nenurodė priežasties. Niekas nebuvo bendrinama.",
-  "The desktop's screen-sharing portal said no: {error}": "Darbalaukio ekrano bendrinimo portalas atsisakė: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Darbalaukio ekrano bendrinimo portalas atsisakė: {error}",
+  "Desktop": "Darbalaukis",
+  "The desktop's screenshot portal said no: {error}": "Darbalaukio ekrano nuotraukų portalas atsisakė: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Darbalaukio ekrano nuotraukų portalas pateikė adresą, kurio Snagster negali atidaryti: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Ekrano nuotrauka buvo atšaukta darbalaukio dialogo lange."
  }
 }

@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "সিস্টেম সেটিংসে “কনট্রাস্ট বাড়ান” চালু আছে, তাই টেক্সট ও বর্ডার আরও স্পষ্ট।",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ডেস্কটপের ডায়ালগে স্ক্রিন শেয়ারিং বাতিল করা হয়েছে: কিছুই শেয়ার করা হয়নি।",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "স্ক্রিন শেয়ারিং শুরু হয়নি: এটি ডেস্কটপের ডায়ালগে বাতিল করা হয়েছিল, অথবা ডেস্কটপ কোনো কারণ জানায়নি। কিছুই শেয়ার করা হয়নি।",
-  "The desktop's screen-sharing portal said no: {error}": "ডেস্কটপের স্ক্রিন শেয়ারিং portal অস্বীকার করেছে: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "ডেস্কটপের স্ক্রিন শেয়ারিং portal অস্বীকার করেছে: {error}",
+  "Desktop": "ডেস্কটপ",
+  "The desktop's screenshot portal said no: {error}": "ডেস্কটপের স্ক্রিনশট portal অস্বীকার করেছে: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "ডেস্কটপের স্ক্রিনশট portal এমন একটি ঠিকানা দিয়েছে যা Snagster খুলতে পারে না: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "ডেস্কটপের ডায়ালগে স্ক্রিনশট বাতিল করা হয়েছে।"
  }
 }

@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "시스템 설정에서 ‘대비 증가’가 켜져 있어 텍스트와 테두리가 더 선명하게 표시됩니다.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "바탕 화면의 대화 상자에서 화면 공유가 취소되었습니다. 공유된 것은 없습니다.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "화면 공유가 시작되지 않았습니다. 바탕 화면의 대화 상자에서 취소되었거나 바탕 화면이 이유를 알려 주지 않았습니다. 공유된 것은 없습니다.",
-  "The desktop's screen-sharing portal said no: {error}": "바탕 화면의 화면 공유 포털(portal)이 거부했습니다: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "바탕 화면의 화면 공유 포털(portal)이 거부했습니다: {error}",
+  "Desktop": "바탕 화면",
+  "The desktop's screenshot portal said no: {error}": "바탕 화면의 스크린샷 포털(portal)이 거부했습니다: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "바탕 화면의 스크린샷 포털(portal)이 Snagster에서 열 수 없는 주소를 알려 주었습니다: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "스크린샷이 바탕 화면의 대화 상자에서 취소되었습니다."
  }
 }

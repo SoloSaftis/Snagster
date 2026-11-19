@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "В Системных настройках включена опция «Увеличить контрастность», поэтому текст и границы выразительнее.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Показ экрана отменён в диалоговом окне рабочего стола: ничего не было передано.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Показ экрана не начался: он был отменён в диалоговом окне рабочего стола, либо рабочий стол не указал причину. Ничего не было передано.",
-  "The desktop's screen-sharing portal said no: {error}": "Портал показа экрана рабочего стола отказал: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Портал показа экрана рабочего стола отказал: {error}",
+  "Desktop": "Рабочий стол",
+  "The desktop's screenshot portal said no: {error}": "Портал снимков экрана рабочего стола отказал: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Портал снимков экрана рабочего стола выдал адрес, который Snagster не может открыть: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Снимок экрана отменён в диалоговом окне рабочего стола."
  }
 }

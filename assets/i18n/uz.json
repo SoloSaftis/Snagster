@@ -1024,6 +1024,10 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Tizim sozlamalarida «Kontrastni oshirish» yoqilgan, shuning uchun matn va chegaralar yaqqolroq.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekran ulashish ish stolining dialog oynasida bekor qilindi: hech narsa ulashilmadi.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran ulashish boshlanmadi: u ish stolining dialog oynasida bekor qilindi yoki ish stoli sabab ko‘rsatmadi. Hech narsa ulashilmadi.",
-  "The desktop's screen-sharing portal said no: {error}": "Ish stolining ekran ulashish portali rad etdi: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Ish stolining ekran ulashish portali rad etdi: {error}",
+  "Desktop": "Ish stoli",
+  "The desktop's screenshot portal said no: {error}": "Ish stolining skrinshot portali rad etdi: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Ish stolining skrinshot portali Snagster ocha olmaydigan manzil berdi: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Skrinshot ish stolining dialog oynasida bekor qilindi."
  }
 }
