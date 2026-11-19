@@ -380,10 +380,12 @@ mod tests {
         assert_eq!(trash_key_for(System::Kde), (false, egui::Key::Delete));
         assert_eq!(trash_key_for(System::Mac), (true, egui::Key::Backspace), "Finder's ⌘⌫");
         let press = |key, modifiers| {
-            let mut i = egui::InputState::default();
-            let raw = egui::RawInput { events: vec![egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers }], modifiers, ..Default::default() };
-            i = i.begin_pass(raw, false, 1.0, egui::Options::default());
-            trash_key_pressed(&i)
+            let ctx = egui::Context::default();
+            let events = vec![egui::Event::ModifiersChanged(modifiers), egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers }];
+            let raw = egui::RawInput { events, ..Default::default() };
+            let mut hit = false;
+            let _ = ctx.run_ui(raw, |ui| hit = ui.input(trash_key_pressed));
+            hit
         };
         let (cmd, key) = trash_key_for(system());
         let m = if cmd { egui::Modifiers::COMMAND } else { egui::Modifiers::NONE };
