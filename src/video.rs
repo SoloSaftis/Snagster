@@ -15,7 +15,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::Sender;
 use std::time::{Duration, Instant};
 
@@ -180,6 +180,14 @@ pub struct VideoDone {
     pub note: String,
 }
 
+impl VideoDone {
+    /// One more frame is in the file.
+    fn wrote(&mut self) {
+        self.frames += 1;
+        RECORDING_FRAMES.store(self.frames, Ordering::Relaxed);
+    }
+}
+
 /// The note for Studio sound inputs that couldn't start ("" when all did).
 #[cfg(windows)]
 fn studio_sound_note(notes: &[String]) -> String {
@@ -284,6 +292,7 @@ pub fn record(opts: &VideoOpts, stop: &AtomicBool, pause: &AtomicBool) -> VideoD
     let existed = opts.path.exists();
     crate::capture::background_thread(false);
     RECORDING_LIVE.store(cfg!(windows), Ordering::Relaxed);
+    RECORDING_FRAMES.store(0, Ordering::Relaxed);
     #[cfg(windows)]
     win::record(opts, stop, pause, &mut done);
     #[cfg(not(windows))]
@@ -311,6 +320,15 @@ static RECORDING_LIVE: AtomicBool = AtomicBool::new(false);
 
 pub fn recording_live() -> bool {
     RECORDING_LIVE.load(Ordering::Relaxed)
+}
+
+/// How many frames the recording that is running (or last ran) has put in its file. Starting
+/// the encoder can take seconds (Quick Sync on Windows), so "live" doesn't yet mean frames are
+/// coming; `--ui-test` waits on this before it pauses and stops.
+static RECORDING_FRAMES: AtomicU64 = AtomicU64::new(0);
+
+pub fn recording_frames() -> u64 {
+    RECORDING_FRAMES.load(Ordering::Relaxed)
 }
 
 /// Paces frames at a steady rate, holding the clock while paused and skipping ticks when the
@@ -360,6 +378,15 @@ impl Clock {
             self.n += skip;
             self.recorded += self.interval * skip as u32;
         }
+    }
+
+    /// After the first frame: starting the encoder (and the screen copy) takes a moment that isn't
+    /// part of the video, so the clock starts here instead of skipping frames for it.
+    fn started(&mut self) {
+        self.n += 1;
+        self.recorded += self.interval;
+        self.base = Instant::now();
+        self.n_base = self.n;
     }
 
     /// Returns true while paused (after sleeping a little).
@@ -2857,15 +2884,11 @@ mod win {
                 done.encoder = n;
                 done.hardware = h;
                 first = false;
-                done.frames += 1;
-                // Starting the encoder takes a moment; the clock starts after it.
-                clock.n += 1;
-                clock.recorded += clock.interval;
-                clock.base = Instant::now();
-                clock.n_base = clock.n;
+                done.wrote();
+                clock.started();
                 continue;
             }
-            done.frames += 1;
+            done.wrote();
             clock.advance();
         }
         done.seconds = clock.recorded.as_secs_f32();
@@ -3100,9 +3123,13 @@ mod soft {
                     mux.frame(&p, d)?;
                 }
             }
-            first = false;
-            done.frames += 1;
-            clock.advance();
+            done.wrote();
+            if first {
+                first = false;
+                clock.started();
+            } else {
+                clock.advance();
+            }
         }
         for p in enc.finish()? {
             if let Some((p, d)) = spacer.push(p) {
@@ -3787,6 +3814,25 @@ mod tests {
     }
 
     #[test]
+    fn a_slow_first_frame_starts_the_clock_instead_of_skipping_frames() {
+        // Starting the encoder took a second: that isn't recorded time, and no frames are skipped
+        // for it (on Linux and macOS a one-second recording used to come out with a few frames).
+        let mut c = Clock::new(100);
+        c.base -= Duration::from_secs(1);
+        c.started();
+        assert_eq!((c.n, c.n_base), (1, 1));
+        assert_eq!(c.recorded, Duration::from_millis(10));
+        assert!(c.deadline() <= Instant::now(), "the next frame is due at once");
+        c.advance();
+        assert!(c.n < 50, "no frames skipped for the start: {}", c.n);
+        // The same second without the restart skips about a hundred frames.
+        let mut c = Clock::new(100);
+        c.base -= Duration::from_secs(1);
+        c.advance();
+        assert!(c.n >= 90);
+    }
+
+    #[test]
     fn recording_stops_after_max_seconds_only_when_set() {
         let mut c = Clock::new(30);
         c.recorded = Duration::from_millis(1999);
@@ -3893,11 +3939,13 @@ mod tests {
         o.hardware = false;
         let seen = Arc::new(AtomicBool::new(false));
         let calls = Arc::new(std::sync::atomic::AtomicU32::new(0));
-        let (s2, c2) = (seen.clone(), calls.clone());
+        let counted = Arc::new(AtomicU64::new(0));
+        let (s2, c2, n2) = (seen.clone(), calls.clone(), counted.clone());
         o.frames = Some(Arc::new(move |px: &mut [u8]| {
             if recording_live() {
                 s2.store(true, Ordering::Relaxed);
             }
+            n2.fetch_max(recording_frames(), Ordering::Relaxed);
             px.fill(128);
             c2.fetch_add(1, Ordering::Relaxed) < 3
         }));
@@ -3905,6 +3953,9 @@ mod tests {
         let d = record(&o, &stop, &pause);
         assert!(d.result.is_ok(), "{:?}", d.result);
         assert!(seen.load(Ordering::Relaxed), "live while pictures were taken");
+        // The fourth picture is asked for after three are in the file.
+        assert_eq!(d.frames, 3);
+        assert!(counted.load(Ordering::Relaxed) >= 2, "the frames written are counted while it records");
         assert!(!recording_live(), "not live after the recording ended");
         let _ = std::fs::remove_dir_all(&dir);
     }

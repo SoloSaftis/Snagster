@@ -54,6 +54,12 @@ Linux:
 - Cancelling the desktop's share dialog now says plainly that nothing was shared, and
   `snagster record` works in the Flatpak on Wayland.
 
+Linux and macOS:
+
+- **Videos start smoothly**: the time the encoder took to start was counted as recorded, so a
+  video began with its first picture held for that long and a time limit ended it early. The
+  clock now starts at the first picture, as on Windows.
+
 ## 0.10.6 — 2026-11-17
 
 Linux with Wayland (checked on Ubuntu 26.04 with GNOME):
