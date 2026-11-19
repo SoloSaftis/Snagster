@@ -280,6 +280,8 @@ pub fn record(opts: &VideoOpts, stop: &AtomicBool, pause: &AtomicBool) -> VideoD
         done.result = Err(e.to_string());
         return done;
     }
+    // A file that was there before (an MCP caller's path, say) is never removed below.
+    let existed = opts.path.exists();
     crate::capture::background_thread(false);
     RECORDING_LIVE.store(cfg!(windows), Ordering::Relaxed);
     #[cfg(windows)]
@@ -287,14 +289,15 @@ pub fn record(opts: &VideoOpts, stop: &AtomicBool, pause: &AtomicBool) -> VideoD
     #[cfg(not(windows))]
     soft::record(opts, stop, pause, &mut done);
     RECORDING_LIVE.store(false, Ordering::Relaxed);
-    if done.result.is_err() {
+    if done.result.is_err() && !existed {
         remove_empty(&opts.path);
     }
     done
 }
 
 /// A recording that failed before its first picture (the share was cancelled, say) leaves no
-/// empty file behind. A file with pictures in it is kept, whatever went wrong later.
+/// empty file behind. A file with pictures in it is kept, whatever went wrong later; `record`
+/// only calls this for a file it made itself.
 fn remove_empty(path: &std::path::Path) {
     if std::fs::metadata(path).is_ok_and(|m| m.is_file() && m.len() == 0) {
         let _ = std::fs::remove_file(path);
@@ -3233,6 +3236,14 @@ mod tests {
         remove_empty(&dir.join("never-made.mp4"));
         assert!(!empty.exists(), "nothing was recorded: no file");
         assert!(kept.exists(), "pictures already written are kept");
+        // A file the caller already had is never touched, even an empty one: record() checks
+        // that before recording and skips remove_empty then.
+        let theirs = dir.join("theirs.mp4");
+        std::fs::write(&theirs, b"").unwrap();
+        let opts = VideoOpts::screen((0, 0, 64, 64), 30, VideoFormat::Gif, theirs.clone());
+        let done = record(&opts, &AtomicBool::new(false), &AtomicBool::new(false));
+        assert!(done.result.is_err(), "GIFs fail here at once");
+        assert!(theirs.exists(), "an empty file that was there before stays");
         let _ = std::fs::remove_dir_all(&dir);
     }
 

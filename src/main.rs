@@ -855,8 +855,6 @@ mod linux_files_tests {
     const METAINFO: &str = include_str!("../assets/linux/io.github.SoloSaftis.Snagster.metainfo.xml");
     const ICON: &[u8] = include_bytes!("../assets/linux/io.github.SoloSaftis.Snagster.png");
 
-    /// The menu entry, the store listing, the icon and the window all carry the same name, so
-    /// Linux desktops (and Flathub) tie them together.
     #[test]
     fn every_mode_names_itself_to_the_desktop_first() {
         // Found on KDE: `snagster record` and MCP captures ran before the app id was given, so
@@ -871,6 +869,8 @@ mod linux_files_tests {
         }
     }
 
+    /// The menu entry, the store listing, the icon and the window all carry the same name, so
+    /// Linux desktops (and Flathub) tie them together.
     #[test]
     fn the_linux_files_use_snagsters_app_id() {
         assert!(DESKTOP.lines().any(|l| l == format!("Icon={APP_ID}")));
