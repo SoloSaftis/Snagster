@@ -61,7 +61,7 @@ codegen-units = 1
 strip = true
 
 [target."cfg(windows)".dependencies]
-windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Dwm", "Win32_Graphics_Gdi", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_Threading", "Win32_System_Console", "Win32_UI_HiDpi", "Win32_Storage_Packaging_Appx"] }
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Dwm", "Win32_Graphics_Gdi", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_Threading", "Win32_System_Console", "Win32_UI_HiDpi", "Win32_Storage_Packaging_Appx", "Win32_UI_Accessibility"] }
 windows = { version = "0.62", features = ["ApplicationModel", "Win32_UI_WindowsAndMessaging", "Foundation", "Foundation_Collections", "Globalization", "Graphics_Imaging", "Media_Ocr", "Storage_Streams", "Win32_Foundation", "Win32_Graphics_Direct3D", "Win32_Graphics_Direct3D11", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Graphics_Gdi", "Win32_Media_MediaFoundation", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Variant", "Win32_System_Ole", "Win32_Media_Audio", "Win32_Devices_FunctionDiscovery", "Win32_Devices_Properties", "Win32_UI_Shell_PropertiesSystem", "Win32_UI_Accessibility", "Win32_Security_Cryptography", "Win32_System_Registry", "Win32_UI_Shell"] }
 
 # Windows draws the window with Direct3D 12 through wgpu (OpenGL stays as the fallback): the
@@ -88,6 +88,13 @@ mp4 = "0.14"
 # libva isn't installed.
 [target."cfg(target_os = \"linux\")".dependencies]
 libloading = "0.8"
+# Bringing the minimized window back after a recording on Wayland (xdg-activation over winit's own
+# connection). Already in the tree through winit (MIT); raw-window-handle (MIT/Apache-2.0/Zlib)
+# through eframe.
+wayland-client = "0.31"
+wayland-backend = { version = "0.3", features = ["client_system"] }
+wayland-protocols = { version = "0.32", features = ["client", "staging"] }
+raw-window-handle = "0.6"
 # Live-stream screen copies on X11: one connection kept open and MIT-SHM shared memory
 # (MIT/Apache-2.0; already in the tree for the window and the clipboard). libc for the System V
 # shared-memory segment (MIT/Apache-2.0).
@@ -96,7 +103,7 @@ libc = "0.2"
 # The desktop's portals (Screenshot, ScreenCast, Trash in the Flatpak) and PipeWire for the screen share: how Snagster
 # sees the screen on Wayland and inside a Flatpak. The same versions and features xcap already
 # brings (ashpd MIT, pipewire MIT, pollster Apache-2.0/MIT), so nothing new in the tree.
-ashpd = { version = "0.14", default-features = false, features = ["async-io", "global_shortcuts", "notification", "pipewire", "screencast", "screenshot", "settings", "trash"] }
+ashpd = { version = "0.14", default-features = false, features = ["async-io", "global_shortcuts", "notification", "pipewire", "screencast", "screenshot", "settings", "trash", "open_uri"] }
 # Global hotkeys on Wayland (the GlobalShortcuts portal): waiting for a key and a timer at once.
 # Both already in the tree through ashpd and zbus (MIT/Apache-2.0).
 futures-util = { version = "0.3", default-features = false }
@@ -112,6 +119,8 @@ winit = { version = "0.30", default-features = false, features = ["wayland-csd-a
 winit = "0.30"
 # The live-stream key in the login Keychain (MIT/Apache-2.0).
 security-framework = "3"
+# Increase contrast and the accent colour (MIT; already in the tree through winit, tray-icon).
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSAccessibility", "NSWorkspace", "NSColor", "NSColorSpace", "objc2-core-foundation"] }
 
 # egui 0.37 with right-to-left text (Arabic, Hebrew, Persian, Urdu), fallback-font alignment for
 # CJK and Indian scripts, and shortcuts on non-Latin keyboards: the same patched egui CVBuilder uses.

@@ -26,12 +26,17 @@ mod hotkeys;
 mod overlay;
 #[cfg(target_os = "linux")]
 mod portal;
+#[cfg(target_os = "linux")]
+mod wl_activate;
 mod panel;
 mod tray;
+#[cfg(any(target_os = "macos", test))]
+mod menubar;
 mod settings;
 mod video;
 mod i18n;
 mod look;
+mod theme;
 mod platform;
 mod audio;
 mod studio;
@@ -112,6 +117,11 @@ fn main() -> eframe::Result {
     install_crash_log();
     let s0 = settings::Settings::load(false);
     i18n::set(i18n::resolve(&s0.language));
+    // Linux: say which app this is to the desktop's portal before any other portal call, in
+    // every mode (window, command line, MCP): KDE files remembered screen shares and hotkeys
+    // under the app's name, so an unnamed `snagster record` was asked again and apart.
+    #[cfg(target_os = "linux")]
+    portal::register_app();
     if matches!(all.first().map(|s| s.as_str()), Some("--mcp" | "mcp")) {
         mcp::serve_stdio();
         return Ok(());
@@ -171,7 +181,8 @@ fn main() -> eframe::Result {
                 window_size = Some(size);
             }
         } else if a == "--view" {
-            // What --screenshot shows: studio, settings-ai, language, record, or lang:<code>.
+            // What --screenshot shows: studio, settings-ai, settings-editor, settings-general, library, language,
+            // record, or lang:<code>; light:<view> or dark:<view> in that palette.
             if let (Some(v), Ok(mut slot)) = (args.next(), app::SCREENSHOT_VIEW.lock()) {
                 *slot = v;
             }
@@ -456,11 +467,9 @@ fn main() -> eframe::Result {
         }
     }
 
-    // Linux: say which app this is to the desktop's portal first (hotkeys, accent colour...).
-    #[cfg(target_os = "linux")]
-    portal::register_app();
-    // The desktop's accent colour (Linux), before the first frame is drawn with it.
-    look::read_system_accent();
+    // The desktop's colour scheme, contrast and accent colour (Linux portal), before the first
+    // frame is drawn with them; then followed while Snagster runs.
+    theme::start();
     // Direct3D first on Windows, OpenGL when it can't start (see drawing.rs). A renderer that
     // fails before the window opens is noted in crash.log and the next one is tried; a failure
     // after the window was open is passed on as before.
@@ -471,6 +480,11 @@ fn main() -> eframe::Result {
         #[allow(unused_mut)]
         let mut options = eframe::NativeOptions { viewport: viewport.clone(), centered: true, ..Default::default() };
         drawing::apply(&mut options, *backend);
+        // The Mac menu bar's Edit items reach the window that has the keyboard.
+        #[cfg(target_os = "macos")]
+        {
+            options.viewport_hooks = Some(std::sync::Arc::new(menubar::KeyHooks));
+        }
         #[cfg(target_os = "macos")]
         if screenshot.is_some() {
             options.event_loop_builder = Some(Box::new(|b| {
@@ -853,6 +867,20 @@ mod linux_files_tests {
     const DESKTOP: &str = include_str!("../assets/linux/io.github.SoloSaftis.Snagster.desktop");
     const METAINFO: &str = include_str!("../assets/linux/io.github.SoloSaftis.Snagster.metainfo.xml");
     const ICON: &[u8] = include_bytes!("../assets/linux/io.github.SoloSaftis.Snagster.png");
+
+    #[test]
+    fn every_mode_names_itself_to_the_desktop_first() {
+        // Found on KDE: `snagster record` and MCP captures ran before the app id was given, so
+        // KDE asked for the screen again under no name. The registration comes before every
+        // mode's start in main().
+        let src = include_str!("main.rs");
+        let main_body = &src[src.find("fn main()").unwrap()..];
+        let at = |s: &str| main_body.find(s).unwrap_or_else(|| panic!("{s} not in main()"));
+        let register = at("portal::register_app()");
+        for mode in ["mcp::serve_stdio()", "mcp_http::serve_forever(", "mcp::run_cli(&all)"] {
+            assert!(register < at(mode), "register_app() must come before {mode}");
+        }
+    }
 
     /// The menu entry, the store listing, the icon and the window all carry the same name, so
     /// Linux desktops (and Flathub) tie them together.

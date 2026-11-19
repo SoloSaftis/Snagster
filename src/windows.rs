@@ -1,7 +1,8 @@
 //! Snagster's extra windows: settings (with hotkeys and presets), library, GIF recordings,
 //! timer, grabbed text, help, and pinned pictures.
 
-use crate::app::{accent, IntervalJob, SettingsTab, SnagApp, TEXT_DIM, logo, rgb};
+use crate::app::{accent, IntervalJob, SettingsTab, SnagApp, logo, rgb};
+use crate::theme::pal;
 use crate::capture::CaptureKind;
 use crate::doc::{Doc, Tool};
 use crate::effects::Effect;
@@ -62,7 +63,7 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
         ctx.data_mut(|d| d.insert_temp(at_id, p));
         p
     });
-    let mut builder = egui::ViewportBuilder::default()
+    let mut builder = snagster_viewport()
         .with_title(w.title)
         .with_inner_size(w.size)
         .with_min_inner_size(vec2(260.0, 120.0))
@@ -79,8 +80,9 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
             (r.inner, r.response.rect.height())
         });
         let (out, used) = panel.inner;
-        // A box that can't be resized grows or shrinks to what it holds.
-        if !w.resizable {
+        // A box that can't be resized grows or shrinks to what it holds (not the Mac's
+        // Settings, which keeps one size for every pane).
+        if fits_content(&w) {
             let want = (used + 16.0).max(80.0).ceil();
             let have = ui.ctx().input(|i| i.viewport().inner_rect.map(|r| r.height()));
             if have.is_some_and(|h| (h - want).abs() > 2.0) {
@@ -98,6 +100,28 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
         ctx.data_mut(|d| d.remove::<Pos2>(at_id));
     }
     out
+}
+
+/// The Settings window's `own_window` key.
+const SETTINGS_KEY: &str = "settings";
+
+/// Whether a window without a resize edge takes the height of what it holds.
+fn fits_content(w: &Win) -> bool {
+    !w.resizable && w.key != SETTINGS_KEY
+}
+
+/// The Settings window's title and whether it can be resized. On a Mac it is titled with the
+/// pane shown and keeps a fixed size, as Apple's settings guidelines ask; elsewhere it is
+/// "Settings" and resizable.
+fn settings_frame(sys: crate::platform::System, pane: &'static str) -> (String, bool) {
+    if sys == crate::platform::System::Mac {
+        // Window titles are in Title Case on a Mac (in English).
+        #[cfg(any(target_os = "macos", test))]
+        return (crate::menubar::in_title_case(pane.to_string(), crate::i18n::current()), false);
+        #[cfg(not(any(target_os = "macos", test)))]
+        return (pane.to_string(), false);
+    }
+    (crate::i18n::t("Settings").to_string(), true)
 }
 
 /// Modifier boxes and a key list for one hotkey.
@@ -134,22 +158,25 @@ impl SnagApp {
         let mut open = self.settings_open;
         let mut reset = false;
         let mut run_preset = None;
-        own_window(ctx, Win { key: "settings", title: crate::i18n::t("Settings"), size: vec2(720.0, 600.0), resizable: true }, &mut open, |ui| {
+        let panes = [
+            (SettingsTab::AfterCapture, crate::i18n::t("After capture")),
+            (SettingsTab::Saving, crate::i18n::t("Saving & library")),
+            (SettingsTab::Capture, crate::i18n::t("Capture")),
+            (SettingsTab::Recording, crate::i18n::t("Recording")),
+            (SettingsTab::Editor, crate::i18n::t("Editor & themes")),
+            (SettingsTab::Effects, crate::i18n::t("Effects")),
+            (SettingsTab::Redact, crate::i18n::t("Smart redact")),
+            (SettingsTab::Hotkeys, crate::i18n::t("Hotkeys")),
+            (SettingsTab::Presets, crate::i18n::t("Presets")),
+            (SettingsTab::Ai, crate::i18n::t("AI apps")),
+            (SettingsTab::Streaming, crate::i18n::t("Streaming")),
+            (SettingsTab::Language, crate::i18n::t("General")),
+        ];
+        let pane = panes.iter().find(|p| p.0 == self.settings_tab).map_or(panes[0].1, |p| p.1);
+        let (title, resizable) = settings_frame(crate::platform::system(), pane);
+        own_window(ctx, Win { key: SETTINGS_KEY, title: &title, size: vec2(720.0, 600.0), resizable }, &mut open, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    for (tab, label) in [
-                        (SettingsTab::AfterCapture, crate::i18n::t("After capture")),
-                        (SettingsTab::Saving, crate::i18n::t("Saving & library")),
-                        (SettingsTab::Capture, crate::i18n::t("Capture")),
-                        (SettingsTab::Recording, crate::i18n::t("Recording")),
-                        (SettingsTab::Editor, crate::i18n::t("Editor & themes")),
-                        (SettingsTab::Effects, crate::i18n::t("Effects")),
-                        (SettingsTab::Redact, crate::i18n::t("Smart redact")),
-                        (SettingsTab::Hotkeys, crate::i18n::t("Hotkeys")),
-                        (SettingsTab::Presets, crate::i18n::t("Presets")),
-                        (SettingsTab::Ai, crate::i18n::t("AI apps")),
-                        (SettingsTab::Streaming, crate::i18n::t("Streaming")),
-                        (SettingsTab::Language, crate::i18n::t("Language & updates")),
-                    ] {
+                    for (tab, label) in panes {
                         ui.selectable_value(&mut self.settings_tab, tab, label);
                     }
                 });
@@ -177,7 +204,7 @@ impl SnagApp {
                         );
                         ui.add_enabled(s.tray_icon, egui::Checkbox::new(&mut s.close_to_tray, crate::i18n::t("Closing the window keeps Snagster running there")));
                         if !crate::platform::has_tray() {
-                            ui.label(RichText::new(crate::i18n::t("This desktop shows tray icons only with an extension, so closing the window ends Snagster.")).color(TEXT_DIM));
+                            ui.label(RichText::new(crate::i18n::t("This desktop shows tray icons only with an extension, so closing the window ends Snagster.")).color(pal().dim));
                         }
                         ui.add_space(8.0);
                         ui.label(RichText::new(crate::i18n::t("Starting Snagster")).strong());
@@ -295,9 +322,9 @@ impl SnagApp {
                                     ui.selectable_value(&mut s.audio_mic, m.id.clone(), &m.name);
                                 }
                             });
-                            ui.label(RichText::new(crate::i18n::t("Sound is recorded into MP4 videos (AAC, 48 kHz stereo). The volumes are set in Studio's mixer.")).color(TEXT_DIM));
+                            ui.label(RichText::new(crate::i18n::t("Sound is recorded into MP4 videos (AAC, 48 kHz stereo). The volumes are set in Studio's mixer.")).color(pal().dim));
                         } else {
-                            ui.label(RichText::new(crate::i18n::t("Recording sound isn't available on this system yet.")).color(TEXT_DIM));
+                            ui.label(RichText::new(crate::i18n::t("Recording sound isn't available on this system yet.")).color(pal().dim));
                         }
                         ui.add_space(4.0);
                         ui.add(egui::Slider::new(&mut s.video_max_s, 0..=7200).suffix(" s").text("Stop by itself after (0: never)"));
@@ -307,7 +334,7 @@ impl SnagApp {
                                 "A full-HD screen at these choices takes about {:.0} MB a minute. Frames above your screen's refresh rate repeat the last picture.",
                                 crate::video::bitrate(w, h, s.video_fps, s.rec_format, s.video_quality) as f64 * 60.0 / 8.0 / 1_000_000.0
                             ))
-                            .color(TEXT_DIM),
+                            .color(pal().dim),
                         );
                         if let Some(list) = encoders_known.then_some(&encoders) {
                             let hw: Vec<String> = list.iter().filter(|e| e.hardware).map(|e| format!("{} ({})", e.name, e.codec)).collect();
@@ -316,7 +343,7 @@ impl SnagApp {
                             } else {
                                 format!("Graphics-chip encoders here: {}", hw.join(", "))
                             };
-                            ui.label(RichText::new(text).color(TEXT_DIM));
+                            ui.label(RichText::new(text).color(pal().dim));
                         }
                         ui.add_space(6.0);
                         ui.label(RichText::new(crate::i18n::t("Animated GIF")).strong());
@@ -327,7 +354,7 @@ impl SnagApp {
                         ui.add_space(6.0);
                         ui.checkbox(&mut s.gif_cursor, crate::i18n::t("Show the mouse pointer in recordings"));
                         ui.add(egui::Slider::new(&mut s.slideshow_s, 0.2..=10.0).suffix(" s").text("Slideshow: time per picture"));
-                        ui.label(RichText::new(crate::i18n::t("Videos and GIFs go to the Videos folder; pictures to the Pictures folder.")).color(TEXT_DIM));
+                        ui.label(RichText::new(crate::i18n::t("Videos and GIFs go to the Videos folder; pictures to the Pictures folder.")).color(pal().dim));
                     }
                     SettingsTab::Editor => self.editor_tab(ui),
                     SettingsTab::Effects => {
@@ -359,7 +386,7 @@ impl SnagApp {
                         ui.checkbox(&mut s.redact_ips, crate::i18n::t("IP addresses"));
                         ui.checkbox(&mut s.redact_urls, crate::i18n::t("Web addresses"));
                         ui.add(egui::Slider::new(&mut s.blur_block, 4..=48).suffix(" px").text("Blur block size"));
-                        ui.label(RichText::new(crate::i18n::t("It uses the text recognition built into Windows; check the result before sharing.")).color(TEXT_DIM));
+                        ui.label(RichText::new(crate::i18n::t("It uses the text recognition built into Windows; check the result before sharing.")).color(pal().dim));
                     }
                     SettingsTab::Hotkeys => self.hotkeys_tab(ui),
                     SettingsTab::Presets => {
@@ -399,9 +426,9 @@ impl SnagApp {
         ui.add_space(6.0);
         ui.label(crate::i18n::t("File name pattern"));
         ui.add(egui::TextEdit::singleline(&mut s.name_pattern).desired_width(380.0));
-        ui.label(RichText::new(crate::i18n::t("%Y year  %m month  %d day  %H hour  %M minute  %S second  %n counter  %t title")).color(TEXT_DIM).size(12.0));
+        ui.label(RichText::new(crate::i18n::t("%Y year  %m month  %d day  %H hour  %M minute  %S second  %n counter  %t title")).color(pal().dim).size(12.0));
         let mut preview = s.clone();
-        ui.label(RichText::new(format!("Example: {}.{}", preview.file_name("Capture"), s.format.ext())).color(TEXT_DIM));
+        ui.label(RichText::new(format!("Example: {}.{}", preview.file_name("Capture"), s.format.ext())).color(pal().dim));
         ui.add_space(6.0);
         ui.horizontal_wrapped(|ui| {
             ui.label(crate::i18n::t("Format"));
@@ -424,11 +451,11 @@ impl SnagApp {
                 s.library_folder = f.display().to_string();
             }
         });
-        ui.label(RichText::new(crate::i18n::t("Keep the library in a cloud folder to have it on every computer:")).color(TEXT_DIM));
+        ui.label(RichText::new(crate::i18n::t("Keep the library in a cloud folder to have it on every computer:")).color(pal().dim));
         ui.horizontal_wrapped(|ui| {
             let clouds = crate::settings::cloud_folders_now(Some(ui.ctx()));
             if clouds.is_empty() {
-                ui.label(RichText::new(crate::i18n::t("No OneDrive, Dropbox, Google Drive, Box or iCloud folder was found.")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("No OneDrive, Dropbox, Google Drive, Box or iCloud folder was found.")).color(pal().dim));
             }
             for (name, p) in clouds {
                 if ui.button(format!("Use {name}")).clicked() {
@@ -474,11 +501,11 @@ impl SnagApp {
         ui.horizontal(|ui| {
             ui.label(crate::i18n::t("Text font"));
             ui.label(RichText::new(if s.font.is_empty() { "Default" } else { &s.font }).strong());
-            ui.label(RichText::new(crate::i18n::t("(pick it in the Text tool's panel)")).color(TEXT_DIM));
+            ui.label(RichText::new(crate::i18n::t("(pick it in the Text tool's panel)")).color(pal().dim));
         });
         ui.add_space(10.0);
         ui.label(RichText::new(crate::i18n::t("Themes")).strong());
-        ui.label(RichText::new(crate::i18n::t("A theme keeps the palette, font, text box and shadow choices together.")).color(TEXT_DIM));
+        ui.label(RichText::new(crate::i18n::t("A theme keeps the palette, font, text box and shadow choices together.")).color(pal().dim));
         let mut apply = None;
         let mut delete = None;
         for (i, t) in s.themes.iter().enumerate() {
@@ -528,10 +555,10 @@ impl SnagApp {
         if !crate::capture::desktop_screenshots_only() {
             ui.checkbox(&mut self.settings.override_hotkeys, crate::i18n::t("Take over keys another program already uses (for example Print Screen)"));
         }
-        ui.label(RichText::new(self.hotkeys.summary()).color(TEXT_DIM));
+        ui.label(RichText::new(self.hotkeys.summary()).color(pal().dim));
         let dups = hotkeys::duplicates(&self.settings);
         if !dups.is_empty() {
-            ui.label(RichText::new(format!("Used twice (only the first one works): {}", dups.join(", "))).color(Color32::from_rgb(255, 170, 60)));
+            ui.label(RichText::new(format!("Used twice (only the first one works): {}", dups.join(", "))).color(pal().warn));
         }
         ui.add_space(4.0);
         let statuses: Vec<Option<bool>> = self.settings.bindings.iter().map(|b| self.hotkeys.status_of(Target::Action(b.action))).collect();
@@ -542,10 +569,10 @@ impl SnagApp {
                     combo_editor(ui, format!("hk{i}"), &mut b.combo);
                 });
                 let (t, c) = match (b.combo.is_set(), statuses[i]) {
-                    (false, _) => ("", TEXT_DIM),
-                    (true, Some(true)) => ("Active", Color32::from_rgb(48, 164, 108)),
-                    (true, Some(false)) => ("Taken by another app", Color32::from_rgb(229, 72, 77)),
-                    (true, None) => ("Applying...", TEXT_DIM),
+                    (false, _) => ("", pal().dim),
+                    (true, Some(true)) => ("Active", pal().ok),
+                    (true, Some(false)) => ("Taken by another app", pal().err),
+                    (true, None) => ("Applying...", pal().dim),
                 };
                 ui.label(RichText::new(t).color(c));
                 ui.end_row();
@@ -591,12 +618,12 @@ impl SnagApp {
             RichText::new(
                 "Changes apply at once. If Print Screen shows as taken, turn off \"Use the Print screen key to open screen capture\" in Windows Settings > Accessibility > Keyboard.",
             )
-            .color(TEXT_DIM),
+            .color(pal().dim),
         );
     }
 
     fn presets_tab(&mut self, ui: &mut egui::Ui) -> Option<usize> {
-        ui.label(RichText::new(crate::i18n::t("A preset remembers how to capture, which effects to add, where it goes, and its own hotkey.")).color(TEXT_DIM));
+        ui.label(RichText::new(crate::i18n::t("A preset remembers how to capture, which effects to add, where it goes, and its own hotkey.")).color(pal().dim));
         let (mut dup, mut export_one, mut import, mut export_all) = (None, None, false, false);
         let mut run = None;
         let mut delete = None;
@@ -604,7 +631,7 @@ impl SnagApp {
         for i in 0..n {
             let status = self.hotkeys.status_of(Target::Preset(i));
             let p = &mut self.settings.presets[i];
-            egui::Frame::new().stroke(Stroke::new(1.0, Color32::from_gray(70))).corner_radius(CornerRadius::same(6)).inner_margin(egui::Margin::same(8)).show(ui, |ui| {
+            egui::Frame::new().stroke(Stroke::new(1.0, pal().line)).corner_radius(CornerRadius::same(6)).inner_margin(egui::Margin::same(8)).show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.add(egui::TextEdit::singleline(&mut p.name).desired_width(220.0));
                     egui::ComboBox::from_id_salt(("pm", i)).selected_text(p.mode.label()).show_ui(ui, |ui| {
@@ -641,9 +668,9 @@ impl SnagApp {
                     combo_editor(ui, format!("pk{i}"), &mut p.combo);
                     if p.combo.is_set() {
                         let (t, c) = match status {
-                            Some(true) => ("Active", Color32::from_rgb(48, 164, 108)),
-                            Some(false) => ("Taken", Color32::from_rgb(229, 72, 77)),
-                            None => ("", TEXT_DIM),
+                            Some(true) => ("Active", pal().ok),
+                            Some(false) => ("Taken", pal().err),
+                            None => ("", pal().dim),
                         };
                         ui.label(RichText::new(t).color(c));
                     }
@@ -757,7 +784,7 @@ impl SnagApp {
                 ef.count(),
                 if ef.color { " in color" } else { "" }
             ))
-            .color(TEXT_DIM));
+            .color(pal().dim));
         });
         self.about_open = open;
     }
@@ -766,7 +793,7 @@ impl SnagApp {
         let Some(mut text) = self.grabbed_text.take() else { return };
         let mut open = true;
         own_window(ctx, Win { key: "grabbed-text", title: crate::i18n::t("Grabbed text"), size: vec2(560.0, 460.0), resizable: true }, &mut open, |ui| {
-            ui.label(RichText::new(crate::i18n::t("Already copied. Edit it here if you like, then copy again.")).color(TEXT_DIM));
+            ui.label(RichText::new(crate::i18n::t("Already copied. Edit it here if you like, then copy again.")).color(pal().dim));
             egui::ScrollArea::vertical().max_height(360.0).show(ui, |ui| {
                 ui.add(egui::TextEdit::multiline(&mut text).desired_width(f32::INFINITY).desired_rows(12));
             });
@@ -994,7 +1021,7 @@ impl SnagApp {
                 }
             });
             ui.horizontal(|ui| {
-                ui.label(RichText::new(format!("{}  ({} captures)", self.settings.library_folder, self.lib_items.len())).color(TEXT_DIM).size(12.0));
+                ui.label(RichText::new(format!("{}  ({} captures)", self.settings.library_folder, self.lib_items.len())).color(pal().dim).size(12.0));
                 if self.lib_scan_rx.is_some() {
                     ui.spinner();
                 }
@@ -1011,7 +1038,7 @@ impl SnagApp {
                 order.retain(|i| self.lib_items[*i].meta.app == self.lib_app);
             }
             if order.is_empty() {
-                ui.label(RichText::new(crate::i18n::t("Nothing here yet. Captures are added automatically (Settings > After capture).")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Nothing here yet. Captures are added automatically (Settings > After capture).")).color(pal().dim));
             }
             // Group by month (date order) or by program.
             let mut groups: Vec<(String, Vec<usize>)> = Vec::new();
@@ -1031,7 +1058,7 @@ impl SnagApp {
                 for (head, members) in &groups {
                     if !head.is_empty() {
                         ui.add_space(4.0);
-                        ui.label(RichText::new(format!("{head}   ({})", members.len())).strong().color(Color32::WHITE));
+                        ui.label(RichText::new(format!("{head}   ({})", members.len())).strong().color(pal().strong));
                     }
                 ui.horizontal_wrapped(|ui| {
                     ui.spacing_mut().item_spacing = vec2(8.0, 8.0);
@@ -1039,7 +1066,7 @@ impl SnagApp {
                         let item = &self.lib_items[i];
                         let (rect, resp) = ui.allocate_exact_size(vec2(192.0, 176.0), Sense::click());
                         let p = ui.painter();
-                        p.rect_filled(rect, CornerRadius::same(8), if resp.hovered() { Color32::from_rgb(46, 49, 59) } else { Color32::from_rgb(28, 30, 36) });
+                        p.rect_filled(rect, CornerRadius::same(8), if resp.hovered() { pal().card_hover } else { pal().card });
                         let thumb_area = Rect::from_min_size(rect.min + vec2(6.0, 6.0), vec2(180.0, 110.0));
                         if let Some(t) = self.lib_thumbs.get(&item.path) {
                             let sz = t.size_vec2();
@@ -1048,13 +1075,13 @@ impl SnagApp {
                         }
                         let title: String = item.meta.title.chars().take(26).collect();
                         let date = item.meta.created.get(..16).unwrap_or(&item.meta.created).replace('T', " ");
-                        p.text(pos2(rect.min.x + 8.0, rect.min.y + 122.0), egui::Align2::LEFT_TOP, title, egui::FontId::proportional(12.5), Color32::WHITE);
+                        p.text(pos2(rect.min.x + 8.0, rect.min.y + 122.0), egui::Align2::LEFT_TOP, title, egui::FontId::proportional(12.5), pal().card_text);
                         p.text(
                             pos2(rect.min.x + 8.0, rect.min.y + 140.0),
                             egui::Align2::LEFT_TOP,
                             format!("{}  {}", date, item.meta.app.chars().take(14).collect::<String>()),
                             egui::FontId::proportional(11.0),
-                            TEXT_DIM,
+                            pal().dim,
                         );
                         if !item.meta.tags.is_empty() {
                             p.text(pos2(rect.min.x + 8.0, rect.min.y + 156.0), egui::Align2::LEFT_TOP, format!("# {}", item.meta.tags.join(", ")), egui::FontId::proportional(11.0), accent());
@@ -1150,7 +1177,7 @@ impl SnagApp {
                 if ui.add_enabled(self.entries.len() >= 2, egui::Button::new(crate::i18n::t("Slideshow from Recent"))).clicked() {
                     slideshow = true;
                 }
-                ui.label(RichText::new(crate::i18n::t("Record with Record > Record an area as GIF")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Record with Record > Record an area as GIF")).color(pal().dim));
             });
             if !self.recordings.is_empty() {
                 ui.horizontal_wrapped(|ui| {
@@ -1165,7 +1192,7 @@ impl SnagApp {
             }
             ui.separator();
             let Some(ed) = &mut self.gif_editor else {
-                ui.label(RichText::new(crate::i18n::t("No GIF open.")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("No GIF open.")).color(pal().dim));
                 return;
             };
             let n = ed.frames.len();
@@ -1173,7 +1200,7 @@ impl SnagApp {
                 // The frames are still being read: show what's here, and that more come.
                 ui.horizontal(|ui| {
                     ui.spinner();
-                    ui.label(RichText::new(format!("{n}")).color(TEXT_DIM));
+                    ui.label(RichText::new(format!("{n}")).color(pal().dim));
                 });
             }
             if ed.playing && !ed.frames.is_empty() {
@@ -1190,7 +1217,7 @@ impl SnagApp {
             if let Some((t, _)) = ed.frames.get(ed.index) {
                 ui.painter().image(t.id(), r, Rect::from_min_max(Pos2::ZERO, pos2(1.0, 1.0)), Color32::WHITE);
             }
-            ui.painter().rect_stroke(r, CornerRadius::ZERO, Stroke::new(1.0, Color32::from_gray(80)), StrokeKind::Outside);
+            ui.painter().rect_stroke(r, CornerRadius::ZERO, Stroke::new(1.0, pal().border), StrokeKind::Outside);
             ui.horizontal(|ui| {
                 if ui.button(if ed.playing { "Pause" } else { "Play" }).clicked() {
                     ed.playing = !ed.playing;
@@ -1228,7 +1255,7 @@ impl SnagApp {
                     append = true;
                 }
             });
-            ui.label(RichText::new(format!("{}", ed.path.display())).color(TEXT_DIM).size(11.5));
+            ui.label(RichText::new(format!("{}", ed.path.display())).color(pal().dim).size(11.5));
         });
         self.gif_open = open;
         if slideshow {
@@ -1297,7 +1324,7 @@ impl SnagApp {
             let (iw, ih) = (pin.image.width() as f32, pin.image.height() as f32);
             let fit = (900.0 / iw).min(700.0 / ih).min(1.0);
             let size = vec2(iw * fit / ppp, ih * fit / ppp);
-            let mut builder = egui::ViewportBuilder::default()
+            let mut builder = snagster_viewport()
                 .with_title(format!("Snagster pin: {}", pin.title))
                 .with_inner_size(size)
                 .with_decorations(false)
@@ -1375,6 +1402,13 @@ impl Dialog {
     }
 }
 
+/// A new window of Snagster's own (dialog, pin, bar). It carries Snagster's app id, so the
+/// desktop shows Snagster's icon and groups it with the main window: without it, KDE Plasma
+/// guesses and may show another program's icon and a taskbar entry of its own.
+pub fn snagster_viewport() -> egui::ViewportBuilder {
+    egui::ViewportBuilder::default().with_app_id(crate::APP_ID)
+}
+
 /// A dialog's main button (`action`, English) and Cancel, in this system's order.
 fn dialog_row(ui: &mut egui::Ui, action: &'static str, enabled: bool) -> Option<Choice> {
     crate::platform::dialog_buttons(ui, Some(crate::i18n::t(action)), crate::i18n::t("Cancel"), crate::platform::Kind::Normal, enabled)
@@ -1449,7 +1483,7 @@ impl SnagApp {
                 }
             }
             Dialog::Canvas { w, h, color } => {
-                ui.label(RichText::new(crate::i18n::t("The picture stays in the middle; the rest gets the color.")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("The picture stays in the middle; the rest gets the color.")).color(pal().dim));
                 ui.horizontal(|ui| {
                     ui.label(crate::i18n::t("Width"));
                     ui.add(egui::DragValue::new(w).range(1..=20000));
@@ -1474,7 +1508,7 @@ impl SnagApp {
             Dialog::Rename(name) => {
                 let r = ui.text_edit_singleline(name);
                 r.request_focus();
-                ui.label(RichText::new(crate::i18n::t("A saved picture's file is renamed too.")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("A saved picture's file is renamed too.")).color(pal().dim));
                 let mut pick = dialog_row(ui, "Rename", !name.trim().is_empty());
                 // The name field has the keyboard, so Return is handled here.
                 if pick.is_none() && !name.trim().is_empty() && ui.input(|i| i.key_pressed(Key::Enter)) {
@@ -1670,7 +1704,7 @@ pub(crate) fn encoder_picker(ui: &mut egui::Ui, salt: &str, pick: &mut String, l
     .response
     .on_hover_text(t("Automatic uses the best encoder that works. If the one you choose can't start or stops working, Snagster switches to the best one that works and says so."));
     if !pick.is_empty() && !list.is_empty() && !choices.iter().any(|n| n.name == *pick) {
-        ui.label(RichText::new(t("The chosen encoder isn't on this computer now, so Automatic is used.")).color(TEXT_DIM));
+        ui.label(RichText::new(t("The chosen encoder isn't on this computer now, so Automatic is used.")).color(pal().dim));
     }
 }
 
@@ -1830,7 +1864,7 @@ impl SnagApp {
             ui.add_space(6.0);
         };
         egui::CollapsingHeader::new(RichText::new(t("Apps that start Snagster themselves (stdio)")).strong()).default_open(true).show(ui, |ui| {
-            ui.label(RichText::new(t("Claude Desktop, Claude Code, Cursor, VS Code, Windsurf, Zed, LM Studio, Jan, Cline, Continue, Goose and others.")).color(TEXT_DIM));
+            ui.label(RichText::new(t("Claude Desktop, Claude Code, Cursor, VS Code, Windsurf, Zed, LM Studio, Jan, Cline, Continue, Goose and others.")).color(pal().dim));
             copy_row(ui, t("Claude Code (run in a terminal)"), format!("claude mcp add snagster -- \"{exe}\" --mcp"));
             let json = serde_json::to_string_pretty(&serde_json::json!({
                 "mcpServers": {"snagster": {"command": exe, "args": ["--mcp"]}}
@@ -1845,7 +1879,7 @@ impl SnagApp {
         });
         ui.add_space(4.0);
         egui::CollapsingHeader::new(RichText::new(t("Apps that connect to a server (HTTP)")).strong()).default_open(true).show(ui, |ui| {
-            ui.label(RichText::new(t("Open WebUI, AnythingLLM, LibreChat, n8n, LM Studio, your own agent: local AI models (Ollama, llama.cpp, LM Studio) work through these apps.")).color(TEXT_DIM));
+            ui.label(RichText::new(t("Open WebUI, AnythingLLM, LibreChat, n8n, LM Studio, your own agent: local AI models (Ollama, llama.cpp, LM Studio) work through these apps.")).color(pal().dim));
             ui.checkbox(&mut self.settings.mcp_http, t("Let AI apps on this computer connect while Snagster runs"));
             ui.horizontal(|ui| {
                 ui.label(t("Port"));
@@ -1855,13 +1889,13 @@ impl SnagApp {
             });
             match (&self.x.mcp_server, &self.x.mcp_error) {
                 (Some(s), _) => {
-                    ui.label(RichText::new(tf("Running: {url}", &[("url", &s.url())])).color(Color32::from_rgb(90, 200, 130)));
+                    ui.label(RichText::new(tf("Running: {url}", &[("url", &s.url())])).color(pal().ok));
                 }
                 (None, Some(e)) => {
-                    ui.label(RichText::new(tf("Couldn't start: {e}", &[("e", e)])).color(Color32::from_rgb(240, 120, 110)));
+                    ui.label(RichText::new(tf("Couldn't start: {e}", &[("e", e)])).color(pal().err));
                 }
                 _ => {
-                    ui.label(RichText::new(t("Off.")).color(TEXT_DIM));
+                    ui.label(RichText::new(t("Off.")).color(pal().dim));
                 }
             }
             let port = self.settings.mcp_port;
@@ -1878,7 +1912,7 @@ impl SnagApp {
         egui::Grid::new("mcp-tools").striped(true).spacing(vec2(12.0, 3.0)).show(ui, |ui| {
             for (n, d) in crate::mcp::tool_names() {
                 ui.label(RichText::new(n).monospace());
-                ui.add(egui::Label::new(RichText::new(d).color(TEXT_DIM).size(12.0)).wrap());
+                ui.add(egui::Label::new(RichText::new(d).color(pal().dim).size(12.0)).wrap());
                 ui.end_row();
             }
         });
@@ -1887,6 +1921,17 @@ impl SnagApp {
     /// Language and updates.
     fn language_tab(&mut self, ui: &mut egui::Ui) {
         use crate::i18n::{t, tf};
+        // Light or dark, in each system's words (Windows: App theme / Use system setting).
+        ui.label(RichText::new(t(crate::theme::heading())).strong());
+        ui.horizontal_wrapped(|ui| {
+            for c in crate::theme::ThemeChoice::ALL {
+                ui.radio_value(&mut self.settings.appearance, c, t(c.label()));
+            }
+        });
+        if let Some(note) = crate::theme::contrast_note() {
+            ui.label(RichText::new(t(note)).color(pal().dim));
+        }
+        ui.add_space(10.0);
         ui.label(RichText::new(t("Language")).strong());
         let cur = crate::i18n::current();
         ui.horizontal(|ui| {
@@ -1900,12 +1945,12 @@ impl SnagApp {
                 self.x.lang_open = true;
             }
         });
-        ui.label(RichText::new(t("Snagster speaks 86 languages. Language names are shown in the language you pick.")).color(TEXT_DIM));
+        ui.label(RichText::new(t("Snagster speaks 86 languages. Language names are shown in the language you pick.")).color(pal().dim));
         ui.add_space(10.0);
         ui.label(RichText::new(t("Updates")).strong());
         ui.label(tf("This is Snagster {v}.", &[("v", env!("CARGO_PKG_VERSION"))]));
         if let Some(who) = self.x.update.managed() {
-            ui.label(RichText::new(crate::app::updates_ui::managed_note(who)).color(TEXT_DIM));
+            ui.label(RichText::new(crate::app::updates_ui::managed_note(who)).color(pal().dim));
         } else {
             ui.checkbox(&mut self.settings.update_check, t("Look for a new version on GitHub when Snagster starts (once a day)"));
             ui.horizontal(|ui| {
@@ -1922,7 +1967,7 @@ impl SnagApp {
         }
         if !self.settings.update_skip.is_empty() {
             ui.horizontal(|ui| {
-                ui.label(RichText::new(tf("Skipping version {v}.", &[("v", &self.settings.update_skip)])).color(TEXT_DIM));
+                ui.label(RichText::new(tf("Skipping version {v}.", &[("v", &self.settings.update_skip)])).color(pal().dim));
                 if ui.small_button(t("Don't skip")).clicked() {
                     self.settings.update_skip.clear();
                 }
@@ -1931,15 +1976,71 @@ impl SnagApp {
         ui.add_space(10.0);
         ui.label(RichText::new(t("Problems")).strong());
         if let Some(p) = crate::crash_log_path() {
-            ui.label(RichText::new(tf("If Snagster ever stops unexpectedly, what happened is written to {file}.", &[("file", &p.display().to_string())])).color(TEXT_DIM));
+            ui.label(RichText::new(tf("If Snagster ever stops unexpectedly, what happened is written to {file}.", &[("file", &p.display().to_string())])).color(pal().dim));
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn every_window_of_snagsters_own_says_it_is_snagster() {
+        // KDE Plasma shows another program's icon for a window without it.
+        assert_eq!(super::snagster_viewport().app_id.as_deref(), Some(crate::APP_ID));
+    }
+
+    #[test]
+    fn no_window_is_made_without_snagsters_app_id() {
+        // Every window but the main one (src/main.rs sets its own app id) comes from
+        // snagster_viewport(); a plain builder anywhere else is how the KDE icon bug started.
+        let plain = ["ViewportBuilder", "::default()"].concat();
+        let mut found = Vec::new();
+        let mut dirs = vec![std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src")];
+        while let Some(dir) = dirs.pop() {
+            for entry in std::fs::read_dir(&dir).unwrap().flatten() {
+                let p = entry.path();
+                if p.is_dir() {
+                    dirs.push(p);
+                } else if p.extension().is_some_and(|e| e == "rs") {
+                    let text = std::fs::read_to_string(&p).unwrap();
+                    let n = text.matches(&plain).count();
+                    let allowed = match p.file_name().and_then(|f| f.to_str()) {
+                        Some("main.rs") | Some("windows.rs") => 1,
+                        _ => 0,
+                    };
+                    if n > allowed {
+                        found.push(format!("{} ({n})", p.display()));
+                    }
+                }
+            }
+        }
+        assert!(found.is_empty(), "use windows::snagster_viewport() for new windows: {found:?}");
+    }
+
     use super::*;
     use std::path::Path;
+
+    #[test]
+    fn mac_settings_is_fixed_and_named_after_its_pane() {
+        use crate::platform::System;
+        assert_eq!(settings_frame(System::Mac, "Hotkeys"), ("Hotkeys".to_string(), false));
+        if crate::i18n::current() == "en" {
+            assert_eq!(settings_frame(System::Mac, "Saving & library").0, "Saving & Library");
+        }
+        for sys in [System::Windows, System::Gnome, System::Kde, System::OtherLinux] {
+            let (title, resizable) = settings_frame(sys, "Hotkeys");
+            assert!(resizable, "{sys:?}");
+            assert_eq!(title, crate::i18n::t("Settings"));
+        }
+        // A fixed Settings window keeps its size for every pane; other fixed boxes fit what
+        // they hold.
+        let settings = Win { key: SETTINGS_KEY, title: "Hotkeys", size: vec2(720.0, 600.0), resizable: false };
+        assert!(!fits_content(&settings));
+        let dialog = Win { key: "rename", title: "Rename", size: vec2(400.0, 160.0), resizable: false };
+        assert!(fits_content(&dialog));
+        let big = Win { key: "library", title: "Library", size: vec2(900.0, 600.0), resizable: true };
+        assert!(!fits_content(&big));
+    }
 
     /// A box opens in the middle of Snagster's window, but never off the screen.
     #[test]

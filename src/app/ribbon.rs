@@ -198,6 +198,8 @@ pub(crate) struct Extra {
     pub access: crate::app::access_ui::AccessUi,
     /// The options panel is shown although the window is narrow (it folds away by itself).
     pub narrow_options: bool,
+    #[cfg(target_os = "macos")]
+    pub menu: crate::app::menubar_ui::MenuUi,
 }
 
 fn kbd(s: &Settings, a: Action) -> String {
@@ -212,7 +214,7 @@ impl SnagApp {
         // ---- tab row ----
         let tabs_rect = ui.available_rect_before_wrap();
         let row_h = look::tab_height(ui) + 4.0;
-        ui.painter().rect_filled(Rect::from_min_size(tabs_rect.min, vec2(tabs_rect.width(), row_h)), CornerRadius::ZERO, look::TABS);
+        ui.painter().rect_filled(Rect::from_min_size(tabs_rect.min, vec2(tabs_rect.width(), row_h)), CornerRadius::ZERO, look::pal().tabs);
         // The buttons at the right end of the tab row, as wide as they were last time.
         let right_id = egui::Id::unique("ribbon-tabs-right");
         let right_w: f32 = ctx.data(|d| d.get_temp(right_id)).unwrap_or(130.0);
@@ -302,7 +304,7 @@ impl SnagApp {
             return;
         }
         // ---- band ----
-        egui::Frame::new().fill(look::BAND).inner_margin(egui::Margin { left: 8, right: 8, top: 4, bottom: 2 }).show(ui, |ui| {
+        egui::Frame::new().fill(look::pal().band).inner_margin(egui::Margin { left: 8, right: 8, top: 4, bottom: 2 }).show(ui, |ui| {
             ui.set_width(ui.available_width());
             // Groups that don't fit the width go, in order, into a menu at the end of the band
             // (Office's ribbon folds the same way), so nothing is cut off in a narrow window.
@@ -531,7 +533,7 @@ impl SnagApp {
 
     pub(crate) fn sound_menu(&mut self, ui: &mut egui::Ui) {
         if !crate::audio::AudioSource::supported() {
-            ui.label(RichText::new(t("Recording sound isn't available on this system yet.")).color(TEXT_DIM));
+            ui.label(RichText::new(t("Recording sound isn't available on this system yet.")).color(pal().dim));
             return;
         }
         for v in crate::audio::AudioSource::ALL {
@@ -554,7 +556,7 @@ impl SnagApp {
             self.x.mics.expire();
         }
         if self.settings.rec_format == crate::video::VideoFormat::Wmv || self.settings.rec_format == crate::video::VideoFormat::Gif {
-            ui.label(RichText::new(t("Sound is recorded into MP4 videos.")).color(TEXT_DIM));
+            ui.label(RichText::new(t("Sound is recorded into MP4 videos.")).color(pal().dim));
         }
     }
 
@@ -909,7 +911,7 @@ impl SnagApp {
             let clouds = crate::settings::cloud_folders_now(Some(ui.ctx()));
             look::small_menu(ui, ph::CLOUD_UP, t("Save to the cloud"), t("OneDrive, Dropbox, Google Drive or iCloud folders on this computer"), |ui| {
                 if clouds.is_empty() {
-                    ui.label(RichText::new(t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(TEXT_DIM));
+                    ui.label(RichText::new(t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(pal().dim));
                 }
                 for (name, p) in clouds {
                     if ui.add_enabled(has, egui::Button::new(tf("Save to {name}", &[("name", &name)]))).clicked()
@@ -1233,7 +1235,7 @@ mod tests {
         for _ in 0..4 {
             let raw = egui::RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(width, 600.0))), ..Default::default() };
             let mut out = ctx.run_ui(raw, |ui| {
-                egui::Panel::top("ribbon").frame(egui::Frame::new().fill(look::BAND)).show(ui, |ui| a.ribbon(ui));
+                egui::Panel::top("ribbon").frame(egui::Frame::new().fill(look::pal().band)).show(ui, |ui| a.ribbon(ui));
             });
             out.textures_delta.clear();
         }

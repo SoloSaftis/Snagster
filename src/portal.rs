@@ -146,14 +146,49 @@ pub fn notify(id: &str, title: &str, body: &str) {
     });
 }
 
-/// What to say when the screen share didn't start: plainly when the person pressed Cancel in
-/// the desktop's dialog, else the portal's own words.
+/// Whether the desktop has a screen-sharing portal at all (a quick D-Bus question, at most a
+/// second). WSLg and bare window managers have none; GNOME, KDE and the others do.
+pub fn screencast_available() -> bool {
+    let (tx, rx) = std::sync::mpsc::channel();
+    let _ = std::thread::Builder::new().name("snagster-portal-check".into()).spawn(move || {
+        let ok = pollster::block_on(async {
+            let proxy = ashpd::desktop::screencast::Screencast::new().await.ok()?;
+            proxy.available_source_types().await.ok()
+        })
+        .is_some();
+        let _ = tx.send(ok);
+    });
+    rx.recv_timeout(std::time::Duration::from_secs(1)).unwrap_or(false)
+}
+
+/// What to say when the screen share didn't start (translated).
+///
+/// The portal answers 1 when the person pressed Cancel (GNOME's dialog; ashpd words it "was
+/// cancelled") and 2 when "the interaction was ended in some other way" (ashpd: "didn't
+/// succeed with no information"). KDE's dialog answers 2 to its Cancel button, but 2 is also
+/// how a backend reports a real failure, so that one says both, honestly.
 fn share_refusal(raw: &str) -> String {
-    if raw.trim() == "Cancelled" || raw.contains("Response(Cancelled)") {
-        "Screen sharing was cancelled in the desktop's dialog: nothing was shared.".into()
+    use crate::i18n::{t, tf};
+    if raw.trim() == "Cancelled" || raw.contains("Response(Cancelled)") || raw.contains("was cancelled") {
+        t("Screen sharing was cancelled in the desktop's dialog: nothing was shared.").to_string()
+    } else if raw.contains("didn't succeed with no information") {
+        t("Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.").to_string()
     } else {
-        format!("the desktop's screen-sharing portal said no ({raw})")
+        tf("The desktop's screen-sharing portal said no: {error}", &[("error", raw)])
     }
+}
+
+/// Show a file in the file manager with it selected, through the desktop's OpenURI portal
+/// (inside a Flatpak too; the portal asks the file manager over org.freedesktop.FileManager1).
+/// Waits for the portal's answer (the file manager may take a moment to start), so call it off
+/// the window's thread. An error when there is no portal or it refused, so the caller can open
+/// the folder instead.
+pub fn show_file(path: &std::path::Path) -> Result<(), String> {
+    let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
+    pollster::block_on(async {
+        let request = ashpd::desktop::open_uri::OpenDirectoryRequest::default().send(&file).await.map_err(|e| e.to_string())?;
+        request.response().map_err(|e| e.to_string())
+    })
 }
 
 /// The pointer mode to ask for: in the picture when wanted and offered, else hidden when
@@ -575,8 +610,13 @@ mod tests {
     #[test]
     fn a_cancelled_share_is_said_plainly() {
         assert!(share_refusal("Cancelled").starts_with("Screen sharing was cancelled"));
+        // ashpd's own wording, and KDE's answer to its dialog's Cancel button.
+        assert!(share_refusal("Portal request was cancelled").starts_with("Screen sharing was cancelled"));
+        // The portal's "ended some other way": KDE's Cancel, or a failure. Both are said.
+        let other_way = share_refusal("Portal request didn't succeed with no information");
+        assert!(other_way.starts_with("Screen sharing didn't start") && other_way.contains("cancelled") && other_way.contains("no reason"), "{other_way}");
         let other = share_refusal("Portal request failed: org.freedesktop.portal.Error.NotAllowed");
-        assert!(other.contains("NotAllowed") && other.starts_with("the desktop's screen-sharing portal said no"));
+        assert!(other.contains("NotAllowed") && other.starts_with("The desktop's screen-sharing portal said no: "), "{other}");
     }
 
     #[test]

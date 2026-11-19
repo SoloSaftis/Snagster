@@ -20,16 +20,12 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-const ACCENT_DEFAULT: Color32 = Color32::from_rgb(79, 124, 255);
+pub use crate::theme::pal;
 
-/// The accent colour: the desktop's where it has one (`look::accent`), else Snagster's blue.
+/// The accent colour of the palette in use (see `theme`).
 pub fn accent() -> Color32 {
-    crate::look::system_accent().unwrap_or(ACCENT_DEFAULT)
+    pal().accent
 }
-pub const BG_DARK: Color32 = Color32::from_rgb(24, 25, 30);
-pub const PANEL: Color32 = Color32::from_rgb(33, 35, 42);
-pub const PANEL_HI: Color32 = Color32::from_rgb(46, 49, 59);
-pub const TEXT_DIM: Color32 = Color32::from_rgb(150, 155, 170);
 
 const UNDO_LIMIT: usize = 100;
 const SCREENSHOT_FRAMES: u32 = 120;
@@ -54,6 +50,8 @@ pub(crate) mod stream_ui;
 pub(crate) mod updates_ui;
 pub(crate) mod commands_ui;
 pub(crate) mod deleted_ui;
+#[cfg(any(target_os = "macos", test))]
+pub(crate) mod menubar_ui;
 /// The editor window's smallest size (lifted while it is the panel or the recording bar).
 /// Narrow enough for Windows' Snap layouts to put it in half or a third of the screen
 /// (Microsoft asks for 500 or less); the ribbon and the side panel fold up to fit.
@@ -79,14 +77,23 @@ pub(crate) struct Entry {
     pub redo: Vec<Doc>,
     tex: Option<(Arc<RgbaImage>, TextureHandle)>,
     drawn: Instant,
+    /// The file it was opened from or saved to.
     pub path: Option<PathBuf>,
+    /// Its copy in the library, once the library has it.
+    pub kept: Option<PathBuf>,
 }
 
 impl Entry {
     pub fn new(name: String, doc: Doc) -> Self {
         static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
         let id = NEXT.fetch_add(1, Ordering::Relaxed);
-        Self { id, name, doc, undo: Vec::new(), redo: Vec::new(), tex: None, drawn: Instant::now(), path: None }
+        Self { id, name, doc, undo: Vec::new(), redo: Vec::new(), tex: None, drawn: Instant::now(), path: None, kept: None }
+    }
+
+    /// The file "Show in folder" shows: the one it was saved to or opened from, else its copy
+    /// in the library.
+    pub fn file(&self) -> Option<&std::path::Path> {
+        self.path.as_deref().or(self.kept.as_deref())
     }
 
     /// Let go of the texture when it hasn't been drawn for `keep`.
@@ -128,6 +135,32 @@ enum Drag {
     Move { idx: usize, last: Pos2, pushed: bool },
     /// Reshaping a mark by one of its handles; `orig` is the mark as it was when taken.
     Grip { idx: usize, grip: doc::Grip, orig: Box<Shape>, pushed: bool },
+}
+
+/// What "Show in folder" / "Open folder" does with a path.
+#[derive(Debug, PartialEq)]
+enum FolderAction {
+    /// A file: its folder with it selected (opening it with xdg-open/open would open the file).
+    Reveal(PathBuf),
+    /// A folder (made first when it isn't there yet).
+    Open(PathBuf),
+    /// A file that has gone: the folder it was in.
+    Parent(PathBuf),
+    /// Nothing left to show.
+    Nothing,
+}
+
+fn folder_action(p: &std::path::Path) -> FolderAction {
+    if p.is_file() {
+        FolderAction::Reveal(p.to_path_buf())
+    } else if p.is_dir() || p.extension().is_none() {
+        FolderAction::Open(p.to_path_buf())
+    } else {
+        match p.parent().filter(|d| d.is_dir()) {
+            Some(d) => FolderAction::Parent(d.to_path_buf()),
+            None => FolderAction::Nothing,
+        }
+    }
 }
 
 /// How near (in screen points) the pointer must be to take a mark's handle.
@@ -460,6 +493,19 @@ pub struct SnagApp {
     /// The window's size the last time it was shown normally (no overlay, no bar, not full
     /// screen): what comes back after the recording bar where the position is unknown.
     normal_size: Option<Vec2>,
+    /// The recording bar as a window of its own (Wayland), and bringing the main window back.
+    bar: BarWindow,
+    /// What the bar's own window shows and what was pressed on it (it draws on its own
+    /// repaints, apart from the main window's).
+    bar_shared: Arc<Mutex<BarShared>>,
+    /// Snagster's window is a native Wayland window (not X11 through XWayland).
+    native_wayland: bool,
+    /// The connection that asks the desktop to bring the main window back (Wayland), and
+    /// whether making it failed.
+    #[cfg(target_os = "linux")]
+    wl: Option<crate::wl_activate::Activator>,
+    #[cfg(target_os = "linux")]
+    wl_failed: bool,
     pub(crate) interval: Option<IntervalJob>,
     pub(crate) schedule: Option<(chrono::NaiveTime, CaptureKind)>,
     pub(crate) timer_open: bool,
@@ -527,10 +573,10 @@ pub struct SnagApp {
 
 impl SnagApp {
     pub fn new(cc: &eframe::CreationContext<'_>, screenshot: Option<PathBuf>, open: Option<PathBuf>) -> Self {
-        setup_style(&cc.egui_ctx);
         crate::panel::round_window_corners(cc);
         let check_run = screenshot.is_some() || UI_TEST.load(Ordering::Relaxed);
         let settings = Settings::load(check_run);
+        setup_style(&cc.egui_ctx, settings.appearance);
         fonts::start_scan(cc.egui_ctx.clone());
         crate::instance::set_wake(&cc.egui_ctx);
         // Check runs (button test, README pictures) keep every box inside the one window they look at.
@@ -571,6 +617,9 @@ impl SnagApp {
             app.status = "Sample picture loaded. Pick a tool on the left and draw on it.".into();
         } else {
             app.apply_hotkeys(&cc.egui_ctx);
+            // The tray's menu and the Mac menu bar send their items here, tray icon or not.
+            let ctx2 = cc.egui_ctx.clone();
+            crate::tray::listen(app.tray_tx.clone(), move || ctx2.request_repaint());
             app.apply_tray(&cc.egui_ctx);
         }
         if let Some(p) = open {
@@ -651,6 +700,13 @@ impl SnagApp {
             mini_paused: None,
             mini_restore: None,
             normal_size: None,
+            bar: BarWindow::default(),
+            bar_shared: Arc::default(),
+            native_wayland: false,
+            #[cfg(target_os = "linux")]
+            wl: None,
+            #[cfg(target_os = "linux")]
+            wl_failed: false,
             interval: None,
             schedule: None,
             timer_open: false,
@@ -1010,7 +1066,8 @@ impl SnagApp {
         // written by the job queue in this order (an error shows in the status line).
         if self.settings.after_library {
             let meta = library::Meta { title: title.to_string(), app: app.to_string(), kind: kind.into(), ..Default::default() };
-            self.add_to_library(move || img, meta);
+            let id = self.entry().map(|e| e.id);
+            self.add_to_library_for(id, move || img, meta);
         }
         let (copy, save, pin) = match &preset {
             Some(p) => (p.copy, p.save, p.pin),
@@ -1130,6 +1187,19 @@ impl SnagApp {
     // ---------- background jobs: scrolling, GIF, steps, text ----------
 
     fn enter_mini(&mut self, ctx: &egui::Context, kind: Mini) {
+        if bar_in_own_window(self.native_wayland) {
+            // Wayland: a program can't place its window, so the main window stays where it is
+            // (minimized) and the bar is a small window of its own; neither has to be moved.
+            self.bar.start();
+            self.mini_restore = None;
+            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+            self.mini = Some(kind);
+            self.mini_since = Instant::now();
+            self.mini_entered = Instant::now();
+            // Opened in this pass: the minimized main window may not get another one.
+            self.bar_window(ctx);
+            return;
+        }
         let ppp = ctx.input(|i| i.viewport().native_pixels_per_point).unwrap_or(1.0);
         let (outer, inner) = ctx.input(|i| (i.viewport().outer_rect, i.viewport().inner_rect));
         self.mini_restore = match (outer, inner) {
@@ -1155,6 +1225,11 @@ impl SnagApp {
 
     fn leave_mini(&mut self, ctx: &egui::Context) {
         self.mini = None;
+        if self.bar.on {
+            // The main window was never changed: it is only asked back (see bar_window_tick).
+            self.bar.stop(Instant::now());
+            return;
+        }
         ctx.send_viewport_cmd(egui::ViewportCommand::Decorations(true));
         ctx.send_viewport_cmd(egui::ViewportCommand::MinInnerSize(MIN_SIZE));
         ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::Normal));
@@ -1290,12 +1365,32 @@ impl SnagApp {
 
     /// Show a file selected in the file manager.
     pub(crate) fn reveal(&mut self, path: &std::path::Path) {
+        // A file that has gone since (moved, deleted): its folder, if that is still there.
+        match folder_action(path) {
+            FolderAction::Reveal(_) => {}
+            FolderAction::Parent(dir) => return self.open_folder(&dir),
+            FolderAction::Open(_) | FolderAction::Nothing => return,
+        }
         #[cfg(windows)]
-        let r = std::process::Command::new("explorer").arg(format!("/select,{}", path.display())).spawn();
+        let r = std::process::Command::new("explorer").arg(format!("/select,{}", path.display())).spawn().map(|_| ());
         #[cfg(target_os = "macos")]
-        let r = std::process::Command::new("open").arg("-R").arg(path).spawn();
-        #[cfg(all(unix, not(target_os = "macos")))]
-        let r = std::process::Command::new("xdg-open").arg(path.parent().unwrap_or(path)).spawn();
+        let r = std::process::Command::new("open").arg("-R").arg(path).spawn().map(|_| ());
+        // The desktop's file manager with the file selected (the portal waits for the file
+        // manager, so off the window's thread); else just its folder.
+        #[cfg(target_os = "linux")]
+        let r: std::io::Result<()> = {
+            let path = path.to_path_buf();
+            std::thread::Builder::new()
+                .name("snagster-reveal".into())
+                .spawn(move || {
+                    if crate::portal::show_file(&path).is_err() {
+                        let _ = std::process::Command::new("xdg-open").arg(path.parent().unwrap_or(&path)).spawn();
+                    }
+                })
+                .map(|_| ())
+        };
+        #[cfg(all(unix, not(any(target_os = "macos", target_os = "linux"))))]
+        let r = std::process::Command::new("xdg-open").arg(path.parent().unwrap_or(path)).spawn().map(|_| ());
         if let Err(e) = r {
             self.status = crate::i18n::tf("Couldn't open the folder: {error}", &[("error", &e.to_string())]);
         }
@@ -1454,16 +1549,21 @@ impl SnagApp {
     /// Add a picture (made by `make`, on the worker) to the library. The open library gets
     /// the new item without reading the whole folder again.
     pub(crate) fn add_to_library(&mut self, make: impl FnOnce() -> RgbaImage + Send + 'static, meta: library::Meta) {
+        self.add_to_library_for(None, make, meta);
+    }
+
+    /// `add_to_library`; the Recent picture `entry` (by id) learns where its copy went.
+    pub(crate) fn add_to_library_for(&mut self, entry: Option<u64>, make: impl FnOnce() -> RgbaImage + Send + 'static, meta: library::Meta) {
         let folder = self.settings.library_folder.clone();
         self.jobs.queue(move || {
             let img = make();
             let r = library::add_item(std::path::Path::new(&folder), &img, meta);
             let thumb = r.as_ref().ok().and_then(|it| library::thumbnail_of(&it.path, &img, 192));
-            Box::new(move |app: &mut SnagApp, ctx: &egui::Context| app.library_added(ctx, &folder, r, thumb))
+            Box::new(move |app: &mut SnagApp, ctx: &egui::Context| app.library_added(ctx, &folder, r, thumb, entry))
         });
     }
 
-    fn library_added(&mut self, ctx: &egui::Context, folder: &str, r: Result<library::Item, String>, thumb: Option<RgbaImage>) {
+    fn library_added(&mut self, ctx: &egui::Context, folder: &str, r: Result<library::Item, String>, thumb: Option<RgbaImage>, entry: Option<u64>) {
         let item = match r {
             Ok(item) => item,
             Err(e) => {
@@ -1471,6 +1571,9 @@ impl SnagApp {
                 return;
             }
         };
+        if let Some(e) = self.entries.iter_mut().find(|e| Some(e.id) == entry) {
+            e.kept = Some(item.path.clone());
+        }
         if folder != self.settings.library_folder {
             return;
         }
@@ -1751,16 +1854,21 @@ impl SnagApp {
         }
     }
 
+    /// Open a folder in the file manager; given a file, its folder with the file selected
+    /// (`xdg-open` and `open` would open the file itself).
     pub(crate) fn open_folder(&mut self, target: &std::path::Path) {
-        if target.is_dir() || target.extension().is_none() {
-            let _ = std::fs::create_dir_all(target);
-        }
-        #[cfg(windows)]
-        let r = if target.is_file() {
-            std::process::Command::new("explorer").arg(format!("/select,{}", target.display())).spawn()
-        } else {
-            std::process::Command::new("explorer").arg(target).spawn()
+        let target = match folder_action(target) {
+            FolderAction::Reveal(file) => return self.reveal(&file),
+            FolderAction::Open(dir) => {
+                let _ = std::fs::create_dir_all(&dir);
+                dir
+            }
+            FolderAction::Parent(dir) => dir,
+            FolderAction::Nothing => return,
         };
+        let target = target.as_path();
+        #[cfg(windows)]
+        let r = std::process::Command::new("explorer").arg(target).spawn();
         #[cfg(target_os = "macos")]
         let r = std::process::Command::new("open").arg(target).spawn();
         #[cfg(all(unix, not(target_os = "macos")))]
@@ -2429,7 +2537,7 @@ impl SnagApp {
         }
         ui.menu_button(crate::i18n::t("Open recent"), |ui| {
             if self.settings.recent_files.is_empty() {
-                ui.label(RichText::new(crate::i18n::t("Nothing opened or saved yet")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Nothing opened or saved yet")).color(pal().dim));
             }
             let mut open = None;
             for f in &self.settings.recent_files {
@@ -2481,7 +2589,7 @@ impl SnagApp {
             self.quick_save();
         }
         ui.menu_button(crate::i18n::t("Export guide"), |ui| {
-            ui.label(RichText::new(crate::i18n::t("From recorded steps, or all of Recent")).color(TEXT_DIM));
+            ui.label(RichText::new(crate::i18n::t("From recorded steps, or all of Recent")).color(pal().dim));
             ui.horizontal(|ui| {
                 ui.label(crate::i18n::t("Title"));
                 ui.text_edit_singleline(&mut self.guide_title);
@@ -2937,10 +3045,10 @@ impl SnagApp {
             self.open_folder(&p);
         }
         ui.separator();
-        ui.label(RichText::new(crate::i18n::t("Cloud folders (point the library or save folder here to sync):")).color(TEXT_DIM));
+        ui.label(RichText::new(crate::i18n::t("Cloud folders (point the library or save folder here to sync):")).color(pal().dim));
         let clouds = crate::settings::cloud_folders_now(Some(ui.ctx()));
         if clouds.is_empty() {
-            ui.label(RichText::new(crate::i18n::t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(TEXT_DIM));
+            ui.label(RichText::new(crate::i18n::t("No OneDrive, Dropbox, Google Drive or iCloud folder found.")).color(pal().dim));
         }
         for (name, p) in clouds {
             if item_on(ui, has, &format!("Save to {name}"), "")
@@ -3001,9 +3109,9 @@ impl SnagApp {
             let (rect, resp) = ui.allocate_exact_size(vec2(grown(110.0, 108.0), grown(28.0, 12.0)), Sense::click());
             let resp = resp.on_hover_text(crate::i18n::t("Colours, sizes and styles on the right"));
             resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
-            let bg = if on { accent() } else if resp.hovered() { PANEL_HI } else { Color32::TRANSPARENT };
+            let bg = if on { pal().accent } else if resp.hovered() { pal().panel_hi } else { Color32::TRANSPARENT };
             ui.painter().rect_filled(rect.shrink(1.0), CornerRadius::same(4), bg);
-            let fg = if on { Color32::WHITE } else { Color32::from_rgb(210, 214, 225) };
+            let fg = if on { pal().on_accent } else { pal().text };
             let p = ui.painter();
             p.text(pos2(rect.left() + 16.0, rect.center().y), Align2::CENTER_CENTER, crate::look::ph::SLIDERS, FontId::new(16.0, crate::look::icons()), fg);
             // Long names in some languages get a smaller font so they stay inside the button.
@@ -3026,14 +3134,14 @@ impl SnagApp {
                 let (rect, resp) = ui.allocate_exact_size(vec2(grown(54.0, 54.0), grown(44.0, 14.0)), Sense::click());
                 let selected = self.tool == t;
                 let bg = if selected {
-                    accent()
+                    pal().accent
                 } else if resp.hovered() {
-                    PANEL_HI
+                    pal().panel_hi
                 } else {
                     Color32::TRANSPARENT
                 };
                 ui.painter().rect_filled(rect.shrink(1.0), CornerRadius::same(8), bg);
-                let fg = if selected { Color32::WHITE } else { Color32::from_rgb(210, 214, 225) };
+                let fg = if selected { pal().on_accent } else { pal().text };
                 let icon = Rect::from_center_size(rect.center() - vec2(0.0, 7.0), vec2(20.0, 20.0));
                 tool_icon(ui.painter(), icon, t, fg, self.color());
                 // Long names in some languages get a smaller font so they stay inside the button.
@@ -3071,9 +3179,9 @@ impl SnagApp {
                     let (rect, resp) = ui.allocate_exact_size(vec2(36.0, 26.0), Sense::click());
                     ui.painter().rect_filled(rect, CornerRadius::same(6), c);
                     if c == cur {
-                        ui.painter().rect_stroke(rect.expand(2.0), CornerRadius::same(8), Stroke::new(2.0, Color32::WHITE), StrokeKind::Outside);
+                        ui.painter().rect_stroke(rect.expand(2.0), CornerRadius::same(8), Stroke::new(2.0, pal().strong), StrokeKind::Outside);
                     } else if resp.hovered() {
-                        ui.painter().rect_stroke(rect, CornerRadius::same(6), Stroke::new(1.0, TEXT_DIM), StrokeKind::Outside);
+                        ui.painter().rect_stroke(rect, CornerRadius::same(6), Stroke::new(1.0, pal().dim), StrokeKind::Outside);
                     }
                     if resp.clicked() {
                         chosen = Some(c);
@@ -3098,13 +3206,13 @@ impl SnagApp {
                 if egui::color_picker::color_edit_button_srgba(ui, &mut c, egui::color_picker::Alpha::Opaque).changed() {
                     chosen = Some(c);
                 }
-                ui.label(RichText::new(format!("#{:02X}{:02X}{:02X}", cur.r(), cur.g(), cur.b())).color(TEXT_DIM));
+                ui.label(RichText::new(format!("#{:02X}{:02X}{:02X}", cur.r(), cur.g(), cur.b())).color(pal().dim));
             });
             if let Some(c) = chosen {
                 self.set_color(c);
             }
             ui.horizontal(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Theme")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Theme")).color(pal().dim));
                 let mut apply = None;
                 egui::ComboBox::from_id_salt("theme").width(120.0).selected_text("Choose…").show_ui(ui, |ui| {
                     for (i, t) in self.settings.themes.iter().enumerate() {
@@ -3136,7 +3244,7 @@ impl SnagApp {
                 ui.checkbox(&mut self.settings.fill, crate::i18n::t("Fill boxes and ovals"));
             }
             if t == Tool::Rect {
-                ui.label(RichText::new(crate::i18n::t("Rounded corners")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Rounded corners")).color(pal().dim));
                 ui.add(egui::Slider::new(&mut self.settings.corner_radius, 0.0..=60.0).step_by(1.0).suffix(" px"));
             }
             if matches!(t, Tool::Text | Tool::Callout | Tool::Select) {
@@ -3144,19 +3252,19 @@ impl SnagApp {
                 if t == Tool::Text {
                     ui.checkbox(&mut self.settings.text_background, crate::i18n::t("Text on a colored box"));
                 }
-                ui.label(RichText::new(format!("Text size {:.0} px", doc::text_size(self.settings.width))).color(TEXT_DIM));
+                ui.label(RichText::new(format!("Text size {:.0} px", doc::text_size(self.settings.width))).color(pal().dim));
             }
             if t == Tool::Blur {
-                ui.label(RichText::new(crate::i18n::t("Pixel block size")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Pixel block size")).color(pal().dim));
                 ui.add(egui::Slider::new(&mut self.settings.blur_block, 4..=48).suffix(" px"));
             }
             if t == Tool::Magnify {
-                ui.label(RichText::new(crate::i18n::t("Magnification")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Magnification")).color(pal().dim));
                 ui.add(egui::Slider::new(&mut self.settings.magnify_zoom, 1.5..=6.0).suffix(" x"));
             }
             if t == Tool::Step {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(crate::i18n::t("Style")).color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("Style")).color(pal().dim));
                     egui::ComboBox::from_id_salt("stepstyle").selected_text(self.settings.step_style.label()).show_ui(ui, |ui| {
                         for s in crate::settings::StepStyle::ALL {
                             ui.selectable_value(&mut self.settings.step_style, s, s.label());
@@ -3164,12 +3272,12 @@ impl SnagApp {
                     });
                 });
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(crate::i18n::t("First")).color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("First")).color(pal().dim));
                     ui.add(egui::DragValue::new(&mut self.settings.step_start).range(1..=999));
                 });
                 if let Some(i) = self.current {
                     let n = self.entries[i].doc.next_step(self.settings.step_start);
-                    ui.label(RichText::new(format!("Next: {}", self.settings.step_style.format(n))).color(TEXT_DIM));
+                    ui.label(RichText::new(format!("Next: {}", self.settings.step_style.format(n))).color(pal().dim));
                 }
             }
             if t == Tool::Stamp {
@@ -3180,7 +3288,7 @@ impl SnagApp {
             if self.selected.is_some() {
                 ui.add_space(10.0);
                 section(ui, crate::i18n::t("Selected mark"));
-                ui.label(RichText::new(crate::i18n::t("Pick a color to recolor it. [ and ] change its size.")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Pick a color to recolor it. [ and ] change its size.")).color(pal().dim));
                 ui.horizontal(|ui| {
                     if ui.button(crate::i18n::t("Smaller")).clicked() {
                         self.scale_selected(1.0 / 1.15);
@@ -3212,19 +3320,19 @@ impl SnagApp {
                 }
             });
             let ppp = ui.ctx().pixels_per_point();
-            ui.label(RichText::new(format!("Zoom {:.0}%", self.last_scale * ppp * 100.0)).color(TEXT_DIM));
+            ui.label(RichText::new(format!("Zoom {:.0}%", self.last_scale * ppp * 100.0)).color(pal().dim));
             if let Some(i) = self.current {
                 let d = &self.entries[i].doc;
-                ui.label(RichText::new(format!("{} x {} pixels, {} marks", d.image.width(), d.image.height(), d.shapes.len())).color(TEXT_DIM));
+                ui.label(RichText::new(format!("{} x {} pixels, {} marks", d.image.width(), d.image.height(), d.shapes.len())).color(pal().dim));
             }
             ui.add_space(10.0);
-            ui.label(RichText::new(crate::i18n::t(self.tool.label())).strong().color(Color32::WHITE));
-            ui.add(egui::Label::new(RichText::new(crate::i18n::t(self.tool.hint())).color(TEXT_DIM).size(12.5)).wrap());
+            ui.label(RichText::new(crate::i18n::t(self.tool.label())).strong().color(pal().strong));
+            ui.add(egui::Label::new(RichText::new(crate::i18n::t(self.tool.hint())).color(pal().dim).size(12.5)).wrap());
         });
     }
 
     fn font_picker(&mut self, ui: &mut egui::Ui) {
-        ui.label(RichText::new(crate::i18n::t("Font")).color(TEXT_DIM));
+        ui.label(RichText::new(crate::i18n::t("Font")).color(pal().dim));
         let shown = if self.settings.font.is_empty() { "Default".to_string() } else { self.settings.font.clone() };
         let families = fonts::families();
         let mut chosen: Option<String> = None;
@@ -3235,7 +3343,7 @@ impl SnagApp {
             }
             match &families {
                 None => {
-                    ui.label(RichText::new(crate::i18n::t("Reading the installed fonts…")).color(TEXT_DIM));
+                    ui.label(RichText::new(crate::i18n::t("Reading the installed fonts…")).color(pal().dim));
                 }
                 Some(list) => {
                     let q = self.font_query.to_lowercase();
@@ -3250,7 +3358,7 @@ impl SnagApp {
             }
         });
         if let Some(n) = &families {
-            ui.label(RichText::new(format!("{} fonts installed", n.len())).color(TEXT_DIM).size(11.5));
+            ui.label(RichText::new(format!("{} fonts installed", n.len())).color(pal().dim).size(11.5));
         }
         ui.horizontal(|ui| {
             ui.toggle_value(&mut self.bold, RichText::new("B").strong());
@@ -3283,7 +3391,7 @@ impl SnagApp {
             } else {
                 format!("{} emojis (black and white)", ef.count())
             })
-            .color(TEXT_DIM),
+            .color(pal().dim),
         );
         let groups: Vec<&str> = ef.groups.iter().map(|g| g.0).collect();
         let gi = self.stamp_group.min(groups.len().saturating_sub(1));
@@ -3310,13 +3418,13 @@ impl SnagApp {
                     } else if self.stamp_ready(*ch, 32) || budget.allow() {
                         self.stamp_texture(&ctx, *ch, 32, [40, 40, 40, 255])
                     } else {
-                        ui.painter().rect_filled(rect.shrink(6.0), CornerRadius::same(4), PANEL_HI);
+                        ui.painter().rect_filled(rect.shrink(6.0), CornerRadius::same(4), pal().panel_hi);
                         None
                     };
                     if self.stamp.starts_with(*ch) {
-                        ui.painter().rect_filled(rect, CornerRadius::same(4), accent());
+                        ui.painter().rect_filled(rect, CornerRadius::same(4), pal().accent);
                     } else if resp.hovered() {
-                        ui.painter().rect_filled(rect, CornerRadius::same(4), PANEL_HI);
+                        ui.painter().rect_filled(rect, CornerRadius::same(4), pal().panel_hi);
                     }
                     if let Some(t) = tex {
                         ui.painter().image(t, rect.shrink(3.0), Rect::from_min_max(Pos2::ZERO, pos2(1.0, 1.0)), Color32::WHITE);
@@ -3368,7 +3476,7 @@ impl SnagApp {
                 ui.set_width(status_width(ui.ctx().content_rect().width()));
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(crate::i18n::t("Recent")).strong().color(Color32::WHITE));
+                    ui.label(RichText::new(crate::i18n::t("Recent")).strong().color(pal().strong));
                     let snap = self.x.stream.snap.clone();
                     if snap.on_air() && stream_ui::live_badge(ui, &snap).clicked() {
                         let ctx = ui.ctx().clone();
@@ -3382,7 +3490,7 @@ impl SnagApp {
                     // Two lines at most (a narrow window or bigger text would push the pictures
                     // beside it out of the bar); the whole message is in the tooltip.
                     let status = crate::i18n::tr(&self.status);
-                    let text = egui::WidgetText::from(RichText::new(status.clone()).color(TEXT_DIM).size(12.5));
+                    let text = egui::WidgetText::from(RichText::new(status.clone()).color(pal().dim).size(12.5));
                     let mut job = (*text.into_layout_job(ui.style(), egui::FontSelection::Default, egui::Align::LEFT)).clone();
                     job.wrap.max_width = ui.available_width();
                     job.wrap.max_rows = 2;
@@ -3400,6 +3508,7 @@ impl SnagApp {
             let mut switch = None;
             let mut remove = None;
             let mut pin = None;
+            let mut show = None;
             let mut open_earlier = None;
             let ctx = ui.ctx().clone();
             // Earlier pictures and videos on this computer (read on a worker, every minute).
@@ -3413,7 +3522,7 @@ impl SnagApp {
                 // Top-aligned: a taller tile (Earlier's, with its label) doesn't push the others down.
                 ui.horizontal_top(|ui| {
                     if self.entries.is_empty() && self.earlier.items.is_empty() {
-                        ui.label(RichText::new(crate::i18n::t("Your captures show up here.")).color(TEXT_DIM));
+                        ui.label(RichText::new(crate::i18n::t("Your captures show up here.")).color(pal().dim));
                     }
                     for i in (0..self.entries.len()).rev() {
                         let (rect, resp) = ui.allocate_exact_size(vec2(124.0, grown(84.0, 20.0)), Sense::click());
@@ -3430,7 +3539,7 @@ impl SnagApp {
                         let shapes = std::mem::take(&mut self.entries[i].doc.shapes);
                         let pc = self.prepare_paint(&ctx, &shapes, s, Some((tex, size)));
                         let p = ui.painter();
-                        p.rect_filled(rect, CornerRadius::same(8), if is_cur { PANEL_HI } else { BG_DARK });
+                        p.rect_filled(rect, CornerRadius::same(8), if is_cur { pal().panel_hi } else { pal().bg });
                         p.image(tex, thumb, Rect::from_min_max(Pos2::ZERO, pos2(1.0, 1.0)), Color32::WHITE);
                         let to = |q: Pos2| pos2(thumb.min.x + q.x * s, thumb.min.y + q.y * s);
                         for sh in &shapes {
@@ -3440,16 +3549,22 @@ impl SnagApp {
                         if is_cur {
                             p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(2.0, accent()), StrokeKind::Inside);
                         } else if resp.hovered() {
-                            p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, TEXT_DIM), StrokeKind::Inside);
+                            p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, pal().dim), StrokeKind::Inside);
                         }
                         let name: String = self.entries[i].name.chars().take(18).collect();
-                        p.text(pos2(rect.center().x, rect.bottom() - grown(10.0, 8.0)), Align2::CENTER_CENTER, name, FontId::proportional(11.5), Color32::from_rgb(210, 214, 225));
+                        p.text(pos2(rect.center().x, rect.bottom() - grown(10.0, 8.0)), Align2::CENTER_CENTER, name, FontId::proportional(11.5), pal().card_text);
                         if resp.clicked() {
                             switch = Some(i);
                         }
                         resp.context_menu(|ui| {
                             if ui.button(crate::i18n::t("Pin to screen")).clicked() {
                                 pin = Some(i);
+                                ui.close();
+                            }
+                            if let Some(f) = self.entries[i].file().filter(|f| f.is_file())
+                                && ui.button(crate::i18n::t("Show in folder")).clicked()
+                            {
+                                show = Some(f.to_path_buf());
                                 ui.close();
                             }
                             if ui.button(crate::i18n::t("Remove from Recent")).clicked() {
@@ -3483,6 +3598,9 @@ impl SnagApp {
                 self.current = Some(i);
                 self.remove_current();
             }
+            if let Some(f) = show {
+                self.reveal(&f);
+            }
         });
     }
 
@@ -3495,7 +3613,7 @@ impl SnagApp {
             return None;
         }
         ui.separator();
-        ui.label(RichText::new(crate::i18n::t("Earlier")).color(TEXT_DIM).size(12.0));
+        ui.label(RichText::new(crate::i18n::t("Earlier")).color(pal().dim).size(12.0));
         let mut pick = None;
         for it in items {
             let (rect, resp) = ui.allocate_exact_size(vec2(124.0, grown(84.0, 20.0)), Sense::click());
@@ -3503,7 +3621,7 @@ impl SnagApp {
                 continue;
             }
             let p = ui.painter();
-            p.rect_filled(rect, CornerRadius::same(8), BG_DARK);
+            p.rect_filled(rect, CornerRadius::same(8), pal().bg);
             let area = Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(116.0, 58.0));
             match self.earlier.thumbs.get(&it.path) {
                 Some(tex) => {
@@ -3513,18 +3631,18 @@ impl SnagApp {
                 }
                 None => {
                     let icon = if it.video { crate::look::ph::FILM_STRIP } else { crate::look::ph::IMAGE };
-                    p.text(area.center(), Align2::CENTER_CENTER, icon, FontId::new(26.0, crate::look::icons()), TEXT_DIM);
+                    p.text(area.center(), Align2::CENTER_CENTER, icon, FontId::new(26.0, crate::look::icons()), pal().dim);
                 }
             }
             if it.video {
                 let ext = it.path.extension().map(|e| e.to_string_lossy().to_uppercase()).unwrap_or_default();
-                p.text(area.right_top() + vec2(-4.0, 4.0), Align2::RIGHT_TOP, ext, FontId::proportional(10.5), Color32::from_rgb(240, 200, 120));
+                p.text(area.right_top() + vec2(-4.0, 4.0), Align2::RIGHT_TOP, ext, FontId::proportional(10.5), pal().warn);
             }
             if resp.hovered() {
-                p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, TEXT_DIM), StrokeKind::Inside);
+                p.rect_stroke(rect, CornerRadius::same(8), Stroke::new(1.0, pal().dim), StrokeKind::Inside);
             }
             let name: String = it.name().chars().take(18).collect();
-            p.text(pos2(rect.center().x, rect.bottom() - grown(10.0, 8.0)), Align2::CENTER_CENTER, name, FontId::proportional(11.5), Color32::from_rgb(170, 175, 190));
+            p.text(pos2(rect.center().x, rect.bottom() - grown(10.0, 8.0)), Align2::CENTER_CENTER, name, FontId::proportional(11.5), pal().dim);
             let tip = if it.video { crate::i18n::t("Play this video") } else { crate::i18n::t("Open this picture") };
             let resp = resp.on_hover_text(format!("{tip}\n{}", it.path.display()));
             if resp.clicked() {
@@ -3547,8 +3665,8 @@ impl SnagApp {
         let top = area.center().y - 180.0;
         let p = ui.painter();
         logo_at(p, pos2(area.center().x, top), 64.0);
-        p.text(pos2(area.center().x, top + 62.0), Align2::CENTER_CENTER, "Snagster", FontId::proportional(40.0), Color32::WHITE);
-        p.text(pos2(area.center().x, top + 100.0), Align2::CENTER_CENTER, "Capture your screen, mark it up, share it.", FontId::proportional(17.0), TEXT_DIM);
+        p.text(pos2(area.center().x, top + 62.0), Align2::CENTER_CENTER, "Snagster", FontId::proportional(40.0), pal().strong);
+        p.text(pos2(area.center().x, top + 100.0), Align2::CENTER_CENTER, "Capture your screen, mark it up, share it.", FontId::proportional(17.0), pal().dim);
         let ctx = ui.ctx().clone();
         for k in 0..4usize {
             let (title, sub) = [
@@ -3561,7 +3679,7 @@ impl SnagApp {
             let rect = Rect::from_min_size(pos2(x, top + 140.0), vec2(card_w, 120.0));
             let resp = ui.interact(rect, ui.scope_id().with(("card", k)), Sense::click());
             let p = ui.painter();
-            p.rect_filled(rect, CornerRadius::same(14), if resp.hovered() { PANEL_HI } else { PANEL });
+            p.rect_filled(rect, CornerRadius::same(14), if resp.hovered() { pal().panel_hi } else { pal().panel });
             if k == 0 {
                 p.rect_stroke(rect, CornerRadius::same(14), Stroke::new(2.0, accent()), StrokeKind::Inside);
             }
@@ -3578,8 +3696,8 @@ impl SnagApp {
                 }
                 _ => folder_icon(p, icon, accent()),
             }
-            p.text(rect.center() + vec2(0.0, 16.0), Align2::CENTER_CENTER, title, FontId::proportional(16.0), Color32::WHITE);
-            p.text(rect.center() + vec2(0.0, 38.0), Align2::CENTER_CENTER, sub, FontId::proportional(12.5), TEXT_DIM);
+            p.text(rect.center() + vec2(0.0, 16.0), Align2::CENTER_CENTER, title, FontId::proportional(16.0), pal().strong);
+            p.text(rect.center() + vec2(0.0, 38.0), Align2::CENTER_CENTER, sub, FontId::proportional(12.5), pal().dim);
             if resp.clicked() {
                 match k {
                     0 => self.do_action(&ctx, Action::AllInOne),
@@ -3591,13 +3709,13 @@ impl SnagApp {
         }
         let link = Rect::from_center_size(pos2(area.center().x, top + 300.0), vec2(260.0, 26.0));
         let resp = ui.interact(link, ui.scope_id().with("sample"), Sense::click());
-        let col = if resp.hovered() { Color32::WHITE } else { accent() };
+        let col = if resp.hovered() { pal().strong } else { accent() };
         ui.painter().text(link.center(), Align2::CENTER_CENTER, crate::i18n::t("Try the tools on a sample picture"), FontId::proportional(14.0), col);
         if resp.clicked() {
             let name = self.next_name("Sample");
             self.add_entry(name, sample::sample_doc());
         }
-        ui.painter().text(pos2(area.center().x, top + 340.0), Align2::CENTER_CENTER, "Or drop a picture file here, or paste one with Ctrl+V.", FontId::proportional(12.5), TEXT_DIM);
+        ui.painter().text(pos2(area.center().x, top + 340.0), Align2::CENTER_CENTER, "Or drop a picture file here, or paste one with Ctrl+V.", FontId::proportional(12.5), pal().dim);
     }
 
     /// Load the fonts and stamp pictures the marks need before they're drawn.
@@ -3806,6 +3924,12 @@ impl SnagApp {
                 self.pin_current();
                 ui.close();
             }
+            if let Some(f) = self.entries[ci].file().filter(|f| f.is_file()).map(|f| f.to_path_buf())
+                && ui.button(crate::i18n::t("Show in folder")).clicked()
+            {
+                self.reveal(&f);
+                ui.close();
+            }
             if self.selected.is_some() && ui.button(crate::i18n::t("Delete mark")).clicked() {
                 self.delete_selected();
                 ui.close();
@@ -3911,7 +4035,7 @@ impl SnagApp {
                 }
                 Tool::Selection => {
                     dashed_rect(&painter, r, Color32::WHITE);
-                    painter.rect_filled(r, CornerRadius::ZERO, Color32::from_rgba_unmultiplied(79, 124, 255, 40));
+                    painter.rect_filled(r, CornerRadius::ZERO, accent().gamma_multiply(0.16));
                 }
                 Tool::CutOut => {
                     let band = if r.width() >= r.height() {
@@ -4054,10 +4178,9 @@ impl SnagApp {
         }
     }
 
-    fn mini_bar(&mut self, ui: &mut egui::Ui) {
-        let ctx = ui.ctx().clone();
-        // A video counts from its first picture (on Wayland the desktop's "Share screen" dialog
-        // comes first).
+    /// What the recording bar shows now. A video or GIF counts from its first picture (on
+    /// Wayland the desktop's "Share screen" dialog comes first).
+    fn bar_view(&mut self) -> BarView {
         let waiting = match self.mini {
             Some(Mini::Video) => !crate::video::recording_live(),
             Some(Mini::Gif) => !capture::gif_live(),
@@ -4065,76 +4188,182 @@ impl SnagApp {
         };
         if waiting {
             self.mini_since = Instant::now();
-            ctx.request_repaint_after(Duration::from_millis(200));
         }
         let secs = self.mini_since.elapsed().as_secs();
-        // Wayland: leaving the full-screen overlay restores the window's old size after the bar
+        let text = match self.mini {
+            // (Its own window stays a moment after Stop, until the main window is back.)
+            None if self.bar.on => crate::i18n::t("Stopping…").to_string(),
+            Some(Mini::Gif) if waiting => "Waiting for screen sharing...".to_string(),
+            Some(Mini::Gif) => format!("Recording GIF  {}:{:02}", secs / 60, secs % 60),
+            Some(Mini::Video) if self.paused() => "Paused".to_string(),
+            Some(Mini::Video) if waiting => "Waiting for screen sharing...".to_string(),
+            Some(Mini::Video) => format!("Recording {} at {} fps  {}:{:02}", self.settings.rec_format.ext().to_uppercase(), self.settings.video_fps, secs / 60, secs % 60),
+            Some(Mini::Steps) => format!("Recording steps: {} so far", self.guide.len()),
+            Some(Mini::Scroll) if self.scroll_manual => "Scroll it yourself, then press Stop".to_string(),
+            Some(Mini::Scroll) => match &self.scroll_progress {
+                Some(p) => crate::i18n::tf(
+                    "Scrolling: {frames} pictures, {height} pixels. Esc stops.",
+                    &[("frames", &p.frames.load(Ordering::Relaxed).to_string()), ("height", &p.length.load(Ordering::Relaxed).to_string())],
+                ),
+                None => "Scrolling and stitching...".to_string(),
+            },
+            None => String::new(),
+        };
+        BarView {
+            text,
+            since: Some(self.mini_since),
+            waiting,
+            buttons: self.mini.is_some(),
+            pause: (self.mini == Some(Mini::Video)).then_some(if self.paused() { "Resume" } else { "Pause" }),
+            esc_stops: self.mini == Some(Mini::Scroll),
+        }
+    }
+
+    /// Do what was pressed on the recording bar.
+    fn bar_act(&mut self, ctx: &egui::Context, act: BarAct) {
+        if act.stop {
+            // The main window is asked back with this click (the desktop honours that only
+            // right after a click on one of Snagster's windows).
+            self.bar.stop(Instant::now());
+            match self.mini {
+                Some(Mini::Steps) => self.stop_steps(ctx),
+                Some(_) => self.stop_job(),
+                None => {}
+            }
+        } else if act.escape && self.mini == Some(Mini::Scroll) {
+            self.stop_job();
+        }
+        if act.pause && self.mini == Some(Mini::Video) {
+            self.toggle_pause();
+        }
+    }
+
+    /// The main window shrunk to the recording bar (Windows, macOS, X11).
+    fn mini_bar(&mut self, ui: &mut egui::Ui) {
+        let ctx = ui.ctx().clone();
+        // Leaving the full-screen overlay may restore the window's old size after the bar
         // asked for its own, which left a big dark window over the area being recorded. Ask
         // again until the bar has its size.
-        // (The content area: on Wayland the window's position, and so its rectangle, is unknown.)
         let have = ctx.input(|i| i.content_rect().size());
         if resize_due(have, MINI_BAR_SIZE, self.mini_entered.elapsed()) {
             ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(MINI_BAR_SIZE));
         }
-        // The bar can be dragged by its free space (a Wayland app can't place its own window).
-        // (Click and drag: the drag starts once the pointer moves, so a press on Stop isn't
-        // handed to the desktop as a window move, which swallowed the click.)
-        let bg = ui.interact(ui.max_rect(), ui.make_persistent_id("mini-bar-drag"), Sense::click_and_drag());
-        if bg.drag_started() && bar_drag_allowed(ctx.input(|i| i.pointer.press_origin()), &self.mini_buttons) {
-            ctx.send_viewport_cmd(egui::ViewportCommand::StartDrag);
+        let view = self.bar_view();
+        if view.waiting {
+            ctx.request_repaint_after(Duration::from_millis(200));
         }
-        let mut buttons = Vec::new();
-        ui.horizontal_centered(|ui| {
-            ui.add_space(10.0);
-            let blink = (self.mini_since.elapsed().as_millis() / 500) % 2 == 0;
-            let (r, _) = ui.allocate_exact_size(vec2(14.0, 14.0), Sense::hover());
-            ui.painter().circle_filled(r.center(), 6.0, if blink { Color32::from_rgb(229, 72, 77) } else { Color32::from_rgb(120, 40, 44) });
-            let text = match self.mini {
-                Some(Mini::Gif) if waiting => "Waiting for screen sharing...".to_string(),
-                Some(Mini::Gif) => format!("Recording GIF  {}:{:02}", secs / 60, secs % 60),
-                Some(Mini::Video) if self.paused() => "Paused".to_string(),
-                Some(Mini::Video) if waiting => "Waiting for screen sharing...".to_string(),
-                Some(Mini::Video) => format!("Recording {} at {} fps  {}:{:02}", self.settings.rec_format.ext().to_uppercase(), self.settings.video_fps, secs / 60, secs % 60),
-                Some(Mini::Steps) => format!("Recording steps: {} so far", self.guide.len()),
-                Some(Mini::Scroll) if self.scroll_manual => "Scroll it yourself, then press Stop".to_string(),
-                Some(Mini::Scroll) => match &self.scroll_progress {
-                    Some(p) => crate::i18n::tf(
-                        "Scrolling: {frames} pictures, {height} pixels. Esc stops.",
-                        &[("frames", &p.frames.load(Ordering::Relaxed).to_string()), ("height", &p.length.load(Ordering::Relaxed).to_string())],
-                    ),
-                    None => "Scrolling and stitching...".to_string(),
-                },
-                None => String::new(),
-            };
-            ui.label(RichText::new(text).color(Color32::WHITE).strong());
-            // Esc stops a scrolling capture when this bar has the keyboard (on Windows it
-            // works anywhere: the capture itself watches the key).
-            if self.mini == Some(Mini::Scroll) && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                self.stop_job();
-            }
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.add_space(10.0);
-                let stop = egui::Button::new(RichText::new(crate::i18n::t("Stop")).color(Color32::WHITE).strong()).fill(Color32::from_rgb(229, 72, 77));
-                let stop = ui.add(stop);
-                buttons.push(stop.rect);
-                if stop.clicked() {
-                    match self.mini {
-                        Some(Mini::Steps) => self.stop_steps(&ctx),
-                        _ => self.stop_job(),
-                    }
-                }
-                if self.mini == Some(Mini::Video) {
-                    let label = if self.paused() { "Resume" } else { "Pause" };
-                    let pause = ui.button(RichText::new(label).strong());
-                    buttons.push(pause.rect);
-                    if pause.clicked() {
-                        self.toggle_pause();
-                    }
-                }
-            });
-        });
-        self.mini_buttons = buttons;
+        let act = draw_bar(ui, &view, &mut self.mini_buttons);
+        self.bar_act(&ctx, act);
         ctx.request_repaint_after(Duration::from_millis(250));
+    }
+
+    /// The recording bar in a small window of its own (Wayland). It draws itself from
+    /// `bar_shared` on its own repaints: the minimized main window gets no frames from the
+    /// desktop, so nothing drawn from its pass would show.
+    fn bar_window(&mut self, ctx: &egui::Context) {
+        let view = self.bar_view();
+        if let Ok(mut s) = self.bar_shared.lock() {
+            s.view = view;
+            s.closed = false;
+        }
+        let builder = crate::windows::snagster_viewport()
+            .with_title(crate::i18n::t("Recording"))
+            .with_inner_size(MINI_BAR_SIZE)
+            .with_min_inner_size(vec2(200.0, 40.0))
+            .with_decorations(false)
+            .with_resizable(false)
+            .with_always_on_top();
+        let shared = self.bar_shared.clone();
+        ctx.show_viewport_deferred(egui::ViewportId::from_hash_of("recording-bar"), builder, move |ui, _| {
+            let ctx = ui.ctx().clone();
+            let Ok(mut s) = shared.lock() else { return };
+            if s.closed {
+                // Over, but the main window hasn't drawn since to take the bar away (the
+                // desktop didn't bring it back): out of sight until it does.
+                ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+                return;
+            }
+            let view = s.view.clone();
+            let mut buttons = std::mem::take(&mut s.buttons);
+            let act = egui::CentralPanel::default()
+                .frame(egui::Frame::new().fill(pal().bg).stroke(Stroke::new(1.0, accent())))
+                .show(ui, |ui| draw_bar(ui, &view, &mut buttons))
+                .inner;
+            s.buttons = buttons;
+            if act.any() {
+                s.act.merge(act);
+                ctx.request_repaint_of(egui::ViewportId::ROOT);
+            }
+            ctx.request_repaint_after(Duration::from_millis(250));
+        });
+    }
+
+    /// Bring the main window back after the bar's own window (Wayland): the desktop is asked
+    /// with the click on Stop, and the bar closes once it has been asked.
+    fn bar_window_tick(&mut self, ctx: &egui::Context, frame: &eframe::Frame) {
+        if self.bar.on {
+            // The bar's own window runs apart from this one: what it shows is updated here,
+            // and what was pressed on it is done here.
+            let act = self.bar_shared.lock().map(|mut s| std::mem::take(&mut s.act)).unwrap_or_default();
+            self.bar_act(ctx, act);
+            let view = self.bar_view();
+            if let Ok(mut s) = self.bar_shared.lock() {
+                s.view = view;
+            }
+            ctx.request_repaint_of(egui::ViewportId::from_hash_of("recording-bar"));
+        }
+        #[cfg(target_os = "linux")]
+        use raw_window_handle::HasWindowHandle as _;
+        #[cfg(target_os = "linux")]
+        {
+            use raw_window_handle::{HasDisplayHandle as _, RawDisplayHandle};
+            let display = frame.display_handle().map(|h| h.as_raw());
+            self.native_wayland = matches!(display, Ok(RawDisplayHandle::Wayland(_)));
+            if self.bar.on && self.wl.is_none() && !self.wl_failed {
+                if let Ok(RawDisplayHandle::Wayland(d)) = display {
+                    // SAFETY: winit's display lives as long as the program's windows.
+                    self.wl = unsafe { crate::wl_activate::Activator::new(d.display.as_ptr()) };
+                }
+                self.wl_failed = self.wl.is_none();
+            }
+            if let Some(wl) = &mut self.wl
+                && wl.poll()
+            {
+                self.bar.done = true;
+            }
+        }
+        if self.bar.ask_due() {
+            self.bar.asked = true;
+            #[cfg(target_os = "linux")]
+            let asked = match (&mut self.wl, frame.window_handle().map(|h| h.as_raw())) {
+                // SAFETY: the main window's surface, alive while the program runs.
+                (Some(wl), Ok(raw_window_handle::RawWindowHandle::Wayland(w))) => unsafe { wl.activate(w.surface.as_ptr()) },
+                _ => false,
+            };
+            #[cfg(not(target_os = "linux"))]
+            let asked = false;
+            if !asked {
+                // The desktop then says Snagster is ready; that brings the window back.
+                ctx.send_viewport_cmd(egui::ViewportCommand::RequestUserAttention(egui::UserAttentionType::Informational));
+                self.bar.done = true;
+            }
+        }
+        #[cfg(not(target_os = "linux"))]
+        let _ = frame;
+        if self.bar.finished(self.mini.is_some(), Instant::now()) {
+            self.bar = BarWindow::default();
+            if let Ok(mut s) = self.bar_shared.lock() {
+                s.closed = true;
+            }
+            #[cfg(target_os = "linux")]
+            {
+                self.wl = None;
+                self.wl_failed = false;
+            }
+        }
+        if self.bar.on {
+            ctx.request_repaint_after(Duration::from_millis(50));
+        }
     }
 
     fn screenshot_tick(&mut self, ctx: &egui::Context) {
@@ -4227,7 +4456,7 @@ impl SnagApp {
             capture::remember_window_screen(((m.x * ppp).round() as u32, (m.y * ppp).round() as u32));
         }
         let full = ctx.input(|i| i.viewport().fullscreen.unwrap_or(false));
-        if !full && self.mini.is_none() && self.overlay.is_none() && self.size_wanted.is_none() {
+        if !full && self.mini.is_none() && !self.bar.on && self.overlay.is_none() && self.size_wanted.is_none() {
             self.normal_size = Some(ctx.input(|i| i.content_rect().size()));
         }
         if let Some((want, since)) = self.size_wanted {
@@ -4241,6 +4470,8 @@ impl SnagApp {
         }
         self.poll_hotkeys(ctx);
         self.poll_tray(ctx);
+        #[cfg(target_os = "macos")]
+        self.apply_menu_bar();
         // Close keeps Snagster in the tray only where there is a tray to come back from (stock
         // GNOME has none), and only when the person chose it.
         let keep_running = !self.quitting && self.tray.is_some() && self.settings.close_to_tray && crate::platform::has_tray();
@@ -4322,9 +4553,12 @@ impl SnagApp {
         self.screen_access_window(&ctx);
             return;
         }
-        if self.mini.is_some() {
+        if self.bar.shown(self.mini.is_some(), Instant::now()) {
+            self.bar_window(&ctx);
+        }
+        if self.mini.is_some() && !self.bar.on {
             egui::CentralPanel::default()
-                .frame(egui::Frame::new().fill(BG_DARK).stroke(Stroke::new(1.0, accent())))
+                .frame(egui::Frame::new().fill(pal().bg).stroke(Stroke::new(1.0, accent())))
                 .show(ui, |ui| self.mini_bar(ui));
             return;
         }
@@ -4336,7 +4570,7 @@ impl SnagApp {
         self.shortcuts(&ctx);
 
         egui::Panel::top("ribbon")
-            .frame(egui::Frame::new().fill(crate::look::BAND))
+            .frame(egui::Frame::new().fill(crate::look::pal().band))
             .show(ui, |ui| self.ribbon(ui));
         self.language_window(&ctx);
         self.update_window(&ctx);
@@ -4353,7 +4587,7 @@ impl SnagApp {
         if self.settings.show_tray {
             egui::Panel::bottom("tray")
                 .exact_size(grown(112.0, 36.0))
-                .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(4, 6)))
+                .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(4, 6)))
                 .show(ui, |ui| self.tray(ui));
         }
         // A narrow window (Snap's half or third of the screen) keeps the picture in view: the
@@ -4362,16 +4596,16 @@ impl SnagApp {
         egui::Panel::left("tools")
             .exact_size(grown(118.0, 108.0))
             .resizable(false)
-            .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(4, 0)))
+            .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(4, 0)))
             .show(ui, |ui| self.tool_bar(ui, narrow && self.settings.show_side_panel));
         if self.settings.show_side_panel && (!narrow || self.x.narrow_options) {
             egui::Panel::right("props")
                 .exact_size(grown(230.0, 140.0))
                 .resizable(false)
-                .frame(egui::Frame::new().fill(PANEL).inner_margin(egui::Margin::symmetric(14, 6)))
+                .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(14, 6)))
                 .show(ui, |ui| self.side_panel(ui));
         }
-        egui::CentralPanel::default().frame(egui::Frame::new().fill(BG_DARK)).show(ui, |ui| self.canvas(ui));
+        egui::CentralPanel::default().frame(egui::Frame::new().fill(pal().bg)).show(ui, |ui| self.canvas(ui));
 
         self.dialog_window(&ctx);
         self.settings_window(&ctx);
@@ -4414,25 +4648,9 @@ pub(crate) fn item_on(ui: &mut egui::Ui, enabled: bool, label: &str, keys: &str)
     clicked
 }
 
-fn setup_style(ctx: &egui::Context) {
-    // Snagster is dark on every system for now. Saying so keeps egui from swapping in its
-    // stock style when the system switches between light and dark, and gives every window a
-    // dark system title bar to match (instead of a white bar above a dark window).
-    ctx.set_theme(egui::Theme::Dark);
-    ctx.options_mut(|o| o.sync_window_theme = true);
-    let mut v = egui::Visuals::dark();
-    v.panel_fill = PANEL;
-    v.window_fill = PANEL;
-    v.extreme_bg_color = BG_DARK;
-    v.selection.bg_fill = accent();
-    v.hyperlink_color = accent();
-    v.widgets.inactive.weak_bg_fill = PANEL_HI;
-    v.widgets.inactive.bg_fill = PANEL_HI;
-    v.widgets.inactive.corner_radius = CornerRadius::same(6);
-    v.widgets.hovered.corner_radius = CornerRadius::same(6);
-    v.widgets.active.corner_radius = CornerRadius::same(6);
-    v.widgets.hovered.weak_bg_fill = Color32::from_rgb(60, 64, 78);
-    ctx.set_visuals(v);
+fn setup_style(ctx: &egui::Context, appearance: crate::theme::ThemeChoice) {
+    // Light, dark or high contrast, and title bars to match (see `theme`); checked every frame.
+    crate::theme::apply(ctx, appearance);
     ctx.all_styles_mut(|s| {
         s.spacing.item_spacing = vec2(8.0, 6.0);
         s.spacing.button_padding = vec2(9.0, 5.0);
@@ -4462,7 +4680,7 @@ fn status_width(window_width: f32) -> f32 {
 }
 
 pub(crate) fn section(ui: &mut egui::Ui, title: &str) {
-    ui.label(RichText::new(title).strong().color(Color32::WHITE));
+    ui.label(RichText::new(title).strong().color(pal().strong));
     ui.add_space(2.0);
 }
 
@@ -4866,7 +5084,7 @@ pub(crate) fn logo(ui: &mut egui::Ui, size: f32) {
 /// Snagster's mark: a rounded tile with viewfinder corners and a dot.
 pub fn logo_at(p: &egui::Painter, c: Pos2, size: f32) {
     let r = Rect::from_center_size(c, Vec2::splat(size));
-    p.rect_filled(r, CornerRadius::same((size * 0.25) as u8), ACCENT_DEFAULT);
+    p.rect_filled(r, CornerRadius::same((size * 0.25) as u8), crate::theme::BRAND);
     frame_icon(p, r.shrink(size * 0.2), Color32::WHITE, false);
     p.circle_filled(c, size * 0.1, Color32::WHITE);
 }
@@ -5097,6 +5315,8 @@ impl SnagApp {
                     self.quitting = true;
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
+                #[cfg(any(target_os = "macos", test))]
+                TrayCmd::Menu(run) => self.run_menu(ctx, run),
             }
         }
     }
@@ -5436,7 +5656,7 @@ impl SnagApp {
 
     fn template_menu(&mut self, ui: &mut egui::Ui) {
         let n = self.entries.len();
-        ui.label(RichText::new(format!("Made from the {n} pictures in Recent")).color(TEXT_DIM));
+        ui.label(RichText::new(format!("Made from the {n} pictures in Recent")).color(pal().dim));
         // Nothing is drawn until one is picked (this used to draw every picture on every frame
         // while the menu was open), and then on the job queue.
         if item_on(ui, n >= 1, "Step-by-step guide (one page)", "") {
@@ -5474,7 +5694,7 @@ impl SnagApp {
         let t = self.tool;
         if t == Tool::Arrow {
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Heads")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Heads")).color(pal().dim));
                 ui.selectable_value(&mut self.settings.arrow_heads, 0, crate::i18n::t("none"));
                 ui.selectable_value(&mut self.settings.arrow_heads, 1, crate::i18n::t("end"));
                 ui.selectable_value(&mut self.settings.arrow_heads, 2, crate::i18n::t("both"));
@@ -5482,7 +5702,7 @@ impl SnagApp {
         }
         if matches!(t, Tool::Text | Tool::Callout) {
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Align")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Align")).color(pal().dim));
                 ui.selectable_value(&mut self.settings.text_align, 0, crate::i18n::t("left"));
                 ui.selectable_value(&mut self.settings.text_align, 1, crate::i18n::t("center"));
                 ui.selectable_value(&mut self.settings.text_align, 2, crate::i18n::t("right"));
@@ -5493,7 +5713,7 @@ impl SnagApp {
         }
         if t == Tool::Callout {
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Shape")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Shape")).color(pal().dim));
                 for (s, l) in [(CalloutShape::Rounded, "rounded"), (CalloutShape::Rectangle, "box"), (CalloutShape::Oval, "oval")] {
                     ui.selectable_value(&mut self.settings.callout_shape, s, l);
                 }
@@ -5502,7 +5722,7 @@ impl SnagApp {
         }
         if t == Tool::Blur {
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Type")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Type")).color(pal().dim));
                 for m in BlurMode::ALL {
                     ui.selectable_value(&mut self.settings.blur_mode, m, m.label());
                 }
@@ -5516,13 +5736,13 @@ impl SnagApp {
         }
         if t == Tool::Highlight {
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new(crate::i18n::t("Shape")).color(TEXT_DIM));
+                ui.label(RichText::new(crate::i18n::t("Shape")).color(pal().dim));
                 ui.selectable_value(&mut self.settings.highlight_box, true, crate::i18n::t("box"));
                 ui.selectable_value(&mut self.settings.highlight_box, false, crate::i18n::t("freehand"));
             });
         }
         if t == Tool::Eraser {
-            ui.label(RichText::new(format!("Eraser width {:.0} px", self.settings.width * 3.0)).color(TEXT_DIM));
+            ui.label(RichText::new(format!("Eraser width {:.0} px", self.settings.width * 3.0)).color(pal().dim));
         }
         // Quick Styles: saved looks, one click away.
         ui.add_space(8.0);
@@ -5532,7 +5752,7 @@ impl SnagApp {
         ui.horizontal_wrapped(|ui| {
             for (i, q) in self.settings.quick_styles.iter().enumerate() {
                 let (r, resp) = ui.allocate_exact_size(vec2(30.0, 30.0), Sense::click());
-                ui.painter().rect_filled(r, CornerRadius::same(6), PANEL_HI);
+                ui.painter().rect_filled(r, CornerRadius::same(6), pal().panel_hi);
                 let c = rgb(q.color);
                 if q.fill {
                     ui.painter().circle_filled(r.center(), 9.0, c);
@@ -5540,7 +5760,7 @@ impl SnagApp {
                     ui.painter().circle_stroke(r.center(), 8.0, Stroke::new((q.width / 2.0).clamp(1.5, 5.0), c));
                 }
                 if q.shadow {
-                    ui.painter().rect_stroke(r.shrink(1.0), CornerRadius::same(6), Stroke::new(1.0, Color32::from_gray(110)), StrokeKind::Inside);
+                    ui.painter().rect_stroke(r.shrink(1.0), CornerRadius::same(6), Stroke::new(1.0, pal().border), StrokeKind::Inside);
                 }
                 if resp.clicked() {
                     apply = Some(i);
@@ -5576,18 +5796,20 @@ impl eframe::App for SnagApp {
     // A mistake in one frame must not close the window and lose the person's pictures: it is
     // written to crash.log (by the panic hook) and shown in the status line, and the next frame
     // carries on.
-    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn logic(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let started = Instant::now();
         crate::drawing::frame(ctx, self.persist);
         if let Err(e) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.logic_body(ctx))) {
             self.recovered(e);
         }
+        self.bar_window_tick(ctx, frame);
         self.sweep_textures(started);
         self.watchdog("logic", started.elapsed());
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let started = Instant::now();
+        crate::theme::apply(ui.ctx(), self.settings.appearance);
         if let Err(e) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.ui_body(ui))) {
             self.recovered(e);
         }
@@ -5680,7 +5902,7 @@ impl SnagApp {
         if !self.win_cache.loaded() {
             ui.spinner();
         } else if self.win_cache.items().is_empty() {
-            ui.label(RichText::new(crate::i18n::t("No windows found")).color(TEXT_DIM));
+            ui.label(RichText::new(crate::i18n::t("No windows found")).color(pal().dim));
         }
         let mut pick = None;
         egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
@@ -5718,6 +5940,13 @@ impl SnagApp {
 
     /// Set up a view for `--screenshot --view ...` (README pictures).
     fn show_view(&mut self, ctx: &egui::Context, view: &str) {
+        // light:<view> and dark:<view> show a view in that palette (README pictures, design reviews).
+        for (prefix, choice) in [("light:", crate::theme::ThemeChoice::Light), ("dark:", crate::theme::ThemeChoice::Dark)] {
+            if let Some(rest) = view.strip_prefix(prefix) {
+                self.settings.appearance = choice;
+                return self.show_view(ctx, rest);
+            }
+        }
         if let Some(code) = view.strip_prefix("lang:") {
             self.settings.language = code.to_string();
             self.x.tab = ribbon::RibbonTab::Home;
@@ -5773,6 +6002,15 @@ impl SnagApp {
                 let id = self.settings.stream.new_also_id();
                 self.settings.stream.also = vec![crate::settings::ExtraService { id, service: crate::stream::Service::YouTube, url: String::new(), on: true }];
             }
+            "settings-general" => {
+                self.settings_open = true;
+                self.settings_tab = SettingsTab::Language;
+            }
+            "settings-editor" => {
+                self.settings_open = true;
+                self.settings_tab = SettingsTab::Editor;
+            }
+            "library" => self.library_open = true,
             "settings-ai" => {
                 self.settings_open = true;
                 self.settings_tab = SettingsTab::Ai;
@@ -5788,6 +6026,152 @@ impl SnagApp {
             }
             _ => {}
         }
+    }
+}
+
+/// What the recording bar shows.
+#[derive(Clone, Default)]
+struct BarView {
+    text: String,
+    /// Since when it records (the red dot blinks from then).
+    since: Option<Instant>,
+    /// Waiting for the desktop's screen sharing.
+    waiting: bool,
+    /// Stop (and Pause) are offered.
+    buttons: bool,
+    /// The Pause button's label, for a video.
+    pause: Option<&'static str>,
+    /// Escape stops (a scrolling capture).
+    esc_stops: bool,
+}
+
+/// What was pressed on the recording bar.
+#[derive(Clone, Copy, Default, PartialEq, Debug)]
+struct BarAct {
+    stop: bool,
+    pause: bool,
+    escape: bool,
+}
+
+impl BarAct {
+    fn any(self) -> bool {
+        self.stop || self.pause || self.escape
+    }
+
+    /// Presses not yet handled add up (two pauses cancel out: the bar shows one state).
+    fn merge(&mut self, other: BarAct) {
+        self.stop |= other.stop;
+        self.pause ^= other.pause;
+        self.escape |= other.escape;
+    }
+}
+
+/// Between the bar's own window and the main window.
+#[derive(Default)]
+struct BarShared {
+    view: BarView,
+    act: BarAct,
+    /// Where its buttons were last frame (a press there is never a drag of the bar).
+    buttons: Vec<egui::Rect>,
+    /// The recording is over; the bar goes out of sight.
+    closed: bool,
+}
+
+/// Draw the recording bar into `ui` (the main window shrunk to a bar, or the bar's own window)
+/// and say what was pressed. `buttons` holds where its buttons were last frame and gets where
+/// they are now.
+fn draw_bar(ui: &mut egui::Ui, view: &BarView, buttons: &mut Vec<egui::Rect>) -> BarAct {
+    let ctx = ui.ctx().clone();
+    let mut act = BarAct::default();
+    // The bar can be dragged by its free space (a Wayland app can't place its own window).
+    // (Click and drag: the drag starts once the pointer moves, so a press on Stop isn't
+    // handed to the desktop as a window move, which swallowed the click.)
+    let bg = ui.interact(ui.max_rect(), ui.make_persistent_id("mini-bar-drag"), Sense::click_and_drag());
+    if bg.drag_started() && bar_drag_allowed(ctx.input(|i| i.pointer.press_origin()), buttons) {
+        ctx.send_viewport_cmd(egui::ViewportCommand::StartDrag);
+    }
+    let mut now = Vec::new();
+    ui.horizontal_centered(|ui| {
+        ui.add_space(10.0);
+        let blink = view.since.is_none_or(|t| (t.elapsed().as_millis() / 500) % 2 == 0);
+        let (r, _) = ui.allocate_exact_size(vec2(14.0, 14.0), Sense::hover());
+        ui.painter().circle_filled(r.center(), 6.0, if blink { Color32::from_rgb(229, 72, 77) } else { Color32::from_rgb(120, 40, 44) });
+        ui.label(RichText::new(&view.text).color(pal().strong).strong());
+        // Esc stops a scrolling capture when this bar has the keyboard (on Windows it works
+        // anywhere: the capture itself watches the key).
+        if view.esc_stops && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+            act.escape = true;
+        }
+        if !view.buttons {
+            return;
+        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.add_space(10.0);
+            let stop = egui::Button::new(RichText::new(crate::i18n::t("Stop")).color(crate::theme::text_on(pal().danger)).strong()).fill(pal().danger);
+            let stop = ui.add(stop);
+            now.push(stop.rect);
+            act.stop = stop.clicked();
+            if let Some(label) = view.pause {
+                let pause = ui.button(RichText::new(label).strong());
+                now.push(pause.rect);
+                act.pause = pause.clicked();
+            }
+        });
+    });
+    *buttons = now;
+    act
+}
+
+/// Whether the recording bar is a window of its own instead of the main window shrunk to a bar:
+/// on Wayland, where a program can't move its window back afterwards.
+fn bar_in_own_window(native_wayland: bool) -> bool {
+    native_wayland
+}
+
+/// How long the bar's own window may stay after Stop while the main window is asked back.
+const BAR_LINGER: Duration = Duration::from_millis(1500);
+
+/// The recording bar as a window of its own, next to the minimized main window (Wayland).
+#[derive(Default)]
+struct BarWindow {
+    /// The bar is a window of its own for the current recording.
+    on: bool,
+    /// Since when the main window is to come back (Stop pressed, or the recording ended).
+    back_since: Option<Instant>,
+    /// The desktop was asked for it (a token was requested).
+    asked: bool,
+    /// The main window was activated.
+    done: bool,
+}
+
+impl BarWindow {
+    fn start(&mut self) {
+        *self = BarWindow { on: true, ..Default::default() };
+    }
+
+    /// Stop was pressed or the recording ended: the main window is to come back. The first
+    /// call counts (the click on Stop, before the recording has finished saving).
+    fn stop(&mut self, now: Instant) {
+        if self.on {
+            self.back_since.get_or_insert(now);
+        }
+    }
+
+    /// Whether to ask the desktop for the main window now.
+    fn ask_due(&self) -> bool {
+        self.on && self.back_since.is_some() && !self.asked
+    }
+
+    /// Whether the bar's window is shown: while recording, and after Stop until the main
+    /// window is back (the request must come from a window that is still there), at most
+    /// [`BAR_LINGER`].
+    fn shown(&self, recording: bool, now: Instant) -> bool {
+        self.on && (recording || self.back_since.is_some_and(|t| !self.done && now.duration_since(t) < BAR_LINGER))
+    }
+
+    /// Whether it is all over (the bar gone, the main window asked back).
+    fn finished(&self, recording: bool, now: Instant) -> bool {
+        self.on && !recording && self.asked && !self.shown(recording, now)
     }
 }
 
@@ -5848,6 +6232,99 @@ mod tests {
         // The free space moves it; no press, no move.
         assert!(bar_drag_allowed(Some(pos2(120.0, 28.0)), &buttons));
         assert!(!bar_drag_allowed(None, &buttons));
+    }
+
+    /// On Wayland the bar is a window of its own and the main window stays where it is; the
+    /// main window is asked back with the click on Stop, and the bar stays until it was.
+    #[test]
+    fn on_wayland_the_bar_has_its_own_window_and_the_editor_comes_back() {
+        use super::{BAR_LINGER, BarWindow, bar_in_own_window};
+        use std::time::{Duration, Instant};
+        assert!(bar_in_own_window(true), "Wayland: the main window can't be moved back");
+        assert!(!bar_in_own_window(false), "Windows, macOS, X11: the main window becomes the bar");
+
+        let t0 = Instant::now();
+        let mut bar = BarWindow::default();
+        bar.stop(t0);
+        assert!(!bar.ask_due() && !bar.shown(false, t0), "nothing happens without a bar window");
+
+        bar.start();
+        assert!(bar.shown(true, t0), "shown while recording");
+        assert!(!bar.ask_due(), "the editor stays away while recording");
+        assert!(!bar.finished(true, t0));
+
+        // Stop pressed: the click counts, not the moment the recording finished saving.
+        bar.stop(t0);
+        bar.stop(t0 + Duration::from_millis(400));
+        assert_eq!(bar.back_since, Some(t0));
+        assert!(bar.ask_due(), "the editor is asked back right after the click");
+        bar.asked = true;
+        assert!(!bar.ask_due(), "asked once");
+        let later = t0 + Duration::from_millis(300);
+        assert!(bar.shown(false, later), "the bar stays while the desktop answers");
+        assert!(!bar.finished(false, later));
+        bar.done = true;
+        assert!(!bar.shown(false, later), "the editor is back: the bar goes");
+        assert!(bar.finished(false, later));
+
+        // No answer from the desktop: the bar goes anyway.
+        bar.start();
+        bar.stop(t0);
+        bar.asked = true;
+        assert!(bar.shown(false, t0 + BAR_LINGER - Duration::from_millis(1)));
+        assert!(bar.finished(false, t0 + BAR_LINGER));
+        // A new recording starts afresh.
+        bar.start();
+        assert!(bar.on && bar.back_since.is_none() && !bar.asked && !bar.done);
+    }
+
+    /// The bar drawn on its own (its own window on Wayland) reports a click on Stop and on
+    /// Pause, offers Pause only for a video, and no buttons once it is only saying "Stopping".
+    #[test]
+    fn the_bar_reports_what_was_pressed() {
+        use super::{BarAct, BarView, draw_bar};
+        let ctx = egui::Context::default();
+        let screen = egui::Rect::from_min_size(egui::Pos2::ZERO, super::MINI_BAR_SIZE);
+        let frame = |view: &BarView, buttons: &mut Vec<egui::Rect>, events: Vec<egui::Event>| {
+            let mut act = BarAct::default();
+            let input = egui::RawInput { screen_rect: Some(screen), events, ..Default::default() };
+            let mut out = ctx.run_ui(input, |ui| {
+                act = egui::CentralPanel::default().show(ui, |ui| draw_bar(ui, view, buttons)).inner;
+            });
+            out.textures_delta.clear();
+            act
+        };
+        let click = |p: egui::Pos2| {
+            vec![
+                egui::Event::PointerMoved(p),
+                egui::Event::PointerButton { pos: p, button: egui::PointerButton::Primary, pressed: true, modifiers: Default::default() },
+                egui::Event::PointerButton { pos: p, button: egui::PointerButton::Primary, pressed: false, modifiers: Default::default() },
+            ]
+        };
+        let video = BarView { text: "Recording MP4".into(), since: None, waiting: false, buttons: true, pause: Some("Pause"), esc_stops: false };
+        let mut buttons = Vec::new();
+        assert_eq!(frame(&video, &mut buttons, vec![]), BarAct::default());
+        assert_eq!(buttons.len(), 2, "Stop and Pause");
+        let (stop, pause) = (buttons[0].center(), buttons[1].center());
+        assert!(stop.x > pause.x, "Stop is the last button");
+        assert_eq!(frame(&video, &mut buttons, click(stop)), BarAct { stop: true, ..Default::default() });
+        assert_eq!(frame(&video, &mut buttons, click(pause)), BarAct { pause: true, ..Default::default() });
+
+        let gif = BarView { pause: None, ..video.clone() };
+        frame(&gif, &mut buttons, vec![]);
+        assert_eq!(buttons.len(), 1, "a GIF can't pause");
+        let stopping = BarView { text: "Stopping…".into(), buttons: false, pause: None, ..video };
+        frame(&stopping, &mut buttons, vec![]);
+        assert!(buttons.is_empty(), "nothing to press while the editor comes back");
+
+        // Presses waiting for the main window add up; two pauses cancel out.
+        let mut waiting = BarAct::default();
+        waiting.merge(BarAct { pause: true, ..Default::default() });
+        waiting.merge(BarAct { stop: true, ..Default::default() });
+        assert_eq!(waiting, BarAct { stop: true, pause: true, escape: false });
+        waiting.merge(BarAct { pause: true, ..Default::default() });
+        assert_eq!(waiting, BarAct { stop: true, pause: false, escape: false });
+        assert!(waiting.any() && !BarAct::default().any());
     }
 
     /// The recording bar re-asks for its size while the window is still the old size (Wayland
@@ -5946,6 +6423,55 @@ mod tests {
         assert!(!a.persist);
         assert!(a.screenshot.is_none());
         assert_eq!(a.x.tab, ribbon::RibbonTab::Home);
+    }
+
+    #[test]
+    fn show_in_folder_selects_a_file_instead_of_opening_it() {
+        let dir = temp("folder-action");
+        let _ = std::fs::create_dir_all(&dir);
+        let video = dir.join("Recording.mp4");
+        std::fs::write(&video, b"x").unwrap();
+        // A file is shown in its folder, never handed to xdg-open/open (which would play it).
+        assert_eq!(folder_action(&video), FolderAction::Reveal(video.clone()));
+        assert_eq!(folder_action(&dir), FolderAction::Open(dir.clone()));
+        // A folder that isn't there yet is made and opened (the save and video folders).
+        let new = dir.join("Snagster");
+        assert_eq!(folder_action(&new), FolderAction::Open(new.clone()));
+        // A file that has gone since: the folder it was in.
+        let gone = dir.join("deleted.png");
+        assert_eq!(folder_action(&gone), FolderAction::Parent(dir.clone()));
+        assert_eq!(folder_action(&dir.join("nowhere").join("x.png")), FolderAction::Nothing);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn show_in_folder_shows_the_saved_file_before_the_library_copy() {
+        let mut a = app();
+        assert_eq!(a.entries[0].file(), None, "a picture that is in no file yet");
+        a.entries[0].kept = Some(PathBuf::from("lib/1.png"));
+        assert_eq!(a.entries[0].file(), Some(std::path::Path::new("lib/1.png")));
+        a.entries[0].path = Some(PathBuf::from("Pictures/shot.png"));
+        assert_eq!(a.entries[0].file(), Some(std::path::Path::new("Pictures/shot.png")));
+    }
+
+    #[test]
+    fn a_library_copy_finds_its_picture_even_after_recent_changed() {
+        let ctx = egui::Context::default();
+        let mut a = app();
+        let id = a.entries[0].id;
+        a.add_entry("Second".into(), Doc::new(RgbaImage::new(4, 4)));
+        // The first picture went; the library's answer still reaches the right one.
+        a.current = Some(0);
+        a.remove_current();
+        a.add_entry("Third".into(), Doc::new(RgbaImage::new(4, 4)));
+        let folder = a.settings.library_folder.clone();
+        let item = |p: &str| library::Item { path: PathBuf::from(p), meta: Default::default() };
+        a.library_added(&ctx, &folder, Ok(item("lib/gone.png")), None, Some(id));
+        assert!(a.entries.iter().all(|e| e.kept.is_none()), "nobody else takes a gone picture's copy");
+        let second = a.entries[0].id;
+        a.library_added(&ctx, &folder, Ok(item("lib/2.png")), None, Some(second));
+        assert_eq!(a.entries[0].kept, Some(PathBuf::from("lib/2.png")));
+        assert_eq!(a.entries[1].kept, None);
     }
 
     #[test]
@@ -6558,6 +7084,8 @@ mod tests {
         assert_eq!(a.lib_items[0].meta.app, "Notes");
         assert!(a.lib_items[0].path.exists());
         assert!(a.lib_thumbs.contains_key(&a.lib_items[0].path), "its thumbnail is ready");
+        assert_eq!(a.entries[0].kept.as_ref(), Some(&a.lib_items[0].path), "the Recent picture knows its library copy (Show in folder)");
+        assert_eq!(a.entries[0].file(), Some(a.lib_items[0].path.as_path()));
         assert!(a.lib_loaded, "no rescan was asked for");
         let _ = std::fs::remove_dir_all(&dir);
     }

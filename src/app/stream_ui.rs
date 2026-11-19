@@ -8,7 +8,7 @@ use crate::look::{self, ph};
 use crate::stream::live::{self, LiveOptions, Phase, Snapshot, StudioFrames};
 use crate::stream::{Encoders, PRESETS, Service, Source, State, StreamTarget, keystore, mask};
 
-pub(crate) const LIVE_RED: Color32 = Color32::from_rgb(229, 52, 58);
+pub(crate) const LIVE_RED: Color32 = Color32::from_rgb(200, 36, 44);
 
 #[derive(Default)]
 pub(crate) struct StreamUi {
@@ -309,7 +309,7 @@ impl SnagApp {
         crate::windows::own_window(ctx, crate::windows::Win { key: "stream-confirm", title: t("Go live?"), size: vec2(400.0, 160.0), resizable: false }, &mut open, |ui| {
                 ui.set_max_width(360.0);
                 ui.label(tf("Everyone watching on {service} will see this from now on: {source}.", &[("service", &service), ("source", source)]));
-                ui.label(RichText::new(t("Snagster asks once each time it starts.")).color(TEXT_DIM));
+                ui.label(RichText::new(t("Snagster asks once each time it starts.")).color(pal().dim));
                 ui.add_space(6.0);
                 // Going live reaches other people: red, and Return doesn't start it.
                 match crate::platform::dialog_buttons(ui, Some(t("Go live")), t("Cancel"), crate::platform::Kind::Destructive, true) {
@@ -348,7 +348,7 @@ impl SnagApp {
         if !self.win_cache.loaded() {
             ui.spinner();
         } else if self.win_cache.items().is_empty() {
-            ui.label(RichText::new(t("No windows found")).color(TEXT_DIM));
+            ui.label(RichText::new(t("No windows found")).color(pal().dim));
         }
         let mut pick = None;
         egui::ScrollArea::vertical().max_height(360.0).show(ui, |ui| {
@@ -407,7 +407,7 @@ impl SnagApp {
         let p = self.settings.stream.service.preset();
         ui.label(RichText::new(t("Service")).strong());
         egui::ComboBox::from_id_salt("stream-service").width(240.0).selected_text(service_name(p.service)).show_ui(ui, |ui| self.service_menu(ui));
-        ui.label(RichText::new(t(p.key_help)).color(TEXT_DIM));
+        ui.label(RichText::new(t(p.key_help)).color(pal().dim));
         ui.add_space(4.0);
         let p = self.settings.stream.service.preset();
         ui.horizontal(|ui| {
@@ -447,7 +447,7 @@ impl SnagApp {
         {
             self.set_stream_key(&k);
         }
-        ui.label(RichText::new(t(keystore::how_kept())).color(TEXT_DIM));
+        ui.label(RichText::new(t(keystore::how_kept())).color(pal().dim));
         ui.add_space(6.0);
         self.also_section(ui);
         ui.add_space(6.0);
@@ -479,12 +479,12 @@ impl SnagApp {
         ui.horizontal(|ui| {
             ui.label(t("Bitrate"));
             ui.add(egui::DragValue::new(&mut s.kbps).range(0..=p.max_video_kbps).speed(50).suffix(" kbit/s"));
-            ui.label(RichText::new(tf("0: recommended for the size; {service} takes up to {max} kbit/s.", &[("service", service_name(p.service)), ("max", &p.max_video_kbps.to_string())])).color(TEXT_DIM));
+            ui.label(RichText::new(tf("0: recommended for the size; {service} takes up to {max} kbit/s.", &[("service", service_name(p.service)), ("max", &p.max_video_kbps.to_string())])).color(pal().dim));
         });
         ui.horizontal(|ui| {
             ui.label(t("A keyframe every"));
             ui.add(egui::DragValue::new(&mut s.keyframe_s).range(1..=4).suffix(" s"));
-            ui.label(RichText::new(t("(services ask for 2 s)")).color(TEXT_DIM));
+            ui.label(RichText::new(t("(services ask for 2 s)")).color(pal().dim));
         });
         ui.checkbox(&mut s.hardware, t("Use the graphics chip to encode (Intel, AMD or NVIDIA)"));
         crate::windows::encoder_picker(ui, "stream-encoder", &mut self.settings.video_encoder, &pickable);
@@ -500,7 +500,7 @@ impl SnagApp {
                 }
             });
         } else {
-            ui.label(RichText::new(t("There's no computer sound on this system yet, so the stream's audio track is silent.")).color(TEXT_DIM));
+            ui.label(RichText::new(t("There's no computer sound on this system yet, so the stream's audio track is silent.")).color(pal().dim));
         }
         ui.add_space(4.0);
         ui.label(RichText::new(t("Connection")).strong());
@@ -517,7 +517,7 @@ impl SnagApp {
     /// key (kept like the main key).
     fn also_section(&mut self, ui: &mut egui::Ui) {
         ui.label(RichText::new(t("Also stream to")).strong());
-        ui.label(RichText::new(t("The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.")).color(TEXT_DIM));
+        ui.label(RichText::new(t("The same picture goes to every service at once, encoded once. It is sent at the size, frame rate and bitrate all of them take.")).color(pal().dim));
         let mut remove = None;
         let n = self.settings.stream.also.len();
         for i in 0..n {
@@ -585,32 +585,32 @@ impl SnagApp {
                 if snap.on_air() {
                     live_badge(ui, &snap);
                 }
-                ui.label(RichText::new(state_label(&snap)).strong().color(if snap.live() { LIVE_RED } else { look::TEXT }));
+                ui.label(RichText::new(state_label(&snap)).strong().color(if snap.live() { look::pal().err } else { look::pal().text }));
             });
             match (&snap.stats, &snap.info) {
                 (Some(s), Some(i)) => {
-                    ui.label(RichText::new(tf("{w} x {h}, {fps} fps, {rate}", &[("w", &i.width.to_string()), ("h", &i.height.to_string()), ("fps", &format!("{:.0}", s.fps)), ("rate", &rate(s.bitrate_bps))])).size(11.5).color(TEXT_DIM));
+                    ui.label(RichText::new(tf("{w} x {h}, {fps} fps, {rate}", &[("w", &i.width.to_string()), ("h", &i.height.to_string()), ("fps", &format!("{:.0}", s.fps)), ("rate", &rate(s.bitrate_bps))])).size(11.5).color(pal().dim));
                     let enc = s.video_encoder.as_ref().map(|e| format!("{} ({})", e.name, if e.hardware { t("graphics chip") } else { t("processor") })).unwrap_or_default();
-                    ui.label(RichText::new(tf("{dropped} dropped frames · {enc}", &[("dropped", &s.frames_dropped.to_string()), ("enc", &enc)])).size(11.5).color(TEXT_DIM));
+                    ui.label(RichText::new(tf("{dropped} dropped frames · {enc}", &[("dropped", &s.frames_dropped.to_string()), ("enc", &enc)])).size(11.5).color(pal().dim));
                     if s.outputs.len() > 1 {
                         // One short line per service when multistreaming.
                         for o in &s.outputs {
                             let (word, warn) = output_word(o.state);
                             let line = format!("{}: {} · {}", o.service, word, rate(o.bitrate_bps));
-                            let r = ui.label(RichText::new(line).size(11.5).color(if warn { Color32::from_rgb(240, 160, 110) } else { TEXT_DIM }));
+                            let r = ui.label(RichText::new(line).size(11.5).color(if warn { pal().warn } else { pal().dim }));
                             if let Some(e) = &o.error {
                                 r.on_hover_text(e);
                             }
                         }
                     } else if let Some(e) = s.error.as_ref().or(s.notice.as_ref()) {
-                        ui.label(RichText::new(e).size(11.5).color(Color32::from_rgb(240, 160, 110)));
+                        ui.label(RichText::new(e).size(11.5).color(pal().warn));
                     }
                 }
                 _ => {
                     let target = self.settings.stream.clone();
                     let names = services_named(target.service, target.also_on().map(|a| a.service));
                     let where_to = if self.x.stream.snap.phase == Phase::Idle { tf("To {service}, {source}", &[("service", &names), ("source", t(target.source.label()))]) } else { String::new() };
-                    ui.label(RichText::new(where_to).size(11.5).color(TEXT_DIM));
+                    ui.label(RichText::new(where_to).size(11.5).color(pal().dim));
                 }
             }
         });
@@ -686,7 +686,7 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
             let icon = if a == crate::audio::AudioSource::None { ph::SPEAKER_SLASH } else if a.mic() { ph::MICROPHONE } else { ph::SPEAKER };
             look::small_menu(ui, icon, t(a.label()), t("Sound to stream"), |ui| {
                 if !crate::audio::AudioSource::supported() {
-                    ui.label(RichText::new(t("There's no computer sound on this system yet, so the stream's audio track is silent.")).color(TEXT_DIM));
+                    ui.label(RichText::new(t("There's no computer sound on this system yet, so the stream's audio track is silent.")).color(pal().dim));
                     return;
                 }
                 for v in crate::audio::AudioSource::ALL {
@@ -762,7 +762,7 @@ fn sound_buttons(app: &mut SnagApp, ui: &mut egui::Ui) {
         .collect();
     if rows.is_empty() {
         look::column(ui, |ui| {
-            ui.label(RichText::new(t("No sound in this scene")).color(TEXT_DIM));
+            ui.label(RichText::new(t("No sound in this scene")).color(pal().dim));
         });
         return;
     }
@@ -780,7 +780,7 @@ fn sound_buttons(app: &mut SnagApp, ui: &mut egui::Ui) {
                 if let Some(level) = app.studio_level(&s.input).filter(|_| !s.muted) {
                     let f = super::studio_ui::meter_fill(level, s.volume);
                     let y = r.rect.bottom() - 2.0;
-                    ui.painter().line_segment([pos2(r.rect.left() + 3.0, y), pos2(r.rect.left() + 3.0 + (r.rect.width() - 6.0) * f, y)], Stroke::new(2.0, super::studio_ui::meter_color(f)));
+                    ui.painter().line_segment([pos2(r.rect.left() + 3.0, y), pos2(r.rect.left() + 3.0 + (r.rect.width() - 6.0) * f, y)], Stroke::new(2.0, super::studio_ui::meter_color_on(f, look::pal().dark)));
                 }
             }
         });
