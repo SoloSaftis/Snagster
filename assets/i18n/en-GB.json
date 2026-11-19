@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Screen sharing was cancelled in the desktop's dialogue: nothing was shared.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Screen sharing didn't start: it was cancelled in the desktop's dialogue, or the desktop gave no reason. Nothing was shared.",
   "The desktop's screen-sharing portal said no: {error}": "The desktop's screen-sharing portal said no: {error}",
+  "More tabs": "More tabs",
+  "The groups that don't fit the window": "The groups that don't fit the window",
   "Upload to {service} too slow": "Upload to {service} too slow",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Your upload to {service} can't keep up: lower the bitrate or the resolution.",
   "Computer too slow to encode": "Computer too slow to encode",

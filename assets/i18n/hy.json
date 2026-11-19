@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Էկրանի համօգտագործումը չեղարկվել է աշխատասեղանի երկխոսության մեջ. ոչինչ չի համօգտագործվել։",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Էկրանի համօգտագործումը չսկսվեց. այն չեղարկվել է աշխատասեղանի երկխոսության մեջ, կամ աշխատասեղանը պատճառ չի նշել։ Ոչինչ չի համօգտագործվել։",
   "The desktop's screen-sharing portal said no: {error}": "Աշխատասեղանի էկրանի համօգտագործման պորտալը մերժեց. {error}",
+  "More tabs": "Այլ ներդիրներ",
+  "The groups that don't fit the window": "Խմբերը, որոնք չեն տեղավորվում պատուհանում",
   "Upload to {service} too slow": "{service}-ին վերբեռնումը չափազանց դանդաղ է",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Ձեր վերբեռնումը {service}-ին չի հասցնում․ նվազեցրեք բիթրեյթը կամ լուծաչափը։",
   "Computer too slow to encode": "Համակարգիչը չափազանց դանդաղ է կոդավորման համար",

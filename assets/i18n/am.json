@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "የማያ ገጽ ማጋራት በዴስክቶፑ መገናኛ ውስጥ ተሰርዟል፦ ምንም አልተጋራም።",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "የማያ ገጽ ማጋራት አልጀመረም፦ በዴስክቶፑ መገናኛ ውስጥ ተሰርዟል፣ ወይም ዴስክቶፑ ምንም ምክንያት አልሰጠም። ምንም አልተጋራም።",
   "The desktop's screen-sharing portal said no: {error}": "የዴስክቶፑ የማያ ገጽ ማጋራት portal እምቢ አለ፦ {error}",
+  "More tabs": "ተጨማሪ ትሮች",
+  "The groups that don't fit the window": "በመስኮቱ ውስጥ የማይገቡ ቡድኖች",
   "Upload to {service} too slow": "ወደ {service} መስቀል በጣም ቀርፋፋ ነው",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "ወደ {service} መስቀልዎ መቀጠል አልቻለም፦ ቢትሬቱን ወይም ጥራቱን ይቀንሱ።",
   "Computer too slow to encode": "ኮምፒውተር ለመቀየሪያ በጣም ቀርፋፋ ነው",

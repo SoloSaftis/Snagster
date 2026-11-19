@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Экранды бөлісу жұмыс үстелінің диалогында тоқтатылды: ештеңе бөлісілген жоқ.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Экранды бөлісу басталмады: ол жұмыс үстелінің диалогында тоқтатылды немесе жұмыс үстелі себебін көрсетпеді. Ештеңе бөлісілген жоқ.",
   "The desktop's screen-sharing portal said no: {error}": "Жұмыс үстелінің экранды бөлісу порталы бас тартты: {error}",
+  "More tabs": "Басқа қойындылар",
+  "The groups that don't fit the window": "Терезеге сыймайтын топтар",
   "Upload to {service} too slow": "{service} қызметіне жүктеу тым баяу",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "{service} қызметіне жүктеуіңіз үлгермейді: битрейтті немесе ажыратымдылықты азайтыңыз.",
   "Computer too slow to encode": "Компьютер кодтау үшін тым баяу",

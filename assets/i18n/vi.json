@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Tính năng chia sẻ màn hình đã bị hủy trong hộp thoại của màn hình nền: không có gì được chia sẻ.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Tính năng chia sẻ màn hình không bắt đầu: nó đã bị hủy trong hộp thoại của màn hình nền, hoặc màn hình nền không đưa ra lý do. Không có gì được chia sẻ.",
   "The desktop's screen-sharing portal said no: {error}": "Cổng (portal) chia sẻ màn hình của màn hình nền đã từ chối: {error}",
+  "More tabs": "Thêm thẻ",
+  "The groups that don't fit the window": "Các nhóm không vừa cửa sổ",
   "Upload to {service} too slow": "Tải lên {service} quá chậm",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Tốc độ tải lên {service} của bạn không theo kịp: hãy giảm bitrate hoặc độ phân giải.",
   "Computer too slow to encode": "Máy tính quá chậm để mã hóa",

@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekran paylaşımı masaüstünün iletişim kutusunda iptal edildi: hiçbir şey paylaşılmadı.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran paylaşımı başlamadı: masaüstünün iletişim kutusunda iptal edildi veya masaüstü bir neden belirtmedi. Hiçbir şey paylaşılmadı.",
   "The desktop's screen-sharing portal said no: {error}": "Masaüstünün ekran paylaşımı portalı hayır dedi: {error}",
+  "More tabs": "Diğer sekmeler",
+  "The groups that don't fit the window": "Pencereye sığmayan gruplar",
   "Upload to {service} too slow": "{service} yüklemesi çok yavaş",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "{service} yüklemeniz yetişemiyor: bit hızını veya çözünürlüğü düşürün.",
   "Computer too slow to encode": "Bilgisayar kodlamak için çok yavaş",

@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekrāna kopīgošana tika atcelta darbvirsmas dialoglodziņā: nekas netika kopīgots.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekrāna kopīgošana nesākās: tā tika atcelta darbvirsmas dialoglodziņā vai darbvirsma nenorādīja iemeslu. Nekas netika kopīgots.",
   "The desktop's screen-sharing portal said no: {error}": "Darbvirsmas ekrāna kopīgošanas portāls atteica: {error}",
+  "More tabs": "Vairāk cilņu",
+  "The groups that don't fit the window": "Grupas, kas neietilpst logā",
   "Upload to {service} too slow": "Augšupielāde uz {service} ir pārāk lēna",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Jūsu augšupielāde uz {service} neiztur: samaziniet bitu pārraides ātrumu vai izšķirtspēju.",
   "Computer too slow to encode": "Dators ir pārāk lēns kodēšanai",

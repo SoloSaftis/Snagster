@@ -247,11 +247,22 @@ fn cjk_font_files(lang: &str) -> Vec<(std::path::PathBuf, u32)> {
     out
 }
 
+/// How wide `tab` draws a tab with this label.
+pub fn tab_width(ui: &Ui, label: &str) -> f32 {
+    ui.painter().layout_no_wrap(label.to_string(), FontId::proportional(13.5), pal().dim).size().x + 22.0
+}
+
+/// How high `tab` draws a tab: 30, or the text and some room when the text is bigger.
+pub fn tab_height(ui: &Ui) -> f32 {
+    (ui.painter().layout_no_wrap("Hg".into(), FontId::proportional(13.5), pal().dim).size().y + 8.0).max(30.0)
+}
+
 /// One tab of the tab row.
 pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
     let font = FontId::proportional(13.5);
     let galley = ui.painter().layout_no_wrap(label.to_string(), font, if on { pal().strong } else { pal().dim });
-    let size = vec2(galley.size().x + 22.0, 30.0);
+    // 30 high, taller when Windows' bigger text needs it.
+    let size = vec2(tab_width(ui, label), tab_height(ui));
     let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
@@ -272,9 +283,10 @@ pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
 /// A big ribbon tool: its icon over its name, flat until hovered, with a tooltip.
 pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, active: bool) -> Response {
     let font = FontId::proportional(12.0);
-    let galley = ui.painter().layout(label.to_string(), font, pal().text, 88.0);
+    // Names wrap at 88 (wider with Windows' bigger text), and the tool grows with them.
+    let galley = ui.painter().layout(label.to_string(), font, pal().text, 88.0 * crate::fonts::text_scale());
     let w = galley.size().x.max(34.0) + 14.0;
-    let (rect, resp) = ui.allocate_exact_size(vec2(w, 62.0), if enabled { Sense::click() } else { Sense::hover() });
+    let (rect, resp) = ui.allocate_exact_size(vec2(w, (36.0 + galley.size().y).max(62.0)), if enabled { Sense::click() } else { Sense::hover() });
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, enabled, active, label));
     let p = ui.painter();
@@ -309,7 +321,7 @@ pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, 
 pub fn small_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool) -> Response {
     let font = FontId::proportional(12.5);
     let galley = ui.painter().layout_no_wrap(label.to_string(), font, pal().text);
-    let (rect, resp) = ui.allocate_exact_size(vec2(galley.size().x + 32.0, 20.0), if enabled { Sense::click() } else { Sense::hover() });
+    let (rect, resp) = ui.allocate_exact_size(vec2(galley.size().x + 32.0, galley.size().y.max(20.0)), if enabled { Sense::click() } else { Sense::hover() });
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, enabled, label));
     let p = ui.painter();
@@ -335,15 +347,22 @@ pub fn small_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool
 
 /// A ribbon group: its tools, its name underneath, a divider after it.
 pub fn group(ui: &mut Ui, name: &str, body: impl FnOnce(&mut Ui)) {
+    // In a narrow window the ribbon shows some groups in the band and the rest in its More menu.
+    let Some(index) = crate::app::ribbon::fit::next_group() else { return };
     let r = ui.vertical(|ui| {
-        ui.set_min_height(86.0);
+        // Every group as tall as three small tools (taller with bigger text), so names line up.
+        let row = ui.painter().layout_no_wrap("Hg".into(), FontId::proportional(12.5), pal().text).size().y.max(20.0);
+        let body_h = (row * 3.0 + 4.0).max(64.0);
+        ui.set_min_height(body_h + 22.0);
         ui.horizontal(|ui| {
-            ui.set_min_height(64.0);
+            ui.set_min_height(body_h);
             ui.spacing_mut().item_spacing.x = 2.0;
             body(ui);
         });
         ui.add_space(1.0);
-        let w = ui.min_rect().width();
+        // As wide as its name at least (bigger text makes names wider than the tools).
+        let name_w = ui.painter().layout_no_wrap(name.to_string(), FontId::proportional(12.0), pal().dim).size().x;
+        let w = ui.min_rect().width().max(name_w);
         ui.allocate_ui(vec2(w, 16.0), |ui| {
             ui.centered_and_justified(|ui| ui.label(egui::RichText::new(name).size(12.0).color(pal().dim)));
         });
@@ -352,6 +371,7 @@ pub fn group(ui: &mut Ui, name: &str, body: impl FnOnce(&mut Ui)) {
     let rect = r.response.rect;
     ui.add_space(12.0);
     ui.painter().line_segment([pos2(x, rect.top() + 6.0), pos2(x, rect.bottom() - 4.0)], Stroke::new(1.0, pal().line));
+    crate::app::ribbon::fit::measured(index, rect.width() + 12.0 + ui.spacing().item_spacing.x, x);
 }
 
 /// A column of small tools inside a group.

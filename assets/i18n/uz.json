@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekran ulashish ish stolining dialog oynasida bekor qilindi: hech narsa ulashilmadi.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran ulashish boshlanmadi: u ish stolining dialog oynasida bekor qilindi yoki ish stoli sabab ko‘rsatmadi. Hech narsa ulashilmadi.",
   "The desktop's screen-sharing portal said no: {error}": "Ish stolining ekran ulashish portali rad etdi: {error}",
+  "More tabs": "Boshqa yorliqlar",
+  "The groups that don't fit the window": "Oynaga sig‘maydigan guruhlar",
   "Upload to {service} too slow": "{service}ga yuklash juda sekin",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "{service}ga yuklashingiz ulgurmayapti: bitreytni yoki rezolyutsiyani pasaytiring.",
   "Computer too slow to encode": "Kompyuter kodlash uchun juda sekin",

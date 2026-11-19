@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "স্ক্ৰীন শ্বেয়াৰিং ডেস্কটপৰ ডায়লগত বাতিল কৰা হ'ল: একো শ্বেয়াৰ কৰা হোৱা নাই।",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "স্ক্ৰীন শ্বেয়াৰিং আৰম্ভ নহ'ল: ই ডেস্কটপৰ ডায়লগত বাতিল কৰা হৈছিল, বা ডেস্কটপে কোনো কাৰণ দিয়া নাছিল। একো শ্বেয়াৰ কৰা হোৱা নাই।",
   "The desktop's screen-sharing portal said no: {error}": "ডেস্কটপৰ স্ক্ৰীন শ্বেয়াৰিং portal-এ অসম্মতি জনালে: {error}",
+  "More tabs": "অধিক টেব",
+  "The groups that don't fit the window": "উইণ্ড'ত নুসুমোৱা গোটসমূহ",
   "Upload to {service} too slow": "{service}লৈ আপলোড অতি লেহেমীয়া",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "{service}লৈ আপোনাৰ আপলোডে ধৰি ৰাখিব পৰা নাই: বিটৰেট বা ৰিজ’লিউশ্বন কমাওক।",
   "Computer too slow to encode": "এনকোড কৰিবলৈ কম্পিউটাৰ অতি লেহেমীয়া",

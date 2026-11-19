@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "டெஸ்க்டாப்பின் உரையாடலில் திரைப் பகிர்வு ரத்து செய்யப்பட்டது: எதுவும் பகிரப்படவில்லை.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "திரைப் பகிர்வு தொடங்கவில்லை: அது டெஸ்க்டாப்பின் உரையாடலில் ரத்து செய்யப்பட்டது, அல்லது டெஸ்க்டாப் எந்தக் காரணத்தையும் தரவில்லை. எதுவும் பகிரப்படவில்லை.",
   "The desktop's screen-sharing portal said no: {error}": "டெஸ்க்டாப்பின் திரைப் பகிர்வு portal மறுத்துவிட்டது: {error}",
+  "More tabs": "மேலும் தாவல்கள்",
+  "The groups that don't fit the window": "சாளரத்தில் பொருந்தாத குழுக்கள்",
   "Upload to {service} too slow": "{service} க்கு பதிவேற்றம் மிகவும் மெதுவாக உள்ளது",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "{service} க்கான உங்கள் பதிவேற்றத்தால் ஈடுகொடுக்க முடியவில்லை: பிட்ரேட் அல்லது தெளிவுத்திறனைக் குறைக்கவும்.",
   "Computer too slow to encode": "என்கோட் செய்ய கணினி மிகவும் மெதுவாக உள்ளது",

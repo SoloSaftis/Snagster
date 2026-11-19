@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "La condivisione dello schermo è stata annullata nella finestra di dialogo del desktop: non è stato condiviso nulla.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "La condivisione dello schermo non è iniziata: è stata annullata nella finestra di dialogo del desktop, oppure il desktop non ha indicato alcun motivo. Non è stato condiviso nulla.",
   "The desktop's screen-sharing portal said no: {error}": "Il portal di condivisione dello schermo del desktop ha rifiutato: {error}",
+  "More tabs": "Altre schede",
+  "The groups that don't fit the window": "I gruppi che non entrano nella finestra",
   "Upload to {service} too slow": "Caricamento su {service} troppo lento",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Il caricamento su {service} non riesce a stare al passo: riduci il bitrate o la risoluzione.",
   "Computer too slow to encode": "Computer troppo lento per codificare",

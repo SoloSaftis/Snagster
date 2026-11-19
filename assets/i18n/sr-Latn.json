@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Deljenje ekrana je otkazano u dijalogu radne površine: ništa nije podeljeno.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Deljenje ekrana nije počelo: otkazano je u dijalogu radne površine ili radna površina nije navela razlog. Ništa nije podeljeno.",
   "The desktop's screen-sharing portal said no: {error}": "Portal radne površine za deljenje ekrana je odbio: {error}",
+  "More tabs": "Još kartica",
+  "The groups that don't fit the window": "Grupe koje ne staju u prozor",
   "Upload to {service} too slow": "Otpremanje na {service} je suviše sporo",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Vaše otpremanje na {service} ne stiže: smanjite bitrejt ili rezoluciju.",
   "Computer too slow to encode": "Računar je suviše spor za kodiranje",

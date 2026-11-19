@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "D'Bildschirmfreigab gouf am Dialog vum Desktop ofgebrach: et gouf näischt fräigeginn.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "D'Bildschirmfreigab huet net ugefaangen: si gouf am Dialog vum Desktop ofgebrach, oder den Desktop huet kee Grond ginn. Et gouf näischt fräigeginn.",
   "The desktop's screen-sharing portal said no: {error}": "Dem Desktop säi Portal fir d'Bildschirmfreigab huet refuséiert: {error}",
+  "More tabs": "Méi Tabs",
+  "The groups that don't fit the window": "D'Gruppen, déi net an d'Fënster passen",
   "Upload to {service} too slow": "Upload op {service} ze lues",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Däin Upload op {service} kënnt net no: Senk d'Bitrate oder d'Opléisung.",
   "Computer too slow to encode": "Computer ze lues fir ze encodéieren",

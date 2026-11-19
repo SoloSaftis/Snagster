@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Cafodd rhannu'r sgrin ei ganslo yn nialog y bwrdd gwaith: ni rannwyd dim.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ni ddechreuodd rhannu'r sgrin: fe'i canslwyd yn nialog y bwrdd gwaith, neu ni roddodd y bwrdd gwaith unrhyw reswm. Ni rannwyd dim.",
   "The desktop's screen-sharing portal said no: {error}": "Dywedodd porth rhannu sgrin y bwrdd gwaith na: {error}",
+  "More tabs": "Rhagor o dabiau",
+  "The groups that don't fit the window": "Y grwpiau nad ydynt yn ffitio yn y ffenestr",
   "Upload to {service} too slow": "Mae'r uwchlwytho i {service} yn rhy araf",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Ni all eich uwchlwytho i {service} gadw i fyny: gostyngwch y gyfradd didau neu'r datrysiad.",
   "Computer too slow to encode": "Cyfrifiadur yn rhy araf i amgodio",

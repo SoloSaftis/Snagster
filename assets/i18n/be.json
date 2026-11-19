@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Абагульванне экрана скасавана ў дыялогу працоўнага стала: нічога не было абагулена.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Абагульванне экрана не пачалося: яго скасавалі ў дыялогу працоўнага стала, або працоўны стол не паведаміў прычыну. Нічога не было абагулена.",
   "The desktop's screen-sharing portal said no: {error}": "Парталь абагульвання экрана працоўнага стала адмовіў: {error}",
+  "More tabs": "Больш укладак",
+  "The groups that don't fit the window": "Групы, якія не змяшчаюцца ў акне",
   "Upload to {service} too slow": "Запампоўка на {service} занадта павольная",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Ваша запампоўка на {service} не паспявае: паменшыце бітрэйт або разрозненне.",
   "Computer too slow to encode": "Камп’ютар занадта павольны для кадавання",

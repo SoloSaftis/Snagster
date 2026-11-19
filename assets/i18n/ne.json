@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "डेस्कटपको डायलगमा स्क्रिन सेयरिङ रद्द गरियो: केही पनि सेयर गरिएन।",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "स्क्रिन सेयरिङ सुरु भएन: यो डेस्कटपको डायलगमा रद्द गरिएको थियो, वा डेस्कटपले कुनै कारण दिएन। केही पनि सेयर गरिएन।",
   "The desktop's screen-sharing portal said no: {error}": "डेस्कटपको स्क्रिन सेयरिङ portal ले अस्वीकार गर्‍यो: {error}",
+  "More tabs": "थप ट्याबहरू",
+  "The groups that don't fit the window": "विन्डोमा नअटाउने समूहहरू",
   "Upload to {service} too slow": "{service} मा अपलोड धेरै ढिलो",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "{service} मा तपाईंको अपलोडले धान्न सक्दैन: बिटरेट वा रिजोल्युसन घटाउनुहोस्।",
   "Computer too slow to encode": "इन्कोड गर्न कम्प्युटर धेरै ढिलो",

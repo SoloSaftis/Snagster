@@ -74,7 +74,9 @@ impl StudioUi {
 /// The ribbon band of the Studio tab.
 pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
     let recording = app.x.studio.as_ref().is_some_and(|s| s.recording());
-    if let Some(i) = crate::app::stream_ui::scene_key(ctx)
+    // Ctrl+number switches scenes once a frame, not again while the ribbon's More menu is drawn.
+    if !crate::app::ribbon::fit::in_overflow()
+        && let Some(i) = crate::app::stream_ui::scene_key(ctx)
         && i < app.settings.studio.scenes.len()
     {
         crate::app::stream_ui::switch_scene(app, i);

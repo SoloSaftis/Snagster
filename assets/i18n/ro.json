@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Partajarea ecranului a fost anulată în dialogul desktopului: nu s-a partajat nimic.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Partajarea ecranului nu a pornit: a fost anulată în dialogul desktopului sau desktopul nu a dat niciun motiv. Nu s-a partajat nimic.",
   "The desktop's screen-sharing portal said no: {error}": "Portalul desktopului pentru partajarea ecranului a refuzat: {error}",
+  "More tabs": "Mai multe file",
+  "The groups that don't fit the window": "Grupurile care nu încap în fereastră",
   "Upload to {service} too slow": "Încărcare către {service} prea lentă",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Încărcarea ta către {service} nu ține pasul: scade bitrate-ul sau rezoluția.",
   "Computer too slow to encode": "Calculator prea lent pentru codare",

@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skærmdeling blev annulleret i skrivebordets dialog: intet blev delt.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skærmdeling startede ikke: den blev annulleret i skrivebordets dialog, eller skrivebordet gav ingen grund. Intet blev delt.",
   "The desktop's screen-sharing portal said no: {error}": "Skrivebordets portal til skærmdeling sagde nej: {error}",
+  "More tabs": "Flere faner",
+  "The groups that don't fit the window": "De grupper, der ikke kan være i vinduet",
   "Upload to {service} too slow": "Upload til {service} er for langsom",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Din upload til {service} kan ikke følge med: sænk bitraten eller opløsningen.",
   "Computer too slow to encode": "Computeren er for langsom til at kode",

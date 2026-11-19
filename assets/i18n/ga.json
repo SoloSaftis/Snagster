@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Cuireadh an roinnt scáileáin ar ceal i ndialóg an deisce: níor roinneadh aon rud.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Níor thosaigh an roinnt scáileáin: cuireadh ar ceal í i ndialóg an deisce, nó níor thug an deasc aon chúis. Níor roinneadh aon rud.",
   "The desktop's screen-sharing portal said no: {error}": "Dúirt tairseach roinnte scáileáin an deisce níl: {error}",
+  "More tabs": "Tuilleadh cluaisíní",
+  "The groups that don't fit the window": "Na grúpaí nach n-oireann don fhuinneog",
   "Upload to {service} too slow": "Tá an uaslódáil chuig {service} rómhall",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "Ní féidir le d'uaslódáil chuig {service} coinneáil suas: laghdaigh an ráta giotán nó an taifeach.",
   "Computer too slow to encode": "Tá an ríomhaire rómhall chun ionchódú",

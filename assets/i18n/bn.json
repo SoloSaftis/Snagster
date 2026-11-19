@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ডেস্কটপের ডায়ালগে স্ক্রিন শেয়ারিং বাতিল করা হয়েছে: কিছুই শেয়ার করা হয়নি।",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "স্ক্রিন শেয়ারিং শুরু হয়নি: এটি ডেস্কটপের ডায়ালগে বাতিল করা হয়েছিল, অথবা ডেস্কটপ কোনো কারণ জানায়নি। কিছুই শেয়ার করা হয়নি।",
   "The desktop's screen-sharing portal said no: {error}": "ডেস্কটপের স্ক্রিন শেয়ারিং portal অস্বীকার করেছে: {error}",
+  "More tabs": "আরও ট্যাব",
+  "The groups that don't fit the window": "যে গ্রুপগুলো উইন্ডোতে আঁটে না",
   "Upload to {service} too slow": "{service}-এ আপলোড খুব ধীর",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "{service}-এ আপনার আপলোড তাল মেলাতে পারছে না: বিটরেট বা রেজোলিউশন কমান।",
   "Computer too slow to encode": "এনকোড করতে কম্পিউটার খুব ধীর",

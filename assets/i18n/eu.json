@@ -1025,6 +1025,8 @@
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Pantaila partekatzea bertan behera utzi da mahaigainaren elkarrizketa-koadroan: ez da ezer partekatu.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Pantaila partekatzea ez da hasi: mahaigainaren elkarrizketa-koadroan bertan behera utzi da, edo mahaigainak ez du arrazoirik eman. Ez da ezer partekatu.",
   "The desktop's screen-sharing portal said no: {error}": "Mahaigainaren pantaila partekatzeko portalak ezetz esan du: {error}",
+  "More tabs": "Fitxa gehiago",
+  "The groups that don't fit the window": "Leihoan sartzen ez diren taldeak",
   "Upload to {service} too slow": "{service}-ra igotzea motelegia da",
   "Your upload to {service} can't keep up: lower the bitrate or the resolution.": "{service}-ra igotzeak ezin du erritmoa jarraitu: jaitsi bit-tasa edo bereizmena.",
   "Computer too slow to encode": "Ordenagailua motelegia da kodetzeko",
