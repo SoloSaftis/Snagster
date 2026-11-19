@@ -1157,7 +1157,7 @@ impl SnagApp {
                         let (rect, resp) = ui.allocate_exact_size(vec2(192.0, 176.0), Sense::click());
                         let picked = self.lib_picked.as_ref() == Some(&item.path);
                         let title_for_reader = item.meta.title.clone();
-                        resp.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, picked, &title_for_reader));
+                        resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::ListItem, true, picked, &title_for_reader));
                         let p = ui.painter();
                         p.rect_filled(rect, CornerRadius::same(8), if resp.hovered() { pal().card_hover } else { pal().card });
                         if picked {

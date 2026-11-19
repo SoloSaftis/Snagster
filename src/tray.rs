@@ -53,7 +53,7 @@ impl Tray {
         {
             let (rgba, size) = if on { stop_icon(TEMPLATE_PX) } else { template_icon(TEMPLATE_PX) };
             if let Ok(ic) = tray_icon::Icon::from_rgba(rgba, size, size) {
-                let _ = self.icon.set_icon_with_as_template(Some(ic), true);
+                let _ = self.icon.set_icon_templated(Some(ic));
             }
         }
         #[cfg(not(target_os = "macos"))]
