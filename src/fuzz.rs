@@ -322,7 +322,8 @@ fn mutate_json(g: &mut Bytes, v: &mut Value, words: &[String]) {
             (Value::Array(a), 1 | 2) if !a.is_empty() => {
                 let i = g.below(a.len());
                 let copy = a[i].clone();
-                for _ in 0..1 + g.below(if g.below(8) == 0 { 300 } else { 3 }) {
+                let most = if g.below(8) == 0 { 300 } else { 3 };
+                for _ in 0..1 + g.below(most) {
                     a.push(copy.clone());
                 }
             }
