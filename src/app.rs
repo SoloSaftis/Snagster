@@ -1363,11 +1363,10 @@ impl SnagApp {
     /// Show a file selected in the file manager.
     pub(crate) fn reveal(&mut self, path: &std::path::Path) {
         // A file that has gone since (moved, deleted): its folder, if that is still there.
-        if !path.is_file() {
-            if let Some(dir) = path.parent().filter(|d| d.is_dir()) {
-                self.open_folder(dir);
-            }
-            return;
+        match folder_action(path) {
+            FolderAction::Reveal(_) => {}
+            FolderAction::Parent(dir) => return self.open_folder(&dir),
+            FolderAction::Open(_) | FolderAction::Nothing => return,
         }
         #[cfg(windows)]
         let r = std::process::Command::new("explorer").arg(format!("/select,{}", path.display())).spawn().map(|_| ());
