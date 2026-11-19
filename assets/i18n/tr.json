@@ -1021,6 +1021,9 @@
   "Use system setting": "Sistem ayarını kullan",
   "Match system": "Sistemle eşleştir",
   "General": "Genel",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistem Ayarları'nda Karşıtlığı Artır açık olduğundan metin ve kenarlıklar daha belirgindir."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistem Ayarları'nda Karşıtlığı Artır açık olduğundan metin ve kenarlıklar daha belirgindir.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekran paylaşımı masaüstünün iletişim kutusunda iptal edildi: hiçbir şey paylaşılmadı.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran paylaşımı başlamadı: masaüstünün iletişim kutusunda iptal edildi veya masaüstü bir neden belirtmedi. Hiçbir şey paylaşılmadı.",
+  "The desktop's screen-sharing portal said no: {error}": "Masaüstünün ekran paylaşımı portalı hayır dedi: {error}"
  }
 }

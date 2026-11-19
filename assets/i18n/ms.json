@@ -1021,6 +1021,9 @@
   "Use system setting": "Gunakan tetapan sistem",
   "Match system": "Padankan sistem",
   "General": "Umum",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "Tingkatkan kontras dihidupkan dalam Tetapan Sistem, jadi teks dan sempadan lebih jelas."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Tingkatkan kontras dihidupkan dalam Tetapan Sistem, jadi teks dan sempadan lebih jelas.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Perkongsian skrin dibatalkan dalam dialog desktop: tiada apa-apa yang dikongsi.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Perkongsian skrin tidak bermula: ia dibatalkan dalam dialog desktop, atau desktop tidak memberi sebarang sebab. Tiada apa-apa yang dikongsi.",
+  "The desktop's screen-sharing portal said no: {error}": "Portal perkongsian skrin desktop menolak: {error}"
  }
 }

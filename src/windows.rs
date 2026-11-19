@@ -1989,6 +1989,34 @@ mod tests {
         assert_eq!(super::snagster_viewport().app_id.as_deref(), Some(crate::APP_ID));
     }
 
+    #[test]
+    fn no_window_is_made_without_snagsters_app_id() {
+        // Every window but the main one (src/main.rs sets its own app id) comes from
+        // snagster_viewport(); a plain builder anywhere else is how the KDE icon bug started.
+        let plain = ["ViewportBuilder", "::default()"].concat();
+        let mut found = Vec::new();
+        let mut dirs = vec![std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src")];
+        while let Some(dir) = dirs.pop() {
+            for entry in std::fs::read_dir(&dir).unwrap().flatten() {
+                let p = entry.path();
+                if p.is_dir() {
+                    dirs.push(p);
+                } else if p.extension().is_some_and(|e| e == "rs") {
+                    let text = std::fs::read_to_string(&p).unwrap();
+                    let n = text.matches(&plain).count();
+                    let allowed = match p.file_name().and_then(|f| f.to_str()) {
+                        Some("main.rs") | Some("windows.rs") => 1,
+                        _ => 0,
+                    };
+                    if n > allowed {
+                        found.push(format!("{} ({n})", p.display()));
+                    }
+                }
+            }
+        }
+        assert!(found.is_empty(), "use windows::snagster_viewport() for new windows: {found:?}");
+    }
+
     use super::*;
     use std::path::Path;
 

@@ -1021,6 +1021,9 @@
   "Use system setting": "Sistema churayta llamk'achiy",
   "Match system": "Sistemawan tupachiy",
   "General": "Tukuy",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistema Churaykunapi Contraste hatunchay hap'ichisqa kashan, chayrayku qillqa chaymanta k'uchukuna astawan sinchi."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistema Churaykunapi Contraste hatunchay hap'ichisqa kashan, chayrayku qillqa chaymanta k'uchukuna astawan sinchi.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Pantalla rakinakuy escritorio rimanakuy qhawanapi kutichisqa karqan: manaraq imapas rakisqachu.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Pantalla rakinakuy manam qallarirqachu: escritorio rimanakuy qhawanapi kutichisqa karqan, utaq escritorio manam imaraykuchus nirqachu. Manaraq imapas rakisqachu.",
+  "The desktop's screen-sharing portal said no: {error}": "Escritorio pantalla rakinakuy portalqa mana nispa nirqa: {error}"
  }
 }

@@ -1021,6 +1021,9 @@
   "Use system setting": "Bruk systeminnstilling",
   "Match system": "Samsvar med systemet",
   "General": "Generelt",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "Øk kontrast er slått på i Systeminnstillinger, så tekst og kanter er tydeligere."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Øk kontrast er slått på i Systeminnstillinger, så tekst og kanter er tydeligere.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skjermdelingen ble avbrutt i skrivebordets dialog: ingenting ble delt.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skjermdelingen startet ikke: den ble avbrutt i skrivebordets dialog, eller skrivebordet oppga ingen årsak. Ingenting ble delt.",
+  "The desktop's screen-sharing portal said no: {error}": "Skrivebordets portal for skjermdeling sa nei: {error}"
  }
 }

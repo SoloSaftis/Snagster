@@ -1021,6 +1021,9 @@
   "Use system setting": "ছিষ্টেম ছেটিং ব্যৱহাৰ কৰক",
   "Match system": "ছিষ্টেমৰ লগত মিলাওক",
   "General": "সাধাৰণ",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "ছিষ্টেম ছেটিংছত ‘কনট্ৰাষ্ট বঢ়াওক’ অন আছে, গতিকে লিখনি আৰু সীমা অধিক স্পষ্ট।"
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "ছিষ্টেম ছেটিংছত ‘কনট্ৰাষ্ট বঢ়াওক’ অন আছে, গতিকে লিখনি আৰু সীমা অধিক স্পষ্ট।",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "স্ক্ৰীন শ্বেয়াৰিং ডেস্কটপৰ ডায়লগত বাতিল কৰা হ'ল: একো শ্বেয়াৰ কৰা হোৱা নাই।",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "স্ক্ৰীন শ্বেয়াৰিং আৰম্ভ নহ'ল: ই ডেস্কটপৰ ডায়লগত বাতিল কৰা হৈছিল, বা ডেস্কটপে কোনো কাৰণ দিয়া নাছিল। একো শ্বেয়াৰ কৰা হোৱা নাই।",
+  "The desktop's screen-sharing portal said no: {error}": "ডেস্কটপৰ স্ক্ৰীন শ্বেয়াৰিং portal-এ অসম্মতি জনালে: {error}"
  }
 }

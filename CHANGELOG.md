@@ -21,6 +21,10 @@ Marking up pictures (every system):
   capture shows its library copy). On Linux and macOS, Show in folder for videos and Library
   items opened the file itself; it now opens its folder with the file selected (on Linux
   through the desktop's portal, so also in the Flatpak).
+- **KDE Plasma:** Snagster's dialogs, pins and recording bar show Snagster's icon and sit
+  with Snagster in the taskbar (they showed another program's icon before).
+- **Cancelling screen sharing** in the desktop's dialog now says so plainly on GNOME and KDE;
+  when the desktop ends the share without a reason, the message says that too.
 
 Windows:
 

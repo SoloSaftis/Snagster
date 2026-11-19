@@ -1021,6 +1021,9 @@
   "Use system setting": "ಸಿಸ್ಟಂ ಸೆಟ್ಟಿಂಗ್ ಬಳಸಿ",
   "Match system": "ಸಿಸ್ಟಂಗೆ ಹೊಂದಿಸಿ",
   "General": "ಸಾಮಾನ್ಯ",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "ಸಿಸ್ಟಂ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ “ಕಾಂಟ್ರಾಸ್ಟ್ ಹೆಚ್ಚಿಸಿ” ಆನ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ ಪಠ್ಯ ಮತ್ತು ಅಂಚುಗಳು ಹೆಚ್ಚು ಸ್ಪಷ್ಟವಾಗಿವೆ."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "ಸಿಸ್ಟಂ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ “ಕಾಂಟ್ರಾಸ್ಟ್ ಹೆಚ್ಚಿಸಿ” ಆನ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ ಪಠ್ಯ ಮತ್ತು ಅಂಚುಗಳು ಹೆಚ್ಚು ಸ್ಪಷ್ಟವಾಗಿವೆ.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಡೈಲಾಗ್‌ನಲ್ಲಿ ಸ್ಕ್ರೀನ್ ಹಂಚಿಕೆಯನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ: ಏನನ್ನೂ ಹಂಚಿಕೊಂಡಿಲ್ಲ.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ಸ್ಕ್ರೀನ್ ಹಂಚಿಕೆ ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ: ಅದನ್ನು ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಡೈಲಾಗ್‌ನಲ್ಲಿ ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ, ಅಥವಾ ಡೆಸ್ಕ್‌ಟಾಪ್ ಯಾವುದೇ ಕಾರಣ ನೀಡಲಿಲ್ಲ. ಏನನ್ನೂ ಹಂಚಿಕೊಂಡಿಲ್ಲ.",
+  "The desktop's screen-sharing portal said no: {error}": "ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಸ್ಕ್ರೀನ್ ಹಂಚಿಕೆ portal ನಿರಾಕರಿಸಿತು: {error}"
  }
 }

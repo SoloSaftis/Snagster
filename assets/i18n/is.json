@@ -1021,6 +1021,9 @@
   "Use system setting": "Nota kerfisstillingu",
   "Match system": "Passa við kerfið",
   "General": "Almennt",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "Kveikt er á Auka birtuskil í kerfisstillingum, því texti og rammar eru skýrari."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Kveikt er á Auka birtuskil í kerfisstillingum, því texti og rammar eru skýrari.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Hætt var við skjádeilingu í samskiptaglugga skjáborðsins: engu var deilt.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skjádeiling hófst ekki: hætt var við hana í samskiptaglugga skjáborðsins, eða skjáborðið gaf enga ástæðu. Engu var deilt.",
+  "The desktop's screen-sharing portal said no: {error}": "Skjádeilingargátt skjáborðsins sagði nei: {error}"
  }
 }

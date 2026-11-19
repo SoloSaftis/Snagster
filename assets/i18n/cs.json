@@ -1021,6 +1021,9 @@
   "Use system setting": "Použít nastavení systému",
   "Match system": "Podle systému",
   "General": "Obecné",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "V Nastavení systému je zapnuto Zvýšit kontrast, text a okraje jsou proto výraznější."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "V Nastavení systému je zapnuto Zvýšit kontrast, text a okraje jsou proto výraznější.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Sdílení obrazovky bylo zrušeno v dialogu plochy: nic se nesdílelo.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Sdílení obrazovky se nespustilo: bylo zrušeno v dialogu plochy, nebo plocha neuvedla žádný důvod. Nic se nesdílelo.",
+  "The desktop's screen-sharing portal said no: {error}": "Portál plochy pro sdílení obrazovky odmítl: {error}"
  }
 }

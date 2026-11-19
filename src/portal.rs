@@ -146,16 +146,20 @@ pub fn notify(id: &str, title: &str, body: &str) {
     });
 }
 
-/// What to say when the screen share didn't start: plainly when the person pressed Cancel in
-/// the desktop's dialog, else the portal's own words.
+/// What to say when the screen share didn't start (translated).
+///
+/// The portal answers 1 when the person pressed Cancel (GNOME's dialog; ashpd words it "was
+/// cancelled") and 2 when "the interaction was ended in some other way" (ashpd: "didn't
+/// succeed with no information"). KDE's dialog answers 2 to its Cancel button, but 2 is also
+/// how a backend reports a real failure, so that one says both, honestly.
 fn share_refusal(raw: &str) -> String {
-    // GNOME answers a Cancel as "cancelled"; KDE's dialog answers it with the portal's
-    // "other" response, which ashpd words as "didn't succeed with no information".
-    let cancelled = raw.trim() == "Cancelled" || raw.contains("Response(Cancelled)") || raw.contains("was cancelled") || raw.contains("didn't succeed with no information");
-    if cancelled {
-        "Screen sharing was cancelled in the desktop's dialog: nothing was shared.".into()
+    use crate::i18n::{t, tf};
+    if raw.trim() == "Cancelled" || raw.contains("Response(Cancelled)") || raw.contains("was cancelled") {
+        t("Screen sharing was cancelled in the desktop's dialog: nothing was shared.").to_string()
+    } else if raw.contains("didn't succeed with no information") {
+        t("Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.").to_string()
     } else {
-        format!("the desktop's screen-sharing portal said no ({raw})")
+        tf("The desktop's screen-sharing portal said no: {error}", &[("error", raw)])
     }
 }
 
@@ -593,9 +597,11 @@ mod tests {
         assert!(share_refusal("Cancelled").starts_with("Screen sharing was cancelled"));
         // ashpd's own wording, and KDE's answer to its dialog's Cancel button.
         assert!(share_refusal("Portal request was cancelled").starts_with("Screen sharing was cancelled"));
-        assert!(share_refusal("Portal request didn't succeed with no information").starts_with("Screen sharing was cancelled"));
+        // The portal's "ended some other way": KDE's Cancel, or a failure. Both are said.
+        let other_way = share_refusal("Portal request didn't succeed with no information");
+        assert!(other_way.starts_with("Screen sharing didn't start") && other_way.contains("cancelled") && other_way.contains("no reason"), "{other_way}");
         let other = share_refusal("Portal request failed: org.freedesktop.portal.Error.NotAllowed");
-        assert!(other.contains("NotAllowed") && other.starts_with("the desktop's screen-sharing portal said no"));
+        assert!(other.contains("NotAllowed") && other.starts_with("The desktop's screen-sharing portal said no: "), "{other}");
     }
 
     #[test]

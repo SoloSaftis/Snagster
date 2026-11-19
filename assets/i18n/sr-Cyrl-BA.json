@@ -1021,6 +1021,9 @@
   "Use system setting": "Користи системско подешавање",
   "Match system": "Као систем",
   "General": "Опште",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "Опција Повећај контраст је укључена у системским подешавањима, па су текст и ивице наглашенији."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Опција Повећај контраст је укључена у системским подешавањима, па су текст и ивице наглашенији.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Дијељење екрана је отказано у дијалогу радне површине: ништа није подијељено.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Дијељење екрана није почело: отказано је у дијалогу радне површине или радна површина није навела разлог. Ништа није подијељено.",
+  "The desktop's screen-sharing portal said no: {error}": "Портал радне површине за дијељење екрана је одбио: {error}"
  }
 }

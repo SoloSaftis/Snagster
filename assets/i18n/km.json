@@ -1021,6 +1021,9 @@
   "Use system setting": "ប្រើការកំណត់ប្រព័ន្ធ",
   "Match system": "ដូចប្រព័ន្ធ",
   "General": "ទូទៅ",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "«បង្កើនកម្រិតពណ៌ផ្ទុយ» ត្រូវបានបើកនៅក្នុងការកំណត់ប្រព័ន្ធ ដូច្នេះអត្ថបទ និងស៊ុមកាន់តែច្បាស់។"
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "«បង្កើនកម្រិតពណ៌ផ្ទុយ» ត្រូវបានបើកនៅក្នុងការកំណត់ប្រព័ន្ធ ដូច្នេះអត្ថបទ និងស៊ុមកាន់តែច្បាស់។",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ការចែករំលែកអេក្រង់ត្រូវបានបោះបង់នៅក្នុងប្រអប់នៃផ្ទៃតុ៖ គ្មានអ្វីត្រូវបានចែករំលែកទេ។",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ការចែករំលែកអេក្រង់មិនបានចាប់ផ្តើមទេ៖ វាត្រូវបានបោះបង់នៅក្នុងប្រអប់នៃផ្ទៃតុ ឬផ្ទៃតុមិនបានផ្តល់ហេតុផលទេ។ គ្មានអ្វីត្រូវបានចែករំលែកទេ។",
+  "The desktop's screen-sharing portal said no: {error}": "portal ចែករំលែកអេក្រង់របស់ផ្ទៃតុបានបដិសេធ៖ {error}"
  }
 }

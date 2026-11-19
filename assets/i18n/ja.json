@@ -1021,6 +1021,9 @@
   "Use system setting": "システム設定を使用",
   "Match system": "システムに合わせる",
   "General": "一般",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "システム設定で「コントラストを上げる」がオンのため、文字と境界線が強調されます。"
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "システム設定で「コントラストを上げる」がオンのため、文字と境界線が強調されます。",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "画面共有はデスクトップのダイアログでキャンセルされました。何も共有されていません。",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "画面共有を開始できませんでした。デスクトップのダイアログでキャンセルされたか、デスクトップから理由が示されませんでした。何も共有されていません。",
+  "The desktop's screen-sharing portal said no: {error}": "デスクトップの画面共有ポータル（portal）が拒否しました: {error}"
  }
 }

@@ -1021,6 +1021,9 @@
   "Use system setting": "Gebruik stelselinstelling",
   "Match system": "Pas by stelsel",
   "General": "Algemeen",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "Verhoog kontras is aan in Stelselinstellings, dus teks en rande is sterker."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Verhoog kontras is aan in Stelselinstellings, dus teks en rande is sterker.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skermdeling is in die lessenaar se dialoog gekanselleer: niks is gedeel nie.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skermdeling het nie begin nie: dit is in die lessenaar se dialoog gekanselleer, of die lessenaar het geen rede gegee nie. Niks is gedeel nie.",
+  "The desktop's screen-sharing portal said no: {error}": "Die lessenaar se skermdeling-portaal het nee gesê: {error}"
  }
 }

@@ -1021,6 +1021,9 @@
   "Use system setting": "Whakamahia te tautuhinga pūnaha",
   "Match system": "Whakahāngai ki te pūnaha",
   "General": "Whānui",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "Kua whakaaetia te Whakanui i te rerekētanga i ngā Tautuhinga Pūnaha, nō reira kua kaha ake te tuhinga me ngā tuaka."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Kua whakaaetia te Whakanui i te rerekētanga i ngā Tautuhinga Pūnaha, nō reira kua kaha ake te tuhinga me ngā tuaka.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "I whakakorea te tohatoha mata i te pouaka kōrero o te papamahi: kāore he mea i tohaina.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Kāore te tohatoha mata i tīmata: i whakakorea i te pouaka kōrero o te papamahi, kāore rānei i hoatu e te papamahi he take. Kāore he mea i tohaina.",
+  "The desktop's screen-sharing portal said no: {error}": "I kī te tomokanga (portal) tohatoha mata o te papamahi kāo: {error}"
  }
 }

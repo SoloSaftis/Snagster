@@ -1021,6 +1021,9 @@
   "Use system setting": "Використовувати системне налаштування",
   "Match system": "Як у системі",
   "General": "Загальні",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "У Системних параметрах увімкнено «Збільшити контрастність», тому текст і межі виразніші."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "У Системних параметрах увімкнено «Збільшити контрастність», тому текст і межі виразніші.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Показ екрана скасовано в діалоговому вікні робочого стола: нічого не було передано.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Показ екрана не розпочався: його скасовано в діалоговому вікні робочого стола, або робочий стіл не вказав причину. Нічого не було передано.",
+  "The desktop's screen-sharing portal said no: {error}": "Портал показу екрана робочого стола відмовив: {error}"
  }
 }

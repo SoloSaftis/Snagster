@@ -1021,6 +1021,9 @@
   "Use system setting": "Erabili sistemaren ezarpena",
   "Match system": "Bat egin sistemarekin",
   "General": "Orokorra",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistemaren ezarpenetan «Handitu kontrastea» aktibatuta dago, beraz testua eta ertzak nabarmenagoak dira."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistemaren ezarpenetan «Handitu kontrastea» aktibatuta dago, beraz testua eta ertzak nabarmenagoak dira.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Pantaila partekatzea bertan behera utzi da mahaigainaren elkarrizketa-koadroan: ez da ezer partekatu.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Pantaila partekatzea ez da hasi: mahaigainaren elkarrizketa-koadroan bertan behera utzi da, edo mahaigainak ez du arrazoirik eman. Ez da ezer partekatu.",
+  "The desktop's screen-sharing portal said no: {error}": "Mahaigainaren pantaila partekatzeko portalak ezetz esan du: {error}"
  }
 }

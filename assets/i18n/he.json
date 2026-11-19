@@ -1021,6 +1021,9 @@
   "Use system setting": "שימוש בהגדרת המערכת",
   "Match system": "התאמה למערכת",
   "General": "כללי",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "האפשרות ״הגברת ניגודיות״ מופעלת בהגדרות המערכת, ולכן הטקסט והמסגרות בולטים יותר."
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "האפשרות ״הגברת ניגודיות״ מופעלת בהגדרות המערכת, ולכן הטקסט והמסגרות בולטים יותר.",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "שיתוף המסך בוטל בתיבת הדו-שיח של שולחן העבודה: דבר לא שותף.",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "שיתוף המסך לא התחיל: הוא בוטל בתיבת הדו-שיח של שולחן העבודה, או ששולחן העבודה לא נתן סיבה. דבר לא שותף.",
+  "The desktop's screen-sharing portal said no: {error}": "הפורטל (portal) של שולחן העבודה לשיתוף מסך סירב: {error}"
  }
 }

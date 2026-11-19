@@ -1021,6 +1021,9 @@
   "Use system setting": "सिस्टम सेटिंग का उपयोग करें",
   "Match system": "सिस्टम से मिलाएँ",
   "General": "सामान्य",
-  "Increase contrast is on in System Settings, so text and borders are stronger.": "सिस्टम सेटिंग्स में “कंट्रास्ट बढ़ाएँ” चालू है, इसलिए टेक्स्ट और बॉर्डर अधिक गहरे हैं।"
+  "Increase contrast is on in System Settings, so text and borders are stronger.": "सिस्टम सेटिंग्स में “कंट्रास्ट बढ़ाएँ” चालू है, इसलिए टेक्स्ट और बॉर्डर अधिक गहरे हैं।",
+  "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "डेस्कटॉप के डायलॉग में स्क्रीन शेयरिंग रद्द कर दी गई: कुछ भी साझा नहीं किया गया।",
+  "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "स्क्रीन शेयरिंग शुरू नहीं हुई: उसे डेस्कटॉप के डायलॉग में रद्द कर दिया गया था, या डेस्कटॉप ने कोई कारण नहीं बताया। कुछ भी साझा नहीं किया गया।",
+  "The desktop's screen-sharing portal said no: {error}": "डेस्कटॉप के स्क्रीन शेयरिंग portal ने मना कर दिया: {error}"
  }
 }
