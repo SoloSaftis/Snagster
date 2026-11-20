@@ -148,29 +148,29 @@ mod tests {
         let ctx = egui::Context::default();
         let a = SnagApp::blank(Settings::default(), false, None);
         let mut typing = None;
-        let _ = ctx.run_ui(Default::default(), |ui| {
+        ctx.run_ui(Default::default(), |ui| {
             typing = Some(a.text_has_keys(ui.ctx()));
-        });
+        }).textures_delta.clear();
         assert_eq!(typing, Some(false), "no text box has the keyboard");
         // A button reached with Tab (Full Keyboard Access) is not a text box: Move to Trash
         // and the picture's Copy stay the menu's.
         let mut button_focused = (false, None);
         for _ in 0..2 {
-            let _ = ctx.run_ui(Default::default(), |ui| {
+            ctx.run_ui(Default::default(), |ui| {
                 let b = ui.button("A button");
                 b.request_focus();
                 button_focused = (b.has_focus(), Some(a.text_has_keys(ui.ctx())));
-            });
+            }).textures_delta.clear();
         }
         assert_eq!(button_focused, (true, Some(false)));
         // A text box with the keys is.
         let mut text = String::new();
         let mut in_text = None;
         for _ in 0..2 {
-            let _ = ctx.run_ui(Default::default(), |ui| {
+            ctx.run_ui(Default::default(), |ui| {
                 ui.text_edit_singleline(&mut text).request_focus();
                 in_text = Some(a.text_has_keys(ui.ctx()));
-            });
+            }).textures_delta.clear();
         }
         assert_eq!(in_text, Some(true));
     }
