@@ -399,7 +399,11 @@ impl KeyNav {
             return None;
         }
         let at = r.rect.center();
-        self.panes.iter().find(|(_, r)| r.contains(at)).map(|(p, _)| *p)
+        self.panes.iter().find(|(_, r)| r.contains(at)).map(|(p, _)| *p).or_else(|| {
+            // The options panel scrolls up and down: a control scrolled out of it is still in it
+            // (the tools, Recent and the ribbon note theirs, so they never get here).
+            self.panes.iter().find(|(p, r)| *p == Pane::Options && r.x_range().contains(at.x)).map(|(p, _)| *p)
+        })
     }
 }
 
@@ -600,10 +604,15 @@ impl SnagApp {
         // took the keyboard into another pane: back where it was.
         if let Some((id, pane)) = self.x.keys.arrowed.take()
             && focused != Some(id)
-            && self.x.keys.pane_of(ctx, focused) != Some(pane)
         {
-            ctx.memory_mut(|m| m.request_focus(id));
-            return;
+            if self.x.keys.pane_of(ctx, focused) != Some(pane) {
+                ctx.memory_mut(|m| m.request_focus(id));
+                return;
+            }
+            // Still in the pane, perhaps scrolled out of view: bring it in.
+            if let Some(r) = focused.and_then(|f| ctx.read_response(f)) {
+                r.scroll_to_me(None);
+            }
         }
         let back = ctx.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, Key::F6));
         let fwd = !back && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, Key::F6));
@@ -646,10 +655,19 @@ impl SnagApp {
             return;
         }
         let Some(item) = k.last.iter().find(|i| i.id == f) else {
-            // egui moves it (a slider keeps its arrows); undone above if it leaves the pane.
-            if let Some(pane) = k.pane_of(ctx, Some(f)) {
-                self.x.keys.arrowed = Some((f, pane));
+            // A control we don't know (the options panel's). A slider keeps its arrows. Down
+            // and Up go to the next and the previous control, as the panel is a column: egui's
+            // own search could pick something nearer in another pane (Recent, under a short
+            // panel). Left and Right are egui's. Leaving the pane is undone above.
+            let Some(pane) = k.pane_of(ctx, Some(f)) else { return };
+            if ctx.read_response(f).is_some_and(|r| r.sense.senses_drag()) {
+                return;
             }
+            if d.y != 0.0 {
+                ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, key));
+                ctx.memory_mut(|mem| mem.move_focus(if d.y > 0.0 { FocusDirection::Next } else { FocusDirection::Previous }));
+            }
+            self.x.keys.arrowed = Some((f, pane));
             return;
         };
         let pane = item.scope.pane();

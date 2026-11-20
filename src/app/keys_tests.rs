@@ -16,15 +16,21 @@ struct Keys {
     mods: Modifiers,
     /// What AccessKit was last told has the focus.
     reader: Option<egui::accesskit::NodeId>,
+    /// The window's size.
+    size: Vec2,
 }
 
 impl Keys {
     fn new() -> Keys {
+        Keys::sized(WINDOW)
+    }
+
+    fn sized(size: Vec2) -> Keys {
         let mut app = SnagApp::blank(Settings::default(), false, None);
         app.add_entry("Test".into(), Doc::new(RgbaImage::from_pixel(400, 300, image::Rgba([255, 255, 255, 255]))));
         let ctx = egui::Context::default();
         ctx.enable_accesskit();
-        let mut k = Keys { app, ctx, time: 0.0, mods: Modifiers::NONE, reader: None };
+        let mut k = Keys { app, ctx, time: 0.0, mods: Modifiers::NONE, reader: None, size };
         k.frame(Vec::new());
         k.frame(Vec::new());
         k
@@ -33,7 +39,7 @@ impl Keys {
     fn frame(&mut self, mut events: Vec<Event>) {
         self.time += 1.0 / 60.0;
         events.insert(0, Event::ModifiersChanged(self.mods));
-        let raw = egui::RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, WINDOW)), time: Some(self.time), events, ..Default::default() };
+        let raw = egui::RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, self.size)), time: Some(self.time), events, ..Default::default() };
         let app = &mut self.app;
         let mut out = self.ctx.run_ui(raw, |ui| app.ui_body(ui));
         out.textures_delta.clear();
@@ -376,14 +382,39 @@ fn a_control_in_a_floating_window_keeps_the_picture_keys_off() {
     let mut k = Keys::new();
     k.app.x.lang_open = true;
     k.frame(Vec::new());
-    k.key(Key::Tab);
-    let in_window = k.focused().is_some_and(|f| k.ctx.read_response(f).is_some_and(|r| r.layer_id.order != egui::Order::Background));
-    if !in_window {
-        return; // The language list is a window of its own on this system: nothing to check.
+    // Tab along until a control of the language list has the keyboard.
+    let floating = |k: &Keys| k.focused().is_some_and(|f| k.ctx.read_response(f).is_some_and(|r| r.layer_id.order != egui::Order::Background));
+    for _ in 0..400 {
+        if floating(&k) && !k.ctx.text_edit_focused() {
+            break;
+        }
+        k.key(Key::Tab);
     }
-    assert_eq!(k.pane(), None);
+    assert!(floating(&k) && !k.ctx.text_edit_focused(), "Tab never reached a control in the language list");
+    assert_eq!(k.pane(), None, "a window over the panes is in none of them");
     let before = k.app.tool;
     let other = Tool::ALL.into_iter().find(|t| *t != before && *t != Tool::Select).unwrap();
     k.key(Key::from_name(other.key()).unwrap());
     assert_eq!(k.app.tool, before, "a letter in the language list doesn't choose a tool");
+}
+
+#[test]
+fn in_a_short_window_the_arrows_reach_the_options_below_the_fold() {
+    let mut k = Keys::sized(vec2(1400.0, 420.0));
+    for _ in 0..4 {
+        k.key(Key::F6);
+    }
+    assert_eq!(k.pane(), Some(Pane::Options));
+    let mut seen = std::collections::HashSet::new();
+    for _ in 0..40 {
+        k.key(Key::ArrowDown);
+        k.frame(Vec::new());
+        assert_eq!(k.pane(), Some(Pane::Options));
+        seen.insert(k.focused());
+    }
+    assert!(seen.len() > 6, "Down stopped after {} controls", seen.len());
+    // The control the keyboard is on was scrolled into view.
+    let r = k.ctx.read_response(k.focused().unwrap()).unwrap();
+    let pane = k.app.x.keys.panes.iter().find(|p| p.0 == Pane::Options).unwrap().1;
+    assert!(pane.intersects(r.rect), "{:?} is out of the panel {pane:?}", r.rect);
 }
