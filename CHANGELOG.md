@@ -112,6 +112,20 @@ macOS:
   picture (in the Library ⌘⌫ moves the capture picked there).
 - **The menu bar icon turns into a stop square** while a recording runs.
 
+Fewer crashes on odd input (found by new tests that feed Snagster broken files every night):
+
+- **A callout with very small text no longer crashes Snagster** (pressing Smaller until it
+  stops, with the tail to the side, did).
+- **Broken files are errors, not crashes or hangs**: a project whose marks sit absurdly far off
+  the picture or have nonsense sizes opens (those marks aren't drawn); a broken MP4 no longer
+  makes video details, or opening it on Linux and macOS, wait for ever or crash; a tiny broken
+  TIFF no longer takes a quarter of a gigabyte of memory.
+- **Long step-by-step guides are quick**: 250 steps took over 30 seconds as one picture; a guide
+  too long for one picture now says to save it as a PDF or web page.
+- For AI apps: combine_images and make_guide refuse sizes that wouldn't fit in memory, and say
+  so; editor_apply's cut_out far outside the picture is simply nothing to cut.
+- Updates: a SHA256SUMS line written as `<sum> * name` now matches its download.
+
 ## 0.10.6 — 2026-11-17
 
 Linux with Wayland (checked on Ubuntu 26.04 with GNOME):

@@ -865,10 +865,10 @@ impl Workspace {
                 }
                 let mut imgs = Vec::new();
                 for p in &paths {
-                    imgs.push(image::open(p).map_err(|e| format!("{p}: {e}"))?.to_rgba8());
+                    imgs.push(export::open_picture(Path::new(p))?);
                 }
                 let vertical = a.get("vertical").and_then(Value::as_bool).unwrap_or(false);
-                let out = effects::combine(&imgs, vertical, 16).ok_or("couldn't combine them")?;
+                let out = effects::combine(&imgs, vertical, 16).ok_or("the combined picture would be too big (over 268 million pixels)")?;
                 self.set(Doc::new(out), "Combined")
             }
             "make_guide" => {
@@ -878,9 +878,20 @@ impl Workspace {
                 let current = a.get("include_current").and_then(Value::as_bool).unwrap_or(false);
                 let total = (list.len() + current as usize + 1) as f64;
                 let mut steps: Vec<(String, image::RgbaImage)> = Vec::new();
+                // A one-picture guide shrinks each step to the page as it is read (as the page
+                // would), and no guide holds more pictures than fit in memory at once.
+                let one_picture = path.extension().is_some_and(|e| ["png", "jpg", "jpeg"].iter().any(|x| e.eq_ignore_ascii_case(x)));
+                let mut held = 0u64;
                 for (i, s) in list.iter().enumerate() {
                     let p = s.get("path").and_then(Value::as_str).ok_or("each step needs a path")?;
-                    let img = image::open(p).map_err(|e| format!("{p}: {e}"))?.to_rgba8();
+                    let mut img = export::open_picture(Path::new(p))?;
+                    if one_picture {
+                        img = effects::fit_guide_width(img, export::GUIDE_WIDTH);
+                    }
+                    held += img.width() as u64 * img.height() as u64;
+                    if held > 4 * effects::GUIDE_PAGE_MAX {
+                        return Err(format!("the pictures are too big together for one guide (step {} goes over); use fewer or smaller steps", i + 1));
+                    }
                     let cap = s.get("caption").and_then(Value::as_str).map(String::from).unwrap_or_else(|| format!("Step {}", i + 1));
                     steps.push((cap, img));
                     self.report(steps.len() as f64, Some(total), &format!("Read step {}", steps.len()));

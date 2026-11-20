@@ -130,7 +130,7 @@ pub fn thumbnail(path: &Path, size: u32) -> Option<RgbaImage> {
     if let Ok(t) = image::open(&thumb) {
         return Some(t.to_rgba8());
     }
-    let img = image::open(path).ok()?.thumbnail(size, size).to_rgba8();
+    let img = image::DynamicImage::ImageRgba8(crate::export::open_picture(path).ok()?).thumbnail(size, size).to_rgba8();
     let _ = std::fs::create_dir_all(&dir);
     let _ = img.save(&thumb);
     Some(img)

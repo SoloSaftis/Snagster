@@ -3326,9 +3326,12 @@ pub(crate) mod fuzzing {
         broken.extend(((inner.len() + 8) as u32).to_be_bytes());
         broken.extend(b"moov");
         broken.extend(inner);
-        let t0 = std::time::Instant::now();
-        let e = mp4_probe(std::io::Cursor::new(&broken), broken.len() as u64).unwrap_err();
-        assert!(t0.elapsed() < std::time::Duration::from_secs(5), "{:?}", t0.elapsed());
+        // On a thread of its own, so the test fails (rather than hangs) if it reads in circles.
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let _ = tx.send(mp4_probe(std::io::Cursor::new(&broken), broken.len() as u64));
+        });
+        let e = rx.recv_timeout(std::time::Duration::from_secs(10)).expect("the probe came back").unwrap_err();
         assert!(e.contains("circles"), "{e}");
     }
 

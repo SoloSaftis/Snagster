@@ -7,7 +7,7 @@
 #
 # Separate from build.yml: nothing here builds downloads, and a failure here never blocks a push.
 # Run it by hand with Actions > Nightly fuzz > Run workflow (or `gh workflow run nightly.yml
-# --ref <branch> -f seconds=60`). DEVELOPING.md says how to replay a saved input.
+# --ref <branch> -f seconds=60`). The top of src/fuzz.rs says how to replay a saved input.
 name: Nightly fuzz
 
 on:
@@ -101,10 +101,12 @@ jobs:
           # One process per target (a crash or an out-of-memory abort ends only that one), as many
           # at once as there are processors.
           jobs=$(nproc 2>/dev/null || echo 4)
-          # Each process gets at most 3 GB on Linux (16 GB, four at once): one input that wants
-          # more ends only its own target, with the input kept, instead of the whole machine.
+          # Each process gets at most 4 GB of address space on Linux (16 GB, four at once): one
+          # input that wants more ends only its own target, with the input kept, instead of the
+          # whole machine. Two malloc arenas, so reserved address space stays close to real use.
+          export MALLOC_ARENA_MAX=2
           echo "$list" | xargs -P "$jobs" -I{} bash -c '
-            [ "$RUNNER_OS" = Linux ] && ulimit -v 3000000
+            [ "$RUNNER_OS" = Linux ] && ulimit -v 4000000
             SNAGSTER_FUZZ_TARGET={} "$TEST_EXE" fuzz::tests::fuzz_nightly --exact --ignored --nocapture > "fuzz-out/{}.log" 2>&1
             echo $? > "fuzz-out/{}.exit"' || true
           failed=0

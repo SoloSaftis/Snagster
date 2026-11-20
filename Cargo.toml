@@ -48,10 +48,6 @@ openh264-sys2 = "0.9"
 # OpenH264's decoder, to check in the tests that what was encoded decodes back.
 openh264 = "0.9"
 
-# The MP4 reader Linux and macOS use, so its fuzz target (src/fuzz.rs) runs in Windows tests too.
-[target."cfg(windows)".dev-dependencies]
-mp4 = "0.14"
-
 [profile.dev]
 # Snag's own code is optimised too, so everyday builds run fast.
 opt-level = 2

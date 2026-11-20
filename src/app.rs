@@ -4810,7 +4810,8 @@ fn read_picture_file(p: &std::path::Path) -> Result<(String, Doc, bool), String>
         let (name, d) = export::load_project(p).map_err(|e| e.to_string())?;
         return Ok((if name.is_empty() { "Project".into() } else { name }, d, true));
     }
-    let img = image::open(p).map_err(|e| e.to_string())?;
+    // The same limits as pictures inside projects: memory bounded by the size, TIFFs checked.
+    let img = export::decode_image(&std::fs::read(p).map_err(|e| e.to_string())?)?;
     let name = p.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "Picture".into());
     Ok((name, Doc::new(img.to_rgba8()), false))
 }

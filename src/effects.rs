@@ -287,18 +287,18 @@ pub fn combine(images: &[RgbaImage], vertical: bool, gap: u32) -> Option<RgbaIma
     if images.is_empty() {
         return None;
     }
+    // Worked out in u64 and refused over GUIDE_PAGE_MAX pixels: 250 pictures one under another
+    // asked for 1.3 GB at once (and the sum could overflow).
+    let gaps = gap as u64 * (images.len() as u64 - 1);
     let (w, h) = if vertical {
-        (
-            images.iter().map(|i| i.width()).max()?,
-            images.iter().map(|i| i.height()).sum::<u32>() + gap * (images.len() as u32 - 1),
-        )
+        (images.iter().map(|i| i.width() as u64).max()?, images.iter().map(|i| i.height() as u64).sum::<u64>() + gaps)
     } else {
-        (
-            images.iter().map(|i| i.width()).sum::<u32>() + gap * (images.len() as u32 - 1),
-            images.iter().map(|i| i.height()).max()?,
-        )
+        (images.iter().map(|i| i.width() as u64).sum::<u64>() + gaps, images.iter().map(|i| i.height() as u64).max()?)
     };
-    let mut out = RgbaImage::from_pixel(w, h, Rgba([255, 255, 255, 255]));
+    if w * h > GUIDE_PAGE_MAX {
+        return None;
+    }
+    let mut out = RgbaImage::from_pixel(w as u32, h as u32, Rgba([255, 255, 255, 255]));
     let mut at = 0i64;
     for i in images {
         if vertical {
@@ -372,13 +372,7 @@ pub fn guide_page(title: &str, items: &[(String, RgbaImage)], width: u32) -> Opt
     let cap_size = 24.0;
     let mut parts: Vec<(String, RgbaImage)> = Vec::new();
     for (cap, img) in items {
-        let img = if img.width() > inner {
-            let h = (img.height() as f32 * inner as f32 / img.width() as f32).round().max(1.0) as u32;
-            imageops::resize(img, inner, h, imageops::FilterType::Triangle)
-        } else {
-            img.clone()
-        };
-        parts.push((cap.clone(), img));
+        parts.push((cap.clone(), fit_inner(img.clone(), inner)));
     }
     let cap_h = (cap_size * 1.6) as u32;
     let top = margin + (title_size * 1.6) as u32 + 16;
@@ -413,6 +407,21 @@ pub fn guide_page(title: &str, items: &[(String, RgbaImage)], width: u32) -> Opt
 
 /// The most pixels a one-page guide may have (a gigabyte of picture).
 pub const GUIDE_PAGE_MAX: u64 = 1 << 28;
+
+/// A picture no wider than the space inside a guide page's margins (shrunk keeping its shape).
+fn fit_inner(img: RgbaImage, inner: u32) -> RgbaImage {
+    if img.width() <= inner {
+        return img;
+    }
+    let h = (img.height() as f32 * inner as f32 / img.width() as f32).round().max(1.0) as u32;
+    imageops::resize(&img, inner, h, imageops::FilterType::Triangle)
+}
+
+/// A step's picture shrunk as `guide_page(.., page_width)` will shrink it, so a long guide
+/// needn't hold every picture at full size first. The page comes out the same.
+pub fn fit_guide_width(img: RgbaImage, page_width: u32) -> RgbaImage {
+    fit_inner(img, page_width.clamp(400, 3000) - 2 * 48)
+}
 
 /// The capture-info text: the date and time now, then each part (app, title or picture name),
 /// three spaces apart. The window and the MCP server both use this.

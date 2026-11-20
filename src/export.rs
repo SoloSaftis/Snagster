@@ -219,6 +219,9 @@ pub fn save_doc(d: &Doc, name: &str, path: &Path, s: &crate::settings::Settings)
     }
 }
 
+/// How wide a one-picture guide is.
+pub const GUIDE_WIDTH: u32 = 1200;
+
 /// Save a step-by-step guide; the extension picks the format: .pdf, .html, .docx, or one tall
 /// picture (.png, .jpg).
 pub fn save_guide(title: &str, steps: &[(String, RgbaImage)], path: &Path, jpeg_quality: u8) -> Result<(), String> {
@@ -242,7 +245,7 @@ pub fn save_guide(title: &str, steps: &[(String, RgbaImage)], path: &Path, jpeg_
         "html" | "htm" => std::fs::write(path, html_guide(title, steps)?).map_err(|e| e.to_string()),
         "docx" => docx(title, steps, path),
         _ => {
-            let page = crate::effects::guide_page(title, steps, 1200).ok_or("couldn't lay out the page")?;
+            let page = crate::effects::guide_page(title, steps, GUIDE_WIDTH).ok_or("the guide is too long for one picture; save it as a PDF or a web page (html) instead")?;
             save_image(&page, path, jpeg_quality)
         }
     }
@@ -294,7 +297,7 @@ fn decode_limit(len: usize) -> u64 {
     ((64u64 << 20) + len as u64 * 4096).min(512 << 20)
 }
 
-/// Whether every entry of a TIFF's directories claims no more data than the file holds. The
+/// Whether every entry of a TIFF's first directory claims no more data than the file holds. The
 /// tiff decoder reads the first directory before it is given any limit, and reserves room for
 /// as many values as an entry claims (up to 256 MB): 335 bytes claiming 8 million values made
 /// it reserve 258 MB. A real TIFF's values are always in the file.
@@ -316,34 +319,37 @@ fn tiff_entries_fit(b: &[u8]) -> Result<(), String> {
         _ => return Err(broken()),
     };
     let (word, first) = if big { (8, num(8, 8)) } else { (4, num(4, 4)) };
-    let mut next = first.ok_or_else(broken)?;
-    let mut seen = Vec::new();
-    while next != 0 {
-        // A directory chain that loops, or one too long to be real.
-        if seen.contains(&next) || seen.len() >= 64 {
+    // Only the first directory: it is the one read before the limits (and the only picture
+    // Snagster opens), so a many-page TIFF is never refused for its other pages.
+    let first = first.ok_or_else(broken)?;
+    if first == 0 {
+        return Ok(());
+    }
+    let at = usize::try_from(first).map_err(|_| broken())?;
+    let (count_len, entry_len) = if big { (8, 20) } else { (2, 12) };
+    let n = num(at, count_len).ok_or_else(broken)? as usize;
+    let entries = at + count_len;
+    for i in 0..n {
+        let e = entries.checked_add(i.checked_mul(entry_len).ok_or_else(broken)?).ok_or_else(broken)?;
+        let (Some(kind), Some(count)) = (num(e + 2, 2), num(e + 4, word)) else { return Err(broken()) };
+        let size: u64 = match kind {
+            3 | 8 => 2,
+            4 | 9 | 11 | 13 => 4,
+            5 | 10 | 12 | 16 | 17 | 18 => 8,
+            _ => 1,
+        };
+        if count.saturating_mul(size) > b.len() as u64 {
             return Err(broken());
         }
-        seen.push(next);
-        let at = usize::try_from(next).map_err(|_| broken())?;
-        let (count_len, entry_len) = if big { (8, 20) } else { (2, 12) };
-        let n = num(at, count_len).ok_or_else(broken)? as usize;
-        let entries = at + count_len;
-        for i in 0..n {
-            let e = entries.checked_add(i.checked_mul(entry_len).ok_or_else(broken)?).ok_or_else(broken)?;
-            let (Some(kind), Some(count)) = (num(e + 2, 2), num(e + 4, word)) else { return Err(broken()) };
-            let size: u64 = match kind {
-                3 | 8 => 2,
-                4 | 9 | 11 | 13 => 4,
-                5 | 10 | 12 | 16 | 17 | 18 => 8,
-                _ => 1,
-            };
-            if count.saturating_mul(size) > b.len() as u64 {
-                return Err(broken());
-            }
-        }
-        next = num(entries + n * entry_len, word).unwrap_or(0);
     }
     Ok(())
+}
+
+/// A picture file, read with the same limits as `decode_image` (the memory it may take bounded
+/// by its size, TIFF directories checked first).
+pub fn open_picture(path: &Path) -> Result<RgbaImage, String> {
+    let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
+    Ok(decode_image(&bytes).map_err(|e| format!("{}: {e}", path.display()))?.to_rgba8())
 }
 
 /// Decode a picture from bytes that came from a file (project files, pictures inside marks),
@@ -1025,11 +1031,12 @@ mod tests {
                 assert!(r.unwrap_err().contains("TIFF"));
             }
         }
-        // Directories that loop, or point outside the file.
+        // Later pages aren't looked at (even a chain that loops back); a first directory
+        // outside the file is broken.
         let mut looped = good.clone();
         let after = ifd + 2 + n * 12;
         looped[after..after + 4].copy_from_slice(&(ifd as u32).to_le_bytes());
-        assert!(tiff_entries_fit(&looped).is_err());
+        assert!(tiff_entries_fit(&looped).is_ok());
         let mut outside = good.clone();
         outside[4..8].copy_from_slice(&u32::MAX.to_le_bytes());
         assert!(tiff_entries_fit(&outside).is_err());

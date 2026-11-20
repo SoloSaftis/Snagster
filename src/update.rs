@@ -400,8 +400,6 @@ fn is_msix(path: &Path) -> bool {
     path.extension().is_some_and(|e| e.eq_ignore_ascii_case("msix"))
 }
 
-/// Start the new version (and let this one close). A downloaded MSIX opens in App Installer,
-/// which updates the installed package and can start it again.
 /// Fuzz target (`src/fuzz.rs`): what the updater downloads before it trusts anything:
 /// GitHub's description of the newest release, and the release's SHA256SUMS file.
 #[cfg(test)]
@@ -450,6 +448,8 @@ pub(crate) mod fuzzing {
     }
 }
 
+/// Start the new version (and let this one close). A downloaded MSIX opens in App Installer,
+/// which updates the installed package and can start it again.
 pub fn restart(program: &Path) -> Result<(), String> {
     if is_msix(program) {
         return crate::packaged::open_installer(program);

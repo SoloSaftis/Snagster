@@ -856,7 +856,7 @@ impl Workspace {
                     let (name, d) = export::load_project(&p)?;
                     return self.set(d, &name);
                 }
-                let img = image::open(&p).map_err(|e| e.to_string())?.to_rgba8();
+                let img = export::open_picture(&p)?;
                 let name = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
                 self.set(Doc::new(img), &name)
             }
@@ -1397,7 +1397,7 @@ fn make_mark(a: &Value, d: &Doc) -> Result<Shape, String> {
         "magnify" => Shape::Magnify { center: p1, radius: size.unwrap_or(80.0), zoom: zoom_arg(a).unwrap_or(2.0) },
         "image" => {
             let path = str_of(a, "path").ok_or("kind image needs a path")?;
-            let img = image::open(path).map_err(|e| format!("{path}: {e}"))?.to_rgba8();
+            let img = export::open_picture(Path::new(path))?;
             let rect = match p2 {
                 Some(b) => Rect::from_two_pos(p1, b),
                 None => Rect::from_min_size(p1, vec2(img.width() as f32, img.height() as f32)),
@@ -1952,7 +1952,7 @@ pub(crate) mod fuzzing {
     /// Tools the fuzz never calls: they capture or record the screen, use the clipboard, the
     /// network, sound or graphics devices, start or message other programs, or write outside
     /// the sandbox (the cloud folders). Each has tests of its own arguments.
-    pub const OUTSIDE: [&str; 29] = [
+    pub const OUTSIDE: [&str; 31] = [
         "capture_screen",
         "capture_region",
         "capture_window",
@@ -1983,17 +1983,74 @@ pub(crate) mod fuzzing {
         // Text recognition: the system's OCR (Windows) is slow and is fed pictures, not arguments.
         "read_text",
         "smart_redact",
+        "simplify",
+        // Probes the graphics chip's video encoders, as list_video_encoders does.
+        "app_info",
+    ];
+
+    /// The tools the fuzz calls: only the picture in memory, the sandbox's files and fixed
+    /// settings. Every tool is in this list or in OUTSIDE (a test checks), so a new one is
+    /// sorted by hand instead of being fuzzed by default.
+    pub const FUZZED: [&str; 48] = [
+        "open_image",
+        "picture_info",
+        "view_picture",
+        "add_mark",
+        "update_mark",
+        "list_marks",
+        "remove_mark",
+        "clear_marks",
+        "blur_area",
+        "crop",
+        "resize",
+        "set_canvas",
+        "trim",
+        "apply_effect",
+        "undo",
+        "redo",
+        "save",
+        "quick_save",
+        "combine_images",
+        "make_guide",
+        "editor_apply",
+        "gif_edit",
+        "video_info",
+        "list_recordings",
+        "library_add",
+        "library_search",
+        "library_tag",
+        "library_delete",
+        "undo_delete",
+        "get_settings",
+        "set_setting",
+        "list_settings",
+        "list_commands",
+        "list_languages",
+        "set_language",
+        "list_presets",
+        "studio_scenes",
+        "studio_add_scene",
+        "studio_remove_scene",
+        "studio_set_current",
+        "studio_add_source",
+        "studio_update_source",
+        "studio_remove_source",
+        "studio_edit",
+        "stream_services",
+        "stream_status",
+        "stream_stats",
+        "replay_status",
     ];
 
     /// The tools the fuzz calls, with their argument schemas.
     pub fn callable() -> Vec<(&'static str, Value)> {
-        tools().into_iter().filter(|t| !OUTSIDE.contains(&t.name)).map(|t| (t.name, t.schema)).collect()
+        tools().into_iter().filter(|t| FUZZED.contains(&t.name)).map(|t| (t.name, t.schema)).collect()
     }
 
     /// Whether an argument names a file or folder (kept inside the sandbox).
     fn is_path_key(k: &str) -> bool {
         let k = k.to_ascii_lowercase();
-        k.contains("path") || k.contains("folder") || k.contains("file") || k == "out" || k == "uri" || k == "pictures" || k == "images"
+        k.contains("path") || k.contains("folder") || k.contains("file") || ["out", "other", "uri", "pictures", "images"].contains(&k.as_str())
     }
 
     /// Paths in `v` (under a path-like key) replaced by names inside `dir`.
@@ -2146,7 +2203,8 @@ pub(crate) mod fuzzing {
     const SMALL: f64 = 4096.0;
 
     fn small_pictures(tool: &str, args: &mut Value) {
-        if !["set_canvas", "resize", "editor_apply"].contains(&tool) {
+        let makes_picture = matches!(tool, "set_canvas" | "resize") || (tool == "editor_apply" && args.get("action").and_then(Value::as_str) == Some("new_image"));
+        if !makes_picture {
             return;
         }
         for k in ["width", "height"] {
@@ -2192,7 +2250,7 @@ pub(crate) mod fuzzing {
     }
 
     /// Tools a JSON-RPC message may call: they change only the picture in memory.
-    const IN_MEMORY: [&str; 22] = [
+    const IN_MEMORY: [&str; 21] = [
         "picture_info",
         "view_picture",
         "add_mark",
@@ -2206,7 +2264,6 @@ pub(crate) mod fuzzing {
         "crop",
         "apply_effect",
         "list_languages",
-        "app_info",
         "get_settings",
         "list_settings",
         "list_commands",
@@ -2276,6 +2333,7 @@ pub(crate) mod fuzzing {
                         let v: Value = serde_json::from_str(&reply).unwrap_or_else(|e| panic!("the reply isn't JSON ({e}): {reply}"));
                         assert_eq!(v["jsonrpc"], "2.0", "{reply}");
                         assert!(v.get("result").is_some() != v.get("error").is_some(), "{reply}");
+                        assert!(!reply.contains("stopped unexpectedly"), "a tool panicked (Session caught it): {reply}");
                     }
                 },
                 budget: |n| (256 << 20) + 64 * n,
@@ -2294,12 +2352,14 @@ pub(crate) mod fuzzing {
             assert_eq!(p.parent(), Some(dir), "{p:?}");
         }
         assert_eq!(a["text"], "../keep", "only paths are touched");
-        // Every tool is either called or listed as reaching outside, and nothing outside is called.
+        // Every tool is in exactly one of FUZZED and OUTSIDE: a new tool is sorted by hand.
         let names: Vec<&str> = tools().iter().map(|t| t.name).collect();
-        assert!(OUTSIDE.iter().all(|n| names.contains(n)), "a tool in OUTSIDE was renamed");
-        assert!(callable().iter().all(|(n, _)| !OUTSIDE.contains(n)));
-        assert!(IN_MEMORY.iter().all(|n| names.contains(n) && !OUTSIDE.contains(n)));
-        assert!(callable().len() + OUTSIDE.len() == names.len(), "{} tools, {} called", names.len(), callable().len());
+        for n in &names {
+            assert!(FUZZED.contains(n) != OUTSIDE.contains(n), "sort the MCP tool {n} into mcp::fuzzing::FUZZED (works on the picture and the sandbox only) or OUTSIDE");
+        }
+        assert!(FUZZED.iter().chain(OUTSIDE.iter()).all(|n| names.contains(n)), "a listed tool was renamed or removed");
+        assert_eq!(callable().len(), FUZZED.len());
+        assert!(IN_MEMORY.iter().all(|n| FUZZED.contains(n)));
         // Each input starts from the same sandbox, whatever the one before saved there.
         let d = sandbox("sandbox-test");
         let small = std::fs::metadata(d.join("a.png")).unwrap().len();
@@ -2309,10 +2369,9 @@ pub(crate) mod fuzzing {
         assert_eq!(std::fs::metadata(d.join("a.png")).unwrap().len(), small);
         assert!(!d.join("left over.pdf").exists());
         let _ = std::fs::remove_dir_all(&d);
-        // A new tool is fuzzed unless it is listed: ones that by their name start the screen,
-        // a recording or a stream must be in OUTSIDE.
+        // And by their names, tools that start the screen, a recording or a stream are OUTSIDE.
         for (n, _) in callable() {
-            let outside = ["capture_", "record_", "stream_", "replay_", "studio_record"].iter().any(|p| n.starts_with(p)) && !n.ends_with("_status") && !n.ends_with("_services");
+            let outside = ["capture_", "record_", "stream_", "replay_", "studio_record"].iter().any(|p| n.starts_with(p)) && !n.ends_with("_status") && !n.ends_with("_services") && n != "stream_stats";
             assert!(!outside, "{n} reaches the screen or the network: add it to mcp::fuzzing::OUTSIDE");
         }
     }

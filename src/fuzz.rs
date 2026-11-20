@@ -6,7 +6,7 @@
 //! from a seed, and fails on a panic, a single allocation over the target's budget, or an
 //! input that takes too long. Whatever failed is saved, so it can be replayed.
 //!
-//! `cargo test` runs a short pass of every target (the `short_*` tests below). The nightly CI
+//! `cargo test` runs a short pass of every target (`fuzz::tests::short_runs`). The nightly CI
 //! job (`.github/workflows/nightly.yml`) runs each target for minutes:
 //!
 //! ```text
@@ -63,7 +63,12 @@ pub fn target(name: &str) -> Target {
 /// A folder of the target's own for files it reads (removed when the run ends).
 pub fn scratch(target: &str) -> PathBuf {
     let p = std::env::temp_dir().join(format!("snagster-fuzz-{}", std::process::id())).join(target);
-    let _ = std::fs::create_dir_all(&p);
+    // (Again if another target removed the shared parent folder at that moment.)
+    for _ in 0..5 {
+        if std::fs::create_dir_all(&p).is_ok() && p.is_dir() {
+            break;
+        }
+    }
     p
 }
 
@@ -161,6 +166,8 @@ pub fn run(t: &Target, seed: u64, stop: Stop, out: &Path, keep_current: bool) ->
         let _ = std::fs::remove_file(&current);
     }
     let _ = std::fs::remove_dir_all(scratch(t.name));
+    // The process's own folder too, once no other target is using it.
+    let _ = std::fs::remove_dir(std::env::temp_dir().join(format!("snagster-fuzz-{}", std::process::id())));
     result
 }
 
