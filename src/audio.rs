@@ -297,8 +297,10 @@ impl Capture {
         if source.mic() {
             cap.add(SoundInput::Microphone { id: mic.to_string() }, MixBy::Slot(1))?;
         }
-        // Give the devices a moment to start (and report a failure).
-        std::thread::sleep(Duration::from_millis(60));
+        // Wait for the devices to start or report a failure (on the recording's, replay's or
+        // stream's own thread). A fixed moment let a device that failed late record silence.
+        let feeds: Vec<Arc<Feed>> = cap.lanes.iter().map(|l| l.feed.clone()).collect();
+        wait_settled(&feeds, START_WAIT);
         if let Some(e) = cap.lanes.iter().find_map(|l| l.feed.error()) {
             return Err(e);
         }
@@ -336,12 +338,21 @@ impl Capture {
         // that isn't there could take longer than 60 ms to say so, and was then kept silently.
         let feeds: Vec<Arc<Feed>> = cap.lanes.iter().map(|l| l.feed.clone()).collect();
         wait_settled(&feeds, most);
-        let failed: Vec<(usize, String)> = cap.lanes.iter().enumerate().filter_map(|(i, l)| l.feed.error().map(|e| (i, format!("{}: {e}", input_label(&l.input))))).collect();
-        for (i, note) in failed.into_iter().rev() {
-            cap.lanes.remove(i);
-            cap.notes.push(note);
-        }
+        cap.drop_failed();
         cap
+    }
+
+    /// Leave out the inputs that have failed, each with a note; whether there were any. Studio's
+    /// meters call it every frame too, since they wait only briefly when they start: an input
+    /// that fails later (a big file that turns out broken) still gets its note.
+    pub fn drop_failed(&mut self) -> bool {
+        let failed: Vec<(usize, String)> = self.lanes.iter().enumerate().filter_map(|(i, l)| l.feed.error().map(|e| (i, format!("{}: {e}", input_label(&l.input))))).collect();
+        let any = !failed.is_empty();
+        for (i, note) in failed.into_iter().rev() {
+            self.lanes.remove(i);
+            self.notes.push(note);
+        }
+        any
     }
 
     /// The inputs that couldn't start, and why.
@@ -456,7 +467,6 @@ pub fn microphones() -> Vec<Device> {
     }
 }
 
-/// Play a WAV file into `feed` in real time, over and over, until `stop`.
 /// How long `start_inputs` waits at most for its inputs to start or fail (a sound device can take
 /// a moment to open; a computer busy with other work slows everything down).
 const START_WAIT: Duration = Duration::from_secs(3);
@@ -475,6 +485,7 @@ fn wait_settled(feeds: &[Arc<Feed>], most: Duration) -> bool {
     }
 }
 
+/// Play a WAV file into `feed` in real time, over and over, until `stop`.
 fn spawn_file(path: String, feed: Arc<Feed>, stop: Arc<AtomicBool>) -> Result<std::thread::JoinHandle<()>, String> {
     std::thread::Builder::new()
         .name("snagster-sound-file".into())
@@ -745,6 +756,24 @@ mod tests {
         assert!(!wait_settled(&[quick, never], Duration::from_millis(50)), "one that never answers isn't waited for forever");
         assert!(t.elapsed() < Duration::from_secs(1));
         assert!(wait_settled(&[], Duration::ZERO), "nothing to wait for");
+    }
+
+    /// Studio's meters wait only briefly; a file that fails after that still gets its note.
+    #[test]
+    fn an_input_that_fails_later_is_left_out_with_a_note_then() {
+        let dir = std::env::temp_dir().join(format!("snagster-audio-late-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let tone = dir.join("tone.wav");
+        std::fs::write(&tone, crate::wav::tests::wav_bytes(1, 48_000, 16, &[8_000, -8_000].repeat(2_400))).unwrap();
+        let file = SoundInput::File { path: tone.to_string_lossy().to_string() };
+        let mut c = Capture::start_inputs(std::slice::from_ref(&file));
+        assert_eq!(c.lanes.len(), 1);
+        assert!(!c.drop_failed() && c.notes().is_empty(), "a working input stays");
+        c.lanes[0].feed.fail("the file was damaged".into());
+        assert!(c.drop_failed());
+        assert!(c.is_silent());
+        assert_eq!(c.notes(), ["tone.wav: the file was damaged"]);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// Inputs that can't start are noted, never fatal; the same input twice runs once.
