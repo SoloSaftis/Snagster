@@ -341,8 +341,13 @@ impl SnagApp {
             }
             let want = self.settings.studio.sound_inputs();
             if st.meters.is_none() || st.meters_for != want {
-                st.meters = Some(crate::audio::Capture::start_inputs(&want));
+                // On the window's thread: never longer than a few frames (the meters only show
+                // levels; a stream of Studio starts its own sound and waits properly).
+                st.meters = Some(crate::audio::Capture::start_inputs_within(&want, std::time::Duration::from_millis(60)));
                 st.meters_for = want;
+            } else if let Some(m) = &mut st.meters {
+                // A sound that failed after that short wait still gets its note.
+                m.drop_failed();
             }
         }
     }
