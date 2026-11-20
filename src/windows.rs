@@ -63,14 +63,7 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
         ctx.data_mut(|d| d.insert_temp(at_id, p));
         p
     });
-    let mut builder = snagster_viewport()
-        .with_title(w.title)
-        .with_inner_size(w.size)
-        .with_min_inner_size(vec2(260.0, 120.0))
-        .with_resizable(w.resizable)
-        .with_maximize_button(w.resizable)
-        .with_minimize_button(w.resizable)
-        .with_position(at);
+    let mut builder = own_window_builder(&w, at);
     static ICON: std::sync::OnceLock<std::sync::Arc<egui::IconData>> = std::sync::OnceLock::new();
     builder = builder.with_icon(ICON.get_or_init(|| std::sync::Arc::new(crate::icon())).clone());
     let mut add = Some(add);
@@ -101,11 +94,31 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
         let close = ui.ctx().input(|i| i.viewport().close_requested() || i.key_pressed(Key::Escape) || (i.modifiers.command && i.key_pressed(Key::W)));
         (out, close)
     });
+    // X11: the box belongs to Snagster's window (see `x11_dialog`).
+    #[cfg(target_os = "linux")]
+    crate::x11_dialog::shown(w.key, w.title);
     if close {
         *open = false;
         ctx.data_mut(|d| d.remove::<Pos2>(at_id));
+        #[cfg(target_os = "linux")]
+        crate::x11_dialog::closed(w.key);
     }
     out
+}
+
+/// The window an `own_window` box opens in, at `at`. A box that can't be resized is a dialog
+/// (X11's `_NET_WM_WINDOW_TYPE_DIALOG`: no Minimise or Maximise on KDE once it belongs to
+/// Snagster's window); the others are ordinary windows.
+fn own_window_builder(w: &Win, at: Pos2) -> egui::ViewportBuilder {
+    let builder = snagster_viewport()
+        .with_title(w.title)
+        .with_inner_size(w.size)
+        .with_min_inner_size(vec2(260.0, 120.0))
+        .with_resizable(w.resizable)
+        .with_maximize_button(w.resizable)
+        .with_minimize_button(w.resizable)
+        .with_position(at);
+    if w.resizable { builder } else { builder.with_window_type(egui::X11WindowType::Dialog) }
 }
 
 /// Whether a text box has the keys in the `own_window` that has the keyboard (Settings, the
@@ -2496,6 +2509,19 @@ mod tests {
         assert_eq!(fit_commands(open, size), [MinInnerSize(size), MaxInnerSize(size), InnerSize(size)]);
         // Growing: the largest goes up first, so the smallest never passes it.
         assert_eq!(fit_commands(size, open), [MaxInnerSize(open), MinInnerSize(open), InnerSize(open)]);
+    }
+
+    /// A fixed box is a dialog to X11 (with no Minimise or Maximise button asked for); one that
+    /// can be resized is an ordinary window with both.
+    #[test]
+    fn a_fixed_box_opens_as_a_dialog_window() {
+        let dialog = own_window_builder(&Win { key: "dialog", title: "New image", size: vec2(440.0, 220.0), resizable: false }, pos2(10.0, 20.0));
+        assert_eq!(dialog.window_type, Some(egui::X11WindowType::Dialog));
+        assert_eq!((dialog.minimize_button, dialog.maximize_button, dialog.resizable), (Some(false), Some(false), Some(false)));
+        assert_eq!(dialog.app_id.as_deref(), Some(crate::APP_ID), "grouped with Snagster on the task bar");
+        let library = own_window_builder(&Win { key: "library", title: "Library", size: vec2(900.0, 640.0), resizable: true }, pos2(0.0, 0.0));
+        assert_eq!(library.window_type, None);
+        assert_eq!((library.minimize_button, library.maximize_button), (Some(true), Some(true)));
     }
 
     /// The New image dialog's content is only as tall as its rows: the buttons don't take the

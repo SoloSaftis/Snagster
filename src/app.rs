@@ -4485,6 +4485,11 @@ impl SnagApp {
             use raw_window_handle::{HasDisplayHandle as _, RawDisplayHandle};
             let display = frame.display_handle().map(|h| h.as_raw());
             self.native_wayland = matches!(display, Ok(RawDisplayHandle::Wayland(_)));
+            // X11: the dialogs belong to this window (`x11_dialog`).
+            crate::x11_dialog::set_main({
+                use raw_window_handle::HasWindowHandle as _;
+                frame.window_handle().ok().map(|h| h.as_raw())
+            });
             if self.bar.on && self.wl.is_none() && !self.wl_failed {
                 if let Ok(RawDisplayHandle::Wayland(d)) = display {
                     // SAFETY: winit's display lives as long as the program's windows.
