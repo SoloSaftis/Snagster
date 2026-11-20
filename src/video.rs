@@ -293,7 +293,7 @@ pub fn record(opts: &VideoOpts, stop: &AtomicBool, pause: &AtomicBool) -> VideoD
     crate::capture::background_thread(false);
     // Counted as live until it returns (or panics); on Windows from the start, elsewhere once
     // the screen is there (`soft` calls `live_here`).
-    let _live = LiveGuard;
+    let _live = LiveGuard(&RECORDING_LIVE);
     if cfg!(windows) {
         live_here();
     }
@@ -360,20 +360,25 @@ thread_local! {
     static COUNTED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 
-/// The recording on this thread is live (counted once, however often this is called).
-fn live_here() {
+/// The recording on this thread is live in `count` (`RECORDING_LIVE`; counted once, however
+/// often this is called).
+fn live_here_in(count: &LiveCount) {
     if !COUNTED.with(|c| c.replace(true)) {
-        RECORDING_LIVE.begin();
+        count.begin();
     }
 }
 
-/// Uncounts this thread's recording when `record` returns, also if it panics.
-struct LiveGuard;
+fn live_here() {
+    live_here_in(&RECORDING_LIVE);
+}
+
+/// Uncounts this thread's recording from its count when `record` returns, also if it panics.
+struct LiveGuard(&'static LiveCount);
 
 impl Drop for LiveGuard {
     fn drop(&mut self) {
         if COUNTED.with(|c| c.replace(false)) {
-            RECORDING_LIVE.end();
+            self.0.end();
         }
     }
 }
@@ -381,7 +386,8 @@ impl Drop for LiveGuard {
 /// How many frames the recording that is running (or last ran) has written (on Linux and macOS:
 /// handed to the encoder, which may put them in the file a little later). Starting
 /// the encoder can take seconds (Quick Sync on Windows), so "live" doesn't yet mean frames are
-/// coming; `--ui-test` waits on this before it pauses and stops.
+/// coming; `--ui-test` waits on this before it pauses and stops. Only for that self-test: when
+/// recordings overlap they share it, so nothing people see should read it.
 static RECORDING_FRAMES: AtomicU64 = AtomicU64::new(0);
 
 pub fn recording_frames() -> u64 {
@@ -4177,21 +4183,23 @@ mod tests {
 
     #[test]
     fn a_recording_thread_is_counted_once_and_uncounted_even_after_a_panic() {
+        // A count of its own: other tests record at the same time.
+        static MINE: LiveCount = LiveCount::new();
         let t = std::thread::spawn(|| {
-            let _g = LiveGuard;
-            live_here();
-            live_here();
-            assert!(COUNTED.with(|c| c.get()));
-            assert!(recording_live());
+            let _g = LiveGuard(&MINE);
+            live_here_in(&MINE);
+            live_here_in(&MINE);
+            assert_eq!(MINE.0.load(Ordering::Relaxed), 1, "counted once");
             panic!("a recorder that fails half way");
         });
         assert!(t.join().is_err());
-        // The guard uncounted it: this thread's own mark was never set.
+        assert!(!MINE.any(), "the guard uncounted it while the panic unwound");
         std::thread::spawn(|| {
-            let g = LiveGuard;
-            live_here();
+            let g = LiveGuard(&MINE);
+            live_here_in(&MINE);
+            assert!(MINE.any());
             drop(g);
-            assert!(!COUNTED.with(|c| c.get()), "uncounted when record returns");
+            assert!(!MINE.any() && !COUNTED.with(|c| c.get()), "uncounted when record returns");
         })
         .join()
         .unwrap();
