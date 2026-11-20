@@ -182,7 +182,10 @@ pub const COMMANDS: &[Command] = &[
     c("ai_apps", "Help > Snagster", &["AI apps"], "app_info", true, "", Safe),
     c("about", "Help > Snagster, the Linux main menu", &["About", "About Snagster"], "app_info", true, "", Safe),
     c("problem_reports", "Help > Snagster", &["Problem reports"], "", true, "", Outside),
-    c("all_commands", "every tab > More", &["All commands", "Tools", "More"], "list_commands", false, "", Safe),
+    c("all_commands", "every tab > Commands", &["All commands"], "list_commands", false, "", Safe),
+    c("tools_menu", "Capture, Edit, Image > Commands", &["Tools"], "list_commands", false, "", Safe),
+    // The menus a narrow window folds the tabs and groups that don't fit into.
+    c("overflow_menus", "the tab row and the band, in a narrow window", &["More", "More tabs"], "list_commands", false, "", Safe),
     // ---- Stream ----
     c("go_live", "Stream > Go live, Studio", &["Go live"], "stream_start", true, "", Outside),
     c("stream_stop", "Stream > Go live, Studio", &["Stop", "Cancel", "Stop the stream"], "stream_stop", true, "", Destructive),

@@ -3744,64 +3744,112 @@ impl SnagApp {
         pick
     }
 
+    /// The first screen, with no picture open: the logo, four big cards and a sample. It fits
+    /// any window from the 500 x 400 minimum up and any Text size: the cards take four, two or
+    /// one columns, the texts wrap, and the whole screen scrolls when the window is too short.
     fn welcome(&mut self, ui: &mut egui::Ui) {
         let area = ui.max_rect();
-        let card_w = 180.0;
-        let total = card_w * 4.0 + 60.0;
-        let top = area.center().y - 180.0;
-        let p = ui.painter();
-        logo_at(p, pos2(area.center().x, top), 64.0);
-        p.text(pos2(area.center().x, top + 62.0), Align2::CENTER_CENTER, "Snagster", FontId::proportional(40.0), pal().strong);
-        p.text(pos2(area.center().x, top + 100.0), Align2::CENTER_CENTER, "Capture your screen, mark it up, share it.", FontId::proportional(17.0), pal().dim);
+        let width = area.width();
+        let wrap = (width - 2.0 * WELCOME_MARGIN).max(80.0);
+        let (columns, card_w) = welcome_columns(width, grown(WELCOME_CARD_W, 40.0));
+        let hotkey = self.settings.binding(Action::AllInOne);
+        let first_sub = if hotkey.is_set() { hotkey.label() } else { crate::i18n::t("All-in-one capture").to_string() };
+        let cards: [(&str, String); 4] = [
+            (crate::i18n::t("Capture"), first_sub),
+            (crate::i18n::t("Scrolling page"), crate::i18n::t("Long pages and documents").to_string()),
+            (crate::i18n::t("Record video"), crate::i18n::t("MP4, up to 120 fps").to_string()),
+            (crate::i18n::t("Open a picture"), crate::i18n::t("Or a .snag project").to_string()),
+        ];
+        let p = ui.painter().clone();
+        let name = centered(&p, "Snagster".into(), FontId::proportional(40.0), pal().strong, wrap);
+        let tagline = centered(&p, crate::i18n::t("Capture your screen, mark it up, share it.").into(), FontId::proportional(17.0), pal().dim, wrap);
+        let card_text: Vec<_> = cards
+            .iter()
+            .map(|(title, sub)| {
+                (centered(&p, title.to_string(), FontId::proportional(16.0), pal().strong, card_w - 16.0), centered(&p, sub.clone(), FontId::proportional(12.5), pal().dim, card_w - 16.0))
+            })
+            .collect();
+        let title_h = card_text.iter().map(|(t, _)| t.size().y).fold(0.0, f32::max);
+        let sub_h = card_text.iter().map(|(_, s)| s.size().y).fold(0.0, f32::max);
+        // Room for the icon, the title and the line under it; never less than the classic 120.
+        let card_h = (14.0 + 30.0 + 10.0 + title_h + 4.0 + sub_h + 14.0).max(120.0);
+        let cards_h = welcome_cards(width, columns, card_w, card_h, 4).iter().map(|r| r.bottom()).fold(0.0, f32::max);
+        let link = centered(&p, crate::i18n::t("Try the tools on a sample picture").into(), FontId::proportional(14.0), accent(), wrap);
+        let paste = crate::platform::keys("Ctrl+V");
+        let hint = centered(&p, crate::i18n::tf("Or drop a picture file here, or paste one with {key}.", &[("key", &paste)]), FontId::proportional(12.5), pal().dim, wrap);
+        // Logo, name, tagline, cards, sample link, hint, with the gaps between them.
+        let blocks = [64.0, 4.0, name.size().y, 6.0, tagline.size().y, 24.0, cards_h, 24.0, link.size().y, 10.0, hint.size().y];
+        // A window too short for all of it leaves out the logo, name and tagline, so the cards
+        // (what the screen is for) come first; the rest scrolls.
+        let header = welcome_stack(&blocks).1 <= area.height();
+        let blocks = if header { blocks } else { welcome_compact(blocks) };
+        let (tops, content_h) = welcome_stack(&blocks);
         let ctx = ui.ctx().clone();
-        for k in 0..4usize {
-            let (title, sub) = [
-                ("Capture", "Print Screen"),
-                ("Scrolling page", "Long pages and documents"),
-                ("Record video", "MP4, up to 120 fps"),
-                ("Open a picture", "Or a .snag project"),
-            ][k];
-            let x = area.center().x - total / 2.0 + k as f32 * (card_w + 20.0);
-            let rect = Rect::from_min_size(pos2(x, top + 140.0), vec2(card_w, 120.0));
-            let resp = ui.interact(rect, ui.scope_id().with(("card", k)), Sense::click());
+        egui::ScrollArea::vertical().id_salt("welcome").auto_shrink([false, false]).show(ui, |ui| {
+            let (full, _) = ui.allocate_exact_size(vec2(width, content_h.max(area.height())), Sense::hover());
+            // Centred when it all fits, from the top (and scrolling) when it doesn't.
+            let top = full.top() + ((area.height() - content_h) / 2.0).max(0.0);
+            let cx = full.center().x;
+            let at = |k: usize| top + tops[k];
             let p = ui.painter();
-            p.rect_filled(rect, CornerRadius::same(14), if resp.hovered() { pal().panel_hi } else { pal().panel });
-            if k == 0 {
-                p.rect_stroke(rect, CornerRadius::same(14), Stroke::new(2.0, accent()), StrokeKind::Inside);
+            if header {
+                logo_at(p, pos2(cx, at(0) + 32.0), 64.0);
+                draw_centered(p, cx, at(2), name, pal().strong);
+                draw_centered(p, cx, at(4), tagline, pal().dim);
             }
-            let icon = Rect::from_center_size(rect.center() - vec2(0.0, 22.0), vec2(30.0, 30.0));
-            match k {
-                0 => frame_icon(p, icon, accent(), true),
-                1 => {
-                    frame_icon(p, icon, accent(), false);
-                    p.arrow(icon.center() - vec2(0.0, 6.0), vec2(0.0, 12.0), Stroke::new(2.0, accent()));
+            let rects = welcome_cards(width, columns, card_w, card_h, 4);
+            for (k, (title, sub)) in card_text.into_iter().enumerate() {
+                let rect = rects[k].translate(vec2(full.left(), at(6)));
+                let resp = ui.interact(rect, ui.scope_id().with(("card", k)), Sense::click());
+                resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, cards[k].0));
+                let p = ui.painter();
+                p.rect_filled(rect, CornerRadius::same(14), if resp.hovered() { pal().panel_hi } else { pal().panel });
+                if k == 0 {
+                    p.rect_stroke(rect, CornerRadius::same(14), Stroke::new(2.0, accent()), StrokeKind::Inside);
                 }
-                2 => {
-                    p.circle_filled(icon.center(), 9.0, Color32::from_rgb(229, 72, 77));
-                    p.circle_stroke(icon.center(), 14.0, Stroke::new(2.0, accent()));
-                }
-                _ => folder_icon(p, icon, accent()),
+                let icon = Rect::from_min_size(pos2(rect.center().x - 15.0, rect.top() + 14.0), vec2(30.0, 30.0));
+                self.welcome_card(ui, &ctx, k, &resp, rect, icon, title, title_h, sub);
             }
-            p.text(rect.center() + vec2(0.0, 16.0), Align2::CENTER_CENTER, title, FontId::proportional(16.0), pal().strong);
-            p.text(rect.center() + vec2(0.0, 38.0), Align2::CENTER_CENTER, sub, FontId::proportional(12.5), pal().dim);
+            let link_rect = Rect::from_center_size(pos2(cx, at(8) + link.size().y / 2.0), vec2(link.size().x + 16.0, link.size().y + 6.0));
+            let resp = ui.interact(link_rect, ui.scope_id().with("sample"), Sense::click());
+            resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Link, true, crate::i18n::t("Try the tools on a sample picture")));
+            let col = if resp.hovered() { pal().strong } else { accent() };
+            draw_centered(ui.painter(), cx, at(8), link, col);
             if resp.clicked() {
-                match k {
-                    0 => self.do_action(&ctx, Action::AllInOne),
-                    1 => self.do_action(&ctx, Action::Scrolling),
-                    2 => self.do_action(&ctx, Action::RecordGif),
-                    _ => self.open_dialog(),
-                }
+                let name = self.next_name("Sample");
+                self.add_entry(name, sample::sample_doc());
+            }
+            draw_centered(ui.painter(), cx, at(10), hint, pal().dim);
+        });
+    }
+
+    /// One Welcome card's icon and texts, and what a click on it does.
+    #[allow(clippy::too_many_arguments)]
+    fn welcome_card(&mut self, ui: &egui::Ui, ctx: &egui::Context, k: usize, resp: &egui::Response, rect: Rect, icon: Rect, title: Arc<egui::Galley>, title_h: f32, sub: Arc<egui::Galley>) {
+        let p = ui.painter();
+        match k {
+            0 => frame_icon(p, icon, accent(), true),
+            1 => {
+                frame_icon(p, icon, accent(), false);
+                p.arrow(icon.center() - vec2(0.0, 6.0), vec2(0.0, 12.0), Stroke::new(2.0, accent()));
+            }
+            2 => {
+                p.circle_filled(icon.center(), 9.0, Color32::from_rgb(229, 72, 77));
+                p.circle_stroke(icon.center(), 14.0, Stroke::new(2.0, accent()));
+            }
+            _ => folder_icon(p, icon, accent()),
+        }
+        let below = icon.bottom() + 10.0;
+        draw_centered(p, rect.center().x, below, title, pal().strong);
+        draw_centered(p, rect.center().x, below + title_h + 4.0, sub, pal().dim);
+        if resp.clicked() {
+            match k {
+                0 => self.do_action(ctx, Action::AllInOne),
+                1 => self.do_action(ctx, Action::Scrolling),
+                2 => self.do_action(ctx, Action::RecordGif),
+                _ => self.open_dialog(),
             }
         }
-        let link = Rect::from_center_size(pos2(area.center().x, top + 300.0), vec2(260.0, 26.0));
-        let resp = ui.interact(link, ui.scope_id().with("sample"), Sense::click());
-        let col = if resp.hovered() { pal().strong } else { accent() };
-        ui.painter().text(link.center(), Align2::CENTER_CENTER, crate::i18n::t("Try the tools on a sample picture"), FontId::proportional(14.0), col);
-        if resp.clicked() {
-            let name = self.next_name("Sample");
-            self.add_entry(name, sample::sample_doc());
-        }
-        ui.painter().text(pos2(area.center().x, top + 340.0), Align2::CENTER_CENTER, "Or drop a picture file here, or paste one with Ctrl+V.", FontId::proportional(12.5), pal().dim);
     }
 
     /// Load the fonts and stamp pictures the marks need before they're drawn.
@@ -4785,6 +4833,75 @@ fn grown_by(size: f32, per_step: f32, text_scale: f32) -> f32 {
 
 fn is_narrow(window_width: f32) -> bool {
     window_width < NARROW_W
+}
+
+/// A Welcome card's width at normal text size, the gap between cards, and the room kept free
+/// at the screen's sides.
+const WELCOME_CARD_W: f32 = 180.0;
+const WELCOME_GAP: f32 = 20.0;
+const WELCOME_MARGIN: f32 = 16.0;
+
+/// How many columns the Welcome cards take in a screen `width` wide, and how wide each card
+/// is: four in a row when they fit, else two by two, else one under the other. A card may
+/// shrink to three quarters of `card_w` to keep more columns; one alone is narrower only when
+/// even it doesn't fit.
+fn welcome_columns(width: f32, card_w: f32) -> (usize, f32) {
+    let room = width - 2.0 * WELCOME_MARGIN;
+    for columns in [4usize, 2] {
+        let fits = ((room - (columns - 1) as f32 * WELCOME_GAP) / columns as f32).min(card_w);
+        if fits >= card_w * 0.75 {
+            return (columns, fits.floor());
+        }
+    }
+    (1, card_w.min(room).max(80.0))
+}
+
+/// The Welcome cards' boxes, from the top-left of a screen `width` wide: `columns` to a row,
+/// the rows centred.
+fn welcome_cards(width: f32, columns: usize, card_w: f32, card_h: f32, count: usize) -> Vec<Rect> {
+    let row_w = columns as f32 * card_w + (columns - 1) as f32 * WELCOME_GAP;
+    let left = (width - row_w) / 2.0;
+    (0..count)
+        .map(|k| {
+            let (row, col) = (k / columns, k % columns);
+            Rect::from_min_size(pos2(left + col as f32 * (card_w + WELCOME_GAP), row as f32 * (card_h + WELCOME_GAP)), vec2(card_w, card_h))
+        })
+        .collect()
+}
+
+/// Blocks of these heights one under the other: where each starts, and how tall they are together.
+fn welcome_stack(heights: &[f32]) -> (Vec<f32>, f32) {
+    let mut y = 0.0;
+    let tops = heights
+        .iter()
+        .map(|h| {
+            let top = y;
+            y += h;
+            top
+        })
+        .collect();
+    (tops, y)
+}
+
+/// The Welcome screen's blocks without the logo, name and tagline (the first six), and with a
+/// small gap above the cards.
+fn welcome_compact(mut blocks: [f32; 11]) -> [f32; 11] {
+    blocks[..5].fill(0.0);
+    blocks[5] = 12.0;
+    blocks
+}
+
+/// `text` wrapped at `width` with each line centred.
+fn centered(p: &egui::Painter, text: String, font: FontId, color: Color32, width: f32) -> Arc<egui::Galley> {
+    let mut job = egui::text::LayoutJob::simple(text, font, color, width);
+    job.halign = egui::Align::Center;
+    p.layout_job(job)
+}
+
+/// Draw a `centered` text with its middle at `cx` and its top at `top`.
+fn draw_centered(p: &egui::Painter, cx: f32, top: f32, galley: Arc<egui::Galley>, color: Color32) {
+    let at = pos2(cx - galley.rect.center().x, top - galley.rect.top());
+    p.galley(at, galley, color);
 }
 
 /// The width of the Recent bar's status text: a share of a narrow window, 250 in a wide one.
@@ -6119,6 +6236,11 @@ impl SnagApp {
                 }
             }
             "record" => self.x.tab = ribbon::RibbonTab::Record,
+            "welcome" => {
+                // The first screen, with no picture open.
+                self.entries.clear();
+                self.current = None;
+            }
             "stream" => {
                 // Streaming Studio's scenes: scene buttons and the scene's sounds in the band.
                 self.picture_scenes();
@@ -6346,6 +6468,51 @@ pub(crate) fn overlay_show_commands(at: Pos2) -> Vec<egui::ViewportCommand> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn welcome_cards_sit_in_a_row_of_four_in_a_wide_window() {
+        let (columns, w) = super::welcome_columns(1280.0, 180.0);
+        assert_eq!((columns, w), (4, 180.0));
+        let cards = super::welcome_cards(1280.0, columns, w, 120.0, 4);
+        // As before: 780 wide in all, centred.
+        assert_eq!(cards[0].left(), 250.0);
+        assert_eq!(cards[3].right(), 1030.0);
+        assert!(cards.iter().all(|c| c.top() == 0.0));
+    }
+
+    #[test]
+    fn welcome_cards_fit_the_smallest_window_at_every_text_size() {
+        // The quality review: in a 500 px wide window the row of four ran off both sides.
+        for width in [300.0, 400.0, 468.0, 500.0, 640.0, 820.0, 1000.0, 1600.0] {
+            for percent in [100u32, 150, 225] {
+                let card = super::grown_by(super::WELCOME_CARD_W, 40.0, percent as f32 / 100.0);
+                let (columns, w) = super::welcome_columns(width, card);
+                let cards = super::welcome_cards(width, columns, w, 140.0, 4);
+                for (k, c) in cards.iter().enumerate() {
+                    assert!(c.left() >= super::WELCOME_MARGIN - 0.01 && c.right() <= width - super::WELCOME_MARGIN + 0.01, "{width} px, {percent} %: card {k} {c:?} is off the screen");
+                    for d in &cards[k + 1..] {
+                        assert!(!c.intersects(*d), "{width} px, {percent} %: cards overlap");
+                    }
+                }
+            }
+        }
+        assert_eq!(super::welcome_columns(500.0, 180.0), (2, 180.0), "two by two at the minimum width");
+        // The canvas beside the tools in a 500 px window: the cards shrink a little to stay two by two.
+        assert_eq!(super::welcome_columns(380.0, 180.0), (2, 164.0));
+        assert_eq!(super::welcome_columns(380.0, 230.0).0, 1, "one under the other with big text");
+    }
+
+    #[test]
+    fn welcome_blocks_stack_without_gaps_or_overlaps() {
+        let (tops, total) = super::welcome_stack(&[64.0, 4.0, 47.0, 6.0]);
+        assert_eq!(tops, vec![0.0, 64.0, 68.0, 115.0]);
+        assert_eq!(total, 121.0);
+        // Too short a window: the cards come first, below a small gap.
+        let compact = super::welcome_compact([64.0, 4.0, 47.0, 6.0, 22.0, 24.0, 260.0, 24.0, 18.0, 10.0, 16.0]);
+        let (tops, total) = super::welcome_stack(&compact);
+        assert_eq!(tops[6], 12.0);
+        assert_eq!(total, 12.0 + 260.0 + 24.0 + 18.0 + 10.0 + 16.0);
+    }
+
     #[test]
     fn finished_work_is_notified_only_when_snagster_is_away() {
         assert!(super::notify_when(Some(false), false), "another window has the focus");

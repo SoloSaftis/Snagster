@@ -240,8 +240,9 @@ impl SnagApp {
             let room = ui.available_width() - right_w - gap;
             let current = RibbonTab::ALL.iter().position(|t| *t == self.x.tab).unwrap_or(0);
             let named = format!("{} {}", self.x.tab.name(), ph::CARET_DOWN);
-            // Words, not just dots: an icon stays small beside big text.
-            let more_tabs = format!("{} {}", t("More"), ph::CARET_DOWN);
+            // Just a caret, as browsers and Windows 11's tab views show it: "More" is the band's
+            // overflow, and a word here would take room the tabs need.
+            let more_tabs = ph::CARET_DOWN.to_string();
             let shown = fit::tabs_shown(&widths, current, room, look::tab_width(ui, &more_tabs) + gap, look::tab_width(ui, &named) + gap);
             for tab in RibbonTab::ALL.into_iter().take(shown) {
                 let on = self.x.tab == tab && !self.settings.ribbon_folded;
@@ -259,8 +260,8 @@ impl SnagApp {
             if shown < RibbonTab::ALL.len() {
                 // The current tab, when it is one of those in the menu, names the menu.
                 let hidden_current = current >= shown;
-                let label = if hidden_current { named } else { more_tabs.clone() };
-                let more = look::tab(ui, &label, t("More tabs"), hidden_current && !self.settings.ribbon_folded);
+                let (label, name) = if hidden_current { (named, self.x.tab.name()) } else { (more_tabs.clone(), t("More tabs")) };
+                let more = look::named_tab(ui, &label, name, t("More tabs"), hidden_current && !self.settings.ribbon_folded);
                 let mut pick = None;
                 egui::Popup::menu(&more).show(|ui| {
                     ui.set_min_width(180.0);
@@ -333,7 +334,7 @@ impl SnagApp {
                     let (measured, mut right) = fit::end();
                     widths = measured;
                     if shown < widths.len() {
-                        let more = look::big_tool(ui, DOTS, t("More"), t("The groups that don't fit the window"), true, false);
+                        let more = look::big_tool(ui, DOTS, t("More"), t("More groups"), true, false);
                         right = right.max(more.rect.right());
                         egui::Popup::menu(&more).show(|ui| {
                             fit::begin(fit::Pass::Overflow, shown, std::mem::take(&mut widths));
@@ -1053,7 +1054,7 @@ impl SnagApp {
         let tip = t("Every command of this tab in one menu");
         match self.x.tab {
             RibbonTab::Studio | RibbonTab::Help => {}
-            tab => look::group(ui, t("More"), |ui| {
+            tab => look::group(ui, t("Commands"), |ui| {
                 look::column(ui, |ui| {
                     look::small_menu(ui, ph::LIST, t("All commands"), tip, |ui| match tab {
                         RibbonTab::Home => self.file_menu(ui),

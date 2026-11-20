@@ -108,6 +108,15 @@ Settings, the Library and the tray (every system):
 - **The Library picks a capture with a click** (a blue ring shows it); Delete moves it to the
   Recycle Bin or Trash, with the usual Undo. In the search box Delete still edits the text.
 - **Stop recording in the tray's menu**: while a recording runs it is the first item.
+- **Library tiles with bigger text**: at Windows' Text size of 150 % and more the tiles grow and
+  their lines no longer run into each other; a title too long for its tile ends in "…" and is
+  shown whole in the tooltip. The Library's sort and search texts are now translated.
+- **The Welcome screen fits any window**: its cards go two by two, or one under the other, in a
+  narrow window or with big text, and a short window scrolls with the cards first. Its texts are
+  translated and the Capture card shows your own All-in-one key.
+- **The ribbon's "More" means one thing**: the groups that don't fit a narrow window. The tabs
+  that don't fit are behind a ▾ at the end of the tab row, and every tab's last group is now
+  called Commands.
 
 macOS:
 

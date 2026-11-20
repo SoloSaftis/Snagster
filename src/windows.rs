@@ -161,6 +161,53 @@ pub(crate) const MAC_GROUPS: [(&str, &str, &[SettingsTab]); 7] = {
     ]
 };
 
+/// Text sizes of a Library tile's three lines: title, date and program, tags.
+const TILE_FONTS: [f32; 3] = [12.5, 11.0, 11.0];
+/// The room round a tile's thumbnail and lines.
+const TILE_PAD: f32 = 6.0;
+
+/// Where things go on a Library tile.
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct TileLayout {
+    size: egui::Vec2,
+    /// The thumbnail's box, from the tile's top-left corner.
+    thumb: Rect,
+    /// The top of each line, from the tile's top.
+    rows: [f32; 3],
+    /// How wide a line may be before it is cut short with "…".
+    text_width: f32,
+}
+
+/// A Library tile for Windows' Text size `text_scale` (1.0 = 100 %) and the height of a line
+/// of each of its texts (`row_heights`, as the fonts measure them at that size). At 100 % it is
+/// the classic 192 x 176; bigger text widens it a little (more of the title fits) and the lines
+/// stack at their real height, so they never overlap each other or the thumbnail.
+fn tile_layout(text_scale: f32, row_heights: [f32; 3]) -> TileLayout {
+    let grow = (text_scale - 1.0).max(0.0);
+    let width = 192.0 + 64.0 * grow;
+    let thumb_w = width - 2.0 * TILE_PAD;
+    let thumb = Rect::from_min_size(pos2(TILE_PAD, TILE_PAD), vec2(thumb_w, thumb_w * 110.0 / 180.0));
+    let mut y = thumb.bottom() + 4.0;
+    let mut rows = [0.0; 3];
+    for (k, h) in row_heights.into_iter().enumerate() {
+        rows[k] = y;
+        y += h + 1.0;
+    }
+    // The tags line is kept even when a tile has none, so every tile in a row is as tall.
+    let height = (y + TILE_PAD).max(176.0);
+    TileLayout { size: vec2(width, height), thumb, rows, text_width: width - 2.0 * (TILE_PAD + 2.0) }
+}
+
+/// `text` on one line at most `width` wide, cut short with "…" when it is longer.
+fn one_line(p: &egui::Painter, text: String, font: egui::FontId, color: Color32, width: f32) -> std::sync::Arc<egui::Galley> {
+    let mut job = egui::text::LayoutJob::simple_singleline(text, font, color);
+    job.wrap.max_width = width;
+    job.wrap.max_rows = 1;
+    job.wrap.break_anywhere = true;
+    job.wrap.overflow_character = Some('…');
+    p.layout_job(job)
+}
+
 /// The Library item the delete key acts on: the picked one, when the grid shows it (`order`
 /// holds the shown items); a capture hidden by the search is never deleted unseen.
 fn picked_index(items: &[library::Item], order: &[usize], picked: Option<&std::path::Path>) -> Option<usize> {
@@ -1128,11 +1175,12 @@ impl SnagApp {
             }
             ui.horizontal(|ui| {
                 ui.label(crate::i18n::t("Search"));
-                ui.add(egui::TextEdit::singleline(&mut self.lib_query).hint_text("title, program, tag, date (2026-11)").desired_width(260.0));
+                ui.add(egui::TextEdit::singleline(&mut self.lib_query).hint_text(crate::i18n::t("Title, program, tag or date (2026-11)")).desired_width(260.0));
+                let sorts = ["Newest first", "Oldest first", "By program", "By title"].map(crate::i18n::t);
                 egui::ComboBox::from_id_salt("libsort")
-                    .selected_text(["Newest first", "Oldest first", "By program", "By title"][self.lib_sort])
+                    .selected_text(sorts[self.lib_sort.min(sorts.len() - 1)])
                     .show_ui(ui, |ui| {
-                        for (i, l) in ["Newest first", "Oldest first", "By program", "By title"].iter().enumerate() {
+                        for (i, l) in sorts.iter().enumerate() {
                             ui.selectable_value(&mut self.lib_sort, i, *l);
                         }
                     });
@@ -1140,7 +1188,7 @@ impl SnagApp {
                 apps.sort_by_key(|a| a.to_lowercase());
                 apps.dedup();
                 egui::ComboBox::from_id_salt("libapp")
-                    .selected_text(if self.lib_app.is_empty() { "All programs".to_string() } else { self.lib_app.clone() })
+                    .selected_text(if self.lib_app.is_empty() { crate::i18n::t("All programs").to_string() } else { self.lib_app.clone() })
                     .show_ui(ui, |ui| {
                         ui.selectable_value(&mut self.lib_app, String::new(), crate::i18n::t("All programs"));
                         for a in apps {
@@ -1156,7 +1204,8 @@ impl SnagApp {
                 }
             });
             ui.horizontal(|ui| {
-                ui.label(RichText::new(format!("{}  ({} captures)", self.settings.library_folder, self.lib_items.len())).color(pal().dim).size(12.0));
+                let count = crate::i18n::tf("Captures: {count}", &[("count", &self.lib_items.len().to_string())]);
+                ui.label(RichText::new(format!("{}  ({count})", self.settings.library_folder)).color(pal().dim).size(12.0));
                 if self.lib_scan_rx.is_some() {
                     ui.spinner();
                 }
@@ -1185,8 +1234,8 @@ impl SnagApp {
             for &i in &order {
                 let m = &self.lib_items[i].meta;
                 let head = match self.lib_sort {
-                    0 | 1 => m.created.get(..7).unwrap_or("Unknown date").to_string(),
-                    2 => if m.app.is_empty() { "Unknown program".to_string() } else { m.app.clone() },
+                    0 | 1 => m.created.get(..7).unwrap_or(crate::i18n::t("Unknown date")).to_string(),
+                    2 => if m.app.is_empty() { crate::i18n::t("Unknown program").to_string() } else { m.app.clone() },
                     _ => String::new(),
                 };
                 match groups.last_mut() {
@@ -1194,6 +1243,11 @@ impl SnagApp {
                     _ => groups.push((head, vec![i])),
                 }
             }
+            // Tiles grow with Windows' Text size, and their lines go one under the other at the
+            // height their text really takes, so nothing overlaps at 150 % and above.
+            let fonts = TILE_FONTS.map(egui::FontId::proportional);
+            let rows = fonts.clone().map(|f| ui.fonts_mut(|x| x.row_height(&f)));
+            let tile = tile_layout(crate::fonts::text_scale(), rows);
             egui::ScrollArea::vertical().show(ui, |ui| {
                 for (head, members) in &groups {
                     if !head.is_empty() {
@@ -1204,7 +1258,7 @@ impl SnagApp {
                     ui.spacing_mut().item_spacing = vec2(8.0, 8.0);
                     for &i in members {
                         let item = &self.lib_items[i];
-                        let (rect, resp) = ui.allocate_exact_size(vec2(192.0, 176.0), Sense::click());
+                        let (rect, resp) = ui.allocate_exact_size(tile.size, Sense::click());
                         let picked = self.lib_picked.as_ref() == Some(&item.path);
                         let title_for_reader = item.meta.title.clone();
                         resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::ListItem, true, picked, &title_for_reader));
@@ -1217,29 +1271,29 @@ impl SnagApp {
                         if resp.clicked() || resp.secondary_clicked() {
                             self.lib_picked = Some(item.path.clone());
                         }
-                        let thumb_area = Rect::from_min_size(rect.min + vec2(6.0, 6.0), vec2(180.0, 110.0));
+                        let thumb_area = tile.thumb.translate(rect.min.to_vec2());
                         if let Some(t) = self.lib_thumbs.get(&item.path) {
                             let sz = t.size_vec2();
                             let s = (thumb_area.width() / sz.x).min(thumb_area.height() / sz.y);
                             p.image(t.id(), Rect::from_center_size(thumb_area.center(), sz * s), Rect::from_min_max(Pos2::ZERO, pos2(1.0, 1.0)), Color32::WHITE);
                         }
-                        let title: String = item.meta.title.chars().take(26).collect();
                         let date = item.meta.created.get(..16).unwrap_or(&item.meta.created).replace('T', " ");
-                        p.text(pos2(rect.min.x + 8.0, rect.min.y + 122.0), egui::Align2::LEFT_TOP, title, egui::FontId::proportional(12.5), pal().card_text);
-                        p.text(
-                            pos2(rect.min.x + 8.0, rect.min.y + 140.0),
-                            egui::Align2::LEFT_TOP,
-                            format!("{}  {}", date, item.meta.app.chars().take(14).collect::<String>()),
-                            egui::FontId::proportional(11.0),
-                            pal().dim,
-                        );
-                        if !item.meta.tags.is_empty() {
-                            p.text(pos2(rect.min.x + 8.0, rect.min.y + 156.0), egui::Align2::LEFT_TOP, format!("# {}", item.meta.tags.join(", ")), egui::FontId::proportional(11.0), accent());
+                        let lines = [
+                            (item.meta.title.clone(), pal().card_text),
+                            (format!("{}  {}", date, item.meta.app), pal().dim),
+                            (if item.meta.tags.is_empty() { String::new() } else { format!("# {}", item.meta.tags.join(", ")) }, accent()),
+                        ];
+                        for (k, (text, color)) in lines.into_iter().enumerate() {
+                            if !text.is_empty() {
+                                let g = one_line(p, text, fonts[k].clone(), color, tile.text_width);
+                                p.galley(rect.min + vec2(TILE_PAD + 2.0, tile.rows[k]), g, color);
+                            }
                         }
                         if resp.double_clicked() || resp.clicked_by(PointerButton::Primary) && ui.input(|i| i.modifiers.ctrl) {
                             open_item = Some(i);
                         }
-                        let resp = resp.on_hover_text("Double-click to open. Right-click for tags and more.");
+                        // The whole title when the tile had to cut it short.
+                        let resp = resp.on_hover_text(format!("{}\n{}", item.meta.title, crate::i18n::t("Double-click to open. Right-click for tags and more.")));
                         resp.context_menu(|ui| {
                             if ui.button(crate::i18n::t("Open in Snagster")).clicked() {
                                 open_item = Some(i);
@@ -2163,6 +2217,53 @@ fn keyboard_rows() -> Vec<(String, String)> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn library_tiles_are_the_classic_size_at_normal_text() {
+        let t = super::tile_layout(1.0, [15.0, 13.0, 13.0]);
+        assert_eq!(t.size, super::vec2(192.0, 176.0));
+        assert_eq!(t.thumb.size(), super::vec2(180.0, 110.0));
+        assert_eq!(t.text_width, 176.0);
+    }
+
+    #[test]
+    fn library_tile_lines_never_overlap_at_any_text_size() {
+        // The overlap the quality review found: at 150 % the lines sat at fixed heights, so the
+        // title ran into the date and the tags fell off the tile.
+        for percent in [100u32, 125, 150, 175, 200, 225] {
+            let scale = percent as f32 / 100.0;
+            let heights = super::TILE_FONTS.map(|f| (f * scale * 1.3).ceil());
+            let t = super::tile_layout(scale, heights);
+            assert!(t.rows[0] >= t.thumb.bottom(), "{percent} %: title under the thumbnail");
+            for k in 0..2 {
+                assert!(t.rows[k] + heights[k] <= t.rows[k + 1], "{percent} %: line {k} runs into the next");
+            }
+            assert!(t.rows[2] + heights[2] <= t.size.y, "{percent} %: the tags fall off the tile");
+            assert!(t.thumb.right() <= t.size.x && t.thumb.left() >= 0.0, "{percent} %");
+            assert!(t.text_width > 0.0 && t.text_width < t.size.x, "{percent} %");
+        }
+        let small = super::tile_layout(1.0, [15.0; 3]);
+        let big = super::tile_layout(2.25, [40.0; 3]);
+        assert!(big.size.x > small.size.x && big.size.y > small.size.y, "bigger text, bigger tile");
+    }
+
+    #[test]
+    fn a_long_title_is_cut_short_to_the_tiles_width() {
+        let ctx = super::egui::Context::default();
+        let mut widths = (0.0, 0.0);
+        let mut out = ctx.run_ui(Default::default(), |ui| {
+            let p = ui.painter();
+            let font = super::egui::FontId::proportional(12.5 * 1.5);
+            let long = super::one_line(p, "A very long capture title that would never fit on one tile".into(), font.clone(), super::Color32::WHITE, 176.0);
+            let short = super::one_line(p, "Notepad".into(), font, super::Color32::WHITE, 176.0);
+            assert_eq!(long.rows.len(), 1, "one line only");
+            assert!(long.text().ends_with('…') || long.rows[0].glyphs.last().is_some_and(|g| g.chr == '…'), "cut short with …");
+            assert!(!short.rows[0].glyphs.iter().any(|g| g.chr == '…'), "a short title stays whole");
+            widths = (long.size().x, short.size().x);
+        });
+        out.textures_delta.clear();
+        assert!(widths.0 <= 176.0 + 0.5, "{widths:?}");
+    }
+
     #[test]
     fn the_shortcuts_window_lists_how_to_move_around_by_keyboard() {
         let rows = super::keyboard_rows();
