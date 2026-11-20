@@ -492,6 +492,41 @@ fn serve(mut stream: TcpStream, st: &State) -> Result<(), String> {
     Ok(())
 }
 
+/// Fuzz target (`src/fuzz.rs`): whatever arrives on the MCP HTTP port, up to the point where
+/// a session would answer it (that part is the `mcp_jsonrpc` target).
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::Target;
+
+    pub fn targets() -> Vec<Target> {
+        vec![Target {
+            name: "mcp_http",
+            seeds: || {
+                let body = r#"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"picture_info","_meta":{"progressToken":"p"}}}"#;
+                vec![
+                    format!("POST /mcp?token=abc%20d&x=%ZZ HTTP/1.1\r\nHost: 127.0.0.1:45831\r\nOrigin: http://localhost:3000\r\nAuthorization: Bearer 0123456789abcdef\r\nMcp-Session-Id: 1f\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}", body.len()).into_bytes(),
+                    b"GET /sse HTTP/1.1\r\nHost: [::1]:45831\r\n\r\n".to_vec(),
+                    b"OPTIONS /mcp HTTP/1.1\r\nOrigin: null\r\n\r\n".to_vec(),
+                ]
+            },
+            words: || ["Content-Length: ", "Origin: ", "Host: ", "Authorization: Bearer ", "\r\n", "%", "?", "&", "=", "[", "]", "://", "4294967296"].iter().map(|s| s.to_string()).collect(),
+            run: |b| {
+                if let Ok(Some(req)) = parse_request(std::io::Cursor::new(b)) {
+                    assert!(req.body.len() <= MAX_BODY);
+                    let _ = cors(&req);
+                    let _ = token_of(&req);
+                    let _ = same_secret(&token_of(&req).unwrap_or_default(), "0123456789abcdef");
+                    let _ = req.headers.get("host").map(|h| local_host(h));
+                    let _ = req.headers.get("origin").map(|o| origin_ok(o));
+                    let _ = wants_progress(&String::from_utf8_lossy(&req.body));
+                }
+            },
+            budget: |n| 256 * 1024 + 4 * n,
+        }]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

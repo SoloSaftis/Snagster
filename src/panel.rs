@@ -359,6 +359,12 @@ impl SnagApp {
                     if snap.on_air() && crate::app::stream_ui::live_badge(ui, &snap).clicked() {
                         self.settings.panel.tab = 3;
                     }
+                    // Something is wrong with the stream: its icon beside the badge (laid out
+                    // right to left, so it lands on the badge's left).
+                    if let Some(l) = self.x.stream.health_line.clone().filter(|_| snap.on_air()) {
+                        let (icon, color) = crate::app::stream_ui::health_icon(l.bad);
+                        ui.label(RichText::new(icon).color(color)).on_hover_text(&l.advice);
+                    }
                 });
             });
         });
@@ -424,7 +430,15 @@ impl SnagApp {
             ui.label(RichText::new(t("Status:")).color(pal().strong));
             let snap = self.x.stream.snap.clone();
             ui.horizontal(|ui| {
-                ui.label(RichText::new(crate::app::stream_ui::state_label(&snap)).color(pal().dim));
+                match &self.x.stream.health_line {
+                    Some(l) => {
+                        let size = egui::TextStyle::Body.resolve(ui.style()).size;
+                        crate::app::stream_ui::health_label(ui, l, size);
+                    }
+                    None => {
+                        ui.label(RichText::new(crate::app::stream_ui::state_label(&snap)).color(pal().dim));
+                    }
+                }
                 if ui.small_button(t("Stream settings…")).clicked() {
                     self.settings_open = true;
                     self.settings_tab = crate::app::SettingsTab::Streaming;

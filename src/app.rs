@@ -47,9 +47,11 @@ pub(crate) mod work;
 pub(crate) mod ribbon;
 pub(crate) mod studio_ui;
 pub(crate) mod stream_ui;
+pub(crate) mod replay_ui;
 pub(crate) mod updates_ui;
 pub(crate) mod commands_ui;
 pub(crate) mod deleted_ui;
+pub(crate) mod keys_ui;
 #[cfg(any(target_os = "macos", test))]
 pub(crate) mod menubar_ui;
 /// The editor window's smallest size (lifted while it is the panel or the recording bar).
@@ -262,6 +264,47 @@ pub(crate) enum SettingsTab {
     Ai,
     Language,
     Streaming,
+}
+
+impl SettingsTab {
+    pub(crate) const ALL: [SettingsTab; 12] = [
+        SettingsTab::AfterCapture,
+        SettingsTab::Saving,
+        SettingsTab::Capture,
+        SettingsTab::Recording,
+        SettingsTab::Editor,
+        SettingsTab::Effects,
+        SettingsTab::Redact,
+        SettingsTab::Hotkeys,
+        SettingsTab::Presets,
+        SettingsTab::Ai,
+        SettingsTab::Language,
+        SettingsTab::Streaming,
+    ];
+
+    /// The pane's name in the settings file (`Settings::settings_pane`), so Settings opens on
+    /// the pane shown last, also after a restart.
+    pub(crate) fn key(self) -> &'static str {
+        match self {
+            SettingsTab::AfterCapture => "after_capture",
+            SettingsTab::Saving => "saving",
+            SettingsTab::Capture => "capture",
+            SettingsTab::Recording => "recording",
+            SettingsTab::Editor => "editor",
+            SettingsTab::Effects => "effects",
+            SettingsTab::Redact => "redact",
+            SettingsTab::Hotkeys => "hotkeys",
+            SettingsTab::Presets => "presets",
+            SettingsTab::Ai => "ai",
+            SettingsTab::Language => "general",
+            SettingsTab::Streaming => "streaming",
+        }
+    }
+
+    /// The pane a settings file names; the first pane for an unknown or empty name.
+    pub(crate) fn from_key(key: &str) -> SettingsTab {
+        SettingsTab::ALL.into_iter().find(|t| t.key() == key).unwrap_or(SettingsTab::AfterCapture)
+    }
 }
 
 /// The small always-on-top bar shown while something runs in the background.
@@ -524,6 +567,8 @@ pub struct SnagApp {
     pub(crate) lib_thumbs: HashMap<PathBuf, TextureHandle>,
     pub(crate) lib_thumb_rx: Option<Receiver<(PathBuf, RgbaImage)>>,
     pub(crate) lib_tag_edit: Option<(usize, String)>,
+    /// The capture picked in the Library grid (a click), which Delete / ⌘⌫ moves to the Trash.
+    pub(crate) lib_picked: Option<PathBuf>,
     // ui helpers
     ui_fonts: fonts::UiFonts,
     /// Stamp pictures by emoji and size (`None`: the font can't draw it).
@@ -630,13 +675,14 @@ impl SnagApp {
 
     /// The window's state with nothing open and nothing started (no window, threads, hotkeys
     /// or files touched), so `new` and the unit tests share it.
-    fn blank(settings: Settings, persist: bool, screenshot: Option<PathBuf>) -> Self {
+    pub(crate) fn blank(settings: Settings, persist: bool, screenshot: Option<PathBuf>) -> Self {
         let (cap_tx, cap_rx) = channel();
         let (hk_tx, hk_rx) = channel();
         let (ocr_tx, ocr_rx) = channel();
         let (gif_tx, gif_rx) = channel();
         let (video_tx, video_rx) = channel();
         let (tray_tx, tray_rx) = channel();
+        let saved_pane = settings.settings_pane.clone();
         Self {
             x: ribbon::Extra::default(),
             saved_settings: settings.clone(),
@@ -722,6 +768,7 @@ impl SnagApp {
             lib_thumbs: HashMap::new(),
             lib_thumb_rx: None,
             lib_tag_edit: None,
+            lib_picked: None,
             ui_fonts: fonts::UiFonts::default(),
             stamp_tex: HashMap::new(),
             image_tex: HashMap::new(),
@@ -744,7 +791,7 @@ impl SnagApp {
             }),
             last_scale: 1.0,
             settings_open: false,
-            settings_tab: SettingsTab::AfterCapture,
+            settings_tab: SettingsTab::from_key(&saved_pane),
             shortcuts_open: false,
             about_open: false,
             redact_open: false,
@@ -863,6 +910,8 @@ impl SnagApp {
                 }
             }
             Action::ShowSnag => self.show_window(ctx),
+            Action::SaveReplay => self.save_replay(ctx),
+            Action::ToggleReplay => self.toggle_replay(ctx),
         }
     }
 
@@ -1989,6 +2038,7 @@ impl SnagApp {
 
     pub(crate) fn undo(&mut self) {
         self.commit_text();
+        self.x.keys.forget_nudge();
         if let Some(e) = self.entry()
             && let Some(prev) = e.undo.pop()
         {
@@ -2003,6 +2053,7 @@ impl SnagApp {
         // or it would later be written over, or delete, whatever mark has its index in the
         // redone picture.
         self.commit_text();
+        self.x.keys.forget_nudge();
         if let Some(e) = self.entry()
             && let Some(next) = e.redo.pop()
         {
@@ -2385,7 +2436,12 @@ impl SnagApp {
     // ---------- keyboard ----------
 
     fn shortcuts(&mut self, ctx: &egui::Context) {
-        let typing = self.text_edit.is_some() || ctx.memory(|m| m.focused().is_some());
+        // Only a text field takes the keys: with a button, a tool or the picture focused (F6, key
+        // tips) the shortcuts still work, as in GTK, Qt and Windows apps.
+        // A control in one of Snagster's own windows (the language list, the timer) keeps them.
+        let focused = ctx.memory(|m| m.focused());
+        let elsewhere = focused.is_some() && self.x.keys.pane_of(ctx, focused).is_none();
+        let typing = self.text_edit.is_some() || ctx.text_edit_focused() || elsewhere;
         let consume = |m: Modifiers, k: Key| ctx.input_mut(|i| i.consume_key(m, k));
         if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z) || consume(Modifiers::COMMAND, Key::Y) {
             self.redo();
@@ -2419,8 +2475,24 @@ impl SnagApp {
         if consume(Modifiers::COMMAND, Key::Comma) {
             self.settings_open = true;
         }
-        if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::P) {
+        // Pin and the capture keys are the system's own (`platform::app_key`): a Mac keeps ⇧⌘A,
+        // ⇧⌘W and ⇧⌘P for other things. Before Print, so ⌥⌘P isn't taken for ⌘P.
+        use crate::platform::{AppKey, app_key};
+        let app = |k: AppKey| {
+            let (m, key) = app_key(k);
+            consume(m, key)
+        };
+        if app(AppKey::Pin) {
             self.pin_current();
+        }
+        if app(AppKey::AllInOne) {
+            self.do_action(ctx, Action::AllInOne);
+        }
+        if app(AppKey::Window) {
+            self.do_action(ctx, Action::Window);
+        }
+        if app(AppKey::Screen) {
+            self.do_action(ctx, Action::Screen);
         }
         if consume(Modifiers::COMMAND, Key::P) && self.current.is_some() {
             self.print();
@@ -2436,15 +2508,6 @@ impl SnagApp {
         }
         if consume(Modifiers::COMMAND, Key::L) {
             self.library_open = true;
-        }
-        if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::A) {
-            self.do_action(ctx, Action::AllInOne);
-        }
-        if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::W) {
-            self.do_action(ctx, Action::Window);
-        }
-        if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::F) {
-            self.do_action(ctx, Action::Screen);
         }
         if consume(Modifiers::NONE, Key::F1) {
             self.shortcuts_open = true;
@@ -2993,7 +3056,7 @@ impl SnagApp {
             self.do_action(ctx, Action::Ruler);
         }
         ui.separator();
-        if item_on(ui, has, "Pin picture to screen", "Ctrl+Shift+P") {
+        if item_on(ui, has, "Pin picture to screen", &crate::platform::app_key_text(crate::platform::AppKey::Pin)) {
             self.pin_current();
         }
         let many = self.entries.len() >= 2;
@@ -3103,12 +3166,14 @@ impl SnagApp {
     /// the button that shows the folded options panel.
     fn tool_bar(&mut self, ui: &mut egui::Ui, options_button: bool) {
         ui.add_space(6.0);
+        keys_ui::set_scope(ui, Some(keys_ui::Scope::Tools));
         if options_button {
             let on = self.x.narrow_options;
             let label = crate::i18n::t("Options panel");
             let (rect, resp) = ui.allocate_exact_size(vec2(grown(110.0, 108.0), grown(28.0, 12.0)), Sense::click());
             let resp = resp.on_hover_text(crate::i18n::t("Colours, sizes and styles on the right"));
             resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
+            keys_ui::note(ui, &resp, label, true, on);
             let bg = if on { pal().accent } else if resp.hovered() { pal().panel_hi } else { Color32::TRANSPARENT };
             ui.painter().rect_filled(rect.shrink(1.0), CornerRadius::same(4), bg);
             let fg = if on { pal().on_accent } else { pal().text };
@@ -3124,7 +3189,11 @@ impl SnagApp {
             }
             ui.add_space(4.0);
         }
-        egui::ScrollArea::vertical().id_salt("tools-scroll").show(ui, |ui| self.tool_grid(ui));
+        egui::ScrollArea::vertical().id_salt("tools-scroll").show(ui, |ui| {
+            self.x.keys.scroll_here(ui.ctx(), keys_ui::Pane::Tools);
+            self.tool_grid(ui)
+        });
+        keys_ui::set_scope(ui, None);
     }
 
     fn tool_grid(&mut self, ui: &mut egui::Ui) {
@@ -3151,6 +3220,8 @@ impl SnagApp {
                 let size = if w > room { (10.0 * room / w).max(7.0) } else { 10.0 };
                 ui.painter().text(pos2(rect.center().x, rect.bottom() - 8.0), Align2::CENTER_CENTER, name, FontId::proportional(size), fg);
                 let resp = resp.on_hover_text(format!("{} ({})\n{}", crate::i18n::t(t.label()), t.key(), crate::i18n::t(t.hint())));
+                resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::RadioButton, true, selected, name));
+                keys_ui::note(ui, &resp, name, true, selected);
                 if resp.clicked() {
                     self.commit_text();
                     self.tool = t;
@@ -3167,6 +3238,7 @@ impl SnagApp {
 
     fn side_panel(&mut self, ui: &mut egui::Ui) {
         egui::ScrollArea::vertical().show(ui, |ui| {
+            self.x.keys.scroll_here(ui.ctx(), keys_ui::Pane::Options);
             ui.add_space(10.0);
             section(ui, crate::i18n::t("Color"));
             let mut chosen = None;
@@ -3177,6 +3249,8 @@ impl SnagApp {
                 for (i, c) in palette.iter().enumerate() {
                     let c = rgb(*c);
                     let (rect, resp) = ui.allocate_exact_size(vec2(36.0, 26.0), Sense::click());
+                    let name = format!("#{:02X}{:02X}{:02X}", c.r(), c.g(), c.b());
+                    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, c == cur, &name));
                     ui.painter().rect_filled(rect, CornerRadius::same(6), c);
                     // Black on a dark panel, white on a light one: an edge so it doesn't vanish.
                     if let Some(edge) = crate::theme::swatch_edge(c, pal().panel, &pal()) {
@@ -3522,7 +3596,9 @@ impl SnagApp {
                 folders.dedup();
                 self.earlier.poll(&ctx, folders);
             }
+            keys_ui::set_scope(ui, Some(keys_ui::Scope::Recent));
             egui::ScrollArea::horizontal().show(ui, |ui| {
+                self.x.keys.scroll_here(ui.ctx(), keys_ui::Pane::Recent);
                 // Top-aligned: a taller tile (Earlier's, with its label) doesn't push the others down.
                 ui.horizontal_top(|ui| {
                     if self.entries.is_empty() && self.earlier.items.is_empty() {
@@ -3530,12 +3606,14 @@ impl SnagApp {
                     }
                     for i in (0..self.entries.len()).rev() {
                         let (rect, resp) = ui.allocate_exact_size(vec2(124.0, grown(84.0, 20.0)), Sense::click());
+                        let is_cur = self.current == Some(i);
+                        resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, is_cur, &self.entries[i].name));
+                        keys_ui::note(ui, &resp, &self.entries[i].name, true, is_cur);
                         // Pictures scrolled out of view aren't drawn (their textures can go).
                         if !ui.is_rect_visible(rect) {
                             continue;
                         }
                         let tex = self.entries[i].texture(&ctx);
-                        let is_cur = self.current == Some(i);
                         let thumb_area = Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(116.0, 58.0));
                         let size = self.entries[i].doc.size();
                         let s = (thumb_area.width() / size.x).min(thumb_area.height() / size.y);
@@ -3580,6 +3658,7 @@ impl SnagApp {
                     open_earlier = self.earlier_tiles(ui);
                 });
             });
+            keys_ui::set_scope(ui, None);
             if let Some(item) = open_earlier {
                 match self.entries.iter().position(|e| e.path.as_deref() == Some(item.path.as_path())) {
                     Some(i) => switch = Some(i),
@@ -3649,6 +3728,9 @@ impl SnagApp {
             p.text(pos2(rect.center().x, rect.bottom() - grown(10.0, 8.0)), Align2::CENTER_CENTER, name, FontId::proportional(11.5), pal().dim);
             let tip = if it.video { crate::i18n::t("Play this video") } else { crate::i18n::t("Open this picture") };
             let resp = resp.on_hover_text(format!("{tip}\n{}", it.path.display()));
+            let name = it.name();
+            resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &name));
+            keys_ui::note(ui, &resp, &name, true, false);
             if resp.clicked() {
                 pick = Some(it.clone());
             }
@@ -3781,6 +3863,9 @@ impl SnagApp {
         let mut origin = canvas_origin(area.center(), size, scale, self.pan);
 
         let resp = ui.allocate_rect(area, Sense::click_and_drag());
+        self.canvas_here(resp.id);
+        let name = self.entries[ci].name.clone();
+        resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, &name));
         let shift = ui.input(|i| i.modifiers.shift);
 
         if resp.hovered() {
@@ -4477,7 +4562,7 @@ impl SnagApp {
         self.poll_hotkeys(ctx);
         self.poll_tray(ctx);
         #[cfg(target_os = "macos")]
-        self.apply_menu_bar();
+        self.apply_menu_bar(ctx);
         // Close keeps Snagster in the tray only where there is a tray to come back from (stock
         // GNOME has none), and only when the person chose it.
         let keep_running = !self.quitting && self.tray.is_some() && self.settings.close_to_tray && crate::platform::has_tray();
@@ -4503,6 +4588,7 @@ impl SnagApp {
             crate::stream::live::wait_idle(Duration::from_secs(5));
         }
         self.poll_stream(ctx);
+        self.poll_replay(ctx);
         // Snagster opened again: this one comes forward (and opens the file asked for).
         for ask in crate::instance::take() {
             // A capture asked for from a desktop shortcut: done as if its hotkey was pressed.
@@ -4573,28 +4659,39 @@ impl SnagApp {
         for p in dropped {
             self.open_path(&p);
         }
+        // F6, the arrows and the key tips first: the keys they take are not shortcuts.
+        self.keys_begin(&ctx);
         self.shortcuts(&ctx);
 
         egui::Panel::top("ribbon")
             .frame(egui::Frame::new().fill(crate::look::pal().band))
-            .show(ui, |ui| self.ribbon(ui));
+            .show(ui, |ui| {
+                self.pane_here(ui, keys_ui::Pane::Ribbon, ui.max_rect());
+                self.ribbon(ui)
+            });
         self.language_window(&ctx);
         self.update_window(&ctx);
         self.stream_confirm_window(&ctx);
         self.screen_access_window(&ctx);
         if self.x.tab == ribbon::RibbonTab::Studio {
+            // Studio: the ribbon and the studio, F6 goes between them.
+            self.pane_here(ui, keys_ui::Pane::Canvas, ui.available_rect_before_wrap());
             self.studio_view(ui);
             self.dialog_window(&ctx);
             self.settings_window(&ctx);
             self.help_windows(&ctx);
             self.library_window(&ctx);
+            self.keys_end(&ctx);
             return;
         }
         if self.settings.show_tray {
             egui::Panel::bottom("tray")
                 .exact_size(grown(112.0, 36.0))
                 .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(4, 6)))
-                .show(ui, |ui| self.tray(ui));
+                .show(ui, |ui| {
+                    self.pane_here(ui, keys_ui::Pane::Recent, ui.max_rect());
+                    self.tray(ui)
+                });
         }
         // A narrow window (Snap's half or third of the screen) keeps the picture in view: the
         // options panel folds away behind a button above the tools.
@@ -4603,15 +4700,24 @@ impl SnagApp {
             .exact_size(grown(118.0, 108.0))
             .resizable(false)
             .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(4, 0)))
-            .show(ui, |ui| self.tool_bar(ui, narrow && self.settings.show_side_panel));
+            .show(ui, |ui| {
+                self.pane_here(ui, keys_ui::Pane::Tools, ui.max_rect());
+                self.tool_bar(ui, narrow && self.settings.show_side_panel)
+            });
         if self.settings.show_side_panel && (!narrow || self.x.narrow_options) {
             egui::Panel::right("props")
                 .exact_size(grown(230.0, 180.0))
                 .resizable(false)
                 .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(14, 6)))
-                .show(ui, |ui| self.side_panel(ui));
+                .show(ui, |ui| {
+                    self.pane_here(ui, keys_ui::Pane::Options, ui.max_rect());
+                    self.side_panel(ui)
+                });
         }
-        egui::CentralPanel::default().frame(egui::Frame::new().fill(pal().bg)).show(ui, |ui| self.canvas(ui));
+        egui::CentralPanel::default().frame(egui::Frame::new().fill(pal().bg)).show(ui, |ui| {
+            self.pane_here(ui, keys_ui::Pane::Canvas, ui.max_rect());
+            self.canvas(ui)
+        });
 
         self.dialog_window(&ctx);
         self.settings_window(&ctx);
@@ -4621,6 +4727,7 @@ impl SnagApp {
         self.timer_window(&ctx);
         self.text_window(&ctx);
         self.show_pins(&ctx);
+        self.keys_end(&ctx);
     }
 }
 
@@ -4754,7 +4861,8 @@ fn read_picture_file(p: &std::path::Path) -> Result<(String, Doc, bool), String>
         let (name, d) = export::load_project(p).map_err(|e| e.to_string())?;
         return Ok((if name.is_empty() { "Project".into() } else { name }, d, true));
     }
-    let img = image::open(p).map_err(|e| e.to_string())?;
+    // The same limits as pictures inside projects: memory bounded by the size, TIFFs checked.
+    let img = export::decode_image(&std::fs::read(p).map_err(|e| e.to_string())?)?;
     let name = p.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "Picture".into());
     Ok((name, Doc::new(img.to_rgba8()), false))
 }
@@ -5266,6 +5374,8 @@ impl SnagApp {
         let ctx2 = ctx.clone();
         match crate::tray::create(&self.settings, self.tray_tx.clone(), move || ctx2.request_repaint()) {
             Ok(t) => {
+                let s = crate::replay::status();
+                t.set_replay(s.on(), s.phase == crate::replay::Phase::On);
                 self.tray = Some(t);
                 self.tray_for = Some(key);
             }
@@ -5321,9 +5431,19 @@ impl SnagApp {
                     self.quitting = true;
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
+                // What the recording bar's Stop does.
+                TrayCmd::StopRecording if self.is_recording() => {
+                    self.bar.stop(Instant::now());
+                    self.stop_job();
+                }
+                TrayCmd::StopRecording => {}
                 #[cfg(any(target_os = "macos", test))]
                 TrayCmd::Menu(run) => self.run_menu(ctx, run),
             }
+        }
+        let recording = self.is_recording();
+        if let Some(t) = &mut self.tray {
+            t.show_recording(recording);
         }
     }
 
@@ -6428,6 +6548,26 @@ mod tests {
 
     fn boxed() -> Shape {
         Shape::Rect { rect: Rect::from_min_max(pos2(20.0, 20.0), pos2(60.0, 60.0)), color: Color32::RED, width: 3.0, fill: false, radius: 0.0, shadow: false }
+    }
+
+    #[test]
+    fn the_trays_stop_recording_stops_only_a_recording() {
+        let ctx = egui::Context::default();
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        let stop = Arc::new(AtomicBool::new(false));
+        a.job_stop = Some(stop.clone());
+        // A scrolling capture isn't a recording: the tray's Stop recording leaves it alone.
+        a.mini = Some(Mini::Scroll);
+        a.tray_tx.send(crate::tray::TrayCmd::StopRecording).unwrap();
+        a.poll_tray(&ctx);
+        assert!(!stop.load(Ordering::Relaxed));
+        for m in [Mini::Video, Mini::Gif] {
+            stop.store(false, Ordering::Relaxed);
+            a.mini = Some(m);
+            a.tray_tx.send(crate::tray::TrayCmd::StopRecording).unwrap();
+            a.poll_tray(&ctx);
+            assert!(stop.load(Ordering::Relaxed), "a recording stops as with the bar's Stop");
+        }
     }
 
     #[test]

@@ -240,8 +240,101 @@ pub(super) fn tools() -> Vec<Tool> {
             edits: false,
         },
         Tool { name: "stream_status", description: "Whether Snagster is live, and how it goes: state, time on the air, bitrate, frames sent and dropped, reconnects, encoder, and the last error (the key masked); when multistreaming, outputs lists each service with its own state, bitrate, frames and error.", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "stream_stats", description: "How well the live stream is going, measured over the last 10 seconds: per service the bitrate really sent against the bitrate set, frames the network dropped (count since going live and share), how far its upload queue is behind (ms), how long the connection has been up and reconnects (in all and in the last 10 minutes); for the computer the frames it dropped (encoder or late) and the encoder's time per frame against the frame's budget; and warnings in plain words (upload too slow, computer too slow, connection dropping) with their level; level is the worst of them (ok, warning or bad). measuring is true for the first seconds, before the rates are known.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "stream_stop", description: "End the live stream (the last packets are sent and the stream is closed); returns its final numbers and the copy's file when one was recorded.", schema: obj(json!({}), &[]), edits: false },
+        Tool {
+            name: "replay_start",
+            description: "Turn the replay buffer on: Snagster keeps encoding the screen the mouse is on (on the graphics chip when it can) and keeps the last 30-120 seconds in memory, so replay_save can save a moment after it happened. It runs in the background until replay_stop. Off by default. On Wayland the desktop may ask the person to choose a screen. Frame rate, quality, encoder and pointer come from the Recording settings; sound from replay_audio.",
+            schema: obj(json!({"seconds": {"type": "integer", "minimum": 30, "maximum": 120, "description": "How much to keep, 30-120 s (default: the replay_s setting)."}}), &[]),
+            edits: false,
+        },
+        Tool {
+            name: "replay_save",
+            description: "Save the last seconds the replay buffer kept as an MP4 in the recordings folder, at once (the buffer keeps going). The clip starts at a keyframe, so it can be up to 2 s longer than asked. When this server's replay buffer is off but the Snagster window has one on, the window saves its own.",
+            schema: obj(json!({"seconds": {"type": "integer", "minimum": 2, "maximum": 120, "description": "Save only the last this many seconds (default: everything kept)."}}), &[]),
+            edits: false,
+        },
+        Tool { name: "replay_stop", description: "Turn the replay buffer off; what it kept is thrown away (nothing is saved).", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "replay_status", description: "Whether the replay buffer is on: its phase (off, starting, on), the seconds it keeps and holds now, the picture size, frame rate, encoder, whether sound is kept, and the last error.", schema: obj(json!({}), &[]), edits: false },
     ]
+}
+
+/// replay_status's answer.
+pub(super) fn replay_json(s: &crate::replay::Status) -> Value {
+    let phase = match s.phase {
+        crate::replay::Phase::Off => "off",
+        crate::replay::Phase::Starting => "starting",
+        crate::replay::Phase::On => "on",
+    };
+    let mut v = json!({"phase": phase, "on": s.on(), "seconds": s.seconds, "held_s": (s.held_s * 10.0).round() / 10.0});
+    if let Some(i) = &s.info {
+        v["width"] = json!(i.width);
+        v["height"] = json!(i.height);
+        v["fps"] = json!(i.fps);
+        v["encoder"] = json!(i.encoder);
+        v["hardware"] = json!(i.hardware);
+        v["sound"] = json!(i.sound);
+    }
+    if let Some(e) = &s.error {
+        v["error"] = json!(e);
+    }
+    v
+}
+
+/// An integer argument within `lo..=hi`, or None when it isn't given.
+fn int_in(a: &Value, k: &str, lo: u32, hi: u32) -> Result<Option<u32>, String> {
+    match a.get(k) {
+        None | Some(Value::Null) => Ok(None),
+        Some(v) => match v.as_f64() {
+            Some(n) if n.fract() == 0.0 && n >= lo as f64 && n <= hi as f64 => Ok(Some(n as u32)),
+            _ => Err(format!("{k} is a whole number from {lo} to {hi}")),
+        },
+    }
+}
+
+impl Workspace {
+    fn replay_start(&mut self, a: &Value) -> Outcome {
+        use crate::replay::{self, Phase};
+        let seconds = int_in(a, "seconds", 30, 120)?;
+        let s = replay::status();
+        if s.on() {
+            if let Some(n) = seconds {
+                replay::set_seconds(n);
+            }
+            return Ok(vec![text(format!("Replay on: keeping the last {} s (already on). Save it with replay_save.", seconds.unwrap_or(s.seconds)))]);
+        }
+        let mut o = replay::ReplayOptions::from_settings(&self.settings());
+        if let Some(n) = seconds {
+            o.seconds = n;
+        }
+        replay::begin(o)?;
+        let s = self.ticking(Some(120.0), "Turning replay on", || replay::wait_started(std::time::Duration::from_secs(130)));
+        match s.phase {
+            Phase::On => {
+                let i = s.info.clone();
+                let what = i.map(|i| format!(" ({} x {} at {} fps, {}{})", i.width, i.height, i.fps, i.encoder, if i.sound { ", with sound" } else { "" })).unwrap_or_default();
+                Ok(vec![text(format!("Replay on: keeping the last {} s of the screen{what}. Save it with replay_save.", s.seconds))])
+            }
+            Phase::Starting => Ok(vec![text("Replay is still starting (the desktop may be asking which screen to share); check with replay_status.")]),
+            Phase::Off => Err(s.error.unwrap_or_else(|| "Replay couldn't start.".into())),
+        }
+    }
+
+    fn replay_save(&mut self, a: &Value) -> Outcome {
+        use crate::replay;
+        let seconds = int_in(a, "seconds", 2, 120)?;
+        if !replay::status().on() {
+            // The window's own buffer (this server runs apart from it over stdio).
+            #[cfg(not(test))]
+            if seconds.is_none() && crate::instance::send_command("replay_save", None).is_ok() {
+                return Ok(vec![text("Asked the Snagster window to save its replay: when it is on there, the video goes to the recordings folder (list_recordings shows it).")]);
+            }
+            return Err("Replay is off; call replay_start first.".into());
+        }
+        let v = replay::save(seconds)?;
+        let msg = format!("Saved {}: the last {:.1} s ({} frames{}).", v.path.display(), v.seconds, v.frames, if v.audio { ", with sound" } else { "" });
+        Ok(saved(&v.path, msg))
+    }
 }
 
 impl Workspace {
@@ -446,6 +539,58 @@ fn stream_json(s: &crate::stream::live::Snapshot) -> Value {
             v["error"] = json!(st.error);
         }
     }
+    v
+}
+
+/// stream_stats: the stream's health (`stream::health`), with plain-words warnings.
+fn stats_json(s: &crate::stream::live::Snapshot) -> Value {
+    use crate::stream::health::Level;
+    let round = |x: f32, places: i32| {
+        let f = 10f64.powi(places);
+        (x as f64 * f).round() / f
+    };
+    let mut v = json!({"live": s.live()});
+    let Some(st) = s.stats.as_ref() else {
+        v["message"] = json!("Nothing is being streamed.");
+        return v;
+    };
+    let h = &st.health;
+    v["state"] = json!(format!("{:?}", st.state).to_lowercase());
+    v["level"] = json!(match h.level() {
+        None => "ok",
+        Some(Level::Warning) => "warning",
+        Some(Level::Bad) => "bad",
+    });
+    v["measuring"] = json!(h.window_s == 0.0);
+    v["window_s"] = json!(round(h.window_s, 1));
+    v["uptime_s"] = json!((st.uptime_s * 10.0).round() / 10.0);
+    v["set_kbps"] = json!(h.set_kbps);
+    v["encoder"] = json!(st.video_encoder.as_ref().map(|e| format!("{} ({})", e.name, if e.hardware { "graphics chip" } else { "processor" })));
+    v["computer"] = json!({
+        "dropped_frames": h.encoder_lost,
+        "dropped_share": round(h.encoder_lost_share, 4),
+        "encode_ms": round(h.encode_ms, 2),
+        "frame_budget_ms": round(h.frame_budget_ms, 2),
+        "encoder_load": round(h.encoder_load, 3),
+    });
+    v["outputs"] = json!(h.outputs.iter().zip(&st.outputs).map(|(o, out)| json!({
+        "service": o.service,
+        "state": format!("{:?}", out.state).to_lowercase(),
+        "measuring": !o.measured,
+        "sent_kbps": o.sent_kbps,
+        "network_dropped_frames": o.dropped,
+        "network_dropped_share": round(o.dropped_share, 4),
+        "queue_ms": o.queue_ms,
+        "connected_s": (o.connected_s * 10.0).round() / 10.0,
+        "reconnects": o.reconnects,
+        "reconnects_last_10_min": o.reconnects_recent,
+    })).collect::<Vec<_>>());
+    v["warnings"] = json!(h.warnings.iter().map(|w| json!({
+        "problem": format!("{:?}", w.problem).to_lowercase(),
+        "level": if w.level == Level::Bad { "bad" } else { "warning" },
+        "service": w.service,
+        "message": w.fill(w.advice()),
+    })).collect::<Vec<_>>());
     v
 }
 
@@ -720,10 +865,10 @@ impl Workspace {
                 }
                 let mut imgs = Vec::new();
                 for p in &paths {
-                    imgs.push(image::open(p).map_err(|e| format!("{p}: {e}"))?.to_rgba8());
+                    imgs.push(export::open_picture(Path::new(p))?);
                 }
                 let vertical = a.get("vertical").and_then(Value::as_bool).unwrap_or(false);
-                let out = effects::combine(&imgs, vertical, 16).ok_or("couldn't combine them")?;
+                let out = effects::combine(&imgs, vertical, 16).ok_or("the combined picture would be too big (over 268 million pixels)")?;
                 self.set(Doc::new(out), "Combined")
             }
             "make_guide" => {
@@ -733,9 +878,20 @@ impl Workspace {
                 let current = a.get("include_current").and_then(Value::as_bool).unwrap_or(false);
                 let total = (list.len() + current as usize + 1) as f64;
                 let mut steps: Vec<(String, image::RgbaImage)> = Vec::new();
+                // A one-picture guide shrinks each step to the page as it is read (as the page
+                // would), and no guide holds more pictures than fit in memory at once.
+                let one_picture = path.extension().is_some_and(|e| ["png", "jpg", "jpeg"].iter().any(|x| e.eq_ignore_ascii_case(x)));
+                let mut held = 0u64;
                 for (i, s) in list.iter().enumerate() {
                     let p = s.get("path").and_then(Value::as_str).ok_or("each step needs a path")?;
-                    let img = image::open(p).map_err(|e| format!("{p}: {e}"))?.to_rgba8();
+                    let mut img = export::open_picture(Path::new(p))?;
+                    if one_picture {
+                        img = effects::fit_guide_width(img, export::GUIDE_WIDTH);
+                    }
+                    held += img.width() as u64 * img.height() as u64;
+                    if held > 4 * effects::GUIDE_PAGE_MAX {
+                        return Err(format!("the pictures are too big together for one guide (step {} goes over); use fewer or smaller steps", i + 1));
+                    }
                     let cap = s.get("caption").and_then(Value::as_str).map(String::from).unwrap_or_else(|| format!("Step {}", i + 1));
                     steps.push((cap, img));
                     self.report(steps.len() as f64, Some(total), &format!("Read step {}", steps.len()));
@@ -1091,6 +1247,11 @@ impl Workspace {
                 self.structured = Some(v.clone());
                 Ok(vec![json_text(&v)])
             }
+            "stream_stats" => {
+                let v = stats_json(&crate::stream::live::snapshot());
+                self.structured = Some(v.clone());
+                Ok(vec![json_text(&v)])
+            }
             "stream_stop" => {
                 use crate::stream::live;
                 if !live::end() {
@@ -1113,6 +1274,14 @@ impl Workspace {
                 Ok(vec![text(line)])
             }
             "stream_start" => self.stream_start(a),
+            "replay_start" => self.replay_start(a),
+            "replay_save" => self.replay_save(a),
+            "replay_stop" => Ok(vec![text(if crate::replay::end() { "Replay off." } else { "Replay was already off." })]),
+            "replay_status" => {
+                let v = replay_json(&crate::replay::status());
+                self.structured = Some(v.clone());
+                Ok(vec![json_text(&v)])
+            }
             other => self.call_app(other, a),
         }
     }

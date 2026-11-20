@@ -130,7 +130,7 @@ pub fn thumbnail(path: &Path, size: u32) -> Option<RgbaImage> {
     if let Ok(t) = image::open(&thumb) {
         return Some(t.to_rgba8());
     }
-    let img = image::open(path).ok()?.thumbnail(size, size).to_rgba8();
+    let img = image::DynamicImage::ImageRgba8(crate::export::open_picture(path).ok()?).thumbnail(size, size).to_rgba8();
     let _ = std::fs::create_dir_all(&dir);
     let _ = img.save(&thumb);
     Some(img)
@@ -154,6 +154,43 @@ pub fn thumbnail_of(path: &Path, img: &RgbaImage, size: u32) -> Option<RgbaImage
 /// answer is what an Undo needs to bring it back with its tags (`recycle::Pending`).
 pub fn delete(item: &Item) -> Result<crate::recycle::Gone, String> {
     crate::recycle::remove(&item.path, Some(item.meta.clone()), crate::recycle::way_here(), &crate::recycle::SystemBin)
+}
+
+/// Fuzz target (`src/fuzz.rs`): a library folder whose tag files were edited by hand, synced
+/// half-way or overwritten with junk.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::Target;
+
+    pub fn targets() -> Vec<Target> {
+        vec![Target {
+            name: "library",
+            seeds: || {
+                let m = Meta { title: "Shot ü".into(), app: "Firefox".into(), kind: "Area".into(), created: "2026-11-19T10:00:00+01:00".into(), tags: vec!["bug".into(), "ui".into()], width: 4, height: 3 };
+                vec![serde_json::to_vec_pretty(&m).unwrap(), b"{}".to_vec()]
+            },
+            words: || ["title", "app", "kind", "created", "tags", "width", "height"].iter().map(|s| s.to_string()).collect(),
+            run: |b| {
+                let dir = crate::fuzz::scratch("library");
+                let pic = dir.join("shot.png");
+                if !pic.exists() {
+                    RgbaImage::from_pixel(4, 3, image::Rgba([9, 9, 9, 255])).save(&pic).unwrap();
+                }
+                std::fs::write(dir.join("shot.json"), b).unwrap();
+                let items = scan(&dir);
+                assert_eq!(items.len(), 1, "the picture is listed whatever its tag file says");
+                let q = String::from_utf8_lossy(&b[..b.len().min(12)]).into_owned();
+                for i in &items {
+                    let _ = i.matches(&q);
+                    let _ = i.matches("shot bug");
+                }
+                let _ = merge_scan(items.clone(), items);
+                assert!(thumbnail(&pic, 64).is_some());
+            },
+            budget: |n| (1 << 20) + 64 * n,
+        }]
+    }
 }
 
 #[cfg(test)]

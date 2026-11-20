@@ -306,7 +306,7 @@ impl Workspace {
                 if paths.len() < 2 {
                     return Err("a slideshow needs two pictures or more in paths".into());
                 }
-                let imgs = paths.iter().map(|p| image::open(p).map(|i| i.to_rgba8()).map_err(|e| format!("{p}: {e}"))).collect::<Result<Vec<_>, _>>()?;
+                let imgs = paths.iter().map(|p| crate::export::open_picture(std::path::Path::new(p))).collect::<Result<Vec<_>, _>>()?;
                 let s = self.settings();
                 let secs = num(a, "seconds").map(|v| v as f32).unwrap_or(s.slideshow_s);
                 let o = out()?;

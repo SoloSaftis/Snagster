@@ -104,10 +104,12 @@ pub enum Action {
     RecordGif,
     RecordSteps,
     ShowSnag,
+    SaveReplay,
+    ToggleReplay,
 }
 
 impl Action {
-    pub const ALL: [Action; 21] = [
+    pub const ALL: [Action; 23] = [
         Action::AllInOne,
         Action::Area,
         Action::Window,
@@ -129,6 +131,8 @@ impl Action {
         Action::RecordGif,
         Action::RecordSteps,
         Action::ShowSnag,
+        Action::SaveReplay,
+        Action::ToggleReplay,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -153,6 +157,8 @@ impl Action {
             Action::RecordGif => "Start / stop recording (video or GIF)",
             Action::RecordSteps => "Start / stop step recording",
             Action::ShowSnag => "Show Snagster",
+            Action::SaveReplay => "Save replay",
+            Action::ToggleReplay => "Turn replay on / off",
         }
     }
 }
@@ -186,6 +192,7 @@ fn default_bindings_for(mac: bool) -> Vec<Binding> {
             b(Action::Scrolling, cmd(true, "S")),
             b(Action::RecordGif, cmd(true, "G")),
             b(Action::RecordSteps, cmd(true, "R")),
+            b(Action::SaveReplay, cmd(true, "B")),
         ]
     } else {
         vec![
@@ -198,6 +205,7 @@ fn default_bindings_for(mac: bool) -> Vec<Binding> {
             b(Action::Scrolling, Combo::new(true, false, true, "F10")),
             b(Action::RecordGif, Combo::new(true, false, true, "F11")),
             b(Action::RecordSteps, Combo::new(true, false, true, "F12")),
+            b(Action::SaveReplay, Combo::new(true, false, true, "F8")),
         ]
     };
     first.into_iter().chain([
@@ -213,6 +221,7 @@ fn default_bindings_for(mac: bool) -> Vec<Binding> {
         b(Action::ColorPicker, Combo::default()),
         b(Action::Ruler, Combo::default()),
         b(Action::ShowSnag, Combo::default()),
+        b(Action::ToggleReplay, Combo::default()),
     ])
     .collect()
 }
@@ -498,6 +507,12 @@ pub struct Settings {
     pub audio_source: crate::audio::AudioSource,
     /// The microphone (its id; empty: the computer's default).
     pub audio_mic: String,
+    /// The replay buffer: how many seconds it keeps (30-120).
+    pub replay_s: u32,
+    /// Sound kept with replays (the microphone only when chosen).
+    pub replay_audio: crate::audio::AudioSource,
+    /// Turn replay on when Snagster starts (off: it starts only when turned on).
+    pub replay_at_start: bool,
     /// Interface language code; empty follows the computer.
     pub language: String,
     /// Light or dark: follow the system (the default), or always one of them.
@@ -514,6 +529,8 @@ pub struct Settings {
     pub stream: StreamSettings,
     /// The ribbon is folded away.
     pub ribbon_folded: bool,
+    /// The Settings pane shown last (`SettingsTab::key`), so Settings opens on it again.
+    pub settings_pane: String,
     /// Let AI apps on this computer connect over HTTP while Snagster runs.
     pub mcp_http: bool,
     pub mcp_port: u16,
@@ -628,6 +645,9 @@ impl Default for Settings {
             video_folder: videos().join("Snagster").to_string_lossy().to_string(),
             audio_source: crate::audio::AudioSource::System,
             audio_mic: String::new(),
+            replay_s: crate::replay::DEFAULT_S,
+            replay_audio: crate::audio::AudioSource::System,
+            replay_at_start: false,
             language: String::new(),
             appearance: crate::theme::ThemeChoice::System,
             update_check: true,
@@ -636,6 +656,7 @@ impl Default for Settings {
             studio: Default::default(),
             stream: StreamSettings::default(),
             ribbon_folded: false,
+            settings_pane: String::new(),
             mcp_http: false,
             mcp_port: 45831,
             mcp_token: String::new(),
@@ -1240,6 +1261,62 @@ pub enum CalloutShape {
     Rounded,
     Rectangle,
     Oval,
+}
+
+/// Fuzz target (`src/fuzz.rs`): a settings.json cut short, edited by hand or written by
+/// another version.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::Target;
+
+    /// Every key in the settings, at any depth.
+    fn keys(v: &serde_json::Value, out: &mut Vec<String>) {
+        match v {
+            serde_json::Value::Object(m) => {
+                for (k, c) in m {
+                    out.push(k.clone());
+                    keys(c, out);
+                }
+            }
+            serde_json::Value::Array(a) => a.iter().for_each(|c| keys(c, out)),
+            _ => {}
+        }
+    }
+
+    pub fn targets() -> Vec<Target> {
+        vec![Target {
+            name: "settings",
+            seeds: || {
+                let mut s = Settings::default();
+                s.studio.current = 1;
+                s.jpeg_quality = 40;
+                vec![serde_json::to_vec_pretty(&s).unwrap(), b"{}".to_vec()]
+            },
+            words: || {
+                let mut w = Vec::new();
+                keys(&serde_json::to_value(Settings::default()).unwrap(), &mut w);
+                w.sort();
+                w.dedup();
+                w
+            },
+            run: |b| {
+                let loaded = Settings::from_saved(Some(&String::from_utf8_lossy(b)));
+                // What a window does with settings it opened.
+                for a in Action::ALL {
+                    let _ = loaded.binding(a);
+                }
+                let _ = loaded.effect_options("info".into());
+                let _ = loaded.studio.scene();
+                for i in 0..loaded.studio.scenes.len() + 1 {
+                    let _ = loaded.studio.scene_sounds(i);
+                }
+                let again = serde_json::to_string(&loaded).unwrap();
+                let _ = Settings::from_saved(Some(&again));
+            },
+            budget: |n| (1 << 20) + 64 * n,
+        }]
+    }
 }
 
 #[cfg(test)]

@@ -35,7 +35,8 @@ on Windows), record_gif, and Studio scenes (studio_scenes, studio_add_scene, stu
 studio_record). Guides: make_guide (PDF, web page, Word or one tall picture). Library: library_search, library_tag, \
 library_delete (to the Recycle Bin / Trash; undo_delete brings it back for 2 minutes). Live streaming: stream_services, stream_start (Twitch, YouTube, Kick, Facebook, Restream or any RTMP/RTMPS \
 server; the screen, a window, an area or the Studio scene; the stream key saved in Snagster is used and never shown), \
-stream_status and stream_stop. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
+stream_status, stream_stats (dropped frames, upload and encoder health, warnings) and stream_stop. Replay buffer (keep the last 30-120 s of the screen, save a moment after it happened): \
+replay_start, replay_save, replay_status and replay_stop. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
 set_setting checks kind and range). Everything else a person can press in the window is in list_commands: app_command \
 presses it in the open window (zoom, pins, Recent, dialogs, email, print, Studio and stream buttons...); editor_apply \
 (cut out, fill, erase, lift, resize or copy a mark), gif_edit, studio_edit and save_to_cloud do the rest here. Long calls send progress when the \
@@ -297,11 +298,12 @@ fn base_tools() -> Vec<Tool> {
 const MARK_KINDS: [&str; 14] = ["arrow", "line", "box", "oval", "highlight", "pen", "text", "callout", "step", "stamp", "pointer", "spotlight", "magnify", "image"];
 
 /// Tools that change something outside the current picture (files, clipboard, settings, screen).
-const SIDE: [&str; 31] = [
+const SIDE: [&str; 34] = [
     "save", "quick_save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "library_delete", "undo_delete", "library_tag",
     "set_setting", "set_language", "open_in_snagster", "studio_add_source", "studio_remove_source", "studio_update_source",
     "studio_add_scene", "studio_remove_scene", "studio_set_current", "studio_record", "capture_scrolling", "paste_from_clipboard",
     "capture_screen", "capture_region", "capture_window", "stream_start", "stream_stop", "app_command", "save_to_cloud", "gif_edit", "studio_edit",
+    "replay_start", "replay_save", "replay_stop",
 ];
 
 /// Tools that may delete or replace something (a mark, a source or scene, a library picture,
@@ -317,7 +319,7 @@ const OPEN_WORLD: [&str; 4] = ["check_for_update", "stream_start", "app_command"
 
 /// Tools that change something but leave the same result when called again with the same
 /// arguments.
-const IDEMPOTENT: [&str; 11] = ["stream_stop", "save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
+const IDEMPOTENT: [&str; 12] = ["stream_stop", "replay_stop", "save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
 
 /// What a tool's structured answer looks like, for the tools that always give one.
 fn output_schema(name: &str) -> Option<Value> {
@@ -352,6 +354,13 @@ fn output_schema(name: &str) -> Option<Value> {
         "studio_scenes" => json!({"type": "object", "properties": {"scenes": {"type": "array", "items": {"type": "object"}}, "current": num, "width": num, "height": num, "fps": num}, "required": ["scenes", "current"]}),
         "library_tag" => json!({"type": "object", "properties": {"path": st, "title": st, "tags": strings}, "required": ["path", "title", "tags"]}),
         "stream_services" => items(props(json!({"service": st, "name": st, "url": st, "key_help": st, "max_width": num, "max_height": num, "max_fps": num, "max_video_kbps": num, "max_pixel_rate": num, "keyframe_s": num, "audio_kbps": num, "hevc": bo}))),
+        "stream_stats" => json!({"type": "object", "properties": {
+            "live": bo, "state": st, "level": {"type": "string", "enum": ["ok", "warning", "bad"]}, "measuring": bo, "window_s": num, "uptime_s": num, "set_kbps": num, "encoder": {"type": ["string", "null"]}, "message": st,
+            "computer": {"type": "object", "properties": {"dropped_frames": num, "dropped_share": num, "encode_ms": num, "frame_budget_ms": num, "encoder_load": num}},
+            "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "state": st, "measuring": bo, "sent_kbps": num, "network_dropped_frames": num, "network_dropped_share": num, "queue_ms": num, "connected_s": num, "reconnects": num, "reconnects_last_10_min": num}}},
+            "warnings": {"type": "array", "items": {"type": "object", "properties": {"problem": {"type": "string", "enum": ["upload", "computer", "connection"]}, "level": {"type": "string", "enum": ["warning", "bad"]}, "service": {"type": ["string", "null"]}, "message": st}}}
+        }, "required": ["live"]}),
+        "replay_status" => json!({"type": "object", "properties": {"phase": st, "on": bo, "seconds": num, "held_s": num, "width": num, "height": num, "fps": num, "encoder": st, "hardware": bo, "sound": bo, "error": st}, "required": ["phase", "on", "seconds", "held_s"]}),
         "stream_status" => json!({"type": "object", "properties": {"phase": st, "live": bo, "state": st, "uptime_s": num, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num, "service": st, "address": st, "source": st, "width": num, "height": num, "fps": num, "also": {"type": "array", "items": st}, "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "address": st, "state": st, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num}}}}, "required": ["phase", "live"]}),
         _ => return None,
     })
@@ -847,7 +856,7 @@ impl Workspace {
                     let (name, d) = export::load_project(&p)?;
                     return self.set(d, &name);
                 }
-                let img = image::open(&p).map_err(|e| e.to_string())?.to_rgba8();
+                let img = export::open_picture(&p)?;
                 let name = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
                 self.set(Doc::new(img), &name)
             }
@@ -1388,7 +1397,7 @@ fn make_mark(a: &Value, d: &Doc) -> Result<Shape, String> {
         "magnify" => Shape::Magnify { center: p1, radius: size.unwrap_or(80.0), zoom: zoom_arg(a).unwrap_or(2.0) },
         "image" => {
             let path = str_of(a, "path").ok_or("kind image needs a path")?;
-            let img = image::open(path).map_err(|e| format!("{path}: {e}"))?.to_rgba8();
+            let img = export::open_picture(Path::new(path))?;
             let rect = match p2 {
                 Some(b) => Rect::from_two_pos(p1, b),
                 None => Rect::from_min_size(p1, vec2(img.width() as f32, img.height() as f32)),
@@ -1928,6 +1937,444 @@ pub fn run_cli(args: &[String]) -> Option<i32> {
         _ => return None,
     };
     Some(code)
+}
+
+/// Fuzz targets (`src/fuzz.rs`): what an AI app sends. `mcp_jsonrpc` breaks whole JSON-RPC
+/// messages; `mcp_tools` calls every tool with broken arguments, built from each tool's own
+/// schema. Both run in a sandbox: settings that point every folder at a scratch folder, file
+/// paths in the arguments kept inside it, and no tool that reaches the screen, the clipboard,
+/// the network, sound devices or other programs.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::{Target, pin_folders, safe_name, sandboxed_settings, scratch};
+
+    /// Tools the fuzz never calls: they capture or record the screen, use the clipboard, the
+    /// network, sound or graphics devices, start or message other programs, or write outside
+    /// the sandbox (the cloud folders). Each has tests of its own arguments.
+    pub const OUTSIDE: [&str; 31] = [
+        "capture_screen",
+        "capture_region",
+        "capture_window",
+        "capture_active_window",
+        "capture_last_area",
+        "capture_scrolling",
+        "run_preset",
+        "pick_color",
+        "read_screen_text",
+        "list_windows",
+        "list_monitors",
+        "list_audio_devices",
+        "list_video_encoders",
+        "record_video",
+        "record_gif",
+        "studio_record",
+        "replay_start",
+        "replay_save",
+        "replay_stop",
+        "stream_start",
+        "stream_stop",
+        "copy_to_clipboard",
+        "paste_from_clipboard",
+        "check_for_update",
+        "open_in_snagster",
+        "app_command",
+        "save_to_cloud",
+        // Text recognition: the system's OCR (Windows) is slow and is fed pictures, not arguments.
+        "read_text",
+        "smart_redact",
+        "simplify",
+        // Probes the graphics chip's video encoders, as list_video_encoders does.
+        "app_info",
+    ];
+
+    /// The tools the fuzz calls: only the picture in memory, the sandbox's files and fixed
+    /// settings. Every tool is in this list or in OUTSIDE (a test checks), so a new one is
+    /// sorted by hand instead of being fuzzed by default.
+    pub const FUZZED: [&str; 48] = [
+        "open_image",
+        "picture_info",
+        "view_picture",
+        "add_mark",
+        "update_mark",
+        "list_marks",
+        "remove_mark",
+        "clear_marks",
+        "blur_area",
+        "crop",
+        "resize",
+        "set_canvas",
+        "trim",
+        "apply_effect",
+        "undo",
+        "redo",
+        "save",
+        "quick_save",
+        "combine_images",
+        "make_guide",
+        "editor_apply",
+        "gif_edit",
+        "video_info",
+        "list_recordings",
+        "library_add",
+        "library_search",
+        "library_tag",
+        "library_delete",
+        "undo_delete",
+        "get_settings",
+        "set_setting",
+        "list_settings",
+        "list_commands",
+        "list_languages",
+        "set_language",
+        "list_presets",
+        "studio_scenes",
+        "studio_add_scene",
+        "studio_remove_scene",
+        "studio_set_current",
+        "studio_add_source",
+        "studio_update_source",
+        "studio_remove_source",
+        "studio_edit",
+        "stream_services",
+        "stream_status",
+        "stream_stats",
+        "replay_status",
+    ];
+
+    /// The tools the fuzz calls, with their argument schemas.
+    pub fn callable() -> Vec<(&'static str, Value)> {
+        tools().into_iter().filter(|t| FUZZED.contains(&t.name)).map(|t| (t.name, t.schema)).collect()
+    }
+
+    /// Whether an argument names a file or folder (kept inside the sandbox).
+    fn is_path_key(k: &str) -> bool {
+        let k = k.to_ascii_lowercase();
+        k.contains("path") || k.contains("folder") || k.contains("file") || ["out", "other", "uri", "pictures", "images"].contains(&k.as_str())
+    }
+
+    /// Paths in `v` (under a path-like key) replaced by names inside `dir`.
+    fn sandbox_paths(v: &mut Value, dir: &Path, under_path: bool) {
+        match v {
+            Value::String(s) if under_path => *s = dir.join(safe_name(s)).to_string_lossy().into_owned(),
+            Value::Array(a) => a.iter_mut().for_each(|c| sandbox_paths(c, dir, under_path)),
+            Value::Object(m) => {
+                // set_setting: a folder or path setting's value is a path too.
+                let setting_is_path = m.get("key").and_then(Value::as_str).is_some_and(is_path_key);
+                for (k, c) in m.iter_mut() {
+                    let p = is_path_key(k) || (k == "value" && setting_is_path);
+                    sandbox_paths(c, dir, under_path || p);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// A plausible value for one argument, from its schema and name.
+    fn example(name: &str, schema: &Value) -> Value {
+        if let Some(e) = schema.get("enum").and_then(Value::as_array).and_then(|e| e.first()) {
+            return e.clone();
+        }
+        let ty = schema.get("type").and_then(Value::as_str).unwrap_or("string");
+        match ty {
+            "number" | "integer" => json!(match name {
+                "x" | "y" | "index" | "number" | "first" | "scene" | "source" => 1,
+                "width" | "height" | "max_width" | "size" => 12,
+                _ => 2,
+            }),
+            "boolean" => json!(true),
+            "array" => match name {
+                "points" => json!([[1, 1], [8, 2], [4, 7]]),
+                "paths" | "pictures" | "images" => json!(["a.png", "b.png"]),
+                _ => json!([example("", schema.get("items").unwrap_or(&json!({})))]),
+            },
+            "object" => {
+                let mut m = serde_json::Map::new();
+                if let Some(p) = schema.get("properties").and_then(Value::as_object) {
+                    for (k, s) in p {
+                        m.insert(k.clone(), example(k, s));
+                    }
+                }
+                Value::Object(m)
+            }
+            _ => json!(match name {
+                "color" | "fill" | "background" => "#FF0000",
+                n if is_path_key(n) => "a.png",
+                "text" | "title" | "name" | "caption" => "Hi",
+                "key" => "jpeg_quality",
+                _ => "x",
+            }),
+        }
+    }
+
+    fn calls(list: Value) -> Vec<u8> {
+        serde_json::to_vec(&json!({ "calls": list })).unwrap()
+    }
+
+    /// For every tool: all its arguments, and only the required ones. Then a few sequences.
+    fn tool_seeds() -> Vec<Vec<u8>> {
+        let mut out = Vec::new();
+        for (name, schema) in callable() {
+            let all = example("", &schema);
+            out.push(calls(json!([{ "tool": name, "args": all }])));
+            let required: Vec<String> = schema.get("required").and_then(Value::as_array).map(|r| r.iter().filter_map(|s| s.as_str().map(String::from)).collect()).unwrap_or_default();
+            let only: serde_json::Map<String, Value> = all.as_object().map(|m| m.iter().filter(|(k, _)| required.contains(k)).map(|(k, v)| (k.clone(), v.clone())).collect()).unwrap_or_default();
+            out.push(calls(json!([{ "tool": name, "args": only }])));
+        }
+        for kind in ["arrow", "line", "box", "oval", "highlight", "spotlight", "text", "callout", "step", "stamp", "pointer", "magnify", "image"] {
+            out.push(calls(json!([
+                {"tool": "add_mark", "args": {"kind": kind, "x": 2, "y": 2, "width": 8, "height": 6, "x2": 9, "y2": 7, "text": "Hi", "color": "blue", "path": "a.png"}},
+                {"tool": "update_mark", "args": {"index": 2, "x": 3, "width": 4, "text": "Yo", "size": 30}},
+                {"tool": "list_marks", "args": {}},
+                {"tool": "undo", "args": {}},
+                {"tool": "redo", "args": {}},
+            ])));
+        }
+        for file in ["a.png", "b.gif", "c.snag", "d.jpg", "missing.png"] {
+            out.push(calls(json!([{"tool": "open_image", "args": {"path": file}}, {"tool": "save", "args": {"path": "out.snag"}}, {"tool": "save", "args": {"path": "out.pdf"}}])));
+        }
+        out.push(calls(json!([{"tool": "library_add", "args": {"title": "One", "tags": ["a"]}}, {"tool": "library_search", "args": {"query": "one"}}, {"tool": "library_delete", "args": {"path": "x.png"}}, {"tool": "undo_delete", "args": {}}])));
+        out.push(calls(json!([{"tool": "set_setting", "args": {"key": "save_folder", "value": "elsewhere"}}, {"tool": "quick_save", "args": {}}])));
+        out
+    }
+
+    fn tool_words() -> Vec<String> {
+        let mut w: Vec<String> = Vec::new();
+        fn props(v: &Value, w: &mut Vec<String>) {
+            match v {
+                Value::Object(m) => {
+                    for (k, c) in m {
+                        if k != "description" {
+                            w.push(k.clone());
+                        }
+                        props(c, w);
+                    }
+                }
+                Value::Array(a) => a.iter().for_each(|c| props(c, w)),
+                Value::String(s) if s.len() < 40 => w.push(s.clone()),
+                _ => {}
+            }
+        }
+        for (name, schema) in callable() {
+            w.push(name.to_string());
+            props(&schema, &mut w);
+        }
+        w.extend(crate::catalog::SETTINGS.iter().map(|s| s.key.to_string()));
+        w.extend(effect_names());
+        w.extend(["tool", "args", "calls", "a.png", "b.gif", "c.snag", "out.docx", "out.html", "out.webp", "out.gif"].map(String::from));
+        w.sort();
+        w.dedup();
+        w
+    }
+
+    /// The sandbox: pictures to open, a library picture, and the settings pointing here.
+    /// Made again for every input (the target's own folder): what one input saved must not
+    /// become the next one's picture. (A guide saved over a.png, then read back as each of 187
+    /// steps, grew until the nightly machine ran out of memory.)
+    fn sandbox(target: &str) -> PathBuf {
+        let _ = std::fs::remove_dir_all(scratch(target));
+        let dir = scratch(target);
+        let img = RgbaImage::from_fn(10, 8, |x, y| image::Rgba([(x * 25) as u8, (y * 30) as u8, 90, 255]));
+        img.save(dir.join("a.png")).unwrap();
+        img.save(dir.join("b.png")).unwrap();
+        image::DynamicImage::ImageRgba8(img.clone()).to_rgb8().save(dir.join("d.jpg")).unwrap();
+        export::write_gif(&dir.join("b.gif"), &[(img.clone(), 100), (img.clone(), 100)]).unwrap();
+        export::save_project(&Doc::new(img.clone()), "c", &dir.join("c.snag")).unwrap();
+        library::add(&dir.join("library"), &img, library::Meta { title: "x".into(), ..Default::default() }).unwrap();
+        dir
+    }
+
+    fn workspace(dir: &Path) -> Workspace {
+        let mut ws = Workspace::with_settings(sandboxed_settings(dir));
+        let mut d = Doc::new(RgbaImage::from_fn(24, 16, |x, y| image::Rgba([(x * 10) as u8, (y * 15) as u8, 200, 255])));
+        d.shapes.push(Shape::Rect { rect: Rect::from_min_max(pos2(2.0, 2.0), pos2(12.0, 9.0)), color: Color32::RED, width: 2.0, fill: false, radius: 1.0, shadow: true });
+        d.shapes.push(Shape::Text { pos: pos2(3.0, 3.0), text: "Hi".into(), color: Color32::BLUE, size: 10.0, bg: false, shadow: false, font: String::new(), bold: false, italic: false, outline: true, align: 0 });
+        d.shapes.push(Shape::Step { center: pos2(20.0, 12.0), n: 1, color: Color32::RED, radius: 3.0, shadow: false, style: Default::default() });
+        ws.set(d, "Shot").unwrap();
+        ws.deleted = Some(crate::recycle::Pending::new(crate::recycle::MCP_UNDO_FOR, Arc::new(crate::recycle::tests::FolderBin::new(dir.join("bin")))));
+        ws
+    }
+
+    /// Tools that make a new picture as big as their arguments say (set_canvas up to 30000 x
+    /// 30000, resize 20000, editor_apply's new_image 16384) get a size of at most `SMALL` when
+    /// a larger one is asked for: those limits are by design (and have tests of their own), and
+    /// several 3.6 GB pictures at once ran the nightly fuzz machine out of memory. Sizes below
+    /// 1, and every other argument, stay as broken as they came.
+    const SMALL: f64 = 4096.0;
+
+    fn small_pictures(tool: &str, args: &mut Value) {
+        let makes_picture = matches!(tool, "set_canvas" | "resize") || (tool == "editor_apply" && args.get("action").and_then(Value::as_str) == Some("new_image"));
+        if !makes_picture {
+            return;
+        }
+        for k in ["width", "height"] {
+            if let Some(v) = args.get_mut(k)
+                && v.as_f64().is_some_and(|n| n > SMALL)
+            {
+                *v = json!(SMALL);
+            }
+        }
+    }
+
+    /// Pictures larger than this end a sequence of calls (the next call would only be slow).
+    const BIG: u64 = 4096 * 4096;
+
+    fn run_tools(b: &[u8]) {
+        let Ok(v) = serde_json::from_slice::<Value>(b) else { return };
+        let list = match v.get("calls").and_then(Value::as_array) {
+            Some(l) => l.clone(),
+            None => vec![v],
+        };
+        let names: Vec<&str> = callable().into_iter().map(|t| t.0).collect();
+        let dir = sandbox("mcp_tools");
+        let mut ws = workspace(&dir);
+        for c in list.iter().take(5) {
+            let name = c.get("tool").and_then(Value::as_str).unwrap_or("");
+            // An unknown name takes the "no such tool" path; never one that reaches outside.
+            let name = if names.contains(&name) { name } else { "zz_no_such_tool" };
+            let mut args = c.get("args").cloned().unwrap_or(Value::Null);
+            sandbox_paths(&mut args, &dir, false);
+            small_pictures(name, &mut args);
+            let r = ws.call(name, &args);
+            if let Some(f) = ws.fixed.as_mut() {
+                pin_folders(f, &dir);
+            }
+            if let Ok(items) = r {
+                serde_json::to_string(&items).unwrap();
+            }
+            serde_json::to_string(&ws.structured).unwrap();
+            if ws.doc.as_ref().is_some_and(|d| d.image.width() as u64 * d.image.height() as u64 > BIG) {
+                break;
+            }
+        }
+    }
+
+    /// Tools a JSON-RPC message may call: they change only the picture in memory.
+    const IN_MEMORY: [&str; 21] = [
+        "picture_info",
+        "view_picture",
+        "add_mark",
+        "update_mark",
+        "list_marks",
+        "remove_mark",
+        "undo",
+        "redo",
+        "clear_marks",
+        "blur_area",
+        "crop",
+        "apply_effect",
+        "list_languages",
+        "get_settings",
+        "list_settings",
+        "list_commands",
+        "library_search",
+        "list_presets",
+        "stream_services",
+        "stream_status",
+        "studio_scenes",
+    ];
+
+    /// Whether a message could call a tool that isn't in memory only (then it is skipped).
+    fn calls_outside(v: &Value, known: &[&str]) -> bool {
+        match v {
+            Value::String(s) => known.contains(&s.as_str()) && !IN_MEMORY.contains(&s.as_str()),
+            Value::Array(a) => a.iter().any(|c| calls_outside(c, known)),
+            Value::Object(m) => m.iter().any(|(k, c)| known.contains(&k.as_str()) || calls_outside(c, known)),
+            _ => false,
+        }
+    }
+
+    fn jsonrpc_seeds() -> Vec<Vec<u8>> {
+        let m = |v: Value| v.to_string().into_bytes();
+        let mut out = vec![
+            m(json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"elicitation":{}},"clientInfo":{"name":"x","version":"1"}}})),
+            m(json!({"jsonrpc":"2.0","method":"notifications/initialized"})),
+            m(json!({"jsonrpc":"2.0","id":"a","method":"ping"})),
+            m(json!({"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"cursor":null}})),
+            m(json!({"jsonrpc":"2.0","id":3,"method":"prompts/list"})),
+            m(json!({"jsonrpc":"2.0","id":3,"method":"prompts/get","params":{"name":"annotate_screenshot","arguments":{"what":"the button"}}})),
+            m(json!({"jsonrpc":"2.0","id":4,"method":"resources/list"})),
+            m(json!({"jsonrpc":"2.0","id":4,"method":"resources/templates/list"})),
+            m(json!({"jsonrpc":"2.0","id":5,"method":"completion/complete","params":{"ref":{"type":"ref/prompt","name":"change_language"},"argument":{"name":"code","value":"p"}}})),
+            m(json!({"jsonrpc":"2.0","id":5,"method":"completion/complete","params":{"ref":{"type":"ref/resource","uri":"snagster://library/{path}"},"argument":{"name":"path","value":""}}})),
+            m(json!({"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":99}})),
+            m(json!({"jsonrpc":"2.0","id":6,"result":{}})),
+            m(json!({"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"add_mark","arguments":{"kind":"arrow","x":1,"y":1,"x2":9,"y2":9},"_meta":{"progressToken":1}}})),
+            m(json!({"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"zz_none","arguments":{}}})),
+        ];
+        for uri in ["snagster://settings", "snagster://library", "snagster://picture/current", "snagster://settings/jpeg_quality", "snagster://languages/pt-br", "snagster://library/a%20b.png"] {
+            out.push(m(json!({"jsonrpc":"2.0","id":9,"method":"resources/read","params":{"uri": uri}})));
+        }
+        for t in IN_MEMORY {
+            out.push(m(json!({"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name": t,"arguments":{}}})));
+        }
+        out
+    }
+
+    pub fn targets() -> Vec<Target> {
+        vec![
+            Target {
+                name: "mcp_jsonrpc",
+                seeds: jsonrpc_seeds,
+                words: || {
+                    let mut w: Vec<String> = ["jsonrpc", "2.0", "id", "method", "params", "arguments", "name", "uri", "ref", "argument", "value", "_meta", "progressToken", "requestId", "cursor", "result", "error"].map(String::from).to_vec();
+                    w.extend(IN_MEMORY.map(String::from));
+                    w
+                },
+                run: |b| {
+                    let Ok(text) = std::str::from_utf8(b) else { return };
+                    let known: Vec<&str> = tools().into_iter().map(|t| t.name).collect();
+                    if serde_json::from_str::<Value>(text).is_ok_and(|v| calls_outside(&v, &known)) {
+                        return;
+                    }
+                    let dir = sandbox("mcp_jsonrpc");
+                    let s = Session::with_settings(sandboxed_settings(&dir));
+                    if let Some(reply) = s.handle(text) {
+                        let v: Value = serde_json::from_str(&reply).unwrap_or_else(|e| panic!("the reply isn't JSON ({e}): {reply}"));
+                        assert_eq!(v["jsonrpc"], "2.0", "{reply}");
+                        assert!(v.get("result").is_some() != v.get("error").is_some(), "{reply}");
+                        assert!(!reply.contains("stopped unexpectedly"), "a tool panicked (Session caught it): {reply}");
+                    }
+                },
+                budget: |n| (256 << 20) + 64 * n,
+            },
+            Target { name: "mcp_tools", seeds: tool_seeds, words: tool_words, run: run_tools, budget: |n| (1 << 30) + 64 * n },
+        ]
+    }
+
+    #[test]
+    fn the_sandbox_keeps_paths_inside() {
+        let dir = Path::new("sandbox");
+        let mut a = json!({"path": "../../etc/passwd", "paths": ["/x/y.png", "C:\\z.png"], "out": "o.gif", "text": "../keep", "key": "video_folder", "value": "/tmp"});
+        sandbox_paths(&mut a, dir, false);
+        for p in [&a["path"], &a["paths"][0], &a["paths"][1], &a["out"], &a["value"]] {
+            let p = PathBuf::from(p.as_str().unwrap());
+            assert_eq!(p.parent(), Some(dir), "{p:?}");
+        }
+        assert_eq!(a["text"], "../keep", "only paths are touched");
+        // Every tool is in exactly one of FUZZED and OUTSIDE: a new tool is sorted by hand.
+        let names: Vec<&str> = tools().iter().map(|t| t.name).collect();
+        for n in &names {
+            assert!(FUZZED.contains(n) != OUTSIDE.contains(n), "sort the MCP tool {n} into mcp::fuzzing::FUZZED (works on the picture and the sandbox only) or OUTSIDE");
+        }
+        assert!(FUZZED.iter().chain(OUTSIDE.iter()).all(|n| names.contains(n)), "a listed tool was renamed or removed");
+        assert_eq!(callable().len(), FUZZED.len());
+        assert!(IN_MEMORY.iter().all(|n| FUZZED.contains(n)));
+        // Each input starts from the same sandbox, whatever the one before saved there.
+        let d = sandbox("sandbox-test");
+        let small = std::fs::metadata(d.join("a.png")).unwrap().len();
+        std::fs::write(d.join("a.png"), vec![0u8; 100_000]).unwrap();
+        std::fs::write(d.join("left over.pdf"), b"x").unwrap();
+        let d = sandbox("sandbox-test");
+        assert_eq!(std::fs::metadata(d.join("a.png")).unwrap().len(), small);
+        assert!(!d.join("left over.pdf").exists());
+        let _ = std::fs::remove_dir_all(&d);
+        // And by their names, tools that start the screen, a recording or a stream are OUTSIDE.
+        for (n, _) in callable() {
+            let outside = ["capture_", "record_", "stream_", "replay_", "studio_record"].iter().any(|p| n.starts_with(p)) && !n.ends_with("_status") && !n.ends_with("_services") && n != "stream_stats";
+            assert!(!outside, "{n} reaches the screen or the network: add it to mcp::fuzzing::OUTSIDE");
+        }
+    }
 }
 
 #[cfg(test)]
@@ -3085,6 +3532,29 @@ mod stream_tests {
     }
 
     #[test]
+    fn replay_tools_check_their_arguments_and_say_when_replay_is_off() {
+        let _g = crate::replay::TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        crate::replay::end();
+        let mut w = ws();
+        assert!(w.call("replay_start", &json!({"seconds": 10})).unwrap_err().contains("30 to 120"));
+        assert!(w.call("replay_start", &json!({"seconds": 45.5})).unwrap_err().contains("whole number"));
+        assert!(w.call("replay_save", &json!({"seconds": 1})).unwrap_err().contains("2 to 120"));
+        assert_eq!(w.call("replay_save", &json!({})).unwrap_err(), "Replay is off; call replay_start first.");
+        assert_eq!(text_of(w.call("replay_stop", &json!({}))), "Replay was already off.");
+        w.call("replay_status", &json!({})).unwrap();
+        let st = w.structured.take().unwrap();
+        assert_eq!((st["phase"].as_str(), st["on"].as_bool()), (Some("off"), Some(false)));
+        assert!(!crate::replay::status().on(), "nothing started");
+        // Listed with their schemas and marked as changing things outside the picture.
+        let names: Vec<String> = tools().iter().map(|t| t.name.to_string()).collect();
+        for n in ["replay_start", "replay_save", "replay_stop", "replay_status"] {
+            assert!(names.iter().any(|x| x == n), "{n}");
+        }
+        assert!(SIDE.contains(&"replay_save") && !SIDE.contains(&"replay_status"));
+        assert!(output_schema("replay_status").is_some());
+    }
+
+    #[test]
     fn stream_start_checks_its_arguments_and_never_echoes_the_key() {
         let _g = crate::stream::live::test_lock();
         let mut w = ws();
@@ -3111,11 +3581,20 @@ mod stream_tests {
         assert_eq!(st["phase"], "running");
         assert_eq!((st["width"].as_u64(), st["fps"].as_u64()), (Some(64), Some(15)));
         assert!(!st.to_string().contains("sk_mcp_secret_2"));
+        w.call("stream_stats", &json!({})).unwrap();
+        let st = w.structured.clone().unwrap();
+        assert_eq!(st["live"], true, "{st}");
+        assert_eq!(st["outputs"][0]["service"], "Custom server", "{st}");
+        assert!(st["computer"]["frame_budget_ms"].as_f64().is_some_and(|b| (b - 66.67).abs() < 0.1), "15 fps: {st}");
+        assert!(st["warnings"].is_array() && st["set_kbps"].as_u64().is_some_and(|k| k > 0), "{st}");
+        assert!(!st.to_string().contains("sk_mcp_secret_2"));
         let t = text_of(w.call("stream_stop", &json!({})));
         assert!(t.starts_with("The stream stopped"), "{t}");
         assert_eq!(text_of(w.call("stream_stop", &json!({}))), "Nothing is being streamed.");
         w.call("stream_status", &json!({})).unwrap();
         assert_eq!(w.structured.clone().unwrap()["phase"], "idle");
+        w.call("stream_stats", &json!({})).unwrap();
+        assert_eq!(w.structured.clone().unwrap(), json!({"live": false, "message": "Nothing is being streamed."}));
     }
 
     /// Multistreaming from an AI app: two local servers get the same stream, each with its own

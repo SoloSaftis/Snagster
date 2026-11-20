@@ -337,6 +337,46 @@ impl UiTest {
                 g.playing = false;
             }
         }));
+        // The replay buffer: on, keeping the real screen, Save replay, off.
+        s.push(once("Record: Replay turns on (off before)", |a, c| {
+            assert!(!crate::replay::status().on(), "replay was on before anyone turned it on");
+            a.settings.video_folder = test_dir().join("replay").to_string_lossy().to_string();
+            a.settings.replay_s = 30;
+            a.do_action(c, Action::ToggleReplay);
+            assert!(crate::replay::status().on(), "{}", a.status);
+        }));
+        s.push((
+            "Record: Replay keeps the screen and shows it is on".to_string(),
+            Box::new(|a: &mut SnagApp, _: &egui::Context| {
+                let s = crate::replay::status();
+                assert!(s.on(), "replay went off: {:?}", s.error);
+                if s.phase != crate::replay::Phase::On || s.held_s < 3.0 {
+                    return false;
+                }
+                assert!(a.x.replay.snap.on(), "the window doesn't know replay is on");
+                assert!(a.status.starts_with("Replay on: keeping the last 30 s"), "{}", a.status);
+                true
+            }),
+        ));
+        s.push(once("Record: Save replay", |a, c| {
+            a.do_action(c, Action::SaveReplay);
+        }));
+        s.push((
+            "Record: the replay is saved and plays back".to_string(),
+            Box::new(|a: &mut SnagApp, c: &egui::Context| {
+                let s = crate::replay::status();
+                let Some(r) = s.saved.clone() else { return false };
+                let v = r.expect("the replay wasn't saved");
+                assert_eq!(a.videos.first().map(|d| d.path.clone()), Some(v.path.clone()), "Play last video doesn't play the replay");
+                let p = crate::video::probe(&v.path).expect("can't read the replay back");
+                assert!(p.frames >= 10 && p.seconds >= 2.0, "only {} frames, {:.1} s", p.frames, p.seconds);
+                assert!(a.status.starts_with("Saved Replay_"), "{}", a.status);
+                a.do_action(c, Action::ToggleReplay);
+                assert!(!crate::replay::status().on());
+                assert_eq!(a.status, "Replay off.");
+                true
+            }),
+        ));
         // Saving: every format, a project, many at once.
         s.push(once("File: save in every format and as a project", |a, _| {
             let dir = test_dir();

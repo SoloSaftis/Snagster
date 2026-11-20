@@ -124,6 +124,9 @@ pub fn rounded_rect(r: Rect, radius: f32) -> Option<ts::Path> {
     pb.finish()
 }
 
+/// The largest text drawn, in pixels (what an AI app may set; projects can say anything).
+pub const MAX_TEXT_SIZE: f32 = 2000.0;
+
 const ID: ts::Transform = ts::Transform { sx: 1.0, kx: 0.0, ky: 0.0, sy: 1.0, tx: 0.0, ty: 0.0 };
 
 /// Contrasting colour so text stays readable on any background.
@@ -169,6 +172,12 @@ fn draw_text_aligned(
     center: bool,
     align: u8,
 ) {
+    // A size from a file can be anything: drawn no larger than the largest an AI app may set,
+    // and not at all when it isn't a size (the outline and the letters grow with its square).
+    if !(size > 0.0) || !pos.x.is_finite() || !pos.y.is_finite() {
+        return;
+    }
+    let size = size.min(MAX_TEXT_SIZE);
     let scale = PxScale::from(size);
     let line_h = fonts.line_height(size);
     let lines: Vec<&str> = text.split('\n').collect();
@@ -186,10 +195,11 @@ fn draw_text_aligned(
     // not the whole picture: much faster on big screenshots.
     let r = if halo.is_some() { (size / 14.0).max(1.0) } else { 0.0 };
     let margin = (r.ceil() + size * 0.5 + 2.0) as i32;
-    let x0 = (left.floor() as i32 - margin).max(0);
-    let y0 = (top.floor() as i32 - margin).max(0);
-    let x1 = ((left + block_w).ceil() as i32 + margin).min(pm.width() as i32);
-    let y1 = ((top + total_h).ceil() as i32 + margin).min(pm.height() as i32);
+    // (Saturating: text far outside the picture gives an empty box, not an overflow.)
+    let x0 = (left.floor() as i32).saturating_sub(margin).max(0);
+    let y0 = (top.floor() as i32).saturating_sub(margin).max(0);
+    let x1 = ((left + block_w).ceil() as i32).saturating_add(margin).min(pm.width() as i32);
+    let y1 = ((top + total_h).ceil() as i32).saturating_add(margin).min(pm.height() as i32);
     if x1 <= x0 || y1 <= y0 {
         return;
     }
@@ -205,9 +215,13 @@ fn draw_text_aligned(
             x += font.as_scaled(scale).h_advance(gid);
             if let Some(og) = font.outline_glyph(glyph) {
                 let bb = og.px_bounds();
+                // A letter outside the box is never drawn (a long line far to one side).
+                if bb.max.x < 0.0 || bb.max.y < 0.0 || bb.min.x >= w as f32 || bb.min.y >= h as f32 {
+                    continue;
+                }
                 og.draw(|gx, gy, cov| {
-                    let px = bb.min.x as i32 + gx as i32;
-                    let py = bb.min.y as i32 + gy as i32;
+                    let px = (bb.min.x as i32).saturating_add(gx as i32);
+                    let py = (bb.min.y as i32).saturating_add(gy as i32);
                     if px >= 0 && py >= 0 && (px as u32) < w && (py as u32) < h {
                         let idx = py as usize * w as usize + px as usize;
                         let v = (cov.clamp(0.0, 1.0) * 255.0) as u8;
@@ -321,7 +335,33 @@ fn magnify(pm: &mut ts::Pixmap, base: &RgbaImage, center: Pos2, radius: f32, zoo
     }
 }
 
+/// Marks reaching further than this from the picture's corner aren't drawn. A project file can
+/// say anything, and tiny-skia's fixed-point maths goes wrong (an assertion in test builds) on
+/// coordinates in the trillions; no real mark is a million pixels away (pictures are at most
+/// 30000 wide).
+const FAR: f32 = 1_000_000.0;
+
+fn drawable(s: &Shape) -> bool {
+    // Widths, sizes and radii are numbers from 0 to 100000 (a callout of size -9e18 made a
+    // bubble tiny-skia couldn't fill).
+    let sane = |v: f32| (0.0..=100_000.0).contains(&v);
+    let sizes_ok = match s {
+        Shape::Arrow { width, .. } | Shape::Line { width, .. } | Shape::Pen { width, .. } | Shape::Highlight { width, .. } => sane(*width),
+        Shape::Rect { width, radius, .. } => sane(*width) && sane(*radius),
+        Shape::Ellipse { width, .. } => sane(*width),
+        Shape::Text { size, .. } | Shape::Callout { size, .. } | Shape::Stamp { size, .. } | Shape::Pointer { size, .. } => sane(*size),
+        Shape::Step { radius, .. } => sane(*radius),
+        Shape::Magnify { radius, zoom, .. } => sane(*radius) && sane(*zoom),
+        Shape::Marker { .. } | Shape::Spotlight { .. } | Shape::Image { .. } => true,
+    };
+    let b = s.bounds();
+    sizes_ok && [b.min.x, b.min.y, b.max.x, b.max.y].iter().all(|v| v.is_finite() && v.abs() <= FAR)
+}
+
 fn draw_shape(pm: &mut ts::Pixmap, base: &RgbaImage, s: &Shape, as_shadow: bool) {
+    if !drawable(s) {
+        return;
+    }
     let col = |c: Color32| if as_shadow { doc::shadow_color() } else { c };
     match s {
         Shape::Arrow { a, b, color, width, heads, .. } => {
@@ -597,7 +637,7 @@ pub fn callout_body(bubble: Rect, shape: crate::settings::CalloutShape, size: f3
 pub fn text_image(text: &str, size: f32, color: [u8; 4]) -> RgbaImage {
     let size = size.clamp(6.0, 400.0);
     let m = measure(text, size, "", false, false);
-    let (w, h) = ((m.x.ceil() as u32 + 8).max(8), (m.y.ceil() as u32 + 8).max(8));
+    let (w, h) = ((m.x.ceil() as u32).saturating_add(8).max(8), (m.y.ceil() as u32).saturating_add(8).max(8));
     let Some(mut pm) = ts::Pixmap::new(w, h) else { return RgbaImage::new(1, 1) };
     let c = Color32::from_rgba_unmultiplied(color[0], color[1], color[2], color[3]);
     draw_text(&mut pm, text, Pos2::new(4.0, 4.0), size, c, Some(Color32::from_black_alpha(160)), false);
@@ -898,6 +938,44 @@ mod tests {
         assert!(pm.pixels().iter().all(|p| p.alpha() == 0));
         draw_text(&mut pm, "H", pos2(10.0, 10.0), 16.0, Color32::RED, Some(Color32::WHITE), true);
         assert!(pm.pixels().iter().any(|p| p.alpha() > 0));
+    }
+
+    /// Bug (found by the fuzz test): a project whose text mark sat at x = 10875944067872
+    /// overflowed working out the text's box, and a huge or broken size drew for ever.
+    #[test]
+    fn text_anywhere_at_any_size_draws_quickly_or_not_at_all() {
+        let mut d = Doc::new(RgbaImage::from_pixel(12, 9, image::Rgba([9, 9, 9, 255])));
+        let text = |x: f32, y: f32, size: f32| Shape::Text { pos: pos2(x, y), text: "Hi ü".into(), color: Color32::RED, size, bg: true, shadow: true, font: String::new(), bold: true, italic: false, outline: true, align: 1 };
+        d.shapes = vec![text(10875944067872.0, 3.0, 12.0), text(-3e38, -3e38, 12.0), text(3.0, 3.0, 1e30), text(3.0, 3.0, f32::NAN), text(3.0, 3.0, -5.0), text(f32::INFINITY, 1.0, 12.0)];
+        let t0 = std::time::Instant::now();
+        let out = compose(&d);
+        assert_eq!(out.dimensions(), (12, 9));
+        assert!(t0.elapsed() < std::time::Duration::from_secs(10), "{:?}", t0.elapsed());
+        let mut pm = ts::Pixmap::new(20, 20).unwrap();
+        draw_text(&mut pm, &"W".repeat(5000), pos2(-1e9, 2.0), 1e9, Color32::RED, Some(Color32::WHITE), false);
+        // Every kind of mark, from one edge of the picture to far away: drawn or skipped, never
+        // a panic (tiny-skia asserts on coordinates in the trillions).
+        for far in [40_000.0, 1e5, 9.9e5, 2e6, 1e13, -1e13, 3e38] {
+            let (p, q) = (pos2(2.0, 2.0), pos2(far, far * 0.5));
+            let r = Rect::from_two_pos(p, q);
+            d.shapes = vec![
+                Shape::Line { a: p, b: q, color: Color32::RED, width: 3.0, shadow: true },
+                Shape::Arrow { a: q, b: p, color: Color32::RED, width: 3.0, shadow: false, heads: 2 },
+                Shape::Rect { rect: r, color: Color32::RED, width: 2.0, fill: true, radius: 4.0, shadow: true },
+                Shape::Ellipse { rect: r, color: Color32::RED, width: 2.0, fill: false, shadow: false },
+                Shape::Pen { points: vec![p, q, pos2(5.0, 1.0)], color: Color32::RED, width: 2.0, shadow: false },
+                Shape::Marker { rect: r, color: Color32::YELLOW },
+                Shape::Spotlight { rect: r },
+                text(far, 3.0, 12.0),
+            ];
+            let _ = compose(&d);
+        }
+        // Bug (found by the fuzz test): a callout of size -9126276185164455000 near the corner.
+        let callout = |size: f32| Shape::Callout { pos: pos2(3.0, 3.0), tail: pos2(10.0, 8.0), text: "Look".into(), color: Color32::RED, size, shadow: false, font: String::new(), bold: false, italic: true, shape: CalloutShape::Rounded, outline: false, align: 2 };
+        d.shapes = vec![callout(-9126276185164455000.0), callout(f32::NAN), callout(-1.0), callout(0.0), callout(1e9), callout(12.0)];
+        let _ = compose(&d);
+        assert!(!drawable(&callout(-1.0)) && drawable(&callout(12.0)) && drawable(&callout(0.0)));
+        assert!(t0.elapsed() < std::time::Duration::from_secs(20), "{:?}", t0.elapsed());
     }
 
     #[test]
