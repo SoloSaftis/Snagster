@@ -307,8 +307,15 @@ impl Capture {
 
     /// Start every input Studio's scenes use, mixed by the current scene (`set_scene_mix`).
     /// An input that can't start (a microphone unplugged, a file gone, computer sound off
-    /// Windows) is left out and noted (`notes`); the others still run.
+    /// Windows) is left out and noted (`notes`); the others still run. Blocks until every input
+    /// has started or failed (at most `START_WAIT`): for a stream's or a recording's own thread.
     pub fn start_inputs(inputs: &[SoundInput]) -> Capture {
+        Self::start_inputs_within(inputs, START_WAIT)
+    }
+
+    /// `start_inputs` waiting at most `most`, for the window's own thread (Studio's meters),
+    /// which mustn't stop drawing for a device that is slow to open.
+    pub fn start_inputs_within(inputs: &[SoundInput], most: Duration) -> Capture {
         let mut cap = Capture::empty();
         let mut seen: Vec<&SoundInput> = Vec::new();
         for input in inputs {
@@ -328,7 +335,7 @@ impl Capture {
         // is left out with a note. Waited for, not a fixed moment: on a busy computer a file
         // that isn't there could take longer than 60 ms to say so, and was then kept silently.
         let feeds: Vec<Arc<Feed>> = cap.lanes.iter().map(|l| l.feed.clone()).collect();
-        wait_settled(&feeds, START_WAIT);
+        wait_settled(&feeds, most);
         let failed: Vec<(usize, String)> = cap.lanes.iter().enumerate().filter_map(|(i, l)| l.feed.error().map(|e| (i, format!("{}: {e}", input_label(&l.input))))).collect();
         for (i, note) in failed.into_iter().rev() {
             cap.lanes.remove(i);
