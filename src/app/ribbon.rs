@@ -326,6 +326,7 @@ impl SnagApp {
             let band_right = ui.max_rect().right();
             crate::app::keys_ui::set_scope(ui, Some(crate::app::keys_ui::Scope::Band));
             egui::ScrollArea::horizontal().id_salt("ribbon-band").scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden).show(ui, |ui| {
+                self.x.keys.scroll_here(ui.ctx(), crate::app::keys_ui::Pane::Ribbon);
                 ui.horizontal_top(|ui| {
                     fit::begin(fit::Pass::Band, shown, std::mem::take(&mut widths));
                     self.band_groups(ui, &ctx);

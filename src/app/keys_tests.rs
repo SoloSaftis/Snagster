@@ -398,23 +398,36 @@ fn a_control_in_a_floating_window_keeps_the_picture_keys_off() {
     assert_eq!(k.app.tool, before, "a letter in the language list doesn't choose a tool");
 }
 
-#[test]
-fn in_a_short_window_the_arrows_reach_the_options_below_the_fold() {
-    let mut k = Keys::sized(vec2(1400.0, 420.0));
+/// The options controls Down reaches from the first, in a window this tall.
+fn options_reached(height: f32) -> (Keys, Vec<Id>) {
+    let mut k = Keys::sized(vec2(1400.0, height));
     for _ in 0..4 {
         k.key(Key::F6);
     }
     assert_eq!(k.pane(), Some(Pane::Options));
-    let mut seen = std::collections::HashSet::new();
+    let mut seen = vec![k.focused().unwrap()];
     for _ in 0..40 {
         k.key(Key::ArrowDown);
         k.frame(Vec::new());
         assert_eq!(k.pane(), Some(Pane::Options));
-        seen.insert(k.focused());
+        let f = k.focused().unwrap();
+        if !seen.contains(&f) {
+            seen.push(f);
+        }
     }
-    assert!(seen.len() > 6, "Down stopped after {} controls", seen.len());
+    (k, seen)
+}
+
+#[test]
+fn in_a_short_window_the_arrows_reach_the_options_below_the_fold() {
+    let (_, tall) = options_reached(900.0);
+    let (k, short) = options_reached(420.0);
+    assert!(tall.len() > 6, "{} controls", tall.len());
+    assert_eq!(short, tall, "in a short window Down reaches the same controls, scrolling them into view");
     // The control the keyboard is on was scrolled into view.
     let r = k.ctx.read_response(k.focused().unwrap()).unwrap();
     let pane = k.app.x.keys.panes.iter().find(|p| p.0 == Pane::Options).unwrap().1;
     assert!(pane.intersects(r.rect), "{:?} is out of the panel {pane:?}", r.rect);
 }
+
+

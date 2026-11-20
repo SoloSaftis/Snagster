@@ -372,9 +372,31 @@ pub(crate) struct KeyNav {
     nudged: Option<(usize, usize, f64)>,
     /// The control an arrow left to egui last frame, and its pane.
     arrowed: Option<(Id, Pane)>,
+    /// A control the keyboard went to, to scroll into the middle of its pane's scroll area.
+    scroll: Option<Id>,
 }
 
 impl KeyNav {
+    /// Give a widget the keyboard, scrolled into view (a picture far along Recent).
+    fn focus(&mut self, ctx: &egui::Context, id: Id) {
+        ctx.memory_mut(|m| m.request_focus(id));
+        self.scroll = Some(id);
+    }
+
+    /// Inside pane `pane`'s scroll area: scroll to the control the keyboard went to, if it's
+    /// there. (egui only scrolls an area for a request made inside it.)
+    pub(crate) fn scroll_here(&mut self, ctx: &egui::Context, pane: Pane) {
+        if let Some(id) = self.scroll
+            && self.pane_of(ctx, Some(id)) == Some(pane)
+            // The tab row isn't in the band's scroll area.
+            && !self.last.iter().any(|i| i.id == id && i.scope == Scope::TabRow)
+            && let Some(r) = ctx.read_response(id)
+        {
+            self.scroll = None;
+            r.scroll_to_me(Some(egui::Align::Center));
+        }
+    }
+
     /// Undo and redo start a new step for the next arrow on the picture.
     pub(crate) fn forget_nudge(&mut self) {
         self.nudged = None;
@@ -419,13 +441,6 @@ fn alt_only(m: egui::Modifiers) -> bool {
     m.alt && !m.ctrl && !m.shift && !m.mac_cmd && !m.command
 }
 
-/// Give a widget the keyboard, scrolled into view (a picture far along Recent).
-fn focus(ctx: &egui::Context, id: Id) {
-    ctx.memory_mut(|m| m.request_focus(id));
-    if let Some(r) = ctx.read_response(id) {
-        r.scroll_to_me(None);
-    }
-}
 
 /// Click a widget as a screen reader would (egui runs it as a click this frame).
 fn click(ctx: &egui::Context, id: Id) {
@@ -609,10 +624,9 @@ impl SnagApp {
                 ctx.memory_mut(|m| m.request_focus(id));
                 return;
             }
-            // Still in the pane, perhaps scrolled out of view: bring it in.
-            if let Some(r) = focused.and_then(|f| ctx.read_response(f)) {
-                r.scroll_to_me(None);
-            }
+            // Still in the pane: keep it in the middle, so the next one down or up is in view too
+            // (egui only moves to controls it can see).
+            self.x.keys.scroll = focused;
         }
         let back = ctx.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, Key::F6));
         let fwd = !back && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, Key::F6));
@@ -678,7 +692,8 @@ impl SnagApp {
         ctx.memory_mut(|mem| mem.move_focus(FocusDirection::None));
         ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, key));
         if let Some(to) = step(&rects, from, d) {
-            focus(ctx, mine[to].id);
+            let id = mine[to].id;
+            self.x.keys.focus(ctx, id);
         }
     }
 
@@ -698,7 +713,7 @@ impl SnagApp {
             Pane::Options => None,
         };
         match id {
-            Some(id) => focus(ctx, id),
+            Some(id) => k.focus(ctx, id),
             None => k.enter = Some(p),
         }
     }

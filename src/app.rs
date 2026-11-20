@@ -3137,7 +3137,10 @@ impl SnagApp {
             }
             ui.add_space(4.0);
         }
-        egui::ScrollArea::vertical().id_salt("tools-scroll").show(ui, |ui| self.tool_grid(ui));
+        egui::ScrollArea::vertical().id_salt("tools-scroll").show(ui, |ui| {
+            self.x.keys.scroll_here(ui.ctx(), keys_ui::Pane::Tools);
+            self.tool_grid(ui)
+        });
         keys_ui::set_scope(ui, None);
     }
 
@@ -3183,6 +3186,7 @@ impl SnagApp {
 
     fn side_panel(&mut self, ui: &mut egui::Ui) {
         egui::ScrollArea::vertical().show(ui, |ui| {
+            self.x.keys.scroll_here(ui.ctx(), keys_ui::Pane::Options);
             ui.add_space(10.0);
             section(ui, crate::i18n::t("Color"));
             let mut chosen = None;
@@ -3542,6 +3546,7 @@ impl SnagApp {
             }
             keys_ui::set_scope(ui, Some(keys_ui::Scope::Recent));
             egui::ScrollArea::horizontal().show(ui, |ui| {
+                self.x.keys.scroll_here(ui.ctx(), keys_ui::Pane::Recent);
                 // Top-aligned: a taller tile (Earlier's, with its label) doesn't push the others down.
                 ui.horizontal_top(|ui| {
                     if self.entries.is_empty() && self.earlier.items.is_empty() {
