@@ -39,6 +39,7 @@ pub static UI_TEST: AtomicBool = AtomicBool::new(false);
 pub static SCREENSHOT_VIEW: Mutex<String> = Mutex::new(String::new());
 
 mod uitest;
+pub use uitest::exit_code as ui_test_exit_code;
 #[cfg(test)]
 mod tool_tests;
 pub(crate) mod access_ui;

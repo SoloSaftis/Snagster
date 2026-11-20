@@ -7,6 +7,22 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 
 type Step = (String, Box<dyn Fn(&mut SnagApp, &egui::Context) -> bool>);
 
+/// Whether `--ui-test` got through every step with every one working. False until it has, so a
+/// run that stops early (the window closed, a crash) also counts as failed.
+static ALL_WORKED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The exit code for a run of Snagster: for `--ui-test` (`ran`), 0 only when `all_worked`, so
+/// a script or a person sees a failed step without reading the report; None otherwise.
+fn exit_code_for(ran: bool, all_worked: bool) -> Option<i32> {
+    ran.then_some(if all_worked { 0 } else { 1 })
+}
+
+/// The exit code `--ui-test` asks for once the window has closed (None when it didn't run).
+pub fn exit_code() -> Option<i32> {
+    use std::sync::atomic::Ordering::Relaxed;
+    exit_code_for(UI_TEST.load(Relaxed), ALL_WORKED.load(Relaxed))
+}
+
 pub(crate) struct UiTest {
     steps: Vec<Step>,
     at: usize,
@@ -1082,6 +1098,7 @@ impl SnagApp {
                     println!("  failed: {f}");
                 }
                 if t.failed.is_empty() {
+                    ALL_WORKED.store(true, std::sync::atomic::Ordering::Relaxed);
                     let _ = std::fs::remove_dir_all(&t.dir);
                 } else {
                     println!("The test's files are in {}", t.dir.display());
@@ -1153,6 +1170,14 @@ pub(crate) fn test_dir() -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_ui_test_with_a_failed_step_exits_with_an_error() {
+        // It used to print "failed:" lines and still exit with 0, so a run looked green.
+        assert_eq!(exit_code_for(true, false), Some(1), "a step failed, or the run stopped early");
+        assert_eq!(exit_code_for(true, true), Some(0));
+        assert_eq!(exit_code_for(false, false), None, "an ordinary run keeps its own exit code");
+    }
 
     #[test]
     fn a_waiting_step_needs_both_many_tries_and_a_minute_before_it_gives_up() {
