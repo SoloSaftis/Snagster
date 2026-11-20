@@ -13,10 +13,12 @@ pub(crate) struct UiTest {
     tries: u32,
     // When the current step first asked to wait.
     waiting: Option<std::time::Instant>,
+    // When the last step finished, to name the frames that held the window up between steps.
+    last_step: Option<std::time::Instant>,
     frames: u32,
     passed: usize,
     failed: Vec<String>,
-    #[allow(dead_code)]
+    // The run's own folder: removed when every step worked, kept to look at when one failed.
     dir: PathBuf,
 }
 
@@ -244,29 +246,87 @@ impl UiTest {
             }
             a.settings.rec_format = crate::video::VideoFormat::Mp4;
         }));
-        s.push(once("Record: start a 120 fps MP4 video", |a, c| {
+        // The recording is paused, resumed and stopped by the test, each step waiting for the state
+        // it checks (frames in the file, not the clock), so neither a slow machine (a frame can take
+        // a second on CI) nor a slow encoder start (seconds for Quick Sync) can throw it off. The
+        // time limit is only a backstop should a step fail before Stop.
+        let rec = std::rc::Rc::new(std::cell::Cell::new(None::<RecTimes>));
+        let r = rec.clone();
+        s.push(once("Record: start a 120 fps MP4 video", move |a, c| {
             a.settings.video_fps = 120;
-            a.settings.video_max_s = 1;
+            a.settings.video_max_s = 30;
             a.start_video_to(c, (0, 0, 320, 240), Some(test_dir().join("ui-test.mp4")));
             assert!(a.mini == Some(Mini::Video), "the recording bar didn't open");
-        }));
-        s.push(once("Record: pause and resume", |a, _| {
-            a.toggle_pause();
-            assert!(a.paused());
-            a.toggle_pause();
-            assert!(!a.paused());
+            r.set(Some(RecTimes::new()));
         }));
         s.push((
-            "Record: the video is saved and plays back".to_string(),
+            "Record: frames are coming".to_string(),
             Box::new(|a: &mut SnagApp, _: &egui::Context| {
+                assert!(a.job_pause.is_some(), "the recording ended by itself: {}", a.status);
+                crate::video::recording_frames() >= 2
+            }),
+        ));
+        let r = rec.clone();
+        s.push(once("Record: pause", move |a, _| {
+            a.toggle_pause();
+            assert!(a.paused() && a.mini_paused.is_some(), "not paused");
+            let frames = crate::video::recording_frames();
+            r.set(r.get().map(|t| RecTimes { paused: Some(std::time::Instant::now()), frames_at: frames, ..t }));
+        }));
+        let r = rec.clone();
+        s.push((
+            "Record: a paused recording takes no frames".to_string(),
+            Box::new(move |a: &mut SnagApp, _: &egui::Context| {
+                assert!(a.paused() && a.mini == Some(Mini::Video), "the recording didn't stay paused: {}", a.status);
+                let Some(t) = r.get() else { return false };
+                if !t.paused.is_some_and(|p| p.elapsed() >= RecTimes::HOLD) {
+                    return false;
+                }
+                // One frame may have been on its way when Pause was pressed.
+                let now = crate::video::recording_frames();
+                assert!(now <= t.frames_at + 1, "{} frames were taken while paused", now - t.frames_at);
+                true
+            }),
+        ));
+        let r = rec.clone();
+        s.push(once("Record: resume", move |a, _| {
+            a.toggle_pause();
+            assert!(!a.paused() && a.mini_paused.is_none(), "still paused");
+            let frames = crate::video::recording_frames();
+            r.set(r.get().map(|t| RecTimes { resumed: Some(std::time::Instant::now()), frames_at: frames, ..t }));
+        }));
+        let r = rec.clone();
+        s.push((
+            "Record: stop after a second of new frames".to_string(),
+            Box::new(move |a: &mut SnagApp, _: &egui::Context| {
+                assert!(a.job_stop.is_some(), "the recording ended by itself: {}", a.status);
+                let Some(t) = r.get() else { return false };
+                if !t.resumed.is_some_and(|p| p.elapsed() >= RecTimes::HOLD) || crate::video::recording_frames() < t.frames_at + 2 {
+                    return false;
+                }
+                a.stop_job();
+                r.set(Some(RecTimes { stopped: Some(std::time::Instant::now()), ..t }));
+                true
+            }),
+        ));
+        s.push((
+            "Record: the video is saved and plays back".to_string(),
+            Box::new(move |a: &mut SnagApp, _: &egui::Context| {
+                // Stop was pressed already; this ends the recording too when a step before failed,
+                // so it doesn't run on to the 30 s backstop.
+                a.stop_job();
                 let Some(v) = a.videos.first() else { return false };
                 assert!(v.result.is_ok(), "{:?}", v.result);
                 let p = crate::video::probe(&v.path).expect("can't read the video back");
-                // The button test checks the video is made and readable; how many frames a second a
-                // machine manages is --video-test's job (CI machines encode slowly in software).
-                assert!(p.frames >= 10, "only {} frames", p.frames);
+                // The button test checks the video is made, paused and readable; how many frames a
+                // second a machine manages is --video-test's job (CI machines encode slowly).
+                // Two frames before Pause and two after Resume, at least.
+                assert!(p.frames >= 4, "only {} frames in the file ({} written, {:.2} s): {}", p.frames, v.frames, v.seconds, a.status);
                 assert_eq!((p.width, p.height), (320, 240));
                 assert!(a.mini.is_none(), "the recording bar stayed open");
+                let t = rec.get().expect("the recording's times");
+                let check = t.check(v.seconds);
+                assert!(check.is_ok(), "{}", check.unwrap_err());
                 a.settings.video_max_s = 0;
                 true
             }),
@@ -943,7 +1003,7 @@ impl UiTest {
             let d = crate::settings::Settings::default();
             (a.settings.scroll_notches, a.settings.scroll_max_height, a.settings.scroll_from_top) = (d.scroll_notches, d.scroll_max_height, d.scroll_from_top);
         }));
-        UiTest { steps: s, at: 0, tries: 0, waiting: None, frames: 0, passed: 0, failed: Vec::new(), dir }
+        UiTest { steps: s, at: 0, tries: 0, waiting: None, last_step: None, frames: 0, passed: 0, failed: Vec::new(), dir }
     }
 
 /// Not run by the test, and why.
@@ -971,7 +1031,14 @@ impl SnagApp {
                 let (name, f) = &t.steps[t.at];
                 let name = name.clone();
                 let started = std::time::Instant::now();
+                // The two frames since the last step were slow (the window was busy or held up).
+                if let Some(gap) = t.last_step.map(|l| started.saturating_duration_since(l))
+                    && gap >= super::work::SLOW_FRAME
+                {
+                    println!("  slow  {name}: the window was held up {:.1} s before this step", gap.as_secs_f64());
+                }
                 let r = catch_unwind(AssertUnwindSafe(|| f(self, ctx)));
+                t.last_step = Some(std::time::Instant::now());
                 // A step that holds up its frame: says which one, so a slow-frame line in the
                 // log can be told apart from the window's own work.
                 if started.elapsed() >= super::work::SLOW_FRAME {
@@ -1014,6 +1081,11 @@ impl SnagApp {
                 for f in &t.failed {
                     println!("  failed: {f}");
                 }
+                if t.failed.is_empty() {
+                    let _ = std::fs::remove_dir_all(&t.dir);
+                } else {
+                    println!("The test's files are in {}", t.dir.display());
+                }
                 println!("Not run on purpose:");
                 for s in UiTest::SKIPPED {
                     println!("  - {s}");
@@ -1031,8 +1103,51 @@ fn gave_up(tries: u32, waited: std::time::Duration) -> bool {
     tries >= 600 && waited >= std::time::Duration::from_secs(60)
 }
 
-fn test_dir() -> PathBuf {
-    std::env::temp_dir().join("snagster-ui-test")
+/// When the test's video recording started, was paused, resumed and stopped, to check the time
+/// it says it recorded.
+#[derive(Clone, Copy, Debug)]
+struct RecTimes {
+    started: std::time::Instant,
+    paused: Option<std::time::Instant>,
+    resumed: Option<std::time::Instant>,
+    stopped: Option<std::time::Instant>,
+    // The frames in the file at the last Pause or Resume.
+    frames_at: u64,
+}
+
+impl RecTimes {
+    /// How long the test keeps the recording paused, and then recording again before Stop.
+    const HOLD: std::time::Duration = std::time::Duration::from_secs(1);
+    /// Slack for the recorder noticing Pause, Resume and Stop a frame late on a slow machine.
+    const SLACK: std::time::Duration = std::time::Duration::from_millis(500);
+
+    fn new() -> Self {
+        RecTimes { started: std::time::Instant::now(), paused: None, resumed: None, stopped: None, frames_at: 0 }
+    }
+
+    /// Whether `seconds` of recorded video fits: at least most of the second after Resume, and
+    /// none of the paused second.
+    fn check(&self, seconds: f32) -> Result<(), String> {
+        let (Some(p), Some(r), Some(s)) = (self.paused, self.resumed, self.stopped) else {
+            return Err(format!("the steps didn't all run: {self:?}"));
+        };
+        let recorded = std::time::Duration::from_secs_f32(seconds.max(0.0));
+        let after_resume = s.saturating_duration_since(r);
+        if recorded + Self::SLACK < after_resume {
+            return Err(format!("{seconds:.2} s recorded, but it ran {:.2} s after Resume", after_resume.as_secs_f32()));
+        }
+        let unpaused = s.saturating_duration_since(self.started).saturating_sub(r.saturating_duration_since(p));
+        if recorded > unpaused + Self::SLACK {
+            return Err(format!("{seconds:.2} s recorded, but only {:.2} s weren't paused: the pause was recorded", unpaused.as_secs_f32()));
+        }
+        Ok(())
+    }
+}
+
+/// The test's own folder in temp. Each run has its own (by process), so two runs at once (two
+/// worktrees on one computer) don't delete each other's files.
+pub(crate) fn test_dir() -> PathBuf {
+    std::env::temp_dir().join(format!("snagster-ui-test-{}", std::process::id()))
 }
 
 #[cfg(test)]
@@ -1074,8 +1189,30 @@ mod tests {
     }
 
     #[test]
+    fn the_recorded_time_leaves_out_the_pause_and_keeps_the_rest() {
+        use std::time::{Duration, Instant};
+        let started = Instant::now();
+        let at = |ms: u64| Some(started + Duration::from_millis(ms));
+        // Recorded 0.2 s, paused 1 s, recorded 1 s again: 1.2 s of video.
+        let t = RecTimes { started, paused: at(200), resumed: at(1200), stopped: at(2200), frames_at: 0 };
+        assert!(t.check(1.2).is_ok());
+        assert!(t.check(0.9).is_ok(), "the recorder starts a little after the button");
+        assert!(t.check(1.6).is_ok(), "noticed Stop a frame late");
+        let e = t.check(2.2).unwrap_err();
+        assert!(e.contains("the pause was recorded"), "{e}");
+        let e = t.check(0.3).unwrap_err();
+        assert!(e.contains("after Resume"), "{e}");
+        assert!(t.check(f32::NAN).is_err(), "no time recorded");
+        let half = RecTimes { stopped: None, ..t };
+        assert!(half.check(1.2).unwrap_err().contains("didn't all run"));
+    }
+
+    #[test]
     fn the_test_folder_is_in_temp() {
         assert!(test_dir().starts_with(std::env::temp_dir()));
+        // Its own per run, so a second run at the same time can't delete this one's files.
+        assert!(test_dir().to_string_lossy().ends_with(&format!("snagster-ui-test-{}", std::process::id())));
+        assert_eq!(test_dir(), test_dir());
     }
 
     #[test]

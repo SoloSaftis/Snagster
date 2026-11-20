@@ -143,6 +143,12 @@ Fewer crashes on odd input (found by new tests that feed Snagster broken files e
   so; editor_apply's cut_out far outside the picture is simply nothing to cut.
 - Updates: a SHA256SUMS line written as `<sum> * name` now matches its download.
 
+Linux and macOS:
+
+- **Videos start smoothly**: the time the encoder took to start was counted as recorded, so a
+  video began with its first picture held for that long and a time limit ended it early. The
+  clock now starts at the first picture, as on Windows.
+
 ## 0.10.6 — 2026-11-17
 
 Linux with Wayland (checked on Ubuntu 26.04 with GNOME):

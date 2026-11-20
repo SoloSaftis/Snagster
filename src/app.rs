@@ -655,7 +655,7 @@ impl SnagApp {
             app.add_entry("Sample 2".into(), second);
             app.add_entry("Sample 1".into(), sample::sample_doc());
             if UI_TEST.load(Ordering::Relaxed) {
-                let dir = std::env::temp_dir().join("snagster-ui-test");
+                let dir = uitest::test_dir();
                 let _ = std::fs::remove_dir_all(&dir);
                 let _ = std::fs::create_dir_all(&dir);
                 app.settings.library_folder = dir.join("Library").display().to_string();

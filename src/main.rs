@@ -545,6 +545,13 @@ fn circle_free(img: &image::RgbaImage) -> image::RgbaImage {
     effects::trim(img)
 }
 
+/// Where `--video-test` writes one recording: its own per run (by process), so two runs at once
+/// (two worktrees on one computer) don't overwrite or delete each other's videos.
+fn video_test_path(fps: u32, format: video::VideoFormat, hardware: bool) -> std::path::PathBuf {
+    let pid = std::process::id();
+    std::env::temp_dir().join(format!("snagster-video-test-{pid}-{fps}-{}-{}.{}", format.ext(), if hardware { "hw" } else { "sw" }, format.ext()))
+}
+
 /// CPU time this process has used so far, in seconds.
 /// `--video-test`: encoders on this computer, then 3-second recordings in each format and rate,
 /// each decoded again to count frames and check the picture is the right way up.
@@ -590,7 +597,7 @@ fn video_test(quick: bool) {
             continue;
         }
         let secs = if fps == 1 { 5 } else { 3 };
-        let path = std::env::temp_dir().join(format!("snagster-video-test-{fps}-{}-{}.{}", format.ext(), if hardware { "hw" } else { "sw" }, format.ext()));
+        let path = video_test_path(fps, format, hardware);
         let mut opts = VideoOpts::screen(rect, fps, format, path.clone());
         opts.hardware = hardware;
         opts.max_s = secs;
@@ -809,6 +816,17 @@ fn attach_console() {
 #[cfg(test)]
 mod main_tests {
     use super::*;
+
+    #[test]
+    fn each_video_test_run_has_its_own_files() {
+        let p = video_test_path(60, video::VideoFormat::Mp4, true);
+        assert!(p.starts_with(std::env::temp_dir()));
+        let name = p.file_name().unwrap().to_string_lossy().to_string();
+        assert!(name.contains(&std::process::id().to_string()), "{name}: two runs at once would share it");
+        assert!(name.ends_with(".mp4"));
+        assert_ne!(p, video_test_path(60, video::VideoFormat::Mp4, false));
+        assert_ne!(p, video_test_path(30, video::VideoFormat::Mp4, true));
+    }
 
     /// build.rs puts assets/snagster.ico into Snagster.exe; Windows picks the size it needs
     /// (16 in lists, 24/32 on the taskbar, 48 in Explorer, 256 for large icons).
