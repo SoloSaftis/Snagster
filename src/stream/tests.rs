@@ -269,6 +269,10 @@ impl VideoEncoder for Breaks {
     fn name(&self) -> EncoderName {
         EncoderName { name: self.name.clone(), hardware: true }
     }
+    /// It threw a few pictures away before it broke (the count must outlive it).
+    fn dropped(&self) -> u64 {
+        7
+    }
 }
 
 fn breaking(after: u64, name: &str) -> Box<dyn VideoEncoder> {
@@ -390,6 +394,17 @@ fn reconnects_after_the_server_drops_the_connection() {
     let st = s.stats();
     assert!(st.reconnects >= 1, "{st:?}");
     assert_eq!(st.state, State::Live);
+    // The health counts the reconnect, and the connection time starts again with it.
+    let h = &st.health.outputs[0];
+    assert_eq!(h.reconnects, st.reconnects);
+    assert!(h.connected_s > 0.0 && h.connected_s < st.uptime_s, "{h:?} after {} s", st.uptime_s);
+    // The new connection's bytes keep adding up: measured once it has run five seconds.
+    let t = Instant::now();
+    while !s.stats().health.outputs[0].measured && t.elapsed() < Duration::from_secs(15) {
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    let h = s.stats().health.outputs[0].clone();
+    assert!(h.measured && h.sent_kbps > 0, "{h:?}");
     drop(s);
     let g = srv.conns.lock().unwrap();
     let c = &g[1];
@@ -465,6 +480,13 @@ fn a_slow_network_drops_frames_and_never_holds_up_the_capture() {
     let st = s.stats();
     assert!(st.frames_dropped >= 10, "{st:?}");
     assert!(st.queue_ms >= 300 || st.frames_dropped > 0);
+    // The health counts them as the network's, not the computer's (the fake encoder keeps up).
+    let h = &st.health;
+    assert_eq!(h.outputs.len(), 1);
+    // (Read a moment after the other numbers, while frames keep being dropped.)
+    assert!(h.outputs[0].dropped >= st.outputs[0].frames_dropped, "{h:?}");
+    assert!(h.encoder_lost >= st.timing.encoder_dropped + st.timing.late, "{h:?}");
+    assert!(h.set_kbps >= st.outputs.len() as u32 * 300, "{h:?}");
     // The capture kept going meanwhile. Held up by the stuck network it would make next to
     // nothing; a quarter of the frames it was due tells that apart even on a 3-core CI Mac
     // running every test at once (it made 13 a second there once, against 30 alone).
@@ -674,6 +696,31 @@ fn one_service_failing_leaves_the_others_live() {
     assert_eq!(s.stop().state, State::Stopped, "the stream as a whole didn't fail");
 }
 
+/// The health's numbers come from what the stream really did: after five seconds to a server
+/// that takes everything, the rates are measured and the bytes it counted are about what the
+/// connection sent. Nothing is dropped: the frames queued while the first connection was made
+/// don't count (nothing was live yet).
+#[test]
+fn a_healthy_stream_measures_what_it_sends() {
+    let srv = Server::start(ServerOpts::default());
+    let (frames, _) = grey();
+    let s = Streamer::start(config(srv.url(), KEY), frames, silence(), fakes(30, 2_000)).unwrap();
+    srv.wait("frames", 15, |c| c.first().is_some_and(|c| c.video.len() >= 10));
+    let t = Instant::now();
+    while !s.stats().health.outputs.first().is_some_and(|o| o.measured) && t.elapsed() < Duration::from_secs(20) {
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    let st = s.stats();
+    let h = &st.health;
+    assert!(h.window_s >= 5.0 && h.outputs[0].measured, "{h:?}");
+    // 2 KB pictures at 30 fps: about 480 kbit/s of video, plus the sound and the headers.
+    assert!(h.outputs[0].sent_kbps > 200 && h.outputs[0].sent_kbps < 2000, "{h:?}");
+    assert_eq!((h.outputs[0].dropped, h.outputs[0].reconnects), (0, 0));
+    assert!(h.outputs[0].connected_s >= 5.0, "{h:?}");
+    assert!(h.encode_ms >= 0.0 && h.frame_budget_ms > 33.0 && h.frame_budget_ms < 34.0, "{h:?}");
+    drop(s);
+}
+
 /// A service on a slow network drops its own frames; the others get every one.
 #[test]
 fn a_slow_service_never_holds_up_the_others() {
@@ -737,6 +784,9 @@ fn a_failing_encoder_is_replaced_and_the_stream_goes_on() {
     assert_eq!(st.notice.as_deref(), Some("fake chip stopped working (the graphics chip was reset); switched to fake video."));
     assert!(st.error.is_none(), "{:?}", st.error);
     assert_eq!(*asked.lock().unwrap(), vec![vec!["fake chip".to_string()]], "asked once, avoiding the one that failed");
+    // The pictures the broken encoder threw away still count after the switch.
+    assert_eq!(st.timing.encoder_dropped, 7, "{:?}", st.timing);
+    assert!(st.health.encoder_lost >= 7, "{:?}", st.health);
     drop(s);
     // The new encoder started with a keyframe; its frames follow the old ones on the same clock.
     let g = srv.conns.lock().unwrap();

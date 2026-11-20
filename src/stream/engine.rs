@@ -3,6 +3,7 @@
 //! drops). The window reads `Streamer::stats` every frame; it never waits on the threads.
 
 use super::flv::{self, Meta, ParamSets};
+use super::health::{Asked, Health, OutNow, OutTotals, Sampler, Totals};
 use super::queue::{Packet, SendQueue};
 use super::rtmp::Client;
 use super::services::{Endpoint, StreamTarget, mask};
@@ -354,6 +355,8 @@ pub struct Stats {
     /// Each service on its own, the main one first (one entry when not multistreaming). The
     /// numbers above add them up: live while any is live, failed only when all have failed.
     pub outputs: Vec<OutputStats>,
+    /// How well it is going over the last seconds, with warnings in plain words.
+    pub health: Health,
 }
 
 /// One service of a stream.
@@ -527,6 +530,10 @@ struct Output {
     bytes_sent: AtomicU64,
     queue_ms: AtomicU32,
     reconnects: AtomicU32,
+    /// Bytes written to the server so far (kept up to date packet by packet, for the rates).
+    bytes_out: AtomicU64,
+    /// When the current connection went live (ms since the start, + 1; 0: it isn't).
+    live_at_ms: AtomicU64,
     error: Mutex<Option<String>>,
     queue: Mutex<Option<SendQueue>>,
     wake: Condvar,
@@ -544,6 +551,19 @@ impl Output {
     fn set_error(&self, e: String) {
         if let Ok(mut g) = self.error.lock() {
             *g = Some(mask(&e, &self.key));
+        }
+    }
+
+    /// Run `f` on the queue and count the video frames it threw away meanwhile (refused, or
+    /// thrown out to make room or because a new connection starts fresh).
+    fn queue_counting_drops(&self, f: impl FnOnce(&mut SendQueue)) {
+        let dropped = self.with_queue(|q| {
+            let before = q.dropped_video;
+            f(q);
+            q.dropped_video.saturating_sub(before)
+        });
+        if let Some(d) = dropped.filter(|&d| d > 0) {
+            self.frames_dropped.fetch_add(d, Ordering::Relaxed);
         }
     }
 
@@ -589,9 +609,63 @@ struct Shared {
     /// Give up sending at once (stopping took too long).
     abort: Arc<AtomicBool>,
     timing: TimingCounters,
+    /// What the stream was asked for (frame rate, video and sound bitrate).
+    asked: Asked,
+    /// Snapshots of the counters for the rates (`health`).
+    sampler: Mutex<Sampler>,
 }
 
 impl Shared {
+    /// The running totals at `at_ms` since the start.
+    fn totals(&self, at_ms: u64) -> Totals {
+        let g = |a: &AtomicU64| a.load(Ordering::Relaxed);
+        let t = &self.timing;
+        Totals {
+            at_ms,
+            frames_in: g(&t.frames_in),
+            encoder_lost: g(&t.encoder_dropped) + g(&t.late),
+            late: g(&t.late),
+            encode_us: g(&t.encode_us),
+            outputs: self.outputs.iter().map(|o| OutTotals { bytes: g(&o.bytes_out), sent: g(&o.frames_sent), dropped: g(&o.frames_dropped), reconnects: o.reconnects.load(Ordering::Relaxed) }).collect(),
+        }
+    }
+
+    /// Keep a snapshot of the counters when one is due; never waits (the picture thread calls
+    /// it every frame, the window when it reads the stats).
+    fn sample(&self, started: Instant) {
+        let at = started.elapsed().as_millis() as u64;
+        if let Ok(mut s) = self.sampler.try_lock()
+            && s.due(at)
+        {
+            s.push(self.totals(at));
+        }
+    }
+
+    /// How it is going (`health::Sampler::health`).
+    fn health(&self, started: Instant) -> Health {
+        self.sample(started);
+        let at = started.elapsed().as_millis() as u64;
+        let now: Vec<OutNow> = self
+            .outputs
+            .iter()
+            .map(|o| {
+                let since = o.live_at_ms.load(Ordering::Relaxed);
+                let live = o.state() == State::Live && since != 0;
+                let since = since.saturating_sub(1);
+                OutNow { service: o.service.clone(), live, queue_ms: o.queue_ms.load(Ordering::Relaxed), connected_ms: if live { at.saturating_sub(since) } else { 0 }, live_since_ms: since }
+            })
+            .collect();
+        let mut h = self.sampler.lock().unwrap_or_else(|p| p.into_inner()).health(self.asked, &now);
+        // The totals as they are now (the snapshots can be a quarter of a second old).
+        let t = self.totals(at);
+        h.encoder_lost = t.encoder_lost;
+        for (o, n) in h.outputs.iter_mut().zip(&t.outputs) {
+            o.dropped = n.dropped;
+            o.reconnects = n.reconnects;
+        }
+        h
+    }
+
     fn set_error(&self, e: String) {
         if let Ok(mut g) = self.error.lock() {
             let e = self.outputs.iter().fold(e, |e, o| mask(&e, &o.key));
@@ -666,7 +740,6 @@ impl Streamer {
         let vcfg = video_config(&cfg)?;
         let (w, h, fps) = (vcfg.width, vcfg.height, vcfg.fps);
         let venc = (encoders.video)(&vcfg).map_err(mask_all)?;
-        let shared = Arc::new(Shared { outputs, ..Default::default() });
         // The chosen encoder couldn't start and another one is used: say so.
         let mut notes: Vec<String> = encoders.take_note().into_iter().collect();
         let mut sound = sound.into_feed();
@@ -680,6 +753,8 @@ impl Streamer {
                 }
             }
         }
+        let asked = Asked { fps, kbps: cfg.video_kbps + if aenc.is_some() { cfg.audio_kbps } else { 0 } };
+        let shared = Arc::new(Shared { outputs, asked, ..Default::default() });
         if !notes.is_empty() {
             *shared.notice.lock().unwrap_or_else(|p| p.into_inner()) = Some(notes.join(" "));
         }
@@ -708,7 +783,8 @@ impl Streamer {
         Ok(Streamer { shared, started, threads, net_threads, _timely: crate::video::TimelyActivity::begin(why) })
     }
 
-    /// Where the stream stands; never waits on the stream's threads.
+    /// Where the stream stands; never waits on the stream's threads (the only lock it takes,
+    /// the health snapshots', is held by them for a few microseconds at most, with `try_lock`).
     pub fn stats(&self) -> Stats {
         let s = &self.shared;
         let live = s.live_since_ms.load(Ordering::Relaxed);
@@ -735,6 +811,7 @@ impl Streamer {
             audio_encoder: names.1,
             timing: s.timing.snapshot(),
             outputs,
+            health: s.health(self.started),
         }
     }
 
@@ -808,11 +885,9 @@ fn queue_packet(sh: &Shared, hook: &Option<PacketHook>, p: Packet) {
     for (i, o) in sh.outputs.iter().enumerate() {
         let one = if i + 1 == n { p.take() } else { p.clone() };
         let Some(one) = one else { break };
-        o.with_queue(|q| match one {
+        o.queue_counting_drops(|q| match one {
             Packet::Video(v) => {
-                if !q.push_video(v) {
-                    o.frames_dropped.fetch_add(1, Ordering::Relaxed);
-                }
+                q.push_video(v);
             }
             Packet::Audio(a) => q.push_audio(a),
         });
@@ -879,7 +954,10 @@ fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEnco
     // The next frame slot to fill: slot n is due at `started + n frames` (fixed deadlines, so
     // nothing drifts however the waits go).
     let mut n: u64 = 0;
+    // Pictures thrown away by encoders that were replaced (the count goes on from there).
+    let mut dropped_before: u64 = 0;
     'frames: while !sh.stop.load(Ordering::Relaxed) {
+        sh.sample(started);
         let mut plan = plan_slots(started.elapsed().as_micros() as u64, frame_us, n, CATCH_UP);
         if let Some(wait) = plan.wait_us {
             // Wait for the slot, then fill it (also when told to stop meanwhile: the slot was
@@ -918,7 +996,7 @@ fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEnco
             let took = add_us(&sh.timing.encode_us, t);
             sh.timing.encode_max_us.fetch_max(took, Ordering::Relaxed);
             sh.timing.frames_in.fetch_add(1, Ordering::Relaxed);
-            sh.timing.encoder_dropped.store(enc.dropped(), Ordering::Relaxed);
+            sh.timing.encoder_dropped.store(dropped_before + enc.dropped(), Ordering::Relaxed);
             match r {
                 Ok(ps) => {
                     sh.timing.packets_out.fetch_add(ps.len() as u64, Ordering::Relaxed);
@@ -928,6 +1006,7 @@ fn video_thread(sh: Arc<Shared>, frames: FrameSource, mut enc: Box<dyn VideoEnco
                     // Another encoder takes over (from the next keyframe); the stream goes on.
                     let failed = enc.name().name;
                     if let Some((new, note)) = swap.replace(&mut avoid, &failed, &e) {
+                        dropped_before += enc.dropped();
                         enc = new;
                         if let Ok(mut n) = sh.names.lock() {
                             n.0 = Some(enc.name());
@@ -1153,14 +1232,21 @@ fn net_thread(sh: Arc<Shared>, idx: usize, cfg: NetCfg, started: Instant) {
         }
         c.abort = Some(sh.abort.clone());
         c.stall = cfg.write_timeout;
+        let reconnected = !first;
         first = false;
         // `tries` is reset only once this connection has carried pictures for a while: a server
         // that takes the connection and then drops it at once must not be retried forever.
         if let Ok(mut e) = o.error.lock() {
             *e = None;
         }
-        // Start this connection fresh: a keyframe soon, nothing stale.
-        o.with_queue(|q| q.restart());
+        // Start this connection fresh: a keyframe soon, nothing stale. After a reconnect the
+        // frames still waiting are lost, and counted; before the first connection nothing was
+        // live yet.
+        if reconnected {
+            o.queue_counting_drops(SendQueue::restart);
+        } else {
+            o.with_queue(SendQueue::restart);
+        }
         sh.want_key.store(true, Ordering::Relaxed);
         let mut s = Session::new(cfg.codec, params.clone());
         let mut setup = c.send_metadata(flv::metadata(&cfg.meta));
@@ -1176,6 +1262,9 @@ fn net_thread(sh: Arc<Shared>, idx: usize, cfg: NetCfg, started: Instant) {
         }
 
         o.set_state(if sh.stop.load(Ordering::Relaxed) { State::Stopping } else { State::Live });
+        o.live_at_ms.store(started.elapsed().as_millis() as u64 + 1, Ordering::Relaxed);
+        // What `bytes_out` has counted of this connection's bytes.
+        let mut counted = c.sent;
         let _ = sh.live_since_ms.compare_exchange(0, started.elapsed().as_millis() as u64 + 1, Ordering::Relaxed, Ordering::Relaxed);
         let mut last_poll = Instant::now();
         let mut window = (Instant::now(), c.sent, 0u64);
@@ -1206,6 +1295,10 @@ fn net_thread(sh: Arc<Shared>, idx: usize, cfg: NetCfg, started: Instant) {
                     }
                 }
             }
+            if c.sent > counted {
+                o.bytes_out.fetch_add(c.sent - counted, Ordering::Relaxed);
+                counted = c.sent;
+            }
             if tries > 0 && connection_is_healthy(connected.elapsed(), frames_here) {
                 tries = 0;
             }
@@ -1227,6 +1320,12 @@ fn net_thread(sh: Arc<Shared>, idx: usize, cfg: NetCfg, started: Instant) {
                 params = s.params.clone();
                 o.bitrate.store(0, Ordering::Relaxed);
                 o.fps_x100.store(0, Ordering::Relaxed);
+                o.live_at_ms.store(0, Ordering::Relaxed);
+                o.queue_ms.store(0, Ordering::Relaxed);
+                // Not live while it waits to try again (it said Live through the wait).
+                if !sh.stop.load(Ordering::Relaxed) {
+                    o.set_state(State::Reconnecting);
+                }
                 if retry_after_failure(&sh, o, &cfg, &mut tries) {
                     continue 'connect;
                 }
@@ -1245,6 +1344,7 @@ fn net_thread(sh: Arc<Shared>, idx: usize, cfg: NetCfg, started: Instant) {
     }
     o.bitrate.store(0, Ordering::Relaxed);
     o.fps_x100.store(0, Ordering::Relaxed);
+    o.live_at_ms.store(0, Ordering::Relaxed);
 }
 
 #[cfg(test)]
