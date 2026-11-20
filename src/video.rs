@@ -3209,16 +3209,24 @@ mod soft {
 /// video; Windows asks Media Foundation). Built into Windows tests too, for the fuzz target.
 #[cfg(any(not(windows), test))]
 fn mp4_probe<R: std::io::Read + std::io::Seek>(reader: R, size: u64) -> Result<Probe, String> {
-    let r = mp4::Mp4Reader::read_header(Bounded::new(reader, size), size).map_err(|e| e.to_string())?;
-    let t = r.tracks().get(&1).ok_or("no video track")?;
-    Ok(Probe {
-        width: t.width() as u32,
-        height: t.height() as u32,
-        frames: t.sample_count() as u64,
-        seconds: t.duration().as_secs_f64(),
-        first: None,
-        audio: r.tracks().len() > 1,
-    })
+    // The mp4 crate panics on some broken files (a time scale of 0 divides by zero): a broken
+    // video is an error, never a crash.
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let r = mp4::Mp4Reader::read_header(Bounded::new(reader, size), size).map_err(|e| e.to_string())?;
+        let t = r.tracks().get(&1).ok_or("no video track")?;
+        if t.timescale() == 0 {
+            return Err("the video is broken (its time scale is 0)".to_string());
+        }
+        Ok(Probe {
+            width: t.width() as u32,
+            height: t.height() as u32,
+            frames: t.sample_count() as u64,
+            seconds: t.duration().as_secs_f64(),
+            first: None,
+            audio: r.tracks().len() > 1,
+        })
+    }))
+    .unwrap_or_else(|_| Err("the video is broken".to_string()))
 }
 
 /// A file read for the mp4 crate that fails once far more was read, or the place moved far
@@ -3322,6 +3330,18 @@ pub(crate) mod fuzzing {
         let e = mp4_probe(std::io::Cursor::new(&broken), broken.len() as u64).unwrap_err();
         assert!(t0.elapsed() < std::time::Duration::from_secs(5), "{:?}", t0.elapsed());
         assert!(e.contains("circles"), "{e}");
+    }
+
+    /// Bug (found by the fuzz test): a 659-byte MP4 whose track's time scale was 0 made the
+    /// mp4 crate divide by zero (a panic) while video_info looked at it.
+    #[test]
+    fn a_time_scale_of_zero_is_an_error_not_a_panic() {
+        let mut b = small_mp4();
+        // mdhd: size, "mdhd", version and flags, created, modified, then the time scale.
+        let at = b.windows(4).position(|w| w == b"mdhd").unwrap() + 4 + 4 + 8;
+        b[at..at + 4].copy_from_slice(&0u32.to_be_bytes());
+        let e = mp4_probe(std::io::Cursor::new(&b), b.len() as u64).unwrap_err();
+        assert!(e.contains("broken"), "{e}");
     }
 }
 

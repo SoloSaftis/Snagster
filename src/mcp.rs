@@ -2105,17 +2105,19 @@ pub(crate) mod fuzzing {
     }
 
     /// The sandbox: pictures to open, a library picture, and the settings pointing here.
-    fn sandbox() -> PathBuf {
-        let dir = scratch("mcp_tools");
-        if !dir.join("a.png").exists() {
-            let img = RgbaImage::from_fn(10, 8, |x, y| image::Rgba([(x * 25) as u8, (y * 30) as u8, 90, 255]));
-            img.save(dir.join("a.png")).unwrap();
-            img.save(dir.join("b.png")).unwrap();
-            image::DynamicImage::ImageRgba8(img.clone()).to_rgb8().save(dir.join("d.jpg")).unwrap();
-            export::write_gif(&dir.join("b.gif"), &[(img.clone(), 100), (img.clone(), 100)]).unwrap();
-            export::save_project(&Doc::new(img.clone()), "c", &dir.join("c.snag")).unwrap();
-            library::add(&dir.join("library"), &img, library::Meta { title: "x".into(), ..Default::default() }).unwrap();
-        }
+    /// Made again for every input (the target's own folder): what one input saved must not
+    /// become the next one's picture. (A guide saved over a.png, then read back as each of 187
+    /// steps, grew until the nightly machine ran out of memory.)
+    fn sandbox(target: &str) -> PathBuf {
+        let _ = std::fs::remove_dir_all(scratch(target));
+        let dir = scratch(target);
+        let img = RgbaImage::from_fn(10, 8, |x, y| image::Rgba([(x * 25) as u8, (y * 30) as u8, 90, 255]));
+        img.save(dir.join("a.png")).unwrap();
+        img.save(dir.join("b.png")).unwrap();
+        image::DynamicImage::ImageRgba8(img.clone()).to_rgb8().save(dir.join("d.jpg")).unwrap();
+        export::write_gif(&dir.join("b.gif"), &[(img.clone(), 100), (img.clone(), 100)]).unwrap();
+        export::save_project(&Doc::new(img.clone()), "c", &dir.join("c.snag")).unwrap();
+        library::add(&dir.join("library"), &img, library::Meta { title: "x".into(), ..Default::default() }).unwrap();
         dir
     }
 
@@ -2160,7 +2162,7 @@ pub(crate) mod fuzzing {
             None => vec![v],
         };
         let names: Vec<&str> = callable().into_iter().map(|t| t.0).collect();
-        let dir = sandbox();
+        let dir = sandbox("mcp_tools");
         let mut ws = workspace(&dir);
         for c in list.iter().take(5) {
             let name = c.get("tool").and_then(Value::as_str).unwrap_or("");
@@ -2262,7 +2264,7 @@ pub(crate) mod fuzzing {
                     if serde_json::from_str::<Value>(text).is_ok_and(|v| calls_outside(&v, &known)) {
                         return;
                     }
-                    let dir = sandbox();
+                    let dir = sandbox("mcp_jsonrpc");
                     let s = Session::with_settings(sandboxed_settings(&dir));
                     if let Some(reply) = s.handle(text) {
                         let v: Value = serde_json::from_str(&reply).unwrap_or_else(|e| panic!("the reply isn't JSON ({e}): {reply}"));
@@ -2292,6 +2294,15 @@ pub(crate) mod fuzzing {
         assert!(callable().iter().all(|(n, _)| !OUTSIDE.contains(n)));
         assert!(IN_MEMORY.iter().all(|n| names.contains(n) && !OUTSIDE.contains(n)));
         assert!(callable().len() + OUTSIDE.len() == names.len(), "{} tools, {} called", names.len(), callable().len());
+        // Each input starts from the same sandbox, whatever the one before saved there.
+        let d = sandbox("sandbox-test");
+        let small = std::fs::metadata(d.join("a.png")).unwrap().len();
+        std::fs::write(d.join("a.png"), vec![0u8; 100_000]).unwrap();
+        std::fs::write(d.join("left over.pdf"), b"x").unwrap();
+        let d = sandbox("sandbox-test");
+        assert_eq!(std::fs::metadata(d.join("a.png")).unwrap().len(), small);
+        assert!(!d.join("left over.pdf").exists());
+        let _ = std::fs::remove_dir_all(&d);
         // A new tool is fuzzed unless it is listed: ones that by their name start the screen,
         // a recording or a stream must be in OUTSIDE.
         for (n, _) in callable() {
