@@ -36,6 +36,10 @@ pub(crate) struct StudioUi {
     pub last: Option<crate::video::VideoDone>,
     windows: Vec<crate::capture::WindowInfo>,
     monitors: Vec<MonitorInfo>,
+    /// The Wayland note on drawing was shown.
+    told_preview_only: bool,
+    /// The source a stroke on the preview started on (its points go to the desktop).
+    ink_from: Option<crate::ink::Placed>,
 }
 
 impl StudioUi {
@@ -54,6 +58,8 @@ impl StudioUi {
             last: None,
             windows: Vec::new(),
             monitors: capture::monitors(),
+            told_preview_only: false,
+            ink_from: None,
         }
     }
 
@@ -109,6 +115,7 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
             start(app, ctx);
         }
     });
+    ink_group(app, ui);
     look::group(ui, t("Scenes"), |ui| {
         look::column(ui, |ui| {
             if look::small_tool(ui, ph::PLUS, t("New scene"), t("An empty scene to fill with sources"), true).clicked() {
@@ -184,6 +191,109 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
             }
         });
     });
+}
+
+/// Studio > Ink: draw on the screen (and the preview), the pen, how long ink stays, Clear.
+fn ink_group(app: &mut SnagApp, ui: &mut egui::Ui) {
+    let now = Instant::now();
+    let (on, any) = crate::ink::with(|i| (i.on, i.any(now)));
+    look::group(ui, t("Ink"), |ui| {
+        let tip = match crate::ink_overlay::support() {
+            crate::ink_overlay::Where::Screen => t("Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)"),
+            crate::ink_overlay::Where::PreviewOnly => t("Draw on the preview. This desktop doesn't let apps draw over the screen."),
+        };
+        let tip = format!("{tip}{}", super::ribbon::kbd(&app.settings, Action::DrawInk));
+        if look::big_tool(ui, ph::PEN_NIB, t("Draw"), &tip, true, on).clicked() {
+            toggle_ink(app);
+        }
+        let tip = format!("{}{}", t("Remove all ink"), super::ribbon::kbd(&app.settings, Action::ClearInk));
+        if look::big_tool(ui, ph::BROOM, t("Clear"), &tip, any, false).clicked() {
+            clear_ink();
+        }
+        look::column(ui, |ui| {
+            let st = &mut app.settings.studio;
+            look::small_menu(ui, ph::PALETTE, t("Color"), t("Ink color"), |ui| {
+                ui.horizontal(|ui| {
+                    for c in crate::ink::COLORS {
+                        let (r, resp) = ui.allocate_exact_size(vec2(22.0, 22.0), Sense::click());
+                        let col = Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
+                        ui.painter().circle_filled(r.center(), 9.0, col);
+                        let edge = if st.ink_color == [c[0], c[1], c[2]] { Stroke::new(2.0, accent()) } else { Stroke::new(1.0, pal().border) };
+                        ui.painter().circle_stroke(r.center(), 10.0, edge);
+                        if resp.clicked() {
+                            st.ink_color = [c[0], c[1], c[2]];
+                            ui.close();
+                        }
+                    }
+                });
+                ui.horizontal(|ui| {
+                    egui::color_picker::color_edit_button_srgb(ui, &mut st.ink_color);
+                    ui.label(t("More colors…"));
+                });
+            });
+            let width = st.ink_width;
+            look::small_menu(ui, ph::CIRCLE, &tf("Pen {width} px", &[("width", &format!("{width:.0}"))]), t("Pen width"), |ui| {
+                for (w, name) in crate::ink::WIDTHS {
+                    if ui.radio((st.ink_width - w).abs() < 0.01, tf("{name} ({width} px)", &[("name", t(name)), ("width", &format!("{w:.0}"))])).clicked() {
+                        st.ink_width = w;
+                    }
+                }
+                ui.add(egui::Slider::new(&mut st.ink_width, 1.0..=64.0).text("px"));
+            });
+            let label = ink_hold_label(st.ink_mode, st.ink_fade_s);
+            look::small_menu(ui, ph::TIMER, &label, t("How long ink stays"), |ui| {
+                for s in crate::ink::HOLDS {
+                    let picked = st.ink_mode == crate::ink::InkMode::Fade && (st.ink_fade_s - s).abs() < 0.01;
+                    if ui.radio(picked, tf("Fades after {seconds} s", &[("seconds", &format!("{s:.0}"))])).clicked() {
+                        st.ink_mode = crate::ink::InkMode::Fade;
+                        st.ink_fade_s = s;
+                    }
+                }
+                ui.separator();
+                if ui.radio(st.ink_mode == crate::ink::InkMode::Stay, t("Stay until cleared")).clicked() {
+                    st.ink_mode = crate::ink::InkMode::Stay;
+                }
+            });
+        });
+    });
+}
+
+/// The Ink group's hold menu label: "Fades after 3 s" or "Stays".
+pub(crate) fn ink_hold_label(mode: crate::ink::InkMode, secs: f32) -> String {
+    match mode {
+        crate::ink::InkMode::Fade => tf("Fades after {seconds} s", &[("seconds", &format!("{:.0}", secs.max(0.5)))]),
+        crate::ink::InkMode::Stay => t("Stays").to_string(),
+    }
+}
+
+/// Draw on or off (the Draw button, its hotkey and the window command). Studio has to be open:
+/// the ink goes into its scene.
+pub(crate) fn toggle_ink(app: &mut SnagApp) {
+    if app.x.studio.is_none() {
+        app.status = t("Open the Studio tab to draw on the screen.").into();
+        return;
+    }
+    let now = Instant::now();
+    let on = crate::ink::with(|i| {
+        let on = !i.on;
+        i.set_on(on, now);
+        on
+    });
+    if on {
+        crate::ink_overlay::run();
+        if crate::ink_overlay::support() == crate::ink_overlay::Where::PreviewOnly
+            && let Some(st) = &mut app.x.studio
+            && !st.told_preview_only
+        {
+            st.told_preview_only = true;
+            app.status = t("On this desktop you draw on the preview.").into();
+        }
+    }
+}
+
+/// Remove all ink (Clear, its hotkey, the window command and the MCP server's ink_clear).
+pub(crate) fn clear_ink() {
+    crate::ink::with(|i| i.clear());
 }
 
 fn add_source_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<Item> {
@@ -330,8 +440,23 @@ impl SnagApp {
     /// Every frame while Studio runs (its tab, or a stream of it from the Stream tab): the
     /// engine draws the current scene as it is now, the mixer follows the current scene, and
     /// the meters listen to every input the scenes use.
-    pub(crate) fn studio_tick(&mut self) {
+    pub(crate) fn studio_tick(&mut self, ctx: &egui::Context) {
         self.settings.studio.apply_mix();
+        if self.x.studio.is_some() {
+            let now = Instant::now();
+            let pen = self.settings.studio.ink_pen();
+            let (on, next) = crate::ink::with(|i| {
+                i.set_pen(pen, now);
+                (i.on, i.next_change(now))
+            });
+            // The ribbon follows Draw turned off with Esc, and Clear greys out once ink fades.
+            if on {
+                ctx.request_repaint_after(Duration::from_millis(100));
+            } else if let Some(at) = next {
+                ctx.request_repaint_after(at.saturating_duration_since(now) + crate::ink::FADE_OUT);
+            }
+            super::ink_ui::overlays(ctx);
+        }
         if let Some(st) = &mut self.x.studio {
             if let Some(scene) = self.settings.studio.scene()
                 && let Ok(mut sh) = st.engine.shared.scene.lock()
@@ -391,7 +516,7 @@ impl SnagApp {
                 st.last = Some(done);
             }
         }
-        self.studio_tick();
+        self.studio_tick(&ctx);
         egui::Panel::left("studio-left")
             .exact_size(250.0)
             .resizable(false)
@@ -697,6 +822,12 @@ impl SnagApp {
             }
         }
         let resp = ui.allocate_rect(rect, Sense::click_and_drag());
+        // Draw is on: the preview is paper, not sources to move.
+        if crate::ink::with(|i| i.on) {
+            let placed = st.engine.shared.placed.lock().map(|p| p.clone()).unwrap_or_default();
+            self.ink_on_preview(ui, &resp, rect, scale, &placed);
+            return;
+        }
         let p = ui.painter();
         p.rect_filled(rect, CornerRadius::ZERO, Color32::BLACK);
         if let Some(tex) = &st.tex {
@@ -755,6 +886,73 @@ impl SnagApp {
         }
         let hint = if st.grab.is_some() { t("Shift: resize freely") } else { t("Drag a source to move it, its corner to resize it") };
         ui.painter().text(pos2(rect.left(), rect.bottom() + 4.0), Align2::LEFT_TOP, hint, FontId::proportional(11.5), pal().dim);
+    }
+
+    /// Drawing on the Studio preview. Over a screen, window or area source the ink is kept in
+    /// desktop pixels, so it also shows on the screen and on every source showing that place;
+    /// elsewhere on the canvas.
+    fn ink_on_preview(&mut self, ui: &mut egui::Ui, resp: &egui::Response, rect: Rect, scale: f32, placed: &[crate::ink::Placed]) {
+        let pen = self.settings.studio.ink_pen();
+        let Some(st) = &mut self.x.studio else { return };
+        let p = ui.painter();
+        p.rect_filled(rect, CornerRadius::ZERO, Color32::BLACK);
+        if let Some(tex) = &st.tex {
+            p.image(tex.id(), rect, Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
+        }
+        p.rect_stroke(rect, CornerRadius::ZERO, Stroke::new(2.0, accent()), egui::StrokeKind::Outside);
+        let now = Instant::now();
+        let to_canvas = |at: Pos2| [(at.x - rect.left()) / scale, (at.y - rect.top()) / scale];
+        if resp.drag_started()
+            && let Some(at) = resp.interact_pointer_pos()
+        {
+            let c = to_canvas(at);
+            let (space, pt) = preview_ink_start(placed, c);
+            crate::ink::with(|i| i.begin(space, pt, now));
+            st.ink_from = placed.iter().rev().find(|q| q.contains_canvas(c)).copied();
+        } else if resp.clicked()
+            && let Some(at) = resp.interact_pointer_pos()
+        {
+            let (space, pt) = preview_ink_start(placed, to_canvas(at));
+            crate::ink::with(|i| {
+                i.begin(space, pt, now);
+                i.end(now);
+            });
+        }
+        if resp.dragged()
+            && let Some(at) = resp.interact_pointer_pos()
+        {
+            let c = to_canvas(at);
+            let pt = st.ink_from.map(|q| q.to_desk(c)).unwrap_or(c);
+            crate::ink::with(|i| i.extend(pt));
+        }
+        if resp.drag_stopped() {
+            crate::ink::with(|i| i.end(now));
+            st.ink_from = None;
+        }
+        // The pointer is a dot of the pen's colour and width.
+        if let Some(at) = resp.hover_pos() {
+            let c = Color32::from_rgba_unmultiplied(pen.color[0], pen.color[1], pen.color[2], pen.color[3]);
+            ui.painter().circle_filled(at, (pen.width * scale / 2.0).max(2.0), c);
+            ui.ctx().set_cursor_icon(egui::CursorIcon::None);
+        }
+        // Esc stops drawing, Ctrl+Z takes back the last stroke.
+        let (esc, undo) = ui.input(|i| (i.key_pressed(egui::Key::Escape), i.modifiers.command && i.key_pressed(egui::Key::Z)));
+        if esc {
+            crate::ink::with(|i| i.set_on(false, now));
+        }
+        if undo {
+            crate::ink::with(|i| i.undo(now));
+        }
+        ui.painter().text(pos2(rect.left(), rect.bottom() + 4.0), Align2::LEFT_TOP, t(crate::ink_overlay::HINT), FontId::proportional(11.5), pal().dim);
+    }
+}
+
+/// Where ink drawn on the preview at canvas point `c` is kept: on the desktop when a screen,
+/// window or area source is there (the topmost), else on the canvas.
+pub(crate) fn preview_ink_start(placed: &[crate::ink::Placed], c: [f32; 2]) -> (crate::ink::Space, [f32; 2]) {
+    match placed.iter().rev().find(|q| q.contains_canvas(c)) {
+        Some(q) => (crate::ink::Space::Desktop, q.to_desk(c)),
+        None => (crate::ink::Space::Canvas, c),
     }
 }
 

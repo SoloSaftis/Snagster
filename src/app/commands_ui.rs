@@ -192,6 +192,8 @@ pub(crate) const SIMPLE: &[(&str, Run)] = &[
     ("studio_new_scene", |a, _| super::studio_ui::new_scene(&mut a.settings.studio)),
     ("studio_copy_scene", |a, _| super::studio_ui::copy_scene(&mut a.settings.studio)),
     ("studio_delete_scene", |a, _| super::studio_ui::delete_scene(&mut a.settings.studio)),
+    ("studio_ink", |a, _| super::studio_ui::toggle_ink(a)),
+    ("studio_ink_clear", |_, _| super::studio_ui::clear_ink()),
 ];
 
 /// A window command with its value read.
@@ -349,6 +351,11 @@ impl SnagApp {
                     self.apply_language(ctx);
                 }
             }
+            return;
+        }
+        // Clearing ink happens mid-stream: the window stays where it is.
+        if id == "studio_ink_clear" {
+            super::studio_ui::clear_ink();
             return;
         }
         match parse(id, value) {

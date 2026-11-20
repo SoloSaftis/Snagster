@@ -47,6 +47,7 @@ pub(crate) mod earlier;
 pub(crate) mod work;
 pub(crate) mod ribbon;
 pub(crate) mod studio_ui;
+pub(crate) mod ink_ui;
 pub(crate) mod stream_ui;
 pub(crate) mod replay_ui;
 pub(crate) mod updates_ui;
@@ -927,6 +928,8 @@ impl SnagApp {
             Action::ShowSnag => self.show_window(ctx),
             Action::SaveReplay => self.save_replay(ctx),
             Action::ToggleReplay => self.toggle_replay(ctx),
+            Action::DrawInk => studio_ui::toggle_ink(self),
+            Action::ClearInk => studio_ui::clear_ink(),
         }
     }
 
@@ -6140,6 +6143,12 @@ impl SnagApp {
 }
 
 impl eframe::App for SnagApp {
+    // Clear, so the live-ink windows over the screen (macOS, X11) are see-through; every other
+    // window is filled by its panels.
+    fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
+        if ink_ui::uses_app_windows() { [0.0; 4] } else { egui::Color32::from_rgba_unmultiplied(12, 12, 12, 180).to_normalized_gamma_f32() }
+    }
+
     // A mistake in one frame must not close the window and lose the person's pictures: it is
     // written to crash.log (by the panic hook) and shown in the status line, and the next frame
     // carries on.

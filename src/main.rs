@@ -42,6 +42,8 @@ mod theme;
 mod platform;
 mod audio;
 mod studio;
+mod ink;
+mod ink_overlay;
 mod update;
 mod userdirs;
 mod mcp_http;
