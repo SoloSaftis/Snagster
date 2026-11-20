@@ -230,7 +230,11 @@ pub fn dialog_buttons(ui: &mut egui::Ui, action: Option<&str>, cancel: &str, kin
     let mut choice = None;
     let destructive = kind == Kind::Destructive;
     ui.add_space(4.0);
-    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+    // One row high: a right-to-left layout on its own takes all the height left, so a dialog
+    // that fits its content would keep empty space round its buttons.
+    let button = ui.text_style_height(&egui::TextStyle::Button) + 2.0 * ui.spacing().button_padding.y;
+    let row = egui::vec2(ui.available_width(), ui.spacing().interact_size.y.max(button));
+    ui.allocate_ui_with_layout(row, egui::Layout::right_to_left(egui::Align::Center), |ui| {
         // Right to left: the first button added is the one at the far right.
         let mut order = button_order(system());
         order.reverse();
