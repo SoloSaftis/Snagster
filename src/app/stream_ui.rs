@@ -50,19 +50,29 @@ pub(crate) struct HealthLine {
     pub bad: bool,
 }
 
-/// What to say about the stream's health: a service of several that is reconnecting or has
-/// failed (bad), else the warning `Steady` shows.
+/// What to say about the stream's health: a service of several that is reconnecting (bad), else
+/// the warning `Steady` shows, else a service of several that has failed for good (so the
+/// others' warnings still show). Service names as shown ("Custom server" translated); the
+/// services' own errors are in the details, not here.
 pub(crate) fn health_line(snap: &Snapshot, shown: Option<&Warning>) -> Option<HealthLine> {
     let s = snap.stats.as_ref().filter(|_| snap.phase == Phase::Running)?;
-    if s.outputs.len() > 1
-        && s.state != State::Failed
-        && let Some(o) = s.outputs.iter().find(|o| matches!(o.state, State::Reconnecting | State::Failed))
-    {
-        let short = format!("{}: {}", o.service, output_word(o.state).0);
-        return Some(HealthLine { advice: o.error.clone().unwrap_or_else(|| short.clone()), short, bad: true });
+    let several = s.outputs.len() > 1 && s.state != State::Failed;
+    let down = |state: State| {
+        s.outputs.iter().find(|o| several && o.state == state).map(|o| {
+            let short = format!("{}: {}", crate::i18n::tr(&o.service), output_word(o.state).0);
+            HealthLine { advice: short.clone(), short, bad: true }
+        })
+    };
+    if let Some(l) = down(State::Reconnecting) {
+        return Some(l);
     }
-    let w = shown?;
-    Some(HealthLine { short: w.fill(t(w.short())), advice: w.fill(t(w.advice())), bad: w.level == Level::Bad })
+    match shown {
+        Some(w) => {
+            let w = Warning { service: w.service.as_deref().map(crate::i18n::tr), ..w.clone() };
+            Some(HealthLine { short: w.fill(t(w.short())), advice: w.fill(t(w.advice())), bad: w.level == Level::Bad })
+        }
+        None => down(State::Failed),
+    }
 }
 
 /// The icon and colour of a warning (bad: red octagon), so colour is never the only sign.
@@ -111,7 +121,7 @@ pub(crate) fn stream_details(ui: &mut egui::Ui, s: &Stats, line: Option<&HealthL
         if h.outputs.len() > 1 {
             ui.label("");
             for o in &h.outputs {
-                ui.label(RichText::new(&o.service).strong());
+                ui.label(RichText::new(crate::i18n::tr(&o.service)).strong());
             }
             ui.end_row();
         }
@@ -163,6 +173,12 @@ pub(crate) fn stream_details(ui: &mut egui::Ui, s: &Stats, line: Option<&HealthL
         ui.end_row();
     });
     ui.label(dim(t("Percentages: last 10 seconds").to_string()).size(11.0));
+    // What a service that isn't live said last (the key is masked in it).
+    for o in s.outputs.iter().filter(|o| o.state != State::Live) {
+        if let Some(e) = &o.error {
+            ui.label(RichText::new(format!("{}: {e}", crate::i18n::tr(&o.service))).size(11.0).color(pal().warn));
+        }
+    }
     if let Some(l) = line {
         let (icon, color) = health_icon(l.bad);
         ui.add_space(4.0);
@@ -451,6 +467,7 @@ impl SnagApp {
         }
         // The status line still gives advice for a problem that has gone: say it's fine again.
         if line.is_none()
+            && snap.phase == Phase::Running
             && let Some(p) = &self.x.stream.health_line
             && self.status == p.advice
         {
@@ -1074,10 +1091,18 @@ mod tests {
         let pc = Warning { problem: Problem::Computer, level: Level::Warning, service: None };
         let l = health_line(&snap, Some(&pc)).unwrap();
         assert_eq!((l.short.as_str(), l.bad), ("Computer too slow to encode", false));
-        // Multistreaming: a service that is reconnecting is bad, with its own error.
+        // Multistreaming: a service that is reconnecting is bad, in plain words (its own error
+        // is in the details).
         let snap = live_snap(&[("Twitch", State::Live), ("YouTube", State::Reconnecting)], vec![]);
-        let l = health_line(&snap, None).unwrap();
-        assert_eq!((l.short.as_str(), l.advice.as_str(), l.bad), ("YouTube: Reconnecting…", "YouTube said no", true));
+        let l = health_line(&snap, Some(&pc)).unwrap();
+        assert_eq!((l.short.as_str(), l.advice.as_str(), l.bad), ("YouTube: Reconnecting…", "YouTube: Reconnecting…", true));
+        // One that failed for good doesn't hide the others' warnings.
+        let snap = live_snap(&[("Twitch", State::Live), ("YouTube", State::Failed)], vec![]);
+        assert_eq!(health_line(&snap, Some(&up)).unwrap().short, "Upload to Twitch too slow");
+        assert_eq!(health_line(&snap, None).unwrap().short, "YouTube: The connection failed");
+        // A custom server is named as the window names it.
+        let custom = Warning { problem: Problem::Connection, level: Level::Warning, service: Some("Custom server".into()) };
+        assert_eq!(health_line(&snap, Some(&custom)).unwrap().short, "Custom server keeps reconnecting");
         // Off the air: nothing.
         assert_eq!(health_line(&Snapshot::default(), Some(&up)), None);
     }
@@ -1130,6 +1155,12 @@ mod tests {
         assert!(a.x.stream.health_line.is_some(), "it stays ten seconds");
         a.health_tick(16.0, &live_snap(&[("Twitch", State::Live)], vec![]));
         assert_eq!(a.status, "The stream is fine again.");
+        // Stopped while the advice is up: it isn't "fine again", it's stopping.
+        a.health_tick(17.0, &live_snap(&[("Twitch", State::Live)], vec![Warning { problem: Problem::Computer, level: Level::Bad, service: None }]));
+        let mut stopping = live_snap(&[("Twitch", State::Live)], vec![]);
+        stopping.phase = Phase::Stopping;
+        a.health_tick(18.0, &stopping);
+        assert!(a.status.starts_with("Your computer"), "{}", a.status);
     }
 
     #[test]

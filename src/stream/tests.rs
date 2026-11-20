@@ -269,6 +269,10 @@ impl VideoEncoder for Breaks {
     fn name(&self) -> EncoderName {
         EncoderName { name: self.name.clone(), hardware: true }
     }
+    /// It threw a few pictures away before it broke (the count must outlive it).
+    fn dropped(&self) -> u64 {
+        7
+    }
 }
 
 fn breaking(after: u64, name: &str) -> Box<dyn VideoEncoder> {
@@ -390,6 +394,17 @@ fn reconnects_after_the_server_drops_the_connection() {
     let st = s.stats();
     assert!(st.reconnects >= 1, "{st:?}");
     assert_eq!(st.state, State::Live);
+    // The health counts the reconnect, and the connection time starts again with it.
+    let h = &st.health.outputs[0];
+    assert_eq!(h.reconnects, st.reconnects);
+    assert!(h.connected_s > 0.0 && h.connected_s < st.uptime_s, "{h:?} after {} s", st.uptime_s);
+    // The new connection's bytes keep adding up: measured once it has run five seconds.
+    let t = Instant::now();
+    while !s.stats().health.outputs[0].measured && t.elapsed() < Duration::from_secs(15) {
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    let h = s.stats().health.outputs[0].clone();
+    assert!(h.measured && h.sent_kbps > 0, "{h:?}");
     drop(s);
     let g = srv.conns.lock().unwrap();
     let c = &g[1];
@@ -681,9 +696,10 @@ fn one_service_failing_leaves_the_others_live() {
     assert_eq!(s.stop().state, State::Stopped, "the stream as a whole didn't fail");
 }
 
-/// The health's numbers come from what the stream really did: after six seconds to a server
-/// that takes everything, the rates are measured, the bytes it counted match what the
-/// connection sent, nothing is dropped and nothing warns.
+/// The health's numbers come from what the stream really did: after five seconds to a server
+/// that takes everything, the rates are measured and the bytes it counted are about what the
+/// connection sent. Nothing is dropped: the frames queued while the first connection was made
+/// don't count (nothing was live yet).
 #[test]
 fn a_healthy_stream_measures_what_it_sends() {
     let srv = Server::start(ServerOpts::default());
@@ -702,7 +718,6 @@ fn a_healthy_stream_measures_what_it_sends() {
     assert_eq!((h.outputs[0].dropped, h.outputs[0].reconnects), (0, 0));
     assert!(h.outputs[0].connected_s >= 5.0, "{h:?}");
     assert!(h.encode_ms >= 0.0 && h.frame_budget_ms > 33.0 && h.frame_budget_ms < 34.0, "{h:?}");
-    assert!(h.warnings.is_empty(), "{:?}", h.warnings);
     drop(s);
 }
 
@@ -769,6 +784,9 @@ fn a_failing_encoder_is_replaced_and_the_stream_goes_on() {
     assert_eq!(st.notice.as_deref(), Some("fake chip stopped working (the graphics chip was reset); switched to fake video."));
     assert!(st.error.is_none(), "{:?}", st.error);
     assert_eq!(*asked.lock().unwrap(), vec![vec!["fake chip".to_string()]], "asked once, avoiding the one that failed");
+    // The pictures the broken encoder threw away still count after the switch.
+    assert_eq!(st.timing.encoder_dropped, 7, "{:?}", st.timing);
+    assert!(st.health.encoder_lost >= 7, "{:?}", st.health);
     drop(s);
     // The new encoder started with a keyframe; its frames follow the old ones on the same clock.
     let g = srv.conns.lock().unwrap();

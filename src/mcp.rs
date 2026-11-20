@@ -353,7 +353,7 @@ fn output_schema(name: &str) -> Option<Value> {
         "library_tag" => json!({"type": "object", "properties": {"path": st, "title": st, "tags": strings}, "required": ["path", "title", "tags"]}),
         "stream_services" => items(props(json!({"service": st, "name": st, "url": st, "key_help": st, "max_width": num, "max_height": num, "max_fps": num, "max_video_kbps": num, "max_pixel_rate": num, "keyframe_s": num, "audio_kbps": num, "hevc": bo}))),
         "stream_stats" => json!({"type": "object", "properties": {
-            "live": bo, "state": st, "level": {"type": "string", "enum": ["ok", "warning", "bad"]}, "measuring": bo, "window_s": num, "uptime_s": num, "set_kbps": num, "encoder": st, "message": st,
+            "live": bo, "state": st, "level": {"type": "string", "enum": ["ok", "warning", "bad"]}, "measuring": bo, "window_s": num, "uptime_s": num, "set_kbps": num, "encoder": {"type": ["string", "null"]}, "message": st,
             "computer": {"type": "object", "properties": {"dropped_frames": num, "dropped_share": num, "encode_ms": num, "frame_budget_ms": num, "encoder_load": num}},
             "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "state": st, "measuring": bo, "sent_kbps": num, "network_dropped_frames": num, "network_dropped_share": num, "queue_ms": num, "connected_s": num, "reconnects": num, "reconnects_last_10_min": num}}},
             "warnings": {"type": "array", "items": {"type": "object", "properties": {"problem": {"type": "string", "enum": ["upload", "computer", "connection"]}, "level": {"type": "string", "enum": ["warning", "bad"]}, "service": {"type": ["string", "null"]}, "message": st}}}

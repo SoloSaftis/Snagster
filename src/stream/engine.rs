@@ -624,6 +624,7 @@ impl Shared {
             at_ms,
             frames_in: g(&t.frames_in),
             encoder_lost: g(&t.encoder_dropped) + g(&t.late),
+            late: g(&t.late),
             encode_us: g(&t.encode_us),
             outputs: self.outputs.iter().map(|o| OutTotals { bytes: g(&o.bytes_out), sent: g(&o.frames_sent), dropped: g(&o.frames_dropped), reconnects: o.reconnects.load(Ordering::Relaxed) }).collect(),
         }
@@ -649,7 +650,9 @@ impl Shared {
             .iter()
             .map(|o| {
                 let since = o.live_at_ms.load(Ordering::Relaxed);
-                OutNow { service: o.service.clone(), live: o.state() == State::Live, queue_ms: o.queue_ms.load(Ordering::Relaxed), connected_ms: if since == 0 { 0 } else { at.saturating_sub(since - 1) } }
+                let live = o.state() == State::Live && since != 0;
+                let since = since.saturating_sub(1);
+                OutNow { service: o.service.clone(), live, queue_ms: o.queue_ms.load(Ordering::Relaxed), connected_ms: if live { at.saturating_sub(since) } else { 0 }, live_since_ms: since }
             })
             .collect();
         let mut h = self.sampler.lock().unwrap_or_else(|p| p.into_inner()).health(self.asked, &now);
@@ -766,7 +769,8 @@ impl Streamer {
         Ok(Streamer { shared, started, threads, net_threads, _timely: crate::video::TimelyActivity::begin("Live streaming") })
     }
 
-    /// Where the stream stands; never waits on the stream's threads.
+    /// Where the stream stands; never waits on the stream's threads (the only lock it takes,
+    /// the health snapshots', is held by them for a few microseconds at most, with `try_lock`).
     pub fn stats(&self) -> Stats {
         let s = &self.shared;
         let live = s.live_since_ms.load(Ordering::Relaxed);
@@ -1304,6 +1308,10 @@ fn net_thread(sh: Arc<Shared>, idx: usize, cfg: NetCfg, started: Instant) {
                 o.fps_x100.store(0, Ordering::Relaxed);
                 o.live_at_ms.store(0, Ordering::Relaxed);
                 o.queue_ms.store(0, Ordering::Relaxed);
+                // Not live while it waits to try again (it said Live through the wait).
+                if !sh.stop.load(Ordering::Relaxed) {
+                    o.set_state(State::Reconnecting);
+                }
                 if retry_after_failure(&sh, o, &cfg, &mut tries) {
                     continue 'connect;
                 }

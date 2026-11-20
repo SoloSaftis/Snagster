@@ -1042,7 +1042,7 @@
   "Dropped by the network": "Vom Netzwerk verworfen",
   "{n} ({pct})": "{n} ({pct})",
   "{pct}%": "{pct} %",
-  "Connected for": "Verbunden seit",
+  "Connected for": "Verbindungsdauer",
   "Reconnects": "Neuverbindungen",
   "Dropped by the computer": "Vom Computer verworfen",
   "Encoder": "Encoder",

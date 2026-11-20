@@ -64,6 +64,9 @@ pub struct Totals {
     pub frames_in: u64,
     /// Pictures the encoder threw away plus frame slots missed (the computer fell behind).
     pub encoder_lost: u64,
+    /// Of those, the frame slots missed (they never reached the encoder, so they aren't in
+    /// `frames_in`; the pictures the encoder threw away are).
+    pub late: u64,
     /// Microseconds spent inside the video encoder.
     pub encode_us: u64,
     /// Each service, the main one first.
@@ -80,6 +83,9 @@ pub struct OutNow {
     pub queue_ms: u32,
     /// How long the current connection has been up (0 when it isn't).
     pub connected_ms: u64,
+    /// When it went live, ms since the stream started (0: it isn't). Its rates never reach back
+    /// before this: the frames thrown away at a reconnect belong to the break, not the upload.
+    pub live_since_ms: u64,
 }
 
 /// What the stream was asked for.
@@ -279,7 +285,9 @@ impl Sampler {
             let enc_us = new.encode_us.saturating_sub(old.encode_us);
             h.encode_ms = if frames == 0 { 0.0 } else { enc_us as f32 / frames as f32 / 1000.0 };
             h.encoder_load = enc_us as f32 / (span_ms as f32 * 1000.0);
-            h.encoder_lost_share = share(lost, frames);
+            // Of every slot due: the pictures handed over plus the slots missed.
+            let late = new.late.saturating_sub(old.late);
+            h.encoder_lost_share = share(lost, (frames + late).saturating_sub(lost));
             let mut level = level_of(h.encoder_lost_share);
             if h.encoder_load >= LOAD_WARN {
                 level = level.max(Some(Level::Warning));
@@ -291,7 +299,11 @@ impl Sampler {
         }
         for (i, n) in now.iter().enumerate() {
             let get = |t: &Totals| t.outputs.get(i).copied().unwrap_or_default();
-            let (a, b) = (get(old), get(new));
+            // This service's window: the last ten seconds, but none of it before this
+            // connection went live.
+            let since = self.samples.iter().find(|s| s.at_ms >= old.at_ms && s.at_ms >= n.live_since_ms).unwrap_or(new);
+            let span_ms = new.at_ms.saturating_sub(since.at_ms);
+            let (a, b) = (get(since), get(new));
             let mut o = OutHealth {
                 service: n.service.clone(),
                 dropped: b.dropped,
@@ -302,7 +314,7 @@ impl Sampler {
                 ..Default::default()
             };
             let service = Some(n.service.clone());
-            if enough && n.live && n.connected_ms >= MIN_WINDOW_MS {
+            if n.live && span_ms >= MIN_WINDOW_MS {
                 o.measured = true;
                 o.sent_kbps = (b.bytes.saturating_sub(a.bytes) as f64 * 8.0 / span_ms as f64) as u32;
                 o.dropped_share = share(b.dropped.saturating_sub(a.dropped), b.sent.saturating_sub(a.sent));
@@ -395,12 +407,78 @@ mod tests {
         OutTotals { bytes, sent, dropped, reconnects }
     }
 
+    /// Totals whose lost pictures are all late slots (see `the_computers_share_counts_every_slot`
+    /// for pictures the encoder threw away).
     fn tot(at_ms: u64, frames_in: u64, encoder_lost: u64, encode_us: u64, outputs: Vec<OutTotals>) -> Totals {
-        Totals { at_ms, frames_in, encoder_lost, encode_us, outputs }
+        Totals { at_ms, frames_in, encoder_lost, late: encoder_lost, encode_us, outputs }
     }
 
     fn now(service: &str, queue_ms: u32) -> OutNow {
-        OutNow { service: service.into(), live: true, queue_ms, connected_ms: 60_000 }
+        OutNow { service: service.into(), live: true, queue_ms, connected_ms: 60_000, live_since_ms: 0 }
+    }
+
+    /// The reviewer's case: a one-second break at 50 s; the 60 frames still queued are thrown
+    /// away at the reconnect (51.01 s), live again at 51.03 s with an upload that keeps up.
+    /// Ten seconds on (the end of the quiet start) nothing may warn, and the numbers are this
+    /// connection's own.
+    #[test]
+    fn frames_lost_at_a_reconnect_are_not_blamed_on_the_upload() {
+        let mut s = Sampler::default();
+        let (mut sent, mut dropped, mut bytes, mut reconnects) = (0u64, 0u64, 0u64, 0u32);
+        let live_since = 51_030;
+        for ms in (0..=70_000u64).step_by(10) {
+            if (50_000..51_030).contains(&ms) {
+                // The break: nothing goes out.
+            } else if ms % 100 == 0 {
+                sent += 3;
+                bytes += 75_000;
+            }
+            if ms == 51_010 {
+                dropped += 60;
+                reconnects += 1;
+            }
+            s.push(tot(ms, ms * 30 / 1000, 0, 0, vec![out(bytes, sent, dropped, reconnects)]));
+            if ms >= live_since + QUIET_START_MS {
+                let n = OutNow { service: "Twitch".into(), live: true, queue_ms: 0, connected_ms: ms - live_since, live_since_ms: live_since };
+                let h = s.health(ASKED, &[n]);
+                assert!(h.warnings.is_empty(), "at {ms}: {:?} {:?}", h.warnings, h.outputs[0]);
+                assert_eq!(h.outputs[0].dropped_share, 0.0, "at {ms}");
+                assert_eq!(h.outputs[0].dropped, 60, "the total still counts them");
+            }
+        }
+        // Seven seconds after the reconnect: measured over those seven seconds only.
+        let mut s2 = Sampler::default();
+        let (mut sent, mut bytes) = (0u64, 0u64);
+        for ms in (0..=58_000u64).step_by(250) {
+            let up = !(50_000..51_030).contains(&ms);
+            if up {
+                sent += 7;
+                bytes += 187_500;
+            }
+            s2.push(tot(ms, ms * 30 / 1000, 0, 0, vec![out(bytes, sent, if ms >= 51_010 { 60 } else { 0 }, 0)]));
+        }
+        let n = OutNow { service: "Twitch".into(), live: true, queue_ms: 0, connected_ms: 6970, live_since_ms: live_since };
+        let h = s2.health(ASKED, &[n]);
+        assert!(h.outputs[0].measured);
+        assert_eq!((h.outputs[0].sent_kbps, h.outputs[0].dropped_share), (6000, 0.0), "{:?}", h.outputs[0]);
+    }
+
+    /// Pictures the encoder threw away were handed to it (they are in `frames_in`); slots missed
+    /// were not. Both count against every slot that was due.
+    #[test]
+    fn the_computers_share_counts_every_slot() {
+        let mut s = Sampler::default();
+        s.push(Totals { at_ms: 10_000, outputs: vec![out(0, 0, 0, 0)], ..Default::default() });
+        // 300 pictures handed over, 15 of them thrown away by the encoder: 5 %.
+        s.push(Totals { at_ms: 20_000, frames_in: 300, encoder_lost: 15, late: 0, encode_us: 0, outputs: vec![out(7_500_000, 285, 0, 0)] });
+        let h = s.health(ASKED, &[now("Twitch", 0)]);
+        assert!((h.encoder_lost_share - 0.05).abs() < 1e-6, "{}", h.encoder_lost_share);
+        assert_eq!(h.level(), Some(Level::Bad));
+        // 285 handed over and 15 slots missed: also 5 %.
+        let mut s = Sampler::default();
+        s.push(Totals { at_ms: 10_000, outputs: vec![out(0, 0, 0, 0)], ..Default::default() });
+        s.push(Totals { at_ms: 20_000, frames_in: 285, encoder_lost: 15, late: 15, encode_us: 0, outputs: vec![out(7_500_000, 285, 0, 0)] });
+        assert!((s.health(ASKED, &[now("Twitch", 0)]).encoder_lost_share - 0.05).abs() < 1e-6);
     }
 
     fn warn(problem: Problem, level: Level, service: Option<&str>) -> Warning {
@@ -462,13 +540,17 @@ mod tests {
         assert!(s.health(ASKED, &[n]).warnings.is_empty());
         let s = steady(30, 6000, 5, 10);
         let mut n = now("Twitch", 0);
-        n.connected_ms = 4000;
+        let connected = |n: &mut OutNow, ms: u64| {
+            n.connected_ms = ms;
+            n.live_since_ms = 30_000 - ms;
+        };
+        connected(&mut n, 4000);
         let h = s.health(ASKED, &[n.clone()]);
         assert!(!h.outputs[0].measured && h.warnings.is_empty(), "just reconnected: measuring");
-        n.connected_ms = 8000;
+        connected(&mut n, 8000);
         let h = s.health(ASKED, &[n.clone()]);
         assert!(h.outputs[0].measured && h.warnings.is_empty(), "measured, not yet judged");
-        n.connected_ms = 10_000;
+        connected(&mut n, 10_000);
         assert_eq!(s.health(ASKED, &[n]).level(), Some(Level::Bad));
     }
 
