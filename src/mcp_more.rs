@@ -240,6 +240,7 @@ pub(super) fn tools() -> Vec<Tool> {
             edits: false,
         },
         Tool { name: "stream_status", description: "Whether Snagster is live, and how it goes: state, time on the air, bitrate, frames sent and dropped, reconnects, encoder, and the last error (the key masked); when multistreaming, outputs lists each service with its own state, bitrate, frames and error.", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "stream_stats", description: "How well the live stream is going, measured over the last 10 seconds: per service the bitrate really sent against the bitrate set, frames the network dropped (count since going live and share), how far its upload queue is behind (ms), how long the connection has been up and reconnects (in all and in the last 10 minutes); for the computer the frames it dropped (encoder or late) and the encoder's time per frame against the frame's budget; and warnings in plain words (upload too slow, computer too slow, connection dropping) with their level; level is the worst of them (ok, warning or bad). measuring is true for the first seconds, before the rates are known.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "stream_stop", description: "End the live stream (the last packets are sent and the stream is closed); returns its final numbers and the copy's file when one was recorded.", schema: obj(json!({}), &[]), edits: false },
         Tool {
             name: "replay_start",
@@ -538,6 +539,58 @@ fn stream_json(s: &crate::stream::live::Snapshot) -> Value {
             v["error"] = json!(st.error);
         }
     }
+    v
+}
+
+/// stream_stats: the stream's health (`stream::health`), with plain-words warnings.
+fn stats_json(s: &crate::stream::live::Snapshot) -> Value {
+    use crate::stream::health::Level;
+    let round = |x: f32, places: i32| {
+        let f = 10f64.powi(places);
+        (x as f64 * f).round() / f
+    };
+    let mut v = json!({"live": s.live()});
+    let Some(st) = s.stats.as_ref() else {
+        v["message"] = json!("Nothing is being streamed.");
+        return v;
+    };
+    let h = &st.health;
+    v["state"] = json!(format!("{:?}", st.state).to_lowercase());
+    v["level"] = json!(match h.level() {
+        None => "ok",
+        Some(Level::Warning) => "warning",
+        Some(Level::Bad) => "bad",
+    });
+    v["measuring"] = json!(h.window_s == 0.0);
+    v["window_s"] = json!(round(h.window_s, 1));
+    v["uptime_s"] = json!((st.uptime_s * 10.0).round() / 10.0);
+    v["set_kbps"] = json!(h.set_kbps);
+    v["encoder"] = json!(st.video_encoder.as_ref().map(|e| format!("{} ({})", e.name, if e.hardware { "graphics chip" } else { "processor" })));
+    v["computer"] = json!({
+        "dropped_frames": h.encoder_lost,
+        "dropped_share": round(h.encoder_lost_share, 4),
+        "encode_ms": round(h.encode_ms, 2),
+        "frame_budget_ms": round(h.frame_budget_ms, 2),
+        "encoder_load": round(h.encoder_load, 3),
+    });
+    v["outputs"] = json!(h.outputs.iter().zip(&st.outputs).map(|(o, out)| json!({
+        "service": o.service,
+        "state": format!("{:?}", out.state).to_lowercase(),
+        "measuring": !o.measured,
+        "sent_kbps": o.sent_kbps,
+        "network_dropped_frames": o.dropped,
+        "network_dropped_share": round(o.dropped_share, 4),
+        "queue_ms": o.queue_ms,
+        "connected_s": (o.connected_s * 10.0).round() / 10.0,
+        "reconnects": o.reconnects,
+        "reconnects_last_10_min": o.reconnects_recent,
+    })).collect::<Vec<_>>());
+    v["warnings"] = json!(h.warnings.iter().map(|w| json!({
+        "problem": format!("{:?}", w.problem).to_lowercase(),
+        "level": if w.level == Level::Bad { "bad" } else { "warning" },
+        "service": w.service,
+        "message": w.fill(w.advice()),
+    })).collect::<Vec<_>>());
     v
 }
 
@@ -1180,6 +1233,11 @@ impl Workspace {
             }
             "stream_status" => {
                 let v = stream_json(&crate::stream::live::snapshot());
+                self.structured = Some(v.clone());
+                Ok(vec![json_text(&v)])
+            }
+            "stream_stats" => {
+                let v = stats_json(&crate::stream::live::snapshot());
                 self.structured = Some(v.clone());
                 Ok(vec![json_text(&v)])
             }

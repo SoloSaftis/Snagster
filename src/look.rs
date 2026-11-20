@@ -112,6 +112,8 @@ pub mod ph {
     pub const LAYOUT: &str = "\u{e6d6}";
     pub const CHECK: &str = "\u{e182}";
     pub const WARNING: &str = "\u{e4e0}";
+    pub const WARNING_OCTAGON: &str = "\u{e4e4}";
+    pub const CHART_LINE: &str = "\u{e154}";
     pub const ROBOT: &str = "\u{e762}";
     pub const PLUGS: &str = "\u{eb5a}";
     pub const CARET_DOWN: &str = "\u{e136}";

@@ -4,6 +4,21 @@ What changed for people using Snagster, per version.
 
 ## Not released yet
 
+Live streaming (every system):
+
+- **See trouble while you're live**: the Stream tab's Status says in a few words when the
+  upload can't keep up, the computer can't encode fast enough, or a service keeps reconnecting,
+  with what to do on hover (a bad one also shows in the status line and the capture panel). A
+  warning shows once it has held for three seconds (a bad one at once) and stays ten seconds,
+  so it doesn't flicker; the first ten seconds after going live are quiet.
+- **Stream details** (the chart button next to the state): for each service the bitrate really
+  sent against the one set, how much is waiting to be sent, frames dropped by the network,
+  how long it has been connected and reconnects; for the computer the frames it dropped and
+  the encoder's time per frame. Shares are over the last ten seconds.
+- Frames thrown away when a reconnect starts fresh, or to make room in a full queue, now count
+  as dropped too.
+- For AI apps: **stream_stats** gives the same numbers and warnings.
+
 Recording (every system):
 
 - **Replay buffer: save a moment after it happened.** Record > Replay keeps the last 30, 60, 90

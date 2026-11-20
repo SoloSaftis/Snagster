@@ -199,6 +199,8 @@ function stdio() {
         check(!services.isError && svc && svc.length === 6 && svc.some((s) => s.service === 'youtube' && s.url.startsWith('rtmps://')), 'stream_services lists the presets');
         const idle = await tool('stream_status');
         check(!idle.isError && idle.structuredContent && idle.structuredContent.phase === 'idle' && idle.structuredContent.live === false, 'stream_status says nothing is live');
+        const stats = await tool('stream_stats');
+        check(!stats.isError && stats.structuredContent && stats.structuredContent.live === false && byName('stream_stats').annotations.readOnlyHint === true && byName('stream_stats').outputSchema, 'stream_stats with nothing live', JSON.stringify(stats));
         const none = await tool('stream_stop');
         check(!none.isError && none.content[0].text === 'Nothing is being streamed.', 'stream_stop with nothing live');
         const badStream = await tool('stream_start', { service: 'custom', url: 'ftp://example.invalid/live', key: 'sk_smoke_secret_42' });
