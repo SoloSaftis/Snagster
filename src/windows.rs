@@ -452,6 +452,7 @@ impl SnagApp {
                         } else {
                             ui.label(RichText::new(crate::i18n::t("Recording sound isn't available on this system yet.")).color(pal().dim));
                         }
+                        crate::app::replay_ui::settings_section(ui, s);
                         ui.add_space(4.0);
                         ui.add(egui::Slider::new(&mut s.video_max_s, 0..=7200).suffix(" s").text("Stop by itself after (0: never)"));
                         let (w, h) = (1920, 1080);

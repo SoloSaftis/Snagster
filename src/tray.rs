@@ -5,7 +5,7 @@
 
 use crate::settings::{Action, Settings};
 use std::sync::mpsc::Sender;
-use tray_icon::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
+use tray_icon::menu::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 use tray_icon::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -32,6 +32,8 @@ pub struct Tray {
     /// "Stop recording" and its separator, at the top of the menu while a recording runs.
     stop: (MenuItem, PredefinedMenuItem),
     recording: bool,
+    replay: CheckMenuItem,
+    save_replay: MenuItem,
 }
 
 impl Tray {
@@ -55,6 +57,10 @@ impl Tray {
             if let Ok(ic) = tray_icon::Icon::from_rgba(rgba, size, size) {
                 let _ = self.icon.set_icon_templated(Some(ic));
             }
+        }
+        // Back from the stop square: the replay buffer's dot, when it is on.
+        if !on && self.replay.is_checked() {
+            self.set_replay(true, self.save_replay.is_enabled());
         }
         #[cfg(not(target_os = "macos"))]
         let _ = &self.icon;
@@ -127,6 +133,14 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
             add(&menu, &format!("a:{a:?}"), &text)?;
         }
     }
+    // The replay buffer: on / off (ticked while on) and Save replay (only while on).
+    menu.append(&PredefinedMenuItem::separator()).map_err(|e| e.to_string())?;
+    let replay = CheckMenuItem::with_id(format!("a:{:?}", Action::ToggleReplay), label("Replay"), true, false, None);
+    menu.append(&replay).map_err(|e| e.to_string())?;
+    let combo = s.binding(Action::SaveReplay);
+    let text = if combo.is_set() && !cfg!(target_os = "macos") { format!("{}\t{}", label("Save replay"), combo.label()) } else { label("Save replay") };
+    let save_replay = MenuItem::with_id(format!("a:{:?}", Action::SaveReplay), text, false, None);
+    menu.append(&save_replay).map_err(|e| e.to_string())?;
     if !s.presets.is_empty() {
         let sub = Submenu::new(label("Presets"), true);
         for (i, p) in s.presets.iter().enumerate() {
@@ -174,7 +188,61 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
             wake();
         }
     }));
-    Ok(Tray { icon: tray, menu, stop, recording: false })
+    Ok(Tray { icon: tray, menu, stop, recording: false, replay, save_replay })
+}
+
+impl Tray {
+    /// Show whether the replay buffer is on: the item ticked, Save replay usable, a dot on the
+    /// icon (the accent colour, not red: red means recording) and the tooltip saying so. Save
+    /// replay works once it is `ready` (not while it is still starting).
+    pub fn set_replay(&self, on: bool, ready: bool) {
+        self.replay.set_checked(on);
+        self.save_replay.set_enabled(ready);
+        let tip = if on { format!("Snagster – {}", crate::i18n::tr("Replay on")) } else { "Snagster".to_string() };
+        let _ = self.icon.set_tooltip(Some(tip));
+        // While a recording runs, a Mac's menu bar keeps the stop square (`show_recording`).
+        #[cfg(target_os = "macos")]
+        if !self.recording {
+            let (mut rgba, size) = template_icon(TEMPLATE_PX);
+            if on {
+                add_dot(&mut rgba, size, size, [0, 0, 0, 255]);
+            }
+            if let Ok(i) = tray_icon::Icon::from_rgba(rgba, size, size) {
+                let _ = self.icon.set_icon_templated(Some(i));
+            }
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            let ic = crate::icon();
+            let mut rgba = ic.rgba;
+            if on {
+                let a = crate::look::accent();
+                add_dot(&mut rgba, ic.width, ic.height, [a.r(), a.g(), a.b(), 255]);
+            }
+            if let Ok(i) = tray_icon::Icon::from_rgba(rgba, ic.width, ic.height) {
+                let _ = self.icon.set_icon(Some(i));
+            }
+        }
+    }
+}
+
+/// A dot in the bottom-right corner of an icon (a third of its size), with a ring of
+/// transparency around it so it stands out on any taskbar.
+pub fn add_dot(rgba: &mut [u8], w: u32, h: u32, color: [u8; 4]) {
+    let d = w.min(h) as f32 / 3.0;
+    let (cx, cy, r) = (w as f32 - d / 2.0 - 0.5, h as f32 - d / 2.0 - 0.5, d / 2.0);
+    let ring = r + (w.min(h) as f32 / 16.0).max(1.0);
+    for y in 0..h {
+        for x in 0..w {
+            let dist = ((x as f32 - cx).powi(2) + (y as f32 - cy).powi(2)).sqrt();
+            let i = ((y * w + x) * 4) as usize;
+            if dist <= r {
+                rgba[i..i + 4].copy_from_slice(&color);
+            } else if dist <= ring {
+                rgba[i + 3] = 0;
+            }
+        }
+    }
 }
 
 /// A menu text: translated, and on a Mac in Title Case for English.
@@ -351,6 +419,19 @@ mod tests {
         let (small, sp) = template_icon(18);
         assert_eq!(small.len(), (sp * sp * 4) as usize);
         assert!(small.chunks(4).any(|p| p[3] == 255));
+    }
+
+    #[test]
+    fn the_replay_dot_sits_in_the_corner_with_a_clear_ring() {
+        let mut px = vec![255u8; 48 * 48 * 4];
+        add_dot(&mut px, 48, 48, [1, 2, 3, 255]);
+        let at = |x: usize, y: usize| px[(y * 48 + x) * 4..(y * 48 + x) * 4 + 4].to_vec();
+        assert_eq!(at(40, 40), vec![1, 2, 3, 255]);
+        assert_eq!(at(4, 4), vec![255; 4]);
+        assert_eq!(at(30, 40)[3], 0);
+        // The replay items read back as their hotkey actions.
+        assert_eq!(parse("a:ToggleReplay"), Some(TrayCmd::Action(Action::ToggleReplay)));
+        assert_eq!(parse("a:SaveReplay"), Some(TrayCmd::Action(Action::SaveReplay)));
     }
 
     #[test]
