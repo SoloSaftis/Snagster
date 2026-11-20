@@ -239,62 +239,96 @@ fn kind_words(t: &str) -> &'static str {
     }
 }
 
-/// Other spellings the tools have always taken for some choices (`Service::parse`,
-/// `AudioSource::parse`, `VideoFormat::parse`, `RedactKinds::from_names`): the argument's name,
-/// the spelling (lower case; for a service without spaces, dashes or underscores) and the
-/// choice it means. check_args passes the choice on, so a tool only ever sees its own names.
-const SPELLINGS: [(&str, &str, &str); 23] = [
-    ("service", "yt", "youtube"),
-    ("service", "fb", "facebook"),
-    ("service", "facebooklive", "facebook"),
-    ("service", "rtmp", "custom"),
-    ("service", "rtmps", "custom"),
-    ("audio", "off", "none"),
-    ("audio", "no", "none"),
-    ("audio", "silent", "none"),
-    ("audio", "computer", "system"),
-    ("audio", "desktop", "system"),
-    ("audio", "mic", "microphone"),
-    ("audio", "all", "both"),
-    ("format", "h264", "mp4"),
-    ("format", "h.264", "mp4"),
-    ("format", "avc", "mp4"),
-    ("format", "h265", "hevc"),
-    ("format", "h.265", "hevc"),
-    ("kinds", "email", "emails"),
-    ("kinds", "phone", "phones"),
-    ("kinds", "card", "cards"),
-    ("kinds", "address", "addresses"),
-    ("kinds", "ip", "ips"),
-    ("kinds", "url", "urls"),
-];
+/// The choice a tool's own parser makes of `v` for the argument `key` (the other spellings the
+/// tools have always taken: circle, centre, mic, h264, yt, web, region...), as the schema names it.
+/// check_args passes that name on, so the tool means the same and the schema stays short.
+fn parsed_choice(key: &str, v: &Value) -> Option<&'static str> {
+    use crate::stream::{services::Service, source::Source};
+    let text = v.as_str();
+    Some(match key {
+        "shape" => match cut_shape(text?)? {
+            CutShape::Rect => "rectangle",
+            CutShape::Ellipse => "ellipse",
+            CutShape::Rounded => "rounded",
+            CutShape::Triangle => "triangle",
+            CutShape::Star => "star",
+            CutShape::Heart => "heart",
+            CutShape::Polygon => "polygon",
+            CutShape::Freehand => "freehand",
+        },
+        "align" => ["left", "center", "right"][align_arg(&json!({ "align": v })).ok()?? as usize],
+        "callout_shape" => match callout_shape_arg(&json!({ "callout_shape": text? })).ok()?? {
+            crate::settings::CalloutShape::Rounded => "rounded",
+            crate::settings::CalloutShape::Rectangle => "rectangle",
+            crate::settings::CalloutShape::Oval => "oval",
+        },
+        "style" => match step_style_arg(&json!({ "style": text? })).ok()?? {
+            crate::settings::StepStyle::Numbers => "numbers",
+            crate::settings::StepStyle::Upper => "upper",
+            crate::settings::StepStyle::Lower => "lower",
+            crate::settings::StepStyle::Roman => "roman",
+        },
+        "kinds" => {
+            let k = ocr::RedactKinds::from_names(&[text?]).ok()?;
+            let on = [k.emails, k.phones, k.cards, k.addresses, k.ips, k.urls];
+            ocr::RedactKinds::NAMES[on.iter().position(|b| *b)?]
+        }
+        "format" => match crate::video::VideoFormat::parse(text?)? {
+            crate::video::VideoFormat::Mp4 => "mp4",
+            crate::video::VideoFormat::Hevc => "hevc",
+            crate::video::VideoFormat::Wmv => "wmv",
+            crate::video::VideoFormat::Gif => "gif",
+        },
+        "audio" => match crate::audio::AudioSource::parse(text?)? {
+            crate::audio::AudioSource::None => "none",
+            crate::audio::AudioSource::System => "system",
+            crate::audio::AudioSource::Microphone => "microphone",
+            crate::audio::AudioSource::Both => "both",
+        },
+        "source" => match Source::parse(text?)? {
+            Source::Screen => "screen",
+            Source::Window(_) => "window",
+            Source::Area(..) => "area",
+            Source::Studio => "studio",
+        },
+        "service" => match Service::parse(text?)? {
+            Service::Twitch => "twitch",
+            Service::YouTube => "youtube",
+            Service::Kick => "kick",
+            Service::Facebook => "facebook",
+            Service::Restream => "restream",
+            Service::Custom => "custom",
+        },
+        _ => return None,
+    })
+}
 
-/// The choice in `allowed` that `v` names: itself, the same name in another case, or one of
-/// its other spellings (see SPELLINGS) for the argument `key`.
+/// The choice in `allowed` that `v` names: itself, the same name in another case, or what the
+/// tool's own parser makes of it for the argument `key` (see parsed_choice).
 fn choice_of(key: &str, allowed: &[Value], v: &Value) -> Option<Value> {
     if allowed.contains(v) {
         return Some(v.clone());
     }
-    let text = v.as_str()?;
     let find = |want: &str| allowed.iter().find(|a| a.as_str().is_some_and(|a| a.eq_ignore_ascii_case(want))).cloned();
-    find(text.trim()).or_else(|| {
-        let mut low = text.trim().to_ascii_lowercase();
-        if key == "service" {
-            low.retain(|c| !matches!(c, ' ' | '-' | '_'));
-        }
-        SPELLINGS.iter().find(|(k, s, _)| *k == key && *s == low).and_then(|(_, _, to)| find(to))
-    })
+    parsed_choice(key, v).and_then(find).or_else(|| v.as_str().and_then(|t| find(t.trim())))
 }
 
 /// Whether an argument is a secret (a stream key, a token): its value is never shown back.
 fn secret(key: &str, schema: &Value) -> bool {
-    matches!(key, "key" | "token" | "password") || schema["description"].as_str().is_some_and(|d| d.contains("Secret"))
+    matches!(key, "token" | "password") || schema["description"].as_str().is_some_and(|d| d.contains("Secret"))
 }
 
 /// Check one argument against its schema and put each choice in its own spelling. `at` names
 /// it in the answer, `key` is its own name (for a list's items, the list's).
 fn check_value(tool: &str, at: &str, key: &str, schema: &Value, v: &mut Value) -> Result<(), String> {
     if v.is_null() {
+        return Ok(());
+    }
+    // A choice the tool takes (in any spelling its parser reads, even align's 0-2) is fine as it is.
+    if let Some(allowed) = schema["enum"].as_array()
+        && let Some(c) = choice_of(key, allowed, v)
+    {
+        *v = c;
         return Ok(());
     }
     let show = |v: &Value| if secret(key, schema) { "(hidden)".to_string() } else { shown(v) };
@@ -369,7 +403,7 @@ fn check_value(tool: &str, at: &str, key: &str, schema: &Value, v: &mut Value) -
 /// Check a call's arguments against the tool's input schema before it runs, so a misspelt
 /// name, a number sent as text or a value out of range gets an answer that says what is wrong
 /// and what the tool takes, instead of being ignored. Gives the arguments the tool runs with:
-/// every choice in the tool's own spelling (any case, and the other spellings in SPELLINGS).
+/// every choice in the schema's own spelling (any case, and what the tool's parser takes).
 fn check_args(t: &Tool, a: &Value) -> Result<Value, String> {
     let mut args = match a {
         Value::Null => serde_json::Map::new(),
@@ -494,7 +528,7 @@ fn base_tools() -> Vec<Tool> {
                     "radius": n("Rounded corners of a box, in pixels."),
                     "font": s("Font name for text and callouts (empty: Snagster's)."),
                     "bold": b("Bold text."), "italic": b("Italic text."),
-                    "align": {"type": "string", "enum": ["left", "center", "right"], "description": "Text alignment."},
+                    "align": {"type": "string", "enum": ["left", "center", "right"], "description": "Text alignment: left, center or right."},
                     "outline": b("An outline around text letters (text default on) or a callout bubble (default off)."),
                     "callout_shape": {"type": "string", "enum": ["rounded", "rectangle", "oval"], "description": "The callout bubble."},
                     "number": n("Number for a step; default the next one."),
@@ -518,7 +552,7 @@ fn base_tools() -> Vec<Tool> {
                     "fill": b("Fill / text background."), "shadow": b("Shadow."),
                     "text": s("New text (text, callout) or emoji (stamp)."),
                     "font": s("Font name."), "bold": b("Bold."), "italic": b("Italic."),
-                    "align": {"type": "string", "enum": ["left", "center", "right"], "description": "Text alignment."},
+                    "align": {"type": "string", "enum": ["left", "center", "right"], "description": "Text alignment: left, center or right."},
                     "outline": b("Outline."),
                     "callout_shape": {"type": "string", "enum": ["rounded", "rectangle", "oval"], "description": "The callout bubble."},
                     "heads": n("Arrow heads 0, 1 or 2."), "radius": n("Box corner radius."),
@@ -2840,6 +2874,73 @@ mod tests {
         assert!(check_args(t, &json!({"action": "add_sound", "input": "mic"})).is_err(), "mic is an audio spelling, not an input one");
         let a = check_args(t, &json!({"action": "add_sound", "input": "computer", "path": "Mixed Case.wav"})).unwrap();
         assert_eq!((a["input"].as_str(), a["path"].as_str()), (Some("computer"), Some("Mixed Case.wav")));
+    }
+
+    #[test]
+    fn every_spelling_a_tools_parser_takes_still_passes_the_check() {
+        // (tool, argument, what an AI app may send, the schema's name the tool then gets).
+        let cases: &[(&str, &str, Value, &str)] = &[
+            ("capture_screen", "shape", json!("circle"), "ellipse"),
+            ("capture_screen", "shape", json!("oval"), "ellipse"),
+            ("capture_screen", "shape", json!("rect"), "rectangle"),
+            ("capture_screen", "shape", json!("box"), "rectangle"),
+            ("capture_screen", "shape", json!("Rounded Rectangle"), "rounded"),
+            ("capture_screen", "shape", json!("lasso"), "freehand"),
+            ("add_mark", "align", json!("centre"), "center"),
+            ("add_mark", "align", json!("middle"), "center"),
+            ("add_mark", "align", json!(2), "right"),
+            ("add_mark", "callout_shape", json!("ellipse"), "oval"),
+            ("add_mark", "callout_shape", json!("box"), "rectangle"),
+            ("add_mark", "style", json!("A"), "upper"),
+            ("add_mark", "style", json!("a"), "lower"),
+            ("add_mark", "style", json!("i"), "roman"),
+            ("add_mark", "style", json!("1"), "numbers"),
+            ("add_mark", "style", json!("number"), "numbers"),
+            ("update_mark", "style", json!("Upper"), "upper"),
+            ("smart_redact", "kinds", json!(["web"]), "urls"),
+            ("smart_redact", "kinds", json!(["email"]), "emails"),
+            ("record_video", "format", json!("h264"), "mp4"),
+            ("record_video", "format", json!("AVC"), "mp4"),
+            ("record_video", "audio", json!("mic"), "microphone"),
+            ("record_video", "audio", json!("desktop"), "system"),
+            ("record_video", "audio", json!("off"), "none"),
+            ("record_video", "audio", json!("all"), "both"),
+            ("stream_start", "source", json!("region"), "area"),
+            ("stream_start", "source", json!("whole screen"), "screen"),
+            ("stream_start", "source", json!("monitor"), "screen"),
+            ("stream_start", "source", json!("Studio Scene"), "studio"),
+            ("stream_start", "service", json!("you-tube"), "youtube"),
+            ("stream_start", "service", json!("Re Stream"), "restream"),
+            ("stream_start", "service", json!("face_book"), "facebook"),
+            ("stream_start", "service", json!("yt"), "youtube"),
+            ("stream_start", "service", json!("rtmps"), "custom"),
+        ];
+        for (tool, arg, sent, want) in cases {
+            let t = find_tool(tool).unwrap();
+            let mut a = json!({ *arg: sent.clone() });
+            if *tool == "add_mark" || *tool == "update_mark" {
+                a[if *tool == "add_mark" { "kind" } else { "index" }] = if *tool == "add_mark" { json!("text") } else { json!(0) };
+            }
+            if *tool == "record_video" {
+                a["seconds"] = json!(1);
+            }
+            let got = check_args(t, &a).unwrap_or_else(|e| panic!("{tool} {arg}={sent}: {e}"));
+            let got = if got[*arg].is_array() { got[*arg][0].clone() } else { got[*arg].clone() };
+            assert_eq!(got, json!(want), "{tool} {arg}={sent}");
+        }
+        // Every name in every schema means itself to its parser (so the names and parsers agree).
+        for (at, p) in every_property() {
+            let key = at.rsplit('.').next().unwrap().trim_end_matches("[]");
+            let choices = p["enum"].as_array().or(p["items"]["enum"].as_array());
+            for c in choices.into_iter().flatten() {
+                if let Some(parsed) = parsed_choice(key, c) {
+                    assert_eq!(json!(parsed), *c, "{at}: the parser reads {c} as {parsed}");
+                }
+            }
+        }
+        // Still refused: what no parser takes.
+        assert!(check_args(find_tool("capture_screen").unwrap(), &json!({"shape": "blob"})).is_err());
+        assert!(check_args(find_tool("add_mark").unwrap(), &json!({"kind": "text", "align": 3})).is_err());
     }
 
     #[test]
