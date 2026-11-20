@@ -2243,14 +2243,14 @@ mod tests {
         for code in ["de", "et", "ar", "fr-CA", "fi", "hu", "ta"] {
             let pack: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(dir.join(format!("{code}.json"))).unwrap()).unwrap();
             let names: Vec<String> = MAC_GROUPS.iter().map(|g| pack["strings"][g.0].as_str().unwrap_or(g.0).to_string()).collect();
-            let _ = ctx.run_ui(Default::default(), |ui| {
+            ctx.run_ui(Default::default(), |ui| {
                 let (size, width) = toolbar_fit(704.0, 8.0, |s| names.iter().map(|n| crate::look::pane_tool_width(ui, n, s)).collect());
                 assert!(width <= 704.0 || size == 9.0, "{code}: {width}");
                 for n in &names {
                     let text = ui.fonts_mut(|f| f.layout_no_wrap(n.clone(), egui::FontId::proportional(size), Color32::WHITE).size().x);
                     assert!(crate::look::pane_tool_width(ui, n, size) > text, "{code}: {n} is cut off");
                 }
-            });
+            }).textures_delta.clear();
         }
     }
 
@@ -2260,10 +2260,10 @@ mod tests {
         for start in SettingsTab::ALL {
             let mut tab = start;
             let mut height = 0.0;
-            let _ = ctx.run_ui(Default::default(), |ui| {
+            ctx.run_ui(Default::default(), |ui| {
                 let r = ui.scope(|ui| mac_settings_toolbar(ui, &mut tab, &|t| t.key()));
                 height = r.response.rect.height();
-            });
+            }).textures_delta.clear();
             assert!(tab == start, "drawing alone never changes the pane ({})", start.key());
             let row = MAC_GROUPS[mac_group(start)].2.len() > 1;
             assert!(height >= 54.0, "{}: the icons are drawn", start.key());
@@ -2294,7 +2294,7 @@ mod tests {
         assert!(a.settings_tab == SettingsTab::Hotkeys, "started on the pane saved last time");
         a.settings_open = true;
         a.settings_tab = SettingsTab::Streaming;
-        let _ = ctx.run_ui(Default::default(), |ui| a.settings_window(ui.ctx()));
+        ctx.run_ui(Default::default(), |ui| a.settings_window(ui.ctx())).textures_delta.clear();
         assert_eq!(a.settings.settings_pane, "streaming");
         let json = serde_json::to_string(&a.settings).unwrap();
         let back: Settings = serde_json::from_str(&json).unwrap();
