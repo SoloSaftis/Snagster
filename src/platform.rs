@@ -118,6 +118,67 @@ fn hotkey_label_for(sys: System, ctrl: bool, alt: bool, shift: bool, win: bool, 
     parts.join(" + ")
 }
 
+/// The in-app commands whose keys differ on a Mac, where Apple keeps ⇧⌘A (Deselect All),
+/// ⇧⌘W (Close File) and ⇧⌘P (Page Setup) for other things.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AppKey {
+    AllInOne,
+    Window,
+    Screen,
+    Pin,
+}
+
+#[cfg(test)]
+impl AppKey {
+    pub const ALL: [AppKey; 4] = [AppKey::AllInOne, AppKey::Window, AppKey::Screen, AppKey::Pin];
+}
+
+/// The key of an in-app command as (Alt/Option, Shift, key), with Ctrl (Command on a Mac)
+/// always held: Ctrl+Shift+A/W/F and Ctrl+Shift+P elsewhere; ⌥⇧⌘A, ⌥⇧⌘W, ⇧⌘F and ⌥⌘P on a Mac.
+pub const fn app_key_for(mac: bool, k: AppKey) -> (bool, bool, char) {
+    match (mac, k) {
+        (true, AppKey::AllInOne) => (true, true, 'a'),
+        (true, AppKey::Window) => (true, true, 'w'),
+        (true, AppKey::Pin) => (true, false, 'p'),
+        (false, AppKey::AllInOne) => (false, true, 'a'),
+        (false, AppKey::Window) => (false, true, 'w'),
+        (false, AppKey::Pin) => (false, true, 'p'),
+        (_, AppKey::Screen) => (false, true, 'f'),
+    }
+}
+
+/// The key of an in-app command on this system, as egui's modifiers and key.
+pub fn app_key(k: AppKey) -> (egui::Modifiers, egui::Key) {
+    let (alt, shift, key) = app_key_for(system() == System::Mac, k);
+    let mut m = egui::Modifiers::COMMAND;
+    m.alt = alt;
+    m.shift = shift;
+    (m, egui::Key::from_name(&key.to_ascii_uppercase().to_string()).expect("a letter key"))
+}
+
+/// The key of an in-app command written the Windows way ("Ctrl+Shift+A", "Ctrl+Alt+P"), for
+/// `keys` to show in this system's form.
+pub fn app_key_text(k: AppKey) -> String {
+    app_key_text_for(system() == System::Mac, k)
+}
+
+fn app_key_text_for(mac: bool, k: AppKey) -> String {
+    let (alt, shift, key) = app_key_for(mac, k);
+    format!("Ctrl+{}{}{}", if alt { "Alt+" } else { "" }, if shift { "Shift+" } else { "" }, key.to_ascii_uppercase())
+}
+
+/// The key that moves the picked capture in the Library to the Recycle Bin or Trash: Delete on
+/// Windows and Linux, ⌘⌫ on a Mac (Finder's), as (Command held, key).
+pub fn trash_key_for(sys: System) -> (bool, egui::Key) {
+    if sys == System::Mac { (true, egui::Key::Backspace) } else { (false, egui::Key::Delete) }
+}
+
+/// Whether `trash_key_for(system())` was pressed in `i` (Command exactly as the key wants it).
+pub fn trash_key_pressed(i: &egui::InputState) -> bool {
+    let (cmd, key) = trash_key_for(system());
+    i.key_pressed(key) && i.modifiers.command == cmd && !i.modifiers.shift && !i.modifiers.alt
+}
+
 /// The names of the four modifier boxes in Settings > Hotkeys (Ctrl, Alt, Shift, and the
 /// system key): Win on Windows, Super on Linux, the key symbols on a Mac (where Ctrl is
 /// Control, Alt is Option and the system key is Command).
@@ -292,6 +353,49 @@ mod tests {
         assert_eq!(keys_for(System::Mac, "F2"), "F2", "a key alone stays");
         assert_eq!(keys_for(System::Kde, "Ctrl + Shift + F9"), "Ctrl+Shift+F9");
         assert_eq!(keys_for(System::Mac, "Ctrl+Shift+A / W / F"), "⇧⌘A / W / F");
+    }
+
+    #[test]
+    fn in_app_capture_keys_leave_apples_keys_alone_on_a_mac() {
+        // Apple's own: ⇧⌘A Deselect All, ⇧⌘W Close File, ⇧⌘P Page Setup; ⌥⌘W Close All.
+        let apples = [(false, true, 'a'), (false, true, 'w'), (false, true, 'p'), (true, false, 'w')];
+        let mut seen = Vec::new();
+        for k in AppKey::ALL {
+            let mac = app_key_for(true, k);
+            assert!(!apples.contains(&mac), "{k:?} takes one of Apple's keys");
+            assert!(!seen.contains(&mac), "{k:?} twice");
+            seen.push(mac);
+        }
+        // Windows and Linux keep the keys people know.
+        assert_eq!(app_key_text_for(false, AppKey::AllInOne), "Ctrl+Shift+A");
+        assert_eq!(app_key_text_for(false, AppKey::Pin), "Ctrl+Shift+P");
+        assert_eq!(keys_for(System::Mac, &app_key_text_for(true, AppKey::AllInOne)), "⌥⇧⌘A");
+        assert_eq!(keys_for(System::Mac, &app_key_text_for(true, AppKey::Window)), "⌥⇧⌘W");
+        assert_eq!(keys_for(System::Mac, &app_key_text_for(true, AppKey::Screen)), "⇧⌘F");
+        assert_eq!(keys_for(System::Mac, &app_key_text_for(true, AppKey::Pin)), "⌥⌘P");
+        // What the window listens for is what the text says.
+        let (m, key) = app_key(AppKey::Screen);
+        assert!(m.command && m.shift && !m.alt && key == egui::Key::F);
+    }
+
+    #[test]
+    fn the_library_trash_key_follows_the_system() {
+        assert_eq!(trash_key_for(System::Windows), (false, egui::Key::Delete));
+        assert_eq!(trash_key_for(System::Kde), (false, egui::Key::Delete));
+        assert_eq!(trash_key_for(System::Mac), (true, egui::Key::Backspace), "Finder's ⌘⌫");
+        let press = |key, modifiers| {
+            let ctx = egui::Context::default();
+            let events = vec![egui::Event::ModifiersChanged(modifiers), egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers }];
+            let raw = egui::RawInput { events, ..Default::default() };
+            let mut hit = false;
+            let _ = ctx.run_ui(raw, |ui| hit = ui.input(trash_key_pressed));
+            hit
+        };
+        let (cmd, key) = trash_key_for(system());
+        let m = if cmd { egui::Modifiers::COMMAND } else { egui::Modifiers::NONE };
+        assert!(press(key, m));
+        assert!(!press(key, m | egui::Modifiers::SHIFT), "not with Shift");
+        assert!(!press(egui::Key::A, m));
     }
 
     #[test]

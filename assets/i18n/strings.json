@@ -1060,6 +1060,12 @@
  "Replay on",
  "Turn replay on / off",
  "Replay didn't start: {e}",
+ "The desktop's screen-sharing portal said no: {error}",
+ "Undo Move to Trash",
+ "Hide ribbon",
+ "Show ribbon",
+ "Stop recording",
+ "Editor",
  "Move between the ribbon, the tools, the picture, the options and Recent",
  "The next or the previous control; the arrow keys move within a part",
  "Use the control that has the keyboard",
