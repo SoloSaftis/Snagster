@@ -2798,6 +2798,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "objc2-screen-capture-kit"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74b7c5390f477482f001bc354d6571a70db7e4f8d5288e860c45521fbce11394"
+dependencies = [
+ "block2 0.6.2",
+ "dispatch2",
+ "libc",
+ "objc2 0.6.5",
+ "objc2-core-media",
+ "objc2-foundation 0.3.2",
+]
+
+[[package]]
 name = "objc2-symbols"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3781,7 +3795,9 @@ dependencies = [
  "ashpd",
  "async-io",
  "base64 0.22.1",
+ "block2 0.6.2",
  "chrono",
+ "dispatch2",
  "eframe",
  "egui",
  "epaint_default_fonts",
@@ -3792,7 +3808,11 @@ dependencies = [
  "libc",
  "libloading",
  "mp4",
+ "objc2 0.6.5",
  "objc2-app-kit 0.3.2",
+ "objc2-core-media",
+ "objc2-foundation 0.3.2",
+ "objc2-screen-capture-kit",
  "openh264",
  "openh264-sys2",
  "pipewire",
@@ -3817,6 +3837,7 @@ dependencies = [
  "webpki-roots",
  "wgpu",
  "windows",
+ "windows-core",
  "windows-sys 0.61.2",
  "winit",
  "winresource",

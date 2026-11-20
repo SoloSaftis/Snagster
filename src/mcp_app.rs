@@ -83,17 +83,36 @@ pub(super) fn tools() -> Vec<Tool> {
         },
         Tool {
             name: "studio_edit",
-            description: "Studio's scene and sound buttons: copy_scene (a copy of scene, made current), move_source (source one place: direction 1 in front, -1 behind), add_sound (input computer, microphone (id from list_audio_devices, \"\" the default) or file (a WAV path) to scene), remove_sound / share_sound (sound number from studio_scenes, shared true for the sounds in every scene; share moves it between every scene and this scene only), sound_volume (volume 0-2, muted).",
+            description: "Studio's scene and sound buttons: copy_scene (a copy of scene, made current), move_source (source one place: direction 1 in front, -1 behind), add_sound (input computer, microphone (id from list_audio_devices, \"\" the default), file (a WAV path) or program (name from list_sound_programs) to scene), remove_sound / share_sound (sound number from studio_scenes, shared true for the sounds in every scene; share moves it between every scene and this scene only), sound_volume (volume 0-2, muted).",
             schema: obj(
                 json!({
                     "action": {"type": "string", "enum": ["copy_scene", "move_source", "add_sound", "remove_sound", "share_sound", "sound_volume"]},
                     "scene": n("Scene number from studio_scenes (default the current one)."),
                     "source": n("move_source: the source's number."), "direction": n("move_source: 1 in front, -1 behind."),
-                    "input": {"type": "string", "enum": ["computer", "microphone", "file"]}, "id": s("add_sound microphone: its id."), "path": s("add_sound file: a WAV file."),
+                    "input": {"type": "string", "enum": ["computer", "microphone", "file", "program"]}, "id": s("add_sound microphone: its id."), "path": s("add_sound file: a WAV file."), "name": s("add_sound program: its name from list_sound_programs."),
                     "sound": n("The sound's number."), "shared": {"type": "boolean", "description": "The sound is one of those in every scene."},
                     "volume": n("sound_volume: 0-2."), "muted": {"type": "boolean"}
                 }),
                 &["action"],
+            ),
+            edits: false,
+        },
+        Tool {
+            name: "list_sound_programs",
+            description: "The programs that have sound open now (name to use with set_program_sound, label people read, playing: sound right now where the system can tell, Windows), and whether this computer can capture one program's sound (Windows 10 2004+, Linux with PipeWire, macOS 13+ with the Screen Recording permission; reason says why not).",
+            schema: obj(json!({}), &[]),
+            edits: false,
+        },
+        Tool {
+            name: "set_program_sound",
+            description: "One program's sound in a Studio scene: its volume (0-2) and mute. A program not in the scene yet is added (to the scene's own sounds, or to every scene with shared true); its sound comes in whenever it runs. name is from list_sound_programs (Windows: the exe name, Linux: the program, macOS: the bundle id).",
+            schema: obj(
+                json!({
+                    "name": s("The program, from list_sound_programs."), "label": s("What the mixer calls it when added (default: from the name)."),
+                    "scene": n("Scene number from studio_scenes (default the current one)."), "shared": {"type": "boolean", "description": "When added: in every scene."},
+                    "volume": n("0-2 (1 is as it plays)."), "muted": {"type": "boolean"}
+                }),
+                &["name"],
             ),
             edits: false,
         },
@@ -200,6 +219,8 @@ impl Workspace {
             }
             "gif_edit" => self.gif_edit(a),
             "studio_edit" => self.studio_edit(a),
+            "list_sound_programs" => Ok(vec![text(serde_json::to_string_pretty(&sound_programs(crate::audio::program_support(), crate::audio::programs)).unwrap_or_default())]),
+            "set_program_sound" => self.set_program_sound(a),
             other => Err(format!("unknown tool {other} (tools/list shows them all)")),
         }
     }
@@ -355,7 +376,16 @@ impl Workspace {
                         }
                         (SoundInput::File { path: p.to_string() }, std::path::Path::new(p).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default())
                     }
-                    other => return Err(format!("{other} isn't computer, microphone or file")),
+                    "program" => {
+                        let raw = str_of(a, "name").ok_or("a program needs name (see list_sound_programs)")?;
+                        let name = crate::audio::program_key(raw);
+                        if name.is_empty() {
+                            return Err("a program needs name (see list_sound_programs)".into());
+                        }
+                        let label = str_of(a, "label").map(str::trim).filter(|l| !l.is_empty()).map(String::from).unwrap_or_else(|| crate::audio::program_label(&name));
+                        (SoundInput::Program { name }, label)
+                    }
+                    other => return Err(format!("{other} isn't computer, microphone, file or program")),
                 };
                 studio_ui::add_sound_to(st, scene, crate::studio::SceneSound::new(input, &name))?;
                 format!("Added {name} to scene {scene}.")
@@ -388,6 +418,55 @@ impl Workspace {
         };
         self.save_settings(&s);
         Ok(vec![text(msg)])
+    }
+
+    fn set_program_sound(&mut self, a: &Value) -> Outcome {
+        use crate::audio::SoundInput;
+        let raw = str_of(a, "name").ok_or("missing name (see list_sound_programs)")?;
+        let name = crate::audio::program_key(raw);
+        if name.is_empty() {
+            return Err("missing name (see list_sound_programs)".into());
+        }
+        let mut s = self.settings();
+        let st = &mut s.studio;
+        let scene = match num(a, "scene") {
+            Some(_) => index_arg(a, "scene")?,
+            None => st.current.min(st.scenes.len().saturating_sub(1)),
+        };
+        if scene >= st.scenes.len() {
+            return Err(format!("there's no scene {scene} (see studio_scenes)"));
+        }
+        let input = SoundInput::Program { name: name.clone() };
+        let mut added = false;
+        if !st.scene_sounds(scene).iter().any(|x| x.input == input) {
+            let label = str_of(a, "label").map(str::trim).filter(|l| !l.is_empty()).map(String::from).unwrap_or_else(|| crate::audio::program_label(&name));
+            crate::app::studio_ui::add_sound_to(st, scene, crate::studio::SceneSound::new(input.clone(), &label))?;
+            if a.get("shared").and_then(Value::as_bool).unwrap_or(false) {
+                let i = st.scenes[scene].sounds.len() - 1;
+                crate::app::studio_ui::sound_change(st, scene, false, i, crate::app::studio_ui::RowAsk::Share)?;
+            }
+            added = true;
+        }
+        let own = st.scenes[scene].sounds.iter_mut();
+        let snd = st.shared_sounds.iter_mut().chain(own).find(|x| x.input == input).ok_or("the program couldn't be added")?;
+        if let Some(v) = num(a, "volume") {
+            snd.volume = v.clamp(0.0, 2.0) as f32;
+        }
+        if let Some(m) = a.get("muted").and_then(Value::as_bool) {
+            snd.muted = m;
+        }
+        let msg = format!("{}{}: volume {:.2}{}.", if added { "Added " } else { "" }, snd.name, snd.volume, if snd.muted { ", muted" } else { "" });
+        self.save_settings(&s);
+        Ok(vec![text(msg)])
+    }
+}
+
+/// list_sound_programs' answer: whether one program's sound can be captured here (and why
+/// not), and the programs with sound open.
+fn sound_programs(support: Result<(), crate::audio::Unsupported>, list: fn() -> Vec<crate::audio::Program>) -> Value {
+    match support {
+        Ok(()) => json!({"supported": true, "programs": list()}),
+        Err(why) => json!({"supported": false, "reason": why.code(), "message": why.text(), "fix": why.command(), "programs": []}),
     }
 }
 
@@ -509,5 +588,51 @@ mod tests {
         let t = txt(w.call("save_to_cloud", &json!({})));
         assert!(t.starts_with("Cloud folders") || t.starts_with("No OneDrive"));
         assert!(w.call("save_to_cloud", &json!({"cloud": "NoSuchCloudXyz"})).unwrap_err().contains("no NoSuchCloudXyz folder"));
+    }
+
+    /// A program is added by its name, kept by its key, and its volume and mute are set by name.
+    #[test]
+    fn program_sound_is_added_and_set_by_name() {
+        use crate::audio::SoundInput;
+        let mut w = ws();
+        let spotify = SoundInput::Program { name: "spotify".into() };
+        // Added the first time (by any spelling of its exe), with a readable name.
+        assert_eq!(txt(w.call("set_program_sound", &json!({"name": "Spotify.exe", "volume": 0.5}))), "Added Spotify: volume 0.50.");
+        let st = w.settings().studio;
+        let snd = st.scene_sounds(0).into_iter().find(|s| s.input == spotify).cloned().unwrap();
+        assert_eq!((snd.name.as_str(), snd.volume, snd.muted), ("Spotify", 0.5, false));
+        // Then changed in place, never added twice; the volume is clamped.
+        assert_eq!(txt(w.call("set_program_sound", &json!({"name": "spotify", "volume": 9, "muted": true}))), "Spotify: volume 2.00, muted.");
+        assert_eq!(w.settings().studio.scene_sounds(0).iter().filter(|s| s.input == spotify).count(), 1);
+        // In every scene when asked, with the label given.
+        txt(w.call("set_program_sound", &json!({"name": "com.example.game", "label": "The Game", "shared": true})));
+        let st = w.settings().studio;
+        assert!(st.shared_sounds.iter().any(|s| s.input == SoundInput::Program { name: "com.example.game".into() } && s.name == "The Game"));
+        assert!(w.call("set_program_sound", &json!({"name": "  "})).unwrap_err().contains("missing name"));
+        assert!(w.call("set_program_sound", &json!({"name": "x", "scene": 7})).unwrap_err().contains("no scene 7"));
+        // studio_edit's add_sound takes a program too.
+        assert!(txt(w.call("studio_edit", &json!({"action": "add_sound", "input": "program", "name": "VLC.exe"}))).contains("Added Vlc"));
+        assert!(w.call("studio_edit", &json!({"action": "add_sound", "input": "program", "name": "vlc"})).unwrap_err().contains("already"));
+        assert!(w.call("studio_edit", &json!({"action": "add_sound", "input": "program"})).unwrap_err().contains("needs name"));
+    }
+
+    #[test]
+    fn the_program_list_says_why_when_it_cant_be_had() {
+        use crate::audio::{Program, Unsupported};
+        fn two() -> Vec<Program> {
+            vec![Program { name: "spotify".into(), label: "Spotify".into(), playing: true }, Program { name: "zoom".into(), label: "Zoom".into(), playing: false }]
+        }
+        let ok = sound_programs(Ok(()), two);
+        assert_eq!(ok["supported"], true);
+        assert_eq!(ok["programs"][0]["name"], "spotify");
+        assert_eq!(ok["programs"][1]["playing"], false);
+        let no = sound_programs(Err(Unsupported::Flatpak), two);
+        assert_eq!((no["supported"].clone(), no["reason"].clone()), (json!(false), json!("flatpak_sandbox")));
+        assert!(no["fix"].as_str().unwrap().starts_with("flatpak override"));
+        assert_eq!(no["programs"], json!([]), "nothing listed when it can't be captured");
+        assert_eq!(sound_programs(Err(Unsupported::OldWindows), two)["fix"], Value::Null);
+        // The real call answers in that shape on every system.
+        let v: Value = serde_json::from_str(&txt(ws().call("list_sound_programs", &json!({})))).unwrap();
+        assert!(v["supported"].is_boolean() && v["programs"].is_array(), "{v}");
     }
 }
