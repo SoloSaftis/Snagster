@@ -34,7 +34,7 @@ pub mod services;
 pub mod source;
 pub mod testserver;
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 pub use engine::{Encoders, PacketHook, State};
 pub use services::{PRESETS, Service, StreamTarget, mask};

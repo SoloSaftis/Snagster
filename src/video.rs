@@ -465,8 +465,7 @@ impl Spacer {
 
 /// An Annex-B access unit as an MP4 sample (4-byte lengths), without the SPS and PPS (which
 /// go into the track header), and the SPS and PPS when it carried them.
-#[cfg(any(not(windows), test))]
-fn avcc_sample(au: &[u8]) -> (Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>) {
+pub(crate) fn avcc_sample(au: &[u8]) -> (Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>) {
     use crate::encode::{Codec, nal_type, split_annex_b};
     let (mut data, mut sps, mut pps) = (Vec::with_capacity(au.len() + 16), None, None);
     for n in split_annex_b(au) {
@@ -739,6 +738,13 @@ fn per_picture_screenshots(wayland: bool) -> bool {
 #[cfg(any(target_os = "linux", test))]
 fn use_portal(wayland: bool, flatpak: bool) -> bool {
     wayland || flatpak
+}
+
+/// Whether recordings, streams and the replay buffer on this desktop copy the screen through
+/// the desktop's screen share (which may ask the person which screen to share).
+#[cfg(target_os = "linux")]
+pub fn copies_through_screen_share() -> bool {
+    use_portal(x11::is_wayland(), crate::update::managed_by() == Some("Flatpak"))
 }
 
 /// Linux on Wayland or in a Flatpak: the pictures of a screen share (`crate::portal::Cast`),
