@@ -519,6 +519,13 @@ fn main() -> eframe::Result {
             backends[i + 1].name()
         ));
     }
+    // --ui-test: a failed step (or a run that stopped early) is an error for whoever started it.
+    if result.is_ok()
+        && let Some(code) = app::ui_test_exit_code()
+        && code != 0
+    {
+        std::process::exit(code);
+    }
     result
 }
 

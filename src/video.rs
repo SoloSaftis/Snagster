@@ -291,13 +291,18 @@ pub fn record(opts: &VideoOpts, stop: &AtomicBool, pause: &AtomicBool) -> VideoD
     // A file that was there before (an MCP caller's path, say) is never removed below.
     let existed = opts.path.exists();
     crate::capture::background_thread(false);
-    RECORDING_LIVE.store(cfg!(windows), Ordering::Relaxed);
+    // Counted as live until it returns (or panics); on Windows from the start, elsewhere once
+    // the screen is there (`soft` calls `live_here`).
+    let _live = LiveGuard(&RECORDING_LIVE);
+    if cfg!(windows) {
+        live_here();
+    }
     RECORDING_FRAMES.store(0, Ordering::Relaxed);
     #[cfg(windows)]
     win::record(opts, stop, pause, &mut done);
     #[cfg(not(windows))]
     soft::record(opts, stop, pause, &mut done);
-    RECORDING_LIVE.store(false, Ordering::Relaxed);
+    drop(_live);
     if done.result.is_err() && !existed {
         remove_empty(&opts.path);
     }
@@ -313,19 +318,76 @@ fn remove_empty(path: &std::path::Path) {
     }
 }
 
-/// Whether the recording that is running has its screen and is counting time. On Wayland a
+/// How many recordings are live: they have their screen and are counting time. On Wayland a
 /// recording first waits for the person in the desktop's "Share screen" dialog; the recording
-/// bar says so instead of counting.
-static RECORDING_LIVE: AtomicBool = AtomicBool::new(false);
+/// bar says so instead of counting. A count, not an on/off flag: two recordings can overlap (a
+/// recording and an AI app's record_screen, or Studio), and the first to end mustn't make the
+/// other look as if it were still waiting.
+static RECORDING_LIVE: LiveCount = LiveCount::new();
 
+/// Whether a recording is live (see `RECORDING_LIVE`).
 pub fn recording_live() -> bool {
-    RECORDING_LIVE.load(Ordering::Relaxed)
+    RECORDING_LIVE.any()
+}
+
+/// Recordings that are live, each counted once.
+struct LiveCount(std::sync::atomic::AtomicU32);
+
+impl LiveCount {
+    const fn new() -> Self {
+        Self(std::sync::atomic::AtomicU32::new(0))
+    }
+    fn begin(&self) {
+        self.0.fetch_add(1, Ordering::Relaxed);
+    }
+    fn end(&self) {
+        // Never below zero, whatever happens.
+        let mut n = self.0.load(Ordering::Relaxed);
+        while n > 0 {
+            match self.0.compare_exchange_weak(n, n - 1, Ordering::Relaxed, Ordering::Relaxed) {
+                Ok(_) => break,
+                Err(now) => n = now,
+            }
+        }
+    }
+    fn any(&self) -> bool {
+        self.0.load(Ordering::Relaxed) > 0
+    }
+}
+
+thread_local! {
+    /// Whether the recording on this thread (`record` blocks its thread) is counted as live.
+    static COUNTED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// The recording on this thread is live in `count` (`RECORDING_LIVE`; counted once, however
+/// often this is called).
+fn live_here_in(count: &LiveCount) {
+    if !COUNTED.with(|c| c.replace(true)) {
+        count.begin();
+    }
+}
+
+fn live_here() {
+    live_here_in(&RECORDING_LIVE);
+}
+
+/// Uncounts this thread's recording from its count when `record` returns, also if it panics.
+struct LiveGuard(&'static LiveCount);
+
+impl Drop for LiveGuard {
+    fn drop(&mut self) {
+        if COUNTED.with(|c| c.replace(false)) {
+            self.0.end();
+        }
+    }
 }
 
 /// How many frames the recording that is running (or last ran) has written (on Linux and macOS:
 /// handed to the encoder, which may put them in the file a little later). Starting
 /// the encoder can take seconds (Quick Sync on Windows), so "live" doesn't yet mean frames are
-/// coming; `--ui-test` waits on this before it pauses and stops.
+/// coming; `--ui-test` waits on this before it pauses and stops. Only for that self-test: when
+/// recordings overlap they share it, so nothing people see should read it.
 static RECORDING_FRAMES: AtomicU64 = AtomicU64::new(0);
 
 pub fn recording_frames() -> u64 {
@@ -3109,7 +3171,7 @@ mod soft {
         // The clock starts once the screen is there: on Wayland opening it waits for the person
         // in the desktop's "Share screen" dialog, and that wait isn't part of the video.
         let mut clock = Clock::new(fps);
-        super::RECORDING_LIVE.store(true, Ordering::Relaxed);
+        super::live_here();
         if let Some(g) = &grab {
             done.capture = g.name();
         }
@@ -4164,8 +4226,50 @@ mod tests {
         // The fourth picture is asked for after three are in the file.
         assert_eq!(d.frames, 3);
         assert!(counted.load(Ordering::Relaxed) >= 2, "the frames written are counted while it records");
-        assert!(!recording_live(), "not live after the recording ended");
+        // This recording's own mark: another test may be recording at the same time.
+        assert!(!COUNTED.with(|c| c.get()), "not live after the recording ended");
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// The flake that showed it (Windows CI, 20 Nov): another test's recording ended while this
+    /// one ran and switched "live" off for both.
+    #[test]
+    fn a_recording_stays_live_when_another_one_ends() {
+        let live = LiveCount::new();
+        live.begin(); // a recording
+        live.begin(); // an AI app's record_screen at the same time
+        live.end();
+        assert!(live.any(), "the first one is still recording");
+        live.end();
+        assert!(!live.any());
+        live.end();
+        assert!(!live.any(), "an extra end never goes below zero");
+        live.begin();
+        assert!(live.any(), "and a new recording still counts");
+    }
+
+    #[test]
+    fn a_recording_thread_is_counted_once_and_uncounted_even_after_a_panic() {
+        // A count of its own: other tests record at the same time.
+        static MINE: LiveCount = LiveCount::new();
+        let t = std::thread::spawn(|| {
+            let _g = LiveGuard(&MINE);
+            live_here_in(&MINE);
+            live_here_in(&MINE);
+            assert_eq!(MINE.0.load(Ordering::Relaxed), 1, "counted once");
+            panic!("a recorder that fails half way");
+        });
+        assert!(t.join().is_err());
+        assert!(!MINE.any(), "the guard uncounted it while the panic unwound");
+        std::thread::spawn(|| {
+            let g = LiveGuard(&MINE);
+            live_here_in(&MINE);
+            assert!(MINE.any());
+            drop(g);
+            assert!(!MINE.any() && !COUNTED.with(|c| c.get()), "uncounted when record returns");
+        })
+        .join()
+        .unwrap();
     }
 
     #[test]

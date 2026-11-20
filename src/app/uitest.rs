@@ -7,6 +7,22 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 
 type Step = (String, Box<dyn Fn(&mut SnagApp, &egui::Context) -> bool>);
 
+/// Whether `--ui-test` got through every step with every one working. False until it has, so a
+/// run that stops early (the window closed, a crash) also counts as failed.
+static ALL_WORKED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The exit code for a run of Snagster: for `--ui-test` (`ran`), 0 only when `all_worked`, so
+/// a script or a person sees a failed step without reading the report; None otherwise.
+fn exit_code_for(ran: bool, all_worked: bool) -> Option<i32> {
+    ran.then_some(if all_worked { 0 } else { 1 })
+}
+
+/// The exit code `--ui-test` asks for once the window has closed (None when it didn't run).
+pub fn exit_code() -> Option<i32> {
+    use std::sync::atomic::Ordering::Relaxed;
+    exit_code_for(UI_TEST.load(Relaxed), ALL_WORKED.load(Relaxed))
+}
+
 pub(crate) struct UiTest {
     steps: Vec<Step>,
     at: usize,
@@ -253,7 +269,7 @@ impl UiTest {
         let rec = std::rc::Rc::new(std::cell::Cell::new(None::<RecTimes>));
         let r = rec.clone();
         s.push(once("Record: start a 120 fps MP4 video", move |a, c| {
-            a.settings.video_fps = 120;
+            a.settings.video_fps = RecTimes::FPS;
             a.settings.video_max_s = 30;
             a.start_video_to(c, (0, 0, 320, 240), Some(test_dir().join("ui-test.mp4")));
             assert!(a.mini == Some(Mini::Video), "the recording bar didn't open");
@@ -304,8 +320,9 @@ impl UiTest {
                 if !t.resumed.is_some_and(|p| p.elapsed() >= RecTimes::HOLD) || crate::video::recording_frames() < t.frames_at + 2 {
                     return false;
                 }
+                let written = crate::video::recording_frames();
                 a.stop_job();
-                r.set(Some(RecTimes { stopped: Some(std::time::Instant::now()), ..t }));
+                r.set(Some(RecTimes { stopped: Some(std::time::Instant::now()), written, ..t }));
                 true
             }),
         ));
@@ -1082,6 +1099,7 @@ impl SnagApp {
                     println!("  failed: {f}");
                 }
                 if t.failed.is_empty() {
+                    ALL_WORKED.store(true, std::sync::atomic::Ordering::Relaxed);
                     let _ = std::fs::remove_dir_all(&t.dir);
                 } else {
                     println!("The test's files are in {}", t.dir.display());
@@ -1113,28 +1131,42 @@ struct RecTimes {
     stopped: Option<std::time::Instant>,
     // The frames in the file at the last Pause or Resume.
     frames_at: u64,
+    // The frames the recorder had written in all at Stop (before Pause and after Resume).
+    written: u64,
 }
 
 impl RecTimes {
     /// How long the test keeps the recording paused, and then recording again before Stop.
     const HOLD: std::time::Duration = std::time::Duration::from_secs(1);
-    /// Slack for the recorder noticing Pause, Resume and Stop a frame late on a slow machine.
+    /// Slack for the recorder noticing Pause, Resume and Stop a frame late on a slow machine
+    /// (for the wall-clock bound only).
     const SLACK: std::time::Duration = std::time::Duration::from_millis(500);
 
+    /// The test records at this rate.
+    const FPS: u32 = 120;
+
     fn new() -> Self {
-        RecTimes { started: std::time::Instant::now(), paused: None, resumed: None, stopped: None, frames_at: 0 }
+        RecTimes { started: std::time::Instant::now(), paused: None, resumed: None, stopped: None, frames_at: 0, written: 0 }
     }
 
-    /// Whether `seconds` of recorded video fits: at least most of the second after Resume, and
-    /// none of the paused second.
+    /// Whether `seconds` of recorded video fits: at least the time of every frame the recorder
+    /// wrote (each one adds a frame's time; skipped frames add time, never remove it), and none
+    /// of the paused second. The frames, not the clock, for the lower bound: on a busy computer
+    /// the recorder stalls too (one run had 0.15 s of video for a 1.13 s wait after Resume,
+    /// with 4 s frames). No slack there, so time lost after Resume fails on any machine.
     fn check(&self, seconds: f32) -> Result<(), String> {
         let (Some(p), Some(r), Some(s)) = (self.paused, self.resumed, self.stopped) else {
             return Err(format!("the steps didn't all run: {self:?}"));
         };
-        let recorded = std::time::Duration::from_secs_f32(seconds.max(0.0));
-        let after_resume = s.saturating_duration_since(r);
-        if recorded + Self::SLACK < after_resume {
-            return Err(format!("{seconds:.2} s recorded, but it ran {:.2} s after Resume", after_resume.as_secs_f32()));
+        if !(seconds > 0.0 && seconds.is_finite()) {
+            return Err(format!("no time recorded ({seconds} s)"));
+        }
+        let recorded = std::time::Duration::from_secs_f32(seconds);
+        // Up to a frame of rounding.
+        let taken = self.written as f64 / Self::FPS as f64;
+        let frame = 1.0 / Self::FPS as f64;
+        if f64::from(seconds) + frame < taken {
+            return Err(format!("{seconds:.2} s recorded, but {} frames ({taken:.2} s) were written: time after Resume was lost", self.written));
         }
         let unpaused = s.saturating_duration_since(self.started).saturating_sub(r.saturating_duration_since(p));
         if recorded > unpaused + Self::SLACK {
@@ -1153,6 +1185,14 @@ pub(crate) fn test_dir() -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_ui_test_with_a_failed_step_exits_with_an_error() {
+        // It used to print "failed:" lines and still exit with 0, so a run looked green.
+        assert_eq!(exit_code_for(true, false), Some(1), "a step failed, or the run stopped early");
+        assert_eq!(exit_code_for(true, true), Some(0));
+        assert_eq!(exit_code_for(false, false), None, "an ordinary run keeps its own exit code");
+    }
 
     #[test]
     fn a_waiting_step_needs_both_many_tries_and_a_minute_before_it_gives_up() {
@@ -1193,18 +1233,29 @@ mod tests {
         use std::time::{Duration, Instant};
         let started = Instant::now();
         let at = |ms: u64| Some(started + Duration::from_millis(ms));
-        // Recorded 0.2 s, paused 1 s, recorded 1 s again: 1.2 s of video.
-        let t = RecTimes { started, paused: at(200), resumed: at(1200), stopped: at(2200), frames_at: 0 };
-        assert!(t.check(1.2).is_ok());
-        assert!(t.check(0.9).is_ok(), "the recorder starts a little after the button");
+        // Recorded 0.2 s, paused 1 s, recorded 1 s again; the recorder started a little after
+        // the button, so 108 frames were written: 0.9 s of video at least.
+        let t = RecTimes { started, paused: at(200), resumed: at(1200), stopped: at(2200), frames_at: 0, written: 108 };
+        assert!(t.check(0.9).is_ok());
+        assert!(t.check(1.2).is_ok(), "skipped frames add time");
         assert!(t.check(1.6).is_ok(), "noticed Stop a frame late");
         let e = t.check(2.2).unwrap_err();
         assert!(e.contains("the pause was recorded"), "{e}");
         let e = t.check(0.3).unwrap_err();
-        assert!(e.contains("after Resume"), "{e}");
-        assert!(t.check(f32::NAN).is_err(), "no time recorded");
+        assert!(e.contains("after Resume"), "the second after Resume is missing: {e}");
+        assert!(t.check(f32::NAN).is_err() && t.check(0.0).is_err(), "no time recorded");
         let half = RecTimes { stopped: None, ..t };
         assert!(half.check(1.2).unwrap_err().contains("didn't all run"));
+        // The run that failed on a busy computer: the recorder stalled with everything else and
+        // wrote 18 frames in all, 4 of them in the 1.13 s after Resume; its 0.15 s of video is all
+        // it could have.
+        let busy = RecTimes { stopped: at(1200 + 1130), written: 18, ..t };
+        assert!(busy.check(0.15).is_ok(), "{:?}", busy.check(0.15));
+        // A slow machine (30 frames a second) that lost the time after Resume still fails: 6
+        // frames before Pause, 30 after, but only the first 0.05 s in the video.
+        let slow = RecTimes { written: 36, ..t };
+        assert!(slow.check(0.05).unwrap_err().contains("after Resume"));
+        assert!(slow.check(0.3).is_ok());
     }
 
     #[test]
