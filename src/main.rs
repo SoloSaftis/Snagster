@@ -51,6 +51,7 @@ mod aac;
 mod encode;
 mod stream;
 mod stream_test;
+mod replay;
 #[cfg(test)]
 mod testalloc;
 
@@ -655,7 +656,67 @@ fn video_test(quick: bool) {
             let _ = std::fs::remove_file(&path);
         }
     }
+    match capture::check_skip(access) {
+        Some(skip) => println!("{skip}: replay buffer"),
+        None => failed += u32::from(!replay_check()),
+    }
     println!("{}", if failed == 0 { "video test: all passed".to_string() } else { format!("video test: {failed} failed") });
+}
+
+/// `--video-test`'s replay buffer: on for 5 s on the real screen with the graphics chip's
+/// encoder, saved, read back (frames, length, sound) and off again.
+fn replay_check() -> bool {
+    let dir = std::env::temp_dir().join("snagster-video-test-replay");
+    let mut o = replay::ReplayOptions::from_settings(&settings::Settings::default());
+    (o.fps, o.seconds, o.hardware, o.folder) = (30, 30, true, dir.to_string_lossy().to_string());
+    o.audio = if audio::AudioSource::supported() { audio::AudioSource::System } else { audio::AudioSource::None };
+    let cpu0 = cpu_seconds();
+    let t0 = std::time::Instant::now();
+    if let Err(e) = replay::begin(o) {
+        println!("FAIL replay buffer: {e}");
+        return false;
+    }
+    let s = replay::wait_started(std::time::Duration::from_secs(30));
+    let Some(info) = s.info.clone().filter(|_| s.phase == replay::Phase::On) else {
+        println!("FAIL replay buffer: didn't start: {}", s.error.unwrap_or_default());
+        replay::end();
+        return false;
+    };
+    std::thread::sleep(std::time::Duration::from_secs(5));
+    let held = replay::status().held_s;
+    let r = replay::save(None);
+    let (wall, cpu) = (t0.elapsed().as_secs_f64(), cpu_seconds() - cpu0);
+    replay::end();
+    let ok = match r {
+        Ok(v) => match video::probe(&v.path) {
+            Ok(p) => {
+                let ok = p.frames as f64 >= v.seconds * 30.0 * 0.8 && p.seconds >= 4.0 && (p.width, p.height) == (info.width, info.height) && p.audio == v.audio;
+                println!(
+                    "{} replay buffer {}x{} 30 fps: held {held:.1} s, saved {:.1} s, {} frames in the file, encoder {}{}{}, CPU {:.1}% of one core",
+                    if ok { "ok  " } else { "FAIL" },
+                    info.width,
+                    info.height,
+                    v.seconds,
+                    p.frames,
+                    info.encoder,
+                    if info.hardware { " (graphics chip)" } else { "" },
+                    if p.audio { ", with a sound track" } else { "" },
+                    100.0 * cpu / wall
+                );
+                ok
+            }
+            Err(e) => {
+                println!("FAIL replay buffer: couldn't read the saved replay back: {e}");
+                false
+            }
+        },
+        Err(e) => {
+            println!("FAIL replay buffer: {e}");
+            false
+        }
+    };
+    let _ = std::fs::remove_dir_all(&dir);
+    ok
 }
 
 /// Where crash reports go: Snagster's settings folder (crash.log, newest last, kept small).

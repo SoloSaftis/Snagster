@@ -282,6 +282,12 @@ pub fn join_screens(parts: Vec<Part>) -> Option<(RgbaImage, (i32, i32))> {
     Some((canvas, (px(min_x) as i32, px(min_y) as i32)))
 }
 
+/// Whether a screen share is remembered (its restore token is saved): opening one then needs
+/// no dialog, unless the person took the permission back in the desktop.
+pub fn screencast_remembered() -> bool {
+    token_path(false).and_then(|p| read_token(&p)).is_some()
+}
+
 /// The saved restore token, if it looks like one (the desktop makes them: a UUID or similar).
 fn read_token(path: &std::path::Path) -> Option<String> {
     let t = std::fs::read_to_string(path).ok()?;
