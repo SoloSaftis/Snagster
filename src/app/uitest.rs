@@ -269,7 +269,7 @@ impl UiTest {
         let rec = std::rc::Rc::new(std::cell::Cell::new(None::<RecTimes>));
         let r = rec.clone();
         s.push(once("Record: start a 120 fps MP4 video", move |a, c| {
-            a.settings.video_fps = 120;
+            a.settings.video_fps = RecTimes::FPS;
             a.settings.video_max_s = 30;
             a.start_video_to(c, (0, 0, 320, 240), Some(test_dir().join("ui-test.mp4")));
             assert!(a.mini == Some(Mini::Video), "the recording bar didn't open");
@@ -320,8 +320,9 @@ impl UiTest {
                 if !t.resumed.is_some_and(|p| p.elapsed() >= RecTimes::HOLD) || crate::video::recording_frames() < t.frames_at + 2 {
                     return false;
                 }
+                let after_resume = crate::video::recording_frames().saturating_sub(t.frames_at);
                 a.stop_job();
-                r.set(Some(RecTimes { stopped: Some(std::time::Instant::now()), ..t }));
+                r.set(Some(RecTimes { stopped: Some(std::time::Instant::now()), after_resume, ..t }));
                 true
             }),
         ));
@@ -1130,6 +1131,8 @@ struct RecTimes {
     stopped: Option<std::time::Instant>,
     // The frames in the file at the last Pause or Resume.
     frames_at: u64,
+    // The frames the recorder wrote between Resume and Stop.
+    after_resume: u64,
 }
 
 impl RecTimes {
@@ -1138,20 +1141,28 @@ impl RecTimes {
     /// Slack for the recorder noticing Pause, Resume and Stop a frame late on a slow machine.
     const SLACK: std::time::Duration = std::time::Duration::from_millis(500);
 
+    /// The test records at this rate.
+    const FPS: u32 = 120;
+
     fn new() -> Self {
-        RecTimes { started: std::time::Instant::now(), paused: None, resumed: None, stopped: None, frames_at: 0 }
+        RecTimes { started: std::time::Instant::now(), paused: None, resumed: None, stopped: None, frames_at: 0, after_resume: 0 }
     }
 
-    /// Whether `seconds` of recorded video fits: at least most of the second after Resume, and
-    /// none of the paused second.
+    /// Whether `seconds` of recorded video fits: at least the time of the frames the recorder
+    /// wrote after Resume, and none of the paused second. The frames, not the clock: on a busy
+    /// computer the recorder stalls too (one run had 0.15 s of video for a 1.13 s wait after
+    /// Resume, with 4 s frames), and what it didn't get to can't be in the video.
     fn check(&self, seconds: f32) -> Result<(), String> {
         let (Some(p), Some(r), Some(s)) = (self.paused, self.resumed, self.stopped) else {
             return Err(format!("the steps didn't all run: {self:?}"));
         };
-        let recorded = std::time::Duration::from_secs_f32(seconds.max(0.0));
-        let after_resume = s.saturating_duration_since(r);
-        if recorded + Self::SLACK < after_resume {
-            return Err(format!("{seconds:.2} s recorded, but it ran {:.2} s after Resume", after_resume.as_secs_f32()));
+        if !(seconds > 0.0 && seconds.is_finite()) {
+            return Err(format!("no time recorded ({seconds} s)"));
+        }
+        let recorded = std::time::Duration::from_secs_f32(seconds);
+        let taken = std::time::Duration::from_secs_f64(self.after_resume as f64 / Self::FPS as f64);
+        if recorded + Self::SLACK < taken {
+            return Err(format!("{seconds:.2} s recorded, but {} frames ({:.2} s) were taken after Resume", self.after_resume, taken.as_secs_f32()));
         }
         let unpaused = s.saturating_duration_since(self.started).saturating_sub(r.saturating_duration_since(p));
         if recorded > unpaused + Self::SLACK {
@@ -1218,18 +1229,22 @@ mod tests {
         use std::time::{Duration, Instant};
         let started = Instant::now();
         let at = |ms: u64| Some(started + Duration::from_millis(ms));
-        // Recorded 0.2 s, paused 1 s, recorded 1 s again: 1.2 s of video.
-        let t = RecTimes { started, paused: at(200), resumed: at(1200), stopped: at(2200), frames_at: 0 };
+        // Recorded 0.2 s, paused 1 s, recorded 1 s again (120 frames): 1.2 s of video.
+        let t = RecTimes { started, paused: at(200), resumed: at(1200), stopped: at(2200), frames_at: 0, after_resume: 120 };
         assert!(t.check(1.2).is_ok());
         assert!(t.check(0.9).is_ok(), "the recorder starts a little after the button");
         assert!(t.check(1.6).is_ok(), "noticed Stop a frame late");
         let e = t.check(2.2).unwrap_err();
         assert!(e.contains("the pause was recorded"), "{e}");
         let e = t.check(0.3).unwrap_err();
-        assert!(e.contains("after Resume"), "{e}");
-        assert!(t.check(f32::NAN).is_err(), "no time recorded");
+        assert!(e.contains("after Resume"), "the second after Resume is missing: {e}");
+        assert!(t.check(f32::NAN).is_err() && t.check(0.0).is_err(), "no time recorded");
         let half = RecTimes { stopped: None, ..t };
         assert!(half.check(1.2).unwrap_err().contains("didn't all run"));
+        // The run that failed on a busy computer: the recorder stalled with everything else and
+        // wrote 4 frames in the 1.13 s after Resume; its 0.15 s of video is all it could have.
+        let busy = RecTimes { stopped: at(1200 + 1130), after_resume: 4, ..t };
+        assert!(busy.check(0.15).is_ok(), "{:?}", busy.check(0.15));
     }
 
     #[test]
