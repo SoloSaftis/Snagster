@@ -11,9 +11,6 @@
 name: Nightly fuzz
 
 on:
-  # TEMPORARY (removed before merging): workflow_dispatch only works once this file is on main.
-  push:
-    branches: [claude/nightly-fuzz-47235d]
   schedule:
     - cron: "17 2 * * *"
   workflow_dispatch:
