@@ -85,7 +85,9 @@ pub fn script_name(kind: &str) -> String {
 /// Load `js` into KWin under `name` (replacing one loaded before under that name) and run it.
 /// It stays loaded (its handlers keep working) until `unload`.
 pub fn run(name: &str, js: &str) -> Result<(), String> {
-    let dir = std::env::var_os("XDG_RUNTIME_DIR").map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
+    // Only the person's own runtime folder: a guessable name in a shared /tmp could be swapped
+    // for someone else's script before KWin reads it.
+    let dir = std::env::var_os("XDG_RUNTIME_DIR").map(PathBuf::from).ok_or("no XDG_RUNTIME_DIR")?;
     let path = dir.join(format!("{name}.js"));
     std::fs::write(&path, js).map_err(|e| e.to_string())?;
     let file = path.to_string_lossy().to_string();
@@ -110,6 +112,20 @@ pub fn run(name: &str, js: &str) -> Result<(), String> {
     // KWin has read it by now (loading reads the file).
     let _ = std::fs::remove_file(&path);
     result
+}
+
+/// Run the bar's script, keep it while the bar is there, and take it out once `done` is
+/// dropped or sent to: on one thread, so the unload never comes before the load.
+pub fn keep_bar_placed(js: String, done: std::sync::mpsc::Receiver<()>) {
+    let name = script_name("bar");
+    std::thread::spawn(move || {
+        if let Err(e) = run(&name, &js) {
+            eprintln!("KWin didn't place the recording bar: {e}");
+            return;
+        }
+        let _ = done.recv();
+        unload(&name);
+    });
 }
 
 /// Take a script loaded with `run` out of KWin (its handlers stop).

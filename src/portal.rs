@@ -322,9 +322,9 @@ struct Newest {
     ended: Option<String>,
 }
 
-/// Set when the desktop ended a share that was sending pictures (its own "stop sharing" in
-/// the top bar or tray): the recording is then stopped as if Stop was pressed. Cleared when a
-/// share starts.
+/// Set when the desktop closed a share's session (its own "stop sharing" in the top bar or
+/// tray; the PipeWire stream doesn't always say so): the recording is then stopped as if Stop
+/// was pressed. Cleared when a share starts and when Snagster ends it.
 static SHARE_ENDED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 /// Whether the desktop ended the screen share since it started (and forget it).
@@ -351,13 +351,6 @@ fn watch_closed(session: &ashpd::desktop::Session<ashpd::desktop::screencast::Sc
             }
         }
     });
-}
-
-/// What a PipeWire stream's new state means for a share that has sent `pictures` pictures:
-/// Some(true) the desktop ended it (stop like Stop, keep what was recorded), Some(false) it
-/// failed before any picture, None nothing to do.
-fn share_end(unconnected_or_error: bool, pictures: u64) -> Option<bool> {
-    unconnected_or_error.then_some(pictures > 0)
 }
 
 /// A live screen share through the ScreenCast portal: the person picks a screen in the
@@ -525,6 +518,8 @@ impl Drop for Cast {
         if let Some(s) = self.session.take() {
             let _ = pollster::block_on(s.close());
         }
+        // Snagster ended it: never a "stopped by the desktop" for the next recording.
+        SHARE_ENDED.store(false, std::sync::atomic::Ordering::Relaxed);
     }
 }
 
@@ -561,15 +556,8 @@ fn receive(fd: std::os::fd::OwnedFd, nodes: &[(u32, Arc<Mutex<Newest>>)], quit: 
         let listener = stream
             .add_local_listener_with_user_data(VideoInfoRaw::default())
             .state_changed(move |_, _, _, now| {
-                use pipewire::stream::StreamState;
-                let mut n = ended.lock().unwrap_or_else(|p| p.into_inner());
-                let gone = matches!(now, StreamState::Error(_) | StreamState::Unconnected);
-                match share_end(gone, n.number) {
-                    // The desktop's "stop sharing": keep the last picture until the recording
-                    // stops, so what was recorded is saved, not lost to an error.
-                    Some(true) => SHARE_ENDED.store(true, std::sync::atomic::Ordering::Relaxed),
-                    Some(false) => n.ended = Some(if let StreamState::Error(e) = now { e } else { "the desktop ended the screen share".into() }),
-                    None => {}
+                if let pipewire::stream::StreamState::Error(e) = now {
+                    ended.lock().unwrap_or_else(|p| p.into_inner()).ended = Some(e);
                 }
             })
             .param_changed(|_, format, id, param| {
@@ -652,7 +640,8 @@ fn receive(fd: std::os::fd::OwnedFd, nodes: &[(u32, Arc<Mutex<Newest>>)], quit: 
         stream
             .connect(Direction::Input, Some(node), StreamFlags::AUTOCONNECT | StreamFlags::MAP_BUFFERS, &mut params)
             .map_err(|e| e.to_string())?;
-        kept.push((stream, listener));
+        // (The listener first: tuples drop in order, so its hook goes before the stream.)
+        kept.push((listener, stream));
     }
 
     let ml = main_loop.clone();
@@ -665,15 +654,9 @@ fn receive(fd: std::os::fd::OwnedFd, nodes: &[(u32, Arc<Mutex<Newest>>)], quit: 
 mod tests {
     use super::*;
 
-    /// A share the desktop ends after pictures came is a Stop (the recording is kept); one
-    /// that ends before any picture is a failure; other changes mean nothing.
+    /// The desktop's "stop sharing" is reported once.
     #[test]
-    fn a_share_ended_by_the_desktop_stops_the_recording_and_keeps_it() {
-        assert_eq!(share_end(true, 120), Some(true));
-        assert_eq!(share_end(true, 0), Some(false));
-        assert_eq!(share_end(false, 120), None);
-        assert_eq!(share_end(false, 0), None);
-        // A new share forgets an old end.
+    fn a_share_ended_by_the_desktop_is_reported_once() {
         SHARE_ENDED.store(true, std::sync::atomic::Ordering::Relaxed);
         assert!(take_share_ended());
         assert!(!take_share_ended(), "taken once");

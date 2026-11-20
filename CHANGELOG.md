@@ -51,6 +51,12 @@ Linux:
 - **A notification** says "Recording saved" or "GIF saved" when Snagster is in the tray or
   behind other windows.
 - The keyboard-shortcut settings say **Super** (Linux) and ⌃ ⌥ ⇧ ⌘ (Mac) instead of Win.
+- **The recording bar on Wayland**: the editor is minimized where it is and the bar is a small
+  window of its own; after Stop the editor comes back at its old place and size. On KDE
+  Plasma the bar opens in the bottom-right corner and stays above other windows, and the
+  editor also comes back after a hotkey Stop. The desktop's own "stop sharing" (GNOME's top
+  bar, KDE's tray) now stops and saves the recording too. The bar's red dot no longer blinks,
+  its clock shows hours, and its texts are translated.
 - Cancelling the desktop's share dialog now says plainly that nothing was shared, and
   `snagster record` works in the Flatpak on Wayland.
 
