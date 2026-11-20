@@ -136,6 +136,8 @@ pub const COMMANDS: &[Command] = &[
     c("show_last_video", "Record menu", &["Show last video in its folder"], "list_recordings", true, "", Outside),
     c("recordings_folder", "Record > Recordings, Studio", &["Recordings folder"], "list_recordings", true, "", Outside),
     c("gif_editor", "Record > Recordings, Record menu", &["GIF editor", "GIF recordings: trim, frames, combine..."], "gif_edit", true, "", Safe),
+    c("replay_toggle", "Record > Replay, tray menu, hotkey", &["Replay", "Stop replay", "Turn replay on / off"], "replay_start", true, "", Safe),
+    c("replay_save", "Record > Replay, tray menu, hotkey", &["Save replay"], "replay_save", true, "", Safe),
     c("gif_slideshow", "Record > Recordings, Record menu, GIF editor", &["GIF slideshow", "Make a GIF slideshow from Recent", "Slideshow from Recent"], "gif_edit", true, "", Safe),
     c("microphones_refresh", "Record > Video > sound", &["Look for microphones again"], "list_audio_devices", false, "", Safe),
     // ---- Edit ----
@@ -216,6 +218,9 @@ pub const COMMANDS: &[Command] = &[
     s("gif_cursor", "Record > Video", &["Mouse pointer"], "gif_cursor"),
     s("audio_source", "Record > Video", &["Sound to record with videos"], "audio_source"),
     s("audio_mic", "Record > Video > sound", &["Microphone", "The computer's default microphone"], "audio_mic"),
+    s("replay_s", "Record > Replay, Settings > Recording", &["How much to keep"], "replay_s"),
+    s("replay_audio", "Settings > Recording > Replay", &["Sound kept with replays"], "replay_audio"),
+    s("replay_at_start", "Settings > Recording > Replay", &["Turn replay on when Snagster starts"], "replay_at_start"),
     s("show_side_panel", "View > Show, View menu", &["Options panel", "Show options panel"], "show_side_panel"),
     s("show_tray", "View > Show, View menu", &["Recent pictures", "Show Recent pictures"], "show_tray"),
     s("toolbar", "View menu > Customize toolbar", &["Customize toolbar", "Show all"], "hidden_tools"),
@@ -254,6 +259,8 @@ pub fn action_command(a: Action) -> &'static str {
         Action::RecordGif => "record",
         Action::RecordSteps => "record_steps",
         Action::ShowSnag => "show_window",
+        Action::SaveReplay => "replay_save",
+        Action::ToggleReplay => "replay_toggle",
     }
 }
 
@@ -422,6 +429,9 @@ pub const SETTINGS: &[SettingKey] = &[
     ko("video_folder", Kind::Text, "Where videos are saved."),
     k("audio_source", Kind::Choice(AUDIO), "Sound recorded with videos."),
     k("audio_mic", Kind::Text, "The microphone's id from list_audio_devices (\"\" the default)."),
+    k("replay_s", Kind::Int(30, 120), "Replay buffer: how many seconds it keeps (30, 60, 90 or 120)."),
+    k("replay_audio", Kind::Choice(AUDIO), "Sound kept with replays."),
+    k("replay_at_start", Kind::Bool, "Turn the replay buffer on when Snagster starts (on Wayland only when the shared screen is remembered)."),
     k("language", Kind::Text, "The interface language code (\"\" the computer's); set_language checks it."),
     k("appearance", Kind::Choice(&["System", "Light", "Dark"]), "Light or dark: follow the system (System), or always Light or Dark. A high-contrast theme on the system wins."),
     ko("update_check", Kind::Bool, "Ask GitHub for a newer Snagster now and then (uses the network)."),

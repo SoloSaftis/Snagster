@@ -723,6 +723,20 @@ impl Streamer {
             endpoints.push(ep);
             outputs.push(Output { service: t.service.preset().name.to_string(), address: t.display(), key: t.key.clone(), queue: Mutex::new(Some(SendQueue::new(cfg.max_queue_ms))), ..Default::default() });
         }
+        Streamer::launch(cfg, outputs, endpoints, frames, sound, encoders, "Live streaming", &mask_all)
+    }
+
+    /// Encode only, for no service: every packet goes to `cfg.on_packet` (the replay buffer
+    /// keeps them); `cfg.target` isn't used. `why` names the work for macOS's activity.
+    pub fn start_local(cfg: StreamConfig, frames: FrameSource, sound: SoundSource, encoders: Encoders, why: &'static str) -> Result<Streamer, String> {
+        if cfg.on_packet.is_none() {
+            return Err("nothing takes the packets".into());
+        }
+        Streamer::launch(cfg, Vec::new(), Vec::new(), frames, sound, encoders, why, &|e| e)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn launch(cfg: StreamConfig, outputs: Vec<Output>, endpoints: Vec<Endpoint>, frames: FrameSource, sound: SoundSource, encoders: Encoders, why: &'static str, mask_all: &dyn Fn(String) -> String) -> Result<Streamer, String> {
         let vcfg = video_config(&cfg)?;
         let (w, h, fps) = (vcfg.width, vcfg.height, vcfg.fps);
         let venc = (encoders.video)(&vcfg).map_err(mask_all)?;
@@ -735,7 +749,7 @@ impl Streamer {
                 Ok(a) => aenc = Some(a),
                 Err(e) => {
                     sound = None;
-                    notes.push(format!("Streaming without sound: {e}"));
+                    notes.push(if why == "Live streaming" { format!("Streaming without sound: {e}") } else { format!("Kept without sound: {e}") });
                 }
             }
         }
@@ -766,7 +780,7 @@ impl Streamer {
             let net = NetCfg { ep, codec: cfg.codec, meta: meta.clone(), asc: asc.clone(), max_reconnects: cfg.max_reconnects, connect_timeout: cfg.connect_timeout, write_timeout: cfg.write_timeout, backoff: cfg.backoff };
             net_threads.push(spawn(&format!("snagster-stream-net-{i}"), move || net_thread(sh, i, net, started)).map_err(|e| e.to_string())?);
         }
-        Ok(Streamer { shared, started, threads, net_threads, _timely: crate::video::TimelyActivity::begin("Live streaming") })
+        Ok(Streamer { shared, started, threads, net_threads, _timely: crate::video::TimelyActivity::begin(why) })
     }
 
     /// Where the stream stands; never waits on the stream's threads (the only lock it takes,

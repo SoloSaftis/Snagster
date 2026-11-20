@@ -300,8 +300,9 @@ impl Sampler {
         for (i, n) in now.iter().enumerate() {
             let get = |t: &Totals| t.outputs.get(i).copied().unwrap_or_default();
             // This service's window: the last ten seconds, but none of it before this
-            // connection went live.
-            let since = self.samples.iter().find(|s| s.at_ms >= old.at_ms && s.at_ms >= n.live_since_ms).unwrap_or(new);
+            // connection went live (strictly after: the frames lost at the reconnect were
+            // counted just before it went live, possibly in the same millisecond).
+            let since = self.samples.iter().find(|s| s.at_ms >= old.at_ms && s.at_ms > n.live_since_ms).unwrap_or(new);
             let span_ms = new.at_ms.saturating_sub(since.at_ms);
             let (a, b) = (get(since), get(new));
             let mut o = OutHealth {

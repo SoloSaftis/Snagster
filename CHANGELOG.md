@@ -19,6 +19,18 @@ Live streaming (every system):
   as dropped too.
 - For AI apps: **stream_stats** gives the same numbers and warnings.
 
+Recording (every system):
+
+- **Replay buffer: save a moment after it happened.** Record > Replay keeps the last 30, 60, 90
+  or 120 seconds of the screen the mouse is on in memory (encoded on the graphics chip where it
+  can, at most about 512 MB); **Save replay** (Ctrl+Shift+F8, ⌥⇧⌘B on a Mac, or the tray menu)
+  saves them at once as an MP4 in the recordings folder, with the computer's sound on Windows.
+  It is off until you turn it on; a "Replay 60 s" badge next to the tabs and a dot on the tray
+  icon show while it is on. Settings > Recording > Replay sets the length and sound, and can
+  turn it on when Snagster starts (on Wayland only when the shared screen is remembered, so no
+  dialog pops up by itself). AI apps use replay_start, replay_save, replay_status and
+  replay_stop.
+
 Marking up pictures (every system):
 
 - **Adjust a mark right after drawing it**: a new arrow, line, box, oval, highlighter box,
