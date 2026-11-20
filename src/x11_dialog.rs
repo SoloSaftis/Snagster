@@ -160,6 +160,7 @@ fn attach(title: &str, main: u32) -> bool {
 #[cfg(target_os = "linux")]
 fn connection() -> Option<&'static std::sync::Mutex<Option<(x11rb::rust_connection::RustConnection, u32)>>> {
     static C: std::sync::OnceLock<std::sync::Mutex<Option<(x11rb::rust_connection::RustConnection, u32)>>> = std::sync::OnceLock::new();
+    use x11rb::connection::Connection as _;
     Some(C.get_or_init(|| {
         std::sync::Mutex::new(x11rb::connect(None).ok().map(|(c, screen)| {
             let root = c.setup().roots.get(screen).map_or(0, |s| s.root);
@@ -222,5 +223,8 @@ mod tests {
         set_main(None);
         shown("no-main", "Anything");
         assert!(tracker().lock().unwrap().0.get("no-main").is_none(), "not even counted");
+        tracker().lock().unwrap().want("closing");
+        closed("closing");
+        assert!(tracker().lock().unwrap().0.get("closing").is_none(), "a closed window is forgotten");
     }
 }
