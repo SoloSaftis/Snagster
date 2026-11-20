@@ -26,6 +26,7 @@ pub mod amf;
 pub mod engine;
 pub mod flv;
 pub mod flvfile;
+pub mod health;
 pub mod keystore;
 pub mod live;
 pub mod queue;

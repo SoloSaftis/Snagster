@@ -124,8 +124,10 @@ impl SendQueue {
         Some(p)
     }
 
-    /// A new connection: what was waiting is stale; video restarts at a keyframe.
+    /// A new connection: what was waiting is stale (its video frames count as dropped); video
+    /// restarts at a keyframe.
     pub fn restart(&mut self) {
+        self.dropped_video += self.items.iter().filter(|p| matches!(p, Packet::Video(_))).count() as u64;
         self.items.clear();
         self.bytes = 0;
         self.drop_until_key = true;
@@ -214,6 +216,7 @@ mod tests {
         q.push_audio(a(0));
         q.restart();
         assert_eq!(q.len(), 0);
+        assert_eq!(q.dropped_video, 1, "the frame that was waiting is lost");
         assert!(!q.push_video(v(33, false)));
         assert!(q.pop().is_none());
     }

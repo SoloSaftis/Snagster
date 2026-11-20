@@ -187,6 +187,7 @@ pub const COMMANDS: &[Command] = &[
     c("go_live", "Stream > Go live, Studio", &["Go live"], "stream_start", true, "", Outside),
     c("stream_stop", "Stream > Go live, Studio", &["Stop", "Cancel", "Stop the stream"], "stream_stop", true, "", Destructive),
     c("stream_source", "Stream > Source", &["Whole screen", "A window", "An area", "Pick an area...", "Studio scene"], "stream_start", true, "screen, window:TITLE, area (pick it) or studio", Safe),
+    c("stream_details", "Stream > Status", &["Stream details"], "stream_stats", false, "", Safe),
     c("stream_edit_in_studio", "Stream > Scenes", &["Edit in Studio"], "studio_scenes", true, "", Safe),
     c("stream_forget_key", "Settings > Streaming", &["Forget"], "", true, "", Asks),
     c("stream_also", "Settings > Streaming", &["Add a service", "Stream to this service too"], "set_setting", false, "", Safe),
@@ -462,6 +463,14 @@ pub const SETTINGS: &[SettingKey] = &[
     k("stream.record_copy", Kind::Bool, "Also record what is streamed."),
     ko("stream.also", Kind::List, "More services to stream to at once (up to 4; their keys are set by the person)."),
     k("ribbon_folded", Kind::Bool, "The ribbon is folded away."),
+    // Kept by the window as the person moves between panes; AI apps open a pane with the
+    // `settings` window command instead.
+    SettingKey {
+        key: "settings_pane",
+        kind: Kind::Choice(&["after_capture", "saving", "capture", "recording", "editor", "effects", "redact", "hotkeys", "presets", "ai", "general", "streaming"]),
+        who: Who::Person,
+        help: "The Settings pane shown last (Settings opens on it).",
+    },
     SettingKey { key: "mcp_http", kind: Kind::Bool, who: Who::Person, help: "The HTTP server for AI apps (only the person changes it)." },
     SettingKey { key: "mcp_port", kind: Kind::Int(1024, 65535), who: Who::Person, help: "The HTTP server's port (only the person changes it)." },
     SettingKey { key: "mcp_token", kind: Kind::Text, who: Who::Person, help: "The HTTP server's access token (only the person changes it; never shown)." },

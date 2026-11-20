@@ -265,6 +265,47 @@ pub(crate) enum SettingsTab {
     Streaming,
 }
 
+impl SettingsTab {
+    pub(crate) const ALL: [SettingsTab; 12] = [
+        SettingsTab::AfterCapture,
+        SettingsTab::Saving,
+        SettingsTab::Capture,
+        SettingsTab::Recording,
+        SettingsTab::Editor,
+        SettingsTab::Effects,
+        SettingsTab::Redact,
+        SettingsTab::Hotkeys,
+        SettingsTab::Presets,
+        SettingsTab::Ai,
+        SettingsTab::Language,
+        SettingsTab::Streaming,
+    ];
+
+    /// The pane's name in the settings file (`Settings::settings_pane`), so Settings opens on
+    /// the pane shown last, also after a restart.
+    pub(crate) fn key(self) -> &'static str {
+        match self {
+            SettingsTab::AfterCapture => "after_capture",
+            SettingsTab::Saving => "saving",
+            SettingsTab::Capture => "capture",
+            SettingsTab::Recording => "recording",
+            SettingsTab::Editor => "editor",
+            SettingsTab::Effects => "effects",
+            SettingsTab::Redact => "redact",
+            SettingsTab::Hotkeys => "hotkeys",
+            SettingsTab::Presets => "presets",
+            SettingsTab::Ai => "ai",
+            SettingsTab::Language => "general",
+            SettingsTab::Streaming => "streaming",
+        }
+    }
+
+    /// The pane a settings file names; the first pane for an unknown or empty name.
+    pub(crate) fn from_key(key: &str) -> SettingsTab {
+        SettingsTab::ALL.into_iter().find(|t| t.key() == key).unwrap_or(SettingsTab::AfterCapture)
+    }
+}
+
 /// The small always-on-top bar shown while something runs in the background.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Mini {
@@ -525,6 +566,8 @@ pub struct SnagApp {
     pub(crate) lib_thumbs: HashMap<PathBuf, TextureHandle>,
     pub(crate) lib_thumb_rx: Option<Receiver<(PathBuf, RgbaImage)>>,
     pub(crate) lib_tag_edit: Option<(usize, String)>,
+    /// The capture picked in the Library grid (a click), which Delete / ⌘⌫ moves to the Trash.
+    pub(crate) lib_picked: Option<PathBuf>,
     // ui helpers
     ui_fonts: fonts::UiFonts,
     /// Stamp pictures by emoji and size (`None`: the font can't draw it).
@@ -631,13 +674,14 @@ impl SnagApp {
 
     /// The window's state with nothing open and nothing started (no window, threads, hotkeys
     /// or files touched), so `new` and the unit tests share it.
-    fn blank(settings: Settings, persist: bool, screenshot: Option<PathBuf>) -> Self {
+    pub(crate) fn blank(settings: Settings, persist: bool, screenshot: Option<PathBuf>) -> Self {
         let (cap_tx, cap_rx) = channel();
         let (hk_tx, hk_rx) = channel();
         let (ocr_tx, ocr_rx) = channel();
         let (gif_tx, gif_rx) = channel();
         let (video_tx, video_rx) = channel();
         let (tray_tx, tray_rx) = channel();
+        let saved_pane = settings.settings_pane.clone();
         Self {
             x: ribbon::Extra::default(),
             saved_settings: settings.clone(),
@@ -723,6 +767,7 @@ impl SnagApp {
             lib_thumbs: HashMap::new(),
             lib_thumb_rx: None,
             lib_tag_edit: None,
+            lib_picked: None,
             ui_fonts: fonts::UiFonts::default(),
             stamp_tex: HashMap::new(),
             image_tex: HashMap::new(),
@@ -745,7 +790,7 @@ impl SnagApp {
             }),
             last_scale: 1.0,
             settings_open: false,
-            settings_tab: SettingsTab::AfterCapture,
+            settings_tab: SettingsTab::from_key(&saved_pane),
             shortcuts_open: false,
             about_open: false,
             redact_open: false,
@@ -2422,8 +2467,24 @@ impl SnagApp {
         if consume(Modifiers::COMMAND, Key::Comma) {
             self.settings_open = true;
         }
-        if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::P) {
+        // Pin and the capture keys are the system's own (`platform::app_key`): a Mac keeps ⇧⌘A,
+        // ⇧⌘W and ⇧⌘P for other things. Before Print, so ⌥⌘P isn't taken for ⌘P.
+        use crate::platform::{AppKey, app_key};
+        let app = |k: AppKey| {
+            let (m, key) = app_key(k);
+            consume(m, key)
+        };
+        if app(AppKey::Pin) {
             self.pin_current();
+        }
+        if app(AppKey::AllInOne) {
+            self.do_action(ctx, Action::AllInOne);
+        }
+        if app(AppKey::Window) {
+            self.do_action(ctx, Action::Window);
+        }
+        if app(AppKey::Screen) {
+            self.do_action(ctx, Action::Screen);
         }
         if consume(Modifiers::COMMAND, Key::P) && self.current.is_some() {
             self.print();
@@ -2439,15 +2500,6 @@ impl SnagApp {
         }
         if consume(Modifiers::COMMAND, Key::L) {
             self.library_open = true;
-        }
-        if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::A) {
-            self.do_action(ctx, Action::AllInOne);
-        }
-        if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::W) {
-            self.do_action(ctx, Action::Window);
-        }
-        if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::F) {
-            self.do_action(ctx, Action::Screen);
         }
         if consume(Modifiers::NONE, Key::F1) {
             self.shortcuts_open = true;
@@ -2996,7 +3048,7 @@ impl SnagApp {
             self.do_action(ctx, Action::Ruler);
         }
         ui.separator();
-        if item_on(ui, has, "Pin picture to screen", "Ctrl+Shift+P") {
+        if item_on(ui, has, "Pin picture to screen", &crate::platform::app_key_text(crate::platform::AppKey::Pin)) {
             self.pin_current();
         }
         let many = self.entries.len() >= 2;
@@ -4480,7 +4532,7 @@ impl SnagApp {
         self.poll_hotkeys(ctx);
         self.poll_tray(ctx);
         #[cfg(target_os = "macos")]
-        self.apply_menu_bar();
+        self.apply_menu_bar(ctx);
         // Close keeps Snagster in the tray only where there is a tray to come back from (stock
         // GNOME has none), and only when the person chose it.
         let keep_running = !self.quitting && self.tray.is_some() && self.settings.close_to_tray && crate::platform::has_tray();
@@ -5327,9 +5379,19 @@ impl SnagApp {
                     self.quitting = true;
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
+                // What the recording bar's Stop does.
+                TrayCmd::StopRecording if self.is_recording() => {
+                    self.bar.stop(Instant::now());
+                    self.stop_job();
+                }
+                TrayCmd::StopRecording => {}
                 #[cfg(any(target_os = "macos", test))]
                 TrayCmd::Menu(run) => self.run_menu(ctx, run),
             }
+        }
+        let recording = self.is_recording();
+        if let Some(t) = &mut self.tray {
+            t.show_recording(recording);
         }
     }
 
@@ -6434,6 +6496,26 @@ mod tests {
 
     fn boxed() -> Shape {
         Shape::Rect { rect: Rect::from_min_max(pos2(20.0, 20.0), pos2(60.0, 60.0)), color: Color32::RED, width: 3.0, fill: false, radius: 0.0, shadow: false }
+    }
+
+    #[test]
+    fn the_trays_stop_recording_stops_only_a_recording() {
+        let ctx = egui::Context::default();
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        let stop = Arc::new(AtomicBool::new(false));
+        a.job_stop = Some(stop.clone());
+        // A scrolling capture isn't a recording: the tray's Stop recording leaves it alone.
+        a.mini = Some(Mini::Scroll);
+        a.tray_tx.send(crate::tray::TrayCmd::StopRecording).unwrap();
+        a.poll_tray(&ctx);
+        assert!(!stop.load(Ordering::Relaxed));
+        for m in [Mini::Video, Mini::Gif] {
+            stop.store(false, Ordering::Relaxed);
+            a.mini = Some(m);
+            a.tray_tx.send(crate::tray::TrayCmd::StopRecording).unwrap();
+            a.poll_tray(&ctx);
+            assert!(stop.load(Ordering::Relaxed), "a recording stops as with the bar's Stop");
+        }
     }
 
     #[test]
