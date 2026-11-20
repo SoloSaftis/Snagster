@@ -32,6 +32,9 @@ Live streaming (every system):
 
 Recording (every system):
 
+- **Two recordings at once no longer confuse the recording bar**: when an AI app's
+  record_screen or a Studio recording ended while your own recording ran, the bar went back to
+  "waiting for the screen". Each recording now counts on its own.
 - **Replay buffer: save a moment after it happened.** Record > Replay keeps the last 30, 60, 90
   or 120 seconds of the screen the mouse is on in memory (encoded on the graphics chip where it
   can, at most about 512 MB); **Save replay** (Ctrl+Shift+F8, ⌥⇧⌘B on a Mac, or the tray menu)
