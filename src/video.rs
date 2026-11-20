@@ -3596,7 +3596,11 @@ mod tests {
         }
         assert!(f.ended_by_desktop());
         assert!(f.frames() > 0, "what came before is kept");
-        let g = ScreenFeed::start_with((0, 0, 8, 4), o, fake_open).unwrap();
+        // (Its own opener: `fake_open` counts opens for another test running alongside.)
+        fn quiet_open(_: (i32, i32, u32, u32), _: bool) -> Result<Box<dyn Grab>, String> {
+            Ok(Box::new(FakeGrab { looks: 0 }))
+        }
+        let g = ScreenFeed::start_with((0, 0, 8, 4), o, quiet_open).unwrap();
         std::thread::sleep(Duration::from_millis(50));
         assert!(!g.ended_by_desktop());
     }
