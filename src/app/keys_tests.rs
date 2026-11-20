@@ -351,3 +351,39 @@ fn every_tab_has_a_key_tip_of_its_own_in_every_language() {
         assert!(tips.iter().all(|t| t.len() == 1 && t.chars().all(|c| c.is_ascii_alphanumeric())), "{code}: {tips:?}");
     }
 }
+
+#[test]
+fn arrows_in_the_options_panel_stay_in_it() {
+    let mut k = Keys::new();
+    for _ in 0..4 {
+        k.key(Key::F6);
+    }
+    assert_eq!(k.pane(), Some(Pane::Options));
+    for key in [Key::ArrowLeft, Key::ArrowUp, Key::ArrowRight, Key::ArrowLeft] {
+        k.key(key);
+        k.frame(Vec::new());
+        assert_eq!(k.pane(), Some(Pane::Options), "{key:?} took the keyboard out of the options");
+    }
+    for _ in 0..20 {
+        k.key(Key::ArrowDown);
+        k.frame(Vec::new());
+        assert_eq!(k.pane(), Some(Pane::Options));
+    }
+}
+
+#[test]
+fn a_control_in_a_floating_window_keeps_the_picture_keys_off() {
+    let mut k = Keys::new();
+    k.app.x.lang_open = true;
+    k.frame(Vec::new());
+    k.key(Key::Tab);
+    let in_window = k.focused().is_some_and(|f| k.ctx.read_response(f).is_some_and(|r| r.layer_id.order != egui::Order::Background));
+    if !in_window {
+        return; // The language list is a window of its own on this system: nothing to check.
+    }
+    assert_eq!(k.pane(), None);
+    let before = k.app.tool;
+    let other = Tool::ALL.into_iter().find(|t| *t != before && *t != Tool::Select).unwrap();
+    k.key(Key::from_name(other.key()).unwrap());
+    assert_eq!(k.app.tool, before, "a letter in the language list doesn't choose a tool");
+}

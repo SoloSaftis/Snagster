@@ -1990,6 +1990,7 @@ impl SnagApp {
 
     pub(crate) fn undo(&mut self) {
         self.commit_text();
+        self.x.keys.forget_nudge();
         if let Some(e) = self.entry()
             && let Some(prev) = e.undo.pop()
         {
@@ -2004,6 +2005,7 @@ impl SnagApp {
         // or it would later be written over, or delete, whatever mark has its index in the
         // redone picture.
         self.commit_text();
+        self.x.keys.forget_nudge();
         if let Some(e) = self.entry()
             && let Some(next) = e.redo.pop()
         {
@@ -2388,7 +2390,10 @@ impl SnagApp {
     fn shortcuts(&mut self, ctx: &egui::Context) {
         // Only a text field takes the keys: with a button, a tool or the picture focused (F6, key
         // tips) the shortcuts still work, as in GTK, Qt and Windows apps.
-        let typing = self.text_edit.is_some() || ctx.text_edit_focused();
+        // A control in one of Snagster's own windows (the language list, the timer) keeps them.
+        let focused = ctx.memory(|m| m.focused());
+        let elsewhere = focused.is_some() && self.x.keys.pane_of(ctx, focused).is_none();
+        let typing = self.text_edit.is_some() || ctx.text_edit_focused() || elsewhere;
         let consume = |m: Modifiers, k: Key| ctx.input_mut(|i| i.consume_key(m, k));
         if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z) || consume(Modifiers::COMMAND, Key::Y) {
             self.redo();
@@ -3185,6 +3190,8 @@ impl SnagApp {
                 for (i, c) in palette.iter().enumerate() {
                     let c = rgb(*c);
                     let (rect, resp) = ui.allocate_exact_size(vec2(36.0, 26.0), Sense::click());
+                    let name = format!("#{:02X}{:02X}{:02X}", c.r(), c.g(), c.b());
+                    resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, c == cur, &name));
                     ui.painter().rect_filled(rect, CornerRadius::same(6), c);
                     // Black on a dark panel, white on a light one: an edge so it doesn't vanish.
                     if let Some(edge) = crate::theme::swatch_edge(c, pal().panel, &pal()) {

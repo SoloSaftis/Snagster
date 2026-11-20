@@ -370,15 +370,22 @@ pub(crate) struct KeyNav {
     before_tips: Option<Option<Id>>,
     /// The mark the arrows moved last, and when: holding an arrow is one undo step.
     nudged: Option<(usize, usize, f64)>,
+    /// The control an arrow left to egui last frame, and its pane.
+    arrowed: Option<(Id, Pane)>,
 }
 
 impl KeyNav {
+    /// Undo and redo start a new step for the next arrow on the picture.
+    pub(crate) fn forget_nudge(&mut self) {
+        self.nudged = None;
+    }
+
     /// The canvas widget, so its keys still work while it has the keyboard.
     pub(crate) fn is_canvas(&self, id: Option<Id>) -> bool {
         id.is_some() && (id == self.canvas || id == self.canvas_now)
     }
 
-    fn pane_of(&self, ctx: &egui::Context, id: Option<Id>) -> Option<Pane> {
+    pub(crate) fn pane_of(&self, ctx: &egui::Context, id: Option<Id>) -> Option<Pane> {
         let id = id?;
         if self.is_canvas(Some(id)) {
             return Some(Pane::Canvas);
@@ -386,7 +393,12 @@ impl KeyNav {
         if let Some(it) = self.last.iter().find(|i| i.id == id) {
             return Some(it.scope.pane());
         }
-        let at = ctx.read_response(id)?.rect.center();
+        // The panes are the window's panels; a window or menu floating over them is none.
+        let r = ctx.read_response(id)?;
+        if r.layer_id.order != egui::Order::Background {
+            return None;
+        }
+        let at = r.rect.center();
         self.panes.iter().find(|(_, r)| r.contains(at)).map(|(p, _)| *p)
     }
 }
@@ -584,6 +596,15 @@ impl SnagApp {
 
     /// F6 between panes, arrows within one, Esc back to the picture.
     fn pane_keys(&mut self, ctx: &egui::Context, focused: Option<Id>, typing: bool) {
+        // An arrow let through to egui (a control we don't know, in the options panel) that
+        // took the keyboard into another pane: back where it was.
+        if let Some((id, pane)) = self.x.keys.arrowed.take()
+            && focused != Some(id)
+            && self.x.keys.pane_of(ctx, focused) != Some(pane)
+        {
+            ctx.memory_mut(|m| m.request_focus(id));
+            return;
+        }
         let back = ctx.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, Key::F6));
         let fwd = !back && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, Key::F6));
         if fwd || back {
@@ -624,7 +645,13 @@ impl SnagApp {
         if m.any() {
             return;
         }
-        let Some(item) = k.last.iter().find(|i| i.id == f) else { return };
+        let Some(item) = k.last.iter().find(|i| i.id == f) else {
+            // egui moves it (a slider keeps its arrows); undone above if it leaves the pane.
+            if let Some(pane) = k.pane_of(ctx, Some(f)) {
+                self.x.keys.arrowed = Some((f, pane));
+            }
+            return;
+        };
         let pane = item.scope.pane();
         let mine: Vec<&Item> = k.last.iter().filter(|i| i.scope.pane() == pane && (i.enabled || i.id == f)).collect();
         let Some(from) = mine.iter().position(|i| i.id == f) else { return };
@@ -722,7 +749,11 @@ impl SnagApp {
         }
         if let Some(scope) = show.filter(|_| !egui::Popup::is_any_open(ctx)) {
             let (shown, tips) = scoped(&items, scope);
-            let painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Foreground, Id::unique("snagster-key-tips")));
+            let mut painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Foreground, Id::unique("snagster-key-tips")));
+            // Only over the ribbon: a tool scrolled out of the band shows none.
+            if let Some((_, r)) = self.x.keys.panes_now.iter().find(|(p, _)| *p == Pane::Ribbon) {
+                painter = painter.with_clip_rect(*r);
+            }
             for (it, tip) in shown.iter().zip(&tips) {
                 if tip.starts_with(self.x.keys.keys.as_str()) {
                     crate::look::key_tip(&painter, it.rect, tip, it.enabled);
