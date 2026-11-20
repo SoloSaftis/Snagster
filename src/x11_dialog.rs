@@ -53,14 +53,21 @@ pub(crate) fn pick(candidates: &[Candidate], pid: u32, title: &str, main: u32) -
 /// moment to map it; past this, something else is wrong and searching every frame is waste).
 pub(crate) const TRIES: u32 = 120;
 
-/// What is known about each open window: tries left, or done.
+/// What is known about each open window: tries left (0 = done or given up) and the last frame
+/// (egui's pass number) it was drawn in.
 #[derive(Debug, Default)]
-pub(crate) struct Tracker(std::collections::HashMap<String, u32>);
+pub(crate) struct Tracker(std::collections::HashMap<String, (u32, u64)>);
 
 impl Tracker {
-    /// Whether to look for `key`'s window this frame (and count the try).
-    pub(crate) fn want(&mut self, key: &str) -> bool {
-        let left = self.0.entry(key.to_string()).or_insert(TRIES);
+    /// Whether to look for `key`'s window in frame `pass` (and count the try). A box that
+    /// wasn't drawn in the frame before is a new window, however the old one closed (its X, a
+    /// Cancel or Create button, the box being dropped), and is looked for afresh.
+    pub(crate) fn want(&mut self, key: &str, pass: u64) -> bool {
+        let (left, last) = self.0.entry(key.to_string()).or_insert((TRIES, pass));
+        if last.saturating_add(1) < pass {
+            *left = TRIES;
+        }
+        *last = pass;
         if *left == 0 {
             return false;
         }
@@ -69,7 +76,9 @@ impl Tracker {
     }
     /// `key`'s window has its parent: stop looking.
     pub(crate) fn done(&mut self, key: &str) {
-        self.0.insert(key.to_string(), 0);
+        if let Some((left, _)) = self.0.get_mut(key) {
+            *left = 0;
+        }
     }
     /// `key`'s window closed: a new one with that key is looked for again.
     pub(crate) fn closed(&mut self, key: &str) {
@@ -82,14 +91,15 @@ fn tracker() -> &'static std::sync::Mutex<Tracker> {
     T.get_or_init(Default::default)
 }
 
-/// Called every frame an `own_window` box (`key`, titled `title`) is open in a window of its own.
-pub(crate) fn shown(key: &str, title: &str) {
+/// Called every frame (`pass`, egui's `cumulative_pass_nr`) an `own_window` box (`key`, titled
+/// `title`) is open in a window of its own.
+pub(crate) fn shown(key: &str, title: &str, pass: u64) {
     let main = MAIN.load(Ordering::Relaxed);
     if main == 0 {
         return;
     }
     let Ok(mut t) = tracker().lock() else { return };
-    if !t.want(key) {
+    if !t.want(key, pass) {
         return;
     }
     #[cfg(target_os = "linux")]
@@ -113,19 +123,15 @@ fn attach(title: &str, main: u32) -> bool {
     use x11rb::connection::Connection as _;
     use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _, PropMode};
     use x11rb::wrapper::ConnectionExt as _;
-    let Some(conn) = connection() else { return false };
-    let Ok(conn) = conn.lock() else { return false };
-    let Some((conn, root)) = conn.as_ref().map(|(c, r)| (c, *r)) else { return false };
-    let atom = |name: &[u8]| conn.intern_atom(false, name).ok().and_then(|c| c.reply().ok()).map(|r| r.atom);
-    let (Some(pid_atom), Some(name_atom), Some(utf8), Some(list_atom)) =
-        (atom(b"_NET_WM_PID"), atom(b"_NET_WM_NAME"), atom(b"UTF8_STRING"), atom(b"_NET_CLIENT_LIST"))
-    else {
-        return false;
-    };
+    let Ok(x) = connection().lock() else { return false };
+    let Some(X { conn, root, pid_atom, name_atom, utf8, list_atom }) = x.as_ref() else { return false };
+    let (root, pid_atom, name_atom, utf8, list_atom) = (*root, *pid_atom, *name_atom, *utf8, *list_atom);
     // The windows not yet mapped are children of the root; the window manager's own list has
-    // the mapped ones (it puts them in frames of its own).
-    let mut ids: Vec<u32> = conn.query_tree(root).ok().and_then(|c| c.reply().ok()).map(|r| r.children).unwrap_or_default();
-    if let Some(list) = conn.get_property(false, root, list_atom, AtomEnum::WINDOW, 0, 4096).ok().and_then(|c| c.reply().ok())
+    // the mapped ones (it puts them in frames of its own). Both asked before either answer.
+    let tree = conn.query_tree(root).ok();
+    let list = conn.get_property(false, root, list_atom, AtomEnum::WINDOW, 0, 4096).ok();
+    let mut ids: Vec<u32> = tree.and_then(|c| c.reply().ok()).map(|r| r.children).unwrap_or_default();
+    if let Some(list) = list.and_then(|c| c.reply().ok())
         && let Some(v) = list.value32()
     {
         ids.extend(v);
@@ -156,17 +162,33 @@ fn attach(title: &str, main: u32) -> bool {
     ok && conn.flush().is_ok()
 }
 
-/// One connection to the X server, kept for the whole run; None without one.
+/// The X server connection and the names (atoms) the search asks about, looked up once.
 #[cfg(target_os = "linux")]
-fn connection() -> Option<&'static std::sync::Mutex<Option<(x11rb::rust_connection::RustConnection, u32)>>> {
-    static C: std::sync::OnceLock<std::sync::Mutex<Option<(x11rb::rust_connection::RustConnection, u32)>>> = std::sync::OnceLock::new();
+struct X {
+    conn: x11rb::rust_connection::RustConnection,
+    root: u32,
+    pid_atom: u32,
+    name_atom: u32,
+    utf8: u32,
+    list_atom: u32,
+}
+
+/// One connection to the X server, kept for the whole run; None inside without one.
+#[cfg(target_os = "linux")]
+fn connection() -> &'static std::sync::Mutex<Option<X>> {
+    static C: std::sync::OnceLock<std::sync::Mutex<Option<X>>> = std::sync::OnceLock::new();
     use x11rb::connection::Connection as _;
-    Some(C.get_or_init(|| {
-        std::sync::Mutex::new(x11rb::connect(None).ok().map(|(c, screen)| {
-            let root = c.setup().roots.get(screen).map_or(0, |s| s.root);
-            (c, root)
+    use x11rb::protocol::xproto::ConnectionExt as _;
+    C.get_or_init(|| {
+        std::sync::Mutex::new(x11rb::connect(None).ok().and_then(|(conn, screen)| {
+            let root = conn.setup().roots.get(screen).map_or(0, |s| s.root);
+            // All four asked before any answer is awaited.
+            let asked: Vec<_> = [&b"_NET_WM_PID"[..], b"_NET_WM_NAME", b"UTF8_STRING", b"_NET_CLIENT_LIST"].iter().map(|n| conn.intern_atom(false, n).ok()).collect();
+            let got: Option<Vec<u32>> = asked.into_iter().map(|c| c.and_then(|c| c.reply().ok()).map(|r| r.atom)).collect();
+            let [pid_atom, name_atom, utf8, list_atom] = got?.try_into().ok()?;
+            Some(X { conn, root, pid_atom, name_atom, utf8, list_atom })
         }))
-    }))
+    })
 }
 
 #[cfg(test)]
@@ -207,24 +229,45 @@ mod tests {
     }
 
     #[test]
-    fn a_window_is_looked_for_a_while_then_left_and_again_after_it_reopens() {
+    fn a_window_is_looked_for_a_while_then_left() {
         let mut t = Tracker::default();
-        let tries = (0..TRIES + 5).filter(|_| t.want("dialog")).count();
-        assert_eq!(tries as u32, TRIES, "gives up after {TRIES} frames");
-        t.closed("dialog");
-        assert!(t.want("dialog"), "a new window with the key is looked for");
+        let tries = (0..TRIES as u64 + 5).filter(|&pass| t.want("dialog", pass)).count();
+        assert_eq!(tries as u32, TRIES, "gives up after {TRIES} frames in a row");
+        assert!(t.want("settings", 200), "each window on its own");
+        t.done("settings");
+        assert!(!t.want("settings", 201), "found: no more searching");
+    }
+
+    /// The dialogs share one key; a dialog closed with its own Cancel or Create (no close
+    /// request reaches `own_window`) and opened again is a new window that needs its parent.
+    #[test]
+    fn a_box_that_was_away_for_a_frame_is_looked_for_again() {
+        let mut t = Tracker::default();
+        assert!(t.want("dialog", 10));
         t.done("dialog");
-        assert!(!t.want("dialog"), "found: no more searching");
-        assert!(t.want("settings"), "each window on its own");
+        assert!(!t.want("dialog", 11), "still the same window");
+        assert!(!t.want("dialog", 12));
+        // Not drawn in frame 13 (Cancel pressed), back in 14 (New image again).
+        assert!(t.want("dialog", 14), "a new window with the key is looked for");
+        t.done("dialog");
+        assert!(!t.want("dialog", 15));
+    }
+
+    #[test]
+    fn a_closed_window_is_forgotten() {
+        let mut t = Tracker::default();
+        assert!(t.want("about", 1));
+        t.done("about");
+        t.closed("about");
+        assert!(t.want("about", 2), "closed by its X and opened at once: looked for again");
+        assert!(tracker().lock().is_ok());
+        closed("never-shown");
     }
 
     #[test]
     fn without_an_x11_main_window_nothing_is_searched() {
         set_main(None);
-        shown("no-main", "Anything");
+        shown("no-main", "Anything", 1);
         assert!(tracker().lock().unwrap().0.get("no-main").is_none(), "not even counted");
-        tracker().lock().unwrap().want("closing");
-        closed("closing");
-        assert!(tracker().lock().unwrap().0.get("closing").is_none(), "a closed window is forgotten");
     }
 }

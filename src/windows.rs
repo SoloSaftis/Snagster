@@ -40,6 +40,9 @@ pub(crate) fn centered_on(parent: Rect, size: egui::Vec2, monitor: Option<egui::
 pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: impl FnOnce(&mut egui::Ui) -> R) -> Option<R> {
     if !*open {
         ctx.data_mut(|d| d.remove::<Pos2>(egui::Id::unique(("own-window-at", w.key))));
+        // (A box dropped without this call is noticed by the frame it was missing from.)
+        #[cfg(target_os = "linux")]
+        crate::x11_dialog::closed(w.key);
         return None;
     }
     if ctx.embed_viewports() {
@@ -96,7 +99,7 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
     });
     // X11: the box belongs to Snagster's window (see `x11_dialog`).
     #[cfg(target_os = "linux")]
-    crate::x11_dialog::shown(w.key, w.title);
+    crate::x11_dialog::shown(w.key, w.title, ctx.cumulative_pass_nr());
     if close {
         *open = false;
         ctx.data_mut(|d| d.remove::<Pos2>(at_id));

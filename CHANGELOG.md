@@ -92,6 +92,9 @@ Windows:
 
 Linux:
 
+- **X11: dialogs belong to Snagster's window**: Settings, the Library and every dialog stay
+  above Snagster and keep out of the task bar, and the fixed-size ones (New image, Resize,
+  Rename and the like) have no Minimise or Maximise button on KDE.
 - **Every screen in a Screen capture on Wayland**: the desktop's dialog lets you pick all your
   screens once, and Screen, Area and scrolling captures then see the whole desk, each screen
   where it sits (screens with different scaling are matched to the sharpest). Recording keeps
