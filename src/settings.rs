@@ -529,6 +529,8 @@ pub struct Settings {
     pub stream: StreamSettings,
     /// The ribbon is folded away.
     pub ribbon_folded: bool,
+    /// The Settings pane shown last (`SettingsTab::key`), so Settings opens on it again.
+    pub settings_pane: String,
     /// Let AI apps on this computer connect over HTTP while Snagster runs.
     pub mcp_http: bool,
     pub mcp_port: u16,
@@ -654,6 +656,7 @@ impl Default for Settings {
             studio: Default::default(),
             stream: StreamSettings::default(),
             ribbon_folded: false,
+            settings_pane: String::new(),
             mcp_http: false,
             mcp_port: 45831,
             mcp_token: String::new(),
