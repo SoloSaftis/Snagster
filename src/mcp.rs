@@ -2124,6 +2124,26 @@ pub(crate) mod fuzzing {
         ws
     }
 
+    /// Tools that make a new picture as big as their arguments say (set_canvas up to 30000 x
+    /// 30000, resize 20000, editor_apply's new_image 16384) get a size of at most `SMALL` when
+    /// a larger one is asked for: those limits are by design (and have tests of their own), and
+    /// several 3.6 GB pictures at once ran the nightly fuzz machine out of memory. Sizes below
+    /// 1, and every other argument, stay as broken as they came.
+    const SMALL: f64 = 4096.0;
+
+    fn small_pictures(tool: &str, args: &mut Value) {
+        if !["set_canvas", "resize", "editor_apply"].contains(&tool) {
+            return;
+        }
+        for k in ["width", "height"] {
+            if let Some(v) = args.get_mut(k)
+                && v.as_f64().is_some_and(|n| n > SMALL)
+            {
+                *v = json!(SMALL);
+            }
+        }
+    }
+
     /// Pictures larger than this end a sequence of calls (the next call would only be slow).
     const BIG: u64 = 4096 * 4096;
 
@@ -2142,6 +2162,7 @@ pub(crate) mod fuzzing {
             let name = if names.contains(&name) { name } else { "zz_no_such_tool" };
             let mut args = c.get("args").cloned().unwrap_or(Value::Null);
             sandbox_paths(&mut args, &dir, false);
+            small_pictures(name, &mut args);
             let r = ws.call(name, &args);
             if let Some(f) = ws.fixed.as_mut() {
                 pin_folders(f, &dir);
@@ -2245,7 +2266,7 @@ pub(crate) mod fuzzing {
                 },
                 budget: |n| (256 << 20) + 64 * n,
             },
-            Target { name: "mcp_tools", seeds: tool_seeds, words: tool_words, run: run_tools, budget: |n| (4 << 30) + 64 * n },
+            Target { name: "mcp_tools", seeds: tool_seeds, words: tool_words, run: run_tools, budget: |n| (1 << 30) + 64 * n },
         ]
     }
 

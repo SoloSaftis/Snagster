@@ -342,8 +342,20 @@ fn magnify(pm: &mut ts::Pixmap, base: &RgbaImage, center: Pos2, radius: f32, zoo
 const FAR: f32 = 1_000_000.0;
 
 fn drawable(s: &Shape) -> bool {
+    // Widths, sizes and radii are numbers from 0 to 100000 (a callout of size -9e18 made a
+    // bubble tiny-skia couldn't fill).
+    let sane = |v: f32| (0.0..=100_000.0).contains(&v);
+    let sizes_ok = match s {
+        Shape::Arrow { width, .. } | Shape::Line { width, .. } | Shape::Pen { width, .. } | Shape::Highlight { width, .. } => sane(*width),
+        Shape::Rect { width, radius, .. } => sane(*width) && sane(*radius),
+        Shape::Ellipse { width, .. } => sane(*width),
+        Shape::Text { size, .. } | Shape::Callout { size, .. } | Shape::Stamp { size, .. } | Shape::Pointer { size, .. } => sane(*size),
+        Shape::Step { radius, .. } => sane(*radius),
+        Shape::Magnify { radius, zoom, .. } => sane(*radius) && sane(*zoom),
+        Shape::Marker { .. } | Shape::Spotlight { .. } | Shape::Image { .. } => true,
+    };
     let b = s.bounds();
-    [b.min.x, b.min.y, b.max.x, b.max.y].iter().all(|v| v.is_finite() && v.abs() <= FAR)
+    sizes_ok && [b.min.x, b.min.y, b.max.x, b.max.y].iter().all(|v| v.is_finite() && v.abs() <= FAR)
 }
 
 fn draw_shape(pm: &mut ts::Pixmap, base: &RgbaImage, s: &Shape, as_shadow: bool) {
@@ -958,6 +970,11 @@ mod tests {
             ];
             let _ = compose(&d);
         }
+        // Bug (found by the fuzz test): a callout of size -9126276185164455000 near the corner.
+        let callout = |size: f32| Shape::Callout { pos: pos2(3.0, 3.0), tail: pos2(10.0, 8.0), text: "Look".into(), color: Color32::RED, size, shadow: false, font: String::new(), bold: false, italic: true, shape: CalloutShape::Rounded, outline: false, align: 2 };
+        d.shapes = vec![callout(-9126276185164455000.0), callout(f32::NAN), callout(-1.0), callout(0.0), callout(1e9), callout(12.0)];
+        let _ = compose(&d);
+        assert!(!drawable(&callout(-1.0)) && drawable(&callout(12.0)) && drawable(&callout(0.0)));
         assert!(t0.elapsed() < std::time::Duration::from_secs(20), "{:?}", t0.elapsed());
     }
 

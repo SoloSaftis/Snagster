@@ -101,7 +101,10 @@ jobs:
           # One process per target (a crash or an out-of-memory abort ends only that one), as many
           # at once as there are processors.
           jobs=$(nproc 2>/dev/null || echo 4)
+          # Each process gets at most 3 GB on Linux (16 GB, four at once): one input that wants
+          # more ends only its own target, with the input kept, instead of the whole machine.
           echo "$list" | xargs -P "$jobs" -I{} bash -c '
+            [ "$RUNNER_OS" = Linux ] && ulimit -v 3000000
             SNAGSTER_FUZZ_TARGET={} "$TEST_EXE" fuzz::tests::fuzz_nightly --exact --ignored --nocapture > "fuzz-out/{}.log" 2>&1
             echo $? > "fuzz-out/{}.exit"' || true
           failed=0
