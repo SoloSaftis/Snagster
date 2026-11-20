@@ -312,6 +312,14 @@ pub fn readable_on(c: Color32, bg: Color32, need: f32) -> Color32 {
     toward
 }
 
+/// The outline a colour swatch (or a quick style's ring) of colour `c` gets on `behind`, so it
+/// never melts into the panel: black on a dark panel, white or yellow on a light one. None when
+/// the colour already stands out (3:1, WCAG's rule for things that aren't text). In a
+/// high-contrast theme every swatch has one, as the theme's other controls do.
+pub fn swatch_edge(c: Color32, behind: Color32, p: &Palette) -> Option<Color32> {
+    (p.high_contrast || contrast(c, behind) < 3.0).then(|| readable_on(p.border, behind, 3.0))
+}
+
 /// Black or white, whichever reads better on `bg`.
 pub fn text_on(bg: Color32) -> Color32 {
     if contrast(Color32::WHITE, bg) >= contrast(Color32::BLACK, bg) { Color32::WHITE } else { Color32::BLACK }
@@ -803,5 +811,29 @@ mod tests {
         assert_eq!(egui_preference(ThemeChoice::System, &hc, true), egui::ThemePreference::Dark);
         let expect = if cfg!(any(target_os = "windows", target_os = "macos")) { egui::ThemePreference::System } else { egui::ThemePreference::Dark };
         assert_eq!(egui_preference(ThemeChoice::System, &s, true), expect);
+    }
+
+    /// The black swatch on the dark side panel and the white (and yellow) ones on the light
+    /// panel get an edge that stands 3:1; the red one, which stands out on both, gets none.
+    /// In high contrast every swatch has an edge.
+    #[test]
+    fn swatches_that_melt_into_the_panel_get_an_edge() {
+        let [r, .., black, white] = crate::settings::DEFAULT_PALETTE.map(|c| Color32::from_rgb(c[0], c[1], c[2]));
+        let yellow = Color32::from_rgb(255, 197, 61);
+        for (p, faint) in [(DARK, vec![black]), (LIGHT, vec![white, yellow])] {
+            for behind in [p.panel, p.panel_hi] {
+                for c in &faint {
+                    let edge = swatch_edge(*c, behind, &p).unwrap_or_else(|| panic!("{c:?} on {behind:?} has no edge"));
+                    assert!(contrast(edge, behind) >= 3.0, "{edge:?} on {behind:?}");
+                }
+                assert_eq!(swatch_edge(r, behind, &p), None, "red on {behind:?}");
+            }
+        }
+        for p in [stronger(DARK), stronger(LIGHT), from_system(night_sky()), from_system(desert())] {
+            for c in [r, black, white] {
+                let edge = swatch_edge(c, p.panel, &p).expect("high contrast outlines every swatch");
+                assert!(contrast(edge, p.panel) >= 3.0, "{edge:?} on {:?}", p.panel);
+            }
+        }
     }
 }
