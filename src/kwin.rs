@@ -117,7 +117,10 @@ pub fn run(name: &str, js: &str) -> Result<(), String> {
 /// Run the bar's script, keep it while the bar is there, and take it out once `done` is
 /// dropped or sent to: on one thread, so the unload never comes before the load.
 pub fn keep_bar_placed(js: String, done: std::sync::mpsc::Receiver<()>) {
-    let name = script_name("bar");
+    // A name of its own per recording: a new bar's script is never taken out by the last one's
+    // unload, however soon after Stop it opens.
+    static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+    let name = script_name(&format!("bar{}", NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)));
     std::thread::spawn(move || {
         if let Err(e) = run(&name, &js) {
             eprintln!("KWin didn't place the recording bar: {e}");

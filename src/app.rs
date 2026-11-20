@@ -4339,14 +4339,6 @@ impl SnagApp {
             }
             ctx.request_repaint_of(egui::ViewportId::from_hash_of("recording-bar"));
         }
-        // The desktop's own "stop sharing" (GNOME's top bar, KDE's tray) stops the recording
-        // like Stop: what was recorded is kept. It can't be hidden behind other windows, so a
-        // recording can always be stopped (Wayland keeps no window above the others).
-        #[cfg(target_os = "linux")]
-        if desktop_stop_applies(self.mini, crate::video::recording_live() || capture::gif_live()) && crate::portal::take_share_ended() {
-            self.bar.stop(Instant::now());
-            self.stop_job();
-        }
         // KDE: KWin keeps the bar above the others and puts it in a corner, off the middle of
         // the screen being recorded.
         #[cfg(target_os = "linux")]
@@ -6289,13 +6281,6 @@ struct BarWindow {
     placed: bool,
 }
 
-/// Whether the desktop's "stop sharing" stops the current recording: only a GIF or video whose
-/// share is live (a flag left from before can't stop the next one while it starts).
-#[cfg(any(target_os = "linux", test))]
-fn desktop_stop_applies(mini: Option<Mini>, live: bool) -> bool {
-    matches!(mini, Some(Mini::Gif | Mini::Video)) && live
-}
-
 /// Whether KWin has been asked too long ago to still wait for it (the next way is tried): a
 /// little before the bar's own window goes, so the next way still has the bar's click.
 #[cfg(any(target_os = "linux", test))]
@@ -6479,17 +6464,11 @@ mod tests {
         assert_eq!(back_ways(false, false, false), vec![Notice], "the desktop's own stop, no token");
     }
 
-    /// The desktop's "stop sharing" stops only a live GIF or video recording, and KWin is
-    /// waited for only until shortly before the bar's own window would go.
+    /// KWin is waited for only until shortly before the bar's own window would go.
     #[test]
-    fn the_desktops_stop_applies_to_live_recordings_and_kwin_isnt_waited_for_forever() {
-        use super::{BAR_LINGER, Mini, answer_overdue, desktop_stop_applies};
+    fn kwin_isnt_waited_for_forever() {
+        use super::{BAR_LINGER, answer_overdue};
         use std::time::Duration;
-        assert!(desktop_stop_applies(Some(Mini::Video), true));
-        assert!(desktop_stop_applies(Some(Mini::Gif), true));
-        assert!(!desktop_stop_applies(Some(Mini::Video), false), "the next recording's share is still starting");
-        assert!(!desktop_stop_applies(Some(Mini::Steps), true));
-        assert!(!desktop_stop_applies(None, true));
         assert!(!answer_overdue(Duration::from_millis(200)));
         assert!(answer_overdue(BAR_LINGER - Duration::from_millis(500)));
         assert!(answer_overdue(Duration::from_secs(30)), "KWin never answered");

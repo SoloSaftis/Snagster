@@ -339,18 +339,8 @@ struct Newest {
     ended: Option<String>,
 }
 
-/// Set when the desktop closed a share's session (its own "stop sharing" in the top bar or
-/// tray; the PipeWire stream doesn't always say so): the recording is then stopped as if Stop
-/// was pressed. Cleared when a share starts and when Snagster ends it.
-static SHARE_ENDED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-
-/// Whether the desktop ended the screen share since it started (and forget it).
-pub fn take_share_ended() -> bool {
-    SHARE_ENDED.swap(false, std::sync::atomic::Ordering::Relaxed)
-}
-
-/// Wait until the desktop closes the share's session (then `SHARE_ENDED`) or `stop` is set.
-fn watch_closed(session: &ashpd::desktop::Session<ashpd::desktop::screencast::Screencast>, stop: &std::sync::atomic::AtomicBool) {
+/// Wait until the desktop closes the share's session (then `ended`) or `stop` is set.
+fn watch_closed(session: &ashpd::desktop::Session<ashpd::desktop::screencast::Screencast>, stop: &std::sync::atomic::AtomicBool, ended: &std::sync::atomic::AtomicBool) {
     use futures_util::StreamExt;
     use std::sync::atomic::Ordering;
     pollster::block_on(async {
@@ -359,7 +349,7 @@ fn watch_closed(session: &ashpd::desktop::Session<ashpd::desktop::screencast::Sc
             let tick = async_io::Timer::after(std::time::Duration::from_millis(300));
             if let futures_util::future::Either::Left((Some(_), _)) = futures_util::future::select(closed.next(), Box::pin(tick)).await {
                 if !stop.load(Ordering::Relaxed) {
-                    SHARE_ENDED.store(true, Ordering::Relaxed);
+                    ended.store(true, Ordering::Relaxed);
                 }
                 return;
             }
@@ -381,6 +371,10 @@ pub struct Cast {
     session: Option<Arc<ashpd::desktop::Session<ashpd::desktop::screencast::Screencast>>>,
     /// Tells the thread watching for the desktop closing the share to stop.
     watch_stop: Arc<std::sync::atomic::AtomicBool>,
+    /// The desktop closed this share (its own "stop sharing" in the top bar or tray; the
+    /// PipeWire stream doesn't always say so). Each share has its own: ending a stream's or the
+    /// replay buffer's share never stops a recording.
+    ended_by_desktop: Arc<std::sync::atomic::AtomicBool>,
     /// Where the (first) shared screen is on the desktop, and its size there (0: not told).
     pub origin: (i32, i32),
     pub logical: (u32, u32),
@@ -407,7 +401,6 @@ impl Cast {
     fn open(cursor: bool, every_screen: bool) -> Result<Cast, String> {
         use ashpd::desktop::PersistMode;
         use ashpd::desktop::screencast::{CursorMode, Screencast, SelectSourcesOptions, SourceType};
-        SHARE_ENDED.store(false, std::sync::atomic::Ordering::Relaxed);
         let token_file = token_path(every_screen);
         let saved = token_file.as_deref().and_then(read_token);
         let (session, picked, fd) = pollster::block_on(async {
@@ -470,9 +463,10 @@ impl Cast {
         // session; the PipeWire stream doesn't always say so.
         let session = Arc::new(session);
         let watch_stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let ended_by_desktop = Arc::new(std::sync::atomic::AtomicBool::new(false));
         {
-            let (session, stop) = (session.clone(), watch_stop.clone());
-            let _ = std::thread::Builder::new().name("snagster-share-watch".into()).spawn(move || watch_closed(&session, &stop));
+            let (session, stop, ended) = (session.clone(), watch_stop.clone(), ended_by_desktop.clone());
+            let _ = std::thread::Builder::new().name("snagster-share-watch".into()).spawn(move || watch_closed(&session, &stop, &ended));
         }
         Ok(Cast {
             screens,
@@ -480,6 +474,7 @@ impl Cast {
             thread: Some(thread),
             session: Some(session),
             watch_stop,
+            ended_by_desktop,
             origin,
             logical,
         })
@@ -505,6 +500,11 @@ impl Cast {
             });
         }
         Ok(Some(parts))
+    }
+
+    /// Whether the desktop ended this share (its own "stop sharing").
+    pub fn ended_by_desktop(&self) -> bool {
+        self.ended_by_desktop.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     /// The newest picture when it is newer than `seen`: copies it into `out` and returns its
@@ -535,8 +535,6 @@ impl Drop for Cast {
         if let Some(s) = self.session.take() {
             let _ = pollster::block_on(s.close());
         }
-        // Snagster ended it: never a "stopped by the desktop" for the next recording.
-        SHARE_ENDED.store(false, std::sync::atomic::Ordering::Relaxed);
     }
 }
 
@@ -671,13 +669,6 @@ fn receive(fd: std::os::fd::OwnedFd, nodes: &[(u32, Arc<Mutex<Newest>>)], quit: 
 mod tests {
     use super::*;
 
-    /// The desktop's "stop sharing" is reported once.
-    #[test]
-    fn a_share_ended_by_the_desktop_is_reported_once() {
-        SHARE_ENDED.store(true, std::sync::atomic::Ordering::Relaxed);
-        assert!(take_share_ended());
-        assert!(!take_share_ended(), "taken once");
-    }
 
     #[test]
     fn a_cancelled_share_is_said_plainly() {

@@ -1494,7 +1494,8 @@ pub fn spawn_gif_recorder(
         let mut prev: Option<RgbaImage> = None;
         let mut pending: Option<(RgbaImage, u32, u32, u32)> = None;
         let mut captured = 0u32;
-        while !stop.load(Ordering::Relaxed) && start.elapsed().as_secs() < max_s as u64 {
+        // (The desktop's own "stop sharing" ends it like Stop: what was recorded is kept.)
+        while !stop.load(Ordering::Relaxed) && start.elapsed().as_secs() < max_s as u64 && !feed.as_ref().is_some_and(|f| f.ended_by_desktop()) {
             let grabbed = match &feed {
                 Some(f) => feed_picture(f),
                 None => grab_rect(x, y, w, h),
