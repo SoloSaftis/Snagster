@@ -388,7 +388,7 @@ mod tests {
             let events = vec![egui::Event::ModifiersChanged(modifiers), egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers }];
             let raw = egui::RawInput { events, ..Default::default() };
             let mut hit = false;
-            let _ = ctx.run_ui(raw, |ui| hit = ui.input(trash_key_pressed));
+            ctx.run_ui(raw, |ui| hit = ui.input(trash_key_pressed)).textures_delta.clear();
             hit
         };
         let (cmd, key) = trash_key_for(system());
