@@ -1116,6 +1116,11 @@
   "Captures: {count}": "צילומים: {count}",
   "Unknown date": "תאריך לא ידוע",
   "Unknown program": "תוכנה לא ידועה",
-  "Title, program, tag or date (2026-11)": "כותרת, תוכנה, תגית או תאריך (2026-11)"
+  "Title, program, tag or date (2026-11)": "כותרת, תוכנה, תגית או תאריך (2026-11)",
+  "Waiting for screen sharing…": "ממתין לשיתוף מסך…",
+  "Recording GIF  {time}": "מקליט GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "מקליט {format} ב-{fps} fps  {time}",
+  "Recording steps: {count} so far": "הקלטת שלבים: {count} עד כה",
+  "Scroll it yourself, then press Stop": "גללו בעצמכם, ואז לחצו על עצירה"
  }
 }

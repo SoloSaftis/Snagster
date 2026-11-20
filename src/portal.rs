@@ -339,6 +339,27 @@ struct Newest {
     ended: Option<String>,
 }
 
+/// Wait until the desktop closes the share's session (then `ended`) or `stop` is set.
+fn watch_closed(session: &ashpd::desktop::Session<ashpd::desktop::screencast::Screencast>, stop: &std::sync::atomic::AtomicBool, ended: &std::sync::atomic::AtomicBool) {
+    use futures_util::StreamExt;
+    use std::sync::atomic::Ordering;
+    pollster::block_on(async {
+        let Ok(mut closed) = session.receive_closed().await else { return };
+        loop {
+            let tick = async_io::Timer::after(std::time::Duration::from_millis(300));
+            if let futures_util::future::Either::Left((Some(_), _)) = futures_util::future::select(closed.next(), Box::pin(tick)).await {
+                if !stop.load(Ordering::Relaxed) {
+                    ended.store(true, Ordering::Relaxed);
+                }
+                return;
+            }
+            if stop.load(Ordering::Relaxed) {
+                return;
+            }
+        }
+    });
+}
+
 /// A live screen share through the ScreenCast portal: the person picks a screen in the
 /// desktop's dialog, then its pictures arrive on a PipeWire thread of its own. Dropping it ends
 /// the share.
@@ -347,7 +368,13 @@ pub struct Cast {
     screens: Vec<Shared>,
     quit: Option<pipewire::channel::Sender<()>>,
     thread: Option<std::thread::JoinHandle<()>>,
-    session: Option<ashpd::desktop::Session<ashpd::desktop::screencast::Screencast>>,
+    session: Option<Arc<ashpd::desktop::Session<ashpd::desktop::screencast::Screencast>>>,
+    /// Tells the thread watching for the desktop closing the share to stop.
+    watch_stop: Arc<std::sync::atomic::AtomicBool>,
+    /// The desktop closed this share (its own "stop sharing" in the top bar or tray; the
+    /// PipeWire stream doesn't always say so). Each share has its own: ending a stream's or the
+    /// replay buffer's share never stops a recording.
+    ended_by_desktop: Arc<std::sync::atomic::AtomicBool>,
     /// Where the (first) shared screen is on the desktop, and its size there (0: not told).
     pub origin: (i32, i32),
     pub logical: (u32, u32),
@@ -432,11 +459,22 @@ impl Cast {
             })
             .map_err(|e| e.to_string())?;
         let (origin, logical) = (screens[0].origin, screens[0].logical);
+        // The desktop's own "stop sharing" (KDE's tray, GNOME's top bar) closes the portal
+        // session; the PipeWire stream doesn't always say so.
+        let session = Arc::new(session);
+        let watch_stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let ended_by_desktop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        {
+            let (session, stop, ended) = (session.clone(), watch_stop.clone(), ended_by_desktop.clone());
+            let _ = std::thread::Builder::new().name("snagster-share-watch".into()).spawn(move || watch_closed(&session, &stop, &ended));
+        }
         Ok(Cast {
             screens,
             quit: Some(quit_tx),
             thread: Some(thread),
             session: Some(session),
+            watch_stop,
+            ended_by_desktop,
             origin,
             logical,
         })
@@ -464,6 +502,11 @@ impl Cast {
         Ok(Some(parts))
     }
 
+    /// Whether the desktop ended this share (its own "stop sharing").
+    pub fn ended_by_desktop(&self) -> bool {
+        self.ended_by_desktop.load(std::sync::atomic::Ordering::Relaxed)
+    }
+
     /// The newest picture when it is newer than `seen`: copies it into `out` and returns its
     /// width, height and number. Err when the share has ended.
     pub fn newer_than(&self, seen: u64, out: &mut Vec<u8>) -> Result<Option<(u32, u32, u64)>, String> {
@@ -488,6 +531,7 @@ impl Drop for Cast {
         if let Some(t) = self.thread.take() {
             let _ = t.join();
         }
+        self.watch_stop.store(true, std::sync::atomic::Ordering::Relaxed);
         if let Some(s) = self.session.take() {
             let _ = pollster::block_on(s.close());
         }
@@ -611,7 +655,8 @@ fn receive(fd: std::os::fd::OwnedFd, nodes: &[(u32, Arc<Mutex<Newest>>)], quit: 
         stream
             .connect(Direction::Input, Some(node), StreamFlags::AUTOCONNECT | StreamFlags::MAP_BUFFERS, &mut params)
             .map_err(|e| e.to_string())?;
-        kept.push((stream, listener));
+        // (The listener first: tuples drop in order, so its hook goes before the stream.)
+        kept.push((listener, stream));
     }
 
     let ml = main_loop.clone();
@@ -623,6 +668,7 @@ fn receive(fd: std::os::fd::OwnedFd, nodes: &[(u32, Arc<Mutex<Newest>>)], quit: 
 #[cfg(test)]
 mod tests {
     use super::*;
+
 
     #[test]
     fn a_cancelled_share_is_said_plainly() {

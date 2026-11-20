@@ -1116,6 +1116,11 @@
   "Captures: {count}": "பிடிப்புகள்: {count}",
   "Unknown date": "தெரியாத தேதி",
   "Unknown program": "தெரியாத நிரல்",
-  "Title, program, tag or date (2026-11)": "தலைப்பு, நிரல், குறிச்சொல் அல்லது தேதி (2026-11)"
+  "Title, program, tag or date (2026-11)": "தலைப்பு, நிரல், குறிச்சொல் அல்லது தேதி (2026-11)",
+  "Waiting for screen sharing…": "திரைப் பகிர்வுக்காகக் காத்திருக்கிறது…",
+  "Recording GIF  {time}": "GIF பதிவு செய்கிறது  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps-இல் {format} பதிவு செய்கிறது  {time}",
+  "Recording steps: {count} so far": "படிகளைப் பதிவு செய்கிறது: இதுவரை {count}",
+  "Scroll it yourself, then press Stop": "நீங்களே உருட்டுங்கள், பிறகு நிறுத்து அழுத்துங்கள்"
  }
 }

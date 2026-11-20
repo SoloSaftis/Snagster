@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Opptak: {count}",
   "Unknown date": "Ukjent dato",
   "Unknown program": "Ukjent program",
-  "Title, program, tag or date (2026-11)": "Tittel, program, merkelapp eller dato (2026-11)"
+  "Title, program, tag or date (2026-11)": "Tittel, program, merkelapp eller dato (2026-11)",
+  "Waiting for screen sharing…": "Venter på skjermdeling…",
+  "Recording GIF  {time}": "Tar opp GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Tar opp {format} med {fps} fps  {time}",
+  "Recording steps: {count} so far": "Tar opp trinn: {count} så langt",
+  "Scroll it yourself, then press Stop": "Rull selv, og trykk så på Stopp"
  }
 }

@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Түсірілімдер: {count}",
   "Unknown date": "Белгісіз күн",
   "Unknown program": "Белгісіз бағдарлама",
-  "Title, program, tag or date (2026-11)": "Атауы, бағдарлама, тег немесе күн (2026-11)"
+  "Title, program, tag or date (2026-11)": "Атауы, бағдарлама, тег немесе күн (2026-11)",
+  "Waiting for screen sharing…": "Экранды бөлісуді күту…",
+  "Recording GIF  {time}": "GIF жазу  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} жазу, {fps} fps  {time}",
+  "Recording steps: {count} so far": "Қадамдарды жазу: әзірге {count}",
+  "Scroll it yourself, then press Stop": "Өзіңіз айналдырыңыз, сосын «Тоқтату» басыңыз"
  }
 }

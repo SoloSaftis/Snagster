@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Felvételek: {count}",
   "Unknown date": "Ismeretlen dátum",
   "Unknown program": "Ismeretlen program",
-  "Title, program, tag or date (2026-11)": "Cím, program, címke vagy dátum (2026-11)"
+  "Title, program, tag or date (2026-11)": "Cím, program, címke vagy dátum (2026-11)",
+  "Waiting for screen sharing…": "Várakozás a képernyőmegosztásra…",
+  "Recording GIF  {time}": "GIF felvétele  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} felvétele {fps} fps-sel  {time}",
+  "Recording steps: {count} so far": "Lépések rögzítése: eddig {count}",
+  "Scroll it yourself, then press Stop": "Görgess magad, majd nyomd meg: Leállítás"
  }
 }

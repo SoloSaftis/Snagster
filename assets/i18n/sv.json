@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Bilder: {count}",
   "Unknown date": "Okänt datum",
   "Unknown program": "Okänt program",
-  "Title, program, tag or date (2026-11)": "Titel, program, tagg eller datum (2026-11)"
+  "Title, program, tag or date (2026-11)": "Titel, program, tagg eller datum (2026-11)",
+  "Waiting for screen sharing…": "Väntar på skärmdelning…",
+  "Recording GIF  {time}": "Spelar in GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Spelar in {format} i {fps} fps  {time}",
+  "Recording steps: {count} so far": "Spelar in steg: {count} hittills",
+  "Scroll it yourself, then press Stop": "Rulla själv och tryck sedan på Stopp"
  }
 }

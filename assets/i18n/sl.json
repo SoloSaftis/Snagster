@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Zajemi: {count}",
   "Unknown date": "Neznan datum",
   "Unknown program": "Neznan program",
-  "Title, program, tag or date (2026-11)": "Naslov, program, oznaka ali datum (2026-11)"
+  "Title, program, tag or date (2026-11)": "Naslov, program, oznaka ali datum (2026-11)",
+  "Waiting for screen sharing…": "Čakanje na deljenje zaslona…",
+  "Recording GIF  {time}": "Snemanje GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Snemanje {format} pri {fps} fps  {time}",
+  "Recording steps: {count} so far": "Snemanje korakov: doslej {count}",
+  "Scroll it yourself, then press Stop": "Pomikajte sami, nato pritisnite Stop"
  }
 }

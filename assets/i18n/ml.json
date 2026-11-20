@@ -1116,6 +1116,11 @@
   "Captures: {count}": "പകർപ്പുകൾ: {count}",
   "Unknown date": "അജ്ഞാത തീയതി",
   "Unknown program": "അജ്ഞാത പ്രോഗ്രാം",
-  "Title, program, tag or date (2026-11)": "തലക്കെട്ട്, പ്രോഗ്രാം, ടാഗ് അല്ലെങ്കിൽ തീയതി (2026-11)"
+  "Title, program, tag or date (2026-11)": "തലക്കെട്ട്, പ്രോഗ്രാം, ടാഗ് അല്ലെങ്കിൽ തീയതി (2026-11)",
+  "Waiting for screen sharing…": "സ്ക്രീൻ പങ്കിടലിനായി കാത്തിരിക്കുന്നു…",
+  "Recording GIF  {time}": "GIF റെക്കോർഡ് ചെയ്യുന്നു  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps-ൽ {format} റെക്കോർഡ് ചെയ്യുന്നു  {time}",
+  "Recording steps: {count} so far": "ഘട്ടങ്ങൾ റെക്കോർഡ് ചെയ്യുന്നു: ഇതുവരെ {count}",
+  "Scroll it yourself, then press Stop": "സ്വയം സ്ക്രോൾ ചെയ്യുക, തുടർന്ന് നിർത്തുക അമർത്തുക"
  }
 }

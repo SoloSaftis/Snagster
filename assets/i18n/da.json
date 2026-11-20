@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Optagelser: {count}",
   "Unknown date": "Ukendt dato",
   "Unknown program": "Ukendt program",
-  "Title, program, tag or date (2026-11)": "Titel, program, mærke eller dato (2026-11)"
+  "Title, program, tag or date (2026-11)": "Titel, program, mærke eller dato (2026-11)",
+  "Waiting for screen sharing…": "Venter på skærmdeling…",
+  "Recording GIF  {time}": "Optager GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Optager {format} med {fps} fps  {time}",
+  "Recording steps: {count} so far": "Optager trin: {count} indtil nu",
+  "Scroll it yourself, then press Stop": "Rul selv, og tryk så på Stop"
  }
 }

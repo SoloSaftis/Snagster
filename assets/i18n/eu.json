@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Argazkiak: {count}",
   "Unknown date": "Data ezezaguna",
   "Unknown program": "Programa ezezaguna",
-  "Title, program, tag or date (2026-11)": "Izenburua, programa, etiketa edo data (2026-11)"
+  "Title, program, tag or date (2026-11)": "Izenburua, programa, etiketa edo data (2026-11)",
+  "Waiting for screen sharing…": "Pantaila partekatzeari itxaroten…",
+  "Recording GIF  {time}": "GIF grabatzen  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} grabatzen {fps} fps-tan  {time}",
+  "Recording steps: {count} so far": "Urratsak grabatzen: {count} orain arte",
+  "Scroll it yourself, then press Stop": "Korritu zeuk, eta sakatu Gelditu"
  }
 }

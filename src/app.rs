@@ -550,6 +550,14 @@ pub struct SnagApp {
     wl: Option<crate::wl_activate::Activator>,
     #[cfg(target_os = "linux")]
     wl_failed: bool,
+    /// The ways still to try to bring the main window back, and KWin's answer while it runs.
+    #[cfg(target_os = "linux")]
+    back_left: Vec<BackWay>,
+    #[cfg(target_os = "linux")]
+    back_rx: Option<Receiver<bool>>,
+    /// Keeps KWin's script for the bar loaded; dropping it takes the script out (KDE).
+    #[cfg(target_os = "linux")]
+    bar_placed: Option<Sender<()>>,
     pub(crate) interval: Option<IntervalJob>,
     pub(crate) schedule: Option<(chrono::NaiveTime, CaptureKind)>,
     pub(crate) timer_open: bool,
@@ -754,6 +762,12 @@ impl SnagApp {
             wl: None,
             #[cfg(target_os = "linux")]
             wl_failed: false,
+            #[cfg(target_os = "linux")]
+            back_left: Vec::new(),
+            #[cfg(target_os = "linux")]
+            back_rx: None,
+            #[cfg(target_os = "linux")]
+            bar_placed: None,
             interval: None,
             schedule: None,
             timer_open: false,
@@ -4327,32 +4341,35 @@ impl SnagApp {
         if waiting {
             self.mini_since = Instant::now();
         }
-        let secs = self.mini_since.elapsed().as_secs();
+        let time = clock(self.mini_since.elapsed());
+        let paused = self.mini == Some(Mini::Video) && self.paused();
         let text = match self.mini {
             // (Its own window stays a moment after Stop, until the main window is back.)
             None if self.bar.on => crate::i18n::t("Stopping…").to_string(),
-            Some(Mini::Gif) if waiting => "Waiting for screen sharing...".to_string(),
-            Some(Mini::Gif) => format!("Recording GIF  {}:{:02}", secs / 60, secs % 60),
-            Some(Mini::Video) if self.paused() => "Paused".to_string(),
-            Some(Mini::Video) if waiting => "Waiting for screen sharing...".to_string(),
-            Some(Mini::Video) => format!("Recording {} at {} fps  {}:{:02}", self.settings.rec_format.ext().to_uppercase(), self.settings.video_fps, secs / 60, secs % 60),
-            Some(Mini::Steps) => format!("Recording steps: {} so far", self.guide.len()),
-            Some(Mini::Scroll) if self.scroll_manual => "Scroll it yourself, then press Stop".to_string(),
+            Some(Mini::Gif | Mini::Video) if waiting => crate::i18n::t("Waiting for screen sharing…").to_string(),
+            Some(Mini::Gif) => crate::i18n::tf("Recording GIF  {time}", &[("time", &time)]),
+            Some(Mini::Video) if paused => crate::i18n::t("Paused").to_string(),
+            Some(Mini::Video) => crate::i18n::tf(
+                "Recording {format} at {fps} fps  {time}",
+                &[("format", &self.settings.rec_format.ext().to_uppercase()), ("fps", &self.settings.video_fps.to_string()), ("time", &time)],
+            ),
+            Some(Mini::Steps) => crate::i18n::tf("Recording steps: {count} so far", &[("count", &self.guide.len().to_string())]),
+            Some(Mini::Scroll) if self.scroll_manual => crate::i18n::t("Scroll it yourself, then press Stop").to_string(),
             Some(Mini::Scroll) => match &self.scroll_progress {
                 Some(p) => crate::i18n::tf(
                     "Scrolling: {frames} pictures, {height} pixels. Esc stops.",
                     &[("frames", &p.frames.load(Ordering::Relaxed).to_string()), ("height", &p.length.load(Ordering::Relaxed).to_string())],
                 ),
-                None => "Scrolling and stitching...".to_string(),
+                None => crate::i18n::t("Scrolling and stitching… keep the mouse still.").to_string(),
             },
             None => String::new(),
         };
         BarView {
             text,
-            since: Some(self.mini_since),
+            lit: dot_lit(self.mini.is_some(), waiting, paused),
             waiting,
             buttons: self.mini.is_some(),
-            pause: (self.mini == Some(Mini::Video)).then_some(if self.paused() { "Resume" } else { "Pause" }),
+            pause: (self.mini == Some(Mini::Video)).then(|| crate::i18n::t(if paused { "Resume" } else { "Pause" })),
             esc_stops: self.mini == Some(Mini::Scroll),
         }
     }
@@ -4363,6 +4380,7 @@ impl SnagApp {
             // The main window is asked back with this click (the desktop honours that only
             // right after a click on one of Snagster's windows).
             self.bar.stop(Instant::now());
+            self.bar.clicked = true;
             match self.mini {
                 Some(Mini::Steps) => self.stop_steps(ctx),
                 Some(_) => self.stop_job(),
@@ -4452,8 +4470,16 @@ impl SnagApp {
             }
             ctx.request_repaint_of(egui::ViewportId::from_hash_of("recording-bar"));
         }
+        // KDE: KWin keeps the bar above the others and puts it in a corner, off the middle of
+        // the screen being recorded.
         #[cfg(target_os = "linux")]
-        use raw_window_handle::HasWindowHandle as _;
+        if self.bar.on && !self.bar.placed && self.native_wayland && crate::kwin::on_kde() {
+            self.bar.placed = true;
+            let js = crate::kwin::bar_script(std::process::id(), crate::i18n::t("Recording"), crate::kwin::MARGIN);
+            let (tx, rx) = channel();
+            crate::kwin::keep_bar_placed(js, rx);
+            self.bar_placed = Some(tx);
+        }
         #[cfg(target_os = "linux")]
         {
             use raw_window_handle::{HasDisplayHandle as _, RawDisplayHandle};
@@ -4475,17 +4501,36 @@ impl SnagApp {
         if self.bar.ask_due() {
             self.bar.asked = true;
             #[cfg(target_os = "linux")]
-            let asked = match (&mut self.wl, frame.window_handle().map(|h| h.as_raw())) {
-                // SAFETY: the main window's surface, alive while the program runs.
-                (Some(wl), Ok(raw_window_handle::RawWindowHandle::Wayland(w))) => unsafe { wl.activate(w.surface.as_ptr()) },
-                _ => false,
-            };
+            {
+                let token = crate::keys_portal::take_activation_token(Duration::from_secs(10));
+                self.back_left = back_ways(self.native_wayland && crate::kwin::on_kde(), self.bar.clicked, token.is_some());
+                self.try_back(ctx, frame, token);
+            }
+            // (Elsewhere the bar is never a window of its own; only the notice would be left.)
             #[cfg(not(target_os = "linux"))]
-            let asked = false;
-            if !asked {
-                // The desktop then says Snagster is ready; that brings the window back.
+            if back_ways(false, self.bar.clicked, false).contains(&BackWay::Notice) {
                 ctx.send_viewport_cmd(egui::ViewportCommand::RequestUserAttention(egui::UserAttentionType::Informational));
                 self.bar.done = true;
+            }
+        }
+        // KWin's answer: back, or on to the next way (also when it is slow to answer).
+        #[cfg(target_os = "linux")]
+        if let Some(rx) = &self.back_rx {
+            let overdue = self.bar.back_since.is_some_and(|t| answer_overdue(t.elapsed()));
+            match rx.try_recv() {
+                Err(std::sync::mpsc::TryRecvError::Empty) if overdue => {
+                    self.back_rx = None;
+                    self.try_back(ctx, frame, None);
+                }
+                Ok(true) => {
+                    self.back_rx = None;
+                    self.bar.done = true;
+                }
+                Ok(false) | Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                    self.back_rx = None;
+                    self.try_back(ctx, frame, None);
+                }
+                Err(std::sync::mpsc::TryRecvError::Empty) => {}
             }
         }
         #[cfg(not(target_os = "linux"))]
@@ -4499,11 +4544,60 @@ impl SnagApp {
             {
                 self.wl = None;
                 self.wl_failed = false;
+                self.back_left.clear();
+                self.back_rx = None;
+                // (KWin's script for the bar is taken out on its own thread, after its load.)
+                self.bar_placed = None;
             }
         }
         if self.bar.on {
             ctx.request_repaint_after(Duration::from_millis(50));
         }
+    }
+
+    /// Try the next way of bringing the main window back (see `back_ways`): KWin answers later
+    /// (`back_rx`), the others at once. `token` is a hotkey press's activation token.
+    #[cfg(target_os = "linux")]
+    fn try_back(&mut self, ctx: &egui::Context, frame: &eframe::Frame, mut token: Option<String>) {
+        use raw_window_handle::HasWindowHandle as _;
+        let surface = match frame.window_handle().map(|h| h.as_raw()) {
+            Ok(raw_window_handle::RawWindowHandle::Wayland(w)) => Some(w.surface.as_ptr()),
+            _ => None,
+        };
+        while !self.back_left.is_empty() {
+            let way = self.back_left.remove(0);
+            match way {
+                BackWay::KWin => {
+                    let (tx, rx) = channel();
+                    let js = crate::kwin::bring_back_script(std::process::id(), crate::i18n::t("Recording"));
+                    std::thread::spawn(move || {
+                        let _ = tx.send(crate::kwin::run(&crate::kwin::script_name("back"), &js).is_ok());
+                        crate::kwin::unload(&crate::kwin::script_name("back"));
+                    });
+                    self.back_rx = Some(rx);
+                    return;
+                }
+                // SAFETY (both): the main window's surface, alive while the program runs.
+                BackWay::Click => {
+                    if let (Some(wl), Some(s)) = (&mut self.wl, surface)
+                        && unsafe { wl.activate(s) }
+                    {
+                        return;
+                    }
+                }
+                BackWay::Token => {
+                    if let (Some(wl), Some(s), Some(t)) = (&mut self.wl, surface, token.take())
+                        && unsafe { wl.activate_with_token(t, s) }
+                    {
+                        return;
+                    }
+                }
+                BackWay::Notice => break,
+            }
+        }
+        // The desktop then says Snagster is ready; that brings the window back.
+        ctx.send_viewport_cmd(egui::ViewportCommand::RequestUserAttention(egui::UserAttentionType::Informational));
+        self.bar.done = true;
     }
 
     fn screenshot_tick(&mut self, ctx: &egui::Context) {
@@ -6292,8 +6386,9 @@ impl SnagApp {
 #[derive(Clone, Default)]
 struct BarView {
     text: String,
-    /// Since when it records (the red dot blinks from then).
-    since: Option<Instant>,
+    /// The red dot is lit: something is being recorded right now (it never blinks: both
+    /// desktops' guidelines ask for no blinking, and it would draw the eye during a recording).
+    lit: bool,
     /// Waiting for the desktop's screen sharing.
     waiting: bool,
     /// Stop (and Pause) are offered.
@@ -6352,9 +6447,12 @@ fn draw_bar(ui: &mut egui::Ui, view: &BarView, buttons: &mut Vec<egui::Rect>) ->
     let mut now = Vec::new();
     ui.horizontal_centered(|ui| {
         ui.add_space(10.0);
-        let blink = view.since.is_none_or(|t| (t.elapsed().as_millis() / 500) % 2 == 0);
         let (r, _) = ui.allocate_exact_size(vec2(14.0, 14.0), Sense::hover());
-        ui.painter().circle_filled(r.center(), 6.0, if blink { Color32::from_rgb(229, 72, 77) } else { Color32::from_rgb(120, 40, 44) });
+        if view.lit {
+            ui.painter().circle_filled(r.center(), 6.0, pal().danger);
+        } else {
+            ui.painter().circle_stroke(r.center(), 5.0, Stroke::new(1.5, pal().danger));
+        }
         ui.label(RichText::new(&view.text).color(pal().strong).strong());
         // Esc stops a scrolling capture when this bar has the keyboard (on Windows it works
         // anywhere: the capture itself watches the key).
@@ -6381,6 +6479,18 @@ fn draw_bar(ui: &mut egui::Ui, view: &BarView, buttons: &mut Vec<egui::Rect>) ->
     act
 }
 
+/// A recording's length as the bar shows it: 0:05, 12:40, 1:02:03.
+fn clock(d: Duration) -> String {
+    let s = d.as_secs();
+    if s >= 3600 { format!("{}:{:02}:{:02}", s / 3600, s / 60 % 60, s % 60) } else { format!("{}:{:02}", s / 60, s % 60) }
+}
+
+/// Whether the bar's red dot is filled: while something is really being recorded (not while
+/// the desktop's share dialog is up, not paused, not after Stop). Otherwise it is a ring.
+fn dot_lit(recording: bool, waiting: bool, paused: bool) -> bool {
+    recording && !waiting && !paused
+}
+
 /// Whether the recording bar is a window of its own instead of the main window shrunk to a bar:
 /// on Wayland, where a program can't move its window back afterwards.
 fn bar_in_own_window(native_wayland: bool) -> bool {
@@ -6401,6 +6511,48 @@ struct BarWindow {
     asked: bool,
     /// The main window was activated.
     done: bool,
+    /// Stop was a click on the bar (the desktop honours a request carrying that click).
+    clicked: bool,
+    /// KWin was asked to place the bar (KDE).
+    #[cfg(target_os = "linux")]
+    placed: bool,
+}
+
+/// Whether KWin has been asked too long ago to still wait for it (the next way is tried): a
+/// little before the bar's own window goes, so the next way still has the bar's click.
+#[cfg(any(target_os = "linux", test))]
+fn answer_overdue(since_stop: Duration) -> bool {
+    since_stop >= BAR_LINGER - Duration::from_millis(500)
+}
+
+/// A way of bringing the main window back after the bar's own window (Wayland).
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum BackWay {
+    /// KWin's scripting un-minimizes it (KDE): needs no click.
+    KWin,
+    /// An activation request carrying the click on Stop.
+    Click,
+    /// The activation token the desktop sent with a hotkey press.
+    Token,
+    /// The desktop's "Snagster is ready" notice; clicking it brings the window back.
+    Notice,
+}
+
+/// The ways to try, best first: KWin on KDE, then the click on Stop or a hotkey's token, and
+/// the notice when nothing else works.
+fn back_ways(kde: bool, clicked: bool, hotkey_token: bool) -> Vec<BackWay> {
+    let mut ways = Vec::new();
+    if kde {
+        ways.push(BackWay::KWin);
+    }
+    if clicked {
+        ways.push(BackWay::Click);
+    }
+    if hotkey_token {
+        ways.push(BackWay::Token);
+    }
+    ways.push(BackWay::Notice);
+    ways
 }
 
 impl BarWindow {
@@ -6582,6 +6734,42 @@ mod tests {
         assert!(bar.on && bar.back_since.is_none() && !bar.asked && !bar.done);
     }
 
+    /// The editor is brought back the surest way first: KWin on KDE, then the click on Stop
+    /// or a hotkey's token, and the desktop's "ready" notice when nothing else is left.
+    #[test]
+    fn the_editor_comes_back_the_surest_way_first() {
+        use super::{BackWay::*, back_ways};
+        assert_eq!(back_ways(true, true, false), vec![KWin, Click, Notice]);
+        assert_eq!(back_ways(true, false, true), vec![KWin, Token, Notice], "a hotkey on KDE");
+        assert_eq!(back_ways(false, true, false), vec![Click, Notice], "GNOME, Stop clicked");
+        assert_eq!(back_ways(false, false, true), vec![Token, Notice], "GNOME, a hotkey that sent a token");
+        assert_eq!(back_ways(false, false, false), vec![Notice], "the desktop's own stop, no token");
+    }
+
+    /// KWin is waited for only until shortly before the bar's own window would go.
+    #[test]
+    fn kwin_isnt_waited_for_forever() {
+        use super::{BAR_LINGER, answer_overdue};
+        use std::time::Duration;
+        assert!(!answer_overdue(Duration::from_millis(200)));
+        assert!(answer_overdue(BAR_LINGER - Duration::from_millis(500)));
+        assert!(answer_overdue(Duration::from_secs(30)), "KWin never answered");
+    }
+
+    /// The bar's clock and its dot: a steady dot, filled only while something is recorded.
+    #[test]
+    fn the_bar_shows_a_steady_dot_and_a_clock() {
+        use super::{clock, dot_lit};
+        use std::time::Duration;
+        assert_eq!(clock(Duration::from_millis(5_900)), "0:05");
+        assert_eq!(clock(Duration::from_secs(12 * 60 + 40)), "12:40");
+        assert_eq!(clock(Duration::from_secs(3723)), "1:02:03", "an hour or more shows the hours");
+        assert!(dot_lit(true, false, false), "recording");
+        assert!(!dot_lit(true, true, false), "the share dialog is still up");
+        assert!(!dot_lit(true, false, true), "paused");
+        assert!(!dot_lit(false, false, false), "stopping");
+    }
+
     /// The bar drawn on its own (its own window on Wayland) reports a click on Stop and on
     /// Pause, offers Pause only for a video, and no buttons once it is only saying "Stopping".
     #[test]
@@ -6605,7 +6793,7 @@ mod tests {
                 egui::Event::PointerButton { pos: p, button: egui::PointerButton::Primary, pressed: false, modifiers: Default::default() },
             ]
         };
-        let video = BarView { text: "Recording MP4".into(), since: None, waiting: false, buttons: true, pause: Some("Pause"), esc_stops: false };
+        let video = BarView { text: "Recording MP4".into(), lit: true, waiting: false, buttons: true, pause: Some("Pause"), esc_stops: false };
         let mut buttons = Vec::new();
         assert_eq!(frame(&video, &mut buttons, vec![]), BarAct::default());
         assert_eq!(buttons.len(), 2, "Stop and Pause");

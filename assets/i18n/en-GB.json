@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Captures: {count}",
   "Unknown date": "Unknown date",
   "Unknown program": "Unknown program",
-  "Title, program, tag or date (2026-11)": "Title, program, tag or date (2026-11)"
+  "Title, program, tag or date (2026-11)": "Title, program, tag or date (2026-11)",
+  "Waiting for screen sharing…": "Waiting for screen sharing…",
+  "Recording GIF  {time}": "Recording GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Recording {format} at {fps} fps  {time}",
+  "Recording steps: {count} so far": "Recording steps: {count} so far",
+  "Scroll it yourself, then press Stop": "Scroll it yourself, then press Stop"
  }
 }

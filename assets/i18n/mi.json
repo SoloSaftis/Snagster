@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Ngā hopukanga: {count}",
   "Unknown date": "Rā kāore e mōhiotia",
   "Unknown program": "Papatono kāore e mōhiotia",
-  "Title, program, tag or date (2026-11)": "Taitara, papatono, tūtohu, rā rānei (2026-11)"
+  "Title, program, tag or date (2026-11)": "Taitara, papatono, tūtohu, rā rānei (2026-11)",
+  "Waiting for screen sharing…": "E tatari ana kia tiritiria te mata…",
+  "Recording GIF  {time}": "E rekoata ana i te GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "E rekoata ana i te {format} ki te {fps} fps  {time}",
+  "Recording steps: {count} so far": "E rekoata ana i ngā hāgi: {count} i tēnei wā",
+  "Scroll it yourself, then press Stop": "Kōrorihia ā-ringa, kātahi ka pēhi i Whakamutu"
  }
 }

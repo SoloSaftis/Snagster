@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Tangkapan: {count}",
   "Unknown date": "Tanggal tidak diketahui",
   "Unknown program": "Program tidak diketahui",
-  "Title, program, tag or date (2026-11)": "Judul, program, tag, atau tanggal (2026-11)"
+  "Title, program, tag or date (2026-11)": "Judul, program, tag, atau tanggal (2026-11)",
+  "Waiting for screen sharing…": "Menunggu berbagi layar…",
+  "Recording GIF  {time}": "Merekam GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Merekam {format} pada {fps} fps  {time}",
+  "Recording steps: {count} so far": "Merekam langkah: {count} sejauh ini",
+  "Scroll it yourself, then press Stop": "Gulir sendiri, lalu tekan Berhenti"
  }
 }

@@ -1116,6 +1116,11 @@
   "Captures: {count}": "ภาพที่จับ: {count}",
   "Unknown date": "ไม่ทราบวันที่",
   "Unknown program": "ไม่ทราบโปรแกรม",
-  "Title, program, tag or date (2026-11)": "ชื่อเรื่อง โปรแกรม แท็ก หรือวันที่ (2026-11)"
+  "Title, program, tag or date (2026-11)": "ชื่อเรื่อง โปรแกรม แท็ก หรือวันที่ (2026-11)",
+  "Waiting for screen sharing…": "กำลังรอการแชร์หน้าจอ…",
+  "Recording GIF  {time}": "กำลังบันทึก GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "กำลังบันทึก {format} ที่ {fps} fps  {time}",
+  "Recording steps: {count} so far": "กำลังบันทึกขั้นตอน: {count} ขั้นแล้ว",
+  "Scroll it yourself, then press Stop": "เลื่อนเอง แล้วกด หยุด"
  }
 }

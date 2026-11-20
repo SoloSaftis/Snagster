@@ -1116,6 +1116,11 @@
   "Captures: {count}": "擷取：{count}",
   "Unknown date": "未知日期",
   "Unknown program": "未知程式",
-  "Title, program, tag or date (2026-11)": "標題、程式、標籤或日期 (2026-11)"
+  "Title, program, tag or date (2026-11)": "標題、程式、標籤或日期 (2026-11)",
+  "Waiting for screen sharing…": "正在等待螢幕分享…",
+  "Recording GIF  {time}": "正在錄製 GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "正在以 {fps} fps 錄製 {format}  {time}",
+  "Recording steps: {count} so far": "正在錄製步驟：已有 {count} 步",
+  "Scroll it yourself, then press Stop": "請自行捲動，然後按「停止」"
  }
 }

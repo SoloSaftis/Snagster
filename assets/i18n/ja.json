@@ -1116,6 +1116,11 @@
   "Captures: {count}": "キャプチャ: {count}",
   "Unknown date": "日付不明",
   "Unknown program": "不明なプログラム",
-  "Title, program, tag or date (2026-11)": "タイトル、プログラム、タグ、日付 (2026-11)"
+  "Title, program, tag or date (2026-11)": "タイトル、プログラム、タグ、日付 (2026-11)",
+  "Waiting for screen sharing…": "画面共有を待っています…",
+  "Recording GIF  {time}": "GIF を録画中  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} を {fps} fps で録画中  {time}",
+  "Recording steps: {count} so far": "手順を記録中: これまで {count} 件",
+  "Scroll it yourself, then press Stop": "自分でスクロールし、「停止」を押します"
  }
 }

@@ -1116,6 +1116,11 @@
   "Captures: {count}": "캡처: {count}",
   "Unknown date": "알 수 없는 날짜",
   "Unknown program": "알 수 없는 프로그램",
-  "Title, program, tag or date (2026-11)": "제목, 프로그램, 태그 또는 날짜 (2026-11)"
+  "Title, program, tag or date (2026-11)": "제목, 프로그램, 태그 또는 날짜 (2026-11)",
+  "Waiting for screen sharing…": "화면 공유를 기다리는 중…",
+  "Recording GIF  {time}": "GIF 녹화 중  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} 녹화 중 ({fps} fps)  {time}",
+  "Recording steps: {count} so far": "단계 기록 중: 지금까지 {count}개",
+  "Scroll it yourself, then press Stop": "직접 스크롤한 다음 중지를 누르세요"
  }
 }

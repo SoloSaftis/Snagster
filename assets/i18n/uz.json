@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Suratlar: {count}",
   "Unknown date": "Noma’lum sana",
   "Unknown program": "Noma’lum dastur",
-  "Title, program, tag or date (2026-11)": "Sarlavha, dastur, teg yoki sana (2026-11)"
+  "Title, program, tag or date (2026-11)": "Sarlavha, dastur, teg yoki sana (2026-11)",
+  "Waiting for screen sharing…": "Ekran ulashilishi kutilmoqda…",
+  "Recording GIF  {time}": "GIF yozilmoqda  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} {fps} fps bilan yozilmoqda  {time}",
+  "Recording steps: {count} so far": "Qadamlarni yozish: hozircha {count}",
+  "Scroll it yourself, then press Stop": "O‘zingiz aylantiring, so‘ng To‘xtatish tugmasini bosing"
  }
 }

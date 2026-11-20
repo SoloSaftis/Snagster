@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Glacaidhean: {count}",
   "Unknown date": "Ceann-latha neo-aithnichte",
   "Unknown program": "Prògram neo-aithnichte",
-  "Title, program, tag or date (2026-11)": "Tiotal, prògram, taga no ceann-latha (2026-11)"
+  "Title, program, tag or date (2026-11)": "Tiotal, prògram, taga no ceann-latha (2026-11)",
+  "Waiting for screen sharing…": "A' feitheamh ri co-roinneadh na sgrìn…",
+  "Recording GIF  {time}": "A' clàradh GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "A' clàradh {format} aig {fps} fps  {time}",
+  "Recording steps: {count} so far": "A' clàradh cheumannan: {count} gu ruige seo",
+  "Scroll it yourself, then press Stop": "Sgrolaich e fhèin, an uairsin brùth Stad"
  }
 }

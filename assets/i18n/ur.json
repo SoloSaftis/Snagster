@@ -1116,6 +1116,11 @@
   "Captures: {count}": "کیپچرز: {count}",
   "Unknown date": "نامعلوم تاریخ",
   "Unknown program": "نامعلوم پروگرام",
-  "Title, program, tag or date (2026-11)": "عنوان، پروگرام، ٹیگ یا تاریخ (2026-11)"
+  "Title, program, tag or date (2026-11)": "عنوان، پروگرام، ٹیگ یا تاریخ (2026-11)",
+  "Waiting for screen sharing…": "اسکرین شیئرنگ کا انتظار…",
+  "Recording GIF  {time}": "GIF ریکارڈ ہو رہا ہے  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps پر {format} ریکارڈ ہو رہا ہے  {time}",
+  "Recording steps: {count} so far": "مراحل ریکارڈ ہو رہے ہیں: اب تک {count}",
+  "Scroll it yourself, then press Stop": "خود اسکرول کریں، پھر روکیں دبائیں"
  }
 }

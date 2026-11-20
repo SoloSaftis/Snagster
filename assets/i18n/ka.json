@@ -1116,6 +1116,11 @@
   "Captures: {count}": "კადრები: {count}",
   "Unknown date": "უცნობი თარიღი",
   "Unknown program": "უცნობი პროგრამა",
-  "Title, program, tag or date (2026-11)": "სათაური, პროგრამა, ჭდე ან თარიღი (2026-11)"
+  "Title, program, tag or date (2026-11)": "სათაური, პროგრამა, ჭდე ან თარიღი (2026-11)",
+  "Waiting for screen sharing…": "ეკრანის გაზიარების მოლოდინი…",
+  "Recording GIF  {time}": "GIF-ის ჩაწერა  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format}-ის ჩაწერა {fps} fps-ით  {time}",
+  "Recording steps: {count} so far": "ნაბიჯები იწერება: ჯერჯერობით {count}",
+  "Scroll it yourself, then press Stop": "თვითონ გადაახვიეთ, შემდეგ დააჭირეთ „გაჩერება“"
  }
 }

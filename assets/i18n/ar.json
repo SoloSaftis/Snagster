@@ -1116,6 +1116,11 @@
   "Captures: {count}": "اللقطات: {count}",
   "Unknown date": "تاريخ غير معروف",
   "Unknown program": "برنامج غير معروف",
-  "Title, program, tag or date (2026-11)": "العنوان أو البرنامج أو الوسم أو التاريخ (2026-11)"
+  "Title, program, tag or date (2026-11)": "العنوان أو البرنامج أو الوسم أو التاريخ (2026-11)",
+  "Waiting for screen sharing…": "بانتظار مشاركة الشاشة…",
+  "Recording GIF  {time}": "جارٍ تسجيل GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "جارٍ تسجيل {format} بمعدل {fps} fps  {time}",
+  "Recording steps: {count} so far": "تسجيل الخطوات: {count} حتى الآن",
+  "Scroll it yourself, then press Stop": "مرّر بنفسك، ثم اضغط إيقاف"
  }
 }

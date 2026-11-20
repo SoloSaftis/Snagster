@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Ảnh chụp: {count}",
   "Unknown date": "Ngày không rõ",
   "Unknown program": "Chương trình không rõ",
-  "Title, program, tag or date (2026-11)": "Tiêu đề, chương trình, thẻ hoặc ngày (2026-11)"
+  "Title, program, tag or date (2026-11)": "Tiêu đề, chương trình, thẻ hoặc ngày (2026-11)",
+  "Waiting for screen sharing…": "Đang chờ chia sẻ màn hình…",
+  "Recording GIF  {time}": "Đang quay GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Đang quay {format} ở {fps} fps  {time}",
+  "Recording steps: {count} so far": "Đang ghi các bước: đã có {count}",
+  "Scroll it yourself, then press Stop": "Tự cuộn, rồi nhấn Dừng"
  }
 }

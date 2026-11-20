@@ -1116,6 +1116,11 @@
   "Captures: {count}": "ቅጽበታዊ ምስሎች፦ {count}",
   "Unknown date": "ያልታወቀ ቀን",
   "Unknown program": "ያልታወቀ ፕሮግራም",
-  "Title, program, tag or date (2026-11)": "ርዕስ፣ ፕሮግራም፣ መለያ ወይም ቀን (2026-11)"
+  "Title, program, tag or date (2026-11)": "ርዕስ፣ ፕሮግራም፣ መለያ ወይም ቀን (2026-11)",
+  "Waiting for screen sharing…": "ማያ ገጽ ማጋራትን በመጠበቅ ላይ…",
+  "Recording GIF  {time}": "GIF በመቅረጽ ላይ  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} በ{fps} fps በመቅረጽ ላይ  {time}",
+  "Recording steps: {count} so far": "ደረጃዎችን በመቅረጽ ላይ፦ እስካሁን {count}",
+  "Scroll it yourself, then press Stop": "ራስዎ ያሸብልሉት፣ ከዚያ አቁም ይጫኑ"
  }
 }

@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Capturi: {count}",
   "Unknown date": "Dată necunoscută",
   "Unknown program": "Program necunoscut",
-  "Title, program, tag or date (2026-11)": "Titlu, program, etichetă sau dată (2026-11)"
+  "Title, program, tag or date (2026-11)": "Titlu, program, etichetă sau dată (2026-11)",
+  "Waiting for screen sharing…": "Se așteaptă partajarea ecranului…",
+  "Recording GIF  {time}": "Înregistrare GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Înregistrare {format} la {fps} fps  {time}",
+  "Recording steps: {count} so far": "Înregistrare pași: {count} până acum",
+  "Scroll it yourself, then press Stop": "Derulează tu, apoi apasă Stop"
  }
 }

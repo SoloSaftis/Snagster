@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Užfiksuota: {count}",
   "Unknown date": "Nežinoma data",
   "Unknown program": "Nežinoma programa",
-  "Title, program, tag or date (2026-11)": "Pavadinimas, programa, žyma arba data (2026-11)"
+  "Title, program, tag or date (2026-11)": "Pavadinimas, programa, žyma arba data (2026-11)",
+  "Waiting for screen sharing…": "Laukiama ekrano bendrinimo…",
+  "Recording GIF  {time}": "Įrašomas GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Įrašomas {format}, {fps} fps  {time}",
+  "Recording steps: {count} so far": "Veiksmų įrašymas: kol kas {count}",
+  "Scroll it yourself, then press Stop": "Slinkite patys, tada spauskite Stop"
  }
 }

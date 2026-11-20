@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Hapisqakuna: {count}",
   "Unknown date": "Mana riqsisqa p'unchaw",
   "Unknown program": "Mana riqsisqa programa",
-  "Title, program, tag or date (2026-11)": "Suti, programa, unancha utaq p'unchaw (2026-11)"
+  "Title, program, tag or date (2026-11)": "Suti, programa, unancha utaq p'unchaw (2026-11)",
+  "Waiting for screen sharing…": "Pantalla rakinakuyta suyashan…",
+  "Recording GIF  {time}": "GIF grabashan  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} grabashan {fps} fps-pi  {time}",
+  "Recording steps: {count} so far": "Kamachikuykunata grabashan: kunankama {count}",
+  "Scroll it yourself, then press Stop": "Kikiyki muyuchiy, chaymanta Sayachiy ñit'iy"
  }
 }

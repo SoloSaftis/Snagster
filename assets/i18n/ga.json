@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Gabhálacha: {count}",
   "Unknown date": "Dáta anaithnid",
   "Unknown program": "Clár anaithnid",
-  "Title, program, tag or date (2026-11)": "Teideal, clár, clib nó dáta (2026-11)"
+  "Title, program, tag or date (2026-11)": "Teideal, clár, clib nó dáta (2026-11)",
+  "Waiting for screen sharing…": "Ag fanacht le comhroinnt scáileáin…",
+  "Recording GIF  {time}": "Ag taifeadadh GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Ag taifeadadh {format} ag {fps} fps  {time}",
+  "Recording steps: {count} so far": "Céimeanna á dtaifead: {count} go dtí seo",
+  "Scroll it yourself, then press Stop": "Scrollaigh féin é, ansin brúigh Stad"
  }
 }

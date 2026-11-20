@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Jäädvustused: {count}",
   "Unknown date": "Tundmatu kuupäev",
   "Unknown program": "Tundmatu programm",
-  "Title, program, tag or date (2026-11)": "Pealkiri, programm, silt või kuupäev (2026-11)"
+  "Title, program, tag or date (2026-11)": "Pealkiri, programm, silt või kuupäev (2026-11)",
+  "Waiting for screen sharing…": "Ootan ekraani jagamist…",
+  "Recording GIF  {time}": "Salvestan GIF-i  {time}",
+  "Recording {format} at {fps} fps  {time}": "Salvestan {format}, {fps} fps  {time}",
+  "Recording steps: {count} so far": "Samme salvestatakse: seni {count}",
+  "Scroll it yourself, then press Stop": "Keri ise, siis vajuta Peata"
  }
 }

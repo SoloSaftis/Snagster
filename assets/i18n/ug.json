@@ -1116,6 +1116,11 @@
   "Captures: {count}": "تۇتۇلغانلار: {count}",
   "Unknown date": "نامەلۇم چېسلا",
   "Unknown program": "نامەلۇم پروگرامما",
-  "Title, program, tag or date (2026-11)": "ماۋزۇ، پروگرامما، خەتكۈچ ياكى چېسلا (2026-11)"
+  "Title, program, tag or date (2026-11)": "ماۋزۇ، پروگرامما، خەتكۈچ ياكى چېسلا (2026-11)",
+  "Waiting for screen sharing…": "ئېكران ھەمبەھىرلەشنى كۈتۈۋاتىدۇ…",
+  "Recording GIF  {time}": "GIF خاتىرىلەش  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} خاتىرىلەش، {fps} fps  {time}",
+  "Recording steps: {count} so far": "باسقۇچلارنى خاتىرىلەش: ھازىرغىچە {count}",
+  "Scroll it yourself, then press Stop": "ئۆزىڭىز سىيرىڭ، ئاندىن «توختىتىش» نى بېسىڭ"
  }
 }

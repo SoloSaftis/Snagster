@@ -1116,6 +1116,11 @@
   "Captures: {count}": "截图：{count}",
   "Unknown date": "未知日期",
   "Unknown program": "未知程序",
-  "Title, program, tag or date (2026-11)": "标题、程序、标签或日期 (2026-11)"
+  "Title, program, tag or date (2026-11)": "标题、程序、标签或日期 (2026-11)",
+  "Waiting for screen sharing…": "正在等待屏幕共享…",
+  "Recording GIF  {time}": "正在录制 GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "正在以 {fps} fps 录制 {format}  {time}",
+  "Recording steps: {count} so far": "正在录制步骤：已有 {count} 步",
+  "Scroll it yourself, then press Stop": "请自行滚动，然后按“停止”"
  }
 }

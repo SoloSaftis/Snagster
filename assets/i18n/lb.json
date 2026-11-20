@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Opnamen: {count}",
   "Unknown date": "Onbekannten Datum",
   "Unknown program": "Onbekannte Programm",
-  "Title, program, tag or date (2026-11)": "Titel, Programm, Tag oder Datum (2026-11)"
+  "Title, program, tag or date (2026-11)": "Titel, Programm, Tag oder Datum (2026-11)",
+  "Waiting for screen sharing…": "Waart op d'Deele vum Écran…",
+  "Recording GIF  {time}": "GIF-Opnam  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format}-Opnam mat {fps} fps  {time}",
+  "Recording steps: {count} so far": "Schrëtt ginn opgeholl: bis elo {count}",
+  "Scroll it yourself, then press Stop": "Selwer scrollen, dann op Stopp drécken"
  }
 }

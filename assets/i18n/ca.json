@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Captures: {count}",
   "Unknown date": "Data desconeguda",
   "Unknown program": "Programa desconegut",
-  "Title, program, tag or date (2026-11)": "Títol, programa, etiqueta o data (2026-11)"
+  "Title, program, tag or date (2026-11)": "Títol, programa, etiqueta o data (2026-11)",
+  "Waiting for screen sharing…": "S'està esperant la compartició de pantalla…",
+  "Recording GIF  {time}": "Gravant GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Gravant {format} a {fps} fps  {time}",
+  "Recording steps: {count} so far": "Gravant passos: {count} fins ara",
+  "Scroll it yourself, then press Stop": "Desplaceu-la vosaltres i després premeu Atura"
  }
 }

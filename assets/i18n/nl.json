@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Opnamen: {count}",
   "Unknown date": "Onbekende datum",
   "Unknown program": "Onbekend programma",
-  "Title, program, tag or date (2026-11)": "Titel, programma, tag of datum (2026-11)"
+  "Title, program, tag or date (2026-11)": "Titel, programma, tag of datum (2026-11)",
+  "Waiting for screen sharing…": "Wachten op scherm delen…",
+  "Recording GIF  {time}": "GIF opnemen  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} opnemen met {fps} fps  {time}",
+  "Recording steps: {count} so far": "Stappen opnemen: tot nu toe {count}",
+  "Scroll it yourself, then press Stop": "Scroll zelf en druk dan op Stop"
  }
 }

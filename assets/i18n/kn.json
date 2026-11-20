@@ -1116,6 +1116,11 @@
   "Captures: {count}": "ಸೆರೆಗಳು: {count}",
   "Unknown date": "ಅಜ್ಞಾತ ದಿನಾಂಕ",
   "Unknown program": "ಅಜ್ಞಾತ ಪ್ರೋಗ್ರಾಂ",
-  "Title, program, tag or date (2026-11)": "ಶೀರ್ಷಿಕೆ, ಪ್ರೋಗ್ರಾಂ, ಟ್ಯಾಗ್ ಅಥವಾ ದಿನಾಂಕ (2026-11)"
+  "Title, program, tag or date (2026-11)": "ಶೀರ್ಷಿಕೆ, ಪ್ರೋಗ್ರಾಂ, ಟ್ಯಾಗ್ ಅಥವಾ ದಿನಾಂಕ (2026-11)",
+  "Waiting for screen sharing…": "ಪರದೆ ಹಂಚಿಕೆಗಾಗಿ ಕಾಯುತ್ತಿದೆ…",
+  "Recording GIF  {time}": "GIF ರೆಕಾರ್ಡ್ ಆಗುತ್ತಿದೆ  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps ನಲ್ಲಿ {format} ರೆಕಾರ್ಡ್ ಆಗುತ್ತಿದೆ  {time}",
+  "Recording steps: {count} so far": "ಹಂತಗಳನ್ನು ರೆಕಾರ್ಡ್ ಮಾಡುತ್ತಿದೆ: ಇಲ್ಲಿಯವರೆಗೆ {count}",
+  "Scroll it yourself, then press Stop": "ನೀವೇ ಸ್ಕ್ರಾಲ್ ಮಾಡಿ, ನಂತರ ನಿಲ್ಲಿಸಿ ಒತ್ತಿ"
  }
 }

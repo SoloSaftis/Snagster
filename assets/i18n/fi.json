@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Kaappaukset: {count}",
   "Unknown date": "Tuntematon päivä",
   "Unknown program": "Tuntematon ohjelma",
-  "Title, program, tag or date (2026-11)": "Otsikko, ohjelma, tunniste tai päivä (2026-11)"
+  "Title, program, tag or date (2026-11)": "Otsikko, ohjelma, tunniste tai päivä (2026-11)",
+  "Waiting for screen sharing…": "Odotetaan näytön jakamista…",
+  "Recording GIF  {time}": "Tallennetaan GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Tallennetaan {format}, {fps} fps  {time}",
+  "Recording steps: {count} so far": "Tallennetaan vaiheita: {count} tähän mennessä",
+  "Scroll it yourself, then press Stop": "Vieritä itse ja paina sitten Pysäytä"
  }
 }

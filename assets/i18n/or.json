@@ -1116,6 +1116,11 @@
   "Captures: {count}": "କ୍ୟାପଚର: {count}",
   "Unknown date": "ଅଜଣା ତାରିଖ",
   "Unknown program": "ଅଜଣା ପ୍ରୋଗ୍ରାମ",
-  "Title, program, tag or date (2026-11)": "ଶୀର୍ଷକ, ପ୍ରୋଗ୍ରାମ, ଟ୍ୟାଗ କିମ୍ବା ତାରିଖ (2026-11)"
+  "Title, program, tag or date (2026-11)": "ଶୀର୍ଷକ, ପ୍ରୋଗ୍ରାମ, ଟ୍ୟାଗ କିମ୍ବା ତାରିଖ (2026-11)",
+  "Waiting for screen sharing…": "ସ୍କ୍ରିନ୍ ସେୟାରିଂ ପାଇଁ ଅପେକ୍ଷା…",
+  "Recording GIF  {time}": "GIF ରେକର୍ଡ ହେଉଛି  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps ରେ {format} ରେକର୍ଡ ହେଉଛି  {time}",
+  "Recording steps: {count} so far": "ଷ୍ଟେପ୍ ରେକର୍ଡ ହେଉଛି: ଏପର୍ଯ୍ୟନ୍ତ {count}",
+  "Scroll it yourself, then press Stop": "ନିଜେ ସ୍କ୍ରୋଲ୍ କରନ୍ତୁ, ତାପରେ ବନ୍ଦ କରନ୍ତୁ ଦବାନ୍ତୁ"
  }
 }

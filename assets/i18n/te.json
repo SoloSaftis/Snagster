@@ -1116,6 +1116,11 @@
   "Captures: {count}": "క్యాప్చర్‌లు: {count}",
   "Unknown date": "తెలియని తేదీ",
   "Unknown program": "తెలియని ప్రోగ్రామ్",
-  "Title, program, tag or date (2026-11)": "శీర్షిక, ప్రోగ్రామ్, ట్యాగ్ లేదా తేదీ (2026-11)"
+  "Title, program, tag or date (2026-11)": "శీర్షిక, ప్రోగ్రామ్, ట్యాగ్ లేదా తేదీ (2026-11)",
+  "Waiting for screen sharing…": "స్క్రీన్ షేరింగ్ కోసం వేచి ఉంది…",
+  "Recording GIF  {time}": "GIF రికార్డ్ అవుతోంది  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps వద్ద {format} రికార్డ్ అవుతోంది  {time}",
+  "Recording steps: {count} so far": "దశలను రికార్డ్ చేస్తోంది: ఇప్పటివరకు {count}",
+  "Scroll it yourself, then press Stop": "మీరే స్క్రోల్ చేసి, ఆపై ఆపు నొక్కండి"
  }
 }

@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Kapje: {count}",
   "Unknown date": "Datë e panjohur",
   "Unknown program": "Program i panjohur",
-  "Title, program, tag or date (2026-11)": "Titull, program, etiketë ose datë (2026-11)"
+  "Title, program, tag or date (2026-11)": "Titull, program, etiketë ose datë (2026-11)",
+  "Waiting for screen sharing…": "Në pritje të ndarjes së ekranit…",
+  "Recording GIF  {time}": "Po regjistrohet GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Po regjistrohet {format} me {fps} fps  {time}",
+  "Recording steps: {count} so far": "Po regjistrohen hapat: {count} deri tani",
+  "Scroll it yourself, then press Stop": "Rrëshqite vetë, pastaj shtyp Ndalo"
  }
 }

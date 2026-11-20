@@ -764,6 +764,11 @@ trait Grab {
     /// Follow the area to `rect`; false when the grabber has to be made again for it.
     fn retarget(&mut self, rect: (i32, i32, u32, u32)) -> bool;
     fn name(&self) -> &'static str;
+    /// The desktop ended the screen share (its own "stop sharing"): a recording then stops
+    /// as if Stop was pressed, and keeps what it has.
+    fn ended_by_desktop(&self) -> bool {
+        false
+    }
 }
 
 /// The best way to copy `rect` on this system: Desktop Duplication (or GDI) on Windows; on
@@ -904,6 +909,10 @@ impl Grab for PortalGrab {
 
     fn name(&self) -> &'static str {
         "screen share (portal)"
+    }
+
+    fn ended_by_desktop(&self) -> bool {
+        self.cast.ended_by_desktop()
     }
 }
 
@@ -1582,6 +1591,8 @@ struct FeedShared {
     /// Grabs made and the microseconds they took (not counting the wait for the next frame).
     grabs: std::sync::atomic::AtomicU64,
     grab_us: std::sync::atomic::AtomicU64,
+    /// The desktop ended the screen share behind the feed.
+    ended_by_desktop: AtomicBool,
 }
 
 /// The newest picture of a screen area, copied `fps` times a second by a thread of its own
@@ -1650,6 +1661,11 @@ impl ScreenFeed {
     /// The last thing that went wrong copying, if anything.
     pub fn error(&self) -> Option<String> {
         self.sh.error.lock().ok().and_then(|e| e.clone())
+    }
+
+    /// Whether the desktop ended the screen share behind this feed (its own "stop sharing").
+    pub fn ended_by_desktop(&self) -> bool {
+        self.sh.ended_by_desktop.load(Ordering::Relaxed)
     }
 
     /// Grabs made so far and the microseconds they took in all (for `--stream-test`).
@@ -1918,6 +1934,9 @@ fn feed_loop(sh: &FeedShared, mut rect: (i32, i32, u32, u32), o: FeedOptions, op
             next = now;
         }
         let r = g.grab(next, force || o.every_frame, &mut back, o.fit);
+        if g.ended_by_desktop() {
+            sh.ended_by_desktop.store(true, Ordering::Relaxed);
+        }
         // The copy's own time: from the end of its wait (or the frame's start) to done.
         let began = WOKE.with(|w| w.take()).unwrap_or(next.max(now));
         sh.grab_us.fetch_add(began.elapsed().as_micros() as u64, Ordering::Relaxed);
@@ -3158,7 +3177,9 @@ mod soft {
         }
         let mut frame = Frame::default();
         loop {
-            if !first && (stop.load(Ordering::Relaxed) || clock.over(opts.max_s)) {
+            // (The desktop's own "stop sharing" ends it like Stop: what was recorded is kept.)
+            let ended = grab.as_ref().is_some_and(|g| g.ended_by_desktop());
+            if !first && (stop.load(Ordering::Relaxed) || clock.over(opts.max_s) || ended) {
                 break;
             }
             if !first && clock.hold(pause) {
@@ -3760,6 +3781,52 @@ mod tests {
         fn name(&self) -> &'static str {
             "fake"
         }
+    }
+
+    /// A share the desktop ended after its first picture.
+    struct EndedGrab;
+
+    impl Grab for EndedGrab {
+        fn grab(&mut self, until: Instant, _: bool, out: &mut Frame, fit: Option<(u32, u32)>) -> Result<bool, String> {
+            std::thread::sleep(until.saturating_duration_since(Instant::now()));
+            let src = solid_px(8, 4, [9, 9, 9, 255]);
+            fit_into(&Pixels { data: &src, width: 8, height: 4, stride: 32, bgra: false }, out, fit.unwrap_or((8, 4)));
+            Ok(true)
+        }
+        fn retarget(&mut self, _: (i32, i32, u32, u32)) -> bool {
+            true
+        }
+        fn name(&self) -> &'static str {
+            "ended"
+        }
+        fn ended_by_desktop(&self) -> bool {
+            true
+        }
+    }
+
+    fn ended_open(_: (i32, i32, u32, u32), _: bool) -> Result<Box<dyn Grab>, String> {
+        Ok(Box::new(EndedGrab))
+    }
+
+    /// The desktop's "stop sharing" reaches whoever reads the feed (a GIF recording stops on
+    /// it); a share nobody ended says nothing.
+    #[test]
+    fn the_feed_says_when_the_desktop_ended_its_share() {
+        let o = FeedOptions { fps: 60, cursor: false, fit: None, every_frame: false };
+        let f = ScreenFeed::start_with((0, 0, 8, 4), o, ended_open).unwrap();
+        let t = Instant::now();
+        while !f.ended_by_desktop() && t.elapsed() < Duration::from_secs(2) {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        assert!(f.ended_by_desktop());
+        assert!(f.frames() > 0, "what came before is kept");
+        // (Its own opener: `fake_open` counts opens for another test running alongside.)
+        fn quiet_open(_: (i32, i32, u32, u32), _: bool) -> Result<Box<dyn Grab>, String> {
+            Ok(Box::new(FakeGrab { looks: 0 }))
+        }
+        let g = ScreenFeed::start_with((0, 0, 8, 4), o, quiet_open).unwrap();
+        std::thread::sleep(Duration::from_millis(50));
+        assert!(!g.ended_by_desktop());
     }
 
     fn fake_open(_: (i32, i32, u32, u32), _: bool) -> Result<Box<dyn Grab>, String> {

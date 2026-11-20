@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Qabdiet: {count}",
   "Unknown date": "Data mhux magħrufa",
   "Unknown program": "Programm mhux magħruf",
-  "Title, program, tag or date (2026-11)": "Titlu, programm, tikketta jew data (2026-11)"
+  "Title, program, tag or date (2026-11)": "Titlu, programm, tikketta jew data (2026-11)",
+  "Waiting for screen sharing…": "Qed nistenna l-qsim tal-iskrin…",
+  "Recording GIF  {time}": "Qed nirrekordja GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Qed nirrekordja {format} b'{fps} fps  {time}",
+  "Recording steps: {count} so far": "Reġistrazzjoni tal-passi: {count} s'issa",
+  "Scroll it yourself, then press Stop": "Skrollja int, imbagħad agħfas Waqqaf"
  }
 }

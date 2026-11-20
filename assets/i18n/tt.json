@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Төшерелгәннәр: {count}",
   "Unknown date": "Билгесез көн",
   "Unknown program": "Билгесез программа",
-  "Title, program, tag or date (2026-11)": "Исем, программа, тамга яки көн (2026-11)"
+  "Title, program, tag or date (2026-11)": "Исем, программа, тамга яки көн (2026-11)",
+  "Waiting for screen sharing…": "Экранны уртаклашуны көтү…",
+  "Recording GIF  {time}": "GIF язу  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} язу, {fps} fps  {time}",
+  "Recording steps: {count} so far": "Адымнарны язу: әлегә {count}",
+  "Scroll it yourself, then press Stop": "Үзегез әйләндерегез, аннары «Туктату» басыгыз"
  }
 }

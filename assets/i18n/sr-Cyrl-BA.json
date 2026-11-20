@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Снимци: {count}",
   "Unknown date": "Непознат датум",
   "Unknown program": "Непознат програм",
-  "Title, program, tag or date (2026-11)": "Наслов, програм, ознака или датум (2026-11)"
+  "Title, program, tag or date (2026-11)": "Наслов, програм, ознака или датум (2026-11)",
+  "Waiting for screen sharing…": "Чека се дијељење екрана…",
+  "Recording GIF  {time}": "Снимање GIF-а  {time}",
+  "Recording {format} at {fps} fps  {time}": "Снимање {format} при {fps} fps  {time}",
+  "Recording steps: {count} so far": "Снимање корака: досад {count}",
+  "Scroll it yourself, then press Stop": "Помјерајте сами, па притисните Заустави"
  }
 }

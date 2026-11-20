@@ -1116,6 +1116,11 @@
   "Captures: {count}": "រូបថត៖ {count}",
   "Unknown date": "កាលបរិច្ឆេទមិនស្គាល់",
   "Unknown program": "កម្មវិធីមិនស្គាល់",
-  "Title, program, tag or date (2026-11)": "ចំណងជើង កម្មវិធី ស្លាក ឬកាលបរិច្ឆេទ (2026-11)"
+  "Title, program, tag or date (2026-11)": "ចំណងជើង កម្មវិធី ស្លាក ឬកាលបរិច្ឆេទ (2026-11)",
+  "Waiting for screen sharing…": "កំពុងរង់ចាំការចែករំលែកអេក្រង់…",
+  "Recording GIF  {time}": "កំពុងថត GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "កំពុងថត {format} ក្នុង {fps} fps  {time}",
+  "Recording steps: {count} so far": "កំពុងថតជំហាន៖ {count} រហូតមកដល់ពេលនេះ",
+  "Scroll it yourself, then press Stop": "រមូរដោយខ្លួនឯង រួចចុច ឈប់"
  }
 }

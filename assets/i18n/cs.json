@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Snímky: {count}",
   "Unknown date": "Neznámé datum",
   "Unknown program": "Neznámý program",
-  "Title, program, tag or date (2026-11)": "Název, program, štítek nebo datum (2026-11)"
+  "Title, program, tag or date (2026-11)": "Název, program, štítek nebo datum (2026-11)",
+  "Waiting for screen sharing…": "Čeká se na sdílení obrazovky…",
+  "Recording GIF  {time}": "Nahrávání GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Nahrávání {format} při {fps} fps  {time}",
+  "Recording steps: {count} so far": "Nahrávání kroků: zatím {count}",
+  "Scroll it yourself, then press Stop": "Posouvejte sami, pak stiskněte Stop"
  }
 }

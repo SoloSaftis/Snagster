@@ -1116,6 +1116,11 @@
   "Captures: {count}": "تصاویر گرفته‌شده: {count}",
   "Unknown date": "تاریخ نامعلوم",
   "Unknown program": "برنامهٔ نامعلوم",
-  "Title, program, tag or date (2026-11)": "عنوان، برنامه، برچسب یا تاریخ (2026-11)"
+  "Title, program, tag or date (2026-11)": "عنوان، برنامه، برچسب یا تاریخ (2026-11)",
+  "Waiting for screen sharing…": "در انتظار اشتراک‌گذاری صفحه…",
+  "Recording GIF  {time}": "در حال ضبط GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "در حال ضبط {format} با {fps} fps  {time}",
+  "Recording steps: {count} so far": "ضبط مراحل: تاکنون {count}",
+  "Scroll it yourself, then press Stop": "خودتان اسکرول کنید، سپس توقف را بزنید"
  }
 }

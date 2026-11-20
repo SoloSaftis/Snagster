@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Zrzuty: {count}",
   "Unknown date": "Nieznana data",
   "Unknown program": "Nieznany program",
-  "Title, program, tag or date (2026-11)": "Tytuł, program, tag lub data (2026-11)"
+  "Title, program, tag or date (2026-11)": "Tytuł, program, tag lub data (2026-11)",
+  "Waiting for screen sharing…": "Oczekiwanie na udostępnienie ekranu…",
+  "Recording GIF  {time}": "Nagrywanie GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Nagrywanie {format} w {fps} fps  {time}",
+  "Recording steps: {count} so far": "Nagrywanie kroków: dotąd {count}",
+  "Scroll it yourself, then press Stop": "Przewijaj samodzielnie, potem naciśnij Stop"
  }
 }

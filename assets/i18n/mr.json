@@ -1116,6 +1116,11 @@
   "Captures: {count}": "कॅप्चर: {count}",
   "Unknown date": "अज्ञात तारीख",
   "Unknown program": "अज्ञात प्रोग्राम",
-  "Title, program, tag or date (2026-11)": "शीर्षक, प्रोग्राम, टॅग किंवा तारीख (2026-11)"
+  "Title, program, tag or date (2026-11)": "शीर्षक, प्रोग्राम, टॅग किंवा तारीख (2026-11)",
+  "Waiting for screen sharing…": "स्क्रीन शेअरिंगची प्रतीक्षा…",
+  "Recording GIF  {time}": "GIF रेकॉर्ड होत आहे  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps वर {format} रेकॉर्ड होत आहे  {time}",
+  "Recording steps: {count} so far": "पायऱ्या रेकॉर्ड होत आहेत: आतापर्यंत {count}",
+  "Scroll it yourself, then press Stop": "स्वतः स्क्रोल करा, मग थांबवा दाबा"
  }
 }

@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Cipluniau: {count}",
   "Unknown date": "Dyddiad anhysbys",
   "Unknown program": "Rhaglen anhysbys",
-  "Title, program, tag or date (2026-11)": "Teitl, rhaglen, tag neu ddyddiad (2026-11)"
+  "Title, program, tag or date (2026-11)": "Teitl, rhaglen, tag neu ddyddiad (2026-11)",
+  "Waiting for screen sharing…": "Yn aros am rannu sgrin…",
+  "Recording GIF  {time}": "Yn recordio GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Yn recordio {format} ar {fps} fps  {time}",
+  "Recording steps: {count} so far": "Yn recordio camau: {count} hyd yma",
+  "Scroll it yourself, then press Stop": "Sgroliwch hi eich hun, yna pwyswch Stopio"
  }
 }

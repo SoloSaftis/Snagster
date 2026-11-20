@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Çəkilişlər: {count}",
   "Unknown date": "Naməlum tarix",
   "Unknown program": "Naməlum proqram",
-  "Title, program, tag or date (2026-11)": "Başlıq, proqram, teq və ya tarix (2026-11)"
+  "Title, program, tag or date (2026-11)": "Başlıq, proqram, teq və ya tarix (2026-11)",
+  "Waiting for screen sharing…": "Ekran paylaşımı gözlənilir…",
+  "Recording GIF  {time}": "GIF qeydə alınır  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} {fps} fps ilə qeydə alınır  {time}",
+  "Recording steps: {count} so far": "Addımların yazılması: indiyədək {count}",
+  "Scroll it yourself, then press Stop": "Özünüz sürüşdürün, sonra Dayandır düyməsini basın"
  }
 }

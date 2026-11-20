@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Yakalamalar: {count}",
   "Unknown date": "Bilinmeyen tarih",
   "Unknown program": "Bilinmeyen program",
-  "Title, program, tag or date (2026-11)": "Başlık, program, etiket veya tarih (2026-11)"
+  "Title, program, tag or date (2026-11)": "Başlık, program, etiket veya tarih (2026-11)",
+  "Waiting for screen sharing…": "Ekran paylaşımı bekleniyor…",
+  "Recording GIF  {time}": "GIF kaydediliyor  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format} {fps} fps ile kaydediliyor  {time}",
+  "Recording steps: {count} so far": "Adımlar kaydediliyor: şu ana kadar {count}",
+  "Scroll it yourself, then press Stop": "Kendiniz kaydırın, sonra Durdur'a basın"
  }
 }

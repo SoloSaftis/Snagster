@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Mga kuha: {count}",
   "Unknown date": "Hindi kilalang petsa",
   "Unknown program": "Hindi kilalang programa",
-  "Title, program, tag or date (2026-11)": "Pamagat, programa, tag o petsa (2026-11)"
+  "Title, program, tag or date (2026-11)": "Pamagat, programa, tag o petsa (2026-11)",
+  "Waiting for screen sharing…": "Naghihintay sa screen sharing…",
+  "Recording GIF  {time}": "Nire-record ang GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Nire-record ang {format} sa {fps} fps  {time}",
+  "Recording steps: {count} so far": "Nire-record ang mga hakbang: {count} sa ngayon",
+  "Scroll it yourself, then press Stop": "Ikaw ang mag-scroll, saka pindutin ang Ihinto"
  }
 }

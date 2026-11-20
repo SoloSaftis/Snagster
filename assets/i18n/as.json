@@ -1116,6 +1116,11 @@
   "Captures: {count}": "কেপচাৰ: {count}",
   "Unknown date": "অজ্ঞাত তাৰিখ",
   "Unknown program": "অজ্ঞাত প্ৰগ্ৰাম",
-  "Title, program, tag or date (2026-11)": "শিৰোনাম, প্ৰগ্ৰাম, টেগ বা তাৰিখ (2026-11)"
+  "Title, program, tag or date (2026-11)": "শিৰোনাম, প্ৰগ্ৰাম, টেগ বা তাৰিখ (2026-11)",
+  "Waiting for screen sharing…": "স্ক্ৰীণ শ্বেয়াৰিঙৰ বাবে অপেক্ষা কৰি আছে…",
+  "Recording GIF  {time}": "GIF ৰেকৰ্ড কৰি আছে  {time}",
+  "Recording {format} at {fps} fps  {time}": "{fps} fps ত {format} ৰেকৰ্ড কৰি আছে  {time}",
+  "Recording steps: {count} so far": "পদক্ষেপ ৰেকৰ্ড কৰি আছে: এতিয়ালৈকে {count}",
+  "Scroll it yourself, then press Stop": "নিজে স্ক্ৰ’ল কৰক, তাৰ পিছত বন্ধ কৰক টিপক"
  }
 }

@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Знімки: {count}",
   "Unknown date": "Невідома дата",
   "Unknown program": "Невідома програма",
-  "Title, program, tag or date (2026-11)": "Назва, програма, мітка або дата (2026-11)"
+  "Title, program, tag or date (2026-11)": "Назва, програма, мітка або дата (2026-11)",
+  "Waiting for screen sharing…": "Очікування демонстрації екрана…",
+  "Recording GIF  {time}": "Запис GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Запис {format}, {fps} fps  {time}",
+  "Recording steps: {count} so far": "Запис кроків: поки {count}",
+  "Scroll it yourself, then press Stop": "Прокрутіть самі, потім натисніть «Стоп»"
  }
 }

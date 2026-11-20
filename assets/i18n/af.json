@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Vasleggings: {count}",
   "Unknown date": "Onbekende datum",
   "Unknown program": "Onbekende program",
-  "Title, program, tag or date (2026-11)": "Titel, program, etiket of datum (2026-11)"
+  "Title, program, tag or date (2026-11)": "Titel, program, etiket of datum (2026-11)",
+  "Waiting for screen sharing…": "Wag vir skermdeling…",
+  "Recording GIF  {time}": "Neem GIF op  {time}",
+  "Recording {format} at {fps} fps  {time}": "Neem {format} op teen {fps} fps  {time}",
+  "Recording steps: {count} so far": "Neem stappe op: {count} tot dusver",
+  "Scroll it yourself, then press Stop": "Rol dit self, druk dan Stop"
  }
 }

@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Նկարներ՝ {count}",
   "Unknown date": "Անհայտ ամսաթիվ",
   "Unknown program": "Անհայտ ծրագիր",
-  "Title, program, tag or date (2026-11)": "Վերնագիր, ծրագիր, պիտակ կամ ամսաթիվ (2026-11)"
+  "Title, program, tag or date (2026-11)": "Վերնագիր, ծրագիր, պիտակ կամ ամսաթիվ (2026-11)",
+  "Waiting for screen sharing…": "Սպասում ենք էկրանի համօգտագործմանը…",
+  "Recording GIF  {time}": "GIF-ի գրանցում  {time}",
+  "Recording {format} at {fps} fps  {time}": "{format}-ի գրանցում {fps} fps-ով  {time}",
+  "Recording steps: {count} so far": "Քայլերը գրանցվում են՝ առայժմ {count}",
+  "Scroll it yourself, then press Stop": "Ինքներդ ոլորեք, ապա սեղմեք Կանգնեցնել"
  }
 }

@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Skjámyndir: {count}",
   "Unknown date": "Óþekkt dagsetning",
   "Unknown program": "Óþekkt forrit",
-  "Title, program, tag or date (2026-11)": "Titill, forrit, merki eða dagsetning (2026-11)"
+  "Title, program, tag or date (2026-11)": "Titill, forrit, merki eða dagsetning (2026-11)",
+  "Waiting for screen sharing…": "Bíður eftir skjádeilingu…",
+  "Recording GIF  {time}": "Tek upp GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Tek upp {format} á {fps} fps  {time}",
+  "Recording steps: {count} so far": "Tek upp skref: {count} hingað til",
+  "Scroll it yourself, then press Stop": "Skrunaðu sjálf(ur), ýttu svo á Stöðva"
  }
 }

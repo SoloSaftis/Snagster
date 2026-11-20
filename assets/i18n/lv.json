@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Uzņēmumi: {count}",
   "Unknown date": "Nezināms datums",
   "Unknown program": "Nezināma programma",
-  "Title, program, tag or date (2026-11)": "Nosaukums, programma, tags vai datums (2026-11)"
+  "Title, program, tag or date (2026-11)": "Nosaukums, programma, tags vai datums (2026-11)",
+  "Waiting for screen sharing…": "Gaida ekrāna kopīgošanu…",
+  "Recording GIF  {time}": "Ieraksta GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Ieraksta {format}, {fps} fps  {time}",
+  "Recording steps: {count} so far": "Darbību ierakstīšana: pagaidām {count}",
+  "Scroll it yourself, then press Stop": "Ritiniet paši, tad nospiediet Stop"
  }
 }

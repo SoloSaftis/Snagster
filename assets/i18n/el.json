@@ -1116,6 +1116,11 @@
   "Captures: {count}": "Λήψεις: {count}",
   "Unknown date": "Άγνωστη ημερομηνία",
   "Unknown program": "Άγνωστο πρόγραμμα",
-  "Title, program, tag or date (2026-11)": "Τίτλος, πρόγραμμα, ετικέτα ή ημερομηνία (2026-11)"
+  "Title, program, tag or date (2026-11)": "Τίτλος, πρόγραμμα, ετικέτα ή ημερομηνία (2026-11)",
+  "Waiting for screen sharing…": "Αναμονή για κοινή χρήση οθόνης…",
+  "Recording GIF  {time}": "Εγγραφή GIF  {time}",
+  "Recording {format} at {fps} fps  {time}": "Εγγραφή {format} στα {fps} fps  {time}",
+  "Recording steps: {count} so far": "Εγγραφή βημάτων: {count} μέχρι τώρα",
+  "Scroll it yourself, then press Stop": "Κυλήστε εσείς και μετά πατήστε Διακοπή"
  }
 }
