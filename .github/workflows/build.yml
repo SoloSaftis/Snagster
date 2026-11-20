@@ -35,6 +35,8 @@ jobs:
         run: node assets/i18n/check.js
       - name: The MCP smoke test script parses
         run: node --check tests/mcp-smoke.js
+      - name: MCP bundles and server.json (the MCP Registry listing) are made right
+        run: node packaging/mcpb/make-mcpb.js self-test
       # Here, on the newest Ubuntu: the store listing uses AppStream tags (developer, vcs-browser)
       # that the validator on the Linux build job's older Ubuntu doesn't know yet.
       - name: Linux menu entry and store listing are valid (what Flathub checks)
@@ -146,6 +148,21 @@ jobs:
           file-digest: SHA256
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
+      # The MCP Registry lists Snagster with one MCP bundle per system (packaging/mcpb).
+      - name: Package (MCP bundle)
+        shell: pwsh
+        run: |
+          node packaging/mcpb/make-mcpb.js bundle --exe dist/Snagster/Snagster.exe --os windows --out dist/Snagster-mcp-windows-x64.mcpb
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Copy-Item dist/Snagster-mcp-windows-x64.mcpb dist/mcpb-check.zip
+          Expand-Archive dist/mcpb-check.zip dist/mcpb-check
+          # The release build is a windowed program: wait for it and read what it wrote.
+          Start-Process dist/mcpb-check/server/Snagster.exe -ArgumentList 'help' -Wait -NoNewWindow -RedirectStandardOutput dist/mcpb-help.txt
+          $out = Get-Content dist/mcpb-help.txt -TotalCount 1
+          Write-Output $out
+          Remove-Item dist/mcpb-help.txt
+          if ("$out" -notmatch '^Snagster ') { exit 1 }
+          Remove-Item -Recurse -Force dist/mcpb-check, dist/mcpb-check.zip
       - name: Package (portable zip)
         shell: pwsh
         run: |
@@ -219,6 +236,7 @@ jobs:
           name: windows
           path: |
             dist/Snagster-windows-x64-portable.zip
+            dist/Snagster-mcp-windows-x64.mcpb
             ${{ env.SIGNED == 'true' && 'dist/msix/Snagster-windows-x64.msix' || '' }}
       # For uploading to Partner Center by hand (never on GitHub's release page).
       - uses: actions/upload-artifact@v4
@@ -319,6 +337,13 @@ jobs:
           echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  $tool" | sha256sum -c -
           chmod +x "$tool"
           ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 "$tool" --no-appstream "$appdir" dist/Snagster-linux-x86_64.AppImage
+      - name: Package (MCP bundle)
+        run: |
+          set -euo pipefail
+          node packaging/mcpb/make-mcpb.js bundle --exe target/release/snagster --os linux --out dist/Snagster-mcp-linux-x86_64.mcpb
+          mkdir -p /tmp/mcpb && unzip -q dist/Snagster-mcp-linux-x86_64.mcpb -d /tmp/mcpb
+          test -x /tmp/mcpb/server/snagster
+          /tmp/mcpb/server/snagster help | sed -n 1p | grep '^Snagster '
       - name: The packaged AppImage and tar.gz start
         run: |
           set -euo pipefail
@@ -331,6 +356,7 @@ jobs:
           path: |
             dist/Snagster-linux-x86_64.AppImage
             dist/Snagster-linux-x86_64-portable.tar.gz
+            dist/Snagster-mcp-linux-x86_64.mcpb
 
   macos:
     runs-on: macos-latest
@@ -394,10 +420,19 @@ jobs:
           PLIST
           codesign --force --deep --sign - dist/Snagster.app
           (cd dist && ditto -c -k --keepParent Snagster.app Snagster-macos-arm64.zip)
+      - name: Package (MCP bundle)
+        run: |
+          set -euo pipefail
+          node packaging/mcpb/make-mcpb.js bundle --exe target/release/snagster --os macos --out dist/Snagster-mcp-macos-arm64.mcpb
+          mkdir -p /tmp/mcpb && unzip -q dist/Snagster-mcp-macos-arm64.mcpb -d /tmp/mcpb
+          test -x /tmp/mcpb/server/snagster
+          /tmp/mcpb/server/snagster help | sed -n 1p | grep '^Snagster '
       - uses: actions/upload-artifact@v4
         with:
           name: macos
-          path: dist/Snagster-macos-arm64.zip
+          path: |
+            dist/Snagster-macos-arm64.zip
+            dist/Snagster-mcp-macos-arm64.mcpb
 
   # Snagster's own Flatpak (packaging/flatpak, AI-generated and not the Flathub manifest), built
   # in Flathub's build image and attached to releases as Snagster-linux-x86_64.flatpak.
@@ -465,15 +500,22 @@ jobs:
         run: |
           cd artifacts
           ls -l
-          # The five downloads, and the MSIX once it is signed with a real certificate.
-          n=$(ls | wc -l); test "$n" -eq 5 -o "$n" -eq 6
+          # The five downloads and three MCP bundles, and the MSIX once it is signed with a real certificate.
+          n=$(ls | wc -l); test "$n" -eq 8 -o "$n" -eq 9
           sha256sum -b -- * > ../SHA256SUMS
           mv ../SHA256SUMS .
           cat SHA256SUMS
           sha256sum -c SHA256SUMS
+      # The MCP Registry listing for this release: the bundles' addresses and SHA-256. The person
+      # publishes it with mcp-publisher (the private HANDOFF.md has the steps).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Write server.json
+        run: node packaging/mcpb/make-mcpb.js server-json --dir artifacts --tag "${GITHUB_REF_NAME}" --out server-json/server.json
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           sed "s/__TAG__/${GITHUB_REF_NAME}/g" .github/release-notes.md > notes.md
-          gh release create "${GITHUB_REF_NAME}" artifacts/* --title "Snagster ${GITHUB_REF_NAME#v}" --notes-file notes.md --generate-notes --latest
+          gh release create "${GITHUB_REF_NAME}" artifacts/* server-json/server.json --title "Snagster ${GITHUB_REF_NAME#v}" --notes-file notes.md --generate-notes --latest

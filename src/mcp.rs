@@ -41,8 +41,28 @@ set_setting checks kind and range). Everything else a person can press in the wi
 presses it in the open window (zoom, pins, Recent, dialogs, email, print, Studio and stream buttons...); editor_apply \
 (cut out, fill, erase, lift, resize or copy a mark), gif_edit, studio_edit and save_to_cloud do the rest here. Long calls send progress when the \
 request has a progressToken and stop early when cancelled. Coordinates are picture pixels from the top-left corner \
-(desktop pixels for captures and recordings). Colours are #RRGGBB or a name (red, orange, yellow, green, blue, purple, \
+(desktop pixels for captures and recordings). Arguments are checked against each tool's input schema first: an error names \
+the argument, what it got and what the tool takes. Colours are #RRGGBB or a name (red, orange, yellow, green, blue, purple, \
 black, white).";
+
+/// Where people read about Snagster (also the MCP Registry's websiteUrl).
+pub const WEBSITE: &str = "https://github.com/SoloSaftis/Snagster";
+
+/// One line about Snagster for listings (the MCP Registry takes at most 100 characters; server.json
+/// and the MCPB bundles say the same).
+pub const DESCRIPTION: &str = "Screen capture, markup, recording and live streaming on Windows, Linux and macOS.";
+
+/// Who this server is, for `initialize`: what a client or a marketplace listing shows.
+fn server_info() -> Value {
+    json!({
+        "name": "snagster",
+        "title": "Snagster",
+        "version": env!("CARGO_PKG_VERSION"),
+        "description": DESCRIPTION,
+        "websiteUrl": WEBSITE,
+        "icons": [{"src": "https://raw.githubusercontent.com/SoloSaftis/Snagster/main/assets/snagster-256.png", "mimeType": "image/png", "sizes": ["256x256"]}]
+    })
+}
 
 /// Reports how far a running call is: done so far, the total when known, and what it's doing.
 pub type Progress = Arc<dyn Fn(f64, Option<f64>, &str) + Send + Sync>;
@@ -378,7 +398,7 @@ fn base_tools() -> Vec<Tool> {
         Tool { name: "list_windows", description: "Visible windows: id, title, program, position and size.", schema: obj(json!({}), &[]), edits: false },
         Tool {
             name: "capture_screen",
-            description: "Capture a screen (the one under the mouse, a monitor by id, or all screens) as the current picture. Returns a preview.",
+            description: "Capture a screen (the one under the mouse, a monitor by id, or all screens) as the current picture, replacing the one in memory (undo brings it back). Returns a preview image. For part of the screen use capture_region; for one window capture_window.",
             schema: obj(with(json!({"monitor_id": n("A monitor id from list_monitors."), "all_screens": b("Every screen in one picture.")}), capture_props()), &[]),
             edits: true,
         },
@@ -396,7 +416,7 @@ fn base_tools() -> Vec<Tool> {
         },
         Tool { name: "open_image", description: "Open a picture file (PNG, JPEG, BMP, GIF, WebP, TIFF) or a .snag project (marks stay editable) as the current picture, replacing the one in memory (undo brings that back).", schema: obj(json!({"path": s("The picture file (full path).")}), &["path"]), edits: true },
         Tool { name: "picture_info", description: "Size of the current picture and its marks.", schema: obj(json!({}), &[]), edits: false },
-        Tool { name: "view_picture", description: "The current picture with its marks, as an image (scaled to at most max_size pixels).", schema: obj(json!({"max_size": n("Longest side, default 1024.")}), &[]), edits: false },
+        Tool { name: "view_picture", description: "Look at the current picture with its marks: a PNG image, scaled down so its longest side is at most max_size pixels (the picture itself is not changed).", schema: obj(json!({"max_size": n("Longest side of the image sent back, in pixels (64-4096, default 1024).")}), &[]), edits: false },
         Tool {
             name: "add_mark",
             description: "Add a mark. kind: arrow, line, box, oval, highlight, pen, text, callout, step, stamp, pointer, spotlight, magnify, image. Arrows/lines go from (x, y) to (x2, y2); boxes, ovals, highlight and spotlight cover (x, y)-(x2, y2); a pen stroke follows points; text, callout, step, stamp, pointer and magnify are placed at (x, y) (a callout points at (x2, y2)); an image puts a picture file at (x, y), sized to (x2, y2) or its own size.",
@@ -469,17 +489,17 @@ fn base_tools() -> Vec<Tool> {
             schema: obj(json!({"effect": {"type": "string", "enum": effect_values(), "description": "The effect, by name (e.g. DropShadow) or by its label in the Effects menu."}}), &["effect"]),
             edits: true,
         },
-        Tool { name: "read_text", description: "Read the text in the current picture (Windows only: Windows text recognition): every line with its box.", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "read_text", description: "Read the text in the current picture (Windows only: Windows text recognition): all of it, and every line with its box in picture pixels. For text on the screen without capturing use read_screen_text.", schema: obj(json!({}), &[]), edits: false },
         Tool {
             name: "smart_redact",
             description: "Find private details in the current picture and pixelate them (Windows only: uses Windows text recognition): emails, phone numbers, card numbers, street addresses, IP addresses and web addresses. Default: the kinds chosen in Snagster's settings (web addresses are off unless switched on).",
             schema: obj(json!({"kinds": {"type": "array", "items": {"type": "string", "enum": ocr::RedactKinds::NAMES}, "description": "Only these kinds instead of the settings'."}}), &[]),
             edits: true,
         },
-        Tool { name: "undo", description: "Undo the last change to the current picture.", schema: obj(json!({}), &[]), edits: true },
+        Tool { name: "undo", description: "Undo the last change to the current picture (a new capture or opened picture counts as a change). redo takes it back.", schema: obj(json!({}), &[]), edits: true },
         Tool {
             name: "save",
-            description: "Save the current picture (an existing file is replaced). The extension picks the format: png, jpg (the setting's quality), bmp, gif, webp, tiff, pdf, svg, docx, or snag (keeps marks editable).",
+            description: "Save the current picture to a path you choose (an existing file is replaced; to save into the usual folder with the usual name use quick_save). The extension picks the format: png, jpg (the setting's quality), bmp, gif, webp, tiff, pdf, svg, docx, or snag (keeps marks editable).",
             schema: obj(json!({"path": s("Full path with extension.")}), &["path"]),
             edits: false,
         },
@@ -526,7 +546,7 @@ fn base_tools() -> Vec<Tool> {
             edits: false,
         },
         Tool { name: "list_video_encoders", description: "The video encoders this computer has (graphics-chip and software) for H.264, HEVC and WMV. To use one for recording and streaming: set_setting video_encoder to its name (\"\" automatic: the best that works; a choice that can't start falls back by itself).", schema: obj(json!({}), &[]), edits: false },
-        Tool { name: "library_search", description: "Search Snagster's capture library by title, program, tag or date.", schema: obj(json!({"query": s("Words to find; empty lists everything."), "limit": n("Default 20.")}), &[]), edits: false },
+        Tool { name: "library_search", description: "Search Snagster's capture library by title, program, tag or date (newest first): path, title, program, kind, when it was made and tags. Use a result's path with open_image, library_tag or library_delete.", schema: obj(json!({"query": s("Words to find; empty lists everything."), "limit": n("Most results (default 20).")}), &[]), edits: false },
     ]
 }
 
@@ -542,11 +562,12 @@ const SIDE: [&str; 34] = [
 ];
 
 /// Tools that may delete or replace something (a mark, a source or scene, a library picture,
-/// a setting, or a file at a given path). app_command can exit Snagster, recycle a file or end
-/// a stream.
-const DESTRUCTIVE: [&str; 14] = [
+/// a setting, or a file at a given path) or end something that can't be picked up again (a live
+/// stream; the replay buffer's kept seconds). app_command can exit Snagster, recycle a file or
+/// end a stream.
+const DESTRUCTIVE: [&str; 16] = [
     "remove_mark", "clear_marks", "studio_remove_source", "studio_remove_scene", "library_delete", "set_setting", "save", "make_guide", "record_video", "record_gif", "studio_record",
-    "app_command", "gif_edit", "studio_edit",
+    "app_command", "gif_edit", "studio_edit", "stream_stop", "replay_stop",
 ];
 
 /// Tools that reach beyond this computer's Snagster: the network, the cloud, other programs.
@@ -1895,7 +1916,7 @@ impl Session {
                             "completions": {},
                             "logging": {},
                         },
-                        "serverInfo": {"name": "snagster", "title": "Snagster", "version": env!("CARGO_PKG_VERSION")},
+                        "serverInfo": server_info(),
                         "instructions": INSTRUCTIONS,
                     }),
                 )
@@ -2746,6 +2767,53 @@ mod tests {
     }
 
     #[test]
+    fn the_agent_skill_names_only_real_tools_and_arguments() {
+        let skill = include_str!("../skills/snagster/SKILL.md").replace("\r\n", "\n");
+        let skill = skill.as_str();
+        let front = skill.strip_prefix("---\n").and_then(|s| s.split_once("\n---\n")).map(|(f, _)| f).expect("frontmatter");
+        assert!(front.lines().any(|l| l == "name: snagster"), "the name matches the folder");
+        let about = front.lines().find_map(|l| l.strip_prefix("description: ")).expect("a description");
+        assert!((20..=1024).contains(&about.len()), "Agent Skills descriptions are 1-1024 characters");
+        let mut known: Vec<String> = every_property().into_iter().map(|(at, _)| at.rsplit('.').next().unwrap().trim_end_matches("[]").to_string()).collect();
+        known.extend(all_tools().iter().map(|t| t.name.to_string()));
+        known.extend(PROMPTS.iter().map(|p| p.0.to_string()));
+        known.extend(["mcp_http", "mcp_port", "mcp_token"].map(String::from));
+        let mut unknown = vec![];
+        for code in skill.split('`').skip(1).step_by(2) {
+            let looks_like_a_name = code.contains('_') && code.chars().all(|c| c.is_ascii_lowercase() || c == '_');
+            if looks_like_a_name && !known.iter().any(|k| k == code) {
+                unknown.push(code);
+            }
+        }
+        assert!(unknown.is_empty(), "the skill names tools or arguments that don't exist: {unknown:?}");
+        for t in ["capture_window", "view_picture", "add_mark", "smart_redact", "record_video", "make_guide", "stream_start", "replay_save", "app_info"] {
+            assert!(skill.contains(&format!("`{t}`")), "the skill explains {t}");
+        }
+    }
+
+    #[test]
+    fn the_registry_listing_says_what_the_server_says() {
+        let s: Value = serde_json::from_str(include_str!("../server.json")).expect("server.json is JSON");
+        let info = server_info();
+        assert_eq!(s["version"], env!("CARGO_PKG_VERSION"), "bump server.json with Cargo.toml (the release job in build.yml fills in the hashes)");
+        assert_eq!(s["description"], DESCRIPTION);
+        assert_eq!(s["description"], info["description"]);
+        assert_eq!(s["websiteUrl"], WEBSITE);
+        assert_eq!(s["title"], info["title"]);
+        assert_eq!(s["icons"], info["icons"]);
+        assert_eq!(s["name"], "io.github.SoloSaftis/snagster", "the GitHub namespace mcp-publisher signs in to");
+        assert!(s["$schema"].as_str().unwrap().starts_with("https://static.modelcontextprotocol.io/schemas/"));
+        let packages = s["packages"].as_array().unwrap();
+        assert_eq!(packages.len(), 3, "one MCP bundle per system");
+        for p in packages {
+            let id = p["identifier"].as_str().unwrap();
+            assert_eq!(p["registryType"], "mcpb");
+            assert!(id.starts_with(&format!("{WEBSITE}/releases/download/v")) && id.contains("/Snagster-mcp-") && id.ends_with(".mcpb"), "{id} (the release job puts in the tag)");
+            assert_eq!(p["transport"]["type"], "stdio");
+        }
+    }
+
+    #[test]
     fn old_names_still_call_their_tool() {
         for (old, new) in ALIASES {
             assert_eq!(find_tool(old).map(|t| t.name), Some(new), "{old}");
@@ -2844,6 +2912,11 @@ mod tests {
         assert_eq!(r["protocolVersion"], PROTOCOL_VERSIONS[0], "no version asked: the newest");
         assert_eq!(r["serverInfo"]["name"], "snagster");
         assert_eq!(r["serverInfo"]["version"], env!("CARGO_PKG_VERSION"));
+        assert_eq!(r["serverInfo"]["title"], "Snagster");
+        assert_eq!(r["serverInfo"]["websiteUrl"], WEBSITE);
+        let about = r["serverInfo"]["description"].as_str().unwrap();
+        assert!(about.len() <= 100 && about.contains("Screen capture"), "short enough for a listing: {about}");
+        assert!(r["serverInfo"]["icons"][0]["src"].as_str().unwrap().starts_with("https://"));
         assert_eq!(r["instructions"], INSTRUCTIONS);
         for cap in ["tools", "resources", "prompts", "completions", "logging"] {
             assert!(r["capabilities"][cap].is_object(), "capability {cap}");
@@ -3801,7 +3874,7 @@ mod tests {
         };
         assert_eq!(size(ws.call("view_picture", &json!({}))), (400, 200), "small pictures stay as they are");
         assert_eq!(size(ws.call("view_picture", &json!({"max_size": 100}))), (100, 50));
-        assert_eq!(size(ws.call("view_picture", &json!({"max_size": 1}))), (64, 32), "at least 64");
+        assert!(ws.call("view_picture", &json!({"max_size": 1})).is_err_and(|e| e.contains("from 64 to 4096")), "below 64 is refused, naming the limit");
     }
 
     #[test]

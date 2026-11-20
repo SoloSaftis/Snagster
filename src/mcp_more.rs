@@ -114,7 +114,7 @@ pub(super) fn tools() -> Vec<Tool> {
             schema: obj(json!({}), &[]),
             edits: false,
         },
-        Tool { name: "list_recordings", description: "The videos and GIFs in Snagster's recordings folder, newest first.", schema: obj(json!({"limit": n("Default 20.")}), &[]), edits: false },
+        Tool { name: "list_recordings", description: "The videos and GIFs in Snagster's recordings folder, newest first, with their size in KB. video_info reads one back.", schema: obj(json!({"limit": n("Most results (default 20).")}), &[]), edits: false },
         Tool { name: "video_info", description: "Read a video file back: size, frames, length (MP4, WMV) or a GIF's frames and length.", schema: obj(json!({"path": s("Full path.")}), &["path"]), edits: false },
         Tool { name: "get_settings", description: "Snagster's settings as JSON (or one of them, by key; nested ones as stream.fps). list_settings explains each one. The AI-app access token is never shown.", schema: obj(json!({"key": s("One setting's key, e.g. video_fps or stream.fps.")}), &[]), edits: false },
         Tool {
@@ -238,7 +238,7 @@ pub(super) fn tools() -> Vec<Tool> {
             ),
             edits: false,
         },
-        Tool { name: "stream_status", description: "Whether Snagster is live, and how it goes: state, time on the air, bitrate, frames sent and dropped, reconnects, encoder, and the last error (the key masked); when multistreaming, outputs lists each service with its own state, bitrate, frames and error.", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "stream_status", description: "Whether Snagster is live (use stream_stats for how well it goes: rates, dropped frames and warnings), and its numbers: state, time on the air, bitrate, frames sent and dropped, reconnects, encoder, and the last error (the key masked); when multistreaming, outputs lists each service with its own state, bitrate, frames and error.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "stream_stats", description: "How well the live stream is going, measured over the last 10 seconds: per service the bitrate really sent against the bitrate set, frames the network dropped (count since going live and share), how far its upload queue is behind (ms), how long the connection has been up and reconnects (in all and in the last 10 minutes); for the computer the frames it dropped (encoder or late) and the encoder's time per frame against the frame's budget; and warnings in plain words (upload too slow, computer too slow, connection dropping) with their level; level is the worst of them (ok, warning or bad). measuring is true for the first seconds, before the rates are known.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "stream_stop", description: "End the live stream (the last packets are sent and the stream is closed); returns its final numbers and the copy's file when one was recorded.", schema: obj(json!({}), &[]), edits: false },
         Tool {
