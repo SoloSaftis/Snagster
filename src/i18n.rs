@@ -97,6 +97,12 @@ pub fn resolve(setting: &str) -> &'static str {
     if setting.is_empty() { system() } else { known(setting).unwrap_or_else(system) }
 }
 
+/// `text` in language `code`, without switching the interface (for tests run side by side).
+#[cfg(test)]
+pub(crate) fn t_in(code: &'static str, text: &'static str) -> &'static str {
+    table_for(code).and_then(|t| t.get(text)).map(|s| s.as_str()).unwrap_or(text)
+}
+
 /// Switch the interface language (affects every [`t`] from now on).
 pub fn set(code: &str) {
     let code = known(code).unwrap_or("en");

@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Экранны уртаклашу башланмады: ул эш өстәленең диалогында туктатылды яки эш өстәле сәбәп күрсәтмәде. Бернәрсә дә уртаклашылмады.",
   "The desktop's screen-sharing portal said no: {error}": "Эш өстәленең экранны уртаклашу порталы баш тартты: {error}",
   "More tabs": "Күбрәк кыстырма",
-  "The groups that don't fit the window": "Тәрәзәгә сыймаган төркемнәр"
+  "The groups that don't fit the window": "Тәрәзәгә сыймаган төркемнәр",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Тасма, кораллар, рәсем, көйләүләр һәм Соңгылар арасында күчү",
+  "The next or the previous control; the arrow keys move within a part": "Киләсе яки алдагы идарә элементы; ук төймәләре өлеш эчендә йөри",
+  "Use the control that has the keyboard": "Клавиатура булган идарә элементын куллану",
+  "Back to the picture": "Рәсемгә кире кайту",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Рәсемдә: сайланган билгене күчерү (Shift белән ун пиксель)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Тасма хәрефләрен күрсәтү: таб ачу яки корал куллану өчен берсен языгыз",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Тасма таблары хәрефләрен күрү өчен басып торыгыз; Alt һәм хәреф шул табны ача"
  }
 }

@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "화면 공유가 시작되지 않았습니다. 바탕 화면의 대화 상자에서 취소되었거나 바탕 화면이 이유를 알려 주지 않았습니다. 공유된 것은 없습니다.",
   "The desktop's screen-sharing portal said no: {error}": "바탕 화면의 화면 공유 포털(portal)이 거부했습니다: {error}",
   "More tabs": "탭 더 보기",
-  "The groups that don't fit the window": "창에 들어가지 않는 그룹"
+  "The groups that don't fit the window": "창에 들어가지 않는 그룹",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "리본, 도구, 사진, 옵션, 최근 항목 사이를 이동",
+  "The next or the previous control; the arrow keys move within a part": "다음 또는 이전 컨트롤. 화살표 키는 한 영역 안에서 이동",
+  "Use the control that has the keyboard": "키보드가 있는 컨트롤 사용",
+  "Back to the picture": "사진으로 돌아가기",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "사진에서: 선택한 표시 이동 (Shift와 함께 10픽셀)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "리본의 키 문자 표시: 문자를 입력해 탭을 열거나 도구 사용",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "누르고 있으면 리본 탭의 문자가 보입니다. Alt와 문자로 해당 탭 열기"
  }
 }

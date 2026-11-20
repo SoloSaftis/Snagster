@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekrāna kopīgošana nesākās: tā tika atcelta darbvirsmas dialoglodziņā vai darbvirsma nenorādīja iemeslu. Nekas netika kopīgots.",
   "The desktop's screen-sharing portal said no: {error}": "Darbvirsmas ekrāna kopīgošanas portāls atteica: {error}",
   "More tabs": "Vairāk cilņu",
-  "The groups that don't fit the window": "Grupas, kas neietilpst logā"
+  "The groups that don't fit the window": "Grupas, kas neietilpst logā",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Pārvietojieties starp lenti, rīkiem, attēlu, opcijām un Nesenajiem",
+  "The next or the previous control; the arrow keys move within a part": "Nākamā vai iepriekšējā vadīkla; bulttaustiņi pārvietojas daļas iekšienē",
+  "Use the control that has the keyboard": "Izmantot vadīklu, kurai ir tastatūra",
+  "Back to the picture": "Atpakaļ uz attēlu",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Attēlā: pārvietot izvēlēto atzīmi (ar Shift — desmit pikseļus)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Rādīt lentes taustiņu burtus: ievadiet vienu, lai atvērtu cilni vai izmantotu rīku",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Turiet, lai redzētu lentes cilņu burtus; Alt un burts atver šo cilni"
  }
 }

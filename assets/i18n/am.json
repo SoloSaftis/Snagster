@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "የማያ ገጽ ማጋራት አልጀመረም፦ በዴስክቶፑ መገናኛ ውስጥ ተሰርዟል፣ ወይም ዴስክቶፑ ምንም ምክንያት አልሰጠም። ምንም አልተጋራም።",
   "The desktop's screen-sharing portal said no: {error}": "የዴስክቶፑ የማያ ገጽ ማጋራት portal እምቢ አለ፦ {error}",
   "More tabs": "ተጨማሪ ትሮች",
-  "The groups that don't fit the window": "በመስኮቱ ውስጥ የማይገቡ ቡድኖች"
+  "The groups that don't fit the window": "በመስኮቱ ውስጥ የማይገቡ ቡድኖች",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "በሪባኑ፣ በመሣሪያዎቹ፣ በሥዕሉ፣ በአማራጮቹ እና በየቅርብ ጊዜ መካከል ይንቀሳቀሱ",
+  "The next or the previous control; the arrow keys move within a part": "ቀጣዩ ወይም ቀዳሚው መቆጣጠሪያ፤ የቀስት ቁልፎች በአንድ ክፍል ውስጥ ይንቀሳቀሳሉ",
+  "Use the control that has the keyboard": "ቁልፍ ሰሌዳው ያለውን መቆጣጠሪያ ተጠቀም",
+  "Back to the picture": "ወደ ሥዕሉ ተመለስ",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "በሥዕሉ ላይ፦ የተመረጠውን ምልክት ውሰድ (በ Shift አሥር ፒክሰል)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "የሪባኑን ቁልፍ ፊደላት አሳይ፦ ትር ለመክፈት ወይም መሣሪያ ለመጠቀም አንዱን ተይብ",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "የሪባኑን ትሮች ፊደላት ለማየት ተጭነው ይያዙ፤ Alt እና ፊደል ያንን ትር ይከፍታል"
  }
 }

@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "اسکرین شیئرنگ شروع نہیں ہوئی: اسے ڈیسک ٹاپ کے ڈائیلاگ میں منسوخ کر دیا گیا تھا، یا ڈیسک ٹاپ نے کوئی وجہ نہیں بتائی۔ کچھ بھی شیئر نہیں کیا گیا۔",
   "The desktop's screen-sharing portal said no: {error}": "ڈیسک ٹاپ کے اسکرین شیئرنگ portal نے انکار کر دیا: {error}",
   "More tabs": "مزید ٹیبز",
-  "The groups that don't fit the window": "وہ گروپ جو ونڈو میں نہیں سماتے"
+  "The groups that don't fit the window": "وہ گروپ جو ونڈو میں نہیں سماتے",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "ربن، ٹولز، تصویر، آپشنز اور حالیہ کے درمیان جائیں",
+  "The next or the previous control; the arrow keys move within a part": "اگلا یا پچھلا کنٹرول؛ تیر والی کیز ایک حصے کے اندر حرکت کرتی ہیں",
+  "Use the control that has the keyboard": "وہ کنٹرول استعمال کریں جس کے پاس کی بورڈ ہے",
+  "Back to the picture": "تصویر پر واپس جائیں",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "تصویر پر: منتخب نشان کو منتقل کریں (Shift کے ساتھ، دس پکسل)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "ربن کے کی حروف دکھائیں: ٹیب کھولنے یا ٹول استعمال کرنے کے لیے ایک ٹائپ کریں",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "ربن ٹیبز کے حروف دیکھنے کے لیے دبائے رکھیں؛ Alt اور ایک حرف وہ ٹیب کھولتا ہے"
  }
 }

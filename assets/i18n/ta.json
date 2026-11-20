@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "திரைப் பகிர்வு தொடங்கவில்லை: அது டெஸ்க்டாப்பின் உரையாடலில் ரத்து செய்யப்பட்டது, அல்லது டெஸ்க்டாப் எந்தக் காரணத்தையும் தரவில்லை. எதுவும் பகிரப்படவில்லை.",
   "The desktop's screen-sharing portal said no: {error}": "டெஸ்க்டாப்பின் திரைப் பகிர்வு portal மறுத்துவிட்டது: {error}",
   "More tabs": "மேலும் தாவல்கள்",
-  "The groups that don't fit the window": "சாளரத்தில் பொருந்தாத குழுக்கள்"
+  "The groups that don't fit the window": "சாளரத்தில் பொருந்தாத குழுக்கள்",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "ரிப்பன், கருவிகள், படம், விருப்பங்கள் மற்றும் சமீபத்தியவை இடையே செல்லவும்",
+  "The next or the previous control; the arrow keys move within a part": "அடுத்த அல்லது முந்தைய கட்டுப்பாடு; அம்புக்குறி விசைகள் ஒரு பகுதிக்குள் நகரும்",
+  "Use the control that has the keyboard": "விசைப்பலகை உள்ள கட்டுப்பாட்டைப் பயன்படுத்தவும்",
+  "Back to the picture": "படத்திற்குத் திரும்பு",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "படத்தில்: தேர்ந்த குறியை நகர்த்து (Shift உடன், பத்து பிக்சல்)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "ரிப்பனின் விசை எழுத்துகளைக் காட்டு: தாவலைத் திறக்க அல்லது கருவியைப் பயன்படுத்த ஒன்றை உள்ளிடவும்",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "ரிப்பன் தாவல்களின் எழுத்துகளைப் பார்க்க அழுத்திப் பிடிக்கவும்; Alt மற்றும் ஓர் எழுத்து அந்தத் தாவலைத் திறக்கும்"
  }
 }

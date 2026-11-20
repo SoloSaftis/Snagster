@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Pantaila partekatzea ez da hasi: mahaigainaren elkarrizketa-koadroan bertan behera utzi da, edo mahaigainak ez du arrazoirik eman. Ez da ezer partekatu.",
   "The desktop's screen-sharing portal said no: {error}": "Mahaigainaren pantaila partekatzeko portalak ezetz esan du: {error}",
   "More tabs": "Fitxa gehiago",
-  "The groups that don't fit the window": "Leihoan sartzen ez diren taldeak"
+  "The groups that don't fit the window": "Leihoan sartzen ez diren taldeak",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Mugitu zintaren, tresnen, irudiaren, aukeren eta Azkenen artean",
+  "The next or the previous control; the arrow keys move within a part": "Hurrengo edo aurreko kontrola; gezi-teklek zati baten barruan mugitzen dira",
+  "Use the control that has the keyboard": "Erabili teklatua duen kontrola",
+  "Back to the picture": "Itzuli irudira",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Irudian: mugitu hautatutako marka (Shift-ekin, hamar pixel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Erakutsi zintaren tekla-letrak: idatzi bat fitxa bat irekitzeko edo tresna bat erabiltzeko",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Eutsi zintaren fitxen letrak ikusteko; Alt eta letra batek fitxa hori irekitzen du"
  }
 }

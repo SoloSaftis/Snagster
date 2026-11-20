@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ಸ್ಕ್ರೀನ್ ಹಂಚಿಕೆ ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ: ಅದನ್ನು ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಡೈಲಾಗ್‌ನಲ್ಲಿ ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ, ಅಥವಾ ಡೆಸ್ಕ್‌ಟಾಪ್ ಯಾವುದೇ ಕಾರಣ ನೀಡಲಿಲ್ಲ. ಏನನ್ನೂ ಹಂಚಿಕೊಂಡಿಲ್ಲ.",
   "The desktop's screen-sharing portal said no: {error}": "ಡೆಸ್ಕ್‌ಟಾಪ್‌ನ ಸ್ಕ್ರೀನ್ ಹಂಚಿಕೆ portal ನಿರಾಕರಿಸಿತು: {error}",
   "More tabs": "ಇನ್ನಷ್ಟು ಟ್ಯಾಬ್‌ಗಳು",
-  "The groups that don't fit the window": "ವಿಂಡೋದಲ್ಲಿ ಹಿಡಿಸದ ಗುಂಪುಗಳು"
+  "The groups that don't fit the window": "ವಿಂಡೋದಲ್ಲಿ ಹಿಡಿಸದ ಗುಂಪುಗಳು",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "ರಿಬ್ಬನ್, ಸಾಧನಗಳು, ಚಿತ್ರ, ಆಯ್ಕೆಗಳು ಮತ್ತು ಇತ್ತೀಚಿನವು ನಡುವೆ ಚಲಿಸಿ",
+  "The next or the previous control; the arrow keys move within a part": "ಮುಂದಿನ ಅಥವಾ ಹಿಂದಿನ ನಿಯಂತ್ರಣ; ಬಾಣದ ಕೀಲಿಗಳು ಒಂದು ಭಾಗದೊಳಗೆ ಚಲಿಸುತ್ತವೆ",
+  "Use the control that has the keyboard": "ಕೀಬೋರ್ಡ್ ಇರುವ ನಿಯಂತ್ರಣವನ್ನು ಬಳಸಿ",
+  "Back to the picture": "ಚಿತ್ರಕ್ಕೆ ಹಿಂತಿರುಗಿ",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "ಚಿತ್ರದ ಮೇಲೆ: ಆರಿಸಿದ ಗುರುತನ್ನು ಸರಿಸಿ (Shift ಜೊತೆ, ಹತ್ತು ಪಿಕ್ಸೆಲ್)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "ರಿಬ್ಬನ್‌ನ ಕೀ ಅಕ್ಷರಗಳನ್ನು ತೋರಿಸಿ: ಟ್ಯಾಬ್ ತೆರೆಯಲು ಅಥವಾ ಸಾಧನ ಬಳಸಲು ಒಂದನ್ನು ಟೈಪ್ ಮಾಡಿ",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "ರಿಬ್ಬನ್ ಟ್ಯಾಬ್‌ಗಳ ಅಕ್ಷರಗಳನ್ನು ನೋಡಲು ಒತ್ತಿ ಹಿಡಿಯಿರಿ; Alt ಮತ್ತು ಒಂದು ಅಕ್ಷರ ಆ ಟ್ಯಾಬ್ ತೆರೆಯುತ್ತದೆ"
  }
 }

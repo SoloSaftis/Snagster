@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Показ екрана не розпочався: його скасовано в діалоговому вікні робочого стола, або робочий стіл не вказав причину. Нічого не було передано.",
   "The desktop's screen-sharing portal said no: {error}": "Портал показу екрана робочого стола відмовив: {error}",
   "More tabs": "Інші вкладки",
-  "The groups that don't fit the window": "Групи, які не вміщаються у вікні"
+  "The groups that don't fit the window": "Групи, які не вміщаються у вікні",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Перемикайтеся між стрічкою, інструментами, зображенням, параметрами та нещодавніми",
+  "The next or the previous control; the arrow keys move within a part": "Наступний або попередній елемент керування; клавіші зі стрілками рухаються всередині частини",
+  "Use the control that has the keyboard": "Використати елемент керування, який має клавіатуру",
+  "Back to the picture": "Назад до зображення",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "На зображенні: перемістити вибрану позначку (з Shift — на десять пікселів)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Показати літери стрічки: введіть одну, щоб відкрити вкладку або використати інструмент",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Утримуйте, щоб побачити літери вкладок стрічки; Alt і літера відкривають цю вкладку"
  }
 }

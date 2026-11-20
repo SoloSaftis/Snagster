@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Pantalla rakinakuy manam qallarirqachu: escritorio rimanakuy qhawanapi kutichisqa karqan, utaq escritorio manam imaraykuchus nirqachu. Manaraq imapas rakisqachu.",
   "The desktop's screen-sharing portal said no: {error}": "Escritorio pantalla rakinakuy portalqa mana nispa nirqa: {error}",
   "More tabs": "Aswan pestañakuna",
-  "The groups that don't fit the window": "Ventanaman mana yaykuq huñukuna"
+  "The groups that don't fit the window": "Ventanaman mana yaykuq huñukuna",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Cinta, llamk'anakuna, rikch'ay, akllay ima Qhipa nisqa chawpipi puriy",
+  "The next or the previous control; the arrow keys move within a part": "Qatiq utaq ñawpaq hap'iy; flecha llavikuna huk ñiqipi puririnku",
+  "Use the control that has the keyboard": "Teclado kaqniyuq hap'iyta llamk'achiy",
+  "Back to the picture": "Rikch'aymanta kutiy",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Rikch'aypi: akllasqa ruraypa pallqanta astay (Shift nisqawan, chunka pixel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Cintapa llave sananta qhawachiy: huk sananta qillqay, huk pestañata kichanaykipaq utaq llamk'anata llamk'achinaykipaq",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Hap'ispa tiyay cintapa pestañankunapa sananta rikunaykipaq; Alt hinallataq huk sana chay pestañata kichan"
  }
 }

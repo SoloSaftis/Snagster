@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "స్క్రీన్ షేరింగ్ ప్రారంభం కాలేదు: అది డెస్క్‌టాప్ డైలాగ్‌లో రద్దు చేయబడింది, లేదా డెస్క్‌టాప్ ఏ కారణమూ ఇవ్వలేదు. ఏదీ షేర్ చేయబడలేదు.",
   "The desktop's screen-sharing portal said no: {error}": "డెస్క్‌టాప్ స్క్రీన్ షేరింగ్ portal నిరాకరించింది: {error}",
   "More tabs": "మరిన్ని ట్యాబ్‌లు",
-  "The groups that don't fit the window": "విండోలో పట్టని సమూహాలు"
+  "The groups that don't fit the window": "విండోలో పట్టని సమూహాలు",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "రిబ్బన్, సాధనాలు, చిత్రం, ఎంపికలు మరియు ఇటీవలివి మధ్య కదలండి",
+  "The next or the previous control; the arrow keys move within a part": "తదుపరి లేదా మునుపటి నియంత్రణ; బాణం కీలు ఒక భాగం లోపల కదులుతాయి",
+  "Use the control that has the keyboard": "కీబోర్డ్ ఉన్న నియంత్రణను ఉపయోగించండి",
+  "Back to the picture": "చిత్రానికి తిరిగి వెళ్లండి",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "చిత్రంపై: ఎంచుకున్న గుర్తును కదిలించండి (Shiftతో, పది పిక్సెళ్లు)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "రిబ్బన్ కీ అక్షరాలను చూపండి: ట్యాబ్ తెరవడానికి లేదా సాధనం వాడటానికి ఒకటి టైప్ చేయండి",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "రిబ్బన్ ట్యాబ్‌ల అక్షరాలను చూడటానికి నొక్కి ఉంచండి; Alt మరియు ఒక అక్షరం ఆ ట్యాబ్‌ను తెరుస్తుంది"
  }
 }

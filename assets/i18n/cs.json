@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Sdílení obrazovky se nespustilo: bylo zrušeno v dialogu plochy, nebo plocha neuvedla žádný důvod. Nic se nesdílelo.",
   "The desktop's screen-sharing portal said no: {error}": "Portál plochy pro sdílení obrazovky odmítl: {error}",
   "More tabs": "Další karty",
-  "The groups that don't fit the window": "Skupiny, které se do okna nevejdou"
+  "The groups that don't fit the window": "Skupiny, které se do okna nevejdou",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Přecházejte mezi pásem karet, nástroji, obrázkem, volbami a Poslední",
+  "The next or the previous control; the arrow keys move within a part": "Další nebo předchozí ovládací prvek; šipky se pohybují uvnitř části",
+  "Use the control that has the keyboard": "Použijte ovládací prvek, který má klávesnici",
+  "Back to the picture": "Zpět na obrázek",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Na obrázku: přesuňte vybranou značku (se Shift o deset pixelů)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Zobrazit písmena pásu karet: stiskněte jedno, otevřete kartu nebo použijete nástroj",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Podržením zobrazíte písmena karet pásu; Alt a písmeno otevře danou kartu"
  }
 }

@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "D'Bildschirmfreigab huet net ugefaangen: si gouf am Dialog vum Desktop ofgebrach, oder den Desktop huet kee Grond ginn. Et gouf näischt fräigeginn.",
   "The desktop's screen-sharing portal said no: {error}": "Dem Desktop säi Portal fir d'Bildschirmfreigab huet refuséiert: {error}",
   "More tabs": "Méi Tabs",
-  "The groups that don't fit the window": "D'Gruppen, déi net an d'Fënster passen"
+  "The groups that don't fit the window": "D'Gruppen, déi net an d'Fënster passen",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Wiesselt tëscht dem Band, de Wierkzecher, dem Bild, den Optiounen a Rezent",
+  "The next or the previous control; the arrow keys move within a part": "Dat nächst oder virdrun Bedéngelement; d’Pfeiltaste bewege sech bannent engem Deel",
+  "Use the control that has the keyboard": "Dat Bedéngelement benotzen, dat d’Tastatur huet",
+  "Back to the picture": "Zréck zum Bild",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Um Bild: déi gewielte Markéierung verréckelen (mat Shift zéng Pixel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "D’Tastebuschtawen vum Band weisen: een tippen, fir en Tab opzemaachen oder e Wierkzeug ze benotzen",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Gedréckt halen, fir d’Buschtawen vun den Tabs ze gesinn; Alt an e Buschtaw maachen deen Tab op"
  }
 }

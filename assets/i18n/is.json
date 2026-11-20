@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skjádeiling hófst ekki: hætt var við hana í samskiptaglugga skjáborðsins, eða skjáborðið gaf enga ástæðu. Engu var deilt.",
   "The desktop's screen-sharing portal said no: {error}": "Skjádeilingargátt skjáborðsins sagði nei: {error}",
   "More tabs": "Fleiri flipar",
-  "The groups that don't fit the window": "Hóparnir sem komast ekki fyrir í glugganum"
+  "The groups that don't fit the window": "Hóparnir sem komast ekki fyrir í glugganum",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Færa á milli borðans, tólanna, myndarinnar, valkostanna og Nýlegs",
+  "The next or the previous control; the arrow keys move within a part": "Næsta eða fyrri stýring; örvatakkarnir hreyfast innan hluta",
+  "Use the control that has the keyboard": "Nota stýringuna sem hefur lyklaborðið",
+  "Back to the picture": "Til baka í myndina",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Á myndinni: færa valda merkið (með Shift, tíu díla)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Sýna lykilstafi borðans: sláðu inn einn til að opna flipa eða nota tól",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Haltu inni til að sjá stafi flipa borðans; Alt og stafur opnar þann flipa"
  }
 }

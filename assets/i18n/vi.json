@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Tính năng chia sẻ màn hình không bắt đầu: nó đã bị hủy trong hộp thoại của màn hình nền, hoặc màn hình nền không đưa ra lý do. Không có gì được chia sẻ.",
   "The desktop's screen-sharing portal said no: {error}": "Cổng (portal) chia sẻ màn hình của màn hình nền đã từ chối: {error}",
   "More tabs": "Thêm thẻ",
-  "The groups that don't fit the window": "Các nhóm không vừa cửa sổ"
+  "The groups that don't fit the window": "Các nhóm không vừa cửa sổ",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Chuyển giữa ribbon, công cụ, ảnh, tùy chọn và Gần đây",
+  "The next or the previous control; the arrow keys move within a part": "Điều khiển kế tiếp hoặc trước đó; phím mũi tên di chuyển trong một phần",
+  "Use the control that has the keyboard": "Dùng điều khiển đang giữ bàn phím",
+  "Back to the picture": "Quay lại ảnh",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Trên ảnh: di chuyển dấu đã chọn (với Shift, mười điểm ảnh)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Hiện chữ phím của ribbon: gõ một chữ để mở tab hoặc dùng công cụ",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Giữ để xem chữ của các tab ribbon; Alt và một chữ sẽ mở tab đó"
  }
 }

@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Deljenje zaslona se ni začelo: preklicano je bilo v pogovornem oknu namizja ali pa namizje ni navedlo razloga. Nič ni bilo deljeno.",
   "The desktop's screen-sharing portal said no: {error}": "Portal namizja za deljenje zaslona je zavrnil: {error}",
   "More tabs": "Več zavihkov",
-  "The groups that don't fit the window": "Skupine, ki ne gredo v okno"
+  "The groups that don't fit the window": "Skupine, ki ne gredo v okno",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Premikajte se med trakom, orodji, sliko, možnostmi in Nedavno",
+  "The next or the previous control; the arrow keys move within a part": "Naslednji ali prejšnji kontrolnik; smerne tipke se premikajo znotraj dela",
+  "Use the control that has the keyboard": "Uporabite kontrolnik, ki ima tipkovnico",
+  "Back to the picture": "Nazaj na sliko",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Na sliki: premaknite izbrano oznako (s Shift za deset slikovnih pik)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Pokaži črke traku: vtipkajte eno, da odprete zavihek ali uporabite orodje",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Držite, da vidite črke zavihkov traka; Alt in črka odpreta ta zavihek"
  }
 }

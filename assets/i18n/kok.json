@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "स्क्रीन शेयरींग सुरू जालें ना: तें डेस्कटॉपाच्या डायलॉगांत रद्द जालें, वा डेस्कटॉपान कितेंच कारण दिलें ना. कांयच शेयर केलें ना.",
   "The desktop's screen-sharing portal said no: {error}": "डेस्कटॉपाच्या स्क्रीन शेयरींग portalान न्हय म्हणलें: {error}",
   "More tabs": "आनीक टॅब",
-  "The groups that don't fit the window": "विंडोंत बसना जाल्ले गट"
+  "The groups that don't fit the window": "विंडोंत बसना जाल्ले गट",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "रिबन, टूल्स, चित्र, पर्याय आनी अलीकडलें हांचेमदीं वचात",
+  "The next or the previous control; the arrow keys move within a part": "फुडलें वा फाटलें नियंत्रण; बाणाचीं कळीं एका भागाभितर चलतात",
+  "Use the control that has the keyboard": "कीबोर्ड आशिल्लें नियंत्रण वापरात",
+  "Back to the picture": "चित्राकडे परत वचात",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "चित्रार: वेंचिल्लें चिन्न हालयात (Shift सयत, धा पिक्सेल)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "रिबनाचीं कळ अक्षरां दाखयात: टॅब उगडपाक वा टूल वापरपाक एक टायप करात",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "रिबन टॅबांचीं अक्षरां पळोवपाक धरून दवरात; Alt आनी एक अक्षर तो टॅब उगडटा"
  }
 }

@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "لم تبدأ مشاركة الشاشة: أُلغيت في مربع حوار سطح المكتب، أو لم يذكر سطح المكتب أي سبب. لم تتم مشاركة أي شيء.",
   "The desktop's screen-sharing portal said no: {error}": "رفضت بوابة (portal) مشاركة الشاشة في سطح المكتب الطلب: {error}",
   "More tabs": "مزيد من علامات التبويب",
-  "The groups that don't fit the window": "المجموعات التي لا تتسع لها النافذة"
+  "The groups that don't fit the window": "المجموعات التي لا تتسع لها النافذة",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "التنقل بين الشريط والأدوات والصورة والخيارات والأخيرة",
+  "The next or the previous control; the arrow keys move within a part": "عنصر التحكم التالي أو السابق؛ مفاتيح الأسهم تتحرك داخل الجزء",
+  "Use the control that has the keyboard": "استخدم عنصر التحكم الذي عليه لوحة المفاتيح",
+  "Back to the picture": "العودة إلى الصورة",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "على الصورة: حرّك العلامة المحددة (مع Shift، عشر بكسلات)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "إظهار أحرف مفاتيح الشريط: اكتب أحدها لفتح علامة تبويب أو استخدام أداة",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "اضغط مع الاستمرار لرؤية أحرف علامات تبويب الشريط؛ Alt وحرف يفتحان علامة التبويب تلك"
  }
 }

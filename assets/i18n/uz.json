@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran ulashish boshlanmadi: u ish stolining dialog oynasida bekor qilindi yoki ish stoli sabab ko‘rsatmadi. Hech narsa ulashilmadi.",
   "The desktop's screen-sharing portal said no: {error}": "Ish stolining ekran ulashish portali rad etdi: {error}",
   "More tabs": "Boshqa yorliqlar",
-  "The groups that don't fit the window": "Oynaga sig‘maydigan guruhlar"
+  "The groups that don't fit the window": "Oynaga sig‘maydigan guruhlar",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Lenta, vositalar, rasm, parametrlar va So‘nggilar o‘rtasida o‘ting",
+  "The next or the previous control; the arrow keys move within a part": "Keyingi yoki oldingi boshqaruv elementi; strelka tugmalari qism ichida harakatlanadi",
+  "Use the control that has the keyboard": "Klaviatura turgan boshqaruv elementidan foydalaning",
+  "Back to the picture": "Rasmga qaytish",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Rasmda: tanlangan belgini siljiting (Shift bilan o‘n piksel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Lentaning tugma harflarini ko‘rsatish: yorliq ochish yoki vosita ishlatish uchun birini kiriting",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Lenta yorliqlarining harflarini ko‘rish uchun bosib turing; Alt va harf o‘sha yorliqni ochadi"
  }
 }

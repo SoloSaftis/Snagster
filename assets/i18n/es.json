@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "La pantalla compartida no se inició: se canceló en el diálogo del escritorio, o el escritorio no dio ningún motivo. No se compartió nada.",
   "The desktop's screen-sharing portal said no: {error}": "El portal de pantalla compartida del escritorio dijo que no: {error}",
   "More tabs": "Más pestañas",
-  "The groups that don't fit the window": "Los grupos que no caben en la ventana"
+  "The groups that don't fit the window": "Los grupos que no caben en la ventana",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Moverse entre la cinta de opciones, las herramientas, la imagen, las opciones y Recientes",
+  "The next or the previous control; the arrow keys move within a part": "El control siguiente o el anterior; las teclas de flecha se mueven dentro de una parte",
+  "Use the control that has the keyboard": "Usar el control que tiene el teclado",
+  "Back to the picture": "Volver a la imagen",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "En la imagen: mover la marca elegida (con Mayús, diez píxeles)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Mostrar las letras de la cinta: escriba una para abrir una pestaña o usar una herramienta",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Mantenga pulsado para ver las letras de las pestañas de la cinta; Alt y una letra abren esa pestaña"
  }
 }

@@ -757,6 +757,7 @@ impl SnagApp {
                     .iter()
                     .map(|(k, v)| (k.to_string(), v.to_string()))
                     .chain(Tool::ALL.iter().map(|t| (t.key().to_string(), format!("{} tool", t.label()))))
+                    .chain(keyboard_rows())
                     .collect();
                     for (k, v) in rows {
                         ui.label(RichText::new(crate::platform::keys(&k)).strong());
@@ -1981,8 +1982,39 @@ impl SnagApp {
     }
 }
 
+/// The keys that move around the window, for the Keyboard shortcuts window: each system's own
+/// way into the ribbon (`app::keys_ui`).
+fn keyboard_rows() -> Vec<(String, String)> {
+    use crate::app::keys_ui::{TipStyle, tip_style};
+    use crate::i18n::t;
+    let mut rows = vec![
+        ("F6, Shift+F6", t("Move between the ribbon, the tools, the picture, the options and Recent")),
+        ("Tab, Shift+Tab", t("The next or the previous control; the arrow keys move within a part")),
+        ("Enter, Space", t("Use the control that has the keyboard")),
+        ("Esc", t("Back to the picture")),
+        ("←  →  ↑  ↓", t("On the picture: move the picked mark (with Shift, ten pixels)")),
+    ];
+    match tip_style(crate::platform::system()) {
+        TipStyle::Office => rows.push(("Alt, F10", t("Show the ribbon's key letters: type one to open a tab or use a tool"))),
+        TipStyle::Mnemonics => {
+            rows.push(("Alt", t("Hold to see the ribbon tabs' letters; Alt and a letter opens that tab")));
+            rows.push(("F10", t("Main menu")));
+        }
+        TipStyle::Off => {}
+    }
+    rows.into_iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn the_shortcuts_window_lists_how_to_move_around_by_keyboard() {
+        let rows = super::keyboard_rows();
+        assert!(rows.iter().any(|(k, _)| k.starts_with("F6")));
+        let tips = rows.iter().any(|(k, _)| k.starts_with("Alt"));
+        assert_eq!(tips, crate::platform::system() != crate::platform::System::Mac, "{rows:?}");
+    }
+
     #[test]
     fn every_window_of_snagsters_own_says_it_is_snagster() {
         // KDE Plasma shows another program's icon for a window without it.

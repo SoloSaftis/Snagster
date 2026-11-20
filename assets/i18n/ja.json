@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "画面共有を開始できませんでした。デスクトップのダイアログでキャンセルされたか、デスクトップから理由が示されませんでした。何も共有されていません。",
   "The desktop's screen-sharing portal said no: {error}": "デスクトップの画面共有ポータル（portal）が拒否しました: {error}",
   "More tabs": "その他のタブ",
-  "The groups that don't fit the window": "ウィンドウに収まらないグループ"
+  "The groups that don't fit the window": "ウィンドウに収まらないグループ",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "リボン、ツール、画像、オプション、最近の間を移動",
+  "The next or the previous control; the arrow keys move within a part": "次または前のコントロール。矢印キーで部分の中を移動",
+  "Use the control that has the keyboard": "キーボード操作を持つコントロールを使う",
+  "Back to the picture": "画像に戻る",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "画像上：選んだマークを移動（Shift で10ピクセル）",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "リボンのキー文字を表示：文字を入力してタブを開くかツールを使う",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "押し続けるとリボンのタブの文字が表示されます。Alt と文字でそのタブを開く"
  }
 }

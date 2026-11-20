@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "La compartició de pantalla no ha començat: s'ha cancel·lat al diàleg de l'escriptori, o l'escriptori no n'ha donat cap motiu. No s'ha compartit res.",
   "The desktop's screen-sharing portal said no: {error}": "El portal de compartició de pantalla de l'escriptori ha dit que no: {error}",
   "More tabs": "Més pestanyes",
-  "The groups that don't fit the window": "Els grups que no caben a la finestra"
+  "The groups that don't fit the window": "Els grups que no caben a la finestra",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Moveu-vos entre la cinta, les eines, la imatge, les opcions i Recents",
+  "The next or the previous control; the arrow keys move within a part": "El control següent o l’anterior; les tecles de fletxa es mouen dins d’una part",
+  "Use the control that has the keyboard": "Useu el control que té el teclat",
+  "Back to the picture": "Torna a la imatge",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "A la imatge: moveu la marca triada (amb Maj, deu píxels)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Mostra les lletres de la cinta: escriviu-ne una per obrir una pestanya o usar una eina",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Manteniu per veure les lletres de les pestanyes de la cinta; Alt i una lletra obren aquella pestanya"
  }
 }

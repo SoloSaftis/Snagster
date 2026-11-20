@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran paylaşımı başlamadı: o, iş masasının dialoqunda ləğv edildi və ya iş masası heç bir səbəb göstərmədi. Heç nə paylaşılmadı.",
   "The desktop's screen-sharing portal said no: {error}": "İş masasının ekran paylaşımı portalı imtina etdi: {error}",
   "More tabs": "Daha çox tab",
-  "The groups that don't fit the window": "Pəncərəyə sığmayan qruplar"
+  "The groups that don't fit the window": "Pəncərəyə sığmayan qruplar",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Lent, alətlər, şəkil, seçimlər və Son istifadə olunanlar arasında keçid edin",
+  "The next or the previous control; the arrow keys move within a part": "Növbəti və ya əvvəlki idarəetmə; ox düymələri bir hissənin içində hərəkət edir",
+  "Use the control that has the keyboard": "Klaviaturası olan idarəetməni istifadə edin",
+  "Back to the picture": "Şəklə qayıt",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Şəkil üzərində: seçilmiş işarəni daşıyın (Shift ilə on piksel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Lentin düymə hərflərini göstər: nişan açmaq və ya alət istifadə etmək üçün birini yazın",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Lent nişanlarının hərflərini görmək üçün basıb saxlayın; Alt və bir hərf həmin nişanı açır"
  }
 }

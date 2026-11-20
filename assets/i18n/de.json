@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Die Bildschirmfreigabe wurde nicht gestartet: Sie wurde im Dialog des Desktops abgebrochen, oder der Desktop hat keinen Grund genannt. Es wurde nichts freigegeben.",
   "The desktop's screen-sharing portal said no: {error}": "Das Portal des Desktops für die Bildschirmfreigabe hat abgelehnt: {error}",
   "More tabs": "Weitere Registerkarten",
-  "The groups that don't fit the window": "Die Gruppen, die nicht ins Fenster passen"
+  "The groups that don't fit the window": "Die Gruppen, die nicht ins Fenster passen",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Zwischen Menüband, Werkzeugen, Bild, Optionen und „Zuletzt“ wechseln",
+  "The next or the previous control; the arrow keys move within a part": "Das nächste oder vorige Steuerelement; die Pfeiltasten bewegen sich innerhalb eines Bereichs",
+  "Use the control that has the keyboard": "Das Steuerelement benutzen, das die Tastatur hat",
+  "Back to the picture": "Zurück zum Bild",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Im Bild: die gewählte Markierung verschieben (mit Shift um zehn Pixel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Tastenbuchstaben des Menübands zeigen: einen tippen, um ein Register zu öffnen oder ein Werkzeug zu nutzen",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Gedrückt halten, um die Buchstaben der Menüband-Register zu sehen; Alt und ein Buchstabe öffnen dieses Register"
  }
 }

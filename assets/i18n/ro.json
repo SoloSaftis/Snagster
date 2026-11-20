@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Partajarea ecranului nu a pornit: a fost anulată în dialogul desktopului sau desktopul nu a dat niciun motiv. Nu s-a partajat nimic.",
   "The desktop's screen-sharing portal said no: {error}": "Portalul desktopului pentru partajarea ecranului a refuzat: {error}",
   "More tabs": "Mai multe file",
-  "The groups that don't fit the window": "Grupurile care nu încap în fereastră"
+  "The groups that don't fit the window": "Grupurile care nu încap în fereastră",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Treceți între panglică, instrumente, imagine, opțiuni și Recente",
+  "The next or the previous control; the arrow keys move within a part": "Controlul următor sau cel anterior; tastele săgeată se mută în interiorul unei părți",
+  "Use the control that has the keyboard": "Folosiți controlul care are tastatura",
+  "Back to the picture": "Înapoi la imagine",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Pe imagine: mutați marcajul ales (cu Shift, zece pixeli)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Afișați literele panglicii: tastați una pentru a deschide o filă sau a folosi un instrument",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Țineți apăsat pentru a vedea literele filelor panglicii; Alt și o literă deschid acea filă"
  }
 }

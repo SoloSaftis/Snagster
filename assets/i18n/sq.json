@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ndarja e ekranit nuk filloi: u anulua në dialogun e desktopit, ose desktopi nuk dha asnjë arsye. Nuk u nda asgjë.",
   "The desktop's screen-sharing portal said no: {error}": "Portali i desktopit për ndarjen e ekranit tha jo: {error}",
   "More tabs": "Më shumë skeda",
-  "The groups that don't fit the window": "Grupet që nuk nxënë në dritare"
+  "The groups that don't fit the window": "Grupet që nuk nxënë në dritare",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Lëviz mes shiritit, mjeteve, imazhit, opsioneve dhe Të fundit",
+  "The next or the previous control; the arrow keys move within a part": "Kontrolli tjetër ose i mëparshmi; tastet e shigjetave lëvizin brenda një pjese",
+  "Use the control that has the keyboard": "Përdor kontrollin që ka tastierën",
+  "Back to the picture": "Kthehu te imazhi",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Te imazhi: lëvize shenjën e zgjedhur (me Shift, dhjetë piksele)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Shfaq shkronjat e shiritit: shkruaj një për të hapur një skedë ose për të përdorur një mjet",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Mbaje shtypur për të parë shkronjat e skedave të shiritit; Alt dhe një shkronjë e hapin atë skedë"
  }
 }

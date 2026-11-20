@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Il-qsim tal-iskrin ma bediex: ġie kkanċellat fid-djalogu tad-desktop, jew id-desktop ma ta ebda raġuni. Ma ġie kondiviż xejn.",
   "The desktop's screen-sharing portal said no: {error}": "Il-portal tad-desktop għall-qsim tal-iskrin qal le: {error}",
   "More tabs": "Aktar tabs",
-  "The groups that don't fit the window": "Il-gruppi li ma joqogħdux fit-tieqa"
+  "The groups that don't fit the window": "Il-gruppi li ma joqogħdux fit-tieqa",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Mexxi bejn ir-ribbon, l-għodod, l-immaġni, l-għażliet u Reċenti",
+  "The next or the previous control; the arrow keys move within a part": "Il-kontroll li jmiss jew ta’ qabel; il-ħotob tal-vleġeġ jiċċaqalqu ġol-parti",
+  "Use the control that has the keyboard": "Uża l-kontroll li għandu t-tastiera",
+  "Back to the picture": "Lura għall-immaġni",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Fuq l-immaġni: mexxi s-sinjal magħżul (b’Shift, għaxar pixels)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Uri l-ittri taċ-ċwievet tar-ribbon: ittajpja waħda biex tiftaħ tab jew tuża għodda",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Żomm biex tara l-ittri tat-tabs tar-ribbon; Alt u ittra jiftħu dik it-tab"
  }
 }

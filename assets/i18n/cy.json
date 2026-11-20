@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ni ddechreuodd rhannu'r sgrin: fe'i canslwyd yn nialog y bwrdd gwaith, neu ni roddodd y bwrdd gwaith unrhyw reswm. Ni rannwyd dim.",
   "The desktop's screen-sharing portal said no: {error}": "Dywedodd porth rhannu sgrin y bwrdd gwaith na: {error}",
   "More tabs": "Rhagor o dabiau",
-  "The groups that don't fit the window": "Y grwpiau nad ydynt yn ffitio yn y ffenestr"
+  "The groups that don't fit the window": "Y grwpiau nad ydynt yn ffitio yn y ffenestr",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Symud rhwng y rhuban, yr offer, y llun, y dewisiadau a Diweddar",
+  "The next or the previous control; the arrow keys move within a part": "Y rheolydd nesaf neu'r un blaenorol; mae'r bysellau saeth yn symud o fewn rhan",
+  "Use the control that has the keyboard": "Defnyddiwch y rheolydd sydd â'r bysellfwrdd",
+  "Back to the picture": "Yn ôl i'r llun",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Ar y llun: symud y marc a ddewiswyd (gyda Shift, deg picsel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Dangos llythrennau bysell y rhuban: teipiwch un i agor tab neu ddefnyddio offeryn",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Daliwch i weld llythrennau tabiau'r rhuban; mae Alt a llythyren yn agor y tab hwnnw"
  }
 }

@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekran paylaşımı başlamadı: masaüstünün iletişim kutusunda iptal edildi veya masaüstü bir neden belirtmedi. Hiçbir şey paylaşılmadı.",
   "The desktop's screen-sharing portal said no: {error}": "Masaüstünün ekran paylaşımı portalı hayır dedi: {error}",
   "More tabs": "Diğer sekmeler",
-  "The groups that don't fit the window": "Pencereye sığmayan gruplar"
+  "The groups that don't fit the window": "Pencereye sığmayan gruplar",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Şerit, araçlar, resim, seçenekler ve Son Kullanılanlar arasında geçin",
+  "The next or the previous control; the arrow keys move within a part": "Sonraki veya önceki denetim; ok tuşları bir bölümün içinde hareket eder",
+  "Use the control that has the keyboard": "Klavyenin olduğu denetimi kullanın",
+  "Back to the picture": "Resme dön",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Resimde: seçilen işareti taşıyın (Shift ile on piksel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Şeridin tuş harflerini göster: bir sekme açmak veya araç kullanmak için birini yazın",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Şerit sekmelerinin harflerini görmek için basılı tutun; Alt ve bir harf o sekmeyi açar"
  }
 }

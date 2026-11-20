@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Споделувањето на екранот не започна: беше откажано во дијалогот на работната површина или работната површина не наведе причина. Ништо не е споделено.",
   "The desktop's screen-sharing portal said no: {error}": "Порталот за споделување на екранот на работната површина одби: {error}",
   "More tabs": "Повеќе картички",
-  "The groups that don't fit the window": "Групите што не собираат во прозорецот"
+  "The groups that don't fit the window": "Групите што не собираат во прозорецот",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Движете се меѓу лентата, алатките, сликата, опциите и Неодамнешни",
+  "The next or the previous control; the arrow keys move within a part": "Следната или претходната контрола; стрелките се движат во еден дел",
+  "Use the control that has the keyboard": "Користете ја контролата што ја има тастатурата",
+  "Back to the picture": "Назад кон сликата",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "На сликата: преместете ја избраната ознака (со Shift, десет пиксели)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Прикажи ги буквите на лентата: впишете една за да отворите картичка или да користите алатка",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Држете за да ги видите буквите на картичките на лентата; Alt и буква ја отвораат таа картичка"
  }
 }

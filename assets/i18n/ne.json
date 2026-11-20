@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "स्क्रिन सेयरिङ सुरु भएन: यो डेस्कटपको डायलगमा रद्द गरिएको थियो, वा डेस्कटपले कुनै कारण दिएन। केही पनि सेयर गरिएन।",
   "The desktop's screen-sharing portal said no: {error}": "डेस्कटपको स्क्रिन सेयरिङ portal ले अस्वीकार गर्‍यो: {error}",
   "More tabs": "थप ट्याबहरू",
-  "The groups that don't fit the window": "विन्डोमा नअटाउने समूहहरू"
+  "The groups that don't fit the window": "विन्डोमा नअटाउने समूहहरू",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "रिबन, टुलहरू, तस्बिर, विकल्पहरू र हालैका बीच जानुहोस्",
+  "The next or the previous control; the arrow keys move within a part": "अर्को वा अघिल्लो नियन्त्रण; तीर कुञ्जीहरू एउटा भागभित्र चल्छन्",
+  "Use the control that has the keyboard": "किबोर्ड भएको नियन्त्रण प्रयोग गर्नुहोस्",
+  "Back to the picture": "तस्बिरमा फर्कनुहोस्",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "तस्बिरमा: रोजिएको चिन्ह सार्नुहोस् (Shift सहित, दश पिक्सेल)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "रिबनका कुञ्जी अक्षरहरू देखाउनुहोस्: ट्याब खोल्न वा टुल प्रयोग गर्न एउटा टाइप गर्नुहोस्",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "रिबन ट्याबका अक्षरहरू हेर्न थिचिराख्नुहोस्; Alt र एउटा अक्षरले त्यो ट्याब खोल्छ"
  }
 }

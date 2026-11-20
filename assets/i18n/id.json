@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Berbagi layar tidak dimulai: dibatalkan di dialog desktop, atau desktop tidak memberikan alasan. Tidak ada yang dibagikan.",
   "The desktop's screen-sharing portal said no: {error}": "Portal berbagi layar desktop menolak: {error}",
   "More tabs": "Tab lainnya",
-  "The groups that don't fit the window": "Grup yang tidak muat di jendela"
+  "The groups that don't fit the window": "Grup yang tidak muat di jendela",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Berpindah antara ribbon, alat, gambar, opsi, dan Terbaru",
+  "The next or the previous control; the arrow keys move within a part": "Kontrol berikutnya atau sebelumnya; tombol panah bergerak di dalam satu bagian",
+  "Use the control that has the keyboard": "Gunakan kontrol yang memegang papan ketik",
+  "Back to the picture": "Kembali ke gambar",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Di gambar: geser tanda yang dipilih (dengan Shift, sepuluh piksel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Tampilkan huruf pintasan ribbon: ketik satu untuk membuka tab atau memakai alat",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Tahan untuk melihat huruf tab ribbon; Alt dan satu huruf membuka tab itu"
  }
 }

@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Η κοινή χρήση οθόνης δεν ξεκίνησε: ακυρώθηκε στο παράθυρο διαλόγου της επιφάνειας εργασίας ή η επιφάνεια εργασίας δεν έδωσε κανέναν λόγο. Δεν κοινοποιήθηκε τίποτα.",
   "The desktop's screen-sharing portal said no: {error}": "Το portal κοινής χρήσης οθόνης της επιφάνειας εργασίας αρνήθηκε: {error}",
   "More tabs": "Περισσότερες καρτέλες",
-  "The groups that don't fit the window": "Οι ομάδες που δεν χωρούν στο παράθυρο"
+  "The groups that don't fit the window": "Οι ομάδες που δεν χωρούν στο παράθυρο",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Μετακίνηση ανάμεσα στην κορδέλα, τα εργαλεία, την εικόνα, τις επιλογές και τα Πρόσφατα",
+  "The next or the previous control; the arrow keys move within a part": "Το επόμενο ή το προηγούμενο στοιχείο ελέγχου· τα βέλη μετακινούνται μέσα σε ένα τμήμα",
+  "Use the control that has the keyboard": "Χρήση του στοιχείου ελέγχου που έχει το πληκτρολόγιο",
+  "Back to the picture": "Επιστροφή στην εικόνα",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Στην εικόνα: μετακίνηση του επιλεγμένου σημείου (με Shift, δέκα pixel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Εμφάνιση των γραμμάτων της κορδέλας: πληκτρολογήστε ένα για να ανοίξετε μια καρτέλα ή να χρησιμοποιήσετε εργαλείο",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Κρατήστε πατημένο για να δείτε τα γράμματα των καρτελών· Alt και ένα γράμμα ανοίγουν την καρτέλα"
  }
 }

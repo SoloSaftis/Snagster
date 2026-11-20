@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Screen sharing didn't start: it was cancelled in the desktop's dialogue, or the desktop gave no reason. Nothing was shared.",
   "The desktop's screen-sharing portal said no: {error}": "The desktop's screen-sharing portal said no: {error}",
   "More tabs": "More tabs",
-  "The groups that don't fit the window": "The groups that don't fit the window"
+  "The groups that don't fit the window": "The groups that don't fit the window",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Move between the ribbon, the tools, the picture, the options and Recent",
+  "The next or the previous control; the arrow keys move within a part": "The next or the previous control; the arrow keys move within a part",
+  "Use the control that has the keyboard": "Use the control that has the keyboard",
+  "Back to the picture": "Back to the picture",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "On the picture: move the picked mark (with Shift, ten pixels)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Show the ribbon's key letters: type one to open a tab or use a tool",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab"
  }
 }

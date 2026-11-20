@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "സ്ക്രീൻ പങ്കിടൽ ആരംഭിച്ചില്ല: ഡെസ്ക്ടോപ്പിന്റെ ഡയലോഗിൽ അത് റദ്ദാക്കി, അല്ലെങ്കിൽ ഡെസ്ക്ടോപ്പ് കാരണമൊന്നും നൽകിയില്ല. ഒന്നും പങ്കിട്ടിട്ടില്ല.",
   "The desktop's screen-sharing portal said no: {error}": "ഡെസ്ക്ടോപ്പിന്റെ സ്ക്രീൻ പങ്കിടൽ portal വിസമ്മതിച്ചു: {error}",
   "More tabs": "കൂടുതൽ ടാബുകൾ",
-  "The groups that don't fit the window": "വിൻഡോയിൽ ഒതുങ്ങാത്ത ഗ്രൂപ്പുകൾ"
+  "The groups that don't fit the window": "വിൻഡോയിൽ ഒതുങ്ങാത്ത ഗ്രൂപ്പുകൾ",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "റിബൺ, ടൂളുകൾ, ചിത്രം, ഓപ്ഷനുകൾ, സമീപകാലം എന്നിവയ്ക്കിടയിൽ നീങ്ങുക",
+  "The next or the previous control; the arrow keys move within a part": "അടുത്തതോ മുമ്പത്തെയോ നിയന്ത്രണം; ആരോ കീകൾ ഒരു ഭാഗത്തിനുള്ളിൽ നീങ്ങുന്നു",
+  "Use the control that has the keyboard": "കീബോർഡ് ഉള്ള നിയന്ത്രണം ഉപയോഗിക്കുക",
+  "Back to the picture": "ചിത്രത്തിലേക്ക് മടങ്ങുക",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "ചിത്രത്തിൽ: തിരഞ്ഞെടുത്ത അടയാളം നീക്കുക (Shift ഉപയോഗിച്ച് പത്ത് പിക്സൽ)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "റിബണിന്റെ കീ അക്ഷരങ്ങൾ കാണിക്കുക: ടാബ് തുറക്കാനോ ടൂൾ ഉപയോഗിക്കാനോ ഒന്ന് ടൈപ്പ് ചെയ്യുക",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "റിബൺ ടാബുകളുടെ അക്ഷരങ്ങൾ കാണാൻ അമർത്തിപ്പിടിക്കുക; Alt-ഉം ഒരു അക്ഷരവും ആ ടാബ് തുറക്കുന്നു"
  }
 }

@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "การแชร์หน้าจอไม่ได้เริ่มขึ้น: ถูกยกเลิกในกล่องโต้ตอบของเดสก์ท็อป หรือเดสก์ท็อปไม่ได้ระบุเหตุผล ไม่มีการแชร์สิ่งใด",
   "The desktop's screen-sharing portal said no: {error}": "พอร์ทัล (portal) แชร์หน้าจอของเดสก์ท็อปปฏิเสธ: {error}",
   "More tabs": "แท็บเพิ่มเติม",
-  "The groups that don't fit the window": "กลุ่มที่ไม่พอดีกับหน้าต่าง"
+  "The groups that don't fit the window": "กลุ่มที่ไม่พอดีกับหน้าต่าง",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "สลับระหว่างริบบิน เครื่องมือ รูปภาพ ตัวเลือก และล่าสุด",
+  "The next or the previous control; the arrow keys move within a part": "ตัวควบคุมถัดไปหรือก่อนหน้า; ปุ่มลูกศรเลื่อนภายในส่วนหนึ่ง",
+  "Use the control that has the keyboard": "ใช้ตัวควบคุมที่มีแป้นพิมพ์อยู่",
+  "Back to the picture": "กลับไปที่รูปภาพ",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "บนรูปภาพ: ย้ายเครื่องหมายที่เลือก (กับ Shift สิบพิกเซล)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "แสดงตัวอักษรคีย์ของริบบิน: พิมพ์หนึ่งตัวเพื่อเปิดแท็บหรือใช้เครื่องมือ",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "กดค้างเพื่อดูตัวอักษรของแท็บริบบิน; Alt กับตัวอักษรจะเปิดแท็บนั้น"
  }
 }

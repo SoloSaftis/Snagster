@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Níor thosaigh an roinnt scáileáin: cuireadh ar ceal í i ndialóg an deisce, nó níor thug an deasc aon chúis. Níor roinneadh aon rud.",
   "The desktop's screen-sharing portal said no: {error}": "Dúirt tairseach roinnte scáileáin an deisce níl: {error}",
   "More tabs": "Tuilleadh cluaisíní",
-  "The groups that don't fit the window": "Na grúpaí nach n-oireann don fhuinneog"
+  "The groups that don't fit the window": "Na grúpaí nach n-oireann don fhuinneog",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Bog idir an ribín, na huirlisí, an pictiúr, na roghanna agus Le déanaí",
+  "The next or the previous control; the arrow keys move within a part": "An chéad rialú eile nó an rialú roimhe; bogann na heochracha saighde laistigh de chuid",
+  "Use the control that has the keyboard": "Úsáid an rialú a bhfuil an méarchlár aige",
+  "Back to the picture": "Ar ais go dtí an pictiúr",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Ar an bpictiúr: bog an marc roghnaithe (le Shift, deich bpixeal)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Taispeáin litreacha eochrach an ribín: clóscríobh ceann chun cluaisín a oscailt nó uirlis a úsáid",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Coinnigh síos chun litreacha chluaisíní an ribín a fheiceáil; osclaíonn Alt agus litir an cluaisín sin"
  }
 }

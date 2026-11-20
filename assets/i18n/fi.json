@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Näytön jakaminen ei käynnistynyt: se peruttiin työpöydän valintaikkunassa, tai työpöytä ei kertonut syytä. Mitään ei jaettu.",
   "The desktop's screen-sharing portal said no: {error}": "Työpöydän näytönjakoportaali kieltäytyi: {error}",
   "More tabs": "Lisää välilehtiä",
-  "The groups that don't fit the window": "Ryhmät, jotka eivät mahdu ikkunaan"
+  "The groups that don't fit the window": "Ryhmät, jotka eivät mahdu ikkunaan",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Siirry nauhan, työkalujen, kuvan, asetusten ja Viimeisimpien välillä",
+  "The next or the previous control; the arrow keys move within a part": "Seuraava tai edellinen ohjausobjekti; nuolinäppäimet liikkuvat osan sisällä",
+  "Use the control that has the keyboard": "Käytä ohjausobjektia, jolla on näppäimistö",
+  "Back to the picture": "Takaisin kuvaan",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Kuvassa: siirrä valittua merkintää (Shiftillä kymmenen pikseliä)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Näytä nauhan pikanäppäinkirjaimet: kirjoita yksi avataksesi välilehden tai käyttääksesi työkalua",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Pidä painettuna nähdäksesi nauhan välilehtien kirjaimet; Alt ja kirjain avaa kyseisen välilehden"
  }
 }

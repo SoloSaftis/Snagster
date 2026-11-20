@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Споделянето на екрана не започна: било е отменено в диалоговия прозорец на работния плот или работният плот не е посочил причина. Нищо не беше споделено.",
   "The desktop's screen-sharing portal said no: {error}": "Порталът за споделяне на екрана на работния плот отказа: {error}",
   "More tabs": "Още раздели",
-  "The groups that don't fit the window": "Групите, които не се побират в прозореца"
+  "The groups that don't fit the window": "Групите, които не се побират в прозореца",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Преминавайте между лентата, инструментите, изображението, опциите и Скорошни",
+  "The next or the previous control; the arrow keys move within a part": "Следващият или предишният контрол; клавишите със стрелки се движат в рамките на една част",
+  "Use the control that has the keyboard": "Използвайте контрола, който има клавиатурата",
+  "Back to the picture": "Обратно към изображението",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Върху изображението: преместете избрания знак (със Shift — десет пиксела)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Показване на буквите на лентата: въведете една, за да отворите раздел или да използвате инструмент",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Задръжте, за да видите буквите на разделите на лентата; Alt и буква отварят този раздел"
  }
 }

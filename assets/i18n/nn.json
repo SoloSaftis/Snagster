@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skjermdelinga starta ikkje: ho vart avbroten i dialogen til skrivebordet, eller skrivebordet oppgav inga årsak. Ingenting vart delt.",
   "The desktop's screen-sharing portal said no: {error}": "Skjermdelingsportalen til skrivebordet sa nei: {error}",
   "More tabs": "Fleire faner",
-  "The groups that don't fit the window": "Gruppene som ikkje får plass i vindauget"
+  "The groups that don't fit the window": "Gruppene som ikkje får plass i vindauget",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Flytt mellom båndet, verktøya, biletet, alternativa og Nyleg",
+  "The next or the previous control; the arrow keys move within a part": "Neste eller førre kontroll; piltastane flyttar seg innanfor ein del",
+  "Use the control that has the keyboard": "Bruk kontrollen som har tastaturet",
+  "Back to the picture": "Tilbake til biletet",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "På biletet: flytt den valde markeringa (med Shift, ti pikslar)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Vis snøggtastbokstavane på båndet: skriv éin for å opne ei fane eller bruke eit verktøy",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Hald inne for å sjå bokstavane på fanene i båndet; Alt og ein bokstav opnar den fana"
  }
 }

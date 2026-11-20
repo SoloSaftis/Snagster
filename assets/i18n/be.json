@@ -1026,6 +1026,13 @@
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Абагульванне экрана не пачалося: яго скасавалі ў дыялогу працоўнага стала, або працоўны стол не паведаміў прычыну. Нічога не было абагулена.",
   "The desktop's screen-sharing portal said no: {error}": "Парталь абагульвання экрана працоўнага стала адмовіў: {error}",
   "More tabs": "Больш укладак",
-  "The groups that don't fit the window": "Групы, якія не змяшчаюцца ў акне"
+  "The groups that don't fit the window": "Групы, якія не змяшчаюцца ў акне",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Пераходзьце паміж стужкай, інструментамі, відарысам, параметрамі і нядаўнімі",
+  "The next or the previous control; the arrow keys move within a part": "Наступны або папярэдні элемент кіравання; стрэлкі рухаюцца ў межах часткі",
+  "Use the control that has the keyboard": "Выкарыстоўвайце элемент кіравання, у якога фокус клавіятуры",
+  "Back to the picture": "Назад да відарыса",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "На відарысе: перасуньце выбраную пазнаку (з Shift — на дзесяць пікселяў)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Паказаць літары стужкі: набярыце адну, каб адкрыць укладку або выкарыстаць інструмент",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Утрымлівайце, каб убачыць літары ўкладак стужкі; Alt і літара адкрываюць гэту ўкладку"
  }
 }

@@ -50,6 +50,7 @@ pub(crate) mod stream_ui;
 pub(crate) mod updates_ui;
 pub(crate) mod commands_ui;
 pub(crate) mod deleted_ui;
+pub(crate) mod keys_ui;
 #[cfg(any(target_os = "macos", test))]
 pub(crate) mod menubar_ui;
 /// The editor window's smallest size (lifted while it is the panel or the recording bar).
@@ -2385,7 +2386,9 @@ impl SnagApp {
     // ---------- keyboard ----------
 
     fn shortcuts(&mut self, ctx: &egui::Context) {
-        let typing = self.text_edit.is_some() || ctx.memory(|m| m.focused().is_some());
+        // Only a text field takes the keys: with a button, a tool or the picture focused (F6, key
+        // tips) the shortcuts still work, as in GTK, Qt and Windows apps.
+        let typing = self.text_edit.is_some() || ctx.text_edit_focused();
         let consume = |m: Modifiers, k: Key| ctx.input_mut(|i| i.consume_key(m, k));
         if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z) || consume(Modifiers::COMMAND, Key::Y) {
             self.redo();
@@ -3103,12 +3106,14 @@ impl SnagApp {
     /// the button that shows the folded options panel.
     fn tool_bar(&mut self, ui: &mut egui::Ui, options_button: bool) {
         ui.add_space(6.0);
+        keys_ui::set_scope(ui, Some(keys_ui::Scope::Tools));
         if options_button {
             let on = self.x.narrow_options;
             let label = crate::i18n::t("Options panel");
             let (rect, resp) = ui.allocate_exact_size(vec2(grown(110.0, 108.0), grown(28.0, 12.0)), Sense::click());
             let resp = resp.on_hover_text(crate::i18n::t("Colours, sizes and styles on the right"));
             resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
+            keys_ui::note(ui, &resp, label, true, on);
             let bg = if on { pal().accent } else if resp.hovered() { pal().panel_hi } else { Color32::TRANSPARENT };
             ui.painter().rect_filled(rect.shrink(1.0), CornerRadius::same(4), bg);
             let fg = if on { pal().on_accent } else { pal().text };
@@ -3125,6 +3130,7 @@ impl SnagApp {
             ui.add_space(4.0);
         }
         egui::ScrollArea::vertical().id_salt("tools-scroll").show(ui, |ui| self.tool_grid(ui));
+        keys_ui::set_scope(ui, None);
     }
 
     fn tool_grid(&mut self, ui: &mut egui::Ui) {
@@ -3151,6 +3157,8 @@ impl SnagApp {
                 let size = if w > room { (10.0 * room / w).max(7.0) } else { 10.0 };
                 ui.painter().text(pos2(rect.center().x, rect.bottom() - 8.0), Align2::CENTER_CENTER, name, FontId::proportional(size), fg);
                 let resp = resp.on_hover_text(format!("{} ({})\n{}", crate::i18n::t(t.label()), t.key(), crate::i18n::t(t.hint())));
+                resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::RadioButton, true, selected, name));
+                keys_ui::note(ui, &resp, name, true, selected);
                 if resp.clicked() {
                     self.commit_text();
                     self.tool = t;
@@ -3518,6 +3526,7 @@ impl SnagApp {
                 folders.dedup();
                 self.earlier.poll(&ctx, folders);
             }
+            keys_ui::set_scope(ui, Some(keys_ui::Scope::Recent));
             egui::ScrollArea::horizontal().show(ui, |ui| {
                 // Top-aligned: a taller tile (Earlier's, with its label) doesn't push the others down.
                 ui.horizontal_top(|ui| {
@@ -3526,12 +3535,14 @@ impl SnagApp {
                     }
                     for i in (0..self.entries.len()).rev() {
                         let (rect, resp) = ui.allocate_exact_size(vec2(124.0, grown(84.0, 20.0)), Sense::click());
+                        let is_cur = self.current == Some(i);
+                        resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, is_cur, &self.entries[i].name));
+                        keys_ui::note(ui, &resp, &self.entries[i].name, true, is_cur);
                         // Pictures scrolled out of view aren't drawn (their textures can go).
                         if !ui.is_rect_visible(rect) {
                             continue;
                         }
                         let tex = self.entries[i].texture(&ctx);
-                        let is_cur = self.current == Some(i);
                         let thumb_area = Rect::from_min_size(rect.min + vec2(4.0, 4.0), vec2(116.0, 58.0));
                         let size = self.entries[i].doc.size();
                         let s = (thumb_area.width() / size.x).min(thumb_area.height() / size.y);
@@ -3576,6 +3587,7 @@ impl SnagApp {
                     open_earlier = self.earlier_tiles(ui);
                 });
             });
+            keys_ui::set_scope(ui, None);
             if let Some(item) = open_earlier {
                 match self.entries.iter().position(|e| e.path.as_deref() == Some(item.path.as_path())) {
                     Some(i) => switch = Some(i),
@@ -3645,6 +3657,9 @@ impl SnagApp {
             p.text(pos2(rect.center().x, rect.bottom() - grown(10.0, 8.0)), Align2::CENTER_CENTER, name, FontId::proportional(11.5), pal().dim);
             let tip = if it.video { crate::i18n::t("Play this video") } else { crate::i18n::t("Open this picture") };
             let resp = resp.on_hover_text(format!("{tip}\n{}", it.path.display()));
+            let name = it.name();
+            resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &name));
+            keys_ui::note(ui, &resp, &name, true, false);
             if resp.clicked() {
                 pick = Some(it.clone());
             }
@@ -3777,6 +3792,9 @@ impl SnagApp {
         let mut origin = canvas_origin(area.center(), size, scale, self.pan);
 
         let resp = ui.allocate_rect(area, Sense::click_and_drag());
+        self.canvas_here(resp.id);
+        let name = self.entries[ci].name.clone();
+        resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, &name));
         let shift = ui.input(|i| i.modifiers.shift);
 
         if resp.hovered() {
@@ -4569,28 +4587,39 @@ impl SnagApp {
         for p in dropped {
             self.open_path(&p);
         }
+        // F6, the arrows and the key tips first: the keys they take are not shortcuts.
+        self.keys_begin(&ctx);
         self.shortcuts(&ctx);
 
         egui::Panel::top("ribbon")
             .frame(egui::Frame::new().fill(crate::look::pal().band))
-            .show(ui, |ui| self.ribbon(ui));
+            .show(ui, |ui| {
+                self.pane_here(ui, keys_ui::Pane::Ribbon, ui.max_rect());
+                self.ribbon(ui)
+            });
         self.language_window(&ctx);
         self.update_window(&ctx);
         self.stream_confirm_window(&ctx);
         self.screen_access_window(&ctx);
         if self.x.tab == ribbon::RibbonTab::Studio {
+            // Studio: the ribbon and the studio, F6 goes between them.
+            self.pane_here(ui, keys_ui::Pane::Canvas, ui.available_rect_before_wrap());
             self.studio_view(ui);
             self.dialog_window(&ctx);
             self.settings_window(&ctx);
             self.help_windows(&ctx);
             self.library_window(&ctx);
+            self.keys_end(&ctx);
             return;
         }
         if self.settings.show_tray {
             egui::Panel::bottom("tray")
                 .exact_size(grown(112.0, 36.0))
                 .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(4, 6)))
-                .show(ui, |ui| self.tray(ui));
+                .show(ui, |ui| {
+                    self.pane_here(ui, keys_ui::Pane::Recent, ui.max_rect());
+                    self.tray(ui)
+                });
         }
         // A narrow window (Snap's half or third of the screen) keeps the picture in view: the
         // options panel folds away behind a button above the tools.
@@ -4599,15 +4628,24 @@ impl SnagApp {
             .exact_size(grown(118.0, 108.0))
             .resizable(false)
             .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(4, 0)))
-            .show(ui, |ui| self.tool_bar(ui, narrow && self.settings.show_side_panel));
+            .show(ui, |ui| {
+                self.pane_here(ui, keys_ui::Pane::Tools, ui.max_rect());
+                self.tool_bar(ui, narrow && self.settings.show_side_panel)
+            });
         if self.settings.show_side_panel && (!narrow || self.x.narrow_options) {
             egui::Panel::right("props")
                 .exact_size(grown(230.0, 180.0))
                 .resizable(false)
                 .frame(egui::Frame::new().fill(pal().panel).inner_margin(egui::Margin::symmetric(14, 6)))
-                .show(ui, |ui| self.side_panel(ui));
+                .show(ui, |ui| {
+                    self.pane_here(ui, keys_ui::Pane::Options, ui.max_rect());
+                    self.side_panel(ui)
+                });
         }
-        egui::CentralPanel::default().frame(egui::Frame::new().fill(pal().bg)).show(ui, |ui| self.canvas(ui));
+        egui::CentralPanel::default().frame(egui::Frame::new().fill(pal().bg)).show(ui, |ui| {
+            self.pane_here(ui, keys_ui::Pane::Canvas, ui.max_rect());
+            self.canvas(ui)
+        });
 
         self.dialog_window(&ctx);
         self.settings_window(&ctx);
@@ -4617,6 +4655,7 @@ impl SnagApp {
         self.timer_window(&ctx);
         self.text_window(&ctx);
         self.show_pins(&ctx);
+        self.keys_end(&ctx);
     }
 }
 
