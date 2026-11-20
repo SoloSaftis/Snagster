@@ -694,6 +694,87 @@ impl Client {
     }
 }
 
+/// Fuzz targets (`src/fuzz.rs`): what a streaming server sends back. `stream_rtmp` is the
+/// chunk stream, arriving in pieces of any size, and the commands in it; `stream_amf` the
+/// AMF0 values inside commands on their own.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::Target;
+
+    fn server_talk() -> Vec<u8> {
+        let mut b = encode_chunks(&Message::control(MSG_WINDOW_ACK_SIZE, 2_500_000u32.to_be_bytes().to_vec()), 128);
+        b.extend(encode_chunks(&Message::control(MSG_SET_CHUNK_SIZE, 300u32.to_be_bytes().to_vec()), 128));
+        let ok = Amf::Object(vec![("fmsVer".into(), Amf::str("FMS/3,0,1,123"))]);
+        b.extend(encode_chunks(&Message::command(3, 0, &[Amf::str("_result"), Amf::Number(1.0), ok, Amf::Null]), 300));
+        let status = Amf::Object(vec![("level".into(), Amf::str("error")), ("code".into(), Amf::str("NetStream.Publish.BadName")), ("description".into(), Amf::str("x"))]);
+        b.extend(encode_chunks(&Message::command(5, 1, &[Amf::str("onStatus"), Amf::Number(0.0), Amf::Null, status]), 300));
+        b.extend(encode_chunks(&Message::new(6, MSG_VIDEO, 1, 0x0100_0000, vec![7; 700]), 300));
+        b.extend(encode_chunks(&Message::control(MSG_USER_CONTROL, vec![0, 6, 0, 0, 4, 0xD2]), 300));
+        b
+    }
+
+    fn amf_sample() -> Vec<u8> {
+        amf::encode(&[
+            Amf::str("_error"),
+            Amf::Number(2.0),
+            Amf::Object(vec![("fmsVer".into(), Amf::str("FMS/3,0,1,123")), ("caps".into(), Amf::Number(31.0))]),
+            Amf::EcmaArray(vec![("level".into(), Amf::str("status")), ("deep".into(), Amf::Object(vec![("x".into(), Amf::Null)]))]),
+            Amf::StrictArray(vec![Amf::Bool(true), Amf::Undefined, Amf::Date(1.0)]),
+            Amf::Str("long ".repeat(20)),
+        ])
+    }
+
+    pub fn targets() -> Vec<Target> {
+        vec![
+            Target {
+                name: "stream_rtmp",
+                seeds: || vec![server_talk()],
+                words: || ["_result", "_error", "onStatus", "level", "code", "description", "\u{ff}\u{ff}\u{ff}"].iter().map(|s| s.to_string()).collect(),
+                run: |b| {
+                    // The piece size comes from the input too (the last byte), so every split is tried.
+                    let piece = 1 + *b.last().unwrap_or(&0) as usize;
+                    let mut r = ChunkReader::default();
+                    let mut n = 0;
+                    'feed: for p in b.chunks(piece) {
+                        r.feed(p);
+                        loop {
+                            match r.next() {
+                                Ok(Some(m)) => {
+                                    assert!(m.payload.len() <= MAX_IN_MESSAGE);
+                                    if m.type_id == MSG_COMMAND_AMF0
+                                        && let Ok(v) = amf::decode_all(&m.payload)
+                                    {
+                                        let _ = (v.first().and_then(Amf::as_str), v.get(1).and_then(Amf::as_number), describe(v.get(3)), v[2.min(v.len())..].to_vec());
+                                    }
+                                    n += 1;
+                                }
+                                Ok(None) => break,
+                                Err(_) => break 'feed,
+                            }
+                        }
+                    }
+                    assert!(n <= b.len(), "every message takes at least a byte");
+                },
+                budget: |n| 64 * 1024 + 4 * n,
+            },
+            Target {
+                name: "stream_amf",
+                seeds: || vec![amf_sample()],
+                words: || ["\u{2}", "\u{3}", "\u{8}", "\u{a}", "\u{c}", "\u{0}\u{0}\u{9}"].iter().map(|s| s.to_string()).collect(),
+                run: |b| {
+                    if let Ok(vals) = amf::decode_all(b) {
+                        // Encoding what was read gives something that reads back the same.
+                        let again = amf::encode(&vals);
+                        assert_eq!(amf::encode(&amf::decode_all(&again).unwrap()), again);
+                    }
+                },
+                budget: |n| 64 * 1024 + 64 * n,
+            },
+        ]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

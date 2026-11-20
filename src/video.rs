@@ -3222,8 +3222,22 @@ mod soft {
     pub fn probe(path: &std::path::Path) -> Result<Probe, String> {
         let f = std::fs::File::open(path).map_err(|e| e.to_string())?;
         let size = f.metadata().map_err(|e| e.to_string())?.len();
-        let r = mp4::Mp4Reader::read_header(std::io::BufReader::new(f), size).map_err(|e| e.to_string())?;
+        super::mp4_probe(std::io::BufReader::new(f), size)
+    }
+}
+
+/// What an MP4 file's header says, read with the mp4 crate (how Linux and macOS look at a
+/// video; Windows asks Media Foundation). Built into Windows tests too, for the fuzz target.
+#[cfg(any(not(windows), test))]
+fn mp4_probe<R: std::io::Read + std::io::Seek>(reader: R, size: u64) -> Result<Probe, String> {
+    // The mp4 crate panics on some broken files (a time scale of 0 divides by zero): a broken
+    // video is an error, never a crash.
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let r = mp4::Mp4Reader::read_header(Bounded::new(reader, size), size).map_err(|e| e.to_string())?;
         let t = r.tracks().get(&1).ok_or("no video track")?;
+        if t.timescale() == 0 {
+            return Err("the video is broken (its time scale is 0)".to_string());
+        }
         Ok(Probe {
             width: t.width() as u32,
             height: t.height() as u32,
@@ -3232,6 +3246,126 @@ mod soft {
             first: None,
             audio: r.tracks().len() > 1,
         })
+    }))
+    .unwrap_or_else(|_| Err("the video is broken".to_string()))
+}
+
+/// A file read for the mp4 crate that fails once far more was read, or the place moved far
+/// more often, than reading a file of this size can need. The crate reads some broken files in
+/// circles for ever (a box of size 0 inside `moov` sends it back to the same header again and
+/// again); this turns that into an error.
+#[cfg(any(not(windows), test))]
+struct Bounded<R> {
+    inner: R,
+    read_left: u64,
+    seeks_left: u64,
+}
+
+#[cfg(any(not(windows), test))]
+impl<R> Bounded<R> {
+    fn new(inner: R, size: u64) -> Self {
+        // Every byte read about once, every box looked at a few times, and room to spare.
+        Bounded { inner, read_left: size.saturating_mul(2).saturating_add(64 * 1024), seeks_left: (size / 2).saturating_add(4096) }
+    }
+
+    fn circles() -> std::io::Error {
+        std::io::Error::new(std::io::ErrorKind::InvalidData, "the file is broken (reading it goes round in circles)")
+    }
+}
+
+#[cfg(any(not(windows), test))]
+impl<R: std::io::Read> std::io::Read for Bounded<R> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        if self.read_left == 0 {
+            return Err(Self::circles());
+        }
+        let n = self.inner.read(buf)?;
+        self.read_left = self.read_left.saturating_sub(n.max(1) as u64);
+        Ok(n)
+    }
+}
+
+#[cfg(any(not(windows), test))]
+impl<R: std::io::Seek> std::io::Seek for Bounded<R> {
+    fn seek(&mut self, to: std::io::SeekFrom) -> std::io::Result<u64> {
+        if self.seeks_left == 0 {
+            return Err(Self::circles());
+        }
+        self.seeks_left -= 1;
+        self.inner.seek(to)
+    }
+}
+
+/// Fuzz target (`src/fuzz.rs`): a video file someone hands to video_info or the editor.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::Target;
+
+    /// A small MP4 with two H.264 samples (the parameter sets are plausible, not decodable).
+    pub fn small_mp4() -> Vec<u8> {
+        let config = mp4::Mp4Config { major_brand: mp4::FourCC::from(*b"isom"), minor_version: 512, compatible_brands: vec![mp4::FourCC::from(*b"isom"), mp4::FourCC::from(*b"avc1")], timescale: 1000 };
+        let mut m = mp4::Mp4Writer::write_start(std::io::Cursor::new(Vec::new()), &config).unwrap();
+        m.add_track(&mp4::TrackConfig {
+            track_type: mp4::TrackType::Video,
+            timescale: 1000,
+            language: "und".into(),
+            media_conf: mp4::MediaConfig::AvcConfig(mp4::AvcConfig { width: 16, height: 16, seq_param_set: vec![0x67, 0x42, 0xC0, 0x1F, 0xDA], pic_param_set: vec![0x68, 0xCE, 0x3C, 0x80] }),
+        })
+        .unwrap();
+        for i in 0..2u64 {
+            m.write_sample(1, &mp4::Mp4Sample { start_time: i * 33, duration: 33, rendering_offset: 0, is_sync: i == 0, bytes: vec![0, 0, 0, 4, 0x65, 1, 2, 3].into() }).unwrap();
+        }
+        m.write_end().unwrap();
+        m.into_writer().into_inner()
+    }
+
+    pub fn targets() -> Vec<Target> {
+        vec![Target {
+            name: "video_probe",
+            seeds: || vec![small_mp4()],
+            words: || ["ftyp", "moov", "mvhd", "trak", "tkhd", "mdia", "mdhd", "hdlr", "minf", "stbl", "stsd", "avc1", "avcC", "stts", "stsz", "stsc", "stco", "co64", "mdat", "\u{ff}\u{ff}\u{ff}\u{ff}"].iter().map(|s| s.to_string()).collect(),
+            run: |b| {
+                let _ = mp4_probe(std::io::Cursor::new(b), b.len() as u64);
+            },
+            budget: |n| (16 << 20) + 64 * n,
+        }]
+    }
+
+    /// Bug (found by the fuzz test): a 658-byte file whose `moov` held a box of size 0 after
+    /// `mvhd` made the mp4 crate read the same header for ever, so video_info (and opening the
+    /// video on Linux and macOS) never came back.
+    #[test]
+    fn a_box_of_size_zero_is_an_error_not_a_hang() {
+        let good = small_mp4();
+        assert_eq!(mp4_probe(std::io::Cursor::new(&good), good.len() as u64).unwrap().width, 16);
+        let at = |name: &[u8]| good.windows(4).position(|w| w == name).unwrap() - 4;
+        let size = |o: usize| u32::from_be_bytes(good[o..o + 4].try_into().unwrap()) as usize;
+        let (moov, mvhd) = (at(b"moov"), at(b"mvhd"));
+        let mut broken = good[..moov].to_vec();
+        let inner = [&good[mvhd..mvhd + size(mvhd)], &[0, 0, 0, 0, b'f', b'r', b'e', b'e'][..]].concat();
+        broken.extend(((inner.len() + 8) as u32).to_be_bytes());
+        broken.extend(b"moov");
+        broken.extend(inner);
+        // On a thread of its own, so the test fails (rather than hangs) if it reads in circles.
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let _ = tx.send(mp4_probe(std::io::Cursor::new(&broken), broken.len() as u64));
+        });
+        let e = rx.recv_timeout(std::time::Duration::from_secs(10)).expect("the probe came back").unwrap_err();
+        assert!(e.contains("circles"), "{e}");
+    }
+
+    /// Bug (found by the fuzz test): a 659-byte MP4 whose track's time scale was 0 made the
+    /// mp4 crate divide by zero (a panic) while video_info looked at it.
+    #[test]
+    fn a_time_scale_of_zero_is_an_error_not_a_panic() {
+        let mut b = small_mp4();
+        // mdhd: size, "mdhd", version and flags, created, modified, then the time scale.
+        let at = b.windows(4).position(|w| w == b"mdhd").unwrap() + 4 + 4 + 8;
+        b[at..at + 4].copy_from_slice(&0u32.to_be_bytes());
+        let e = mp4_probe(std::io::Cursor::new(&b), b.len() as u64).unwrap_err();
+        assert!(e.contains("broken"), "{e}");
     }
 }
 

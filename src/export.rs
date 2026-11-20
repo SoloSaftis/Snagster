@@ -219,6 +219,9 @@ pub fn save_doc(d: &Doc, name: &str, path: &Path, s: &crate::settings::Settings)
     }
 }
 
+/// How wide a one-picture guide is.
+pub const GUIDE_WIDTH: u32 = 1200;
+
 /// Save a step-by-step guide; the extension picks the format: .pdf, .html, .docx, or one tall
 /// picture (.png, .jpg).
 pub fn save_guide(title: &str, steps: &[(String, RgbaImage)], path: &Path, jpeg_quality: u8) -> Result<(), String> {
@@ -242,7 +245,7 @@ pub fn save_guide(title: &str, steps: &[(String, RgbaImage)], path: &Path, jpeg_
         "html" | "htm" => std::fs::write(path, html_guide(title, steps)?).map_err(|e| e.to_string()),
         "docx" => docx(title, steps, path),
         _ => {
-            let page = crate::effects::guide_page(title, steps, 1200).ok_or("couldn't lay out the page")?;
+            let page = crate::effects::guide_page(title, steps, GUIDE_WIDTH).ok_or("the guide is too long for one picture; save it as a PDF or a web page (html) instead")?;
             save_image(&page, path, jpeg_quality)
         }
     }
@@ -294,10 +297,68 @@ fn decode_limit(len: usize) -> u64 {
     ((64u64 << 20) + len as u64 * 4096).min(512 << 20)
 }
 
+/// Whether every entry of a TIFF's first directory claims no more data than the file holds. The
+/// tiff decoder reads the first directory before it is given any limit, and reserves room for
+/// as many values as an entry claims (up to 256 MB): 335 bytes claiming 8 million values made
+/// it reserve 258 MB. A real TIFF's values are always in the file.
+fn tiff_entries_fit(b: &[u8]) -> Result<(), String> {
+    let broken = || "the TIFF picture is broken".to_string();
+    let le = match b.get(..2) {
+        Some(b"II") => true,
+        Some(b"MM") => false,
+        _ => return Err(broken()),
+    };
+    let num = |at: usize, n: usize| -> Option<u64> {
+        let s = b.get(at..at.checked_add(n)?)?;
+        Some(if le { s.iter().rev().fold(0u64, |v, x| v << 8 | *x as u64) } else { s.iter().fold(0u64, |v, x| v << 8 | *x as u64) })
+    };
+    // Classic TIFF: 2-byte entry counts, 12-byte entries, 4-byte counts and offsets; BigTIFF 8.
+    let big = match num(2, 2) {
+        Some(42) => false,
+        Some(43) => true,
+        _ => return Err(broken()),
+    };
+    let (word, first) = if big { (8, num(8, 8)) } else { (4, num(4, 4)) };
+    // Only the first directory: it is the one read before the limits (and the only picture
+    // Snagster opens), so a many-page TIFF is never refused for its other pages.
+    let first = first.ok_or_else(broken)?;
+    if first == 0 {
+        return Ok(());
+    }
+    let at = usize::try_from(first).map_err(|_| broken())?;
+    let (count_len, entry_len) = if big { (8, 20) } else { (2, 12) };
+    let n = num(at, count_len).ok_or_else(broken)? as usize;
+    let entries = at + count_len;
+    for i in 0..n {
+        let e = entries.checked_add(i.checked_mul(entry_len).ok_or_else(broken)?).ok_or_else(broken)?;
+        let (Some(kind), Some(count)) = (num(e + 2, 2), num(e + 4, word)) else { return Err(broken()) };
+        let size: u64 = match kind {
+            3 | 8 => 2,
+            4 | 9 | 11 | 13 => 4,
+            5 | 10 | 12 | 16 | 17 | 18 => 8,
+            _ => 1,
+        };
+        if count.saturating_mul(size) > b.len() as u64 {
+            return Err(broken());
+        }
+    }
+    Ok(())
+}
+
+/// A picture file, read with the same limits as `decode_image` (the memory it may take bounded
+/// by its size, TIFF directories checked first).
+pub fn open_picture(path: &Path) -> Result<RgbaImage, String> {
+    let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
+    Ok(decode_image(&bytes).map_err(|e| format!("{}: {e}", path.display()))?.to_rgba8())
+}
+
 /// Decode a picture from bytes that came from a file (project files, pictures inside marks),
 /// with the memory it may take bounded by its size.
 pub fn decode_image(bytes: &[u8]) -> Result<image::DynamicImage, String> {
     let mut r = image::ImageReader::new(std::io::Cursor::new(bytes)).with_guessed_format().map_err(|e| e.to_string())?;
+    if r.format() == Some(image::ImageFormat::Tiff) {
+        tiff_entries_fit(bytes)?;
+    }
     let mut limits = image::Limits::default();
     limits.max_alloc = Some(decode_limit(bytes.len()));
     r.limits(limits);
@@ -472,6 +533,128 @@ pub fn slideshow_gif(images: &[RgbaImage], max_w: u32, seconds: f32, out: &Path)
     let list: Vec<(RgbaImage, u32)> = letterbox(images, max_w).into_iter().map(|f| (f, ms)).collect();
     write_gif(out, &list)?;
     Ok(list.len())
+}
+
+/// Fuzz targets (`src/fuzz.rs`): pictures from files, animated GIFs, `.snag` projects.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::doc::ImgData;
+    use crate::fuzz::Target;
+    use eframe::egui::{Color32, Rect, pos2};
+    use std::sync::Arc;
+
+    fn picture(w: u32, h: u32) -> RgbaImage {
+        RgbaImage::from_fn(w, h, |x, y| image::Rgba([(x * 40) as u8, (y * 30) as u8, 120, if x == 0 { 128 } else { 255 }]))
+    }
+
+    /// One small picture in every format Snagster opens.
+    fn pictures() -> Vec<Vec<u8>> {
+        let img = image::DynamicImage::ImageRgba8(picture(6, 5));
+        let mut out = vec![png_bytes(&picture(6, 5)).unwrap(), gif_bytes(&picture(6, 5)).unwrap()];
+        for f in [image::ImageFormat::Bmp, image::ImageFormat::Tiff, image::ImageFormat::Ico, image::ImageFormat::WebP] {
+            let mut b = Vec::new();
+            img.write_to(&mut std::io::Cursor::new(&mut b), f).unwrap();
+            out.push(b);
+        }
+        let mut jpg = Vec::new();
+        image::DynamicImage::ImageRgb8(img.to_rgb8()).write_to(&mut std::io::Cursor::new(&mut jpg), image::ImageFormat::Jpeg).unwrap();
+        out.push(jpg);
+        out
+    }
+
+    fn gifs() -> Vec<Vec<u8>> {
+        let dir = crate::fuzz::scratch("gif-seeds");
+        let p = dir.join("a.gif");
+        write_gif(&p, &[(picture(7, 4), 100), (RgbaImage::from_pixel(7, 4, image::Rgba([0, 0, 255, 255])), 40)]).unwrap();
+        let out = vec![std::fs::read(&p).unwrap(), gif_bytes(&picture(3, 3)).unwrap()];
+        let _ = std::fs::remove_dir_all(&dir);
+        out
+    }
+
+    /// A project with one mark of every kind.
+    pub fn project() -> Vec<u8> {
+        let r = Rect::from_min_max(pos2(1.0, 1.0), pos2(9.0, 7.0));
+        let (c, p) = (Color32::RED, pos2(3.0, 3.0));
+        let mut d = Doc::new(picture(12, 9));
+        d.shapes = vec![
+            Shape::Arrow { a: p, b: pos2(9.0, 8.0), color: c, width: 3.0, shadow: true, heads: 2 },
+            Shape::Line { a: p, b: pos2(0.0, 8.0), color: c, width: 2.0, shadow: false },
+            Shape::Rect { rect: r, color: c, width: 3.0, fill: false, radius: 2.0, shadow: true },
+            Shape::Ellipse { rect: r, color: c, width: 2.0, fill: true, shadow: false },
+            Shape::Pen { points: vec![p, pos2(5.0, 6.0), pos2(8.0, 2.0)], color: c, width: 2.0, shadow: false },
+            Shape::Highlight { points: vec![p, pos2(6.0, 3.0)], color: Color32::YELLOW, width: 4.0 },
+            Shape::Marker { rect: r, color: Color32::YELLOW },
+            Shape::Text { pos: p, text: "Hi ü".into(), color: c, size: 12.0, bg: true, shadow: true, font: String::new(), bold: true, italic: false, outline: true, align: 1 },
+            Shape::Callout { pos: p, tail: pos2(10.0, 8.0), text: "Look".into(), color: c, size: 10.0, shadow: false, font: String::new(), bold: false, italic: true, shape: Default::default(), outline: false, align: 2 },
+            Shape::Step { center: p, n: 3, color: c, radius: 4.0, shadow: false, style: Default::default() },
+            Shape::Stamp { center: p, emoji: "👍".into(), size: 8.0, color: c },
+            Shape::Magnify { center: p, radius: 3.0, zoom: 2.0 },
+            Shape::Pointer { pos: p, size: 6.0 },
+            Shape::Spotlight { rect: r },
+            Shape::Image { rect: r, image: ImgData(Arc::new(picture(2, 2))) },
+        ];
+        let dir = crate::fuzz::scratch("project-seeds");
+        let path = dir.join("p.snag");
+        save_project(&d, "Shot", &path).unwrap();
+        let out = std::fs::read(&path).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        out
+    }
+
+    fn project_words() -> Vec<String> {
+        let kinds = ["Arrow", "Line", "Rect", "Ellipse", "Pen", "Highlight", "Marker", "Text", "Callout", "Step", "Stamp", "Magnify", "Pointer", "Spotlight", "Image"];
+        let fields = ["format", "version", "name", "image_png", "shapes", "rect", "min", "max", "x", "y", "points", "width", "size", "radius", "zoom", "text", "emoji", "font", "align", "heads", "n", "style", "shape", "image", "color", "snag-project"];
+        let mut w: Vec<String> = kinds.iter().chain(fields.iter()).map(|s| s.to_string()).collect();
+        // A picture inside a mark that claims to be huge.
+        w.push(b64(&super::tests::png_claiming(60_000, 60_000)));
+        w
+    }
+
+    pub fn targets() -> Vec<Target> {
+        vec![
+            Target {
+                name: "picture",
+                seeds: pictures,
+                words: Vec::new,
+                run: |b| {
+                    if let Ok(img) = decode_image(b) {
+                        let _ = img.to_rgba8();
+                    }
+                },
+                budget: |n| 2 * decode_limit(n) as usize,
+            },
+            Target {
+                name: "gif",
+                seeds: gifs,
+                words: Vec::new,
+                run: |b| {
+                    let p = crate::fuzz::scratch("gif").join("in.gif");
+                    std::fs::write(&p, b).unwrap();
+                    let _ = gif_frames(&p, 0);
+                    let _ = gif_frames(&p, 5);
+                },
+                budget: |n| (64 << 20) + 4096 * n,
+            },
+            Target {
+                name: "project",
+                seeds: || vec![project()],
+                words: project_words,
+                run: |b| {
+                    // Opening a project, then what opening leads to: drawing it, saving it.
+                    if let Ok((_, d)) = project_from_json(&String::from_utf8_lossy(b)) {
+                        for s in &d.shapes {
+                            let _ = s.bounds();
+                            let _ = s.hit(pos2(2.0, 2.0), 4.0);
+                        }
+                        let _ = crate::render::compose(&d);
+                        let _ = serde_json::to_string(&d.shapes);
+                    }
+                },
+                budget: |n| (64 << 20) + 64 * n,
+            },
+        ]
+    }
 }
 
 #[cfg(test)]
@@ -799,7 +982,7 @@ mod tests {
     }
 
     /// A real 1 x 1 PNG whose header (with a correct checksum) claims `w` x `h` pixels.
-    fn png_claiming(w: u32, h: u32) -> Vec<u8> {
+    pub(super) fn png_claiming(w: u32, h: u32) -> Vec<u8> {
         let mut p = png_bytes(&solid(1, 1, [1, 2, 3, 255])).unwrap();
         assert_eq!(&p[12..16], b"IHDR");
         p[16..20].copy_from_slice(&w.to_be_bytes());
@@ -823,6 +1006,41 @@ mod tests {
         let png = png_bytes(&plain).unwrap();
         assert_eq!(decode_image(&png).unwrap().to_rgba8(), plain);
         assert!(decode_limit(10) >= 64 << 20 && decode_limit(usize::MAX / 8192) == 512 << 20);
+    }
+
+    /// Bug (found by the fuzz test): a 335-byte TIFF whose SampleFormat entry claimed 8060932
+    /// values made the tiff decoder reserve 258 MB before Snagster's limit applied.
+    #[test]
+    fn a_tiff_entry_claiming_more_than_the_file_is_refused_cheaply() {
+        let mut good = Vec::new();
+        image::DynamicImage::ImageRgba8(gradient(6, 5)).write_to(&mut std::io::Cursor::new(&mut good), image::ImageFormat::Tiff).unwrap();
+        assert_eq!(decode_image(&good).unwrap().to_rgba8(), gradient(6, 5));
+        assert!(tiff_entries_fit(&good).is_ok());
+        // The first directory's last entry (little-endian TIFF: II, 42, then its offset).
+        assert_eq!(&good[..4], b"II*\0");
+        let ifd = u32::from_le_bytes(good[4..8].try_into().unwrap()) as usize;
+        let n = u16::from_le_bytes(good[ifd..ifd + 2].try_into().unwrap()) as usize;
+        let last = ifd + 2 + (n - 1) * 12;
+        for (count, ok) in [(8_060_932u32, false), (u32::MAX, false), (1, true)] {
+            let mut b = good.clone();
+            b[last + 4..last + 8].copy_from_slice(&count.to_le_bytes());
+            let (r, largest, _) = crate::testalloc::measure(|| decode_image(&b));
+            assert!(largest < 1 << 20, "count {count}: reserved {largest} bytes");
+            assert_eq!(tiff_entries_fit(&b).is_ok(), ok, "count {count}");
+            if !ok {
+                assert!(r.unwrap_err().contains("TIFF"));
+            }
+        }
+        // Later pages aren't looked at (even a chain that loops back); a first directory
+        // outside the file is broken.
+        let mut looped = good.clone();
+        let after = ifd + 2 + n * 12;
+        looped[after..after + 4].copy_from_slice(&(ifd as u32).to_le_bytes());
+        assert!(tiff_entries_fit(&looped).is_ok());
+        let mut outside = good.clone();
+        outside[4..8].copy_from_slice(&u32::MAX.to_le_bytes());
+        assert!(tiff_entries_fit(&outside).is_err());
+        assert!(tiff_entries_fit(b"MM\0+\0\0\0\0\0\0\0\0\0\0\0\0").is_ok(), "an empty BigTIFF has nothing to claim");
     }
 
     #[test]

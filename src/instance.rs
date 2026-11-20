@@ -262,6 +262,55 @@ fn write_private(p: &Path, text: &str) -> std::io::Result<()> {
     std::fs::write(p, text)
 }
 
+/// Fuzz target (`src/fuzz.rs`): the lock file and what arrives on the local port, then what
+/// the window makes of a message (a command and its value are checked the same way).
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::Target;
+
+    const SECRET: &str = "0123456789abcdef0123";
+
+    pub fn targets() -> Vec<Target> {
+        vec![Target {
+            name: "instance",
+            seeds: || {
+                let mut out: Vec<Vec<u8>> = [Ask::Show, Ask::Open(PathBuf::from("C:/x y/shot.png")), Ask::Action("Area".into()), Ask::Command("zoom".into(), Some("150".into())), Ask::Command("ribbon_tab".into(), None)]
+                    .iter()
+                    .map(|a| message(SECRET, a).into_bytes())
+                    .collect();
+                out.push(format!("45831 {SECRET}\n").into_bytes());
+                out
+            },
+            words: || {
+                let mut w: Vec<String> = ["SHOW", "OPEN ", "ACTION ", "COMMAND ", "\t", "\n", "\r\n", SECRET].map(String::from).to_vec();
+                w.extend(crate::catalog::COMMANDS.iter().take(80).map(|c| c.id.to_string()));
+                w.extend(crate::settings::Action::ALL.iter().map(|a| format!("{a:?}")));
+                w
+            },
+            run: |b| {
+                // At most 4 KB arrive, as text.
+                let text = String::from_utf8_lossy(&b[..b.len().min(4096)]);
+                let _ = parse_lock(&text);
+                match parse_message(&text, SECRET) {
+                    Some(Ask::Command(id, value)) => {
+                        let _ = crate::app::commands_ui::parse(&id, value.as_deref());
+                    }
+                    Some(Ask::Action(name)) => {
+                        assert!(action_name(&name), "{name:?}");
+                        let _ = crate::settings::Action::ALL.iter().find(|a| format!("{a:?}") == name);
+                    }
+                    Some(Ask::Open(p)) => assert!(!p.as_os_str().is_empty()),
+                    Some(Ask::Show) | None => {}
+                }
+                // Never without the secret.
+                assert!(parse_message(&text, "another secret, also long").is_none() || text.starts_with("another secret, also long"));
+            },
+            budget: |n| 64 * 1024 + 8 * n,
+        }]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

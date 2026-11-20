@@ -39,14 +39,18 @@ fn table_for(code: &'static str) -> Option<&'static HashMap<String, String>> {
         return Some(t);
     }
     let text = packs::PACKS.iter().find(|(c, _)| *c == code)?.1;
-    let pack: Pack = serde_json::from_str(text).unwrap_or_default();
-    // Keep only real translations (empty entries fall back to English).
-    let table: HashMap<String, String> = pack.strings.into_iter().filter(|(_, v)| !v.trim().is_empty()).collect();
-    let leaked: &'static HashMap<String, String> = Box::leak(Box::new(table));
+    let leaked: &'static HashMap<String, String> = Box::leak(Box::new(parse_pack(text)));
     if let Ok(mut m) = LOADED.write() {
         m.insert(code, leaked);
     }
     Some(leaked)
+}
+
+/// A pack's translations: only real ones (empty entries fall back to English). A pack that
+/// can't be read gives none.
+fn parse_pack(text: &str) -> HashMap<String, String> {
+    let pack: Pack = serde_json::from_str(text).unwrap_or_default();
+    pack.strings.into_iter().filter(|(_, v)| !v.trim().is_empty()).collect()
 }
 
 /// The code from the list for a language tag, or None.
@@ -95,6 +99,12 @@ pub fn system() -> &'static str {
 /// The language a setting means: a code, or "" for the computer's language.
 pub fn resolve(setting: &str) -> &'static str {
     if setting.is_empty() { system() } else { known(setting).unwrap_or_else(system) }
+}
+
+/// `text` in language `code`, without switching the interface (for tests run side by side).
+#[cfg(test)]
+pub(crate) fn t_in(code: &'static str, text: &'static str) -> &'static str {
+    table_for(code).and_then(|t| t.get(text)).map(|s| s.as_str()).unwrap_or(text)
 }
 
 /// Switch the interface language (affects every [`t`] from now on).
@@ -164,11 +174,59 @@ pub fn tr(en: &str) -> String {
 
 /// Translate, then fill in `{name}` placeholders.
 pub fn tf(en: &'static str, args: &[(&str, &str)]) -> String {
-    let mut s = t(en).to_string();
+    fill(t(en), args)
+}
+
+/// `{name}` placeholders in a text filled in.
+fn fill(text: &str, args: &[(&str, &str)]) -> String {
+    let mut s = text.to_string();
     for (k, v) in args {
         s = s.replace(&format!("{{{k}}}"), v);
     }
     s
+}
+
+/// Fuzz target (`src/fuzz.rs`): translation packs (a broken one must never stop Snagster) and
+/// the locale names the system hands over.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::Target;
+
+    pub fn targets() -> Vec<Target> {
+        vec![Target {
+            name: "language",
+            seeds: || {
+                // A few entries of real packs (whole ones are large and slow to break).
+                let mut out: Vec<Vec<u8>> = ["de", "ar", "ja", "sr-Latn"]
+                    .iter()
+                    .map(|c| {
+                        let table = parse_pack(packs::PACKS.iter().find(|(p, _)| p == c).unwrap().1);
+                        let some: HashMap<&String, &String> = table.iter().filter(|(k, _)| k.contains('{')).take(8).chain(table.iter().take(8)).collect();
+                        serde_json::to_vec(&serde_json::json!({ "strings": some })).unwrap()
+                    })
+                    .collect();
+                out.push(b"nb-NO\npt_BR.UTF-8\nzh-Hant-TW\nsr-Latn-RS\nca-ES@valencia\nC.UTF-8\n-\n_".to_vec());
+                out
+            },
+            words: || ["strings", "{name}", "{n}", "{path}", "{", "}", "-", "_", ".", "@", "Hant", "Latn", "valencia", "419"].iter().map(|s| s.to_string()).chain(CODES.iter().map(|c| c.to_string())).collect(),
+            run: |b| {
+                let text = String::from_utf8_lossy(b);
+                for v in parse_pack(&text).values() {
+                    let _ = fill(v, &[("name", "x"), ("n", "{n}"), ("path", "")]);
+                }
+                for line in text.lines().take(50) {
+                    let code = match_locale(line);
+                    assert!(CODES.contains(&code), "{line:?} gave {code}");
+                    let _ = (is_rtl(line), is_cjk(line), name_in(line, code), native_name(line));
+                    if !line.is_empty() {
+                        let _ = resolve(line);
+                    }
+                }
+            },
+            budget: |n| (1 << 20) + 64 * n,
+        }]
+    }
 }
 
 

@@ -200,6 +200,7 @@ pub(crate) struct Extra {
     pub stream: crate::app::stream_ui::StreamUi,
     pub replay: crate::app::replay_ui::ReplayUi,
     pub access: crate::app::access_ui::AccessUi,
+    pub keys: crate::app::keys_ui::KeyNav,
     /// The options panel is shown although the window is narrow (it folds away by itself).
     pub narrow_options: bool,
     #[cfg(target_os = "macos")]
@@ -224,6 +225,7 @@ impl SnagApp {
         let right_w: f32 = ctx.data(|d| d.get_temp(right_id)).unwrap_or(130.0);
         ui.horizontal(|ui| {
             ui.set_height(row_h);
+            crate::app::keys_ui::set_scope(ui, Some(crate::app::keys_ui::Scope::TabRow));
             // The title bar shows Snagster's icon and name, so the tabs start at the edge.
             ui.add_space(6.0);
             // File: a menu, like Word's.
@@ -243,7 +245,9 @@ impl SnagApp {
             let shown = fit::tabs_shown(&widths, current, room, look::tab_width(ui, &more_tabs) + gap, look::tab_width(ui, &named) + gap);
             for tab in RibbonTab::ALL.into_iter().take(shown) {
                 let on = self.x.tab == tab && !self.settings.ribbon_folded;
-                if look::tab(ui, tab.name(), tab.tip(), on || (tab == RibbonTab::Studio && self.x.tab == RibbonTab::Studio)).clicked() {
+                let resp = look::tab(ui, tab.name(), tab.tip(), on || (tab == RibbonTab::Studio && self.x.tab == RibbonTab::Studio));
+                crate::app::keys_ui::note_tab(&resp, tab);
+                if resp.clicked() {
                     if self.x.tab == tab {
                         self.settings.ribbon_folded = !self.settings.ribbon_folded;
                     } else {
@@ -306,6 +310,7 @@ impl SnagApp {
             });
         });
         if self.settings.ribbon_folded {
+            crate::app::keys_ui::set_scope(ui, None);
             return;
         }
         // ---- band ----
@@ -319,7 +324,9 @@ impl SnagApp {
             let more_w = overflow_width(ui);
             let shown = fit::groups_shown(&widths, room, more_w);
             let band_right = ui.max_rect().right();
+            crate::app::keys_ui::set_scope(ui, Some(crate::app::keys_ui::Scope::Band));
             egui::ScrollArea::horizontal().id_salt("ribbon-band").scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden).show(ui, |ui| {
+                self.x.keys.scroll_here(ui.ctx(), crate::app::keys_ui::Pane::Ribbon);
                 ui.horizontal_top(|ui| {
                     fit::begin(fit::Pass::Band, shown, std::mem::take(&mut widths));
                     self.band_groups(ui, &ctx);
@@ -337,6 +344,7 @@ impl SnagApp {
                     ctx.data_mut(|d| d.insert_temp(egui::Id::unique("ribbon-band-fit"), (shown.min(widths.len()), widths.len(), right, band_right)));
                 });
             });
+            crate::app::keys_ui::set_scope(ui, None);
             if fit::groups_shown(&widths, room, more_w) != shown {
                 ctx.request_repaint();
             }
@@ -647,9 +655,9 @@ impl SnagApp {
         });
         look::group(ui, t("After capture"), |ui| {
             look::column(ui, |ui| {
-                ui.checkbox(&mut self.settings.after_copy, t("Copy to clipboard")).on_hover_text(t("Every capture goes to the clipboard too"));
-                ui.checkbox(&mut self.settings.after_save, t("Save to folder")).on_hover_text(t("Every capture is saved in the save folder"));
-                ui.checkbox(&mut self.settings.include_cursor, t("Mouse pointer")).on_hover_text(t("Include the mouse pointer (you can move it afterwards)"));
+                look::check(ui, &mut self.settings.after_copy, t("Copy to clipboard"), t("Every capture goes to the clipboard too"));
+                look::check(ui, &mut self.settings.after_save, t("Save to folder"), t("Every capture is saved in the save folder"));
+                look::check(ui, &mut self.settings.include_cursor, t("Mouse pointer"), t("Include the mouse pointer (you can move it afterwards)"));
             });
         });
     }
@@ -681,8 +689,8 @@ impl SnagApp {
                         }
                     }
                 });
-                ui.checkbox(&mut self.settings.video_hardware, t("Graphics chip")).on_hover_text(t("Encode on the graphics chip (Intel, AMD or NVIDIA): fast and light on the battery"));
-                ui.checkbox(&mut self.settings.gif_cursor, t("Mouse pointer")).on_hover_text(t("Show the mouse pointer in recordings"));
+                look::check(ui, &mut self.settings.video_hardware, t("Graphics chip"), t("Encode on the graphics chip (Intel, AMD or NVIDIA): fast and light on the battery"));
+                look::check(ui, &mut self.settings.gif_cursor, t("Mouse pointer"), t("Show the mouse pointer in recordings"));
             });
         });
         look::group(ui, t("Guides"), |ui| {
@@ -952,8 +960,8 @@ impl SnagApp {
         });
         look::group(ui, t("Show"), |ui| {
             look::column(ui, |ui| {
-                ui.checkbox(&mut self.settings.show_side_panel, t("Options panel")).on_hover_text(t("Colours, sizes and styles on the right"));
-                ui.checkbox(&mut self.settings.show_tray, t("Recent pictures")).on_hover_text(t("The row of recent pictures at the bottom"));
+                look::check(ui, &mut self.settings.show_side_panel, t("Options panel"), t("Colours, sizes and styles on the right"));
+                look::check(ui, &mut self.settings.show_tray, t("Recent pictures"), t("The row of recent pictures at the bottom"));
             });
         });
         look::group(ui, t("Windows"), |ui| {

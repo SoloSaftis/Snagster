@@ -4,6 +4,17 @@ What changed for people using Snagster, per version.
 
 ## Not released yet
 
+Using Snagster from the keyboard (every system):
+
+- **F6 and Shift+F6 move between the ribbon, the tools, the picture, the options and Recent**;
+  Tab moves from control to control, the arrow keys within a part, Enter or Space uses the
+  control, Esc goes back to the picture. A ring shows which control has the keyboard, and
+  screen readers follow every move. On the picture the arrow keys move the picked mark.
+- **Windows: Alt or F10 shows key tips on the ribbon**, as in Office: type a tab's letter, then
+  a tool's. Alt and a letter opens a tab at once.
+- **Linux: hold Alt to see the ribbon tabs' letters**; Alt and a letter opens that tab (F10
+  still opens the main menu).
+
 Live streaming (every system):
 
 - **See trouble while you're live**: the Stream tab's Status says in a few words when the
@@ -117,6 +128,20 @@ macOS:
 - **View > Hide Ribbon / Show Ribbon** (⌥⌘T), and **File > Move to Trash on ⌘⌫** for a saved
   picture (in the Library ⌘⌫ moves the capture picked there).
 - **The menu bar icon turns into a stop square** while a recording runs.
+
+Fewer crashes on odd input (found by new tests that feed Snagster broken files every night):
+
+- **A callout with very small text no longer crashes Snagster** (pressing Smaller until it
+  stops, with the tail to the side, did).
+- **Broken files are errors, not crashes or hangs**: a project whose marks sit absurdly far off
+  the picture or have nonsense sizes opens (those marks aren't drawn); a broken MP4 no longer
+  makes video details, or opening it on Linux and macOS, wait for ever or crash; a tiny broken
+  TIFF no longer takes a quarter of a gigabyte of memory.
+- **Long step-by-step guides are quick**: 250 steps took over 30 seconds as one picture; a guide
+  too long for one picture now says to save it as a PDF or web page.
+- For AI apps: combine_images and make_guide refuse sizes that wouldn't fit in memory, and say
+  so; editor_apply's cut_out far outside the picture is simply nothing to cut.
+- Updates: a SHA256SUMS line written as `<sum> * name` now matches its download.
 
 ## 0.10.6 — 2026-11-17
 

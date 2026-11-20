@@ -159,7 +159,8 @@ pub fn parse_sums(text: &str) -> std::collections::HashMap<String, [u8; 32]> {
         let line = line.trim_end_matches('\r');
         let Some((hex, name)) = line.split_once(char::is_whitespace) else { continue };
         let name = name.trim_start();
-        let name = name.strip_prefix('*').unwrap_or(name).trim_end();
+        // (Trimmed after the star too: "<hex> * name" names "name", not " name".)
+        let name = name.strip_prefix('*').unwrap_or(name).trim();
         if let Some(sum) = from_hex(hex)
             && !name.is_empty()
         {
@@ -399,6 +400,54 @@ fn is_msix(path: &Path) -> bool {
     path.extension().is_some_and(|e| e.eq_ignore_ascii_case("msix"))
 }
 
+/// Fuzz target (`src/fuzz.rs`): what the updater downloads before it trusts anything:
+/// GitHub's description of the newest release, and the release's SHA256SUMS file.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::Target;
+
+    pub fn targets() -> Vec<Target> {
+        vec![Target {
+            name: "update",
+            seeds: || {
+                let sum = "a".repeat(64);
+                vec![
+                    format!("{sum}  {}\n{} *SHA256SUMS\r\n\nbroken line\n{sum}\tSnagster-linux-x86_64.AppImage\n", asset_name(), "0F".repeat(32)).into_bytes(),
+                    serde_json::to_vec(&serde_json::json!({
+                        "tag_name": "v0.10.7", "body": "Notes", "html_url": "https://github.com/SoloSaftis/Snagster/releases/tag/v0.10.7", "draft": false, "prerelease": false,
+                        "assets": [{"name": asset_name(), "browser_download_url": "https://github.com/x", "size": 123}, {"name": SUMS_NAME, "browser_download_url": "https://github.com/y", "size": 4}]
+                    }))
+                    .unwrap(),
+                ]
+            },
+            words: || ["tag_name", "assets", "name", "browser_download_url", "size", "draft", "prerelease", "body", "html_url", SUMS_NAME, asset_name(), MSIX_NAME, "v", ".", "*", "  "].iter().map(|s| s.to_string()).collect(),
+            run: |b| {
+                let text = String::from_utf8_lossy(b);
+                for (name, sum) in parse_sums(&text) {
+                    assert!(!name.is_empty() && name.trim() == name, "{name:?}");
+                    assert_eq!(from_hex(&to_hex(&sum)), Some(sum));
+                }
+                let _ = expected_sum(&text, asset_name());
+                // A download checked against these sums (a small file of its own).
+                let file = crate::fuzz::scratch("update").join(asset_name());
+                if !file.exists() {
+                    std::fs::write(&file, b"not really Snagster").unwrap();
+                }
+                let _ = verify(&file, asset_name(), &text);
+                if let Ok(r) = serde_json::from_str::<ApiRelease>(&text)
+                    && let Ok(rel) = release_from(r, asset_name())
+                {
+                    let _ = parse_version(&rel.version);
+                    let _ = is_newer(&rel.version, env!("CARGO_PKG_VERSION"));
+                    let _ = is_newer(env!("CARGO_PKG_VERSION"), &rel.version);
+                }
+            },
+            budget: |n| (1 << 20) + 64 * n,
+        }]
+    }
+}
+
 /// Start the new version (and let this one close). A downloaded MSIX opens in App Installer,
 /// which updates the installed package and can start it again.
 pub fn restart(program: &Path) -> Result<(), String> {
@@ -553,6 +602,10 @@ mod tests {
         assert_eq!(to_hex(&up["a.zip"]), ABC);
         // A name with spaces stays whole.
         assert!(parse_sums(&format!("{ABC}  my file.zip")).contains_key("my file.zip"));
+        // Bug (found by the fuzz test): a space after the binary-mode star stayed in the name,
+        // so the line never matched the download it was for.
+        let spaced = parse_sums(&format!("{ABC} * Snagster-linux-x86_64-portable.tar.gz\n{ABC} *  \n"));
+        assert_eq!(spaced.keys().collect::<Vec<_>>(), vec!["Snagster-linux-x86_64-portable.tar.gz"]);
     }
 
     #[test]

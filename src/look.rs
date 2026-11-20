@@ -2,7 +2,7 @@
 //! Phosphor icon font, and the ribbon's building blocks (tabs, tool buttons with an icon over
 //! their name, named groups). Every tool has a tooltip.
 
-use eframe::egui::{self, Align2, Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId, Response, Sense, Stroke, Ui, pos2, vec2};
+use eframe::egui::{self, Align2, Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId, Rect, Response, Sense, Stroke, Ui, pos2, vec2};
 use std::sync::Arc;
 
 pub use crate::theme::pal;
@@ -268,6 +268,7 @@ pub fn tab(ui: &mut Ui, label: &str, tip: &str, on: bool) -> Response {
     let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, on, label));
+    crate::app::keys_ui::note(ui, &resp, label, true, on);
     if resp.hovered() && !on {
         ui.painter().rect_filled(rect.shrink2(vec2(2.0, 3.0)), CornerRadius::same(6), pal().hover);
     }
@@ -291,6 +292,7 @@ pub fn big_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool, 
     let (rect, resp) = ui.allocate_exact_size(vec2(w, (36.0 + galley.size().y).max(62.0)), if enabled { Sense::click() } else { Sense::hover() });
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, enabled, active, label));
+    crate::app::keys_ui::note(ui, &resp, label, enabled, active);
     let p = ui.painter();
     let pal = pal();
     let down = active || (enabled && resp.is_pointer_button_down_on());
@@ -367,6 +369,7 @@ pub fn small_tool(ui: &mut Ui, icon: &str, label: &str, tip: &str, enabled: bool
     let (rect, resp) = ui.allocate_exact_size(vec2(galley.size().x + 32.0, galley.size().y.max(20.0)), if enabled { Sense::click() } else { Sense::hover() });
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, enabled, label));
+    crate::app::keys_ui::note(ui, &resp, label, enabled, false);
     let p = ui.painter();
     let pal = pal();
     let lit = enabled && resp.hovered();
@@ -448,11 +451,46 @@ pub fn icon_button(ui: &mut Ui, icon: &str, tip: &str) -> Response {
     let (rect, resp) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
     let resp = resp.on_hover_text(crate::platform::keys(tip));
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, tip));
+    // Its key tip comes from its name, not its keys: "Settings (Ctrl+,)" is Settings.
+    crate::app::keys_ui::note(ui, &resp, tip.split(" (").next().unwrap_or(tip), true, false);
     if resp.hovered() {
         ui.painter().rect_filled(rect, CornerRadius::same(6), pal().hover);
     }
     ui.painter().text(rect.center(), Align2::CENTER_CENTER, icon, FontId::new(17.0, icons()), if resp.hovered() { pal().on_hover } else { pal().dim });
     resp
+}
+
+/// A checkbox in the ribbon (the keyboard reaches it like the tools around it).
+pub fn check(ui: &mut Ui, on: &mut bool, label: &str, tip: &str) -> Response {
+    let resp = ui.checkbox(on, label).on_hover_text(tip);
+    crate::app::keys_ui::note(ui, &resp, label, true, *on);
+    resp
+}
+
+/// The ring around the control that has the keyboard: two pixels of the strongest text colour
+/// with the background's colour inside it, so it shows on any fill (and in contrast themes,
+/// where these are the system's own colours). The picture gets it inside its edge.
+pub fn focus_ring(p: &egui::Painter, rect: Rect, inside: bool) {
+    let pal = pal();
+    // GNOME and KDE draw focus in the accent colour; Windows in the strongest text colour.
+    let ring = if crate::platform::linux() && !pal.high_contrast { accent() } else { pal.strong };
+    let (r, kind) = if inside { (rect.shrink(2.0), egui::StrokeKind::Inside) } else { (rect.expand(1.0), egui::StrokeKind::Outside) };
+    p.rect_stroke(r, CornerRadius::same(6), Stroke::new(2.0, ring), kind);
+    p.rect_stroke(r, CornerRadius::same(6), Stroke::new(1.0, pal.bg), if inside { egui::StrokeKind::Outside } else { egui::StrokeKind::Inside });
+}
+
+/// A key tip: the key's letters in a small box at the bottom middle of the control, as
+/// Office shows them. Dimmed for a control that can't be used now.
+pub fn key_tip(p: &egui::Painter, rect: Rect, keys: &str, enabled: bool) {
+    let pal = pal();
+    let font = FontId::proportional(12.0);
+    let g = p.layout_no_wrap(keys.to_string(), font, pal.bg);
+    let size = vec2(g.size().x + 8.0, g.size().y + 2.0).max(vec2(16.0, 16.0));
+    let at = pos2(rect.center().x, rect.bottom() - size.y / 2.0 + 2.0);
+    let b = Rect::from_center_size(at, size);
+    p.rect_filled(b, CornerRadius::same(3), if enabled { pal.strong } else { pal.disabled });
+    p.rect_stroke(b, CornerRadius::same(3), Stroke::new(1.0, pal.bg), egui::StrokeKind::Outside);
+    p.galley(b.center() - g.size() / 2.0, g, pal.bg);
 }
 
 

@@ -54,6 +54,8 @@ mod stream_test;
 mod replay;
 #[cfg(test)]
 mod testalloc;
+#[cfg(test)]
+mod fuzz;
 
 use eframe::egui;
 use std::path::PathBuf;

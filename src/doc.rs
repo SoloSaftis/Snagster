@@ -309,13 +309,16 @@ pub fn callout_tail(bubble: Rect, tail: Pos2) -> [Pos2; 3] {
     let d = tail - c;
     let base_w = (bubble.height().min(bubble.width()) * 0.35).max(8.0);
     // Leave from the side the tail is on.
+    // Kept inside the side, or in its middle when the bubble is smaller than the tail's base
+    // (`clamp` panics when its ends cross, or are not numbers).
+    let within = |v: f32, lo: f32, hi: f32| if lo <= hi { v.clamp(lo, hi) } else { (lo + hi) / 2.0 };
     let (a, b) = if d.x.abs() * bubble.height() > d.y.abs() * bubble.width() {
         let x = if d.x > 0.0 { bubble.max.x - 2.0 } else { bubble.min.x + 2.0 };
-        let y = c.y.clamp(bubble.min.y + base_w, bubble.max.y - base_w);
+        let y = within(c.y, bubble.min.y + base_w, bubble.max.y - base_w);
         (pos2(x, y - base_w / 2.0), pos2(x, y + base_w / 2.0))
     } else {
         let y = if d.y > 0.0 { bubble.max.y - 2.0 } else { bubble.min.y + 2.0 };
-        let x = (c.x + d.x * 0.3).clamp(bubble.min.x + base_w, bubble.max.x - base_w);
+        let x = within(c.x + d.x * 0.3, bubble.min.x + base_w, bubble.max.x - base_w);
         (pos2(x - base_w / 2.0, y), pos2(x + base_w / 2.0, y))
     };
     [a, b, tail]
@@ -713,7 +716,8 @@ impl Doc {
         } else {
             (band.min.x.max(0.0) as u32, (band.max.x.ceil() as u32).min(w))
         };
-        if b <= a + 1 {
+        // (Saturating: a band starting far outside the picture is nothing to cut.)
+        if b <= a.saturating_add(1) {
             return None;
         }
         let cut = b - a;
@@ -1388,6 +1392,30 @@ mod tests {
         assert!(d.cut_out(Rect::from_min_max(pos2(3.0, 0.0), pos2(3.5, 10.0))).is_none());
         assert!(d.cut_out(Rect::from_min_max(pos2(0.0, -1.0), pos2(10.0, 20.0))).is_none());
         assert!(d.cut_out(Rect::from_min_max(pos2(-5.0, -2.0), pos2(20.0, 15.0))).is_none());
+    }
+
+    /// Bug (found by the fuzz test): a callout bubble smaller than its tail's base (a small
+    /// text size) panicked while drawing (the tail's place was clamped between crossed ends).
+    #[test]
+    fn a_tiny_callout_still_has_a_tail() {
+        for bubble in [Rect::from_min_size(pos2(0.0, 0.0), vec2(30.0, 6.0)), Rect::from_min_size(pos2(0.0, 0.0), vec2(6.0, 30.0)), Rect::from_min_size(pos2(0.0, 0.0), vec2(4.0, 4.0))] {
+            for tail in [pos2(100.0, 3.0), pos2(3.0, 100.0), pos2(-50.0, -50.0)] {
+                let t = callout_tail(bubble, tail);
+                assert!(t.iter().all(|p| p.is_finite()), "{bubble:?} {tail:?} {t:?}");
+                assert_eq!(t[2], tail);
+            }
+        }
+        let _ = callout_tail(Rect::from_min_size(pos2(f32::NAN, 0.0), vec2(4.0, 4.0)), pos2(1.0, 1.0));
+    }
+
+    /// Bug (found by the fuzz test): an AI app's cut_out band at y = 5909000937 overflowed
+    /// (the band's start, as a whole number, was the largest there is, and one more wrapped).
+    #[test]
+    fn cut_out_far_outside_the_picture_is_nothing() {
+        let d = Doc::new(cols_image(10, 10));
+        assert!(d.cut_out(Rect::from_min_size(pos2(1.0, 5909000937.0), vec2(12.0, 12.0))).is_none());
+        assert!(d.cut_out(Rect::from_min_size(pos2(5909000937.0, 1.0), vec2(1.0, 12.0))).is_none());
+        assert!(d.cut_out(Rect::from_min_max(pos2(0.0, f32::MAX), pos2(10.0, f32::INFINITY))).is_none());
     }
 
     #[test]

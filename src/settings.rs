@@ -1263,6 +1263,62 @@ pub enum CalloutShape {
     Oval,
 }
 
+/// Fuzz target (`src/fuzz.rs`): a settings.json cut short, edited by hand or written by
+/// another version.
+#[cfg(test)]
+pub(crate) mod fuzzing {
+    use super::*;
+    use crate::fuzz::Target;
+
+    /// Every key in the settings, at any depth.
+    fn keys(v: &serde_json::Value, out: &mut Vec<String>) {
+        match v {
+            serde_json::Value::Object(m) => {
+                for (k, c) in m {
+                    out.push(k.clone());
+                    keys(c, out);
+                }
+            }
+            serde_json::Value::Array(a) => a.iter().for_each(|c| keys(c, out)),
+            _ => {}
+        }
+    }
+
+    pub fn targets() -> Vec<Target> {
+        vec![Target {
+            name: "settings",
+            seeds: || {
+                let mut s = Settings::default();
+                s.studio.current = 1;
+                s.jpeg_quality = 40;
+                vec![serde_json::to_vec_pretty(&s).unwrap(), b"{}".to_vec()]
+            },
+            words: || {
+                let mut w = Vec::new();
+                keys(&serde_json::to_value(Settings::default()).unwrap(), &mut w);
+                w.sort();
+                w.dedup();
+                w
+            },
+            run: |b| {
+                let loaded = Settings::from_saved(Some(&String::from_utf8_lossy(b)));
+                // What a window does with settings it opened.
+                for a in Action::ALL {
+                    let _ = loaded.binding(a);
+                }
+                let _ = loaded.effect_options("info".into());
+                let _ = loaded.studio.scene();
+                for i in 0..loaded.studio.scenes.len() + 1 {
+                    let _ = loaded.studio.scene_sounds(i);
+                }
+                let again = serde_json::to_string(&loaded).unwrap();
+                let _ = Settings::from_saved(Some(&again));
+            },
+            budget: |n| (1 << 20) + 64 * n,
+        }]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
