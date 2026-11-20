@@ -104,10 +104,12 @@ pub enum Action {
     RecordGif,
     RecordSteps,
     ShowSnag,
+    SaveReplay,
+    ToggleReplay,
 }
 
 impl Action {
-    pub const ALL: [Action; 21] = [
+    pub const ALL: [Action; 23] = [
         Action::AllInOne,
         Action::Area,
         Action::Window,
@@ -129,6 +131,8 @@ impl Action {
         Action::RecordGif,
         Action::RecordSteps,
         Action::ShowSnag,
+        Action::SaveReplay,
+        Action::ToggleReplay,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -153,6 +157,8 @@ impl Action {
             Action::RecordGif => "Start / stop recording (video or GIF)",
             Action::RecordSteps => "Start / stop step recording",
             Action::ShowSnag => "Show Snagster",
+            Action::SaveReplay => "Save replay",
+            Action::ToggleReplay => "Turn replay on / off",
         }
     }
 }
@@ -186,6 +192,7 @@ fn default_bindings_for(mac: bool) -> Vec<Binding> {
             b(Action::Scrolling, cmd(true, "S")),
             b(Action::RecordGif, cmd(true, "G")),
             b(Action::RecordSteps, cmd(true, "R")),
+            b(Action::SaveReplay, cmd(true, "B")),
         ]
     } else {
         vec![
@@ -198,6 +205,7 @@ fn default_bindings_for(mac: bool) -> Vec<Binding> {
             b(Action::Scrolling, Combo::new(true, false, true, "F10")),
             b(Action::RecordGif, Combo::new(true, false, true, "F11")),
             b(Action::RecordSteps, Combo::new(true, false, true, "F12")),
+            b(Action::SaveReplay, Combo::new(true, false, true, "F8")),
         ]
     };
     first.into_iter().chain([
@@ -213,6 +221,7 @@ fn default_bindings_for(mac: bool) -> Vec<Binding> {
         b(Action::ColorPicker, Combo::default()),
         b(Action::Ruler, Combo::default()),
         b(Action::ShowSnag, Combo::default()),
+        b(Action::ToggleReplay, Combo::default()),
     ])
     .collect()
 }
@@ -498,6 +507,12 @@ pub struct Settings {
     pub audio_source: crate::audio::AudioSource,
     /// The microphone (its id; empty: the computer's default).
     pub audio_mic: String,
+    /// The replay buffer: how many seconds it keeps (30-120).
+    pub replay_s: u32,
+    /// Sound kept with replays (the microphone only when chosen).
+    pub replay_audio: crate::audio::AudioSource,
+    /// Turn replay on when Snagster starts (off: it starts only when turned on).
+    pub replay_at_start: bool,
     /// Interface language code; empty follows the computer.
     pub language: String,
     /// Light or dark: follow the system (the default), or always one of them.
@@ -628,6 +643,9 @@ impl Default for Settings {
             video_folder: videos().join("Snagster").to_string_lossy().to_string(),
             audio_source: crate::audio::AudioSource::System,
             audio_mic: String::new(),
+            replay_s: crate::replay::DEFAULT_S,
+            replay_audio: crate::audio::AudioSource::System,
+            replay_at_start: false,
             language: String::new(),
             appearance: crate::theme::ThemeChoice::System,
             update_check: true,

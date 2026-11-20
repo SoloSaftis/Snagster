@@ -47,6 +47,7 @@ pub(crate) mod work;
 pub(crate) mod ribbon;
 pub(crate) mod studio_ui;
 pub(crate) mod stream_ui;
+pub(crate) mod replay_ui;
 pub(crate) mod updates_ui;
 pub(crate) mod commands_ui;
 pub(crate) mod deleted_ui;
@@ -864,6 +865,8 @@ impl SnagApp {
                 }
             }
             Action::ShowSnag => self.show_window(ctx),
+            Action::SaveReplay => self.save_replay(ctx),
+            Action::ToggleReplay => self.toggle_replay(ctx),
         }
     }
 
@@ -4528,6 +4531,7 @@ impl SnagApp {
             crate::stream::live::wait_idle(Duration::from_secs(5));
         }
         self.poll_stream(ctx);
+        self.poll_replay(ctx);
         // Snagster opened again: this one comes forward (and opens the file asked for).
         for ask in crate::instance::take() {
             // A capture asked for from a desktop shortcut: done as if its hotkey was pressed.
@@ -5312,6 +5316,8 @@ impl SnagApp {
         let ctx2 = ctx.clone();
         match crate::tray::create(&self.settings, self.tray_tx.clone(), move || ctx2.request_repaint()) {
             Ok(t) => {
+                let s = crate::replay::status();
+                t.set_replay(s.on(), s.phase == crate::replay::Phase::On);
                 self.tray = Some(t);
                 self.tray_for = Some(key);
             }

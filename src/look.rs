@@ -79,6 +79,8 @@ pub mod ph {
     pub const TRASH: &str = "\u{e4a6}";
     pub const TIMER: &str = "\u{e492}";
     pub const CLOCK: &str = "\u{e19a}";
+    pub const CLOCK_COUNTER_CLOCKWISE: &str = "\u{e1a0}";
+    pub const DOWNLOAD_SIMPLE: &str = "\u{e20e}";
     pub const SELECTION: &str = "\u{e69a}";
     pub const CURSOR: &str = "\u{e1dc}";
     pub const CIRCLE: &str = "\u{e18a}";
