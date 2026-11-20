@@ -187,6 +187,7 @@ pub const COMMANDS: &[Command] = &[
     c("go_live", "Stream > Go live, Studio", &["Go live"], "stream_start", true, "", Outside),
     c("stream_stop", "Stream > Go live, Studio", &["Stop", "Cancel", "Stop the stream"], "stream_stop", true, "", Destructive),
     c("stream_source", "Stream > Source", &["Whole screen", "A window", "An area", "Pick an area...", "Studio scene"], "stream_start", true, "screen, window:TITLE, area (pick it) or studio", Safe),
+    c("stream_details", "Stream > Status", &["Stream details"], "stream_stats", false, "", Safe),
     c("stream_edit_in_studio", "Stream > Scenes", &["Edit in Studio"], "studio_scenes", true, "", Safe),
     c("stream_forget_key", "Settings > Streaming", &["Forget"], "", true, "", Asks),
     c("stream_also", "Settings > Streaming", &["Add a service", "Stream to this service too"], "set_setting", false, "", Safe),
