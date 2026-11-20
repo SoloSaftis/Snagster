@@ -91,6 +91,27 @@ Linux:
 - Cancelling the desktop's share dialog now says plainly that nothing was shared, and
   `snagster record` works in the Flatpak on Wayland.
 
+Settings, the Library and the tray (every system):
+
+- **Settings opens on the pane you used last**, also after Snagster restarts.
+- **The Library picks a capture with a click** (a blue ring shows it); Delete moves it to the
+  Recycle Bin or Trash, with the usual Undo. In the search box Delete still edits the text.
+- **Stop recording in the tray's menu**: while a recording runs it is the first item.
+
+macOS:
+
+- **Settings has a toolbar** of seven icons (General, Capture, Recording, Editor, Hotkeys,
+  Streaming, AI Apps), as Mac apps' Settings windows do; the window is named after the one
+  chosen.
+- **Capture keys that leave the Mac's own alone**: All-in-One ⌥⇧⌘A, Window ⌥⇧⌘W, Screen ⇧⌘F,
+  and Pin to Screen ⌥⌘P (⇧⌘A, ⇧⌘W and ⇧⌘P are the Mac's Deselect All, Close File and Page
+  Setup). Windows and Linux keep Ctrl+Shift+A, W, F and P.
+- **The Edit menu greys out** Undo, Redo, Cut, Copy and Select All when there is nothing for
+  them to do, and right after a delete Undo reads "Undo Move to Trash".
+- **View > Hide Ribbon / Show Ribbon** (⌥⌘T), and **File > Move to Trash on ⌘⌫** for a saved
+  picture (in the Library ⌘⌫ moves the capture picked there).
+- **The menu bar icon turns into a stop square** while a recording runs.
+
 ## 0.10.6 — 2026-11-17
 
 Linux with Wayland (checked on Ubuntu 26.04 with GNOME):
