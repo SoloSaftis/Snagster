@@ -506,8 +506,8 @@ jobs:
           mv ../SHA256SUMS .
           cat SHA256SUMS
           sha256sum -c SHA256SUMS
-      # The MCP Registry listing for this release: the bundles' addresses and SHA-256. The person
-      # publishes it with mcp-publisher (the private HANDOFF.md has the steps).
+      # The MCP Registry listing for this release: the bundles' addresses and SHA-256. The
+      # maintainer publishes it with mcp-publisher.
       - uses: actions/setup-node@v4
         with:
           node-version: 22

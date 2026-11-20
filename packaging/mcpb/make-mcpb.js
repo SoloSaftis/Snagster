@@ -26,7 +26,7 @@ const REPO = 'https://github.com/SoloSaftis/Snagster';
 const SYSTEMS = {
   windows: { file: 'Snagster-mcp-windows-x64.mcpb', platform: 'win32', exe: 'Snagster.exe' },
   linux: { file: 'Snagster-mcp-linux-x86_64.mcpb', platform: 'linux', exe: 'snagster' },
-  macos: { file: 'Snagster-mcp-macos-arm64.mcpb', platform: 'darwin', exe: 'snagster' },
+  macos: { file: 'Snagster-mcp-macos-arm64.mcpb', platform: 'darwin', exe: 'snagster', note: ' This bundle is for Macs with Apple silicon (M1 or newer).' },
 };
 
 function cargoVersion() {
@@ -185,7 +185,8 @@ function manifest(system, version, tools) {
     long_description:
       'Snagster captures the screen, a window, an area or a scrolling page; marks pictures up with arrows, boxes, text and steps; ' +
       'hides private details; reads text; records videos and GIFs; makes step-by-step guides; runs Studio scenes, a replay buffer ' +
-      'and live streams. Free and open source (MIT or Apache-2.0); everything runs on this computer.',
+      'and live streams. Free and open source (MIT or Apache-2.0); everything runs on this computer.' +
+      (s.note || ''),
     author: { name: 'SoloSaftis', url: 'https://github.com/SoloSaftis' },
     repository: { type: 'git', url: REPO },
     homepage: REPO,
@@ -268,6 +269,13 @@ function serverJsonFor(dir, tag) {
   return s;
 }
 
+/** Write a release's server.json to `out`, making its folder when it isn't there yet. */
+function writeServerJson(dir, tag, out) {
+  const s = serverJsonFor(dir, tag);
+  fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
+  fs.writeFileSync(out, JSON.stringify(s, null, 2) + '\n');
+}
+
 // ---- self-test (no Snagster binary needed) ----
 
 async function selfTest() {
@@ -313,6 +321,7 @@ async function selfTest() {
       assert(files['icon.png'] && files['LICENSE-MIT'] && files['LICENSE-APACHE'], `${system} has the icon and licenses`);
       assert(m.tools.length === 50, `${system} lists the tools`);
       assert(s.file.toLowerCase().includes('mcp'), `${system} file name has mcp, as the registry wants`);
+      assert(system !== 'macos' || m.long_description.includes('Apple silicon'), 'the Mac bundle says it needs Apple silicon');
     }
     let wrongOs = false;
     try {
@@ -331,6 +340,10 @@ async function selfTest() {
       assert(pk.fileSha256 === sha256(fs.readFileSync(path.join(tmp, file))), 'fileSha256 is the bundle\'s');
     }
     assert(s.packages.length === Object.keys(SYSTEMS).length, 'one package per system');
+    // As the release job does it: into a folder that isn't there yet.
+    const written = path.join(tmp, 'server-json', 'server.json');
+    writeServerJson(tmp, 'v9.8.7', written);
+    assert(JSON.stringify(JSON.parse(fs.readFileSync(written, 'utf8'))) === JSON.stringify(s), 'server.json is written into a new folder');
     fs.unlinkSync(path.join(tmp, SYSTEMS.macos.file));
     let missing = false;
     try {
@@ -372,7 +385,7 @@ async function main() {
     const tag = flag(args, '--tag');
     const out = flag(args, '--out') || 'server.json';
     if (!dir || !/^v\d+\.\d+\.\d+/.test(tag || '')) throw new Error('server-json needs --dir <folder> --tag vX.Y.Z [--out server.json]');
-    fs.writeFileSync(out, JSON.stringify(serverJsonFor(dir, tag), null, 2) + '\n');
+    writeServerJson(dir, tag, out);
     console.log(fs.readFileSync(out, 'utf8'));
   } else if (cmd === 'self-test') {
     await selfTest();

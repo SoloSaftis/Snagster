@@ -9,8 +9,9 @@ license: MIT OR Apache-2.0
 Snagster is a free screen capture, recording and streaming app (MIT/Apache-2.0) with an MCP
 server built in. Through it an agent can see this computer's screen, make clear annotated
 screenshots and videos for the person, and change Snagster's own settings. Everything stays on
-this computer: the server reads no network except for streaming, update checks and cloud folders,
-and only when a tool says so.
+this computer: only `stream_start` (and the stream it runs), `check_for_update` and `app_command`'s
+email and update buttons go online, and `save_to_cloud` puts a file where a cloud program uploads
+it; their descriptions say so.
 
 ## When to use this skill
 
@@ -129,7 +130,7 @@ recognition, sound recording, encoders) and its folders.
 
 **Record a short video or GIF**
 
-- `record_video` `{"seconds": 10, "fps": 30, "audio": "system"}` → returns the MP4's path, length and
+- `record_video` `{"seconds": 10, "fps": 30, "audio": "system"}` → returns the video's path, length and
   the encoder used. Add `x`, `y`, `width`, `height` for an area or `monitor_id` for one screen.
 - `record_gif` `{"seconds": 5, "x": 100, "y": 100, "width": 640, "height": 360}`
 - `video_info` `{"path": "..."}` reads a recording back to check it.

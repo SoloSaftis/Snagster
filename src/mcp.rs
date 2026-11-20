@@ -239,11 +239,65 @@ fn kind_words(t: &str) -> &'static str {
     }
 }
 
-/// Check one argument against its schema; `at` names it in the answer.
-fn check_value(tool: &str, at: &str, schema: &Value, v: &Value) -> Result<(), String> {
+/// Other spellings the tools have always taken for some choices (`Service::parse`,
+/// `AudioSource::parse`, `VideoFormat::parse`, `RedactKinds::from_names`): the argument's name,
+/// the spelling (lower case; for a service without spaces, dashes or underscores) and the
+/// choice it means. check_args passes the choice on, so a tool only ever sees its own names.
+const SPELLINGS: [(&str, &str, &str); 23] = [
+    ("service", "yt", "youtube"),
+    ("service", "fb", "facebook"),
+    ("service", "facebooklive", "facebook"),
+    ("service", "rtmp", "custom"),
+    ("service", "rtmps", "custom"),
+    ("audio", "off", "none"),
+    ("audio", "no", "none"),
+    ("audio", "silent", "none"),
+    ("audio", "computer", "system"),
+    ("audio", "desktop", "system"),
+    ("audio", "mic", "microphone"),
+    ("audio", "all", "both"),
+    ("format", "h264", "mp4"),
+    ("format", "h.264", "mp4"),
+    ("format", "avc", "mp4"),
+    ("format", "h265", "hevc"),
+    ("format", "h.265", "hevc"),
+    ("kinds", "email", "emails"),
+    ("kinds", "phone", "phones"),
+    ("kinds", "card", "cards"),
+    ("kinds", "address", "addresses"),
+    ("kinds", "ip", "ips"),
+    ("kinds", "url", "urls"),
+];
+
+/// The choice in `allowed` that `v` names: itself, the same name in another case, or one of
+/// its other spellings (see SPELLINGS) for the argument `key`.
+fn choice_of(key: &str, allowed: &[Value], v: &Value) -> Option<Value> {
+    if allowed.contains(v) {
+        return Some(v.clone());
+    }
+    let text = v.as_str()?;
+    let find = |want: &str| allowed.iter().find(|a| a.as_str().is_some_and(|a| a.eq_ignore_ascii_case(want))).cloned();
+    find(text.trim()).or_else(|| {
+        let mut low = text.trim().to_ascii_lowercase();
+        if key == "service" {
+            low.retain(|c| !matches!(c, ' ' | '-' | '_'));
+        }
+        SPELLINGS.iter().find(|(k, s, _)| *k == key && *s == low).and_then(|(_, _, to)| find(to))
+    })
+}
+
+/// Whether an argument is a secret (a stream key, a token): its value is never shown back.
+fn secret(key: &str, schema: &Value) -> bool {
+    matches!(key, "key" | "token" | "password") || schema["description"].as_str().is_some_and(|d| d.contains("Secret"))
+}
+
+/// Check one argument against its schema and put each choice in its own spelling. `at` names
+/// it in the answer, `key` is its own name (for a list's items, the list's).
+fn check_value(tool: &str, at: &str, key: &str, schema: &Value, v: &mut Value) -> Result<(), String> {
     if v.is_null() {
         return Ok(());
     }
+    let show = |v: &Value| if secret(key, schema) { "(hidden)".to_string() } else { shown(v) };
     let types: Vec<&str> = match &schema["type"] {
         Value::String(t) => vec![t.as_str()],
         Value::Array(ts) => ts.iter().filter_map(Value::as_str).collect(),
@@ -261,17 +315,18 @@ fn check_value(tool: &str, at: &str, schema: &Value, v: &Value) -> Result<(), St
     if !types.is_empty() && !types.iter().any(|t| fits(t)) {
         let want: Vec<&str> = types.iter().filter(|t| **t != "null").map(|t| kind_words(t)).collect();
         let hint = if v.is_string() && types.iter().any(|t| matches!(*t, "number" | "integer" | "boolean")) { " (without quotes)" } else { "" };
-        return Err(format!("\"{at}\" is {}, but {tool} takes {} there{hint}.", shown(v), want.join(" or ")));
+        return Err(format!("\"{at}\" is {}, but {tool} takes {} there{hint}.", show(v), want.join(" or ")));
     }
-    // Names are matched without regard to case, as the tools themselves match them.
-    let same = |a: &Value| a == v || a.as_str().zip(v.as_str()).is_some_and(|(a, v)| a.eq_ignore_ascii_case(v));
-    if let Some(allowed) = schema["enum"].as_array()
-        && !allowed.iter().any(same)
-    {
-        let names: Vec<String> = allowed.iter().map(|a| a.as_str().map_or_else(|| a.to_string(), str::to_string)).collect();
-        let about = schema["description"].as_str().map(|d| format!(" ({})", d.trim_end_matches('.'))).unwrap_or_default();
-        let list = if names.len() <= 20 { format!("one of: {}{about}", names.join(", ")) } else { format!("one of {} names{about}", names.len()) };
-        return Err(format!("\"{at}\" is {}, but {tool} takes {list}.", shown(v)));
+    if let Some(allowed) = schema["enum"].as_array() {
+        match choice_of(key, allowed, v) {
+            Some(c) => *v = c,
+            None => {
+                let names: Vec<String> = allowed.iter().map(|a| a.as_str().map_or_else(|| a.to_string(), str::to_string)).collect();
+                let about = schema["description"].as_str().map(|d| format!(" ({})", d.trim_end_matches('.'))).unwrap_or_default();
+                let list = if names.len() <= 20 { format!("one of: {}{about}", names.join(", ")) } else { format!("one of {} names{about}", names.len()) };
+                return Err(format!("\"{at}\" is {}, but {tool} takes {list}.", show(v)));
+            }
+        }
     }
     if let Some(f) = v.as_f64() {
         let (lo, hi) = (schema["minimum"].as_f64(), schema["maximum"].as_f64());
@@ -285,26 +340,26 @@ fn check_value(tool: &str, at: &str, schema: &Value, v: &Value) -> Result<(), St
             return Err(format!("\"{at}\" is {f}, but {tool} takes {range} there."));
         }
     }
-    if let Some(items) = v.as_array() {
+    if let Some(items) = v.as_array_mut() {
         if let Some(max) = schema["maxItems"].as_u64().filter(|m| items.len() as u64 > *m) {
             return Err(format!("\"{at}\" has {} items, but {tool} takes at most {max}.", items.len()));
         }
         if let Some(min) = schema["minItems"].as_u64().filter(|m| (items.len() as u64) < *m) {
             return Err(format!("\"{at}\" has {} items, but {tool} needs at least {min}.", items.len()));
         }
-        for (i, item) in items.iter().enumerate() {
-            check_value(tool, &format!("{at}[{i}]"), &schema["items"], item)?;
+        for (i, item) in items.iter_mut().enumerate() {
+            check_value(tool, &format!("{at}[{i}]"), key, &schema["items"], item)?;
         }
     }
-    if let Some(o) = v.as_object() {
+    if let Some(o) = v.as_object_mut() {
         for k in schema["required"].as_array().into_iter().flatten().filter_map(Value::as_str) {
             if o.get(k).is_none_or(Value::is_null) {
                 return Err(format!("\"{at}\" needs \"{k}\"."));
             }
         }
-        for (k, item) in o {
+        for (k, item) in o.iter_mut() {
             if let Some(s) = schema["properties"].get(k) {
-                check_value(tool, &format!("{at}.{k}"), s, item)?;
+                check_value(tool, &format!("{at}.{k}"), k, s, item)?;
             }
         }
     }
@@ -313,14 +368,15 @@ fn check_value(tool: &str, at: &str, schema: &Value, v: &Value) -> Result<(), St
 
 /// Check a call's arguments against the tool's input schema before it runs, so a misspelt
 /// name, a number sent as text or a value out of range gets an answer that says what is wrong
-/// and what the tool takes, instead of being ignored.
-fn check_args(t: &Tool, a: &Value) -> Result<(), String> {
-    let empty = serde_json::Map::new();
-    let args = match a {
-        Value::Null => &empty,
-        Value::Object(o) => o,
+/// and what the tool takes, instead of being ignored. Gives the arguments the tool runs with:
+/// every choice in the tool's own spelling (any case, and the other spellings in SPELLINGS).
+fn check_args(t: &Tool, a: &Value) -> Result<Value, String> {
+    let mut args = match a {
+        Value::Null => serde_json::Map::new(),
+        Value::Object(o) => o.clone(),
         other => return Err(format!("{}'s arguments are an object of named values, like {{\"x\": 10}}, not {}.", t.name, shown(other))),
     };
+    let empty = serde_json::Map::new();
     let props = t.schema["properties"].as_object().unwrap_or(&empty);
     for k in t.schema["required"].as_array().into_iter().flatten().filter_map(Value::as_str) {
         if args.get(k).is_none_or(Value::is_null) {
@@ -328,9 +384,9 @@ fn check_args(t: &Tool, a: &Value) -> Result<(), String> {
             return Err(format!("{} needs \"{k}\"{help}", t.name));
         }
     }
-    for (k, v) in args {
+    for (k, v) in args.iter_mut() {
         match props.get(k) {
-            Some(s) => check_value(t.name, k, s, v)?,
+            Some(s) => check_value(t.name, k, k, s, v)?,
             None => {
                 let mut takes: Vec<&str> = props.keys().map(String::as_str).collect();
                 takes.sort_unstable();
@@ -339,7 +395,7 @@ fn check_args(t: &Tool, a: &Value) -> Result<(), String> {
             }
         }
     }
-    Ok(())
+    Ok(Value::Object(args))
 }
 
 /// Make a tool's own "missing ..." answer say what the argument is.
@@ -442,7 +498,7 @@ fn base_tools() -> Vec<Tool> {
                     "outline": b("An outline around text letters (text default on) or a callout bubble (default off)."),
                     "callout_shape": {"type": "string", "enum": ["rounded", "rectangle", "oval"], "description": "The callout bubble."},
                     "number": n("Number for a step; default the next one."),
-                    "style": {"type": "string", "enum": ["numbers", "upper", "lower", "roman"], "description": "How a step shows its number: 1, A, a or i."},
+                    "style": {"type": "string", "enum": ["numbers", "upper", "lower", "roman"], "description": "How a step shows its number: numbers (1, 2, 3), upper (A, B, C), lower (a, b, c) or roman (i, ii, iii)."},
                     "zoom": n("How much a magnifier enlarges, 1-8 (default 2).")
                 }),
                 &["kind"],
@@ -466,7 +522,7 @@ fn base_tools() -> Vec<Tool> {
                     "outline": b("Outline."),
                     "callout_shape": {"type": "string", "enum": ["rounded", "rectangle", "oval"], "description": "The callout bubble."},
                     "heads": n("Arrow heads 0, 1 or 2."), "radius": n("Box corner radius."),
-                    "number": n("Step number."), "style": {"type": "string", "enum": ["numbers", "upper", "lower", "roman"], "description": "How a step shows its number: 1, A, a or i."},
+                    "number": n("Step number."), "style": {"type": "string", "enum": ["numbers", "upper", "lower", "roman"], "description": "How a step shows its number: numbers (1, 2, 3), upper (A, B, C), lower (a, b, c) or roman (i, ii, iii)."},
                     "zoom": n("Magnifier zoom 1-8.")
                 }),
                 &["index"],
@@ -1043,8 +1099,8 @@ impl Workspace {
     pub fn call(&mut self, name: &str, a: &Value) -> Outcome {
         self.structured = None;
         let Some(t) = find_tool(name) else { return self.run(name, a) };
-        check_args(t, a)?;
-        self.run(t.name, a).map_err(|e| explain(t, e))
+        let a = check_args(t, a)?;
+        self.run(t.name, &a).map_err(|e| explain(t, e))
     }
 
     fn run(&mut self, name: &str, a: &Value) -> Outcome {
@@ -2755,6 +2811,44 @@ mod tests {
         // Null is the same as not given.
         assert!(ws.call("list_marks", &json!({"filter": null})).is_err_and(|e| e.contains("no argument")), "an unknown name is refused even as null");
         assert!(ws.call("view_picture", &json!({"max_size": null})).is_err_and(|e| e.contains("no current picture")), "max_size: null passes the check");
+    }
+
+    #[test]
+    fn choices_reach_the_tool_in_its_own_spelling() {
+        // Any case: the tool gets its own name, so it does what was asked (blur_area compared
+        // "solid" exactly and quietly blurred instead).
+        let mut ws = ws_with(40, 40);
+        ws.call("blur_area", &json!({"x": 0, "y": 0, "width": 10, "height": 10, "mode": "SOLID", "color": "#FF0000"})).unwrap();
+        assert_eq!(&ws.doc.as_ref().unwrap().image.get_pixel(5, 5).0[..3], &[255, 0, 0], "a red box, not a blur");
+        ws.call("add_mark", &json!({"kind": "BOX", "x": 1, "y": 1, "x2": 9, "y2": 9})).unwrap();
+        assert!(matches!(ws.doc.as_ref().unwrap().shapes.last(), Some(Shape::Rect { .. })));
+        ws.call("add_mark", &json!({"kind": "Step", "x": 20, "y": 20, "style": "Upper"})).unwrap();
+        ws.call("editor_apply", &json!({"action": "NEW_IMAGE", "width": 8, "height": 6})).unwrap();
+        assert_eq!(ws.doc.as_ref().unwrap().image.dimensions(), (8, 6));
+        // The other spellings the tools always took become their names.
+        let t = find_tool("record_video").unwrap();
+        let a = check_args(t, &json!({"seconds": 1, "audio": "mic", "format": "H264"})).unwrap();
+        assert_eq!((a["audio"].as_str(), a["format"].as_str()), (Some("microphone"), Some("mp4")));
+        let t = find_tool("stream_start").unwrap();
+        let a = check_args(t, &json!({"service": "YT", "also": [{"service": "Facebook Live"}, {"service": "rtmps"}]})).unwrap();
+        assert_eq!(a["service"], "youtube");
+        assert_eq!((a["also"][0]["service"].as_str(), a["also"][1]["service"].as_str()), (Some("facebook"), Some("custom")));
+        let t = find_tool("smart_redact").unwrap();
+        assert_eq!(check_args(t, &json!({"kinds": ["email", "IPs"]})).unwrap()["kinds"], json!(["emails", "ips"]));
+        // A spelling of one argument doesn't count for another, and nothing else is changed.
+        let t = find_tool("studio_edit").unwrap();
+        assert!(check_args(t, &json!({"action": "add_sound", "input": "mic"})).is_err(), "mic is an audio spelling, not an input one");
+        let a = check_args(t, &json!({"action": "add_sound", "input": "computer", "path": "Mixed Case.wav"})).unwrap();
+        assert_eq!((a["input"].as_str(), a["path"].as_str()), (Some("computer"), Some("Mixed Case.wav")));
+    }
+
+    #[test]
+    fn a_secret_sent_wrong_is_never_shown_back() {
+        let t = find_tool("stream_start").unwrap();
+        for a in [json!({"key": 12345678}), json!({"also": [{"service": "kick", "key": 87654321}]})] {
+            let e = check_args(t, &a).unwrap_err();
+            assert!(e.contains("(hidden)") && !e.contains("12345678") && !e.contains("87654321"), "{e}");
+        }
     }
 
     #[test]

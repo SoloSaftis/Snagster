@@ -23,4 +23,4 @@ The app is not signed yet, so your computer may warn you once:
 
 ## For AI apps
 
-`Snagster-mcp-windows-x64.mcpb`, `Snagster-mcp-linux-x86_64.mcpb` and `Snagster-mcp-macos-arm64.mcpb` are MCP bundles: AI apps that install bundles (such as Claude Desktop) add Snagster's tools in one step. `server.json` is the listing for the MCP Registry. With the normal download, Settings → AI apps shows the lines to copy instead.
+`Snagster-mcp-windows-x64.mcpb`, `Snagster-mcp-linux-x86_64.mcpb` and `Snagster-mcp-macos-arm64.mcpb` are MCP bundles (the Mac one for Apple silicon): AI apps that install bundles (such as Claude Desktop) add Snagster's tools in one step. `server.json` is the listing for the MCP Registry. With the normal download, Settings → AI apps shows the lines to copy instead.
