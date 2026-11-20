@@ -1091,6 +1091,13 @@
   "Time per frame": "Czas na klatkę",
   "{ms} of {budget} ms": "{ms} z {budget} ms",
   "Percentages: last 10 seconds": "Wartości procentowe: ostatnie 10 sekund",
-  "The stream is fine again.": "Transmisja znów działa prawidłowo."
+  "The stream is fine again.": "Transmisja znów działa prawidłowo.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Przechodzenie między wstążką, narzędziami, obrazem, opcjami i Ostatnimi",
+  "The next or the previous control; the arrow keys move within a part": "Następna lub poprzednia kontrolka; klawisze strzałek przesuwają w obrębie części",
+  "Use the control that has the keyboard": "Użyj kontrolki, która ma klawiaturę",
+  "Back to the picture": "Powrót do obrazu",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Na obrazie: przesuń wybrany znacznik (z Shift o dziesięć pikseli)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Pokaż litery wstążki: wpisz jedną, aby otworzyć kartę lub użyć narzędzia",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Przytrzymaj, aby zobaczyć litery kart wstążki; Alt i litera otwierają tę kartę"
  }
 }

@@ -1091,6 +1091,13 @@
   "Time per frame": "ஒரு பிரேமுக்கான நேரம்",
   "{ms} of {budget} ms": "{budget} ms இல் {ms}",
   "Percentages: last 10 seconds": "சதவீதங்கள்: கடந்த 10 வினாடிகள்",
-  "The stream is fine again.": "ஸ்ட்ரீம் மீண்டும் சரியாக உள்ளது."
+  "The stream is fine again.": "ஸ்ட்ரீம் மீண்டும் சரியாக உள்ளது.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "ரிப்பன், கருவிகள், படம், விருப்பங்கள் மற்றும் சமீபத்தியவை இடையே செல்லவும்",
+  "The next or the previous control; the arrow keys move within a part": "அடுத்த அல்லது முந்தைய கட்டுப்பாடு; அம்புக்குறி விசைகள் ஒரு பகுதிக்குள் நகரும்",
+  "Use the control that has the keyboard": "விசைப்பலகை உள்ள கட்டுப்பாட்டைப் பயன்படுத்தவும்",
+  "Back to the picture": "படத்திற்குத் திரும்பு",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "படத்தில்: தேர்ந்த குறியை நகர்த்து (Shift உடன், பத்து பிக்சல்)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "ரிப்பனின் விசை எழுத்துகளைக் காட்டு: தாவலைத் திறக்க அல்லது கருவியைப் பயன்படுத்த ஒன்றை உள்ளிடவும்",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "ரிப்பன் தாவல்களின் எழுத்துகளைப் பார்க்க அழுத்திப் பிடிக்கவும்; Alt மற்றும் ஓர் எழுத்து அந்தத் தாவலைத் திறக்கும்"
  }
 }

@@ -1091,6 +1091,13 @@
   "Time per frame": "Tími á ramma",
   "{ms} of {budget} ms": "{ms} af {budget} ms",
   "Percentages: last 10 seconds": "Hlutföll: síðustu 10 sekúndur",
-  "The stream is fine again.": "Streymið er í lagi á ný."
+  "The stream is fine again.": "Streymið er í lagi á ný.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Færa á milli borðans, tólanna, myndarinnar, valkostanna og Nýlegs",
+  "The next or the previous control; the arrow keys move within a part": "Næsta eða fyrri stýring; örvatakkarnir hreyfast innan hluta",
+  "Use the control that has the keyboard": "Nota stýringuna sem hefur lyklaborðið",
+  "Back to the picture": "Til baka í myndina",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Á myndinni: færa valda merkið (með Shift, tíu díla)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Sýna lykilstafi borðans: sláðu inn einn til að opna flipa eða nota tól",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Haltu inni til að sjá stafi flipa borðans; Alt og stafur opnar þann flipa"
  }
 }

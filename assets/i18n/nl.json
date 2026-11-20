@@ -1091,6 +1091,13 @@
   "Time per frame": "Tijd per frame",
   "{ms} of {budget} ms": "{ms} van {budget} ms",
   "Percentages: last 10 seconds": "Percentages: laatste 10 seconden",
-  "The stream is fine again.": "De stream is weer in orde."
+  "The stream is fine again.": "De stream is weer in orde.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Wissel tussen het lint, de gereedschappen, de afbeelding, de opties en Recent",
+  "The next or the previous control; the arrow keys move within a part": "Het volgende of vorige bedieningselement; de pijltoetsen bewegen binnen een deel",
+  "Use the control that has the keyboard": "Gebruik het bedieningselement dat het toetsenbord heeft",
+  "Back to the picture": "Terug naar de afbeelding",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Op de afbeelding: de gekozen markering verplaatsen (met Shift tien pixels)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Toon de toetsletters van het lint: typ er een om een tabblad te openen of een gereedschap te gebruiken",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Ingedrukt houden om de letters van de lint-tabbladen te zien; Alt en een letter openen dat tabblad"
  }
 }

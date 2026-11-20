@@ -4,6 +4,17 @@ What changed for people using Snagster, per version.
 
 ## Not released yet
 
+Using Snagster from the keyboard (every system):
+
+- **F6 and Shift+F6 move between the ribbon, the tools, the picture, the options and Recent**;
+  Tab moves from control to control, the arrow keys within a part, Enter or Space uses the
+  control, Esc goes back to the picture. A ring shows which control has the keyboard, and
+  screen readers follow every move. On the picture the arrow keys move the picked mark.
+- **Windows: Alt or F10 shows key tips on the ribbon**, as in Office: type a tab's letter, then
+  a tool's. Alt and a letter opens a tab at once.
+- **Linux: hold Alt to see the ribbon tabs' letters**; Alt and a letter opens that tab (F10
+  still opens the main menu).
+
 Live streaming (every system):
 
 - **See trouble while you're live**: the Stream tab's Status says in a few words when the

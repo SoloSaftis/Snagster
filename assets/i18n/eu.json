@@ -1091,6 +1091,13 @@
   "Time per frame": "Denbora fotogramako",
   "{ms} of {budget} ms": "{ms} / {budget} ms",
   "Percentages: last 10 seconds": "Ehunekoak: azken 10 segundoak",
-  "The stream is fine again.": "Zuzeneko emisioa berriro ondo dago."
+  "The stream is fine again.": "Zuzeneko emisioa berriro ondo dago.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Mugitu zintaren, tresnen, irudiaren, aukeren eta Azkenen artean",
+  "The next or the previous control; the arrow keys move within a part": "Hurrengo edo aurreko kontrola; gezi-teklek zati baten barruan mugitzen dira",
+  "Use the control that has the keyboard": "Erabili teklatua duen kontrola",
+  "Back to the picture": "Itzuli irudira",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Irudian: mugitu hautatutako marka (Shift-ekin, hamar pixel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Erakutsi zintaren tekla-letrak: idatzi bat fitxa bat irekitzeko edo tresna bat erabiltzeko",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Eutsi zintaren fitxen letrak ikusteko; Alt eta letra batek fitxa hori irekitzen du"
  }
 }

@@ -1091,6 +1091,13 @@
   "Time per frame": "ھەر كادىر ۋاقتى",
   "{ms} of {budget} ms": "{budget} ms نىڭ {ms}",
   "Percentages: last 10 seconds": "پىرسەنت: ئاخىرقى 10 سېكۇنت",
-  "The stream is fine again.": "بىۋاسىتە ئوقۇم يەنە نورمال بولدى."
+  "The stream is fine again.": "بىۋاسىتە ئوقۇم يەنە نورمال بولدى.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "لېنتا، قوراللار، سۈرەت، تاللانمىلار ۋە يېقىنقىلار ئارىسىدا يۆتكىلىڭ",
+  "The next or the previous control; the arrow keys move within a part": "كېيىنكى ياكى ئالدىنقى تىزگىنلەش؛ ئوق كۇنۇپكىلىرى بىر قىسىم ئىچىدە يۆتكىلىدۇ",
+  "Use the control that has the keyboard": "كۇنۇپكا تاختىسى بار تىزگىنلەشنى ئىشلىتىڭ",
+  "Back to the picture": "سۈرەتكە قايتىش",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "سۈرەتتە: تاللانغان بەلگىنى يۆتكەڭ (Shift بىلەن ئون پىكسېل)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "لېنتانىڭ كۇنۇپكا ھەرپلىرىنى كۆرسىتىش: بىر بەتكۈچنى ئېچىش ياكى قورال ئىشلىتىش ئۈچۈن بىرىنى كىرگۈزۈڭ",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "لېنتا بەتكۈچلىرىنىڭ ھەرپلىرىنى كۆرۈش ئۈچۈن بېسىپ تۇرۇڭ؛ Alt ۋە بىر ھەرپ شۇ بەتكۈچنى ئاچىدۇ"
  }
 }

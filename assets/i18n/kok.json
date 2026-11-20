@@ -1091,6 +1091,13 @@
   "Time per frame": "फ्रेमाक लागपी वेळ",
   "{ms} of {budget} ms": "{budget} ms पैकी {ms}",
   "Percentages: last 10 seconds": "टक्केवारी: शेवटले 10 सेकंद",
-  "The stream is fine again.": "स्ट्रीम परत बरो जाला."
+  "The stream is fine again.": "स्ट्रीम परत बरो जाला.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "रिबन, टूल्स, चित्र, पर्याय आनी अलीकडलें हांचेमदीं वचात",
+  "The next or the previous control; the arrow keys move within a part": "फुडलें वा फाटलें नियंत्रण; बाणाचीं कळीं एका भागाभितर चलतात",
+  "Use the control that has the keyboard": "कीबोर्ड आशिल्लें नियंत्रण वापरात",
+  "Back to the picture": "चित्राकडे परत वचात",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "चित्रार: वेंचिल्लें चिन्न हालयात (Shift सयत, धा पिक्सेल)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "रिबनाचीं कळ अक्षरां दाखयात: टॅब उगडपाक वा टूल वापरपाक एक टायप करात",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "रिबन टॅबांचीं अक्षरां पळोवपाक धरून दवरात; Alt आनी एक अक्षर तो टॅब उगडटा"
  }
 }

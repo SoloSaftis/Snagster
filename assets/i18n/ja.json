@@ -1091,6 +1091,13 @@
   "Time per frame": "1フレームあたりの時間",
   "{ms} of {budget} ms": "{ms} / {budget} ミリ秒",
   "Percentages: last 10 seconds": "割合：直近10秒",
-  "The stream is fine again.": "配信は正常に戻りました。"
+  "The stream is fine again.": "配信は正常に戻りました。",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "リボン、ツール、画像、オプション、最近の間を移動",
+  "The next or the previous control; the arrow keys move within a part": "次または前のコントロール。矢印キーで部分の中を移動",
+  "Use the control that has the keyboard": "キーボード操作を持つコントロールを使う",
+  "Back to the picture": "画像に戻る",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "画像上：選んだマークを移動（Shift で10ピクセル）",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "リボンのキー文字を表示：文字を入力してタブを開くかツールを使う",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "押し続けるとリボンのタブの文字が表示されます。Alt と文字でそのタブを開く"
  }
 }

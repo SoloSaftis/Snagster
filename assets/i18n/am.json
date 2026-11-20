@@ -1091,6 +1091,13 @@
   "Time per frame": "በአንድ ክፈፍ ጊዜ",
   "{ms} of {budget} ms": "{ms} ከ{budget} ሚሴ",
   "Percentages: last 10 seconds": "መቶኛዎች፦ ያለፉት 10 ሰከንዶች",
-  "The stream is fine again.": "ስርጭቱ እንደገና ደህና ነው።"
+  "The stream is fine again.": "ስርጭቱ እንደገና ደህና ነው።",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "በሪባኑ፣ በመሣሪያዎቹ፣ በሥዕሉ፣ በአማራጮቹ እና በየቅርብ ጊዜ መካከል ይንቀሳቀሱ",
+  "The next or the previous control; the arrow keys move within a part": "ቀጣዩ ወይም ቀዳሚው መቆጣጠሪያ፤ የቀስት ቁልፎች በአንድ ክፍል ውስጥ ይንቀሳቀሳሉ",
+  "Use the control that has the keyboard": "ቁልፍ ሰሌዳው ያለውን መቆጣጠሪያ ተጠቀም",
+  "Back to the picture": "ወደ ሥዕሉ ተመለስ",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "በሥዕሉ ላይ፦ የተመረጠውን ምልክት ውሰድ (በ Shift አሥር ፒክሰል)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "የሪባኑን ቁልፍ ፊደላት አሳይ፦ ትር ለመክፈት ወይም መሣሪያ ለመጠቀም አንዱን ተይብ",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "የሪባኑን ትሮች ፊደላት ለማየት ተጭነው ይያዙ፤ Alt እና ፊደል ያንን ትር ይከፍታል"
  }
 }

@@ -1091,6 +1091,13 @@
   "Time per frame": "Tempo por fotograma",
   "{ms} of {budget} ms": "{ms} de {budget} ms",
   "Percentages: last 10 seconds": "Porcentaxes: últimos 10 segundos",
-  "The stream is fine again.": "A emisión volve ir ben."
+  "The stream is fine again.": "A emisión volve ir ben.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Moverse entre a cinta, as ferramentas, a imaxe, as opcións e Recentes",
+  "The next or the previous control; the arrow keys move within a part": "O control seguinte ou o anterior; as teclas de frecha móvense dentro dunha parte",
+  "Use the control that has the keyboard": "Usar o control que ten o teclado",
+  "Back to the picture": "Volver á imaxe",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Na imaxe: mover a marca escollida (con Maiús, dez píxeles)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Amosar as letras da cinta: escribe unha para abrir un separador ou usar unha ferramenta",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Mantén premido para ver as letras dos separadores da cinta; Alt e unha letra abren ese separador"
  }
 }

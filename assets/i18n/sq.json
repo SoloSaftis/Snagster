@@ -1091,6 +1091,13 @@
   "Time per frame": "Koha për kuadër",
   "{ms} of {budget} ms": "{ms} nga {budget} ms",
   "Percentages: last 10 seconds": "Përqindjet: 10 sekondat e fundit",
-  "The stream is fine again.": "Transmetimi është sërish në rregull."
+  "The stream is fine again.": "Transmetimi është sërish në rregull.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Lëviz mes shiritit, mjeteve, imazhit, opsioneve dhe Të fundit",
+  "The next or the previous control; the arrow keys move within a part": "Kontrolli tjetër ose i mëparshmi; tastet e shigjetave lëvizin brenda një pjese",
+  "Use the control that has the keyboard": "Përdor kontrollin që ka tastierën",
+  "Back to the picture": "Kthehu te imazhi",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Te imazhi: lëvize shenjën e zgjedhur (me Shift, dhjetë piksele)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Shfaq shkronjat e shiritit: shkruaj një për të hapur një skedë ose për të përdorur një mjet",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Mbaje shtypur për të parë shkronjat e skedave të shiritit; Alt dhe një shkronjë e hapin atë skedë"
  }
 }

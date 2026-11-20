@@ -1091,6 +1091,13 @@
   "Time per frame": "Oras bawat frame",
   "{ms} of {budget} ms": "{ms} ng {budget} ms",
   "Percentages: last 10 seconds": "Mga porsyento: huling 10 segundo",
-  "The stream is fine again.": "Maayos na ulit ang stream."
+  "The stream is fine again.": "Maayos na ulit ang stream.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Lumipat sa ribbon, mga tool, larawan, mga opsyon at Kamakailan",
+  "The next or the previous control; the arrow keys move within a part": "Ang susunod o nakaraang control; ang mga arrow key ay gumagalaw sa loob ng isang bahagi",
+  "Use the control that has the keyboard": "Gamitin ang control na may keyboard",
+  "Back to the picture": "Bumalik sa larawan",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Sa larawan: ilipat ang napiling marka (gamit ang Shift, sampung pixel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Ipakita ang mga key letter ng ribbon: mag-type ng isa para magbukas ng tab o gumamit ng tool",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Pindutin nang matagal para makita ang mga letra ng mga tab ng ribbon; ang Alt at isang letra ay nagbubukas ng tab na iyon"
  }
 }

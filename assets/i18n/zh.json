@@ -1091,6 +1091,13 @@
   "Time per frame": "每帧耗时",
   "{ms} of {budget} ms": "{ms} / {budget} 毫秒",
   "Percentages: last 10 seconds": "百分比：最近 10 秒",
-  "The stream is fine again.": "直播已恢复正常。"
+  "The stream is fine again.": "直播已恢复正常。",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "在功能区、工具、图片、选项和最近之间切换",
+  "The next or the previous control; the arrow keys move within a part": "下一个或上一个控件；方向键在一个部分内移动",
+  "Use the control that has the keyboard": "使用拥有键盘的控件",
+  "Back to the picture": "返回图片",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "在图片上：移动选中的标记（按住 Shift 为十像素）",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "显示功能区的按键字母：键入一个字母即可打开选项卡或使用工具",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "按住可查看功能区选项卡的字母；Alt 加字母可打开该选项卡"
  }
 }

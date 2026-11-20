@@ -1091,6 +1091,13 @@
   "Time per frame": "Zäit pro Bild",
   "{ms} of {budget} ms": "{ms} vun {budget} ms",
   "Percentages: last 10 seconds": "Prozenter: lescht 10 Sekonnen",
-  "The stream is fine again.": "De Stream leeft erëm ouni Problemer."
+  "The stream is fine again.": "De Stream leeft erëm ouni Problemer.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Wiesselt tëscht dem Band, de Wierkzecher, dem Bild, den Optiounen a Rezent",
+  "The next or the previous control; the arrow keys move within a part": "Dat nächst oder virdrun Bedéngelement; d’Pfeiltaste bewege sech bannent engem Deel",
+  "Use the control that has the keyboard": "Dat Bedéngelement benotzen, dat d’Tastatur huet",
+  "Back to the picture": "Zréck zum Bild",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Um Bild: déi gewielte Markéierung verréckelen (mat Shift zéng Pixel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "D’Tastebuschtawen vum Band weisen: een tippen, fir en Tab opzemaachen oder e Wierkzeug ze benotzen",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Gedréckt halen, fir d’Buschtawen vun den Tabs ze gesinn; Alt an e Buschtaw maachen deen Tab op"
  }
 }

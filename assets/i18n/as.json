@@ -1091,6 +1091,13 @@
   "Time per frame": "প্ৰতি ফ্ৰেমৰ সময়",
   "{ms} of {budget} ms": "{budget} মি.ছে.ৰ ভিতৰত {ms}",
   "Percentages: last 10 seconds": "শতাংশ: যোৱা ১০ ছেকেণ্ড",
-  "The stream is fine again.": "ষ্ট্ৰিমটো পুনৰ ভালে আছে।"
+  "The stream is fine again.": "ষ্ট্ৰিমটো পুনৰ ভালে আছে।",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "ৰিবন, টুল, ছবি, বিকল্প আৰু শেহতীয়াৰ মাজত যাওক",
+  "The next or the previous control; the arrow keys move within a part": "পৰৱৰ্তী বা পূৰ্বৰ নিয়ন্ত্ৰণ; কাঁড়চিহ্নৰ কি’ এটা অংশৰ ভিতৰত চলে",
+  "Use the control that has the keyboard": "কীবৰ্ড থকা নিয়ন্ত্ৰণ ব্যৱহাৰ কৰক",
+  "Back to the picture": "ছবিলৈ উভতি যাওক",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "ছবিত: বাছনি কৰা চিহ্ন লৰাওক (Shift ৰ সৈতে, দহ পিক্সেল)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "ৰিবনৰ কি’ আখৰ দেখুৱাওক: টেব খুলিবলৈ বা টুল ব্যৱহাৰ কৰিবলৈ এটা টাইপ কৰক",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "ৰিবনৰ টেবৰ আখৰ চাবলৈ হেঁচি ধৰক; Alt আৰু এটা আখৰে সেই টেব খোলে"
  }
 }

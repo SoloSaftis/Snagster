@@ -1091,6 +1091,13 @@
   "Time per frame": "Tid per bilete",
   "{ms} of {budget} ms": "{ms} av {budget} ms",
   "Percentages: last 10 seconds": "Prosentar: siste 10 sekund",
-  "The stream is fine again.": "Straumen er i orden att."
+  "The stream is fine again.": "Straumen er i orden att.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Flytt mellom båndet, verktøya, biletet, alternativa og Nyleg",
+  "The next or the previous control; the arrow keys move within a part": "Neste eller førre kontroll; piltastane flyttar seg innanfor ein del",
+  "Use the control that has the keyboard": "Bruk kontrollen som har tastaturet",
+  "Back to the picture": "Tilbake til biletet",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "På biletet: flytt den valde markeringa (med Shift, ti pikslar)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Vis snøggtastbokstavane på båndet: skriv éin for å opne ei fane eller bruke eit verktøy",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Hald inne for å sjå bokstavane på fanene i båndet; Alt og ein bokstav opnar den fana"
  }
 }

@@ -1091,6 +1091,13 @@
   "Time per frame": "Wā mō ia anga",
   "{ms} of {budget} ms": "{ms} o te {budget} ms",
   "Percentages: last 10 seconds": "Ngā ōrau: ngā hēkona 10 whakamutunga",
-  "The stream is fine again.": "Kua pai anō te rere."
+  "The stream is fine again.": "Kua pai anō te rere.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Neke i waenga i te rīpene, ngā taputapu, te whakaahua, ngā kōwhiringa me Tata nei",
+  "The next or the previous control; the arrow keys move within a part": "Te mana whakahaere e whai ake nei, te mea rānei o mua; ka neke ngā pātuhi pere i roto i tētahi wāhanga",
+  "Use the control that has the keyboard": "Whakamahia te mana whakahaere kei a ia te papapātuhi",
+  "Back to the picture": "Hoki ki te whakaahua",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Ki te whakaahua: neke te tohu kua kōwhiria (me Shift, tekau ngā pika)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Whakaatu i ngā reta pātuhi o te rīpene: patohia tētahi hei whakatuwhera i tētahi ripa, hei whakamahi rānei i tētahi taputapu",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Pupuri hei kite i ngā reta o ngā ripa rīpene; ka whakatuwhera a Alt me tētahi reta i taua ripa"
  }
 }

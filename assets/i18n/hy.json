@@ -1091,6 +1091,13 @@
   "Time per frame": "Ժամանակ մեկ կադրի համար",
   "{ms} of {budget} ms": "{ms} / {budget} մվ",
   "Percentages: last 10 seconds": "Տոկոսներ՝ վերջին 10 վայրկյանը",
-  "The stream is fine again.": "Հեռարձակումը նորից կարգին է։"
+  "The stream is fine again.": "Հեռարձակումը նորից կարգին է։",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Անցեք ժապավենի, գործիքների, պատկերի, ընտրանքների և Վերջինների միջև",
+  "The next or the previous control; the arrow keys move within a part": "Հաջորդ կամ նախորդ կառավարման տարրը; սլաք ստեղները շարժվում են մասի ներսում",
+  "Use the control that has the keyboard": "Օգտագործեք այն կառավարման տարրը, որն ունի ստեղնաշարը",
+  "Back to the picture": "Վերադարձ պատկերին",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Պատկերի վրա՝ տեղափոխեք ընտրված նշանը (Shift-ով՝ տասը պիքսել)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Ցույց տալ ժապավենի ստեղների տառերը՝ մուտքագրեք մեկը՝ ներդիր բացելու կամ գործիք օգտագործելու համար",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Պահեք՝ ժապավենի ներդիրների տառերը տեսնելու համար; Alt և տառը բացում են այդ ներդիրը"
  }
 }

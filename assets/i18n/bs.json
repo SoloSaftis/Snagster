@@ -1091,6 +1091,13 @@
   "Time per frame": "Vrijeme po kadru",
   "{ms} of {budget} ms": "{ms} od {budget} ms",
   "Percentages: last 10 seconds": "Postoci: posljednjih 10 sekundi",
-  "The stream is fine again.": "Prijenos je ponovo u redu."
+  "The stream is fine again.": "Prijenos je ponovo u redu.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Prelazite između trake, alata, slike, opcija i Nedavno",
+  "The next or the previous control; the arrow keys move within a part": "Sljedeća ili prethodna kontrola; tipke sa strelicama kreću se unutar dijela",
+  "Use the control that has the keyboard": "Koristite kontrolu koja ima tastaturu",
+  "Back to the picture": "Nazad na sliku",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Na slici: pomjerite odabranu oznaku (sa Shift, deset piksela)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Prikaži slova trake: otkucajte jedno da otvorite karticu ili upotrijebite alat",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Držite da vidite slova kartica trake; Alt i slovo otvaraju tu karticu"
  }
 }

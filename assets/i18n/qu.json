@@ -1091,6 +1091,13 @@
   "Time per frame": "Frame sapaq pachan",
   "{ms} of {budget} ms": "{budget} ms-manta {ms}",
   "Percentages: last 10 seconds": "Pachakmanta kaqkuna: qhipa 10 segundo",
-  "The stream is fine again.": "Streamqa musuqmanta allinmi."
+  "The stream is fine again.": "Streamqa musuqmanta allinmi.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Cinta, llamk'anakuna, rikch'ay, akllay ima Qhipa nisqa chawpipi puriy",
+  "The next or the previous control; the arrow keys move within a part": "Qatiq utaq ñawpaq hap'iy; flecha llavikuna huk ñiqipi puririnku",
+  "Use the control that has the keyboard": "Teclado kaqniyuq hap'iyta llamk'achiy",
+  "Back to the picture": "Rikch'aymanta kutiy",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Rikch'aypi: akllasqa ruraypa pallqanta astay (Shift nisqawan, chunka pixel)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Cintapa llave sananta qhawachiy: huk sananta qillqay, huk pestañata kichanaykipaq utaq llamk'anata llamk'achinaykipaq",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Hap'ispa tiyay cintapa pestañankunapa sananta rikunaykipaq; Alt hinallataq huk sana chay pestañata kichan"
  }
 }

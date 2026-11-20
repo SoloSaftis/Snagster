@@ -1091,6 +1091,13 @@
   "Time per frame": "ପ୍ରତି ଫ୍ରେମ୍ ସମୟ",
   "{ms} of {budget} ms": "{budget} ms ମଧ୍ୟରୁ {ms}",
   "Percentages: last 10 seconds": "ଶତକଡ଼ା: ଶେଷ 10 ସେକେଣ୍ଡ",
-  "The stream is fine again.": "ଷ୍ଟ୍ରିମ୍ ପୁଣି ଠିକ୍ ଅଛି।"
+  "The stream is fine again.": "ଷ୍ଟ୍ରିମ୍ ପୁଣି ଠିକ୍ ଅଛି।",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "ରିବନ୍, ଟୁଲ୍, ଚିତ୍ର, ବିକଳ୍ପ ଏବଂ ସାମ୍ପ୍ରତିକ ମଧ୍ୟରେ ଯାଆନ୍ତୁ",
+  "The next or the previous control; the arrow keys move within a part": "ପରବର୍ତ୍ତୀ କିମ୍ବା ପୂର୍ବ ନିୟନ୍ତ୍ରଣ; ତୀର କୀ ଗୋଟିଏ ଅଂଶ ଭିତରେ ଚାଲେ",
+  "Use the control that has the keyboard": "କୀବୋର୍ଡ ଥିବା ନିୟନ୍ତ୍ରଣ ବ୍ୟବହାର କରନ୍ତୁ",
+  "Back to the picture": "ଚିତ୍ରକୁ ଫେରନ୍ତୁ",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "ଚିତ୍ରରେ: ବଛାଯାଇଥିବା ଚିହ୍ନ ଘୁଞ୍ଚାନ୍ତୁ (Shift ସହ, ଦଶ ପିକ୍ସେଲ)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "ରିବନର କୀ ଅକ୍ଷର ଦେଖାନ୍ତୁ: ଟାବ୍ ଖୋଲିବାକୁ କିମ୍ବା ଟୁଲ୍ ବ୍ୟବହାର କରିବାକୁ ଗୋଟିଏ ଟାଇପ୍ କରନ୍ତୁ",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "ରିବନ୍ ଟାବ୍‌ର ଅକ୍ଷର ଦେଖିବାକୁ ଧରି ରଖନ୍ତୁ; Alt ଏବଂ ଗୋଟିଏ ଅକ୍ଷର ସେହି ଟାବ୍ ଖୋଲେ"
  }
 }

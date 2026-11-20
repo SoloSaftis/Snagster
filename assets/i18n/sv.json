@@ -1091,6 +1091,13 @@
   "Time per frame": "Tid per bildruta",
   "{ms} of {budget} ms": "{ms} av {budget} ms",
   "Percentages: last 10 seconds": "Procent: senaste 10 sekunderna",
-  "The stream is fine again.": "Streamen fungerar bra igen."
+  "The stream is fine again.": "Streamen fungerar bra igen.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Flytta mellan menybandet, verktygen, bilden, alternativen och Senaste",
+  "The next or the previous control; the arrow keys move within a part": "Nästa eller föregående kontroll; piltangenterna flyttar sig inom en del",
+  "Use the control that has the keyboard": "Använd kontrollen som har tangentbordet",
+  "Back to the picture": "Tillbaka till bilden",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "På bilden: flytta den valda markeringen (med Skift, tio pixlar)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Visa menybandets kortkommandobokstäver: skriv en för att öppna en flik eller använda ett verktyg",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Håll nere för att se bokstäverna på menybandets flikar; Alt och en bokstav öppnar den fliken"
  }
 }

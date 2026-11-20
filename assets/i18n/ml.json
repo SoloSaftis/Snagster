@@ -1091,6 +1091,13 @@
   "Time per frame": "ഓരോ ഫ്രെയിമിനും സമയം",
   "{ms} of {budget} ms": "{budget} ms-ൽ {ms}",
   "Percentages: last 10 seconds": "ശതമാനങ്ങൾ: കഴിഞ്ഞ 10 സെക്കൻഡ്",
-  "The stream is fine again.": "സ്ട്രീം വീണ്ടും ശരിയായി."
+  "The stream is fine again.": "സ്ട്രീം വീണ്ടും ശരിയായി.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "റിബൺ, ടൂളുകൾ, ചിത്രം, ഓപ്ഷനുകൾ, സമീപകാലം എന്നിവയ്ക്കിടയിൽ നീങ്ങുക",
+  "The next or the previous control; the arrow keys move within a part": "അടുത്തതോ മുമ്പത്തെയോ നിയന്ത്രണം; ആരോ കീകൾ ഒരു ഭാഗത്തിനുള്ളിൽ നീങ്ങുന്നു",
+  "Use the control that has the keyboard": "കീബോർഡ് ഉള്ള നിയന്ത്രണം ഉപയോഗിക്കുക",
+  "Back to the picture": "ചിത്രത്തിലേക്ക് മടങ്ങുക",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "ചിത്രത്തിൽ: തിരഞ്ഞെടുത്ത അടയാളം നീക്കുക (Shift ഉപയോഗിച്ച് പത്ത് പിക്സൽ)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "റിബണിന്റെ കീ അക്ഷരങ്ങൾ കാണിക്കുക: ടാബ് തുറക്കാനോ ടൂൾ ഉപയോഗിക്കാനോ ഒന്ന് ടൈപ്പ് ചെയ്യുക",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "റിബൺ ടാബുകളുടെ അക്ഷരങ്ങൾ കാണാൻ അമർത്തിപ്പിടിക്കുക; Alt-ഉം ഒരു അക്ഷരവും ആ ടാബ് തുറക്കുന്നു"
  }
 }

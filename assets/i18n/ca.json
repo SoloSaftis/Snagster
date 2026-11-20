@@ -1091,6 +1091,13 @@
   "Time per frame": "Temps per fotograma",
   "{ms} of {budget} ms": "{ms} de {budget} ms",
   "Percentages: last 10 seconds": "Percentatges: darrers 10 segons",
-  "The stream is fine again.": "L'emissió torna a anar bé."
+  "The stream is fine again.": "L'emissió torna a anar bé.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Moveu-vos entre la cinta, les eines, la imatge, les opcions i Recents",
+  "The next or the previous control; the arrow keys move within a part": "El control següent o l’anterior; les tecles de fletxa es mouen dins d’una part",
+  "Use the control that has the keyboard": "Useu el control que té el teclat",
+  "Back to the picture": "Torna a la imatge",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "A la imatge: moveu la marca triada (amb Maj, deu píxels)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Mostra les lletres de la cinta: escriviu-ne una per obrir una pestanya o usar una eina",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Manteniu per veure les lletres de les pestanyes de la cinta; Alt i una lletra obren aquella pestanya"
  }
 }

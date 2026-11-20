@@ -1091,6 +1091,13 @@
   "Time per frame": "Aeg kaadri kohta",
   "{ms} of {budget} ms": "{ms} / {budget} ms",
   "Percentages: last 10 seconds": "Protsendid: viimased 10 sekundit",
-  "The stream is fine again.": "Voogedastus on taas korras."
+  "The stream is fine again.": "Voogedastus on taas korras.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Liikuge lindi, tööriistade, pildi, valikute ja Hiljutiste vahel",
+  "The next or the previous control; the arrow keys move within a part": "Järgmine või eelmine juhtelement; nooleklahvid liiguvad osa sees",
+  "Use the control that has the keyboard": "Kasutage juhtelementi, millel on klaviatuur",
+  "Back to the picture": "Tagasi pildi juurde",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Pildil: liigutage valitud märki (Shiftiga kümme pikslit)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Kuva lindi klahvitähed: tippige üks, et avada kaart või kasutada tööriista",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Hoidke all, et näha lindi kaartide tähti; Alt ja täht avab selle kaardi"
  }
 }

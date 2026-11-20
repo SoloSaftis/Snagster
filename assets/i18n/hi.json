@@ -1091,6 +1091,13 @@
   "Time per frame": "प्रति फ़्रेम समय",
   "{ms} of {budget} ms": "{budget} मि.से. में से {ms}",
   "Percentages: last 10 seconds": "प्रतिशत: पिछले 10 सेकंड",
-  "The stream is fine again.": "स्ट्रीम फिर से ठीक है।"
+  "The stream is fine again.": "स्ट्रीम फिर से ठीक है।",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "रिबन, टूल, चित्र, विकल्प और हाल के के बीच जाएँ",
+  "The next or the previous control; the arrow keys move within a part": "अगला या पिछला नियंत्रण; तीर कुंजियाँ एक हिस्से के भीतर चलती हैं",
+  "Use the control that has the keyboard": "जिस नियंत्रण पर कीबोर्ड है, उसका उपयोग करें",
+  "Back to the picture": "चित्र पर वापस जाएँ",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "चित्र पर: चुने हुए निशान को हिलाएँ (Shift के साथ, दस पिक्सेल)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "रिबन के कुंजी अक्षर दिखाएँ: टैब खोलने या टूल इस्तेमाल करने के लिए एक टाइप करें",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "रिबन टैब के अक्षर देखने के लिए दबाए रखें; Alt और एक अक्षर वह टैब खोलता है"
  }
 }

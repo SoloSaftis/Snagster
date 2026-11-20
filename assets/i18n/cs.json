@@ -1091,6 +1091,13 @@
   "Time per frame": "Čas na snímek",
   "{ms} of {budget} ms": "{ms} z {budget} ms",
   "Percentages: last 10 seconds": "Procenta: posledních 10 sekund",
-  "The stream is fine again.": "Vysílání je zase v pořádku."
+  "The stream is fine again.": "Vysílání je zase v pořádku.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "Přecházejte mezi pásem karet, nástroji, obrázkem, volbami a Poslední",
+  "The next or the previous control; the arrow keys move within a part": "Další nebo předchozí ovládací prvek; šipky se pohybují uvnitř části",
+  "Use the control that has the keyboard": "Použijte ovládací prvek, který má klávesnici",
+  "Back to the picture": "Zpět na obrázek",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "Na obrázku: přesuňte vybranou značku (se Shift o deset pixelů)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "Zobrazit písmena pásu karet: stiskněte jedno, otevřete kartu nebo použijete nástroj",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "Podržením zobrazíte písmena karet pásu; Alt a písmeno otevře danou kartu"
  }
 }

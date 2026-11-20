@@ -1091,6 +1091,13 @@
   "Time per frame": "프레임당 시간",
   "{ms} of {budget} ms": "{budget} ms 중 {ms}",
   "Percentages: last 10 seconds": "백분율: 최근 10초",
-  "The stream is fine again.": "스트림이 다시 정상입니다."
+  "The stream is fine again.": "스트림이 다시 정상입니다.",
+  "Move between the ribbon, the tools, the picture, the options and Recent": "리본, 도구, 사진, 옵션, 최근 항목 사이를 이동",
+  "The next or the previous control; the arrow keys move within a part": "다음 또는 이전 컨트롤. 화살표 키는 한 영역 안에서 이동",
+  "Use the control that has the keyboard": "키보드가 있는 컨트롤 사용",
+  "Back to the picture": "사진으로 돌아가기",
+  "On the picture: move the picked mark (with Shift, ten pixels)": "사진에서: 선택한 표시 이동 (Shift와 함께 10픽셀)",
+  "Show the ribbon's key letters: type one to open a tab or use a tool": "리본의 키 문자 표시: 문자를 입력해 탭을 열거나 도구 사용",
+  "Hold to see the ribbon tabs' letters; Alt and a letter opens that tab": "누르고 있으면 리본 탭의 문자가 보입니다. Alt와 문자로 해당 탭 열기"
  }
 }
