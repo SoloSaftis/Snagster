@@ -56,7 +56,7 @@ impl RibbonTab {
     }
 }
 
-/// "More" (three dots), for the tabs and groups that don't fit.
+/// "More" (three dots), for the groups that don't fit the band.
 const DOTS: &str = "\u{e1fe}";
 /// Room kept at the end of the band for the More button when groups don't fit: the button
 /// (as `look::big_tool` sizes it) and a gap.
@@ -367,7 +367,7 @@ impl SnagApp {
             RibbonTab::View => self.band_view(ui, ctx),
             RibbonTab::Help => self.band_help(ui),
         }
-        self.more_group(ui, ctx);
+        self.commands_group(ui, ctx);
     }
 
     pub(crate) fn switch_tab(&mut self, ctx: &egui::Context, tab: RibbonTab) {
@@ -1050,7 +1050,7 @@ impl SnagApp {
 
     /// The last group of every tab: the tab's full menu, so every command stays one click away
     /// (window and screen lists, presets, templates, recent files...).
-    fn more_group(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+    fn commands_group(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         let tip = t("Every command of this tab in one menu");
         match self.x.tab {
             RibbonTab::Studio | RibbonTab::Help => {}

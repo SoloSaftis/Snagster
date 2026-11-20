@@ -208,6 +208,11 @@ fn one_line(p: &egui::Painter, text: String, font: egui::FontId, color: Color32,
     p.layout_job(job)
 }
 
+/// Whether `one_line` had to cut `text` short (its line ends in an "…" the text didn't have).
+fn was_cut(galley: &egui::Galley, text: &str) -> bool {
+    galley.rows.last().and_then(|r| r.glyphs.last()).is_some_and(|g| g.chr == '…') && !text.ends_with('…')
+}
+
 /// The Library item the delete key acts on: the picked one, when the grid shows it (`order`
 /// holds the shown items); a capture hidden by the search is never deleted unseen.
 fn picked_index(items: &[library::Item], order: &[usize], picked: Option<&std::path::Path>) -> Option<usize> {
@@ -1283,17 +1288,22 @@ impl SnagApp {
                             (format!("{}  {}", date, item.meta.app), pal().dim),
                             (if item.meta.tags.is_empty() { String::new() } else { format!("# {}", item.meta.tags.join(", ")) }, accent()),
                         ];
+                        // The lines the tile had to cut short are shown whole in its tooltip.
+                        let mut whole = Vec::new();
                         for (k, (text, color)) in lines.into_iter().enumerate() {
                             if !text.is_empty() {
-                                let g = one_line(p, text, fonts[k].clone(), color, tile.text_width);
+                                let g = one_line(p, text.clone(), fonts[k].clone(), color, tile.text_width);
+                                if was_cut(&g, &text) {
+                                    whole.push(text);
+                                }
                                 p.galley(rect.min + vec2(TILE_PAD + 2.0, tile.rows[k]), g, color);
                             }
                         }
                         if resp.double_clicked() || resp.clicked_by(PointerButton::Primary) && ui.input(|i| i.modifiers.ctrl) {
                             open_item = Some(i);
                         }
-                        // The whole title when the tile had to cut it short.
-                        let resp = resp.on_hover_text(format!("{}\n{}", item.meta.title, crate::i18n::t("Double-click to open. Right-click for tags and more.")));
+                        whole.push(crate::i18n::t("Double-click to open. Right-click for tags and more.").to_string());
+                        let resp = resp.on_hover_text(whole.join("\n"));
                         resp.context_menu(|ui| {
                             if ui.button(crate::i18n::t("Open in Snagster")).clicked() {
                                 open_item = Some(i);
@@ -2258,6 +2268,11 @@ mod tests {
             assert_eq!(long.rows.len(), 1, "one line only");
             assert!(long.text().ends_with('…') || long.rows[0].glyphs.last().is_some_and(|g| g.chr == '…'), "cut short with …");
             assert!(!short.rows[0].glyphs.iter().any(|g| g.chr == '…'), "a short title stays whole");
+            // Only what was cut goes to the tooltip; a title that itself ends in "…" wasn't cut.
+            assert!(super::was_cut(&long, "A very long capture title that would never fit on one tile"));
+            assert!(!super::was_cut(&short, "Notepad"));
+            let dots = super::one_line(p, "Wait…".into(), super::egui::FontId::proportional(12.5), super::Color32::WHITE, 176.0);
+            assert!(!super::was_cut(&dots, "Wait…"));
             widths = (long.size().x, short.size().x);
         });
         out.textures_delta.clear();
