@@ -1946,7 +1946,7 @@ pub(crate) mod fuzzing {
     /// Tools the fuzz never calls: they capture or record the screen, use the clipboard, the
     /// network, sound or graphics devices, start or message other programs, or write outside
     /// the sandbox (the cloud folders). Each has tests of its own arguments.
-    pub const OUTSIDE: [&str; 26] = [
+    pub const OUTSIDE: [&str; 29] = [
         "capture_screen",
         "capture_region",
         "capture_window",
@@ -1963,6 +1963,9 @@ pub(crate) mod fuzzing {
         "record_video",
         "record_gif",
         "studio_record",
+        "replay_start",
+        "replay_save",
+        "replay_stop",
         "stream_start",
         "stream_stop",
         "copy_to_clipboard",
@@ -2289,6 +2292,12 @@ pub(crate) mod fuzzing {
         assert!(callable().iter().all(|(n, _)| !OUTSIDE.contains(n)));
         assert!(IN_MEMORY.iter().all(|n| names.contains(n) && !OUTSIDE.contains(n)));
         assert!(callable().len() + OUTSIDE.len() == names.len(), "{} tools, {} called", names.len(), callable().len());
+        // A new tool is fuzzed unless it is listed: ones that by their name start the screen,
+        // a recording or a stream must be in OUTSIDE.
+        for (n, _) in callable() {
+            let outside = ["capture_", "record_", "stream_", "replay_", "studio_record"].iter().any(|p| n.starts_with(p)) && !n.ends_with("_status") && !n.ends_with("_services");
+            assert!(!outside, "{n} reaches the screen or the network: add it to mcp::fuzzing::OUTSIDE");
+        }
     }
 }
 
