@@ -1024,6 +1024,12 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Tingkatkan kontras aktif di Pengaturan Sistem, sehingga teks dan batas tampak lebih tegas.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Berbagi layar dibatalkan di dialog desktop: tidak ada yang dibagikan.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Berbagi layar tidak dimulai: dibatalkan di dialog desktop, atau desktop tidak memberikan alasan. Tidak ada yang dibagikan.",
-  "The desktop's screen-sharing portal said no: {error}": "Portal berbagi layar desktop menolak: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Portal berbagi layar desktop menolak: {error}",
+  "More tabs": "Tab lainnya",
+  "The groups that don't fit the window": "Grup yang tidak muat di jendela",
+  "Desktop": "Desktop",
+  "The desktop's screenshot portal said no: {error}": "Portal tangkapan layar desktop menolak: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Portal tangkapan layar desktop memberikan alamat yang tidak dapat dibuka Snagster: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Tangkapan layar dibatalkan di dialog desktop."
  }
 }

@@ -1024,6 +1024,12 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "„Kontrast erhöhen“ ist in den Systemeinstellungen aktiviert, daher sind Text und Rahmen kräftiger.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Die Bildschirmfreigabe wurde im Dialog des Desktops abgebrochen: Es wurde nichts freigegeben.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Die Bildschirmfreigabe wurde nicht gestartet: Sie wurde im Dialog des Desktops abgebrochen, oder der Desktop hat keinen Grund genannt. Es wurde nichts freigegeben.",
-  "The desktop's screen-sharing portal said no: {error}": "Das Portal des Desktops für die Bildschirmfreigabe hat abgelehnt: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Das Portal des Desktops für die Bildschirmfreigabe hat abgelehnt: {error}",
+  "More tabs": "Weitere Registerkarten",
+  "The groups that don't fit the window": "Die Gruppen, die nicht ins Fenster passen",
+  "Desktop": "Desktop",
+  "The desktop's screenshot portal said no: {error}": "Das Portal des Desktops für Screenshots hat abgelehnt: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Das Portal des Desktops für Screenshots hat eine Adresse geliefert, die Snagster nicht öffnen kann: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Der Screenshot wurde im Dialog des Desktops abgebrochen."
  }
 }

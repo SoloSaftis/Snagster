@@ -1024,6 +1024,12 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "ସିଷ୍ଟମ୍ ସେଟିଂସ୍‌ରେ “କଣ୍ଟ୍ରାଷ୍ଟ ବଢ଼ାନ୍ତୁ” ଚାଲୁ ଅଛି, ତେଣୁ ଲେଖା ଏବଂ ସୀମା ଅଧିକ ସ୍ପଷ୍ଟ।",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "ଡେସ୍କଟପ୍‌ର ଡାୟଲଗରେ ସ୍କ୍ରିନ୍ ସେୟାରିଂ ବାତିଲ୍ ହୋଇଛି: କିଛି ସେୟାର୍ ହୋଇନାହିଁ।",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "ସ୍କ୍ରିନ୍ ସେୟାରିଂ ଆରମ୍ଭ ହୋଇନାହିଁ: ଏହା ଡେସ୍କଟପ୍‌ର ଡାୟଲଗରେ ବାତିଲ୍ ହୋଇଥିଲା, କିମ୍ବା ଡେସ୍କଟପ୍ କୌଣସି କାରଣ ଦେଇନାହିଁ। କିଛି ସେୟାର୍ ହୋଇନାହିଁ।",
-  "The desktop's screen-sharing portal said no: {error}": "ଡେସ୍କଟପ୍‌ର ସ୍କ୍ରିନ୍ ସେୟାରିଂ portal ମନା କଲା: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "ଡେସ୍କଟପ୍‌ର ସ୍କ୍ରିନ୍ ସେୟାରିଂ portal ମନା କଲା: {error}",
+  "More tabs": "ଅଧିକ ଟ୍ୟାବ୍",
+  "The groups that don't fit the window": "ୱିଣ୍ଡୋରେ ଧରୁନଥିବା ଗୋଷ୍ଠୀଗୁଡ଼ିକ",
+  "Desktop": "ଡେସ୍କଟପ୍",
+  "The desktop's screenshot portal said no: {error}": "ଡେସ୍କଟପ୍‌ର ସ୍କ୍ରିନସଟ୍ portal ମନା କଲା: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "ଡେସ୍କଟପ୍‌ର ସ୍କ୍ରିନସଟ୍ portal ଏପରି ଏକ ଠିକଣା ଦେଲା ଯାହାକୁ Snagster ଖୋଲିପାରିବ ନାହିଁ: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "ଡେସ୍କଟପ୍‌ର ଡାୟଲଗରେ ସ୍କ୍ରିନସଟ୍ ବାତିଲ୍ ହୋଇଛି।"
  }
 }

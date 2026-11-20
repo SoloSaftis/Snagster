@@ -634,6 +634,15 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
             }
         }
     });
+    // Ctrl+number switches scenes even when the Scenes group sits in the ribbon's More menu
+    // (a narrow window), and only once a frame.
+    if app.settings.stream.source == Source::Studio
+        && !crate::app::ribbon::fit::in_overflow()
+        && let Some(i) = scene_key(ctx)
+        && i < app.settings.studio.scenes.len()
+    {
+        switch_scene(app, i);
+    }
     // Streaming Studio's scenes: switch scenes and mute sounds right here while live.
     if app.settings.stream.source == Source::Studio {
         look::group(ui, t("Scenes"), |ui| scene_buttons(app, ui, ctx));
@@ -718,11 +727,6 @@ pub(crate) fn switch_scene(app: &mut SnagApp, i: usize) {
 
 /// The Studio scenes as buttons, three to a column ("1 Intro"), and Edit in Studio.
 fn scene_buttons(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
-    if let Some(i) = scene_key(ctx)
-        && i < app.settings.studio.scenes.len()
-    {
-        switch_scene(app, i);
-    }
     let names: Vec<String> = app.settings.studio.scenes.iter().map(|s| s.name.clone()).collect();
     let cur = app.settings.studio.current.min(names.len().saturating_sub(1));
     let all: Vec<usize> = (0..names.len()).collect();

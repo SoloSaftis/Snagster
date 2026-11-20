@@ -1024,6 +1024,12 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Increase contrast is on in System Settings, so text and borders are stronger.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Screen sharing was cancelled in the desktop's dialogue: nothing was shared.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Screen sharing didn't start: it was cancelled in the desktop's dialogue, or the desktop gave no reason. Nothing was shared.",
-  "The desktop's screen-sharing portal said no: {error}": "The desktop's screen-sharing portal said no: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "The desktop's screen-sharing portal said no: {error}",
+  "More tabs": "More tabs",
+  "The groups that don't fit the window": "The groups that don't fit the window",
+  "Desktop": "Desktop",
+  "The desktop's screenshot portal said no: {error}": "The desktop's screenshot portal said no: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "The desktop's screenshot portal gave an address Snagster can't open: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "The screenshot was cancelled in the desktop's dialogue."
  }
 }

@@ -1024,6 +1024,12 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "V Nastaveniach systému je zapnuté Zvýšiť kontrast, preto sú text a okraje výraznejšie.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Zdieľanie obrazovky bolo zrušené v dialógovom okne pracovnej plochy: nič sa nezdieľalo.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Zdieľanie obrazovky sa nespustilo: bolo zrušené v dialógovom okne pracovnej plochy alebo pracovná plocha neuviedla dôvod. Nič sa nezdieľalo.",
-  "The desktop's screen-sharing portal said no: {error}": "Portál pracovnej plochy na zdieľanie obrazovky odmietol: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Portál pracovnej plochy na zdieľanie obrazovky odmietol: {error}",
+  "More tabs": "Ďalšie karty",
+  "The groups that don't fit the window": "Skupiny, ktoré sa do okna nezmestia",
+  "Desktop": "Pracovná plocha",
+  "The desktop's screenshot portal said no: {error}": "Portál pracovnej plochy na snímky obrazovky odmietol: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Portál pracovnej plochy na snímky obrazovky poskytol adresu, ktorú Snagster nemôže otvoriť: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Snímka obrazovky bola zrušená v dialógovom okne pracovnej plochy."
  }
 }

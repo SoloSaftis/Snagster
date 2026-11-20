@@ -1024,6 +1024,12 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Sistemaren ezarpenetan «Handitu kontrastea» aktibatuta dago, beraz testua eta ertzak nabarmenagoak dira.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Pantaila partekatzea bertan behera utzi da mahaigainaren elkarrizketa-koadroan: ez da ezer partekatu.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Pantaila partekatzea ez da hasi: mahaigainaren elkarrizketa-koadroan bertan behera utzi da, edo mahaigainak ez du arrazoirik eman. Ez da ezer partekatu.",
-  "The desktop's screen-sharing portal said no: {error}": "Mahaigainaren pantaila partekatzeko portalak ezetz esan du: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Mahaigainaren pantaila partekatzeko portalak ezetz esan du: {error}",
+  "More tabs": "Fitxa gehiago",
+  "The groups that don't fit the window": "Leihoan sartzen ez diren taldeak",
+  "Desktop": "Mahaigaina",
+  "The desktop's screenshot portal said no: {error}": "Mahaigainaren pantaila-argazkien portalak ezetz esan du: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Mahaigainaren pantaila-argazkien portalak Snagsterrek ireki ezin duen helbide bat eman du: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Pantaila-argazkia bertan behera utzi da mahaigainaren elkarrizketa-koadroan."
  }
 }

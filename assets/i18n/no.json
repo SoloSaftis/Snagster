@@ -1024,6 +1024,12 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Øk kontrast er slått på i Systeminnstillinger, så tekst og kanter er tydeligere.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Skjermdelingen ble avbrutt i skrivebordets dialog: ingenting ble delt.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Skjermdelingen startet ikke: den ble avbrutt i skrivebordets dialog, eller skrivebordet oppga ingen årsak. Ingenting ble delt.",
-  "The desktop's screen-sharing portal said no: {error}": "Skrivebordets portal for skjermdeling sa nei: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Skrivebordets portal for skjermdeling sa nei: {error}",
+  "More tabs": "Flere faner",
+  "The groups that don't fit the window": "Gruppene som ikke får plass i vinduet",
+  "Desktop": "Skrivebord",
+  "The desktop's screenshot portal said no: {error}": "Skrivebordets portal for skjermbilder sa nei: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Skrivebordets portal for skjermbilder ga en adresse som Snagster ikke kan åpne: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Skjermbildet ble avbrutt i skrivebordets dialog."
  }
 }

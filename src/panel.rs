@@ -10,6 +10,35 @@ use crate::settings::{Action, PanelSelection, PanelSettings, PanelShare, Preset,
 use eframe::egui::{self, Align2, Color32, CornerRadius, FontId, Pos2, Rect, RichText, Sense, Stroke, StrokeKind, Vec2, pos2, vec2};
 
 pub const PANEL_SIZE: Vec2 = Vec2::new(780.0, 236.0);
+
+/// Whether Windows draws the window's corners round (Windows 11, once asked by
+/// `round_window_corners`); the panel then paints square ones inside them.
+static SYSTEM_ROUNDS: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The corner radius the panel paints: none when the system rounds the window itself (Windows
+/// 11 draws 8 px corners, a border and a shadow), else 12.
+fn painted_corner(system_rounds: bool) -> u8 {
+    if system_rounds { 0 } else { 12 }
+}
+
+/// Ask Windows 11 to round the main window's corners (Microsoft's guidance for windows without
+/// a title bar, which the compact panel and the recording bar are; a framed window is round
+/// already). Windows 10 says no and keeps square corners. Other systems: nothing to do.
+#[cfg(windows)]
+pub fn round_window_corners(window: &impl raw_window_handle::HasWindowHandle) {
+    use raw_window_handle::RawWindowHandle;
+    use windows_sys::Win32::Graphics::Dwm::{DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_ROUND, DwmSetWindowAttribute};
+    let Ok(handle) = window.window_handle() else { return };
+    let RawWindowHandle::Win32(h) = handle.as_raw() else { return };
+    let pref = DWMWCP_ROUND;
+    let hr = unsafe {
+        DwmSetWindowAttribute(h.hwnd.get() as _, DWMWA_WINDOW_CORNER_PREFERENCE as u32, (&pref as *const i32).cast(), std::mem::size_of_val(&pref) as u32)
+    };
+    SYSTEM_ROUNDS.store(hr == 0, std::sync::atomic::Ordering::Relaxed);
+}
+
+#[cfg(not(windows))]
+pub fn round_window_corners<T>(_window: &T) {}
 const CAPTURE_RED: Color32 = Color32::from_rgb(200, 44, 52);
 
 /// A small on/off switch.
@@ -58,6 +87,8 @@ fn tab_icon(p: &egui::Painter, c: Pos2, tab: u8, color: Color32) {
 
 impl SnagApp {
     pub(crate) fn panel_ui(&mut self, ui: &mut egui::Ui) {
+        // The panel is laid out to fixed places: its text keeps its size (see fonts::fixed_family).
+        crate::fonts::use_fixed_fonts(ui);
         let ctx = ui.ctx().clone();
         let full = ui.max_rect();
         // Drag the panel by any empty spot.
@@ -78,7 +109,8 @@ impl SnagApp {
 
         // ---- left: tabs ----
         let tabs_rect = Rect::from_min_size(full.min, vec2(92.0, full.height() - 44.0));
-        ui.painter().rect_filled(tabs_rect, CornerRadius { nw: 12, ne: 0, sw: 0, se: 0 }, pal().bg);
+        let corner = painted_corner(SYSTEM_ROUNDS.load(std::sync::atomic::Ordering::Relaxed));
+        ui.painter().rect_filled(tabs_rect, CornerRadius { nw: corner, ne: 0, sw: 0, se: 0 }, pal().bg);
         let tab_h = tabs_rect.height() / 4.0;
         for (i, name) in ["All-in-One", "Image", "Video", crate::i18n::t("Stream")].iter().enumerate() {
             let r = Rect::from_min_size(tabs_rect.min + vec2(0.0, i as f32 * tab_h), vec2(92.0, tab_h));
@@ -91,7 +123,7 @@ impl SnagApp {
             }
             let col = if sel { accent() } else { pal().text };
             tab_icon(ui.painter(), r.center() - vec2(0.0, 7.0), i as u8, col);
-            ui.painter().text(r.center() + vec2(0.0, 13.0), Align2::CENTER_CENTER, *name, FontId::proportional(12.0), col);
+            ui.painter().text(r.center() + vec2(0.0, 13.0), Align2::CENTER_CENTER, *name, FontId::new(12.0, crate::fonts::fixed_family()), col);
             if resp.clicked() {
                 self.settings.panel.tab = i as u8;
             }
@@ -271,7 +303,7 @@ impl SnagApp {
             2 => "Record",
             _ => "Capture",
         };
-        ui.painter().text(big.center(), Align2::CENTER_CENTER, label, FontId::proportional(17.0), Color32::WHITE);
+        ui.painter().text(big.center(), Align2::CENTER_CENTER, label, FontId::new(17.0, crate::fonts::fixed_family()), Color32::WHITE);
         let tip = if tab == 3 { crate::i18n::t("Start or stop the live stream") } else { "Print Screen does the same" };
         if br.on_hover_text(tip).clicked() {
             if tab == 3 {
@@ -501,7 +533,9 @@ impl SnagApp {
 
     /// Draw the panel's outline (the window has no frame of its own while it shows).
     pub(crate) fn panel_frame() -> egui::Frame {
-        egui::Frame::new().fill(pal().panel).stroke(Stroke::new(1.0, pal().border)).corner_radius(CornerRadius::same(12))
+        let system = SYSTEM_ROUNDS.load(std::sync::atomic::Ordering::Relaxed);
+        // The outline stays: over Remote Desktop Windows says yes but draws no border.
+        egui::Frame::new().fill(pal().panel).stroke(Stroke::new(1.0, pal().border)).corner_radius(CornerRadius::same(painted_corner(system)))
     }
 }
 
@@ -520,6 +554,12 @@ mod tests {
     }
 
     use super::*;
+
+    #[test]
+    fn the_panel_paints_round_corners_only_where_windows_does_not() {
+        assert_eq!(painted_corner(true), 0, "Windows 11 rounds the window itself");
+        assert_eq!(painted_corner(false), 12);
+    }
 
     fn image_tab(selection: PanelSelection) -> PanelSettings {
         PanelSettings { tab: 1, selection, ..Default::default() }

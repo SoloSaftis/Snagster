@@ -1024,6 +1024,12 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Kua whakaaetia te Whakanui i te rerekētanga i ngā Tautuhinga Pūnaha, nō reira kua kaha ake te tuhinga me ngā tuaka.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "I whakakorea te tohatoha mata i te pouaka kōrero o te papamahi: kāore he mea i tohaina.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Kāore te tohatoha mata i tīmata: i whakakorea i te pouaka kōrero o te papamahi, kāore rānei i hoatu e te papamahi he take. Kāore he mea i tohaina.",
-  "The desktop's screen-sharing portal said no: {error}": "I kī te tomokanga (portal) tohatoha mata o te papamahi kāo: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "I kī te tomokanga (portal) tohatoha mata o te papamahi kāo: {error}",
+  "More tabs": "Ētahi atu ripa",
+  "The groups that don't fit the window": "Ngā rōpū kāore e uru ki te matapihi",
+  "Desktop": "Papamahi",
+  "The desktop's screenshot portal said no: {error}": "I kī te tomokanga (portal) hopu mata o te papamahi kāo: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "I hoatu e te tomokanga (portal) hopu mata o te papamahi he wāhitau e kore e taea e Snagster te whakatuwhera: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "I whakakorea te hopu mata i te pouaka kōrero o te papamahi."
  }
 }

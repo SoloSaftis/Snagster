@@ -1024,6 +1024,12 @@
   "Increase contrast is on in System Settings, so text and borders are stronger.": "Süsteemisätetes on sisse lülitatud Suurenda kontrasti, mistõttu on tekst ja äärised selgemad.",
   "Screen sharing was cancelled in the desktop's dialog: nothing was shared.": "Ekraani jagamine tühistati töölaua dialoogis: midagi ei jagatud.",
   "Screen sharing didn't start: it was cancelled in the desktop's dialog, or the desktop gave no reason. Nothing was shared.": "Ekraani jagamine ei käivitunud: see tühistati töölaua dialoogis või töölaud ei esitanud põhjust. Midagi ei jagatud.",
-  "The desktop's screen-sharing portal said no: {error}": "Töölaua ekraanijagamise portaal ütles ei: {error}"
+  "The desktop's screen-sharing portal said no: {error}": "Töölaua ekraanijagamise portaal ütles ei: {error}",
+  "More tabs": "Rohkem vahekaarte",
+  "The groups that don't fit the window": "Rühmad, mis aknasse ei mahu",
+  "Desktop": "Töölaud",
+  "The desktop's screenshot portal said no: {error}": "Töölaua ekraanipildi portaal ütles ei: {error}",
+  "The desktop's screenshot portal gave an address Snagster can't open: {address}": "Töölaua ekraanipildi portaal andis aadressi, mida Snagster ei saa avada: {address}",
+  "The screenshot was cancelled in the desktop's dialog.": "Ekraanipilt tühistati töölaua dialoogis."
  }
 }
