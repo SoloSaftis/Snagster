@@ -3192,6 +3192,10 @@ impl SnagApp {
                     let c = rgb(*c);
                     let (rect, resp) = ui.allocate_exact_size(vec2(36.0, 26.0), Sense::click());
                     ui.painter().rect_filled(rect, CornerRadius::same(6), c);
+                    // Black on a dark panel, white on a light one: an edge so it doesn't vanish.
+                    if let Some(edge) = crate::theme::swatch_edge(c, pal().panel, &pal()) {
+                        ui.painter().rect_stroke(rect, CornerRadius::same(6), Stroke::new(1.0, edge), StrokeKind::Inside);
+                    }
                     if c == cur {
                         ui.painter().rect_stroke(rect.expand(2.0), CornerRadius::same(8), Stroke::new(2.0, pal().strong), StrokeKind::Outside);
                     } else if resp.hovered() {
@@ -5858,10 +5862,19 @@ impl SnagApp {
                 let (r, resp) = ui.allocate_exact_size(vec2(30.0, 30.0), Sense::click());
                 ui.painter().rect_filled(r, CornerRadius::same(6), pal().panel_hi);
                 let c = rgb(q.color);
+                let edge = crate::theme::swatch_edge(c, pal().panel_hi, &pal()).map(|e| Stroke::new(1.0, e));
                 if q.fill {
                     ui.painter().circle_filled(r.center(), 9.0, c);
+                    if let Some(edge) = edge {
+                        ui.painter().circle_stroke(r.center(), 9.0, edge);
+                    }
                 } else {
-                    ui.painter().circle_stroke(r.center(), 8.0, Stroke::new((q.width / 2.0).clamp(1.5, 5.0), c));
+                    let w = (q.width / 2.0).clamp(1.5, 5.0);
+                    ui.painter().circle_stroke(r.center(), 8.0, Stroke::new(w, c));
+                    // A thin line round a ring that melts into the tile.
+                    if let Some(edge) = edge {
+                        ui.painter().circle_stroke(r.center(), 8.0 + w / 2.0 + 0.5, edge);
+                    }
                 }
                 if q.shadow {
                     ui.painter().rect_stroke(r.shrink(1.0), CornerRadius::same(6), Stroke::new(1.0, pal().border), StrokeKind::Inside);
@@ -6115,6 +6128,7 @@ impl SnagApp {
                 self.settings_tab = SettingsTab::Editor;
             }
             "library" => self.library_open = true,
+            "new-image" => self.dialog = Some(crate::windows::Dialog::new_image()),
             "settings-ai" => {
                 self.settings_open = true;
                 self.settings_tab = SettingsTab::Ai;

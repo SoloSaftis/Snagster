@@ -87,7 +87,9 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
             let have = ui.ctx().input(|i| i.viewport().inner_rect.map(|r| r.height()));
             if have.is_some_and(|h| (h - want).abs() > 2.0) {
                 let width = ui.ctx().input(|i| i.viewport().inner_rect.map_or(w.size.x, |r| r.width()));
-                ui.ctx().send_viewport_cmd(egui::ViewportCommand::InnerSize(vec2(width, want)));
+                for cmd in fit_commands(vec2(width, have.unwrap_or(want)), vec2(width, want)) {
+                    ui.ctx().send_viewport_cmd(cmd);
+                }
             }
         }
         // Esc closes a secondary window everywhere; Ctrl+W (⌘W) too, as GNOME, KDE and macOS
@@ -108,6 +110,17 @@ const SETTINGS_KEY: &str = "settings";
 /// Whether a window without a resize edge takes the height of what it holds.
 fn fits_content(w: &Win) -> bool {
     !w.resizable && w.key != SETTINGS_KEY
+}
+
+/// What makes a fixed-size window `size` big (from `have`). Its smallest and largest size move
+/// with it: on Wayland winit pins both to the size the window opened with, and the desktop then
+/// keeps that size (empty space below the buttons on KDE). Smallest = largest also tells KWin and
+/// other desktops that it can't be resized, so they show no maximise button. Growing moves the
+/// largest first and shrinking the smallest first, so on X11 the smallest is never above the
+/// largest in between.
+fn fit_commands(have: egui::Vec2, size: egui::Vec2) -> [egui::ViewportCommand; 3] {
+    use egui::ViewportCommand::{InnerSize, MaxInnerSize, MinInnerSize};
+    if size.y > have.y || size.x > have.x { [MaxInnerSize(size), MinInnerSize(size), InnerSize(size)] } else { [MinInnerSize(size), MaxInnerSize(size), InnerSize(size)] }
 }
 
 /// The Settings window's title and whether it can be resized. On a Mac it is titled with the
@@ -148,8 +161,19 @@ fn combo_editor(ui: &mut egui::Ui, id: String, c: &mut Combo) -> bool {
 
 fn color_edit(ui: &mut egui::Ui, c: &mut [u8; 3]) {
     let mut col = rgb(*c);
-    if egui::color_picker::color_edit_button_srgba(ui, &mut col, egui::color_picker::Alpha::Opaque).changed() {
+    let r = egui::color_picker::color_edit_button_srgba(ui, &mut col, egui::color_picker::Alpha::Opaque);
+    swatch_edge_on(ui, &r, col);
+    if r.changed() {
         *c = [col.r(), col.g(), col.b()];
+    }
+}
+
+/// The same contrast edge the side panel's swatches have, on egui's colour button (a white
+/// background colour on a light dialog, a black one on a dark dialog).
+fn swatch_edge_on(ui: &egui::Ui, r: &egui::Response, col: Color32) {
+    if let Some(edge) = crate::theme::swatch_edge(col.to_opaque(), ui.visuals().window_fill, &pal()) {
+        let radius = ui.visuals().widgets.inactive.corner_radius;
+        ui.painter().rect_stroke(r.rect, radius, Stroke::new(1.0, edge), StrokeKind::Inside);
     }
 }
 
@@ -1416,7 +1440,9 @@ fn dialog_row(ui: &mut egui::Ui, action: &'static str, enabled: bool) -> Option<
 
 fn color4_edit(ui: &mut egui::Ui, c: &mut [u8; 4]) {
     let mut col = Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
-    if egui::color_picker::color_edit_button_srgba(ui, &mut col, egui::color_picker::Alpha::OnlyBlend).changed() {
+    let r = egui::color_picker::color_edit_button_srgba(ui, &mut col, egui::color_picker::Alpha::OnlyBlend);
+    swatch_edge_on(ui, &r, col);
+    if r.changed() {
         *c = col.to_srgba_unmultiplied();
     }
 }
@@ -2077,6 +2103,35 @@ mod tests {
             assert_eq!(own_window(ui.ctx(), Win { key: "t", title: "Test", size: vec2(300.0, 200.0), resizable: false }, &mut closed, |_| 1), None);
         });
         out.textures_delta.clear();
+    }
+
+    /// A fixed box that fits its content moves its smallest and largest size along, so the
+    /// desktop can't keep it at the size it opened with (KDE on Wayland) and shows no maximise.
+    #[test]
+    fn a_fitted_box_pins_its_smallest_and_largest_size_to_the_new_size() {
+        use egui::ViewportCommand::{InnerSize, MaxInnerSize, MinInnerSize};
+        let (open, size) = (vec2(440.0, 220.0), vec2(440.0, 132.0));
+        // Shrinking: the smallest size comes down first, then the largest, then the size itself.
+        assert_eq!(fit_commands(open, size), [MinInnerSize(size), MaxInnerSize(size), InnerSize(size)]);
+        // Growing: the largest goes up first, so the smallest never passes it.
+        assert_eq!(fit_commands(size, open), [MaxInnerSize(open), MinInnerSize(open), InnerSize(open)]);
+    }
+
+    /// The New image dialog's content is only as tall as its rows: the buttons don't take the
+    /// space left in the window (which kept the dialog from shrinking to fit).
+    #[test]
+    fn dialog_content_is_only_as_tall_as_its_rows() {
+        let ctx = egui::Context::default();
+        let mut used = 0.0;
+        let mut out = ctx.run_ui(Default::default(), |ui| {
+            let r = ui.scope(|ui| {
+                ui.label("Width");
+                dialog_row(ui, "Create", true);
+            });
+            used = r.response.rect.height();
+        });
+        out.textures_delta.clear();
+        assert!(used < 80.0, "the dialog's rows took {used} points");
     }
 
     #[test]
