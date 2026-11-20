@@ -29,6 +29,9 @@ Using Snagster from the keyboard (every system):
 
 Live streaming (every system):
 
+- **A Studio sound that can't start is always reported**: on a busy computer a missing sound
+  file or a microphone in use could be kept as a silent input without the note saying so.
+  Snagster now waits for each sound to start or fail.
 - **See trouble while you're live**: the Stream tab's Status says in a few words when the
   upload can't keep up, the computer can't encode fast enough, or a service keeps reconnecting,
   with what to do on hover (a bad one also shows in the status line and the capture panel). A

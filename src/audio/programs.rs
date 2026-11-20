@@ -195,6 +195,9 @@ pub(super) fn spawn(name: String, feed: Arc<Feed>, stop: Arc<AtomicBool>) -> Res
     std::thread::Builder::new()
         .name("snagster-program-sound".into())
         .spawn(move || {
+            // Waiting for the program is a lane that has started; a failure later is noted
+            // like any input's (`Capture::drop_failed`).
+            feed.settle();
             #[cfg(windows)]
             let r = super::programs_win::run(&name, &feed, &stop);
             #[cfg(target_os = "linux")]
@@ -203,10 +206,8 @@ pub(super) fn spawn(name: String, feed: Arc<Feed>, stop: Arc<AtomicBool>) -> Res
             let r = super::programs_mac::run(&name, &feed, &stop);
             #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
             let r: Result<(), String> = Err(String::new());
-            if let Err(e) = r
-                && let Ok(mut slot) = feed.error.lock()
-            {
-                *slot = Some(e);
+            if let Err(e) = r {
+                feed.fail(e);
             }
         })
         .map_err(|e| e.to_string())
