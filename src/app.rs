@@ -2466,7 +2466,8 @@ impl SnagApp {
             if consume(Modifiers::COMMAND, Key::Z) {
                 crate::ink::with(|i| i.undo(Instant::now()));
             }
-            if consume(Modifiers::NONE, Key::Escape) {
+            // (Esc closes an open menu first.)
+            if !ctx.any_popup_open() && consume(Modifiers::NONE, Key::Escape) {
                 crate::ink::with(|i| i.set_on(false, Instant::now()));
             }
         }

@@ -12,7 +12,6 @@
 //!   window-system work of its own (a transparent OpenGL window would cover the screen in black
 //!   where the window system can't blend it), still to do.
 
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Where ink can be drawn on this system.
@@ -41,17 +40,20 @@ pub fn overlay_in_captures() -> bool {
     IN_CAPTURES.load(Ordering::Relaxed)
 }
 
-/// Snagster's main window on the desktop (pixels), which the overlay leaves usable while
-/// drawing; None while it is minimized or hidden.
-static APP_RECT: Mutex<Option<(i32, i32, u32, u32)>> = Mutex::new(None);
-
-pub fn set_app_rect(r: Option<(i32, i32, u32, u32)>) {
-    *APP_RECT.lock().unwrap_or_else(|e| e.into_inner()) = r;
+/// The part of the overlay left out while drawing: Snagster's window, only while it is in front
+/// and shown (in the tray, minimized or behind another program, its old place is drawn on like
+/// the rest of the screen, and clicks there never reach the program in front).
+#[cfg(any(windows, test))]
+fn cut_out(front_is_ours: bool, shown: bool, rect: Option<(i32, i32, u32, u32)>) -> Option<(i32, i32, u32, u32)> {
+    rect.filter(|r| front_is_ours && shown && r.2 > 0 && r.3 > 0)
 }
 
+/// Whether the overlay's keyboard hook takes a key while Draw is on: Esc, and Ctrl+Z without
+/// Shift or Alt (Ctrl+Shift+Z is redo elsewhere). When Snagster is in front its own window
+/// handles them (and Esc closes an open menu there first).
 #[cfg(any(windows, test))]
-fn app_rect() -> Option<(i32, i32, u32, u32)> {
-    *APP_RECT.lock().unwrap_or_else(|e| e.into_inner())
+fn hook_takes(front_is_ours: bool, esc: bool, z: bool, ctrl: bool, shift: bool, alt: bool) -> bool {
+    !front_is_ours && (esc || (z && ctrl && !shift && !alt))
 }
 
 /// The hint shown while drawing (on the screen the pointer is on, never captured).
@@ -140,7 +142,8 @@ mod win {
     };
     use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
     use windows_sys::Win32::UI::HiDpi::{DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetThreadDpiAwarenessContext};
-    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, ReleaseCapture, SetCapture, VK_CONTROL, VK_ESCAPE};
+    use windows_sys::Win32::System::Threading::GetCurrentProcessId;
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, ReleaseCapture, SetCapture, VK_CONTROL, VK_ESCAPE, VK_MENU, VK_SHIFT};
     use windows_sys::Win32::UI::WindowsAndMessaging::*;
 
     static STARTED: AtomicBool = AtomicBool::new(false);
@@ -229,26 +232,37 @@ mod win {
         if code == HC_ACTION as i32 && (wp == WM_KEYDOWN as WPARAM || wp == WM_SYSKEYDOWN as WPARAM) {
             // SAFETY: a low-level keyboard hook's lParam is a KBDLLHOOKSTRUCT.
             let vk = unsafe { (*(lp as *const KBDLLHOOKSTRUCT)).vkCode };
-            let ctrl = (unsafe { GetAsyncKeyState(VK_CONTROL as i32) } as u16 & 0x8000) != 0;
-            let now = Instant::now();
-            let took = crate::ink::with(|i| {
-                if !i.on {
-                    false
-                } else if vk == VK_ESCAPE as u32 {
-                    i.set_on(false, now);
-                    true
-                } else if vk == b'Z' as u32 && ctrl {
-                    i.undo(now);
-                    true
-                } else {
-                    false
+            let (esc, z) = (vk == VK_ESCAPE as u32, vk == b'Z' as u32);
+            if (esc || z) && crate::ink::with(|i| i.on) {
+                let down = |k: u16| (unsafe { GetAsyncKeyState(k as i32) } as u16 & 0x8000) != 0;
+                if super::hook_takes(unsafe { front_is_ours() }.0, esc, z, down(VK_CONTROL), down(VK_SHIFT), down(VK_MENU)) {
+                    let now = Instant::now();
+                    crate::ink::with(|i| if esc { i.set_on(false, now) } else { i.undo(now) });
+                    return 1;
                 }
-            });
-            if took {
-                return 1;
             }
         }
         unsafe { CallNextHookEx(std::ptr::null_mut(), code, wp, lp) }
+    }
+
+    /// Whether the window in front is one of Snagster's own (not an overlay), shown, and where.
+    unsafe fn front_is_ours() -> (bool, bool, Option<(i32, i32, u32, u32)>) {
+        unsafe {
+            let fg = GetForegroundWindow();
+            if fg.is_null() {
+                return (false, false, None);
+            }
+            let mut pid = 0u32;
+            GetWindowThreadProcessId(fg, &mut pid);
+            let mut class = [0u16; 16];
+            let n = GetClassNameW(fg, class.as_mut_ptr(), class.len() as i32).max(0) as usize;
+            let overlay = class[..n] == CLASS[..CLASS.len() - 1];
+            let ours = pid == GetCurrentProcessId() && !overlay;
+            let shown = IsWindowVisible(fg) != 0 && IsIconic(fg) == 0;
+            let mut r = RECT { left: 0, top: 0, right: 0, bottom: 0 };
+            let rect = (GetWindowRect(fg, &mut r) != 0).then(|| (r.left, r.top, (r.right - r.left).max(0) as u32, (r.bottom - r.top).max(0) as u32));
+            (ours, shown, rect)
+        }
     }
 
     unsafe fn make(rect: (i32, i32, u32, u32)) -> Option<Screen> {
@@ -397,8 +411,9 @@ mod win {
                     continue;
                 }
                 last_shown = now;
-                // The monitors, again every few seconds (one may have been plugged in).
-                if listed_at.is_none_or(|t| t.elapsed() > Duration::from_secs(3)) {
+                // The monitors, again every few seconds (one may have been plugged in); not while
+                // drawing, when this thread also answers every key press (the keyboard hook).
+                if screens.is_empty() || (!on && listed_at.is_none_or(|t| t.elapsed() > Duration::from_secs(3))) {
                     listed_at = Some(now);
                     let rects: Vec<(i32, i32, u32, u32)> = crate::capture::monitors().iter().map(|m| (m.x, m.y, m.width, m.height)).filter(|r| r.2 > 0 && r.3 > 0).collect();
                     if rects != screens.iter().map(|s| s.rect).collect::<Vec<_>>() {
@@ -414,7 +429,8 @@ mod win {
                 if hint.as_ref().is_none_or(|(t, _)| *t != text) {
                     hint = Some((text.clone(), super::hint_picture(&text)));
                 }
-                let app = super::app_rect();
+                let (ours, shown, front) = front_is_ours();
+                let app = super::cut_out(ours, shown, front);
                 for s in &mut screens {
                     set_clicks(s, on, app);
                     let (l, t, r, b) = (s.rect.0 as f32, s.rect.1 as f32, (s.rect.0 + s.rect.2 as i32) as f32, (s.rect.1 + s.rect.3 as i32) as f32);
@@ -487,12 +503,27 @@ mod tests {
         assert!(hint_picture("Drawing").width() > 24);
     }
 
+    /// Bug: Snagster's old place stayed cut out of the overlay while it was in the tray or
+    /// behind the browser, so strokes there clicked the browser instead.
     #[test]
-    fn snagsters_window_rect_is_kept_for_the_overlay() {
-        set_app_rect(Some((10, 20, 300, 200)));
-        assert_eq!(app_rect(), Some((10, 20, 300, 200)));
-        set_app_rect(None);
-        assert_eq!(app_rect(), None);
+    fn snagsters_window_is_left_usable_only_while_in_front_and_shown() {
+        let r = Some((10, 20, 300, 200));
+        assert_eq!(cut_out(true, true, r), r);
+        assert_eq!(cut_out(false, true, r), None, "another program in front");
+        assert_eq!(cut_out(true, false, r), None, "minimized or in the tray");
+        assert_eq!(cut_out(true, true, Some((0, 0, 0, 10))), None);
+        assert_eq!(cut_out(true, true, None), None);
+    }
+
+    #[test]
+    fn the_keyboard_hook_takes_only_esc_and_plain_ctrl_z_from_other_programs() {
+        assert!(hook_takes(false, true, false, false, false, false), "Esc");
+        assert!(hook_takes(false, false, true, true, false, false), "Ctrl+Z");
+        assert!(!hook_takes(false, false, true, false, false, false), "Z alone is typing");
+        assert!(!hook_takes(false, false, true, true, true, false), "Ctrl+Shift+Z is redo elsewhere");
+        assert!(!hook_takes(false, false, true, true, false, true), "Ctrl+Alt+Z");
+        assert!(!hook_takes(true, true, false, false, false, false), "Snagster in front handles Esc itself (an open menu first)");
+        assert!(!hook_takes(true, false, true, true, false, false));
     }
 
     /// The overlay picture: the ink at the fade's strength (premultiplied, blue first), a

@@ -461,9 +461,6 @@ impl SnagApp {
             } else if let Some(at) = next {
                 ctx.request_repaint_after(at.saturating_duration_since(now) + crate::ink::FADE_OUT);
             }
-            // Snagster's window stays usable while drawing over the screen.
-            let (rect, ppp, hidden) = ctx.input(|i| (i.viewport().outer_rect, i.pixels_per_point, i.viewport().minimized == Some(true)));
-            crate::ink_overlay::set_app_rect(rect.filter(|_| !hidden).map(|r| ((r.left() * ppp).round() as i32, (r.top() * ppp).round() as i32, (r.width() * ppp).round() as u32, (r.height() * ppp).round() as u32)));
         }
         if let Some(st) = &mut self.x.studio {
             if let Some(scene) = self.settings.studio.scene()
