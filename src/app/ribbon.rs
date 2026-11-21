@@ -944,17 +944,17 @@ impl SnagApp {
 
     fn band_view(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         look::group(ui, t("Zoom"), |ui| {
-            if look::big_tool(ui, ph::ARROWS_IN, t("Fit"), "0", true, false).clicked() {
+            if look::big_tool(ui, ph::ARROWS_IN, t("Fit"), "Ctrl+0", true, false).clicked() {
                 self.set_zoom(ctx, None);
             }
             look::column(ui, |ui| {
                 if look::small_tool(ui, ph::FRAME_CORNERS, t("Actual size"), "1", true).clicked() {
                     self.set_zoom(ctx, Some(0.0));
                 }
-                if look::small_tool(ui, ph::ZOOM_IN, t("Zoom in"), "+", true).clicked() {
+                if look::small_tool(ui, ph::ZOOM_IN, t("Zoom in"), "Ctrl+=", true).clicked() {
                     self.set_zoom(ctx, Some(1.25));
                 }
-                if look::small_tool(ui, ph::ZOOM_OUT, t("Zoom out"), "-", true).clicked() {
+                if look::small_tool(ui, ph::ZOOM_OUT, t("Zoom out"), "Ctrl+-", true).clicked() {
                     self.set_zoom(ctx, Some(0.8));
                 }
             });

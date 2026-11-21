@@ -66,6 +66,9 @@ Recording (every system):
 
 Marking up pictures (every system):
 
+- **Ctrl+= , Ctrl+- and Ctrl+0 zoom the picture** (⌘ on a Mac, also in the View menu), as in
+  other editors. Before, they made the whole window's text and buttons bigger or smaller; for
+  that, use Windows' Text size or your desktop's display scale.
 - **Adjust a mark right after drawing it**: a new arrow, line, box, oval, highlighter box,
   spotlight or magnifier stays picked with handles: drag an end of an arrow, or a corner or
   side of a box, to reshape it without switching tools. With a drawing tool, pressing on a mark

@@ -1195,7 +1195,7 @@ impl SnagApp {
                         (print_pin.as_str(), "Print, pin picture to screen"),
                         ("Ctrl+,", "Settings"),
                         ("Delete, [ and ]", "Delete, shrink or grow the selected mark"),
-                        ("0, 1, +, -", "Fit, actual size, zoom in, zoom out"),
+                        ("Ctrl+0 or 0, 1, Ctrl+= or +, Ctrl+- or -", "Fit, actual size, zoom in, zoom out"),
                         ("Ctrl+wheel, middle drag", "Zoom, move around"),
                         ("Shift while drawing", "Straight lines, squares, circles"),
                         ("On the frozen screen", "R E O F P S H T change the shape, Space = full screen, Ctrl = whole window"),
