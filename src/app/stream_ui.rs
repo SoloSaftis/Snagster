@@ -401,7 +401,7 @@ impl SnagApp {
     pub(crate) fn poll_stream(&mut self, ctx: &egui::Context) {
         // A stream of Studio follows its scene and mixer from any tab.
         if self.x.studio.is_some() && self.x.tab != super::ribbon::RibbonTab::Studio {
-            self.studio_tick();
+            self.studio_tick(ctx);
         }
         let snap = live::snapshot();
         if snap.phase != Phase::Idle {

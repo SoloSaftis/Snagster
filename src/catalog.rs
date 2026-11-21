@@ -202,6 +202,11 @@ pub const COMMANDS: &[Command] = &[
     c("studio_new_scene", "Studio > Scenes", &["New scene"], "studio_add_scene", true, "", Safe),
     c("studio_copy_scene", "Studio > Scenes", &["Copy scene"], "studio_edit", true, "", Safe),
     c("studio_delete_scene", "Studio > Scenes", &["Delete scene"], "studio_remove_scene", true, "", Destructive),
+    c("studio_ink", "Studio > Ink, hotkey", &["Draw", "Draw on screen"], "", true, "", Safe),
+    c("studio_ink_clear", "Studio > Ink, hotkey", &["Clear", "Clear ink"], "ink_clear", true, "", Destructive),
+    s("studio_ink_color", "Studio > Ink", &["Color", "Ink color", "More colors…"], "studio.ink_color"),
+    s("studio_ink_width", "Studio > Ink", &["Pen width"], "studio.ink_width"),
+    s("studio_ink_hold", "Studio > Ink", &["How long ink stays", "Stay until cleared"], "studio.ink_mode"),
     c("studio_add_source", "Studio > Sources", &["Add source", "Screen area", "Picture...", "Text", "Color", "Pick a window..."], "studio_add_source", false, "", Safe),
     c("studio_source", "Studio > the source's properties", &["Shown", "Show this scene (also while recording)", "Fill the video", "Fit, keep shape", "Center", "Choose another picture...", "Move up (in front)", "Move down (behind)"], "studio_update_source", false, "", Safe),
     c("studio_sound", "Studio > Sound", &["Add sound", "Sound file (WAV)...", "The computer's default microphone", "Mute Computer sound"], "studio_edit", false, "", Safe),
@@ -264,6 +269,8 @@ pub fn action_command(a: Action) -> &'static str {
         Action::ShowSnag => "show_window",
         Action::SaveReplay => "replay_save",
         Action::ToggleReplay => "replay_toggle",
+        Action::DrawInk => "studio_ink",
+        Action::ClearInk => "studio_ink_clear",
     }
 }
 
@@ -451,6 +458,10 @@ pub const SETTINGS: &[SettingKey] = &[
     k("studio.system_muted", Kind::Bool, "The computer sound is muted in Studio."),
     k("studio.mic_volume", Kind::Num(0.0, 2.0), "The microphone's volume in Studio."),
     k("studio.mic_muted", Kind::Bool, "The microphone is muted in Studio."),
+    k("studio.ink_mode", Kind::Choice(&["Fade", "Stay"]), "Live ink: Fade (goes studio.ink_fade_s seconds after the last stroke) or Stay (until cleared with ink_clear)."),
+    k("studio.ink_fade_s", Kind::Num(0.5, 600.0), "Seconds live ink holds before it fades out (Fade mode)."),
+    k("studio.ink_color", Kind::Color, "The live ink colour."),
+    k("studio.ink_width", Kind::Num(1.0, 64.0), "The live ink pen width in screen pixels."),
     k("stream.service", Kind::Choice(&["Twitch", "YouTube", "Kick", "Facebook", "Restream", "Custom"]), "Where the stream goes."),
     ko("stream.url", Kind::Text, "The server address (\"\" the service's usual one)."),
     k("stream.source", Kind::List, "What is streamed: \"Screen\", \"Studio\", {\"Window\": title} or {\"Area\": [x, y, w, h]}."),

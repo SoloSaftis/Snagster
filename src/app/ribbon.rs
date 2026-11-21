@@ -381,7 +381,12 @@ impl SnagApp {
             && !s.recording()
             && !(self.x.stream.uses_studio && self.x.stream.snap.phase != crate::stream::live::Phase::Idle)
         {
-            // Leaving Studio stops its preview (and the screen copies behind it).
+            // Leaving Studio stops its preview (and the screen copies behind it), and its ink:
+            // nothing would show it in a stream any more.
+            crate::ink::with(|i| {
+                i.set_on(false, std::time::Instant::now());
+                i.clear();
+            });
             self.x.studio = None;
         }
         self.x.tab = tab;

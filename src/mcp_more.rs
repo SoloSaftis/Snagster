@@ -254,6 +254,12 @@ pub(super) fn tools() -> Vec<Tool> {
             edits: false,
         },
         Tool { name: "replay_stop", description: "Turn the replay buffer off; what it kept is thrown away (nothing is saved).", schema: obj(json!({}), &[]), edits: false },
+        Tool {
+            name: "ink_clear",
+            description: "Remove all live ink: what the person drew on the screen or the Studio preview with Studio's Draw (it shows in the stream and Studio's video). Undo in the window brings it back. How long ink stays is the setting studio.ink_mode (Fade or Stay) with studio.ink_fade_s; colour and width are studio.ink_color and studio.ink_width (set_setting). Drawing itself is only for the person: it takes over their mouse.",
+            schema: obj(json!({}), &[]),
+            edits: false,
+        },
         Tool { name: "replay_status", description: "Whether the replay buffer is on: its phase (off, starting, on), the seconds it keeps and holds now, the picture size, frame rate, encoder, whether sound is kept, and the last error.", schema: obj(json!({}), &[]), edits: false },
     ]
 }
@@ -278,6 +284,24 @@ pub(super) fn replay_json(s: &crate::replay::Status) -> Value {
         v["error"] = json!(e);
     }
     v
+}
+
+/// ink_clear: the ink of this process (when the server runs in the window) and of the window.
+fn ink_clear() -> Outcome {
+    let here = crate::ink::with(|i| {
+        let any = i.any(std::time::Instant::now());
+        i.clear();
+        any
+    });
+    #[cfg(not(test))]
+    if crate::instance::send_command("studio_ink_clear", None).is_ok() {
+        return Ok(vec![text("Cleared the live ink in the Snagster window.")]);
+    }
+    if here {
+        Ok(vec![text("Cleared the live ink.")])
+    } else {
+        Err("There is no live ink to clear: the Snagster window isn't running.".into())
+    }
 }
 
 /// An integer argument within `lo..=hi`, or None when it isn't given.
@@ -1276,6 +1300,7 @@ impl Workspace {
             "replay_start" => self.replay_start(a),
             "replay_save" => self.replay_save(a),
             "replay_stop" => Ok(vec![text(if crate::replay::end() { "Replay off." } else { "Replay was already off." })]),
+            "ink_clear" => ink_clear(),
             "replay_status" => {
                 let v = replay_json(&crate::replay::status());
                 self.structured = Some(v.clone());

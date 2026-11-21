@@ -106,10 +106,12 @@ pub enum Action {
     ShowSnag,
     SaveReplay,
     ToggleReplay,
+    DrawInk,
+    ClearInk,
 }
 
 impl Action {
-    pub const ALL: [Action; 23] = [
+    pub const ALL: [Action; 25] = [
         Action::AllInOne,
         Action::Area,
         Action::Window,
@@ -133,6 +135,8 @@ impl Action {
         Action::ShowSnag,
         Action::SaveReplay,
         Action::ToggleReplay,
+        Action::DrawInk,
+        Action::ClearInk,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -159,6 +163,8 @@ impl Action {
             Action::ShowSnag => "Show Snagster",
             Action::SaveReplay => "Save replay",
             Action::ToggleReplay => "Turn replay on / off",
+            Action::DrawInk => "Draw on screen",
+            Action::ClearInk => "Clear ink",
         }
     }
 }
@@ -193,6 +199,8 @@ fn default_bindings_for(mac: bool) -> Vec<Binding> {
             b(Action::RecordGif, cmd(true, "G")),
             b(Action::RecordSteps, cmd(true, "R")),
             b(Action::SaveReplay, cmd(true, "B")),
+            b(Action::DrawInk, cmd(true, "D")),
+            b(Action::ClearInk, cmd(true, "X")),
         ]
     } else {
         vec![
@@ -206,6 +214,8 @@ fn default_bindings_for(mac: bool) -> Vec<Binding> {
             b(Action::RecordGif, Combo::new(true, false, true, "F11")),
             b(Action::RecordSteps, Combo::new(true, false, true, "F12")),
             b(Action::SaveReplay, Combo::new(true, false, true, "F8")),
+            b(Action::DrawInk, Combo::new(true, false, true, "F7")),
+            b(Action::ClearInk, Combo::new(true, false, true, "F6")),
         ]
     };
     first.into_iter().chain([

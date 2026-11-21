@@ -928,6 +928,8 @@ impl SnagApp {
             Action::ShowSnag => self.show_window(ctx),
             Action::SaveReplay => self.save_replay(ctx),
             Action::ToggleReplay => self.toggle_replay(ctx),
+            Action::DrawInk => studio_ui::toggle_ink(self),
+            Action::ClearInk => studio_ui::clear_ink(),
         }
     }
 
@@ -2463,6 +2465,17 @@ impl SnagApp {
             return;
         }
         let consume = |m: Modifiers, k: Key| ctx.input_mut(|i| i.consume_key(m, k));
+        // While Draw is on, Ctrl+Z / ⌘Z takes back ink (never the picture or a deleted file) and
+        // Esc stops drawing.
+        if crate::ink::with(|i| i.on) {
+            if consume(Modifiers::COMMAND, Key::Z) {
+                crate::ink::with(|i| i.undo(Instant::now()));
+            }
+            // (Esc closes an open menu first.)
+            if !ctx.any_popup_open() && consume(Modifiers::NONE, Key::Escape) {
+                crate::ink::with(|i| i.set_on(false, Instant::now()));
+            }
+        }
         if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z) || consume(Modifiers::COMMAND, Key::Y) {
             self.redo();
         }

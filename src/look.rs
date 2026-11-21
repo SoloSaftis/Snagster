@@ -108,6 +108,8 @@ pub mod ph {
     pub const CLOUD_UP: &str = "\u{e1ae}";
     pub const ARROW_SQUARE_OUT: &str = "\u{e5de}";
     pub const X: &str = "\u{e4f6}";
+    pub const PEN_NIB: &str = "\u{e3ac}";
+    pub const BROOM: &str = "\u{ec54}";
     pub const VIDEO: &str = "\u{e740}";
     pub const LAYOUT: &str = "\u{e6d6}";
     pub const CHECK: &str = "\u{e182}";

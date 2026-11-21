@@ -116,6 +116,14 @@ pub struct StudioSettings {
     pub system_muted: bool,
     pub mic_volume: f32,
     pub mic_muted: bool,
+    /// Live ink: fade after `ink_fade_s` seconds or stay until cleared.
+    pub ink_mode: crate::ink::InkMode,
+    /// Seconds ink holds before it fades.
+    pub ink_fade_s: f32,
+    /// The ink colour.
+    pub ink_color: [u8; 3],
+    /// Pen width in desktop pixels.
+    pub ink_width: f32,
 }
 
 impl Default for StudioSettings {
@@ -136,11 +144,20 @@ impl Default for StudioSettings {
             system_muted: false,
             mic_volume: 1.0,
             mic_muted: false,
+            ink_mode: crate::ink::InkMode::Fade,
+            ink_fade_s: 3.0,
+            ink_color: [230, 40, 40],
+            ink_width: 6.0,
         }
     }
 }
 
 impl StudioSettings {
+    /// The pen these settings give new ink.
+    pub fn ink_pen(&self) -> crate::ink::Pen {
+        crate::ink::Pen { color: [self.ink_color[0], self.ink_color[1], self.ink_color[2], 255], width: self.ink_width.clamp(1.0, 64.0), mode: self.ink_mode, hold_s: self.ink_fade_s.clamp(0.5, 600.0) }
+    }
+
     pub fn scene(&self) -> Option<&Scene> {
         self.scenes.get(self.current).or(self.scenes.first())
     }
@@ -285,6 +302,10 @@ pub struct Compositor {
     /// Wayland: one screen share per live area (the desktop asks the person once), instead of
     /// a desktop screenshot per frame. A share that couldn't start is retried after a while.
     feeds: std::collections::HashMap<(i32, i32, u32, u32), Result<crate::video::ScreenFeed, Instant>>,
+    /// Where the last frame showed parts of the desktop (for live ink), bottom first.
+    pub placed: Vec<crate::ink::Placed>,
+    /// Live ink, drawn once per change and kept (see `ink::Layer`).
+    ink_layers: crate::ink::Layers,
 }
 
 /// How long a screen share that couldn't start (the person said no, or the desktop has none)
@@ -355,7 +376,16 @@ impl Compositor {
     }
 
     /// Draw `scene` into `out` (RGBA, the canvas size).
+    #[cfg(test)]
     pub fn draw(&mut self, scene: &Scene, out: &mut RgbaImage) {
+        self.draw_with_ink(scene, out, &crate::ink::Snapshot::default());
+    }
+
+    /// Draw `scene` with live ink: ink drawn on the screen goes on each source showing that
+    /// part of the desktop (right after it, so sources above cover it as they cover the
+    /// screen), ink drawn on the preview on top of everything.
+    pub fn draw_with_ink(&mut self, scene: &Scene, out: &mut RgbaImage, ink: &crate::ink::Snapshot) {
+        self.placed.clear();
         for p in out.pixels_mut() {
             *p = image::Rgba([0, 0, 0, 255]);
         }
@@ -381,6 +411,7 @@ impl Compositor {
                         SourceKind::Area { x, y, w, h } => Some((*x, *y, *w, *h)),
                         _ => None,
                     };
+                    let shown = rect.filter(|r| r.2 > 0 && r.3 > 0).map(|desk| crate::ink::Placed { desk, canvas: (dx, dy, dw, dh) });
                     if let Some((x, y, w, h)) = rect
                         && w > 0
                         && h > 0
@@ -400,9 +431,18 @@ impl Compositor {
                         }
                         blit_scaled(out, &img, dx, dy, dw, dh, false);
                     }
+                    if let Some(p) = shown {
+                        // Where the screen copy already holds the overlay's ink, not twice.
+                        if !crate::ink_overlay::overlay_in_captures() {
+                            self.ink_layers.draw_placed(out, ink, &p);
+                        }
+                        self.placed.push(p);
+                    }
                 }
             }
         }
+        self.ink_layers.draw_canvas(out, ink);
+        self.ink_layers.end_frame();
     }
 }
 
@@ -503,6 +543,10 @@ pub struct Shared {
     pub recording_fps: Mutex<Option<u32>>,
     /// Milliseconds the last frame took to draw.
     pub draw_ms: AtomicU64,
+    /// Where the last frame showed parts of the desktop (the preview maps ink drawn on it).
+    pub placed: Mutex<Vec<crate::ink::Placed>>,
+    /// Draw the program's live ink into the frames (off in unit tests, which share it).
+    pub ink: AtomicBool,
 }
 
 /// The background thread that keeps drawing the scene.
@@ -520,6 +564,8 @@ impl Engine {
             stop: AtomicBool::new(false),
             recording_fps: Mutex::new(None),
             draw_ms: AtomicU64::new(0),
+            placed: Mutex::new(Vec::new()),
+            ink: AtomicBool::new(!cfg!(test)),
         });
         let sh = shared.clone();
         let thread = std::thread::Builder::new()
@@ -534,7 +580,11 @@ impl Engine {
                     let scene = sh.scene.lock().map(|s| s.clone()).ok();
                     let t = Instant::now();
                     if let Some(scene) = scene {
-                        comp.draw(&scene, &mut canvas);
+                        let ink = if sh.ink.load(Ordering::Relaxed) { crate::ink::with(|i| i.snapshot(Instant::now())) } else { crate::ink::Snapshot::default() };
+                        comp.draw_with_ink(&scene, &mut canvas, &ink);
+                        if let Ok(mut p) = sh.placed.lock() {
+                            p.clone_from(&comp.placed);
+                        }
                     }
                     sh.draw_ms.store(t.elapsed().as_millis() as u64, Ordering::Relaxed);
                     if let Ok(mut f) = sh.frame.lock() {
@@ -1063,6 +1113,63 @@ mod tests {
         assert_eq!(small, [10, 120, 250, 255, 10, 120, 250, 255]);
         engine.shared.stop.store(true, Ordering::Relaxed);
         assert!(!feed(&mut buf), "stopped");
+    }
+
+    fn ink_line(space: crate::ink::Space, y: f32) -> crate::ink::Stroke {
+        crate::ink::Stroke { space, points: vec![[0.0, y], [63.0, y]], color: [255, 255, 0, 255], width: 4.0 }
+    }
+
+    /// Ink drawn on the preview is on top of every source; ink drawn on the screen goes on the
+    /// source that shows that part of the desktop, under the sources above it.
+    #[test]
+    fn live_ink_is_composed_into_the_frame() {
+        use crate::ink::{Snapshot, Space};
+        let screen = Item { name: "area".into(), kind: SourceKind::Area { x: 0, y: 0, w: 64, h: 64 }, x: 0.0, y: 0.0, w: 32.0, h: 32.0, visible: true };
+        let scene = Scene { sounds: Vec::new(), name: "s".into(), items: vec![colour("bg", [0, 0, 80, 255], 0.0, 0.0, 64.0, 64.0), screen, colour("cam", [0, 200, 0, 255], 0.0, 0.0, 8.0, 8.0)] };
+        let ink = Snapshot { strokes: vec![ink_line(Space::Canvas, 50.0), ink_line(Space::Desktop, 20.0), ink_line(Space::Desktop, 4.0)], alpha: 1.0 };
+        let mut out = RgbaImage::new(64, 64);
+        let mut comp = Compositor::default();
+        comp.draw_with_ink(&scene, &mut out, &ink);
+        assert_eq!(out.get_pixel(30, 50).0, [255, 255, 0, 255], "preview ink over the background");
+        // Desktop y 20 is canvas y 10 in the half-size area source, only inside its box.
+        assert_eq!(out.get_pixel(20, 10).0, [255, 255, 0, 255], "screen ink on the screen source");
+        assert_ne!(out.get_pixel(40, 10).0, [255, 255, 0, 255], "not past the source's box");
+        assert_eq!(out.get_pixel(4, 2).0, [0, 200, 0, 255], "a source above covers the ink");
+        assert_eq!(comp.placed, vec![crate::ink::Placed { desk: (0, 0, 64, 64), canvas: (0, 0, 32, 32) }]);
+        // Without ink, the same scene shows none.
+        comp.draw(&scene, &mut out);
+        assert_eq!(out.get_pixel(30, 50).0, [0, 0, 80, 255]);
+    }
+
+    #[test]
+    fn the_engine_draws_the_programs_ink() {
+        let scene = Scene { sounds: Vec::new(), name: "s".into(), items: vec![colour("c", [0, 0, 0, 255], 0.0, 0.0, 64.0, 64.0)] };
+        let _one = crate::ink::TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let engine = Engine::start(scene, 64, 64, None);
+        engine.shared.ink.store(true, Ordering::Relaxed);
+        // A colour no other test uses, at a spot of its own: tests share the program's ink.
+        let stroke = crate::ink::Stroke { space: crate::ink::Space::Canvas, points: vec![[40.0, 40.0]], color: [7, 77, 177, 255], width: 10.0 };
+        crate::ink::with(|i| {
+            i.pen.color = stroke.color;
+            i.pen.width = stroke.width;
+            i.pen.mode = crate::ink::InkMode::Stay;
+            i.begin(stroke.space, stroke.points[0], Instant::now());
+        });
+        let t = Instant::now();
+        while !engine.latest().is_some_and(|f| f.get_pixel(40, 40).0 == [7, 77, 177, 255]) {
+            assert!(t.elapsed() < Duration::from_secs(10), "the ink never reached the frame");
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        crate::ink::with(|i| i.clear());
+    }
+
+    #[test]
+    fn ink_settings_have_defaults_and_give_the_pen() {
+        let s: StudioSettings = serde_json::from_str("{}").unwrap();
+        assert_eq!((s.ink_mode, s.ink_fade_s, s.ink_color, s.ink_width), (crate::ink::InkMode::Fade, 3.0, [230, 40, 40], 6.0));
+        let s = StudioSettings { ink_width: 500.0, ink_fade_s: 0.0, ink_mode: crate::ink::InkMode::Stay, ..Default::default() };
+        let p = s.ink_pen();
+        assert_eq!((p.width, p.hold_s, p.mode, p.color), (64.0, 0.5, crate::ink::InkMode::Stay, crate::ink::COLORS[0]));
     }
 
     #[test]
