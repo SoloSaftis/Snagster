@@ -17,6 +17,22 @@ Studio:
   `set_program_sound`. The Mac app now needs macOS 12.3 or later (it was 12.0), as
   ScreenCaptureKit, which this uses, came in 12.3.
 
+For AI apps (every system):
+
+- **Clearer answers when an AI app gets a tool's arguments wrong**: every call is checked
+  against the tool's description first, and a misspelt argument, a number sent as text, a name
+  that isn't one of the choices or a value out of range is refused with what was sent and what
+  the tool takes (before, some were ignored or quietly changed to the nearest allowed value).
+  Every argument now says what it is, its unit and its range.
+- Ending a live stream and turning the replay buffer off are marked as ending something, so AI
+  apps ask before they do it. The server tells AI apps its description, website and icon.
+- **A free skill for AI coding agents** (Claude Code and others):
+  [skills/snagster/SKILL.md](skills/snagster/SKILL.md) explains when and how to use Snagster's
+  tools, with setup and recipes.
+- **MCP bundles**: every release has a one-file MCP bundle (`.mcpb`) for Windows, Linux and
+  macOS, which AI apps that take bundles install with one click, and a `server.json` for the
+  official MCP Registry.
+
 Using Snagster from the keyboard (every system):
 
 - **F6 and Shift+F6 move between the ribbon, the tools, the picture, the options and Recent**;
