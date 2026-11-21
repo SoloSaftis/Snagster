@@ -1193,7 +1193,7 @@
   "Theme name": "Name des Designs",
   "Text size {size} px": "Textgröße {size} px",
   "Next: {step}": "Nächste: {step}",
-  "Made from the {count} pictures in Recent": "Aus den {count} Bildern in Zuletzt erstellt",
+  "Made from the {count} pictures in Recent": "Aus den {count} Bildern unter „Zuletzt“",
   "Eraser width {size} px": "Radierer-Breite {size} px",
   "Example: {name}": "Beispiel: {name}",
   "Use {name}": "{name} verwenden",
