@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} และอีก {n} รายการ",
   "{names} are heard twice: Computer sound already has them.": "{names} จะได้ยินสองครั้ง: เสียงของคอมพิวเตอร์มีเสียงเหล่านี้อยู่แล้ว",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "ไม่มีเสียงในฉากนี้: เพิ่มเสียงของคอมพิวเตอร์ โปรแกรม ไมโครโฟน หรือไฟล์เสียง",
-  "Mute Computer sound": "ปิดเสียงของคอมพิวเตอร์"
+  "Mute Computer sound": "ปิดเสียงของคอมพิวเตอร์",
+  "Open {pane} settings": "เปิดการตั้งค่า{pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "ตอนนี้ไม่มีโปรแกรมที่มีหน้าต่างเปิดอยู่ เปิดโปรแกรมสักตัว โปรแกรมนั้นจะแสดงที่นี่"
  }
 }

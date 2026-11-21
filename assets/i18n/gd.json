@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} agus {n} a bharrachd",
   "{names} are heard twice: Computer sound already has them.": "Cluinnear {names} dà thuras: tha iad aig Fuaim a' choimpiutair mu thràth.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Chan eil fuaim san t-sealladh seo: cuir fuaim a' choimpiutair, prògram, micreofon no faidhle fuaime ris.",
-  "Mute Computer sound": "Balbhaich Fuaim a' choimpiutair"
+  "Mute Computer sound": "Balbhaich Fuaim a' choimpiutair",
+  "Open {pane} settings": "Fosgail roghainnean {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Chan eil prògram sam bith le uinneag fosgailte an-dràsta. Fosgail fear, is nochdaidh e an-seo."
  }
 }

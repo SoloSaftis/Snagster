@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} і яшчэ {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} чуваць двойчы: Гук камп'ютара ўжо ўтрымлівае іх гук.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "У гэтай сцэне няма гуку: дадайце гук камп'ютара, праграму, мікрафон або гукавы файл.",
-  "Mute Computer sound": "Выключыць Гук камп'ютара"
+  "Mute Computer sound": "Выключыць Гук камп'ютара",
+  "Open {pane} settings": "Адкрыць налады «{pane}»",
+  "No program with a window is open right now. Open one, and it shows up here.": "Зараз не адкрыта ніводнай праграмы з акном. Адкрыйце праграму, і яна з'явіцца тут."
  }
 }

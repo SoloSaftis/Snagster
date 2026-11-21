@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} og {n} andre",
   "{names} are heard twice: Computer sound already has them.": "{names} høres to gange: Computerlyd har dem allerede.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Ingen lyd i denne scene: tilføj computerlyden, et program, en mikrofon eller en lydfil.",
-  "Mute Computer sound": "Slå lyden fra for Computerlyd"
+  "Mute Computer sound": "Slå lyden fra for Computerlyd",
+  "Open {pane} settings": "Åbn indstillinger for {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Intet program med et vindue er åbent lige nu. Åbn et, så dukker det op her."
  }
 }

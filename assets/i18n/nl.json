@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} en nog {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} zijn twee keer te horen: Computergeluid bevat ze al.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Geen geluid in deze scène: voeg het computergeluid, een programma, een microfoon of een geluidsbestand toe.",
-  "Mute Computer sound": "Computergeluid dempen"
+  "Mute Computer sound": "Computergeluid dempen",
+  "Open {pane} settings": "Instellingen voor {pane} openen",
+  "No program with a window is open right now. Open one, and it shows up here.": "Er is nu geen programma met een venster open. Open er een, dan verschijnt het hier."
  }
 }

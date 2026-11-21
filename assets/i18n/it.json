@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} e altri {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} si sentono due volte: sono già inclusi in Audio del computer.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Nessun audio in questa scena: aggiungi l'audio del computer, un programma, un microfono o un file audio.",
-  "Mute Computer sound": "Disattiva Audio del computer"
+  "Mute Computer sound": "Disattiva Audio del computer",
+  "Open {pane} settings": "Apri le impostazioni di {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Nessun programma con una finestra è aperto. Aprine uno: comparirà qui."
  }
 }

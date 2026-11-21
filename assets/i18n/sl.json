@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} in še {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} se slišijo dvakrat: Zvok računalnika jih že vsebuje.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "V tem prizoru ni zvoka: dodajte zvok računalnika, program, mikrofon ali zvočno datoteko.",
-  "Mute Computer sound": "Utišaj zvok računalnika"
+  "Mute Computer sound": "Utišaj zvok računalnika",
+  "Open {pane} settings": "Odpri nastavitve »{pane}«",
+  "No program with a window is open right now. Open one, and it shows up here.": "Trenutno ni odprt noben program z oknom. Odprite katerega, pa se bo prikazal tukaj."
  }
 }

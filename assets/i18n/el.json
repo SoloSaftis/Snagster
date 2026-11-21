@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} και {n} ακόμη",
   "{names} are heard twice: Computer sound already has them.": "Τα {names} ακούγονται δύο φορές: ο Ήχος υπολογιστή τα περιέχει ήδη.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Δεν υπάρχει ήχος σε αυτή τη σκηνή: προσθέστε τον ήχο του υπολογιστή, ένα πρόγραμμα, ένα μικρόφωνο ή ένα αρχείο ήχου.",
-  "Mute Computer sound": "Σίγαση Ήχου υπολογιστή"
+  "Mute Computer sound": "Σίγαση Ήχου υπολογιστή",
+  "Open {pane} settings": "Άνοιγμα ρυθμίσεων «{pane}»",
+  "No program with a window is open right now. Open one, and it shows up here.": "Κανένα πρόγραμμα με παράθυρο δεν είναι ανοιχτό αυτή τη στιγμή. Ανοίξτε ένα, και θα εμφανιστεί εδώ."
  }
 }

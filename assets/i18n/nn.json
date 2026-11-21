@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} og {n} til",
   "{names} are heard twice: Computer sound already has them.": "{names} høyrest to gonger: Datalyd har dei allereie.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Ingen lyd i denne scenen: legg til datalyden, eit program, ein mikrofon eller ei lydfil.",
-  "Mute Computer sound": "Slå av datalyd"
+  "Mute Computer sound": "Slå av datalyd",
+  "Open {pane} settings": "Opne innstillingar for {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Ingen program med vindauge er opne no. Opne eitt, så dukkar det opp her."
  }
 }

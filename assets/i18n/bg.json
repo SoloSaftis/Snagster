@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} и още {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} се чуват два пъти: Звук от компютъра вече ги включва.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Няма звук в тази сцена: добавете звука от компютъра, програма, микрофон или звуков файл.",
-  "Mute Computer sound": "Заглушаване на Звук от компютъра"
+  "Mute Computer sound": "Заглушаване на Звук от компютъра",
+  "Open {pane} settings": "Отвори настройките за „{pane}“",
+  "No program with a window is open right now. Open one, and it shows up here.": "В момента не е отворена програма с прозорец. Отворете някоя и тя ще се появи тук."
  }
 }

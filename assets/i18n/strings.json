@@ -1140,5 +1140,7 @@
  "{a}, {b} and {n} more",
  "{names} are heard twice: Computer sound already has them.",
  "No sound in this scene: add the computer sound, a program, a microphone or a sound file.",
- "Mute Computer sound"
+ "Mute Computer sound",
+ "Open {pane} settings",
+ "No program with a window is open right now. Open one, and it shows up here."
 ]

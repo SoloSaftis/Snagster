@@ -14,7 +14,8 @@ Studio:
   Windows 10 version 2004 and later; Linux with PipeWire (the Flatpak needs one override, which
   the menu shows); macOS 13 and later, with the Screen Recording permission. Elsewhere the menu
   says why and everything else works as before. AI apps get `list_sound_programs` and
-  `set_program_sound`.
+  `set_program_sound`. The Mac app now needs macOS 12.3 or later (it was 12.0), as
+  ScreenCaptureKit, which this uses, came in 12.3.
 
 Using Snagster from the keyboard (every system):
 

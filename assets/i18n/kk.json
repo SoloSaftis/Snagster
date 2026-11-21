@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} және тағы {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} екі рет естіледі: Компьютер дыбысында олар бар.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Бұл сахнада дыбыс жоқ: компьютер дыбысын, бағдарламаны, микрофонды немесе дыбыс файлын қосыңыз.",
-  "Mute Computer sound": "Компьютер дыбысын өшіру"
+  "Mute Computer sound": "Компьютер дыбысын өшіру",
+  "Open {pane} settings": "«{pane}» параметрлерін ашу",
+  "No program with a window is open right now. Open one, and it shows up here.": "Қазір терезесі бар ешбір бағдарлама ашық емес. Біреуін ашыңыз, сонда ол осында пайда болады."
  }
 }

@@ -85,6 +85,11 @@ impl Unsupported {
     }
 }
 
+/// The link that opens the macOS settings pane with the screen permission.
+pub fn settings_link() -> String {
+    crate::i18n::tf("Open {pane} settings", &[("pane", mac_pane())])
+}
+
 /// The macOS settings pane that holds the screen permission ("Screen & System Audio Recording"
 /// since macOS 15).
 fn mac_pane() -> &'static str {
@@ -311,16 +316,18 @@ pub(super) struct Layout {
 }
 
 /// `frames` frames of native-endian samples as 16-bit stereo: the first two channels, one
-/// channel on both sides. Too few bytes: what is there; an unknown layout: nothing.
+/// channel on both sides. Too few bytes: what is there; an unknown layout: nothing. Planar: the
+/// buffer is one equal plane per channel, which may be longer than `frames` (padding at its end).
 #[cfg(any(target_os = "macos", test))]
 pub(super) fn to_stereo(bytes: &[u8], frames: usize, l: Layout) -> Vec<i16> {
     let size = if l.float { 4 } else { 2 };
     if l.channels == 0 || frames == 0 {
         return Vec::new();
     }
-    let frames = frames.min(bytes.len() / (size * l.channels));
+    let plane = bytes.len() / l.channels / size;
+    let frames = frames.min(plane);
     let at = |frame: usize, ch: usize| -> i16 {
-        let i = if l.planar { ch * frames + frame } else { frame * l.channels + ch } * size;
+        let i = if l.planar { ch * plane + frame } else { frame * l.channels + ch } * size;
         if l.float { to_i16(f32::from_ne_bytes([bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]])) } else { i16::from_ne_bytes([bytes[i], bytes[i + 1]]) }
     };
     let right = if l.channels > 1 { 1 } else { 0 };
@@ -431,6 +438,8 @@ mod tests {
         let planar = Layout { channels: 2, float: true, planar: true };
         // Left 0.5, -0.5 then right 0.25, 1.0 (macOS's usual layout).
         assert_eq!(to_stereo(&f(&[0.5, -0.5, 0.25, 1.0]), 2, planar), [16384, 8192, -16384, 32767]);
+        // Planes of 3 with 2 frames in them: the right plane starts at the third sample.
+        assert_eq!(to_stereo(&f(&[0.5, -0.5, 0.0, 0.25, 1.0, 0.0]), 2, planar), [16384, 8192, -16384, 32767], "planes longer than the frames");
         let mixed = Layout { planar: false, ..planar };
         assert_eq!(to_stereo(&f(&[0.5, 0.25, -0.5, 1.0]), 2, mixed), [16384, 8192, -16384, 32767]);
         let mono = Layout { channels: 1, float: true, planar: true };

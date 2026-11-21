@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} மற்றும் இன்னும் {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} இருமுறை கேட்கும்: கணினி ஒலியில் அவை ஏற்கெனவே உள்ளன.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "இந்தக் காட்சியில் ஒலி இல்லை: கணினி ஒலி, ஒரு நிரல், ஒரு மைக்ரோஃபோன் அல்லது ஒரு ஒலிக் கோப்பைச் சேர்க்கவும்.",
-  "Mute Computer sound": "கணினி ஒலியை ஒலியடக்கு"
+  "Mute Computer sound": "கணினி ஒலியை ஒலியடக்கு",
+  "Open {pane} settings": "{pane} அமைப்புகளைத் திற",
+  "No program with a window is open right now. Open one, and it shows up here.": "இப்போது சாளரம் உள்ள எந்த நிரலும் திறந்திருக்கவில்லை. ஒன்றைத் திறந்தால், அது இங்கே தோன்றும்."
  }
 }

@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} och {n} till",
   "{names} are heard twice: Computer sound already has them.": "{names} hörs två gånger: Datorljud har dem redan.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Inget ljud i den här scenen: lägg till datorljudet, ett program, en mikrofon eller en ljudfil.",
-  "Mute Computer sound": "Stäng av Datorljud"
+  "Mute Computer sound": "Stäng av Datorljud",
+  "Open {pane} settings": "Öppna inställningar för {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Inget program med ett fönster är öppet just nu. Öppna ett, så dyker det upp här."
  }
 }

@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} hinallataq {n} aswan",
   "{names} are heard twice: Computer sound already has them.": "{names} iskay kutita uyarikunku: Computadorapa uyarinanpiña kachkanku.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Kay escenapiqa manam uyarina kanchu: computadorap uyarinanta, huk programata, huk micrófonota utaq huk uyarina archivota yapay.",
-  "Mute Computer sound": "Computadorapa uyarinanta upallachiy"
+  "Mute Computer sound": "Computadorapa uyarinanta upallachiy",
+  "Open {pane} settings": "{pane} churanakuyninta kichay",
+  "No program with a window is open right now. Open one, and it shows up here.": "Kunanqa manam ima ventanayuq programapas kichasqachu. Hukta kichay, hinaspa kaypi rikhurinqa."
  }
 }

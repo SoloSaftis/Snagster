@@ -27,14 +27,24 @@ pub fn major() -> u32 {
     NSProcessInfo::processInfo().operatingSystemVersion().majorVersion as u32
 }
 
+/// Looked at again at most once a second (the interface asks every frame).
 pub fn support() -> Result<(), Unsupported> {
-    if major() < 13 {
-        return Err(Unsupported::OldMac);
+    static LAST: Mutex<Option<(Instant, Result<(), Unsupported>)>> = Mutex::new(None);
+    let mut last = LAST.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some((at, r)) = &*last
+        && at.elapsed() < Duration::from_secs(1)
+    {
+        return r.clone();
     }
-    if !preflight() {
-        return Err(Unsupported::Permission);
-    }
-    Ok(())
+    let r = if major() < 13 {
+        Err(Unsupported::OldMac)
+    } else if !preflight() {
+        Err(Unsupported::Permission)
+    } else {
+        Ok(())
+    };
+    *last = Some((Instant::now(), r.clone()));
+    r
 }
 
 #[link(name = "CoreGraphics", kind = "framework")]
@@ -93,14 +103,11 @@ struct Asbd {
     reserved: u32,
 }
 
+// objc2-core-media declares the sample and block buffer calls (declaring them again here clashes);
+// this one needs a crate feature that brings in CoreAudio's types, so it is declared here.
 #[link(name = "CoreMedia", kind = "framework")]
 unsafe extern "C" {
-    fn CMSampleBufferGetNumSamples(sbuf: *const c_void) -> isize;
-    fn CMSampleBufferGetDataBuffer(sbuf: *const c_void) -> *const c_void;
-    fn CMSampleBufferGetFormatDescription(sbuf: *const c_void) -> *const c_void;
     fn CMAudioFormatDescriptionGetStreamBasicDescription(desc: *const c_void) -> *const Asbd;
-    fn CMBlockBufferGetDataLength(buf: *const c_void) -> usize;
-    fn CMBlockBufferCopyDataBytes(buf: *const c_void, offset: usize, len: usize, dest: *mut c_void) -> i32;
 }
 
 const FLAG_FLOAT: u32 = 1;
@@ -108,15 +115,13 @@ const FLAG_NON_INTERLEAVED: u32 = 1 << 5;
 
 /// A sound buffer's samples as 16-bit stereo.
 fn samples(sb: &CMSampleBuffer) -> Vec<i16> {
-    let sb = sb as *const CMSampleBuffer as *const c_void;
     unsafe {
-        let frames = CMSampleBufferGetNumSamples(sb).max(0) as usize;
-        let desc = CMSampleBufferGetFormatDescription(sb);
-        let data = CMSampleBufferGetDataBuffer(sb);
-        if frames == 0 || desc.is_null() || data.is_null() {
+        let frames = sb.num_samples().max(0) as usize;
+        let (Some(desc), Some(data)) = (sb.format_description(), sb.data_buffer()) else { return Vec::new() };
+        if frames == 0 {
             return Vec::new();
         }
-        let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(desc);
+        let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(&*desc as *const _ as *const c_void);
         if asbd.is_null() {
             return Vec::new();
         }
@@ -125,9 +130,12 @@ fn samples(sb: &CMSampleBuffer) -> Vec<i16> {
         if (layout.float && a.bits_per_channel != 32) || (!layout.float && a.bits_per_channel != 16) {
             return Vec::new();
         }
-        let len = CMBlockBufferGetDataLength(data);
+        let len = data.data_length();
+        if len == 0 {
+            return Vec::new();
+        }
         let mut bytes = vec![0u8; len];
-        if CMBlockBufferCopyDataBytes(data, 0, len, bytes.as_mut_ptr().cast()) != 0 {
+        if data.copy_data_bytes(0, len, std::ptr::NonNull::new_unchecked(bytes.as_mut_ptr().cast())) != 0 {
             return Vec::new();
         }
         to_stereo(&bytes, frames, layout)
@@ -184,8 +192,19 @@ struct Running {
 }
 
 impl Drop for Running {
+    /// Stops the stream and waits (up to 2 s) until it has, so it no longer calls the output,
+    /// then takes the output off.
     fn drop(&mut self) {
-        unsafe { self.stream.stopCaptureWithCompletionHandler(None) };
+        let (tx, rx) = channel::<()>();
+        let tx = Mutex::new(Some(tx));
+        let done = RcBlock::new(move |_e: *mut NSError| {
+            if let Some(tx) = tx.lock().ok().and_then(|mut t| t.take()) {
+                let _ = tx.send(());
+            }
+        });
+        unsafe { self.stream.stopCaptureWithCompletionHandler(Some(&done)) };
+        let _ = rx.recv_timeout(Duration::from_secs(2));
+        let _ = unsafe { self.stream.removeStreamOutput_type_error(ProtocolObject::from_ref(&*self._output), SCStreamOutputType::Audio) };
     }
 }
 

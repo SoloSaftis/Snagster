@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} និង {n} ផ្សេងទៀត",
   "{names} are heard twice: Computer sound already has them.": "{names} ត្រូវបានឮពីរដង៖ សំឡេងកុំព្យូទ័រមានពួកវារួចហើយ។",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "គ្មានសំឡេងក្នុងឈុតនេះទេ៖ បន្ថែមសំឡេងកុំព្យូទ័រ កម្មវិធី មីក្រូហ្វូន ឬឯកសារសំឡេង។",
-  "Mute Computer sound": "បិទសំឡេងកុំព្យូទ័រ"
+  "Mute Computer sound": "បិទសំឡេងកុំព្យូទ័រ",
+  "Open {pane} settings": "បើកការកំណត់{pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "ឥឡូវនេះគ្មានកម្មវិធីណាដែលមានវិនដូកំពុងបើកទេ។ បើកកម្មវិធីមួយ នោះវានឹងបង្ហាញនៅទីនេះ។"
  }
 }

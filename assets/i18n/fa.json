@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}، {b} و {n} مورد دیگر",
   "{names} are heard twice: Computer sound already has them.": "{names} دو بار شنیده می‌شوند: صدای رایانه آن‌ها را از قبل دارد.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "این صحنه صدایی ندارد: صدای رایانه، یک برنامه، یک میکروفون یا یک فایل صوتی اضافه کنید.",
-  "Mute Computer sound": "بی‌صدا کردن صدای رایانه"
+  "Mute Computer sound": "بی‌صدا کردن صدای رایانه",
+  "Open {pane} settings": "باز کردن تنظیمات {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "اکنون هیچ برنامه‌ای با پنجره باز نیست. یکی را باز کنید تا اینجا نمایش داده شود."
  }
 }

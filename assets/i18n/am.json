@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}፣ {b} እና ሌሎች {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} ሁለት ጊዜ ይሰማሉ፦ የኮምፒውተር ድምፅ አስቀድሞ አካትቷቸዋል።",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "በዚህ ትዕይንት ውስጥ ድምፅ የለም፦ የኮምፒውተር ድምፅ፣ ፕሮግራም፣ ማይክሮፎን ወይም የድምፅ ፋይል ያክሉ።",
-  "Mute Computer sound": "የኮምፒውተር ድምፅን አጥፋ"
+  "Mute Computer sound": "የኮምፒውተር ድምፅን አጥፋ",
+  "Open {pane} settings": "የ{pane} ቅንብሮችን ክፈት",
+  "No program with a window is open right now. Open one, and it shows up here.": "አሁን መስኮት ያለው ፕሮግራም አልተከፈተም። አንዱን ይክፈቱ፣ እዚህ ይታያል።"
  }
 }

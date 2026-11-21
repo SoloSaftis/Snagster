@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} va yana {n} ta",
   "{names} are heard twice: Computer sound already has them.": "{names} ikki marta eshitiladi: Kompyuter ovozida ular allaqachon bor.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Bu sahnada ovoz yo‘q: kompyuter ovozi, dastur, mikrofon yoki ovoz faylini qo‘shing.",
-  "Mute Computer sound": "Kompyuter ovozini o‘chirish"
+  "Mute Computer sound": "Kompyuter ovozini o‘chirish",
+  "Open {pane} settings": "«{pane}» sozlamalarini ochish",
+  "No program with a window is open right now. Open one, and it shows up here.": "Hozir oynasi bor hech bir dastur ochiq emas. Birortasini oching, u shu yerda paydo bo‘ladi."
  }
 }

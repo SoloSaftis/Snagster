@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} an {n} aner",
   "{names} are heard twice: Computer sound already has them.": "{names} sinn duebel ze héieren: de Computerton huet se schonn.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Keen Toun an dëser Szen: de Computerton, e Programm, e Mikro oder eng Tounfichier derbäisetzen.",
-  "Mute Computer sound": "Computerton stumm schalten"
+  "Mute Computer sound": "Computerton stumm schalten",
+  "Open {pane} settings": "Astellunge fir {pane} opmaachen",
+  "No program with a window is open right now. Open one, and it shows up here.": "Am Moment ass kee Programm mat enger Fënster op. Maach een op, da gesäis du en hei."
  }
 }

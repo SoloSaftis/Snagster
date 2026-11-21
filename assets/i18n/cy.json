@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} a {n} arall",
   "{names} are heard twice: Computer sound already has them.": "Mae {names} i'w clywed ddwywaith: mae Sain y cyfrifiadur eisoes yn eu cynnwys.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Dim sain yn yr olygfa hon: ychwanegwch sain y cyfrifiadur, rhaglen, meicroffon neu ffeil sain.",
-  "Mute Computer sound": "Tawelu Sain y cyfrifiadur"
+  "Mute Computer sound": "Tawelu Sain y cyfrifiadur",
+  "Open {pane} settings": "Agor gosodiadau {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Does dim rhaglen gyda ffenestr ar agor ar hyn o bryd. Agorwch un, a bydd yn ymddangos yma."
  }
 }

@@ -6272,7 +6272,11 @@ impl SnagApp {
         let music = std::env::temp_dir().join("intro-music.wav");
         let _ = std::fs::write(&music, crate::wav::tone(2, 330.0));
         if let Some(s) = st.scenes.first_mut() {
-            s.sounds = vec![SceneSound { volume: 0.6, ..SceneSound::new(SoundInput::File { path: music.to_string_lossy().to_string() }, "intro-music.wav") }];
+            // One program's sound too (it shows as not running while Spotify isn't open).
+            s.sounds = vec![
+                SceneSound { volume: 0.6, ..SceneSound::new(SoundInput::File { path: music.to_string_lossy().to_string() }, "intro-music.wav") },
+                SceneSound { volume: 0.8, ..SceneSound::new(SoundInput::Program { name: "spotify".into() }, "Spotify") },
+            ];
         }
     }
 

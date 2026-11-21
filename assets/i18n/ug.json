@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}، {b} ۋە يەنە {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} ئىككى قېتىم ئاڭلىنىدۇ: كومپيۇتېر ئاۋازىدا ئۇلار ئاللىقاچان بار.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "بۇ كۆرۈنۈشتە ئاۋاز يوق: كومپيۇتېر ئاۋازى، پروگرامما، مىكروفون ياكى ئاۋاز ھۆججىتى قوشۇڭ.",
-  "Mute Computer sound": "كومپيۇتېر ئاۋازىنى ئۈنسىز قىلىش"
+  "Mute Computer sound": "كومپيۇتېر ئاۋازىنى ئۈنسىز قىلىش",
+  "Open {pane} settings": "{pane} تەڭشەكلىرىنى ئېچىش",
+  "No program with a window is open right now. Open one, and it shows up here.": "ھازىر كۆزنىكى بار ھېچقانداق پروگرامما ئېچىلمىغان. بىرىنى ئېچىڭ، ئۇ بۇ يەردە كۆرۈنىدۇ."
  }
 }

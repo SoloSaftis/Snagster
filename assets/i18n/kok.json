@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} आनी आनीक {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} दोन फावटीं आयकूंक येतात: कॉम्प्युटराच्या आवाजांत ते आदींच आसात.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "ह्या दृश्यांत आवाज ना: कॉम्प्युटराचो आवाज, एक प्रोग्राम, एक मायक्रोफोन वा एक आवाज फायल जोडात.",
-  "Mute Computer sound": "कॉम्प्युटराचो आवाज म्यूट करात"
+  "Mute Computer sound": "कॉम्प्युटराचो आवाज म्यूट करात",
+  "Open {pane} settings": "{pane} सेटिंग्स उगडात",
+  "No program with a window is open right now. Open one, and it shows up here.": "आतां विंडो आशिल्लो खंयचोच प्रोग्राम उगडो ना. एक उगडात, मागीर तो हांगा दिसतलो."
  }
 }

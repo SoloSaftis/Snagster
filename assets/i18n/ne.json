@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} र थप {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} दुई पटक सुनिन्छन्: कम्प्युटरको आवाजमा ती पहिले नै छन्।",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "यो दृश्यमा कुनै आवाज छैन: कम्प्युटरको आवाज, एउटा प्रोग्राम, एउटा माइक्रोफोन वा एउटा ध्वनि फाइल थप्नुहोस्।",
-  "Mute Computer sound": "कम्प्युटरको आवाज म्युट गर्नुहोस्"
+  "Mute Computer sound": "कम्प्युटरको आवाज म्युट गर्नुहोस्",
+  "Open {pane} settings": "{pane} सेटिङ्स खोल्नुहोस्",
+  "No program with a window is open right now. Open one, and it shows up here.": "अहिले विन्डो भएको कुनै प्रोग्राम खुला छैन। एउटा खोल्नुहोस्, अनि यो यहाँ देखिन्छ।"
  }
 }

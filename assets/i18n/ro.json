@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} și încă {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} se aud de două ori: Sunetul computerului le conține deja.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Niciun sunet în această scenă: adaugă sunetul computerului, un program, un microfon sau un fișier de sunet.",
-  "Mute Computer sound": "Oprește sunetul computerului"
+  "Mute Computer sound": "Oprește sunetul computerului",
+  "Open {pane} settings": "Deschide configurările pentru {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Niciun program cu fereastră nu e deschis acum. Deschide unul, iar el apare aici."
  }
 }

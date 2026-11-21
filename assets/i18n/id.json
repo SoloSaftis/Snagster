@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b}, dan {n} lainnya",
   "{names} are heard twice: Computer sound already has them.": "{names} terdengar dua kali: Suara komputer sudah memuatnya.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Tidak ada suara di adegan ini: tambahkan suara komputer, program, mikrofon, atau file suara.",
-  "Mute Computer sound": "Bisukan Suara komputer"
+  "Mute Computer sound": "Bisukan Suara komputer",
+  "Open {pane} settings": "Buka pengaturan {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Tidak ada program berjendela yang terbuka saat ini. Buka salah satu, maka program itu akan muncul di sini."
  }
 }

@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} agus {n} eile",
   "{names} are heard twice: Computer sound already has them.": "Cloistear {names} faoi dhó: tá siad ag Fuaim an ríomhaire cheana.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Níl aon fhuaim sa radharc seo: cuir fuaim an ríomhaire, clár, micreafón nó comhad fuaime leis.",
-  "Mute Computer sound": "Balbhaigh Fuaim an ríomhaire"
+  "Mute Computer sound": "Balbhaigh Fuaim an ríomhaire",
+  "Open {pane} settings": "Oscail socruithe {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Níl aon chlár le fuinneog oscailte faoi láthair. Oscail ceann, agus taispeánfar anseo é."
  }
 }

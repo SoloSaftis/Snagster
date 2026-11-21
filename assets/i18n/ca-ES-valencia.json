@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} i {n} més",
   "{names} are heard twice: Computer sound already has them.": "{names} se senten dues vegades: el So de l'ordinador ja els inclou.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "No hi ha so en esta escena: afegiu el so de l'ordinador, un programa, un micròfon o un fitxer de so.",
-  "Mute Computer sound": "Silencia el So de l'ordinador"
+  "Mute Computer sound": "Silencia el So de l'ordinador",
+  "Open {pane} settings": "Obri la configuració de {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Ara no hi ha obert cap programa amb finestra. Obriu-ne un, i apareixerà ací."
  }
 }

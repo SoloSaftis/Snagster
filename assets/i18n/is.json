@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} og {n} í viðbót",
   "{names} are heard twice: Computer sound already has them.": "{names} heyrast tvisvar: Hljóð tölvunnar inniheldur þau þegar.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Ekkert hljóð í þessari senu: bættu við hljóði tölvunnar, forriti, hljóðnema eða hljóðskrá.",
-  "Mute Computer sound": "Þagga hljóð tölvunnar"
+  "Mute Computer sound": "Þagga hljóð tölvunnar",
+  "Open {pane} settings": "Opna stillingar fyrir {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Ekkert forrit með glugga er opið núna. Opnaðu eitt, þá birtist það hér."
  }
 }

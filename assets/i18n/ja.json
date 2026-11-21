@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}、{b} ほか {n} 個",
   "{names} are heard twice: Computer sound already has them.": "{names} が二重に聞こえます: コンピューターの音声にすでに含まれています。",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "このシーンには音声がありません。コンピューターの音声、プログラム、マイク、または音声ファイルを追加してください。",
-  "Mute Computer sound": "コンピューターの音声をミュート"
+  "Mute Computer sound": "コンピューターの音声をミュート",
+  "Open {pane} settings": "{pane}の設定を開く",
+  "No program with a window is open right now. Open one, and it shows up here.": "現在、ウィンドウのあるプログラムは開いていません。プログラムを開くと、ここに表示されます。"
  }
 }

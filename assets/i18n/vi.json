@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} và {n} chương trình khác",
   "{names} are heard twice: Computer sound already has them.": "{names} bị nghe hai lần: Âm thanh máy tính đã có chúng.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Cảnh này không có âm thanh: hãy thêm âm thanh máy tính, một chương trình, một micro hoặc một tệp âm thanh.",
-  "Mute Computer sound": "Tắt tiếng Âm thanh máy tính"
+  "Mute Computer sound": "Tắt tiếng Âm thanh máy tính",
+  "Open {pane} settings": "Mở cài đặt {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Hiện không có chương trình nào có cửa sổ đang mở. Hãy mở một chương trình, nó sẽ hiện ở đây."
  }
 }

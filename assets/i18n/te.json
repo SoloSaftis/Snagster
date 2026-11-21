@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} మరియు మరో {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} రెండుసార్లు వినిపిస్తాయి: కంప్యూటర్ ధ్వనిలో అవి ఇప్పటికే ఉన్నాయి.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "ఈ సన్నివేశంలో ధ్వని లేదు: కంప్యూటర్ ధ్వని, ఒక ప్రోగ్రామ్, ఒక మైక్రోఫోన్ లేదా ఒక ధ్వని ఫైల్‌ను జోడించండి.",
-  "Mute Computer sound": "కంప్యూటర్ ధ్వనిని మ్యూట్ చేయి"
+  "Mute Computer sound": "కంప్యూటర్ ధ్వనిని మ్యూట్ చేయి",
+  "Open {pane} settings": "{pane} సెట్టింగ్‌లను తెరువు",
+  "No program with a window is open right now. Open one, and it shows up here.": "ప్రస్తుతం విండో ఉన్న ఏ ప్రోగ్రామ్ తెరిచి లేదు. ఒకదాన్ని తెరవండి, అది ఇక్కడ కనిపిస్తుంది."
  }
 }

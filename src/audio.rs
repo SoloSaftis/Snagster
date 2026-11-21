@@ -22,7 +22,7 @@ mod programs_linux;
 mod programs_mac;
 #[cfg(windows)]
 mod programs_win;
-pub use programs::{Program, Unsupported, key as program_key, label_from_key as program_label, list as programs, support as program_support};
+pub use programs::{Program, Unsupported, key as program_key, label_from_key as program_label, settings_link as program_settings_link, list as programs, support as program_support};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;

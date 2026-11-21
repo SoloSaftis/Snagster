@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} ಮತ್ತು ಇನ್ನೂ {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} ಎರಡು ಬಾರಿ ಕೇಳಿಸುತ್ತವೆ: ಕಂಪ್ಯೂಟರ್ ಧ್ವನಿಯಲ್ಲಿ ಅವು ಈಗಾಗಲೇ ಇವೆ.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "ಈ ದೃಶ್ಯದಲ್ಲಿ ಧ್ವನಿ ಇಲ್ಲ: ಕಂಪ್ಯೂಟರ್ ಧ್ವನಿ, ಪ್ರೋಗ್ರಾಂ, ಮೈಕ್ರೊಫೋನ್ ಅಥವಾ ಧ್ವನಿ ಫೈಲ್ ಸೇರಿಸಿ.",
-  "Mute Computer sound": "ಕಂಪ್ಯೂಟರ್ ಧ್ವನಿಯನ್ನು ಮ್ಯೂಟ್ ಮಾಡಿ"
+  "Mute Computer sound": "ಕಂಪ್ಯೂಟರ್ ಧ್ವನಿಯನ್ನು ಮ್ಯೂಟ್ ಮಾಡಿ",
+  "Open {pane} settings": "{pane} ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ",
+  "No program with a window is open right now. Open one, and it shows up here.": "ಈಗ ವಿಂಡೋ ಇರುವ ಯಾವುದೇ ಪ್ರೋಗ್ರಾಂ ತೆರೆದಿಲ್ಲ. ಒಂದನ್ನು ತೆರೆಯಿರಿ, ಅದು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ."
  }
 }

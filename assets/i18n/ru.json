@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} и ещё {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} звучат дважды: эти звуки уже входят в «Звук компьютера».",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "В этой сцене нет звука: добавьте звук компьютера, программу, микрофон или звуковой файл.",
-  "Mute Computer sound": "Отключить звук компьютера"
+  "Mute Computer sound": "Отключить звук компьютера",
+  "Open {pane} settings": "Открыть настройки «{pane}»",
+  "No program with a window is open right now. Open one, and it shows up here.": "Сейчас не открыто ни одной программы с окном. Откройте какую-нибудь — она появится здесь."
  }
 }

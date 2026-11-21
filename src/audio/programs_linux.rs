@@ -12,7 +12,7 @@ use super::{CHANNELS, Feed, RATE};
 use pipewire as pw;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
@@ -20,14 +20,28 @@ fn in_flatpak() -> bool {
     std::env::var_os("FLATPAK_ID").is_some() || std::path::Path::new("/.flatpak-info").exists()
 }
 
+/// How often whether PipeWire can be reached is looked at again (it may start later, or the
+/// Flatpak override may be given; the app is restarted for that, but PipeWire may not).
+const RECHECK: Duration = Duration::from_secs(30);
+
+/// Never waits: PipeWire is asked on a worker, and until its first answer this says yes (a lane
+/// started meanwhile reports its own error).
 pub fn support() -> Result<(), Unsupported> {
-    static OK: OnceLock<bool> = OnceLock::new();
-    if *OK.get_or_init(|| nodes().is_ok()) {
-        Ok(())
-    } else if in_flatpak() {
-        Err(Unsupported::Flatpak)
-    } else {
-        Err(Unsupported::NoPipeWire)
+    // (reachable, when it was asked, a worker is asking)
+    static STATE: Mutex<(Option<bool>, Option<Instant>, bool)> = Mutex::new((None, None, false));
+    let mut s = STATE.lock().unwrap_or_else(|e| e.into_inner());
+    if !s.2 && s.1.is_none_or(|t| t.elapsed() >= RECHECK) {
+        s.2 = true;
+        let _ = std::thread::Builder::new().name("pipewire check".into()).spawn(|| {
+            let ok = nodes().is_ok();
+            let mut s = STATE.lock().unwrap_or_else(|e| e.into_inner());
+            *s = (Some(ok), Some(Instant::now()), false);
+        });
+    }
+    match s.0 {
+        Some(false) if in_flatpak() => Err(Unsupported::Flatpak),
+        Some(false) => Err(Unsupported::NoPipeWire),
+        _ => Ok(()),
     }
 }
 
@@ -52,6 +66,45 @@ fn node_program<'a>(get: impl Fn(&str) -> Option<&'a str>, own_pid: u32) -> Opti
     Some((k, name.map(String::from).unwrap_or_default()))
 }
 
+/// Output nodes bound to read their full properties: the registry's short list of a node's
+/// properties leaves out `application.process.binary` and `application.process.id`, which come
+/// in the node's info. Kept while the node lasts (an info can come again when it changes).
+type Bound = Rc<RefCell<Vec<(u32, pw::node::Node, pw::node::NodeListener)>>>;
+
+/// Watch the registry for program output nodes: `came` gets each one's (node id, serial, key,
+/// label) once its info is in (perhaps more than once), `went` gets a node id that is gone.
+fn watch(registry: &pw::registry::RegistryRc, came: impl Fn(Node) + 'static, went: impl Fn(u32) + 'static) -> (pw::registry::Listener, Bound) {
+    let bound: Bound = Rc::new(RefCell::new(Vec::new()));
+    let came = Rc::new(came);
+    let own = std::process::id();
+    let (r, b, b2) = (registry.clone(), bound.clone(), bound.clone());
+    let listener = registry
+        .add_listener_local()
+        .global(move |g| {
+            if g.type_ != pw::types::ObjectType::Node || g.props.and_then(|p| p.get("media.class")) != Some("Stream/Output/Audio") {
+                return;
+            }
+            let Ok(node) = r.bind::<pw::node::Node, _>(g) else { return };
+            let (id, came) = (g.id, came.clone());
+            let l = node
+                .add_listener_local()
+                .info(move |info| {
+                    let Some(props) = info.props() else { return };
+                    if let Some((k, label)) = node_program(|x| props.get(x), own) {
+                        came((id, props.get("object.serial").map(String::from).unwrap_or_else(|| id.to_string()), k, label));
+                    }
+                })
+                .register();
+            b.borrow_mut().push((id, node, l));
+        })
+        .global_remove(move |id| {
+            b2.borrow_mut().retain(|(i, ..)| *i != id);
+            went(id);
+        })
+        .register();
+    (listener, bound)
+}
+
 /// Every program output node, read once (fails when there is no PipeWire to reach).
 fn nodes() -> Result<Vec<Node>, String> {
     pw::init();
@@ -61,26 +114,33 @@ fn nodes() -> Result<Vec<Node>, String> {
     let registry = core.get_registry_rc().map_err(|e| e.to_string())?;
     let found: Rc<RefCell<Vec<Node>>> = Rc::new(RefCell::new(Vec::new()));
     let done = Rc::new(std::cell::Cell::new(false));
-    let own = std::process::id();
     let f = found.clone();
-    let _reg = registry
-        .add_listener_local()
-        .global(move |g| {
-            if g.type_ != pw::types::ObjectType::Node {
-                return;
-            }
-            let Some(props) = g.props else { return };
-            if let Some((k, label)) = node_program(|x| props.get(x), own) {
-                f.borrow_mut().push((g.id, props.get("object.serial").unwrap_or_default().to_string(), k, label));
-            }
-        })
-        .register();
-    let pending = core.sync(0).map_err(|e| e.to_string())?;
-    let (d, ml) = (done.clone(), main_loop.clone());
+    let (_reg, _bound) = watch(
+        &registry,
+        move |n| {
+            let mut f = f.borrow_mut();
+            f.retain(|o| o.0 != n.0);
+            f.push(n);
+        },
+        |_| {},
+    );
+    // The first answer comes after every node is listed; the nodes are bound while listing, so
+    // a second one comes after their infos.
+    let first = core.sync(0).map_err(|e| e.to_string())?;
+    let second = Rc::new(std::cell::Cell::new(None));
+    let (d, ml, c) = (done.clone(), main_loop.clone(), core.clone());
     let _core = core
         .add_listener_local()
         .done(move |id, seq| {
-            if id == pw::core::PW_ID_CORE && seq == pending {
+            if id != pw::core::PW_ID_CORE {
+                return;
+            }
+            if seq == first {
+                match c.sync(0) {
+                    Ok(s) => second.set(Some(s)),
+                    Err(_) => ml.quit(),
+                }
+            } else if Some(seq) == second.get() {
                 d.set(true);
                 ml.quit();
             }
@@ -101,13 +161,28 @@ pub fn list() -> Vec<Program> {
     nodes().unwrap_or_default().into_iter().map(|(_, _, name, label)| Program { name, label, playing: true }).collect()
 }
 
+/// The sound format asked for: 16-bit 48 kHz stereo (PipeWire converts).
+fn format_param() -> Result<Vec<u8>, String> {
+    use pw::spa::param::audio::{AudioFormat, AudioInfoRaw};
+    use pw::spa::pod::{Object, Value, serialize::PodSerializer};
+    let mut info = AudioInfoRaw::new();
+    info.set_format(AudioFormat::S16LE);
+    info.set_rate(RATE);
+    info.set_channels(CHANNELS);
+    let mut pos = [0u32; 64];
+    pos[0] = pw::spa::sys::SPA_AUDIO_CHANNEL_FL;
+    pos[1] = pw::spa::sys::SPA_AUDIO_CHANNEL_FR;
+    info.set_position(pos);
+    let obj = Object { type_: pw::spa::utils::SpaTypes::ObjectParamFormat.as_raw(), id: pw::spa::param::ParamType::EnumFormat.as_raw(), properties: info.into() };
+    Ok(PodSerializer::serialize(std::io::Cursor::new(Vec::new()), &Value::Object(obj)).map_err(|e| format!("{e:?}"))?.0.into_inner())
+}
+
 /// One capture stream on one of the program's nodes.
 type Linked = (u32, pw::stream::StreamListener<()>, pw::stream::StreamRc);
 
 /// Open a capture stream on output node `serial`, its samples going to `gather` as copy `id`.
 fn link(core: &pw::core::CoreRc, id: u32, serial: &str, gather: Rc<RefCell<Gather>>) -> Result<Linked, String> {
-    use pw::spa::param::audio::{AudioFormat, AudioInfoRaw};
-    use pw::spa::pod::{Object, Pod, Value, serialize::PodSerializer};
+    use pw::spa::pod::Pod;
     let props = pw::properties::properties! {
         *pw::keys::MEDIA_TYPE => "Audio",
         *pw::keys::MEDIA_CATEGORY => "Capture",
@@ -137,16 +212,7 @@ fn link(core: &pw::core::CoreRc, id: u32, serial: &str, gather: Rc<RefCell<Gathe
         })
         .register()
         .map_err(|e| e.to_string())?;
-    let mut info = AudioInfoRaw::new();
-    info.set_format(AudioFormat::S16LE);
-    info.set_rate(RATE);
-    info.set_channels(CHANNELS);
-    let mut pos = [0u32; 64];
-    pos[0] = pw::spa::sys::SPA_AUDIO_CHANNEL_FL;
-    pos[1] = pw::spa::sys::SPA_AUDIO_CHANNEL_FR;
-    info.set_position(pos);
-    let obj = Object { type_: pw::spa::utils::SpaTypes::ObjectParamFormat.as_raw(), id: pw::spa::param::ParamType::EnumFormat.as_raw(), properties: info.into() };
-    let bytes = PodSerializer::serialize(std::io::Cursor::new(Vec::new()), &Value::Object(obj)).map_err(|e| format!("{e:?}"))?.0.into_inner();
+    let bytes = format_param()?;
     let mut params = [Pod::from_bytes(&bytes).ok_or("the sound format couldn't be written")?];
     stream
         .connect(pw::spa::utils::Direction::Input, None, pw::stream::StreamFlags::AUTOCONNECT | pw::stream::StreamFlags::MAP_BUFFERS, &mut params)
@@ -163,24 +229,17 @@ pub fn run(name: &str, feed: &Arc<Feed>, stop: &Arc<AtomicBool>) -> Result<(), S
     // Nodes of this program that came (id, serial) and went (id), handled on the timer.
     let came: Rc<RefCell<Vec<(u32, String)>>> = Rc::new(RefCell::new(Vec::new()));
     let went: Rc<RefCell<Vec<u32>>> = Rc::new(RefCell::new(Vec::new()));
-    let own = std::process::id();
     let want = name.to_string();
     let (c, w) = (came.clone(), went.clone());
-    let _reg = registry
-        .add_listener_local()
-        .global(move |g| {
-            if g.type_ != pw::types::ObjectType::Node {
-                return;
+    let (_reg, _bound) = watch(
+        &registry,
+        move |(id, serial, k, _)| {
+            if same(&want, &k) {
+                c.borrow_mut().push((id, serial));
             }
-            let Some(props) = g.props else { return };
-            if let Some((k, _)) = node_program(|x| props.get(x), own)
-                && same(&want, &k)
-            {
-                c.borrow_mut().push((g.id, props.get("object.serial").map(String::from).unwrap_or_else(|| g.id.to_string())));
-            }
-        })
-        .global_remove(move |id| w.borrow_mut().push(id))
-        .register();
+        },
+        move |id| w.borrow_mut().push(id),
+    );
 
     let gather = Rc::new(RefCell::new(Gather::new(Instant::now())));
     let linked: Rc<RefCell<Vec<Linked>>> = Rc::new(RefCell::new(Vec::new()));
@@ -222,6 +281,85 @@ mod tests {
     fn program(props: &[(&str, &str)], own: u32) -> Option<(String, String)> {
         let m: HashMap<&str, &str> = props.iter().copied().collect();
         node_program(|k| m.get(k).copied(), own)
+    }
+
+    /// On a computer running PipeWire with WirePlumber (not in CI): a stream that says it is
+    /// the program "snagster-tone-test" plays a tone, and a lane for that program hears it,
+    /// so the session manager links a capture stream to a program's output node.
+    /// `cargo test -- --ignored a_programs_stream_is_heard`.
+    #[test]
+    #[ignore = "needs a running PipeWire and WirePlumber"]
+    fn a_programs_stream_is_heard() {
+        use crate::audio::{Capture, SoundInput};
+        let stop = Arc::new(AtomicBool::new(false));
+        let s2 = stop.clone();
+        let tone = std::thread::spawn(move || {
+            pw::init();
+            let ml = pw::main_loop::MainLoopRc::new(None).unwrap();
+            let ctx = pw::context::ContextRc::new(&ml, None).unwrap();
+            let core = ctx.connect_rc(None).unwrap();
+            let props = pw::properties::properties! {
+                *pw::keys::MEDIA_TYPE => "Audio",
+                *pw::keys::MEDIA_CATEGORY => "Playback",
+                *pw::keys::MEDIA_ROLE => "Music",
+                *pw::keys::APP_NAME => "Tone Test",
+                *pw::keys::APP_PROCESS_BINARY => "snagster-tone-test",
+                // Not this process, which Snagster leaves out as its own.
+                *pw::keys::APP_PROCESS_ID => "1",
+            };
+            let stream = pw::stream::StreamRc::new(core, "snagster-tone-test", props).unwrap();
+            let mut phase = 0f32;
+            let _l = stream
+                .add_local_listener_with_user_data(())
+                .process(move |stream, _| {
+                    let Some(mut b) = stream.dequeue_buffer() else { return };
+                    let Some(d) = b.datas_mut().first_mut() else { return };
+                    let n = match d.data() {
+                        Some(bytes) => {
+                            let frames = bytes.len() / 4;
+                            for f in 0..frames {
+                                let v = ((phase.sin() * 12_000.0) as i16).to_le_bytes();
+                                phase += 2.0 * std::f32::consts::PI * 440.0 / RATE as f32;
+                                bytes[f * 4..f * 4 + 4].copy_from_slice(&[v[0], v[1], v[0], v[1]]);
+                            }
+                            frames
+                        }
+                        None => 0,
+                    };
+                    let c = d.chunk_mut();
+                    *c.offset_mut() = 0;
+                    *c.stride_mut() = 4;
+                    *c.size_mut() = (n * 4) as u32;
+                })
+                .register()
+                .unwrap();
+            let bytes = format_param().unwrap();
+            let mut params = [pw::spa::pod::Pod::from_bytes(&bytes).unwrap()];
+            stream.connect(pw::spa::utils::Direction::Output, None, pw::stream::StreamFlags::AUTOCONNECT | pw::stream::StreamFlags::MAP_BUFFERS, &mut params).unwrap();
+            let m2 = ml.clone();
+            let t = ml.loop_().add_timer(move |_| {
+                if s2.load(Ordering::Relaxed) {
+                    m2.quit();
+                }
+            });
+            let _ = t.update_timer(Some(Duration::from_millis(50)), Some(Duration::from_millis(50)));
+            ml.run();
+        });
+        std::thread::sleep(Duration::from_millis(500));
+        assert!(list().iter().any(|p| p.name == "snagster-tone-test" && p.label == "Tone Test"), "{:?}", list());
+        let input = SoundInput::Program { name: "snagster-tone-test".into() };
+        let cap = Capture::start_inputs(std::slice::from_ref(&input));
+        assert!(cap.notes().is_empty(), "{:?}", cap.notes());
+        let start = Instant::now();
+        let mut loudest = 0f32;
+        while start.elapsed() < Duration::from_secs(5) && loudest < 0.2 {
+            std::thread::sleep(Duration::from_millis(50));
+            cap.take(2_400);
+            loudest = loudest.max(cap.level_of(&input).unwrap_or(0.0));
+        }
+        stop.store(true, Ordering::Relaxed);
+        let _ = tone.join();
+        assert!(loudest >= 0.2, "the tone wasn't heard (loudest {loudest}, waiting {})", cap.waiting(&input));
     }
 
     #[test]

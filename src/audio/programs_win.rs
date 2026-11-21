@@ -77,7 +77,7 @@ fn roots(procs: &[Proc], name: &str) -> Vec<u32> {
         .collect()
 }
 
-/// The exe name of process `pid`'s top copy of its program, following parents with the same exe.
+/// The exe name of process `pid` (None: not in the snapshot).
 fn exe_of(procs: &[Proc], pid: u32) -> Option<&str> {
     procs.iter().find(|(p, ..)| *p == pid).map(|(_, _, e)| e.as_str())
 }
@@ -185,8 +185,9 @@ impl IActivateAudioInterfaceCompletionHandler_Impl for Activated_Impl {
 
 impl IAgileObject_Impl for Activated_Impl {}
 
-/// One running copy: its sound client and the process, to see when it ends.
-struct Copy {
+/// A tap on one running copy of the program: its sound client and the process, to see when
+/// it ends.
+struct Tap {
     pid: u32,
     client: IAudioClient,
     cap: IAudioCaptureClient,
@@ -194,7 +195,7 @@ struct Copy {
     event: HANDLE,
 }
 
-impl Drop for Copy {
+impl Drop for Tap {
     fn drop(&mut self) {
         unsafe {
             let _ = self.client.Stop();
@@ -205,7 +206,7 @@ impl Drop for Copy {
 }
 
 /// Start capturing process `pid` and its children.
-fn open(pid: u32) -> Result<Copy, String> {
+fn open(pid: u32) -> Result<Tap, String> {
     unsafe {
         let params = AUDIOCLIENT_ACTIVATION_PARAMS {
             ActivationType: AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK,
@@ -240,17 +241,17 @@ fn open(pid: u32) -> Result<Copy, String> {
         let cap: IAudioCaptureClient = client.GetService().map_err(|e| e.message())?;
         let process = OpenProcess(PROCESS_SYNCHRONIZE, false, pid).unwrap_or_default();
         client.Start().map_err(|e| e.message())?;
-        Ok(Copy { pid, client, cap, process, event })
+        Ok(Tap { pid, client, cap, process, event })
     }
 }
 
-/// Whether copy `c`'s process has ended.
-fn ended(c: &Copy) -> bool {
+/// Whether tap `c`'s process has ended (seen through its handle, when Windows gave one).
+fn ended(c: &Tap) -> bool {
     !c.process.is_invalid() && unsafe { WaitForSingleObject(c.process, 0) } == WAIT_OBJECT_0
 }
 
-/// What copy `c` has captured since last time.
-fn read(c: &Copy, buf: &mut Vec<i16>) {
+/// What tap `c` has captured since last time.
+fn read(c: &Tap, buf: &mut Vec<i16>) {
     buf.clear();
     unsafe {
         while c.cap.GetNextPacketSize().unwrap_or(0) > 0 {
@@ -270,39 +271,44 @@ fn read(c: &Copy, buf: &mut Vec<i16>) {
     }
 }
 
+/// How long a copy Windows wouldn't let Snagster hear waits before it is tried again.
+const RETRY: Duration = Duration::from_secs(10);
+
 pub fn run(name: &str, feed: &std::sync::Arc<Feed>, stop: &std::sync::Arc<AtomicBool>) -> Result<(), String> {
     unsafe {
         let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
     }
     let mut gather = Gather::new(Instant::now());
-    let mut copies: Vec<Copy> = Vec::new();
-    // Copies that couldn't start, so they aren't tried again every look.
-    let mut refused: Vec<u32> = Vec::new();
+    let mut copies: Vec<Tap> = Vec::new();
+    // Copies that couldn't be tapped and when: tried again every RETRY, not every look.
+    let mut refused: Vec<(u32, Instant)> = Vec::new();
     let mut looked: Option<Instant> = None;
     let mut buf = Vec::new();
     while !stop.load(Ordering::Relaxed) {
         if looked.is_none_or(|t| t.elapsed() >= LOOK_EVERY) {
             looked = Some(Instant::now());
+            let procs = processes();
             copies.retain(|c| {
-                let gone = ended(c);
+                // Without a handle, a process missing from the snapshot has ended.
+                let gone = ended(c) || !procs.iter().any(|(p, ..)| *p == c.pid);
                 if gone {
                     gather.end(c.pid as u64);
                 }
                 !gone
             });
-            let procs = processes();
             let now = roots(&procs, name);
-            refused.retain(|p| now.contains(p));
+            refused.retain(|(p, at)| now.contains(p) && at.elapsed() < RETRY);
             for pid in now {
-                if copies.iter().any(|c| c.pid == pid) || refused.contains(&pid) {
+                if copies.iter().any(|c| c.pid == pid) || refused.iter().any(|(p, _)| *p == pid) {
                     continue;
                 }
                 match open(pid) {
                     Ok(c) => copies.push(c),
-                    Err(_) => refused.push(pid),
+                    Err(_) => refused.push((pid, Instant::now())),
                 }
             }
-            feed.waiting.store(copies.is_empty(), Ordering::Relaxed);
+            // Running but not (yet) heard isn't "not running": the row stays on, silent.
+            feed.waiting.store(copies.is_empty() && refused.is_empty(), Ordering::Relaxed);
         }
         for c in &copies {
             read(c, &mut buf);
@@ -361,6 +367,7 @@ mod tests {
             loudest = loudest.max(cap.level_of(&ps).unwrap_or(0.0));
         }
         let _ = child.kill();
+        let _ = child.wait();
         assert!(loudest >= 0.02, "PowerShell's sound wasn't heard (loudest {loudest})");
         assert!(!cap.waiting(&ps));
         assert!(cap.waiting(&none), "a program that isn't running waits");

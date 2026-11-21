@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} dhe {n} të tjerë",
   "{names} are heard twice: Computer sound already has them.": "{names} dëgjohen dy herë: Zëri i kompjuterit i ka tashmë.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Nuk ka zë në këtë skenë: shto zërin e kompjuterit, një program, një mikrofon ose një skedar zanor.",
-  "Mute Computer sound": "Hesht Zërin e kompjuterit"
+  "Mute Computer sound": "Hesht Zërin e kompjuterit",
+  "Open {pane} settings": "Hap cilësimet për «{pane}»",
+  "No program with a window is open right now. Open one, and it shows up here.": "Asnjë program me dritare nuk është i hapur tani. Hap një, dhe do të shfaqet këtu."
  }
 }

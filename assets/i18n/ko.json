@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} 외 {n}개",
   "{names} are heard twice: Computer sound already has them.": "{names}이(가) 두 번 들립니다. 컴퓨터 소리에 이미 포함되어 있습니다.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "이 장면에 소리가 없습니다. 컴퓨터 소리, 프로그램, 마이크 또는 사운드 파일을 추가하세요.",
-  "Mute Computer sound": "컴퓨터 소리 음소거"
+  "Mute Computer sound": "컴퓨터 소리 음소거",
+  "Open {pane} settings": "{pane} 설정 열기",
+  "No program with a window is open right now. Open one, and it shows up here.": "지금 창이 열려 있는 프로그램이 없습니다. 프로그램을 열면 여기에 나타납니다."
  }
 }

@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} և ևս {n}",
   "{names} are heard twice: Computer sound already has them.": "{names}՝ լսվում են երկու անգամ. Համակարգչի ձայնում դրանք արդեն կան։",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Այս տեսարանում ձայն չկա. ավելացրեք համակարգչի ձայնը, ծրագիր, խոսափող կամ ձայնային ֆայլ։",
-  "Mute Computer sound": "Անջատել Համակարգչի ձայնը"
+  "Mute Computer sound": "Անջատել Համակարգչի ձայնը",
+  "Open {pane} settings": "Բացել «{pane}» կարգավորումները",
+  "No program with a window is open right now. Open one, and it shows up here.": "Այս պահին պատուհանով ոչ մի ծրագիր բաց չէ։ Բացեք որևէ մեկը, և այն կհայտնվի այստեղ։"
  }
 }

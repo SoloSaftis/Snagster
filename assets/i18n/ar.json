@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a} و{b} و{n} غيرها",
   "{names} are heard twice: Computer sound already has them.": "{names} تُسمع مرتين: صوت الحاسوب يتضمنها بالفعل.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "لا صوت في هذا المشهد: أضف صوت الحاسوب أو برنامجًا أو ميكروفونًا أو ملفًا صوتيًا.",
-  "Mute Computer sound": "كتم صوت الحاسوب"
+  "Mute Computer sound": "كتم صوت الحاسوب",
+  "Open {pane} settings": "فتح إعدادات {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "لا يوجد برنامج له نافذة مفتوح الآن. افتح برنامجًا، وسيظهر هنا."
  }
 }

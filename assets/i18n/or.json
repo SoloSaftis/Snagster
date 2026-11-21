@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} ଓ ଆଉ {n}ଟି",
   "{names} are heard twice: Computer sound already has them.": "{names} ଦୁଇଥର ଶୁଣାଯାଉଛି: କମ୍ପ୍ୟୁଟର୍ ସାଉଣ୍ଡରେ ସେଗୁଡ଼ିକ ପୂର୍ବରୁ ଅଛି।",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "ଏହି ଦୃଶ୍ୟରେ କୌଣସି ସାଉଣ୍ଡ ନାହିଁ: କମ୍ପ୍ୟୁଟର୍ ସାଉଣ୍ଡ, ଗୋଟିଏ ପ୍ରୋଗ୍ରାମ୍, ଗୋଟିଏ ମାଇକ୍ରୋଫୋନ୍ କିମ୍ବା ଗୋଟିଏ ସାଉଣ୍ଡ ଫାଇଲ୍ ଯୋଡ଼ନ୍ତୁ।",
-  "Mute Computer sound": "କମ୍ପ୍ୟୁଟର୍ ସାଉଣ୍ଡ ମ୍ୟୁଟ୍ କରନ୍ତୁ"
+  "Mute Computer sound": "କମ୍ପ୍ୟୁଟର୍ ସାଉଣ୍ଡ ମ୍ୟୁଟ୍ କରନ୍ତୁ",
+  "Open {pane} settings": "{pane} ସେଟିଂସ ଖୋଲନ୍ତୁ",
+  "No program with a window is open right now. Open one, and it shows up here.": "ଏବେ ୱିଣ୍ଡୋ ଥିବା କୌଣସି ପ୍ରୋଗ୍ରାମ୍ ଖୋଲା ନାହିଁ। ଗୋଟିଏ ଖୋଲନ୍ତୁ, ଏହା ଏଠାରେ ଦେଖାଯିବ।"
  }
 }

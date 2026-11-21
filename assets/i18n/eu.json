@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} eta beste {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} bi aldiz entzuten dira: Ordenagailuaren soinuak baditu jada.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Ez dago soinurik eszena honetan: gehitu ordenagailuaren soinua, programa bat, mikrofono bat edo soinu-fitxategi bat.",
-  "Mute Computer sound": "Isilarazi Ordenagailuaren soinua"
+  "Mute Computer sound": "Isilarazi Ordenagailuaren soinua",
+  "Open {pane} settings": "Ireki {pane} ezarpenak",
+  "No program with a window is open right now. Open one, and it shows up here.": "Ez dago leihoa duen programarik irekita orain. Ireki bat, eta hemen agertuko da."
  }
 }

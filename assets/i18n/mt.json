@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} u {n} oħra",
   "{names} are heard twice: Computer sound already has them.": "{names} jinstemgħu darbtejn: il-Ħoss tal-kompjuter diġà jinkludihom.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "M'hemmx ħoss f'din ix-xena: żid il-ħoss tal-kompjuter, programm, mikrofonu jew fajl tal-ħoss.",
-  "Mute Computer sound": "Itfi l-ħoss tal-kompjuter"
+  "Mute Computer sound": "Itfi l-ħoss tal-kompjuter",
+  "Open {pane} settings": "Iftaħ is-settings ta' {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "L-ebda programm b'tieqa mhu miftuħ bħalissa. Iftaħ wieħed, u jidher hawn."
  }
 }

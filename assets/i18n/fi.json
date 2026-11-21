@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} ja {n} muuta",
   "{names} are heard twice: Computer sound already has them.": "{names} kuuluvat kahdesti: Tietokoneen ääni sisältää ne jo.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Tässä kohtauksessa ei ole ääntä: lisää tietokoneen ääni, ohjelma, mikrofoni tai äänitiedosto.",
-  "Mute Computer sound": "Mykistä Tietokoneen ääni"
+  "Mute Computer sound": "Mykistä Tietokoneen ääni",
+  "Open {pane} settings": "Avaa asetukset: {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Mitään ikkunallista ohjelmaa ei ole juuri nyt auki. Avaa jokin, niin se näkyy täällä."
  }
 }

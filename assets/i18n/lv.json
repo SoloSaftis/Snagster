@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} un vēl {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} ir dzirdamas divreiz: Datora skaņa tās jau satur.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Šajā ainā nav skaņas: pievienojiet datora skaņu, programmu, mikrofonu vai skaņas failu.",
-  "Mute Computer sound": "Izslēgt datora skaņu"
+  "Mute Computer sound": "Izslēgt datora skaņu",
+  "Open {pane} settings": "Atvērt „{pane}” iestatījumus",
+  "No program with a window is open right now. Open one, and it shows up here.": "Pašlaik nav atvērta neviena programma ar logu. Atveriet kādu, un tā parādīsies šeit."
  }
 }

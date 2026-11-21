@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} আৰু আন {n} টা",
   "{names} are heard twice: Computer sound already has them.": "{names} দুবাৰ শুনা যায়: কম্পিউটাৰৰ শব্দত সেইবোৰ ইতিমধ্যে আছে।",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "এই দৃশ্যত কোনো শব্দ নাই: কম্পিউটাৰৰ শব্দ, এটা প্ৰগ্ৰাম, এটা মাইক্ৰ’ফোন বা এটা শব্দ ফাইল যোগ কৰক।",
-  "Mute Computer sound": "কম্পিউটাৰৰ শব্দ মিউট কৰক"
+  "Mute Computer sound": "কম্পিউটাৰৰ শব্দ মিউট কৰক",
+  "Open {pane} settings": "{pane} ছেটিংছ খোলক",
+  "No program with a window is open right now. Open one, and it shows up here.": "এতিয়া ৱিণ্ড’ থকা কোনো প্ৰগ্ৰাম খোলা নাই। এটা খোলক, তেতিয়া ই ইয়াত দেখা যাব।"
  }
 }

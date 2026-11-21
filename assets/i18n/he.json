@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} ועוד {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} נשמעות פעמיים: צליל המחשב כבר כולל אותן.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "אין צליל בסצנה הזו: הוסיפו את צליל המחשב, תוכנה, מיקרופון או קובץ צליל.",
-  "Mute Computer sound": "השתקת צליל המחשב"
+  "Mute Computer sound": "השתקת צליל המחשב",
+  "Open {pane} settings": "פתיחת ההגדרות של {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "אין כרגע תוכנה פתוחה עם חלון. פתחו אחת, והיא תופיע כאן."
  }
 }

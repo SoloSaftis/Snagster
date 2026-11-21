@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} ve {n} tane daha",
   "{names} are heard twice: Computer sound already has them.": "{names} iki kez duyulur: Bilgisayar sesi bunları zaten içeriyor.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Bu sahnede ses yok: bilgisayar sesini, bir programı, bir mikrofonu veya bir ses dosyasını ekleyin.",
-  "Mute Computer sound": "Bilgisayar sesini kapat"
+  "Mute Computer sound": "Bilgisayar sesini kapat",
+  "Open {pane} settings": "{pane} ayarlarını aç",
+  "No program with a window is open right now. Open one, and it shows up here.": "Şu anda penceresi olan hiçbir program açık değil. Birini açın, burada görünür."
  }
 }

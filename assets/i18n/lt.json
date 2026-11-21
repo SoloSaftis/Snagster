@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} ir dar {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} girdimos du kartus: Kompiuterio garse jos jau yra.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Šioje scenoje nėra garso: pridėkite kompiuterio garsą, programą, mikrofoną arba garso failą.",
-  "Mute Computer sound": "Nutildyti kompiuterio garsą"
+  "Mute Computer sound": "Nutildyti kompiuterio garsą",
+  "Open {pane} settings": "Atidaryti „{pane}“ nustatymus",
+  "No program with a window is open right now. Open one, and it shows up here.": "Šiuo metu neatidaryta jokia programa su langu. Atidarykite kurią nors – ji atsiras čia."
  }
 }

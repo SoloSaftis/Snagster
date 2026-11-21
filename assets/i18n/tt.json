@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} һәм тагын {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} ике тапкыр ишетелә: Компьютер тавышында алар инде бар.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Бу сәхнәдә тавыш юк: компьютер тавышын, программаны, микрофонны яки тавыш файлын өстәгез.",
-  "Mute Computer sound": "Компьютер тавышын сүндерү"
+  "Mute Computer sound": "Компьютер тавышын сүндерү",
+  "Open {pane} settings": "«{pane}» көйләүләрен ачу",
+  "No program with a window is open right now. Open one, and it shows up here.": "Хәзер тәрәзәле бер программа да ачык түгел. Берсен ачыгыз, ул монда күренер."
  }
 }

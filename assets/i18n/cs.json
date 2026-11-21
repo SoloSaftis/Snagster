@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} a {n} dalších",
   "{names} are heard twice: Computer sound already has them.": "{names} jsou slyšet dvakrát: Zvuk počítače je už obsahuje.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "V této scéně není žádný zvuk: přidejte zvuk počítače, program, mikrofon nebo zvukový soubor.",
-  "Mute Computer sound": "Ztlumit Zvuk počítače"
+  "Mute Computer sound": "Ztlumit Zvuk počítače",
+  "Open {pane} settings": "Otevřít nastavení „{pane}“",
+  "No program with a window is open right now. Open one, and it shows up here.": "Teď není otevřený žádný program s oknem. Nějaký otevřete, a objeví se tady."
  }
 }

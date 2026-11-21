@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}、{b} 和另外 {n} 個",
   "{names} are heard twice: Computer sound already has them.": "{names} 會被聽到兩次：電腦音效已包含它們。",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "此場景沒有聲音：請新增電腦音效、程式、麥克風或聲音檔案。",
-  "Mute Computer sound": "將電腦音效靜音"
+  "Mute Computer sound": "將電腦音效靜音",
+  "Open {pane} settings": "打開{pane}設定",
+  "No program with a window is open right now. Open one, and it shows up here.": "目前沒有開啟任何有視窗的程式。請開啟一個程式，它就會出現在這裡。"
  }
 }

@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} ja veel {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} kostavad kaks korda: Arvuti heli sisaldab neid juba.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Selles stseenis pole heli: lisa arvuti heli, programm, mikrofon või helifail.",
-  "Mute Computer sound": "Vaigista Arvuti heli"
+  "Mute Computer sound": "Vaigista Arvuti heli",
+  "Open {pane} settings": "Ava jaotise „{pane}” sätted",
+  "No program with a window is open right now. Open one, and it shows up here.": "Praegu pole ükski aknaga programm avatud. Ava mõni, siis ilmub see siia."
  }
 }

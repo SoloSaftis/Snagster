@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} en nog {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} word twee keer gehoor: Rekenaarklank het hulle reeds.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Geen klank in hierdie toneel nie: voeg die rekenaarklank, 'n program, 'n mikrofoon of 'n klanklêer by.",
-  "Mute Computer sound": "Demp Rekenaarklank"
+  "Mute Computer sound": "Demp Rekenaarklank",
+  "Open {pane} settings": "Maak {pane}-instellings oop",
+  "No program with a window is open right now. Open one, and it shows up here.": "Geen program met 'n venster is nou oop nie. Maak een oop, dan verskyn dit hier."
  }
 }

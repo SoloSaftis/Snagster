@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}、{b} 和另外 {n} 个",
   "{names} are heard twice: Computer sound already has them.": "{names} 会被听到两次：计算机声音已包含它们。",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "此场景没有声音：请添加计算机声音、程序、麦克风或声音文件。",
-  "Mute Computer sound": "将计算机声音静音"
+  "Mute Computer sound": "将计算机声音静音",
+  "Open {pane} settings": "打开{pane}设置",
+  "No program with a window is open right now. Open one, and it shows up here.": "目前没有打开任何带窗口的程序。请打开一个程序，它就会出现在这里。"
  }
 }

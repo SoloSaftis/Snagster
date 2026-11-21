@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} me ētahi atu {n}",
   "{names} are heard twice: Computer sound already has them.": "E rua ngā wā e rangona ai a {names}: kei roto kē i te Oro rorohiko.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Kāore he oro i tēnei whakaaturanga: tāpirihia te oro rorohiko, he hōtaka, he hopūoro, he kōnae oro rānei.",
-  "Mute Computer sound": "Whakahāngū i te Oro rorohiko"
+  "Mute Computer sound": "Whakahāngū i te Oro rorohiko",
+  "Open {pane} settings": "Whakatuwherahia ngā tautuhinga {pane}",
+  "No program with a window is open right now. Open one, and it shows up here.": "Kāore he hōtaka whai matapihi e tuwhera ana ināianei. Whakatuwherahia tētahi, ā, ka puta mai ki konei."
  }
 }

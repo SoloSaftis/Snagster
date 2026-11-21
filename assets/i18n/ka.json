@@ -1143,6 +1143,8 @@
   "{a}, {b} and {n} more": "{a}, {b} და კიდევ {n}",
   "{names} are heard twice: Computer sound already has them.": "{names} ორჯერ ისმის: კომპიუტერის ხმა მათ უკვე შეიცავს.",
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "ამ სცენაში ხმა არ არის: დაამატეთ კომპიუტერის ხმა, პროგრამა, მიკროფონი ან ხმოვანი ფაილი.",
-  "Mute Computer sound": "კომპიუტერის ხმის დადუმება"
+  "Mute Computer sound": "კომპიუტერის ხმის დადუმება",
+  "Open {pane} settings": "„{pane}“-ის პარამეტრების გახსნა",
+  "No program with a window is open right now. Open one, and it shows up here.": "ახლა ფანჯრიანი არცერთი პროგრამა არ არის გახსნილი. გახსენით რომელიმე — აქ გამოჩნდება."
  }
 }
