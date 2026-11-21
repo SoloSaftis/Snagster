@@ -235,7 +235,8 @@ mod win {
             let (esc, z) = (vk == VK_ESCAPE as u32, vk == b'Z' as u32);
             if (esc || z) && crate::ink::with(|i| i.on) {
                 let down = |k: u16| (unsafe { GetAsyncKeyState(k as i32) } as u16 & 0x8000) != 0;
-                if super::hook_takes(unsafe { front_is_ours() }.0, esc, z, down(VK_CONTROL), down(VK_SHIFT), down(VK_MENU)) {
+                let (ours, shown, _) = unsafe { front_is_ours() };
+                if super::hook_takes(ours && shown, esc, z, down(VK_CONTROL), down(VK_SHIFT), down(VK_MENU)) {
                     let now = Instant::now();
                     crate::ink::with(|i| if esc { i.set_on(false, now) } else { i.undo(now) });
                     return 1;
