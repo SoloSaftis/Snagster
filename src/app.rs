@@ -1868,16 +1868,8 @@ impl SnagApp {
             dialog = dialog.set_directory(&folder);
         }
         if let Some(path) = dialog.set_file_name(format!("{name}.{ext}")).save_file() {
-            self.rename_to_chosen(i, &name, &path);
-            self.save_in_background(i, path);
-        }
-    }
-
-    /// After Save as: a name the person typed in the dialog becomes the picture's name (in Recent
-    /// and the window's title); the suggested name kept as it was leaves the picture's own.
-    fn rename_to_chosen(&mut self, i: usize, suggested: &str, path: &std::path::Path) {
-        if let Some(name) = chosen_name(suggested, path) {
-            self.entries[i].name = name;
+            let rename = chosen_name(&name, &path);
+            self.save_renamed(i, path, rename);
         }
     }
 
@@ -1891,8 +1883,8 @@ impl SnagApp {
             .set_file_name(format!("{name}.snag"))
             .save_file()
         {
-            self.rename_to_chosen(i, &name, &path);
-            self.save_in_background(i, path);
+            let rename = chosen_name(&name, &path);
+            self.save_renamed(i, path, rename);
         }
     }
 
@@ -1908,23 +1900,33 @@ impl SnagApp {
 
     /// `save_to`, on the job queue.
     pub(crate) fn save_in_background(&mut self, i: usize, path: PathBuf) {
+        self.save_renamed(i, path, None);
+    }
+
+    /// Save picture `i` to `path` on the job queue; after Save as with a name the person typed
+    /// (`rename`), the picture takes that name once the file is saved (not when it fails).
+    fn save_renamed(&mut self, i: usize, path: PathBuf, rename: Option<String>) {
         let Some(e) = self.entries.get(i) else { return };
-        let (id, doc, name, settings) = (e.id, e.doc.clone(), e.name.clone(), self.settings.clone());
+        let (id, doc, settings) = (e.id, e.doc.clone(), self.settings.clone());
+        let name = rename.clone().unwrap_or_else(|| e.name.clone());
         self.saving.insert(path.clone());
         self.status = crate::i18n::tf("Saved {path}", &[("path", &path.display().to_string())]);
         self.jobs.queue(move || {
             let r = export::save_doc(&doc, &name, &path, &settings);
-            Box::new(move |app: &mut SnagApp, _: &egui::Context| app.saved(id, path, r))
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| app.saved(id, path, r, rename))
         });
     }
 
-    fn saved(&mut self, id: u64, path: PathBuf, r: Result<(), String>) {
+    fn saved(&mut self, id: u64, path: PathBuf, r: Result<(), String>, rename: Option<String>) {
         self.saving.remove(&path);
         self.earlier.expire();
         match r {
             Ok(()) => {
                 if let Some(e) = self.entries.iter_mut().find(|e| e.id == id) {
                     e.path = Some(path.clone());
+                    if let Some(name) = rename {
+                        e.name = name;
+                    }
                 }
                 self.remember_file(&path);
             }
@@ -6719,6 +6721,20 @@ mod tests {
         // The canvas beside the tools in a 500 px window: the cards shrink a little to stay two by two.
         assert_eq!(super::welcome_columns(380.0, 180.0), (2, 164.0));
         assert_eq!(super::welcome_columns(380.0, 230.0).0, 1, "one under the other with big text");
+    }
+
+    #[test]
+    fn a_save_as_name_is_taken_only_once_the_file_is_saved() {
+        let mut app = super::SnagApp::blank(super::Settings::default(), false, None);
+        app.add_entry("Area 3".into(), super::Doc::new(image::RgbaImage::new(4, 4)));
+        let id = app.entries[0].id;
+        let path = std::path::PathBuf::from("Invoice.png");
+        app.saved(id, path.clone(), Err("the disk is full".into()), Some("Invoice".into()));
+        assert_eq!(app.entries[0].name, "Area 3", "no file by the new name: the picture keeps its name");
+        app.saved(id, path.clone(), Ok(()), Some("Invoice".into()));
+        assert_eq!(app.entries[0].name, "Invoice");
+        app.saved(id, path, Ok(()), None);
+        assert_eq!(app.entries[0].name, "Invoice", "an ordinary save leaves the name");
     }
 
     #[test]

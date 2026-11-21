@@ -473,6 +473,13 @@ fn the_window_title_names_the_open_picture() {
     k.app.panel_open = false;
     k.frame(Vec::new());
     assert!(k.app.title_sent.starts_with("Picture 2"), "back on the picture");
+    // A recording (its bar up, the window minimised): the same.
+    k.app.mini = Some(Mini::Gif);
+    k.frame(Vec::new());
+    assert_eq!(k.app.title_sent, "Snagster");
+    k.app.mini = None;
+    k.frame(Vec::new());
+    assert!(k.app.title_sent.starts_with("Picture 2"));
     k.app.entries.clear();
     k.app.current = None;
     k.frame(Vec::new());
