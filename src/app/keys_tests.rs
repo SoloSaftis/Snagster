@@ -460,6 +460,7 @@ fn while_drawing_ctrl_z_takes_back_ink_not_the_picture() {
     k.press(Key::Z, Modifiers::COMMAND);
     assert_eq!(k.app.entries[ci].undo.len(), steps - 1, "not drawing: Ctrl+Z is the picture's again");
     crate::ink::with(|i| i.clear());
+}
 
 /// Ctrl+= / Ctrl+- / Ctrl+0 (⌘ on a Mac) zoom the picture, as in other editors. They used to
 /// scale the whole interface instead (egui's own zoom keys), and the picture's zoom needed the
