@@ -674,6 +674,95 @@ impl UiTest {
             super::studio_ui::sound_change(st, 0, false, i, super::studio_ui::RowAsk::Remove).unwrap();
             assert!(!st.scene_sounds(0).iter().any(|s| s.input == f3));
         }));
+        // Live ink: Draw, a stroke on the preview and one on the screen reach the frame (what the
+        // stream and the video get), Clear takes them away, fading ink goes by itself.
+        const INK: [u8; 3] = [255, 0, 255];
+        let ink_at = |a: &SnagApp, p: [f32; 2]| -> bool {
+            let Some(st) = &a.x.studio else { return false };
+            let Some(f) = st.engine_shared().frame.lock().ok().and_then(|f| f.clone()) else { return false };
+            let (x, y) = (p[0].round() as u32, p[1].round() as u32);
+            x < f.width() && y < f.height() && f.get_pixel(x, y).0[..3] == INK
+        };
+        s.push(once("Studio: Ink > Color, Pen, Stay until cleared, Draw", |a, c| {
+            a.switch_tab(c, super::ribbon::RibbonTab::Studio);
+            a.settings.studio.current = 0;
+            a.settings.studio.ink_color = INK;
+            a.settings.studio.ink_width = crate::ink::WIDTHS[2].0;
+            a.settings.studio.ink_mode = crate::ink::InkMode::Stay;
+            a.studio_tick(c);
+            assert!(crate::ink::with(|i| !i.on), "Draw was on before anyone turned it on");
+            a.do_action(c, Action::DrawInk);
+            assert!(crate::ink::with(|i| i.on), "Draw didn't turn on: {}", a.status);
+            assert_eq!(crate::ink::with(|i| i.pen.color), [255, 0, 255, 255], "the pen has the Color chosen");
+            assert_eq!(super::studio_ui::ink_hold_label(a.settings.studio.ink_mode, a.settings.studio.ink_fade_s), crate::i18n::t("Stays"));
+        }));
+        s.push(once("Studio: draw on the preview", |a, _| {
+            let st = a.x.studio.as_ref().expect("Studio isn't open");
+            let placed = st.engine_shared().placed.lock().unwrap().clone();
+            // Over the scene's screen the ink goes to the desktop (it shows on the screen too),
+            // elsewhere on the canvas: either way it lands where it was drawn.
+            let (space, p) = super::studio_ui::preview_ink_start(&placed, [60.0, 1000.0]);
+            let end = match placed.iter().rev().find(|q| q.contains_canvas([60.0, 1000.0])) {
+                Some(q) if space == crate::ink::Space::Desktop => q.to_desk([200.0, 1000.0]),
+                _ => [200.0, 1000.0],
+            };
+            let now = Instant::now();
+            crate::ink::with(|i| {
+                i.begin(space, p, now);
+                i.extend(end);
+                i.end(now);
+            });
+        }));
+        s.push(("Studio: the preview's ink is in the frame".to_string(), Box::new(move |a: &mut SnagApp, _: &egui::Context| ink_at(a, [130.0, 1000.0]))));
+        // On the screen: ink drawn on the scene's screen lands where the scene shows it.
+        let screen_spot: std::rc::Rc<std::cell::Cell<Option<[f32; 2]>>> = Default::default();
+        let spot = screen_spot.clone();
+        s.push(once("Studio: draw on the screen", move |a, _| {
+            let st = a.x.studio.as_ref().expect("Studio isn't open");
+            let placed = st.engine_shared().placed.lock().unwrap().clone();
+            let Some(p) = placed.first().copied() else {
+                // No screen in the scene (a desktop without one): nothing to draw on.
+                return;
+            };
+            let (x, y) = (p.desk.0 as f32 + p.desk.2 as f32 / 3.0, p.desk.1 as f32 + p.desk.3 as f32 / 2.0);
+            let now = Instant::now();
+            crate::ink::with(|i| {
+                i.begin(crate::ink::Space::Desktop, [x, y], now);
+                i.extend([x + 300.0, y]);
+                i.end(now);
+            });
+            spot.set(Some(p.to_canvas([x + 150.0, y])));
+        }));
+        let spot = screen_spot.clone();
+        s.push(("Studio: the screen's ink is in the frame".to_string(), Box::new(move |a: &mut SnagApp, _: &egui::Context| spot.get().is_none_or(|p| ink_at(a, p)))));
+        s.push(once("Studio: Ink > Clear (and Undo brings it back, Clear again)", |a, c| {
+            assert!(crate::ink::with(|i| i.any(Instant::now())), "no ink to clear");
+            a.do_action(c, Action::ClearInk);
+            assert!(crate::ink::with(|i| !i.any(Instant::now())), "Clear left ink");
+            crate::ink::with(|i| i.undo(Instant::now()));
+            assert!(crate::ink::with(|i| i.any(Instant::now())), "Undo didn't bring the ink back");
+            a.run_command(c, "studio_ink_clear", None);
+            assert!(crate::ink::with(|i| !i.any(Instant::now())), "the window command didn't clear");
+        }));
+        s.push(("Studio: cleared ink is gone from the frame".to_string(), Box::new(move |a: &mut SnagApp, _: &egui::Context| !ink_at(a, [130.0, 1000.0]))));
+        s.push(once("Studio: Ink > Fades after 1 s, then a stroke", |a, c| {
+            a.settings.studio.ink_mode = crate::ink::InkMode::Fade;
+            a.settings.studio.ink_fade_s = crate::ink::HOLDS[0];
+            a.studio_tick(c);
+            let now = Instant::now();
+            crate::ink::with(|i| {
+                i.begin(crate::ink::Space::Canvas, [60.0, 1000.0], now);
+                i.extend([200.0, 1000.0]);
+                i.end(now);
+            });
+        }));
+        s.push(("Studio: fading ink shows".to_string(), Box::new(move |a: &mut SnagApp, _: &egui::Context| ink_at(a, [130.0, 1000.0]))));
+        s.push(("Studio: and is gone by itself".to_string(), Box::new(move |a: &mut SnagApp, _: &egui::Context| !ink_at(a, [130.0, 1000.0]) && crate::ink::with(|i| !i.any(Instant::now())))));
+        s.push(once("Studio: Draw turns off", |a, c| {
+            a.do_action(c, Action::DrawInk);
+            assert!(crate::ink::with(|i| !i.on));
+            a.settings.studio = crate::studio::StudioSettings { ink_mode: crate::ink::InkMode::Fade, ink_fade_s: 3.0, ink_color: [230, 40, 40], ink_width: 6.0, ..a.settings.studio.clone() };
+        }));
         s.push(once("Studio: Ctrl+2 and Ctrl+1 switch scenes", |a, _| {
             super::stream_ui::switch_scene(a, 1);
             assert_eq!(a.settings.studio.current, 1);

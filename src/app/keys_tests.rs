@@ -242,6 +242,64 @@ fn arrows_on_the_picture_move_the_picked_mark() {
     assert_eq!(k.app.entries[ci].undo.len(), 2);
 }
 
+/// Wayland: a dialog inside the window has the keys. With the picture focused and a mark
+/// picked, the arrows, Delete and F6 don't touch the picture or the panes behind it; Esc closes
+/// the dialog, and then the arrows move the mark again.
+#[test]
+fn a_dialog_inside_the_window_keeps_the_editor_keys_off_the_picture() {
+    let mut k = Keys::new();
+    k.ctx.set_embed_viewports(true);
+    let ci = k.app.current.unwrap();
+    let r = Rect::from_min_size(pos2(50.0, 50.0), vec2(40.0, 30.0));
+    k.app.entries[ci].doc.shapes.push(Shape::Rect { rect: r, color: Color32::RED, width: 3.0, fill: false, radius: 0.0, shadow: false });
+    k.app.selected = Some(0);
+    for _ in 0..3 {
+        k.key(Key::F6);
+    }
+    assert_eq!(k.pane(), Some(Pane::Canvas));
+    k.app.about_open = true;
+    k.frame(Vec::new());
+    assert_eq!(k.pane(), None, "the picture behind gave up the keyboard");
+    for key in [Key::ArrowRight, Key::Delete] {
+        k.key(key);
+    }
+    k.key(Key::F6);
+    assert_eq!(k.pane(), None, "F6 doesn't move the keyboard into the panes behind the dialog");
+    let Shape::Rect { rect, .. } = &k.app.entries[ci].doc.shapes[0] else { panic!("the mark was deleted") };
+    assert_eq!(rect.min, r.min, "the arrows didn't move the mark behind the dialog");
+    assert!(k.app.about_open, "the dialog is still open");
+    k.key(Key::Escape);
+    assert!(!k.app.about_open, "Esc closed the dialog");
+    assert_eq!(k.app.entries[ci].doc.shapes.len(), 1, "and not the mark");
+}
+
+/// Wayland: a big box beside the editor (here Keyboard shortcuts) has the keys from its
+/// opening: F6 and Delete stay off the editor until a click on the editor gives them back.
+#[test]
+fn a_big_box_inside_the_window_keeps_f6_and_delete_off_the_editor_until_a_click_on_it() {
+    let mut k = Keys::new();
+    k.ctx.set_embed_viewports(true);
+    let ci = k.app.current.unwrap();
+    let r = Rect::from_min_size(pos2(50.0, 50.0), vec2(40.0, 30.0));
+    k.app.entries[ci].doc.shapes.push(Shape::Rect { rect: r, color: Color32::RED, width: 3.0, fill: false, radius: 0.0, shadow: false });
+    k.app.selected = Some(0);
+    k.app.shortcuts_open = true;
+    k.frame(Vec::new());
+    k.key(Key::F6);
+    assert_eq!(k.pane(), None, "F6 is the box's, not the editor's panes");
+    k.key(Key::Delete);
+    assert_eq!(k.app.entries[ci].doc.shapes.len(), 1, "Delete didn't remove the mark behind");
+    assert!(k.app.shortcuts_open);
+    // A click on the editor, beside the box (the box is centred, so the left edge is clear).
+    let at = pos2(4.0, WINDOW.y / 2.0);
+    let b = |pressed| Event::PointerButton { pos: at, button: egui::PointerButton::Primary, pressed, modifiers: Modifiers::NONE };
+    k.frame(vec![Event::PointerMoved(at), b(true), b(false)]);
+    k.frame(Vec::new());
+    k.key(Key::F6);
+    assert!(k.pane().is_some(), "the editor's F6 works again");
+    assert!(k.app.shortcuts_open, "the box stays open beside the editor");
+}
+
 #[test]
 fn with_a_ribbon_button_focused_the_shortcuts_still_work() {
     let mut k = Keys::new();
@@ -431,6 +489,36 @@ fn in_a_short_window_the_arrows_reach_the_options_below_the_fold() {
 }
 
 
+
+/// Bug: while drawing, Ctrl+Z / ⌘Z undid the picture (or brought back a deleted file) instead
+/// of the last stroke, and on Wayland never reached the ink at all.
+#[test]
+fn while_drawing_ctrl_z_takes_back_ink_not_the_picture() {
+    let _one = crate::ink::TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let mut k = Keys::new();
+    let ci = k.app.current.unwrap();
+    k.app.apply_effect(crate::effects::Effect::Invert);
+    let steps = k.app.entries[ci].undo.len();
+    assert!(steps > 0, "an edit to take back");
+    let now = std::time::Instant::now();
+    crate::ink::with(|i| {
+        i.clear();
+        i.set_on(true, now);
+        for x in [1.0, 2.0] {
+            i.begin(crate::ink::Space::Canvas, [x, 1.0], now);
+            i.end(now);
+        }
+    });
+    k.press(Key::Z, Modifiers::COMMAND);
+    let left = crate::ink::with(|i| i.snapshot(std::time::Instant::now()).strokes.len());
+    assert_eq!(k.app.entries[ci].undo.len(), steps, "the picture's edit stays");
+    assert_eq!(left, 1, "one stroke taken back");
+    k.key(Key::Escape);
+    assert!(crate::ink::with(|i| !i.on), "Esc stops drawing");
+    k.press(Key::Z, Modifiers::COMMAND);
+    assert_eq!(k.app.entries[ci].undo.len(), steps - 1, "not drawing: Ctrl+Z is the picture's again");
+    crate::ink::with(|i| i.clear());
+}
 
 /// Ctrl+= / Ctrl+- / Ctrl+0 (⌘ on a Mac) zoom the picture, as in other editors. They used to
 /// scale the whole interface instead (egui's own zoom keys), and the picture's zoom needed the

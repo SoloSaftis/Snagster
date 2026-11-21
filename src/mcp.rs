@@ -36,7 +36,8 @@ studio_record). Guides: make_guide (PDF, web page, Word or one tall picture). Li
 library_delete (to the Recycle Bin / Trash; undo_delete brings it back for 2 minutes). Live streaming: stream_services, stream_start (Twitch, YouTube, Kick, Facebook, Restream or any RTMP/RTMPS \
 server; the screen, a window, an area or the Studio scene; the stream key saved in Snagster is used and never shown), \
 stream_status, stream_stats (dropped frames, upload and encoder health, warnings) and stream_stop. Replay buffer (keep the last 30-120 s of the screen, save a moment after it happened): \
-replay_start, replay_save, replay_status and replay_stop. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
+replay_start, replay_save, replay_status and replay_stop. Live ink (what the person draws over the stream with Studio's Draw): ink_clear \
+removes it; set_setting studio.ink_mode (Fade or Stay) and studio.ink_fade_s say how long it stays. Defaults come from Snagster's settings (list_settings explains every key, get_settings, \
 set_setting checks kind and range). Everything else a person can press in the window is in list_commands: app_command \
 presses it in the open window (zoom, pins, Recent, dialogs, email, print, Studio and stream buttons...); editor_apply \
 (cut out, fill, erase, lift, resize or copy a mark), gif_edit, studio_edit and save_to_cloud do the rest here. Long calls send progress when the \
@@ -643,21 +644,21 @@ fn base_tools() -> Vec<Tool> {
 const MARK_KINDS: [&str; 14] = ["arrow", "line", "box", "oval", "highlight", "pen", "text", "callout", "step", "stamp", "pointer", "spotlight", "magnify", "image"];
 
 /// Tools that change something outside the current picture (files, clipboard, settings, screen).
-const SIDE: [&str; 34] = [
+const SIDE: [&str; 35] = [
     "save", "quick_save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "library_delete", "undo_delete", "library_tag",
     "set_setting", "set_language", "open_in_snagster", "studio_add_source", "studio_remove_source", "studio_update_source",
     "studio_add_scene", "studio_remove_scene", "studio_set_current", "studio_record", "capture_scrolling", "paste_from_clipboard",
     "capture_screen", "capture_region", "capture_window", "stream_start", "stream_stop", "app_command", "save_to_cloud", "gif_edit", "studio_edit",
-    "replay_start", "replay_save", "replay_stop",
+    "replay_start", "replay_save", "replay_stop", "ink_clear",
 ];
 
 /// Tools that may delete or replace something (a mark, a source or scene, a library picture,
 /// a setting, or a file at a given path) or end something that can't be picked up again (a live
 /// stream; the replay buffer's kept seconds). app_command can exit Snagster, recycle a file or
 /// end a stream.
-const DESTRUCTIVE: [&str; 16] = [
+const DESTRUCTIVE: [&str; 17] = [
     "remove_mark", "clear_marks", "studio_remove_source", "studio_remove_scene", "library_delete", "set_setting", "save", "make_guide", "record_video", "record_gif", "studio_record",
-    "app_command", "gif_edit", "studio_edit", "stream_stop", "replay_stop",
+    "app_command", "gif_edit", "studio_edit", "stream_stop", "replay_stop", "ink_clear",
 ];
 
 /// Tools that reach beyond this computer's Snagster: the network, the cloud, other programs.
@@ -665,7 +666,7 @@ const OPEN_WORLD: [&str; 4] = ["check_for_update", "stream_start", "app_command"
 
 /// Tools that change something but leave the same result when called again with the same
 /// arguments.
-const IDEMPOTENT: [&str; 12] = ["stream_stop", "replay_stop", "save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
+const IDEMPOTENT: [&str; 13] = ["stream_stop", "replay_stop", "ink_clear", "save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
 
 /// What a tool's structured answer looks like, for the tools that always give one.
 fn output_schema(name: &str) -> Option<Value> {
@@ -2300,7 +2301,7 @@ pub(crate) mod fuzzing {
     /// Tools the fuzz never calls: they capture or record the screen, use the clipboard, the
     /// network, sound or graphics devices, start or message other programs, or write outside
     /// the sandbox (the cloud folders). Each has tests of its own arguments.
-    pub const OUTSIDE: [&str; 31] = [
+    pub const OUTSIDE: [&str; 32] = [
         "capture_screen",
         "capture_region",
         "capture_window",
@@ -2320,6 +2321,7 @@ pub(crate) mod fuzzing {
         "replay_start",
         "replay_save",
         "replay_stop",
+        "ink_clear",
         "stream_start",
         "stream_stop",
         "copy_to_clipboard",

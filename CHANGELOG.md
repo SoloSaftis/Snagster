@@ -48,6 +48,17 @@ Live streaming (every system):
 - Frames thrown away when a reconnect starts fresh, or to make room in a full queue, now count
   as dropped too.
 - For AI apps: **stream_stats** gives the same numbers and warnings.
+- **Draw while you're live (Studio > Ink > Draw, Ctrl+Shift+F7; ⌥⇧⌘D on a Mac)**: the ink is
+  in the stream and in Studio's video, on every source that shows that part of the screen. It
+  fades a few seconds after the pen lifts (1 to 10 s, 3 s at first) or stays until **Clear**
+  (Ctrl+Shift+F6; ⌥⇧⌘X). Pick the colour and pen width in the Ink group; Esc stops drawing,
+  Ctrl+Z (⌘Z) takes back the last stroke, or right after Clear what it removed. On Windows you
+  draw over every monitor (a thin border and a hint show, never captured; Snagster's own window
+  stays usable); other programs' screen shares don't see the ink, only Studio's stream and video
+  do. On macOS and Linux you draw on the Studio preview for now (Wayland doesn't let apps cover
+  the screen; drawing over the screen on macOS and X11 is still to come). For AI apps:
+  **ink_clear**, and the settings studio.ink_mode, studio.ink_fade_s, studio.ink_color and
+  studio.ink_width.
 
 Recording (every system):
 
@@ -114,6 +125,15 @@ Windows:
 
 Linux:
 
+- **X11: dialogs belong to Snagster's window**: Settings, the Library and every dialog stay
+  above Snagster and keep out of the task bar, and the fixed-size ones (New image, Resize,
+  Rename and the like) have no Minimise or Maximise button on KDE.
+- **Wayland: dialogs open inside Snagster's window**: New image, Resize, Rename and the other
+  fixed-size dialogs dim the picture behind them and close with Esc, Ctrl+W or their close button (a
+  click beside them doesn't lose what you typed). Settings, the Library and the other big
+  boxes fit inside the window. A box has the keys from when it opens until you click the
+  editor (a click on the box gives them back to it), and meanwhile the editor's shortcuts
+  leave the picture alone. Esc closes only the box on top.
 - **Every screen in a Screen capture on Wayland**: the desktop's dialog lets you pick all your
   screens once, and Screen, Area and scrolling captures then see the whole desk, each screen
   where it sits (screens with different scaling are matched to the sharpest). Recording keeps
