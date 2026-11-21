@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Ukončíte ho kliknutím pravým tlačítkem na ikonu a volbou {item}.",
   "More captures": "Další snímky",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Po povolení Snagsteru v Nastavení systému se musí znovu spustit, aby viděl obrazovku.",
-  "Quit and Reopen": "Ukončit a znovu otevřít"
+  "Quit & Reopen": "Ukončit a znovu otevřít",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster se nemohl sám znovu spustit. Ukončete ho a otevřete znovu."
  }
 }

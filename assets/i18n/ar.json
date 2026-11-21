@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "للإنهاء، انقر بزر الماوس الأيمن على الأيقونة واختر {item}.",
   "More captures": "لقطات أخرى",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "بعد السماح لـ Snagster في إعدادات النظام، يجب أن يبدأ من جديد ليرى الشاشة.",
-  "Quit and Reopen": "إنهاء وإعادة الفتح"
+  "Quit & Reopen": "إنهاء وإعادة الفتح",
+  "Snagster couldn't restart itself. Quit it and open it again.": "تعذّر على Snagster إعادة تشغيل نفسه. أغلقه وافتحه مرة أخرى."
  }
 }

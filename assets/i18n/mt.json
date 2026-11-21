@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Biex tagħlqu, ikklikkja bil-lemin fuq l-ikona u agħżel {item}.",
   "More captures": "Aktar qabdiet",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Wara li tippermetti lil Snagster fis-Settings tas-Sistema, irid jerġa' jibda biex jara l-iskrin.",
-  "Quit and Reopen": "Oħroġ u Erġa' Iftaħ"
+  "Quit & Reopen": "Oħroġ u Erġa' Iftaħ",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ma setax jerġa' jibda waħdu. Agħlqu u erġa' iftħu."
  }
 }

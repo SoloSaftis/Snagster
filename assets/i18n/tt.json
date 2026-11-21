@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Ябу өчен билгегә уң төймә белән басып, «{item}» сайлагыз.",
   "More captures": "Башка төшерүләр",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Система көйләүләрендә Snagster-га рөхсәт биргәннән соң, экранны күрү өчен ул яңадан башланырга тиеш.",
-  "Quit and Reopen": "Чыгу һәм яңадан ачу"
+  "Quit & Reopen": "Чыгу һәм яңадан ачу",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster үзен яңадан башлый алмады. Аны ябып, яңадан ачыгыз."
  }
 }

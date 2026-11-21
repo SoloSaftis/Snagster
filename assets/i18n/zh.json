@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "要退出，请右键单击图标并选择“{item}”。",
   "More captures": "更多截图",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "在“系统设置”中允许 Snagster 后，它需要重新启动才能看到屏幕。",
-  "Quit and Reopen": "退出并重新打开"
+  "Quit & Reopen": "退出并重新打开",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster 无法自行重新启动。请退出后重新打开。"
  }
 }

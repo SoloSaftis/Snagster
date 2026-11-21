@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "बंद करने के लिए, आइकन पर राइट-क्लिक करके {item} चुनें।",
   "More captures": "और कैप्चर",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "सिस्टम सेटिंग्स में Snagster को अनुमति देने के बाद, स्क्रीन देखने के लिए इसे फिर से शुरू होना होगा।",
-  "Quit and Reopen": "बंद करके फिर खोलें"
+  "Quit & Reopen": "बंद करके फिर खोलें",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ख़ुद को फिर से शुरू नहीं कर सका। इसे बंद करके फिर से खोलें।"
  }
 }

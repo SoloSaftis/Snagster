@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Wichq'anapaq, iconopi paña ñit'iy, {item} akllay.",
   "More captures": "Astawan hapiykuna",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Snagsterta Sistemapa Churanakunanpi saqiyta qhepaman, pantallata rikunanpaq wakmanta qallarinan.",
-  "Quit and Reopen": "Lluqsiy, wakmanta kichay"
+  "Quit & Reopen": "Lluqsiy, wakmanta kichay",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster manam kikillanmanta yapamanta qallariyta atirqanchu. Wichqay hinaspa yapamanta kichay."
  }
 }

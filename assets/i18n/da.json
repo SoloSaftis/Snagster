@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "For at afslutte skal du højreklikke på ikonet og vælge {item}.",
   "More captures": "Flere optagelser",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Når du har givet Snagster lov i Systemindstillinger, skal det starte igen for at se skærmen.",
-  "Quit and Reopen": "Afslut og åbn igen"
+  "Quit & Reopen": "Afslut og åbn igen",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster kunne ikke genstarte sig selv. Afslut programmet, og åbn det igen."
  }
 }

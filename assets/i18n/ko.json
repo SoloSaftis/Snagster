@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "종료하려면 아이콘을 마우스 오른쪽 단추로 클릭하고 {item}을(를) 선택하세요.",
   "More captures": "캡처 더 보기",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "시스템 설정에서 Snagster를 허용한 후에는 화면을 보려면 다시 시작해야 합니다.",
-  "Quit and Reopen": "종료 후 다시 열기"
+  "Quit & Reopen": "종료 후 다시 열기",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster가 스스로 다시 시작하지 못했습니다. 종료한 다음 다시 여세요."
  }
 }

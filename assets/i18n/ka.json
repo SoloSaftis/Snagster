@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "დასახურად მარჯვენა ღილაკით დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}.",
   "More captures": "სხვა გადაღებები",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "სისტემის პარამეტრებში Snagster-ის დაშვების შემდეგ, ეკრანის სანახავად ის თავიდან უნდა გაეშვას.",
-  "Quit and Reopen": "გასვლა და ხელახლა გახსნა"
+  "Quit & Reopen": "გასვლა და ხელახლა გახსნა",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-მა ვერ შეძლო თავისით გადატვირთვა. დახურეთ და ხელახლა გახსენით."
  }
 }

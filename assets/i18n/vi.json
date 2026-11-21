@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Để thoát, nhấp chuột phải vào biểu tượng và chọn {item}.",
   "More captures": "Chụp khác",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Sau khi bạn cho phép Snagster trong Cài đặt hệ thống, ứng dụng phải khởi động lại để thấy màn hình.",
-  "Quit and Reopen": "Thoát và mở lại"
+  "Quit & Reopen": "Thoát và mở lại",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster không tự khởi động lại được. Hãy thoát rồi mở lại."
  }
 }

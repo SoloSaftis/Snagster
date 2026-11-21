@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "మూసివేయడానికి, చిహ్నంపై కుడి-క్లిక్ చేసి {item} ఎంచుకోండి.",
   "More captures": "మరిన్ని క్యాప్చర్‌లు",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "సిస్టమ్ సెట్టింగ్‌లలో Snagster ను అనుమతించిన తర్వాత, స్క్రీన్ చూడటానికి అది మళ్లీ ప్రారంభం కావాలి.",
-  "Quit and Reopen": "నిష్క్రమించి మళ్లీ తెరువు"
+  "Quit & Reopen": "నిష్క్రమించి మళ్లీ తెరువు",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster తనను తాను పునఃప్రారంభించుకోలేకపోయింది. దాన్ని మూసివేసి మళ్లీ తెరవండి."
  }
 }

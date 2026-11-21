@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Փակելու համար աջ սեղմեք պատկերակին և ընտրեք {item}։",
   "More captures": "Այլ նկարումներ",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Համակարգի կարգավորումներում Snagster-ին թույլատրելուց հետո այն պետք է վերագործարկվի, որպեսզի տեսնի էկրանը։",
-  "Quit and Reopen": "Փակել և նորից բացել"
+  "Quit & Reopen": "Փակել և նորից բացել",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-ը չկարողացավ ինքն իրեն վերագործարկել։ Փակեք այն և նորից բացեք։"
  }
 }

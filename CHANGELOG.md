@@ -202,7 +202,7 @@ Settings, the Library and the tray (every system):
 
 macOS:
 
-- **Quit and Reopen after allowing Screen Recording**: once System Settings is open from
+- **Quit & Reopen after allowing Screen Recording**: once System Settings is open from
   Snagster's window, the window offers to start Snagster again, which macOS needs before the
   permission counts.
 - **Settings has a toolbar** of seven icons (General, Capture, Recording, Editor, Hotkeys,

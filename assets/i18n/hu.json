@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Kilépéshez kattintson a jobb gombbal az ikonra, és válassza a(z) {item} lehetőséget.",
   "More captures": "További felvételek",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Miután engedélyezte a Snagstert a Rendszerbeállításokban, újra kell indulnia, hogy lássa a képernyőt.",
-  "Quit and Reopen": "Kilépés és újbóli megnyitás"
+  "Quit & Reopen": "Kilépés és újbóli megnyitás",
+  "Snagster couldn't restart itself. Quit it and open it again.": "A Snagster nem tudta újraindítani magát. Lépjen ki belőle, és nyissa meg újra."
  }
 }

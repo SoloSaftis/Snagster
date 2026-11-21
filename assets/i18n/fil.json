@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Para umalis, i-right-click ang icon at piliin ang {item}.",
   "More captures": "Higit pang kuha",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Pagkatapos mong payagan ang Snagster sa System Settings, kailangan itong magsimula muli para makita ang screen.",
-  "Quit and Reopen": "Umalis at Buksan Muli"
+  "Quit & Reopen": "Umalis at Buksan Muli",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Hindi na-restart ng Snagster ang sarili nito. Isara ito at buksan muli."
  }
 }

@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Çıxmaq üçün simgəyə sağ klikləyib {item} seçin.",
   "More captures": "Digər çəkilişlər",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Snagster-ə Sistem Ayarlarında icazə verdikdən sonra ekranı görmək üçün yenidən başlamalıdır.",
-  "Quit and Reopen": "Çıx və yenidən aç"
+  "Quit & Reopen": "Çıx və yenidən aç",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster özünü yenidən başlada bilmədi. Ondan çıxın və yenidən açın."
  }
 }

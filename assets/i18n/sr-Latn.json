@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Za izlaz kliknite desnim tasterom na ikonicu i izaberite „{item}“.",
   "More captures": "Još snimaka",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Kada dozvolite Snagster u Sistemskim podešavanjima, mora ponovo da se pokrene da bi video ekran.",
-  "Quit and Reopen": "Izađi i ponovo otvori"
+  "Quit & Reopen": "Izađi i ponovo otvori",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nije mogao sam da se ponovo pokrene. Zatvorite ga i ponovo otvorite."
  }
 }

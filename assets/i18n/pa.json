@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "ਬੰਦ ਕਰਨ ਲਈ, ਆਈਕਨ ʼਤੇ ਸੱਜਾ-ਕਲਿੱਕ ਕਰਕੇ {item} ਚੁਣੋ।",
   "More captures": "ਹੋਰ ਕੈਪਚਰ",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ ਵਿੱਚ Snagster ਨੂੰ ਇਜਾਜ਼ਤ ਦੇਣ ਤੋਂ ਬਾਅਦ, ਸਕ੍ਰੀਨ ਦੇਖਣ ਲਈ ਇਸਨੂੰ ਮੁੜ ਸ਼ੁਰੂ ਹੋਣਾ ਪਵੇਗਾ।",
-  "Quit and Reopen": "ਬੰਦ ਕਰਕੇ ਮੁੜ ਖੋਲ੍ਹੋ"
+  "Quit & Reopen": "ਬੰਦ ਕਰਕੇ ਮੁੜ ਖੋਲ੍ਹੋ",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ਆਪਣੇ ਆਪ ਨੂੰ ਮੁੜ ਸ਼ੁਰੂ ਨਹੀਂ ਕਰ ਸਕਿਆ। ਇਸਨੂੰ ਬੰਦ ਕਰਕੇ ਮੁੜ ਖੋਲ੍ਹੋ।"
  }
 }

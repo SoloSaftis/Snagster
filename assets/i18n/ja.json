@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "終了するには、アイコンを右クリックして [{item}] を選びます。",
   "More captures": "その他のキャプチャ",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "システム設定で Snagster を許可したあと、画面を見るには Snagster を再起動する必要があります。",
-  "Quit and Reopen": "終了して再度開く"
+  "Quit & Reopen": "終了して再度開く",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster を自動で再起動できませんでした。終了してからもう一度開いてください。"
  }
 }

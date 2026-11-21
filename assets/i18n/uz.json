@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Yopish uchun belgiga o‘ng tugma bilan bosing va {item} ni tanlang.",
   "More captures": "Boshqa suratlar",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Tizim sozlamalarida Snagster’ga ruxsat bergandan so‘ng, ekranni ko‘rishi uchun u qayta ishga tushishi kerak.",
-  "Quit and Reopen": "Chiqish va qayta ochish"
+  "Quit & Reopen": "Chiqish va qayta ochish",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster o‘zini qayta ishga tushira olmadi. Undan chiqib, qayta oching."
  }
 }

@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Hei whakamutu, pāwhiri matau i te ata, ka kōwhiri i {item}.",
   "More captures": "Ētahi atu hopukanga",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Ina whakaaetia e koe a Snagster i ngā Tautuhinga Pūnaha, me tīmata anō kia kite ai i te mata.",
-  "Quit and Reopen": "Whakamutu, Whakatuwhera Anō"
+  "Quit & Reopen": "Whakamutu, Whakatuwhera Anō",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Kāore i taea e Snagster te tīmata anō i a ia anō. Whakamutua, ka whakatuwhera anō."
  }
 }

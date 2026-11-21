@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "மூட, சின்னத்தில் வலது சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும்.",
   "More captures": "மேலும் பிடிப்புகள்",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "கணினி அமைப்புகளில் Snagster-ஐ அனுமதித்த பிறகு, திரையைப் பார்க்க அது மீண்டும் தொடங்க வேண்டும்.",
-  "Quit and Reopen": "வெளியேறி மீண்டும் திற"
+  "Quit & Reopen": "வெளியேறி மீண்டும் திற",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster தானாக மீண்டும் தொடங்க முடியவில்லை. அதை மூடிவிட்டு மீண்டும் திறக்கவும்."
  }
 }

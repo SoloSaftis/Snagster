@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Sulgemiseks paremklõpsa ikoonil ja vali {item}.",
   "More captures": "Veel jäädvustusi",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Kui oled Snagsteri süsteemiseadetes lubanud, peab see ekraani nägemiseks uuesti käivituma.",
-  "Quit and Reopen": "Sulge ja ava uuesti"
+  "Quit & Reopen": "Sulge ja ava uuesti",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ei saanud ennast taaskäivitada. Sulgege see ja avage uuesti."
  }
 }

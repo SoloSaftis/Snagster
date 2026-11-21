@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Om af te sluit, regsklik op die ikoon en kies {item}.",
   "More captures": "Meer vasleggings",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Nadat jy Snagster in Stelselinstellings toegelaat het, moet dit weer begin om die skerm te sien.",
-  "Quit and Reopen": "Sluit af en maak weer oop"
+  "Quit & Reopen": "Sluit af en maak weer oop",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster kon nie self weer begin nie. Sluit dit af en maak dit weer oop."
  }
 }

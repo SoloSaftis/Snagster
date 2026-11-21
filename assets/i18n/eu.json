@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Ixteko, egin eskuineko klik ikonoan eta aukeratu {item}.",
   "More captures": "Argazki gehiago",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Sistemaren ezarpenetan Snagster baimendu ondoren, berriro abiarazi behar da pantaila ikusteko.",
-  "Quit and Reopen": "Itxi eta ireki berriro"
+  "Quit & Reopen": "Itxi eta ireki berriro",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-ek ezin izan du bere burua berrabiarazi. Itxi eta ireki berriro."
  }
 }

@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Para saír, preme co botón dereito na icona e escolle {item}.",
   "More captures": "Máis capturas",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Despois de permitir Snagster na Configuración do sistema, ten que volver abrirse para ver a pantalla.",
-  "Quit and Reopen": "Saír e volver abrir"
+  "Quit & Reopen": "Saír e volver abrir",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster non puido reiniciarse. Péchao e volve abrilo."
  }
 }

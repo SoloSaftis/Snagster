@@ -22,7 +22,7 @@ pub(crate) struct AccessUi {
     /// the line contains it.
     pub status_line: Option<String>,
     /// System Settings was opened from the window: macOS applies the permission only after
-    /// Snagster starts again, so the window now offers Quit and Reopen.
+    /// Snagster starts again, so the window now offers Quit & Reopen.
     pub settings_opened: bool,
 }
 
@@ -69,19 +69,27 @@ impl SnagApp {
         if !self.x.access.status_line.as_deref().is_some_and(|l| self.status.contains(l)) {
             return;
         }
-        if self.screen_access() == ScreenAccess::NotGranted && ui.link(t("Open Screen Recording settings")).clicked() {
+        let access = self.screen_access();
+        if access == ScreenAccess::NotGranted && ui.link(t("Open Screen Recording settings")).clicked() {
             self.open_screen_settings();
+            // The window then offers Quit & Reopen, also when it was closed before.
+            self.x.access.open = Some(access);
+            self.x.access.settings_opened = true;
         }
     }
 
     fn open_screen_settings(&mut self) {
+        // The button test's made-up answer opens nothing.
+        if self.x.access.fake.is_some() {
+            return;
+        }
         if let Err(e) = crate::capture::open_screen_settings() {
             self.status = crate::i18n::tf("Couldn't open it: {error}", &[("error", &e)]);
         }
     }
 
     /// The window the first time screen access stops a capture. Once System Settings is open
-    /// it offers Quit and Reopen, as macOS's own prompt does: the permission only counts for a
+    /// it offers Quit & Reopen, as macOS's own prompt does: the permission only counts for a
     /// Snagster started after it was given.
     pub(crate) fn screen_access_window(&mut self, ctx: &egui::Context) {
         let Some(access) = self.x.access.open else { return };
@@ -97,7 +105,7 @@ impl SnagApp {
                 }
                 ui.add_space(6.0);
                 let (action, cancel) = if after {
-                    (Some(t("Quit and Reopen")), t("Later"))
+                    (Some(t("Quit & Reopen")), t("Later"))
                 } else {
                     ((access == ScreenAccess::NotGranted).then(|| t("Open Screen Recording settings")), t("Close"))
                 };
@@ -109,12 +117,12 @@ impl SnagApp {
                 }
             });
         if settings {
-            // The window stays, now with Quit and Reopen.
+            // The window stays, now with Quit & Reopen.
             self.open_screen_settings();
             self.x.access.settings_opened = true;
         }
-        if reopen {
-            self.quit_and_reopen(ctx);
+        // A restart that couldn't start keeps the window, with a line saying so.
+        if reopen && self.quit_and_reopen(ctx) {
             close = true;
         }
         if close || !open || ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
@@ -123,31 +131,37 @@ impl SnagApp {
         }
     }
 
-    /// Start Snagster again once this one has quit (macOS applies Screen Recording then).
-    fn quit_and_reopen(&mut self, ctx: &egui::Context) {
+    /// Start Snagster again once this one has quit (macOS applies Screen Recording then);
+    /// whether the restart could be set up (if not, the status line says so and nothing quits).
+    fn quit_and_reopen(&mut self, ctx: &egui::Context) -> bool {
         if self.x.access.fake.is_none() {
-            let Ok(exe) = std::env::current_exe() else { return };
-            let cmd = reopen_command(std::process::id(), &exe);
-            if let Err(e) = std::process::Command::new(&cmd[0]).args(&cmd[1..]).spawn() {
-                self.status = crate::i18n::tf("Couldn't open it: {error}", &[("error", &e.to_string())]);
-                return;
+            let started = std::env::current_exe().and_then(|exe| {
+                let cmd = reopen_command(std::process::id(), &exe);
+                std::process::Command::new(&cmd[0]).args(&cmd[1..]).spawn()
+            });
+            if started.is_err() {
+                self.status = t("Snagster couldn't restart itself. Quit it and open it again.").into();
+                return false;
             }
         }
         self.quitting = true;
         ctx.send_viewport_cmd_to(egui::ViewportId::ROOT, egui::ViewportCommand::Close);
+        true
     }
 }
 
 /// The command that starts Snagster again after process `pid` has ended: a small shell waits
 /// for it (one Snagster at a time: a new one would only hand over to this one), then opens the
-/// app bundle `exe` is in, or `exe` itself outside a bundle.
-fn reopen_command(pid: u32, exe: &std::path::Path) -> Vec<String> {
+/// app bundle `exe` is in, or `exe` itself outside a bundle (a build run from a terminal, which
+/// starts again without its original arguments). The pid and the path are the script's
+/// arguments, never part of its text, so no folder name can change what it runs.
+fn reopen_command(pid: u32, exe: &std::path::Path) -> Vec<std::ffi::OsString> {
     let bundle = exe.ancestors().find(|p| p.extension().is_some_and(|e| e == "app"));
-    let open = match bundle {
-        Some(app) => format!("open -n \"{}\"", app.display()),
-        None => format!("\"{}\" &", exe.display()),
+    let (script, target) = match bundle {
+        Some(app) => (r#"while kill -0 "$1" 2>/dev/null; do sleep 0.2; done; open -n "$2""#, app),
+        None => (r#"while kill -0 "$1" 2>/dev/null; do sleep 0.2; done; "$2" &"#, exe),
     };
-    vec!["/bin/sh".into(), "-c".into(), format!("while kill -0 {pid} 2>/dev/null; do sleep 0.2; done; {open}")]
+    vec!["/bin/sh".into(), "-c".into(), script.into(), "sh".into(), pid.to_string().into(), target.as_os_str().to_owned()]
 }
 
 #[cfg(test)]
@@ -160,14 +174,59 @@ mod tests {
         let exe = std::path::Path::new("/Applications/Snagster.app/Contents/MacOS/snagster");
         let cmd = reopen_command(4242, exe);
         assert_eq!(&cmd[..2], ["/bin/sh", "-c"]);
-        assert!(cmd[2].starts_with("while kill -0 4242 2>/dev/null; do sleep 0.2; done;"), "{}", cmd[2]);
-        assert!(cmd[2].ends_with("open -n \"/Applications/Snagster.app\""), "{}", cmd[2]);
+        assert_eq!(cmd[2], r#"while kill -0 "$1" 2>/dev/null; do sleep 0.2; done; open -n "$2""#);
+        assert_eq!(&cmd[3..], ["sh", "4242", "/Applications/Snagster.app"]);
         // Outside a bundle (a build run from the terminal) the program itself starts again.
         let dev = reopen_command(7, std::path::Path::new("/Users/me/snag/target/debug/snagster"));
-        assert!(dev[2].ends_with("\"/Users/me/snag/target/debug/snagster\" &"), "{}", dev[2]);
+        assert_eq!(dev[2], r#"while kill -0 "$1" 2>/dev/null; do sleep 0.2; done; "$2" &"#);
+        assert_eq!(&dev[3..], ["sh", "7", "/Users/me/snag/target/debug/snagster"]);
     }
 
-    /// Once System Settings was opened, Return chooses Quit and Reopen: Snagster quits (with the
+    /// A folder name with shell characters stays a name: it is an argument, never script text.
+    #[test]
+    fn a_folder_name_can_never_change_what_reopening_runs() {
+        let odd = "/Users/me/My \"Apps\" $(rm -rf ~); `x`/Snagster.app";
+        let cmd = reopen_command(1, &std::path::Path::new(odd).join("Contents/MacOS/snagster"));
+        assert_eq!(cmd[5], odd);
+        for part in ["Apps", "rm", "$(", "`"] {
+            assert!(!cmd[2].to_string_lossy().contains(part), "{part} in {:?}", cmd[2]);
+        }
+    }
+
+    /// Esc (as Later does, through the same close) shuts the window and forgets that System
+    /// Settings was opened, so the next time it starts from the explanation again.
+    #[test]
+    fn esc_closes_and_starts_over_next_time() {
+        let ctx = egui::Context::default();
+        let esc = |pressed| egui::Event::Key { key: egui::Key::Escape, physical_key: None, pressed, repeat: false, modifiers: egui::Modifiers::NONE };
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.x.access.fake = Some(ScreenAccess::NotGranted);
+        a.x.access.open = Some(ScreenAccess::NotGranted);
+        a.x.access.settings_opened = true;
+        let raw = egui::RawInput { events: vec![esc(true), esc(false)], ..Default::default() };
+        let mut out = ctx.run_ui(raw, |_| a.screen_access_window(&ctx));
+        out.textures_delta.clear();
+        assert!(!a.quitting && a.x.access.open.is_none() && !a.x.access.settings_opened);
+    }
+
+    /// Open Screen Recording settings keeps the window and turns it into the Quit & Reopen step.
+    #[test]
+    fn opening_system_settings_keeps_the_window_for_reopening() {
+        let ctx = egui::Context::default();
+        let mut a = SnagApp::blank(Settings::default(), false, None);
+        a.x.access.fake = Some(ScreenAccess::NotGranted);
+        a.x.access.open = Some(ScreenAccess::NotGranted);
+        let mut out = ctx.run_ui(Default::default(), |_| a.screen_access_window(&ctx));
+        out.textures_delta.clear();
+        let enter = |pressed| egui::Event::Key { key: egui::Key::Enter, physical_key: None, pressed, repeat: false, modifiers: egui::Modifiers::NONE };
+        let raw = egui::RawInput { events: vec![enter(true), enter(false)], ..Default::default() };
+        let mut out = ctx.run_ui(raw, |_| a.screen_access_window(&ctx));
+        out.textures_delta.clear();
+        assert!(!a.quitting, "opening System Settings doesn't quit");
+        assert!(a.x.access.open.is_some() && a.x.access.settings_opened);
+    }
+
+    /// Once System Settings was opened, Return chooses Quit & Reopen: Snagster quits (with the
     /// made-up answer nothing is started) and the window goes.
     #[test]
     fn after_opening_system_settings_return_quits_to_reopen() {
@@ -183,7 +242,7 @@ mod tests {
         let raw = egui::RawInput { events: vec![enter(true), enter(false)], ..Default::default() };
         let mut out = ctx.run_ui(raw, |_| a.screen_access_window(&ctx));
         out.textures_delta.clear();
-        assert!(a.quitting, "Quit and Reopen");
+        assert!(a.quitting, "Quit & Reopen");
         assert!(a.x.access.open.is_none() && !a.x.access.settings_opened);
     }
 

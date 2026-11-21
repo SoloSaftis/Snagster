@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "要結束，請以滑鼠右鍵按一下圖示並選擇「{item}」。",
   "More captures": "更多擷取",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "在「系統設定」中允許 Snagster 後，它需要重新啟動才能看到螢幕。",
-  "Quit and Reopen": "結束並重新開啟"
+  "Quit & Reopen": "結束並重新開啟",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster 無法自行重新啟動。請結束後再重新開啟。"
  }
 }

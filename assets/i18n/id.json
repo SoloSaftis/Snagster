@@ -1234,6 +1234,7 @@
   "To quit, right-click the icon and choose {item}.": "Untuk keluar, klik kanan ikon lalu pilih {item}.",
   "More captures": "Tangkapan lain",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Setelah Anda mengizinkan Snagster di Pengaturan Sistem, aplikasi harus dimulai ulang untuk melihat layar.",
-  "Quit and Reopen": "Keluar dan Buka Lagi"
+  "Quit & Reopen": "Keluar dan Buka Lagi",
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster tidak dapat memulai ulang sendiri. Keluar lalu buka lagi."
  }
 }
