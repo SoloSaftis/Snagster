@@ -16,6 +16,8 @@ packaging, reviewing or reusing Snagster can see it. It is kept current when tha
 | Linux desktop entry and AppStream metainfo | `assets/linux/` | All of it |
 | Snagster's own Flatpak packaging (the `.flatpak` on the releases page) | `packaging/flatpak/` | All of it. This is not a Flathub manifest |
 | Windows installer and Microsoft Store edition | `packaging/msix/` (manifest, scripts, guides) | All of it |
+| MCP bundles and the MCP Registry listing | `packaging/mcpb/`, `server.json` | All of it |
+| Agent skill for AI coding agents | `skills/` | All of it |
 | Microsoft Store listing texts | `packaging/msix/listing/` (86 languages) | All of them (written and machine-translated by the AI, not yet reviewed by native speakers) |
 | Icon | drawn by code in `src/main.rs`; `assets/snagster-256.png` and `assets/linux/*.png` are renders of it | All of it |
 | Screenshots | `assets/screenshots/` | Made by Snagster itself (`--screenshot`) from AI-written views |

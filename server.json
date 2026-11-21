@@ -1,0 +1,42 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.SoloSaftis/snagster",
+  "title": "Snagster",
+  "description": "Screen capture, markup, recording and live streaming on Windows, Linux and macOS.",
+  "version": "0.10.6",
+  "websiteUrl": "https://github.com/SoloSaftis/Snagster",
+  "repository": {
+    "url": "https://github.com/SoloSaftis/Snagster",
+    "source": "github"
+  },
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/SoloSaftis/Snagster/main/assets/snagster-256.png",
+      "mimeType": "image/png",
+      "sizes": ["256x256"]
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/SoloSaftis/Snagster/releases/download/v0.10.6/Snagster-mcp-windows-x64.mcpb",
+      "version": "0.10.6",
+      "fileSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/SoloSaftis/Snagster/releases/download/v0.10.6/Snagster-mcp-linux-x86_64.mcpb",
+      "version": "0.10.6",
+      "fileSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/SoloSaftis/Snagster/releases/download/v0.10.6/Snagster-mcp-macos-arm64.mcpb",
+      "version": "0.10.6",
+      "fileSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "transport": { "type": "stdio" }
+    }
+  ]
+}

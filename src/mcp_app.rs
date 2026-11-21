@@ -27,7 +27,7 @@ pub(super) fn tools() -> Vec<Tool> {
             description: "Press a command in the open Snagster window, exactly as the person would (its ribbon button or menu item runs): zoom, panels, pins, Recent pictures, the library, GIF editor and timer windows, Steps recording, email, print, save dialogs, settings pages, Studio and streaming controls... It acts on the window's own pictures, not this server's current picture (open_in_snagster sends that one). Starts Snagster when it isn't running (unless start is false). Commands that open a dialog (save as, print, email, install an update, forget a stream key) leave the decision to the person; risky ones (exit, recycle, stop a stream) say so in list_commands. Returns once the window has the command (it runs on the window's next frame).",
             schema: obj(
                 json!({
-                    "command": {"type": "string", "enum": ids, "description": "The command's id from list_commands."},
+                    "command": {"type": "string", "enum": ids, "description": "The command's id from list_commands (only those it marks window: true; the others have their own tool or set_setting key, which list_commands names)."},
                     "value": s("What the command needs, when list_commands gives it a value (a shape, a size, a page, an effect, a path...)."),
                     "start": {"type": "boolean", "description": "Start Snagster's window when it isn't running (default true)."}
                 }),
@@ -46,7 +46,7 @@ pub(super) fn tools() -> Vec<Tool> {
             description: "The editor tools that change the picture itself, and mark edits, as the window's tools do them. action: cut_out (remove the band x, y, width, height and close the gap: a full-width band when it is wider than tall... as the Cut out tool), fill (flood-fill from x, y with color, tolerance 0-255, default 32), erase (rub out along points [[x, y], ...] with width), lift (lift the rectangle x, y, width, height out as a movable picture mark: the Selection tool), scale_mark (index, factor: Bigger is 1.15, Smaller 0.87), duplicate_mark (index; the copy is offset by dx, dy, default 16: Copy and Paste mark), new_image (a blank width x height picture in color, as File > New image).",
             schema: obj(
                 json!({
-                    "action": {"type": "string", "enum": ["cut_out", "fill", "erase", "lift", "scale_mark", "duplicate_mark", "new_image"]},
+                    "action": {"type": "string", "enum": ["cut_out", "fill", "erase", "lift", "scale_mark", "duplicate_mark", "new_image"], "description": "Which editor tool (the tool's description says what each one needs)."},
                     "x": n("Left, picture pixels."), "y": n("Top."), "width": n("Width."), "height": n("Height."),
                     "points": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}, "description": "[[x, y], ...] for erase."},
                     "color": s("#RRGGBB or a name (fill and new_image; default the mark colour / white)."),
@@ -71,9 +71,9 @@ pub(super) fn tools() -> Vec<Tool> {
             description: "The GIF editor: info (frames and size of a GIF), trim (keep frames first..last, counted from 0, into out), append (add other's frames to the end; written next to path as NAME_combined.gif), frame (make frame number frame the current picture), slideshow (a GIF of the pictures in paths, seconds each, into out). An existing out is replaced.",
             schema: obj(
                 json!({
-                    "action": {"type": "string", "enum": ["info", "trim", "append", "frame", "slideshow"]},
-                    "path": s("The GIF."), "out": s("Where to write (trim, slideshow)."), "other": s("append: the GIF to add."),
-                    "first": n("trim: the first frame kept."), "last": n("trim: the last frame kept."), "frame": n("frame: which one."),
+                    "action": {"type": "string", "enum": ["info", "trim", "append", "frame", "slideshow"], "description": "What to do (the tool's description says what each one needs)."},
+                    "path": s("The GIF file (full path)."), "out": s("Where to write the new GIF (trim, slideshow); an existing file is replaced."), "other": s("append: the GIF to add."),
+                    "first": n("trim: the first frame kept, from 0."), "last": n("trim: the last frame kept, from 0."), "frame": n("frame: which frame, from 0."),
                     "paths": {"type": "array", "items": {"type": "string"}, "description": "slideshow: the pictures."},
                     "seconds": n("slideshow: seconds per picture (default the setting).")
                 }),
@@ -86,12 +86,12 @@ pub(super) fn tools() -> Vec<Tool> {
             description: "Studio's scene and sound buttons: copy_scene (a copy of scene, made current), move_source (source one place: direction 1 in front, -1 behind), add_sound (input computer, microphone (id from list_audio_devices, \"\" the default) or file (a WAV path) to scene), remove_sound / share_sound (sound number from studio_scenes, shared true for the sounds in every scene; share moves it between every scene and this scene only), sound_volume (volume 0-2, muted).",
             schema: obj(
                 json!({
-                    "action": {"type": "string", "enum": ["copy_scene", "move_source", "add_sound", "remove_sound", "share_sound", "sound_volume"]},
+                    "action": {"type": "string", "enum": ["copy_scene", "move_source", "add_sound", "remove_sound", "share_sound", "sound_volume"], "description": "Which Studio button (the tool's description says what each one needs)."},
                     "scene": n("Scene number from studio_scenes (default the current one)."),
                     "source": n("move_source: the source's number."), "direction": n("move_source: 1 in front, -1 behind."),
-                    "input": {"type": "string", "enum": ["computer", "microphone", "file"]}, "id": s("add_sound microphone: its id."), "path": s("add_sound file: a WAV file."),
+                    "input": {"type": "string", "enum": ["computer", "microphone", "file"], "description": "add_sound: the computer's sound, a microphone or a WAV file."}, "id": s("add_sound microphone: its id."), "path": s("add_sound file: a WAV file."),
                     "sound": n("The sound's number."), "shared": {"type": "boolean", "description": "The sound is one of those in every scene."},
-                    "volume": n("sound_volume: 0-2."), "muted": {"type": "boolean"}
+                    "volume": n("sound_volume: 0-2 (1 is as recorded)."), "muted": {"type": "boolean", "description": "sound_volume: silence it (true) or not."}
                 }),
                 &["action"],
             ),
@@ -429,10 +429,10 @@ mod tests {
     #[test]
     fn app_command_checks_before_it_reaches_the_window() {
         let mut w = ws();
-        assert!(w.call("app_command", &json!({"command": "nope", "start": false})).unwrap_err().contains("unknown command"));
+        assert!(w.call("app_command", &json!({"command": "nope", "start": false})).unwrap_err().contains("list_commands"));
         assert!(w.call("app_command", &json!({"command": "capture_fixed_size", "start": false})).unwrap_err().contains("WIDTHxHEIGHT"));
         assert!(w.call("app_command", &json!({"command": "after_copy", "start": false})).unwrap_err().contains("set_setting"));
-        assert_eq!(w.call("app_command", &json!({})).unwrap_err(), "missing command");
+        assert_eq!(w.call("app_command", &json!({})).unwrap_err(), "app_command needs \"command\": The command's id from list_commands (only those it marks window: true; the others have their own tool or set_setting key, which list_commands names).");
         assert!(w.call("app_command", &json!({"command": "studio_ink", "start": false})).unwrap_err().contains("only for the person"));
     }
 
@@ -502,7 +502,8 @@ mod tests {
         txt(w.call("studio_edit", &json!({"action": "add_sound", "input": "microphone", "id": "test-mic"})));
         assert_eq!(w.settings().studio.scenes[1].sounds.len(), own + 1);
         assert!(w.call("studio_edit", &json!({"action": "add_sound", "input": "microphone", "id": "test-mic"})).unwrap_err().contains("already"));
-        assert!(txt(w.call("studio_edit", &json!({"action": "sound_volume", "sound": own, "volume": 5, "muted": true}))).contains("volume 2.00, muted"));
+        assert!(w.call("studio_edit", &json!({"action": "sound_volume", "sound": own, "volume": 5})).unwrap_err().contains("from 0 to 2"), "a volume past the limit is refused, naming it");
+        assert!(txt(w.call("studio_edit", &json!({"action": "sound_volume", "sound": own, "volume": 2, "muted": true}))).contains("volume 2.00, muted"));
         txt(w.call("studio_edit", &json!({"action": "remove_sound", "sound": own})));
         assert_eq!(w.settings().studio.scenes[1].sounds.len(), own);
         assert!(w.call("studio_edit", &json!({"action": "copy_scene", "scene": 9})).unwrap_err().contains("no scene 9"));
