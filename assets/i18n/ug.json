@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "باسقۇچلارنى خاتىرىلەش: ھەر بىر چېكىش نومۇرلۇق رەسىم ئالىدۇ.",
   "Removed from Recent (it was never saved).": "«يېقىنقى»دىن چىقىرىۋېتىلدى (ئۇ ھەرگىز ساقلانمىغان).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "ئۈلگە رەسىم يۈكلەندى. سول تەرەپتىن قورال تاللاڭ ۋە ئۇنىڭ ئۈستىگە سىزىڭ.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster ۋەزىپە بالدىقى بۇلۇڭىدا ئىجرا بولۇشنى داۋاملاشتۇرىدۇ. چىقىش ئۈچۈن سىنبەلگىسىنى ئوڭ چېكىڭ.",
   "That GIF has no frames.": "بۇ GIF دا كادىر يوق.",
   "There's no picture on the clipboard.": "چاپلاش تاختىسىدا رەسىم يوق.",
   "There's nothing to put in a guide yet.": "قوللانمىغا قويىدىغان ھېچنېمە تېخى يوق.",
@@ -961,8 +960,6 @@
   "Quit": "چىقىش",
   "Quit Snagster": "Snagster دىن چىقىش",
   "Export {n} pictures": "{n} سۈرەتنى چىقىرىش",
-  "Snagster keeps running in the menu bar.": "Snagster تىزىملىك بالدىقىدا ئىجرا بولۇشنى داۋاملاشتۇرىدۇ.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster سىستېما تەخسىسىدە ئىجرا بولۇشنى داۋاملاشتۇرىدۇ. چىقىش ئۈچۈن سىنبەلگىسىنى ئوڭ چېكىڭ.",
   "Menu bar icon": "تىزىملىك بالدىقى سىنبەلگىسى",
   "Tray icon": "سىستېما تەخسىسى سىنبەلگىسى",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Snagster سىنبەلگىسىنى تىزىملىك بالدىقىدا كۆرسىتىش (چېكىش: سۈرەتكە ئېلىش تاختىسى، ئوڭ چېكىش: تېز تىزىملىك)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "بۇ كۆرۈنۈشتە ئاۋاز يوق: كومپيۇتېر ئاۋازى، پروگرامما، مىكروفون ياكى ئاۋاز ھۆججىتى قوشۇڭ.",
   "Mute Computer sound": "كومپيۇتېر ئاۋازىنى ئۈنسىز قىلىش",
   "Open {pane} settings": "{pane} تەڭشەكلىرىنى ئېچىش",
-  "No program with a window is open right now. Open one, and it shows up here.": "ھازىر كۆزنىكى بار ھېچقانداق پروگرامما ئېچىلمىغان. بىرىنى ئېچىڭ، ئۇ بۇ يەردە كۆرۈنىدۇ."
+  "No program with a window is open right now. Open one, and it shows up here.": "ھازىر كۆزنىكى بار ھېچقانداق پروگرامما ئېچىلمىغان. بىرىنى ئېچىڭ، ئۇ بۇ يەردە كۆرۈنىدۇ.",
+  "Snagster is still running": "Snagster يەنىلا ئىجرا بولۇۋاتىدۇ",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "تۇتۇش تېزلەتمىلىرىڭىز ئىشلەۋەرسۇن دەپ Snagster ۋەزىپە بالدىقىنىڭ بۇلۇڭىدا قالىدۇ. چېكىنىش ئۈچۈن سىنبەلگىسىنى ئوڭ چېكىپ {item} نى تاللاڭ. بۇنى تەڭشەكلەردە ئۆزگەرتەلەيسىز.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "تۇتۇش تېزلەتمىلىرىڭىز ئىشلەۋەرسۇن دەپ Snagster تىزىملىك بالدىقىدا قالىدۇ. تاقاش ئۈچۈن سىنبەلگىسىنى چېكىپ {item} نى تاللاڭ. بۇنى تەڭشەكلەردە ئۆزگەرتەلەيسىز.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "تۇتۇش تېزلەتمىلىرىڭىز ئىشلەۋەرسۇن دەپ Snagster سىستېما تەخسىسىدە قالىدۇ. تاقاش ئۈچۈن سىنبەلگىسىنى ئوڭ چېكىپ {item} نى تاللاڭ. بۇنى تەڭشەكلەردە ئۆزگەرتەلەيسىز.",
+  "Keep running": "ئىجرا بولۇۋەرسۇن",
+  "Always exit": "ھەمىشە چېكىن",
+  "Always quit": "ھەمىشە تاقا",
+  "To exit, right-click the icon and choose {item}.": "چېكىنىش ئۈچۈن سىنبەلگىنى ئوڭ چېكىپ {item} نى تاللاڭ.",
+  "To quit, click the icon and choose {item}.": "تاقاش ئۈچۈن سىنبەلگىنى چېكىپ {item} نى تاللاڭ.",
+  "To quit, right-click the icon and choose {item}.": "تاقاش ئۈچۈن سىنبەلگىنى ئوڭ چېكىپ {item} نى تاللاڭ."
  }
 }

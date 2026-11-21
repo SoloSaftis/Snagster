@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Schrëtt ginn opgeholl: All Klick mécht e nummeréiert Bild.",
   "Removed from Recent (it was never saved).": "Aus Rezent erausgeholl (et gouf ni gespäichert).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Beispillbild gelueden. Wiel lénks e Wierkzeug a mol drop.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster leeft weider an der Ecke vun der Taskbar. Klick mat der rietser Maustast op d'Ikon fir ze verloossen.",
   "That GIF has no frames.": "Deen GIF huet keng Frames.",
   "There's no picture on the clipboard.": "Et ass kee Bild an der Zwëschenoflag.",
   "There's nothing to put in a guide yet.": "Et gëtt nach näischt fir an e Guide ze setzen.",
@@ -961,8 +960,6 @@
   "Quit": "Zoumaachen",
   "Quit Snagster": "Snagster zoumaachen",
   "Export {n} pictures": "{n} Biller exportéieren",
-  "Snagster keeps running in the menu bar.": "Snagster leeft weider an der Menüleescht.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster leeft weider am Systemtray. Klick mat der rietser Maustast op d'Ikon fir ze verloossen.",
   "Menu bar icon": "Symbol an der Menüleescht",
   "Tray icon": "Systemtray-Symbol",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "D'Snagster-Symbol an der Menüleescht weisen (Klick: Erfaassungspanel, Rietsklick: séiere Menü)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Keen Toun an dëser Szen: de Computerton, e Programm, e Mikro oder eng Tounfichier derbäisetzen.",
   "Mute Computer sound": "Computerton stumm schalten",
   "Open {pane} settings": "Astellunge fir {pane} opmaachen",
-  "No program with a window is open right now. Open one, and it shows up here.": "Am Moment ass kee Programm mat enger Fënster op. Maach een op, da gesäis du en hei."
+  "No program with a window is open right now. Open one, and it shows up here.": "Am Moment ass kee Programm mat enger Fënster op. Maach een op, da gesäis du en hei.",
+  "Snagster is still running": "Snagster leeft nach",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster bleift am Eck vun der Taskbar, sou datt Är Opnam-Tastekombinatioune weider funktionéieren. Fir opzehalen, klickt mat der rietser Maustast op säin Icon a wielt „{item}“. Dir kënnt dat an den Astellungen änneren.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster bleift an der Menüleescht, sou datt Är Opnam-Tastekombinatioune weider funktionéieren. Fir opzehalen, klickt op säin Icon a wielt „{item}“. Dir kënnt dat an den Astellungen änneren.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster bleift am Systembereich, sou datt Är Opnam-Tastekombinatioune weider funktionéieren. Fir opzehalen, klickt mat der rietser Maustast op säin Icon a wielt „{item}“. Dir kënnt dat an den Astellungen änneren.",
+  "Keep running": "Weiderlafe loossen",
+  "Always exit": "Ëmmer ophalen",
+  "Always quit": "Ëmmer ophalen",
+  "To exit, right-click the icon and choose {item}.": "Fir opzehalen, mat der rietser Maustast op den Icon klicken a „{item}“ wielen.",
+  "To quit, click the icon and choose {item}.": "Fir opzehalen, op den Icon klicken a „{item}“ wielen.",
+  "To quit, right-click the icon and choose {item}.": "Fir opzehalen, mat der rietser Maustast op den Icon klicken a „{item}“ wielen."
  }
 }

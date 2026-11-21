@@ -588,6 +588,8 @@ pub struct Settings {
     // Tray and capture panel
     pub tray_icon: bool,
     pub close_to_tray: bool,
+    /// The one-time notice "Snagster is still running" was shown (the first close to the tray).
+    pub close_hint_seen: bool,
     pub panel: PanelSettings,
     // Round 5
     pub override_hotkeys: bool,
@@ -706,6 +708,7 @@ impl Default for Settings {
             show_tray: true,
             tray_icon: true,
             close_to_tray: crate::platform::close_to_tray_by_default(),
+            close_hint_seen: false,
             panel: PanelSettings::default(),
             override_hotkeys: true,
             start_mode: StartMode::Editor,

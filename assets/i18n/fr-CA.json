@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Enregistrement des étapes : chaque clic prend une image numérotée.",
   "Removed from Recent (it was never saved).": "Retiré de Récentes (jamais enregistré).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Image d'exemple chargée. Choisissez un outil à gauche et dessinez dessus.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster continue de s'exécuter dans la zone de notification de la barre des tâches. Cliquez avec le bouton droit sur son icône pour quitter.",
   "That GIF has no frames.": "Ce GIF n'a aucune image.",
   "There's no picture on the clipboard.": "Il n'y a pas d'image dans le presse-papiers.",
   "There's nothing to put in a guide yet.": "Il n'y a encore rien à mettre dans un guide.",
@@ -961,8 +960,6 @@
   "Quit": "Quitter",
   "Quit Snagster": "Quitter Snagster",
   "Export {n} pictures": "Exporter {n} images",
-  "Snagster keeps running in the menu bar.": "Snagster continue de s'exécuter dans la barre des menus.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster continue de s'exécuter dans la zone de notification. Cliquez avec le bouton droit sur son icône pour quitter.",
   "Menu bar icon": "Icône de la barre des menus",
   "Tray icon": "Icône de la zone de notification",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Afficher l'icône de Snagster dans la barre des menus (clic : panneau de capture, clic droit : menu rapide)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Aucun son dans cette scène : ajoutez le son de l'ordinateur, un programme, un microphone ou un fichier son.",
   "Mute Computer sound": "Couper le son de l'ordinateur",
   "Open {pane} settings": "Ouvrir les réglages « {pane} »",
-  "No program with a window is open right now. Open one, and it shows up here.": "Aucun programme avec une fenêtre n'est ouvert en ce moment. Ouvrez-en un : il apparaîtra ici."
+  "No program with a window is open right now. Open one, and it shows up here.": "Aucun programme avec une fenêtre n'est ouvert en ce moment. Ouvrez-en un : il apparaîtra ici.",
+  "Snagster is still running": "Snagster est toujours ouvert",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster reste dans le coin de la barre des tâches pour que vos raccourcis de capture fonctionnent toujours. Pour quitter, faites un clic droit sur son icône et choisissez « {item} ». Vous pouvez changer cela dans les Paramètres.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster reste dans la barre des menus pour que vos raccourcis de capture fonctionnent toujours. Pour quitter, cliquez sur son icône et choisissez « {item} ». Vous pouvez changer cela dans les Paramètres.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster reste dans la zone de notification pour que vos raccourcis de capture fonctionnent toujours. Pour quitter, faites un clic droit sur son icône et choisissez « {item} ». Vous pouvez changer cela dans les Paramètres.",
+  "Keep running": "Laisser ouvert",
+  "Always exit": "Toujours quitter",
+  "Always quit": "Toujours quitter",
+  "To exit, right-click the icon and choose {item}.": "Pour quitter, faites un clic droit sur l'icône et choisissez « {item} ».",
+  "To quit, click the icon and choose {item}.": "Pour quitter, cliquez sur l'icône et choisissez « {item} ».",
+  "To quit, right-click the icon and choose {item}.": "Pour quitter, faites un clic droit sur l'icône et choisissez « {item} »."
  }
 }

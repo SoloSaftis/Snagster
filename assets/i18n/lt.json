@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Veiksmų įrašymas: kiekvienas spustelėjimas sukuria sunumeruotą paveikslėlį.",
   "Removed from Recent (it was never saved).": "Pašalinta iš „Naujausių“ (niekada nebuvo išsaugota).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Pavyzdinis paveikslėlis įkeltas. Kairėje pasirinkite įrankį ir piešite ant jo.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster toliau veikia užduočių juostos kampe. Spustelėkite jo piktogramą dešiniuoju pelės klavišu, kad išeitumėte.",
   "That GIF has no frames.": "Šis GIF neturi kadrų.",
   "There's no picture on the clipboard.": "Iškarpinėje nėra paveikslėlio.",
   "There's nothing to put in a guide yet.": "Į vadovą dar nėra ką dėti.",
@@ -961,8 +960,6 @@
   "Quit": "Išeiti",
   "Quit Snagster": "Išeiti iš Snagster",
   "Export {n} pictures": "Eksportuoti paveikslėlius: {n}",
-  "Snagster keeps running in the menu bar.": "Snagster toliau veikia meniu juostoje.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster toliau veikia sistemos dėkle. Spustelėkite jo piktogramą dešiniuoju pelės klavišu, kad išeitumėte.",
   "Menu bar icon": "Meniu juostos piktograma",
   "Tray icon": "Dėklo piktograma",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Rodyti Snagster piktogramą meniu juostoje (spustelėjimas: fiksavimo skydelis, dešinysis spustelėjimas: greitasis meniu)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Šioje scenoje nėra garso: pridėkite kompiuterio garsą, programą, mikrofoną arba garso failą.",
   "Mute Computer sound": "Nutildyti kompiuterio garsą",
   "Open {pane} settings": "Atidaryti „{pane}“ nustatymus",
-  "No program with a window is open right now. Open one, and it shows up here.": "Šiuo metu neatidaryta jokia programa su langu. Atidarykite kurią nors – ji atsiras čia."
+  "No program with a window is open right now. Open one, and it shows up here.": "Šiuo metu neatidaryta jokia programa su langu. Atidarykite kurią nors – ji atsiras čia.",
+  "Snagster is still running": "Snagster vis dar veikia",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster lieka užduočių juostos kampe, kad fiksavimo spartieji klavišai veiktų. Norėdami išeiti, dešiniuoju pelės mygtuku spustelėkite piktogramą ir pasirinkite „{item}“. Tai galite pakeisti nustatymuose.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster lieka meniu juostoje, kad fiksavimo spartieji klavišai veiktų. Norėdami išeiti, spustelėkite piktogramą ir pasirinkite „{item}“. Tai galite pakeisti nustatymuose.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster lieka sistemos dėkle, kad fiksavimo spartieji klavišai veiktų. Norėdami išeiti, dešiniuoju pelės mygtuku spustelėkite piktogramą ir pasirinkite „{item}“. Tai galite pakeisti nustatymuose.",
+  "Keep running": "Toliau veikti",
+  "Always exit": "Visada išeiti",
+  "Always quit": "Visada išeiti",
+  "To exit, right-click the icon and choose {item}.": "Norėdami išeiti, dešiniuoju mygtuku spustelėkite piktogramą ir pasirinkite „{item}“.",
+  "To quit, click the icon and choose {item}.": "Norėdami išeiti, spustelėkite piktogramą ir pasirinkite „{item}“.",
+  "To quit, right-click the icon and choose {item}.": "Norėdami išeiti, dešiniuoju mygtuku spustelėkite piktogramą ir pasirinkite „{item}“."
  }
 }

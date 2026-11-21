@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Spelar in steg: varje klick tar en numrerad bild.",
   "Removed from Recent (it was never saved).": "Borttagen från Senaste (den sparades aldrig).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Exempelbild inläst. Välj ett verktyg till vänster och rita på den.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster fortsätter köra i hörnet av aktivitetsfältet. Högerklicka på ikonen för att avsluta.",
   "That GIF has no frames.": "Den GIF:en har inga bildrutor.",
   "There's no picture on the clipboard.": "Det finns ingen bild i Urklipp.",
   "There's nothing to put in a guide yet.": "Det finns inget att lägga i en guide än.",
@@ -961,8 +960,6 @@
   "Quit": "Avsluta",
   "Quit Snagster": "Avsluta Snagster",
   "Export {n} pictures": "Exportera {n} bilder",
-  "Snagster keeps running in the menu bar.": "Snagster fortsätter köra i menyraden.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster fortsätter köra i systemfältet. Högerklicka på ikonen för att avsluta.",
   "Menu bar icon": "Ikon i menyraden",
   "Tray icon": "Ikon i systemfältet",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Visa Snagsters ikon i menyraden (klick: fångstpanel, högerklick: snabbmeny)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Inget ljud i den här scenen: lägg till datorljudet, ett program, en mikrofon eller en ljudfil.",
   "Mute Computer sound": "Stäng av Datorljud",
   "Open {pane} settings": "Öppna inställningar för {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Inget program med ett fönster är öppet just nu. Öppna ett, så dyker det upp här."
+  "No program with a window is open right now. Open one, and it shows up here.": "Inget program med ett fönster är öppet just nu. Öppna ett, så dyker det upp här.",
+  "Snagster is still running": "Snagster körs fortfarande",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster stannar i hörnet av aktivitetsfältet så att dina kortkommandon för skärmbilder fortsätter att fungera. Avsluta genom att högerklicka på ikonen och välja {item}. Du kan ändra detta i Inställningar.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster stannar i menyraden så att dina kortkommandon för skärmbilder fortsätter att fungera. Avsluta genom att klicka på ikonen och välja {item}. Du kan ändra detta i Inställningar.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster stannar i systemfältet så att dina kortkommandon för skärmbilder fortsätter att fungera. Avsluta genom att högerklicka på ikonen och välja {item}. Du kan ändra detta i Inställningar.",
+  "Keep running": "Fortsätt köra",
+  "Always exit": "Avsluta alltid",
+  "Always quit": "Avsluta alltid",
+  "To exit, right-click the icon and choose {item}.": "Avsluta genom att högerklicka på ikonen och välja {item}.",
+  "To quit, click the icon and choose {item}.": "Avsluta genom att klicka på ikonen och välja {item}.",
+  "To quit, right-click the icon and choose {item}.": "Avsluta genom att högerklicka på ikonen och välja {item}."
  }
 }

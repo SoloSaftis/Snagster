@@ -524,6 +524,7 @@ pub const SETTINGS: &[SettingKey] = &[
     k("show_tray", Kind::Bool, "Show the Recent pictures row."),
     ko("tray_icon", Kind::Bool, "An icon in the taskbar corner."),
     k("close_to_tray", Kind::Bool, "Closing the window keeps Snagster in the taskbar corner."),
+    SettingKey { key: "close_hint_seen", kind: Kind::Bool, who: Who::Person, help: "The one-time notice that Snagster keeps running after its window closes was shown." },
     k("panel.tab", Kind::Int(0, 2), "The capture panel's tab: 0 image, 1 video, 2 more."),
     k("panel.selection", Kind::Choice(&["Region", "Window", "Screen", "AllScreens", "Scrolling", "Panorama", "Menu", "Circle", "Freehand", "Polygon", "Star", "Heart", "FixedSize", "Multi"]), "The capture panel's picture selection."),
     k("panel.video_selection", Kind::Choice(&["Region", "Window", "Screen", "AllScreens", "Scrolling", "Panorama", "Menu", "Circle", "Freehand", "Polygon", "Star", "Heart", "FixedSize", "Multi"]), "The capture panel's video selection."),

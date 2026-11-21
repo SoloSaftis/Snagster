@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "पावलां रेकॉर्ड जातात: दर क्लिक एक क्रमांक आशिल्लें चित्र घेता.",
   "Removed from Recent (it was never saved).": "अलीकडील मदल्यान काडलें (तें केन्नाच सेव्ह केल्लें ना).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "नमुनो चित्र लोड जालो. दावे वटेन एक साधन निवडात आनी तातूंत रेखाटात.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster टास्कबारच्या कोपऱ्यांत चालू रावता. भायर सरपाक ताच्या आयकॉनार राईट-क्लिक करात.",
   "That GIF has no frames.": "त्या GIF त फ्रेम ना.",
   "There's no picture on the clipboard.": "क्लिपबोर्डार चित्र ना.",
   "There's nothing to put in a guide yet.": "मार्गदर्शकांत घालपाक अजून कांयच ना.",
@@ -961,8 +960,6 @@
   "Quit": "भायर सरात",
   "Quit Snagster": "Snagster सोडात",
   "Export {n} pictures": "{n} चित्रां एक्स्पोर्ट करात",
-  "Snagster keeps running in the menu bar.": "Snagster मेनू बारांत चालू रावता.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster सिस्टम ट्रेंत चालू रावता. भायर सरपाक ताच्या आयकॉनार राईट-क्लिक करात.",
   "Menu bar icon": "मेनू बार आयकॉन",
   "Tray icon": "ट्रे आयकॉन",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Snagster चो आयकॉन मेनू बारांत दाखयात (क्लिक: कॅप्चर पॅनेल, राईट-क्लिक: बेगीन मेनू)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "ह्या दृश्यांत आवाज ना: कॉम्प्युटराचो आवाज, एक प्रोग्राम, एक मायक्रोफोन वा एक आवाज फायल जोडात.",
   "Mute Computer sound": "कॉम्प्युटराचो आवाज म्यूट करात",
   "Open {pane} settings": "{pane} सेटिंग्स उगडात",
-  "No program with a window is open right now. Open one, and it shows up here.": "आतां विंडो आशिल्लो खंयचोच प्रोग्राम उगडो ना. एक उगडात, मागीर तो हांगा दिसतलो."
+  "No program with a window is open right now. Open one, and it shows up here.": "आतां विंडो आशिल्लो खंयचोच प्रोग्राम उगडो ना. एक उगडात, मागीर तो हांगा दिसतलो.",
+  "Snagster is still running": "Snagster अजून चालू आसा",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "तुमचे कॅप्चर शॉर्टकट काम करपाक Snagster टास्कबाराच्या कोनशाक उरता. भायर सरपाक, ताच्या आयकॉनाचेर उजवें-क्लिक करून {item} वेंचात. हें तुमी सेटिंगांत बदलूं येता.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "तुमचे कॅप्चर शॉर्टकट काम करपाक Snagster मेनू बाराचेर उरता. बंद करपाक, ताच्या आयकॉनाचेर क्लिक करून {item} वेंचात. हें तुमी सेटिंगांत बदलूं येता.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "तुमचे कॅप्चर शॉर्टकट काम करपाक Snagster ट्रेंत उरता. बंद करपाक, ताच्या आयकॉनाचेर उजवें-क्लिक करून {item} वेंचात. हें तुमी सेटिंगांत बदलूं येता.",
+  "Keep running": "चालू दवरात",
+  "Always exit": "सदांच भायर सरात",
+  "Always quit": "सदांच बंद करात",
+  "To exit, right-click the icon and choose {item}.": "भायर सरपाक, आयकॉनाचेर उजवें-क्लिक करून {item} वेंचात.",
+  "To quit, click the icon and choose {item}.": "बंद करपाक, आयकॉनाचेर क्लिक करून {item} वेंचात.",
+  "To quit, right-click the icon and choose {item}.": "बंद करपाक, आयकॉनाचेर उजवें-क्लिक करून {item} वेंचात."
  }
 }

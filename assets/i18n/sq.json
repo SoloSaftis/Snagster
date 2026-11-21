@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Po regjistrohen hapat: çdo klikim merr një figurë të numëruar.",
   "Removed from Recent (it was never saved).": "U hoq nga Të fundit (nuk ishte ruajtur kurrë).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "U ngarkua figura shembull. Zgjidhni një mjet në të majtë dhe vizatoni mbi të.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster vazhdon të punojë në qoshen e shiritit të detyrave. Klikoni me të djathtën ikonën e tij për të dalë.",
   "That GIF has no frames.": "Ai GIF nuk ka kuadro.",
   "There's no picture on the clipboard.": "Nuk ka figurë në kujtesën e fragmenteve.",
   "There's nothing to put in a guide yet.": "Ende nuk ka asgjë për ta futur në udhëzues.",
@@ -961,8 +960,6 @@
   "Quit": "Dil",
   "Quit Snagster": "Dil nga Snagster",
   "Export {n} pictures": "Eksporto {n} imazhe",
-  "Snagster keeps running in the menu bar.": "Snagster vazhdon të punojë në shiritin e menysë.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster vazhdon të punojë në zonën e njoftimeve. Klikoni me të djathtën ikonën e tij për të dalë.",
   "Menu bar icon": "Ikona në shiritin e menysë",
   "Tray icon": "Ikona në zonën e njoftimeve",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Shfaq ikonën e Snagster në shiritin e menysë (klik: paneli i kapjes, klik i djathtë: menyja e shpejtë)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Nuk ka zë në këtë skenë: shto zërin e kompjuterit, një program, një mikrofon ose një skedar zanor.",
   "Mute Computer sound": "Hesht Zërin e kompjuterit",
   "Open {pane} settings": "Hap cilësimet për «{pane}»",
-  "No program with a window is open right now. Open one, and it shows up here.": "Asnjë program me dritare nuk është i hapur tani. Hap një, dhe do të shfaqet këtu."
+  "No program with a window is open right now. Open one, and it shows up here.": "Asnjë program me dritare nuk është i hapur tani. Hap një, dhe do të shfaqet këtu.",
+  "Snagster is still running": "Snagster po punon ende",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster mbetet në cep të shiritit të detyrave që shkurtoret e kapjes të vazhdojnë të punojnë. Për të dalë, klikoni me të djathtën ikonën e tij dhe zgjidhni {item}. Mund ta ndryshoni këtë te Cilësimet.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster mbetet në shiritin e menysë që shkurtoret e kapjes të vazhdojnë të punojnë. Për ta mbyllur, klikoni ikonën e tij dhe zgjidhni {item}. Mund ta ndryshoni këtë te Cilësimet.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster mbetet në tabakanë e sistemit që shkurtoret e kapjes të vazhdojnë të punojnë. Për ta mbyllur, klikoni me të djathtën ikonën e tij dhe zgjidhni {item}. Mund ta ndryshoni këtë te Cilësimet.",
+  "Keep running": "Lëre të punojë",
+  "Always exit": "Dil gjithmonë",
+  "Always quit": "Mbyll gjithmonë",
+  "To exit, right-click the icon and choose {item}.": "Për të dalë, klikoni me të djathtën ikonën dhe zgjidhni {item}.",
+  "To quit, click the icon and choose {item}.": "Për ta mbyllur, klikoni ikonën dhe zgjidhni {item}.",
+  "To quit, right-click the icon and choose {item}.": "Për ta mbyllur, klikoni me të djathtën ikonën dhe zgjidhni {item}."
  }
 }

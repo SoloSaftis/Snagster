@@ -191,7 +191,7 @@ fn main() -> eframe::Result {
             }
         } else if a == "--view" {
             // What --screenshot shows: studio, settings-ai, settings-editor, settings-general, library, language,
-            // new-image, record, welcome, or lang:<code>; light:<view> or dark:<view> in that palette.
+            // new-image, still-running, record, welcome, or lang:<code>; light:<view> or dark:<view> in that palette.
             if let (Some(v), Ok(mut slot)) = (args.next(), app::SCREENSHOT_VIEW.lock()) {
                 *slot = v;
             }

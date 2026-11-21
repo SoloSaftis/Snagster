@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Merakam langkah: setiap klik mengambil gambar bernombor.",
   "Removed from Recent (it was never saved).": "Dialih keluar daripada Terkini (ia tidak pernah disimpan).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Gambar sampel dimuatkan. Pilih alat di sebelah kiri dan lukis padanya.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster terus berjalan di sudut bar tugas. Klik kanan ikonnya untuk keluar.",
   "That GIF has no frames.": "GIF itu tiada bingkai.",
   "There's no picture on the clipboard.": "Tiada gambar pada papan keratan.",
   "There's nothing to put in a guide yet.": "Belum ada apa-apa untuk dimasukkan ke dalam panduan.",
@@ -961,8 +960,6 @@
   "Quit": "Keluar",
   "Quit Snagster": "Keluar dari Snagster",
   "Export {n} pictures": "Eksport {n} gambar",
-  "Snagster keeps running in the menu bar.": "Snagster terus berjalan di bar menu.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster terus berjalan di dulang sistem. Klik kanan ikonnya untuk keluar.",
   "Menu bar icon": "Ikon bar menu",
   "Tray icon": "Ikon dulang",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Tunjuk ikon Snagster di bar menu (klik: panel tangkapan, klik kanan: menu pantas)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Tiada bunyi dalam babak ini: tambah bunyi komputer, program, mikrofon atau fail bunyi.",
   "Mute Computer sound": "Senyapkan bunyi komputer",
   "Open {pane} settings": "Buka seting {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Tiada program bertetingkap yang terbuka sekarang. Buka satu, dan ia akan muncul di sini."
+  "No program with a window is open right now. Open one, and it shows up here.": "Tiada program bertetingkap yang terbuka sekarang. Buka satu, dan ia akan muncul di sini.",
+  "Snagster is still running": "Snagster masih berjalan",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster kekal di penjuru bar tugas supaya pintasan tangkapan anda terus berfungsi. Untuk keluar, klik kanan ikonnya dan pilih {item}. Anda boleh mengubahnya dalam Tetapan.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster kekal di bar menu supaya pintasan tangkapan anda terus berfungsi. Untuk keluar, klik ikonnya dan pilih {item}. Anda boleh mengubahnya dalam Tetapan.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster kekal di dulang sistem supaya pintasan tangkapan anda terus berfungsi. Untuk keluar, klik kanan ikonnya dan pilih {item}. Anda boleh mengubahnya dalam Tetapan.",
+  "Keep running": "Terus berjalan",
+  "Always exit": "Sentiasa keluar",
+  "Always quit": "Sentiasa keluar",
+  "To exit, right-click the icon and choose {item}.": "Untuk keluar, klik kanan ikon dan pilih {item}.",
+  "To quit, click the icon and choose {item}.": "Untuk keluar, klik ikon dan pilih {item}.",
+  "To quit, right-click the icon and choose {item}.": "Untuk keluar, klik kanan ikon dan pilih {item}."
  }
 }

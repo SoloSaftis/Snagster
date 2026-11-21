@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Reġistrazzjoni tal-passi: kull klikk jieħu ritratt bin-numru.",
   "Removed from Recent (it was never saved).": "Tneħħa minn Reċenti (qatt ma nżamm).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Ir-ritratt tal-kampjun ġie mgħobbi. Agħżel għodda fuq ix-xellug u pinġi fuqu.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster ikompli jaħdem fil-kantuniera tal-bar tal-kompiti. Ikklikkja bil-lemin fuq l-ikona tiegħu biex toħroġ.",
   "That GIF has no frames.": "Dak il-GIF m'għandux frejms.",
   "There's no picture on the clipboard.": "M'hemm l-ebda ritratt fuq il-clipboard.",
   "There's nothing to put in a guide yet.": "M'hemm xejn x'tpoġġi f'gwida għadu.",
@@ -961,8 +960,6 @@
   "Quit": "Oħroġ",
   "Quit Snagster": "Oħroġ minn Snagster",
   "Export {n} pictures": "Esporta {n} immaġini",
-  "Snagster keeps running in the menu bar.": "Snagster ikompli jaħdem fil-menu bar.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster ikompli jaħdem fit-tray tas-sistema. Ikklikkja bil-lemin fuq l-ikona tiegħu biex toħroġ.",
   "Menu bar icon": "Ikona tal-menu bar",
   "Tray icon": "Ikona tat-tray",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Uri l-ikona ta' Snagster fil-menu bar (klikk: pannell tal-qbid, klikk tal-lemin: menu mgħaġġel)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "M'hemmx ħoss f'din ix-xena: żid il-ħoss tal-kompjuter, programm, mikrofonu jew fajl tal-ħoss.",
   "Mute Computer sound": "Itfi l-ħoss tal-kompjuter",
   "Open {pane} settings": "Iftaħ is-settings ta' {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "L-ebda programm b'tieqa mhu miftuħ bħalissa. Iftaħ wieħed, u jidher hawn."
+  "No program with a window is open right now. Open one, and it shows up here.": "L-ebda programm b'tieqa mhu miftuħ bħalissa. Iftaħ wieħed, u jidher hawn.",
+  "Snagster is still running": "Snagster għadu għaddej",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster jibqa' fil-kantuniera tat-taskbar biex ix-shortcuts tal-qbid tiegħek jibqgħu jaħdmu. Biex toħroġ, ikklikkja bil-lemin fuq l-ikona tiegħu u agħżel {item}. Tista' tibdel dan fis-Settings.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster jibqa' fil-menu bar biex ix-shortcuts tal-qbid tiegħek jibqgħu jaħdmu. Biex tagħlqu, ikklikkja fuq l-ikona tiegħu u agħżel {item}. Tista' tibdel dan fis-Settings.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster jibqa' fit-tray biex ix-shortcuts tal-qbid tiegħek jibqgħu jaħdmu. Biex tagħlqu, ikklikkja bil-lemin fuq l-ikona tiegħu u agħżel {item}. Tista' tibdel dan fis-Settings.",
+  "Keep running": "Ħallih għaddej",
+  "Always exit": "Dejjem oħroġ",
+  "Always quit": "Dejjem agħlaq",
+  "To exit, right-click the icon and choose {item}.": "Biex toħroġ, ikklikkja bil-lemin fuq l-ikona u agħżel {item}.",
+  "To quit, click the icon and choose {item}.": "Biex tagħlqu, ikklikkja fuq l-ikona u agħżel {item}.",
+  "To quit, right-click the icon and choose {item}.": "Biex tagħlqu, ikklikkja bil-lemin fuq l-ikona u agħżel {item}."
  }
 }

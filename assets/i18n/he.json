@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "הקלטת שלבים: כל לחיצה מצלמת תמונה ממוספרת.",
   "Removed from Recent (it was never saved).": "הוסר מ״אחרונות״ (הוא מעולם לא נשמר).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "תמונת הדוגמה נטענה. בחרו כלי בסרגל הכלים וציירו עליה.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster ממשיך לפעול בפינת שורת המשימות. לחצו לחיצה ימנית על הסמל שלו כדי לצאת.",
   "That GIF has no frames.": "ל-GIF הזה אין פריימים.",
   "There's no picture on the clipboard.": "אין תמונה בלוח.",
   "There's nothing to put in a guide yet.": "עדיין אין מה להכניס למדריך.",
@@ -961,8 +960,6 @@
   "Quit": "יציאה",
   "Quit Snagster": "יציאה מ-Snagster",
   "Export {n} pictures": "ייצוא {n} תמונות",
-  "Snagster keeps running in the menu bar.": "Snagster ממשיך לפעול בשורת התפריטים.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster ממשיך לפעול במגש המערכת. לחצו לחיצה ימנית על הסמל שלו כדי לצאת.",
   "Menu bar icon": "סמל בשורת התפריטים",
   "Tray icon": "סמל במגש המערכת",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "הצגת סמל Snagster בשורת התפריטים (לחיצה: חלונית צילום, לחיצה ימנית: תפריט מהיר)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "אין צליל בסצנה הזו: הוסיפו את צליל המחשב, תוכנה, מיקרופון או קובץ צליל.",
   "Mute Computer sound": "השתקת צליל המחשב",
   "Open {pane} settings": "פתיחת ההגדרות של {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "אין כרגע תוכנה פתוחה עם חלון. פתחו אחת, והיא תופיע כאן."
+  "No program with a window is open right now. Open one, and it shows up here.": "אין כרגע תוכנה פתוחה עם חלון. פתחו אחת, והיא תופיע כאן.",
+  "Snagster is still running": "Snagster עדיין פועל",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster נשאר בפינת שורת המשימות כדי שקיצורי הצילום ימשיכו לעבוד. ליציאה, לחצו לחיצה ימנית על הסמל שלו ובחרו {item}. אפשר לשנות זאת בהגדרות.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster נשאר בשורת התפריטים כדי שקיצורי הצילום ימשיכו לעבוד. ליציאה, לחצו על הסמל שלו ובחרו {item}. אפשר לשנות זאת בהגדרות.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster נשאר במגש המערכת כדי שקיצורי הצילום ימשיכו לעבוד. ליציאה, לחצו לחיצה ימנית על הסמל שלו ובחרו {item}. אפשר לשנות זאת בהגדרות.",
+  "Keep running": "להמשיך לפעול",
+  "Always exit": "תמיד לצאת",
+  "Always quit": "תמיד לצאת",
+  "To exit, right-click the icon and choose {item}.": "ליציאה, לחצו לחיצה ימנית על הסמל ובחרו {item}.",
+  "To quit, click the icon and choose {item}.": "ליציאה, לחצו על הסמל ובחרו {item}.",
+  "To quit, right-click the icon and choose {item}.": "ליציאה, לחצו לחיצה ימנית על הסמל ובחרו {item}."
  }
 }

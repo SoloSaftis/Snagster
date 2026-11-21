@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Înregistrare pași: fiecare clic face o imagine numerotată.",
   "Removed from Recent (it was never saved).": "Eliminat din Recente (nu fusese salvat niciodată).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Imaginea exemplu a fost încărcată. Alegeți o unealtă din stânga și desenați pe ea.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster rămâne activ în colțul barei de activități. Faceți clic dreapta pe pictograma lui pentru a ieși.",
   "That GIF has no frames.": "Acel GIF nu are cadre.",
   "There's no picture on the clipboard.": "Nu există nicio imagine în clipboard.",
   "There's nothing to put in a guide yet.": "Nu există încă nimic de pus într-un ghid.",
@@ -961,8 +960,6 @@
   "Quit": "Ieșire",
   "Quit Snagster": "Ieși din Snagster",
   "Export {n} pictures": "Exportă {n} imagini",
-  "Snagster keeps running in the menu bar.": "Snagster rămâne activ în bara de meniu.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster rămâne activ în zona de notificare. Faceți clic dreapta pe pictograma lui pentru a ieși.",
   "Menu bar icon": "Pictograma din bara de meniu",
   "Tray icon": "Pictograma din zona de notificare",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Afișează pictograma Snagster în bara de meniu (clic: panoul de captură, clic dreapta: meniu rapid)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Niciun sunet în această scenă: adaugă sunetul computerului, un program, un microfon sau un fișier de sunet.",
   "Mute Computer sound": "Oprește sunetul computerului",
   "Open {pane} settings": "Deschide configurările pentru {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Niciun program cu fereastră nu e deschis acum. Deschide unul, iar el apare aici."
+  "No program with a window is open right now. Open one, and it shows up here.": "Niciun program cu fereastră nu e deschis acum. Deschide unul, iar el apare aici.",
+  "Snagster is still running": "Snagster încă rulează",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster rămâne în colțul barei de activități ca scurtăturile de captură să funcționeze în continuare. Pentru ieșire, dă clic dreapta pe pictograma sa și alege {item}. Poți schimba asta în Setări.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster rămâne în bara de meniu ca scurtăturile de captură să funcționeze în continuare. Pentru a închide, dă clic pe pictograma sa și alege {item}. Poți schimba asta în Setări.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster rămâne în zona de notificare ca scurtăturile de captură să funcționeze în continuare. Pentru a închide, dă clic dreapta pe pictograma sa și alege {item}. Poți schimba asta în Setări.",
+  "Keep running": "Lasă-l să ruleze",
+  "Always exit": "Ieși mereu",
+  "Always quit": "Închide mereu",
+  "To exit, right-click the icon and choose {item}.": "Pentru ieșire, dă clic dreapta pe pictogramă și alege {item}.",
+  "To quit, click the icon and choose {item}.": "Pentru a închide, dă clic pe pictogramă și alege {item}.",
+  "To quit, right-click the icon and choose {item}.": "Pentru a închide, dă clic dreapta pe pictogramă și alege {item}."
  }
 }

@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Đang ghi các bước: mỗi lần nhấp sẽ chụp một ảnh có đánh số.",
   "Removed from Recent (it was never saved).": "Đã xóa khỏi Gần đây (ảnh chưa từng được lưu).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Đã tải ảnh mẫu. Chọn một công cụ ở bên trái rồi vẽ lên ảnh.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster tiếp tục chạy ở góc thanh tác vụ. Nhấp chuột phải vào biểu tượng của nó để thoát.",
   "That GIF has no frames.": "GIF đó không có khung hình nào.",
   "There's no picture on the clipboard.": "Không có ảnh nào trên bảng nhớ tạm.",
   "There's nothing to put in a guide yet.": "Chưa có gì để đưa vào hướng dẫn.",
@@ -961,8 +960,6 @@
   "Quit": "Thoát",
   "Quit Snagster": "Thoát Snagster",
   "Export {n} pictures": "Xuất {n} ảnh",
-  "Snagster keeps running in the menu bar.": "Snagster tiếp tục chạy trên thanh menu.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster tiếp tục chạy trong khay hệ thống. Nhấp chuột phải vào biểu tượng của nó để thoát.",
   "Menu bar icon": "Biểu tượng trên thanh menu",
   "Tray icon": "Biểu tượng trong khay hệ thống",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Hiện biểu tượng Snagster trên thanh menu (nhấp: bảng chụp, nhấp chuột phải: menu nhanh)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Cảnh này không có âm thanh: hãy thêm âm thanh máy tính, một chương trình, một micro hoặc một tệp âm thanh.",
   "Mute Computer sound": "Tắt tiếng Âm thanh máy tính",
   "Open {pane} settings": "Mở cài đặt {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Hiện không có chương trình nào có cửa sổ đang mở. Hãy mở một chương trình, nó sẽ hiện ở đây."
+  "No program with a window is open right now. Open one, and it shows up here.": "Hiện không có chương trình nào có cửa sổ đang mở. Hãy mở một chương trình, nó sẽ hiện ở đây.",
+  "Snagster is still running": "Snagster vẫn đang chạy",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster ở lại góc thanh tác vụ để các phím tắt chụp vẫn hoạt động. Để thoát, nhấp chuột phải vào biểu tượng của nó và chọn {item}. Bạn có thể đổi điều này trong Cài đặt.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster ở lại thanh menu để các phím tắt chụp vẫn hoạt động. Để thoát, nhấp vào biểu tượng của nó và chọn {item}. Bạn có thể đổi điều này trong Cài đặt.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster ở lại khay hệ thống để các phím tắt chụp vẫn hoạt động. Để thoát, nhấp chuột phải vào biểu tượng của nó và chọn {item}. Bạn có thể đổi điều này trong Cài đặt.",
+  "Keep running": "Tiếp tục chạy",
+  "Always exit": "Luôn thoát",
+  "Always quit": "Luôn thoát",
+  "To exit, right-click the icon and choose {item}.": "Để thoát, nhấp chuột phải vào biểu tượng và chọn {item}.",
+  "To quit, click the icon and choose {item}.": "Để thoát, nhấp vào biểu tượng và chọn {item}.",
+  "To quit, right-click the icon and choose {item}.": "Để thoát, nhấp chuột phải vào biểu tượng và chọn {item}."
  }
 }

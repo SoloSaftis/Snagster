@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "ደረጃዎችን በመቅረጽ ላይ፦ እያንዳንዱ ጠቅታ ቁጥር ያለው ምስል ያነሳል።",
   "Removed from Recent (it was never saved).": "ከቅርብ ጊዜ ተወግዷል (ተቀምጦ አያውቅም)።",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "የናሙና ምስል ተጭኗል። በግራ በኩል መሣሪያ ይምረጡና በላዩ ላይ ይሳሉ።",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster በተግባር አሞሌው ጥግ ላይ መሥራቱን ይቀጥላል። ለመውጣት አዶውን በቀኝ ጠቅ ያድርጉ።",
   "That GIF has no frames.": "ያ GIF ምንም ፍሬም የለውም።",
   "There's no picture on the clipboard.": "በቅንጥብ ሰሌዳው ላይ ምስል የለም።",
   "There's nothing to put in a guide yet.": "ወደ መመሪያው ለማስገባት ገና ምንም የለም።",
@@ -961,8 +960,6 @@
   "Quit": "ውጣ",
   "Quit Snagster": "ከSnagster ውጣ",
   "Export {n} pictures": "{n} ሥዕሎችን ወደ ውጭ ላክ",
-  "Snagster keeps running in the menu bar.": "Snagster በምናሌ አሞሌው ላይ መሥራቱን ይቀጥላል።",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster በሲስተም ትሪው ላይ መሥራቱን ይቀጥላል። ለመውጣት አዶውን በቀኝ ጠቅ ያድርጉ።",
   "Menu bar icon": "የምናሌ አሞሌ አዶ",
   "Tray icon": "የሲስተም ትሪ አዶ",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "የSnagster አዶን በምናሌ አሞሌው ላይ አሳይ (ጠቅ ማድረግ: የቀረጻ ፓነል፣ የቀኝ ጠቅታ: ፈጣን ምናሌ)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "በዚህ ትዕይንት ውስጥ ድምፅ የለም፦ የኮምፒውተር ድምፅ፣ ፕሮግራም፣ ማይክሮፎን ወይም የድምፅ ፋይል ያክሉ።",
   "Mute Computer sound": "የኮምፒውተር ድምፅን አጥፋ",
   "Open {pane} settings": "የ{pane} ቅንብሮችን ክፈት",
-  "No program with a window is open right now. Open one, and it shows up here.": "አሁን መስኮት ያለው ፕሮግራም አልተከፈተም። አንዱን ይክፈቱ፣ እዚህ ይታያል።"
+  "No program with a window is open right now. Open one, and it shows up here.": "አሁን መስኮት ያለው ፕሮግራም አልተከፈተም። አንዱን ይክፈቱ፣ እዚህ ይታያል።",
+  "Snagster is still running": "Snagster አሁንም እየሰራ ነው",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "የቀረጻ አቋራጮችዎ እንዲሰሩ Snagster በተግባር አሞሌው ጥግ ይቆያል። ለመውጣት አዶውን በቀኝ ጠቅ አድርገው {item}ን ይምረጡ። ይህንን በቅንብሮች መቀየር ይችላሉ።",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "የቀረጻ አቋራጮችዎ እንዲሰሩ Snagster በምናሌ አሞሌው ይቆያል። ለማቆም አዶውን ጠቅ አድርገው {item}ን ይምረጡ። ይህንን በቅንብሮች መቀየር ይችላሉ።",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "የቀረጻ አቋራጮችዎ እንዲሰሩ Snagster በትሪው ይቆያል። ለማቆም አዶውን በቀኝ ጠቅ አድርገው {item}ን ይምረጡ። ይህንን በቅንብሮች መቀየር ይችላሉ።",
+  "Keep running": "መስራቱን ቀጥል",
+  "Always exit": "ሁልጊዜ ውጣ",
+  "Always quit": "ሁልጊዜ አቁም",
+  "To exit, right-click the icon and choose {item}.": "ለመውጣት አዶውን በቀኝ ጠቅ አድርገው {item}ን ይምረጡ።",
+  "To quit, click the icon and choose {item}.": "ለማቆም አዶውን ጠቅ አድርገው {item}ን ይምረጡ።",
+  "To quit, right-click the icon and choose {item}.": "ለማቆም አዶውን በቀኝ ጠቅ አድርገው {item}ን ይምረጡ።"
  }
 }

@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "ضبط مراحل: هر کلیک یک تصویر شماره‌دار می‌گیرد.",
   "Removed from Recent (it was never saved).": "از «اخیر» حذف شد (هرگز ذخیره نشده بود).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "تصویر نمونه بارگذاری شد. از سمت چپ یک ابزار انتخاب کنید و روی آن نقاشی کنید.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster در گوشه نوار وظیفه به کار خود ادامه می‌دهد. برای خروج روی نمادش راست‌کلیک کنید.",
   "That GIF has no frames.": "این GIF فریمی ندارد.",
   "There's no picture on the clipboard.": "تصویری در کلیپ‌بورد نیست.",
   "There's nothing to put in a guide yet.": "هنوز چیزی برای افزودن به راهنما نیست.",
@@ -961,8 +960,6 @@
   "Quit": "خروج",
   "Quit Snagster": "خروج از Snagster",
   "Export {n} pictures": "خروجی گرفتن از {n} تصویر",
-  "Snagster keeps running in the menu bar.": "Snagster در نوار منو به کار خود ادامه می‌دهد.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster در سینی سیستم به کار خود ادامه می‌دهد. برای خروج روی نمادش راست‌کلیک کنید.",
   "Menu bar icon": "نماد نوار منو",
   "Tray icon": "نماد سینی سیستم",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "نمایش نماد Snagster در نوار منو (کلیک: پنل ضبط، کلیک راست: منوی سریع)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "این صحنه صدایی ندارد: صدای رایانه، یک برنامه، یک میکروفون یا یک فایل صوتی اضافه کنید.",
   "Mute Computer sound": "بی‌صدا کردن صدای رایانه",
   "Open {pane} settings": "باز کردن تنظیمات {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "اکنون هیچ برنامه‌ای با پنجره باز نیست. یکی را باز کنید تا اینجا نمایش داده شود."
+  "No program with a window is open right now. Open one, and it shows up here.": "اکنون هیچ برنامه‌ای با پنجره باز نیست. یکی را باز کنید تا اینجا نمایش داده شود.",
+  "Snagster is still running": "Snagster هنوز در حال اجراست",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster در گوشهٔ نوار وظیفه می‌ماند تا میان‌برهای ثبت شما کار کنند. برای خروج، روی نمادش راست‌کلیک کنید و {item} را انتخاب کنید. می‌توانید این را در تنظیمات تغییر دهید.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster در نوار منو می‌ماند تا میان‌برهای ثبت شما کار کنند. برای بستن، روی نمادش کلیک کنید و {item} را انتخاب کنید. می‌توانید این را در تنظیمات تغییر دهید.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster در سینی سیستم می‌ماند تا میان‌برهای ثبت شما کار کنند. برای بستن، روی نمادش راست‌کلیک کنید و {item} را انتخاب کنید. می‌توانید این را در تنظیمات تغییر دهید.",
+  "Keep running": "ادامهٔ اجرا",
+  "Always exit": "همیشه خارج شو",
+  "Always quit": "همیشه ببند",
+  "To exit, right-click the icon and choose {item}.": "برای خروج، روی نماد راست‌کلیک کنید و {item} را انتخاب کنید.",
+  "To quit, click the icon and choose {item}.": "برای بستن، روی نماد کلیک کنید و {item} را انتخاب کنید.",
+  "To quit, right-click the icon and choose {item}.": "برای بستن، روی نماد راست‌کلیک کنید و {item} را انتخاب کنید."
  }
 }

@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Samme salvestatakse: iga klõps teeb nummerdatud pildi.",
   "Removed from Recent (it was never saved).": "Eemaldatud jaotisest Hiljutised (seda polnud kunagi salvestatud).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Näidispilt laaditud. Vali vasakult tööriist ja joonista sellele.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster töötab edasi tegumiriba nurgas. Sulgemiseks tee selle ikoonil paremklõps.",
   "That GIF has no frames.": "Selles GIF-is pole kaadreid.",
   "There's no picture on the clipboard.": "Lõikelaual pole pilti.",
   "There's nothing to put in a guide yet.": "Juhendisse pole veel midagi panna.",
@@ -961,8 +960,6 @@
   "Quit": "Välju",
   "Quit Snagster": "Välju Snagsterist",
   "Export {n} pictures": "Ekspordi {n} pilti",
-  "Snagster keeps running in the menu bar.": "Snagster töötab edasi menüüribal.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster töötab edasi süsteemisalves. Sulgemiseks tee selle ikoonil paremklõps.",
   "Menu bar icon": "Menüüriba ikoon",
   "Tray icon": "Süsteemisalve ikoon",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Näita Snagsteri ikooni menüüribal (klõps: jäädvustuspaneel, paremklõps: kiirmenüü)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Selles stseenis pole heli: lisa arvuti heli, programm, mikrofon või helifail.",
   "Mute Computer sound": "Vaigista Arvuti heli",
   "Open {pane} settings": "Ava jaotise „{pane}” sätted",
-  "No program with a window is open right now. Open one, and it shows up here.": "Praegu pole ükski aknaga programm avatud. Ava mõni, siis ilmub see siia."
+  "No program with a window is open right now. Open one, and it shows up here.": "Praegu pole ükski aknaga programm avatud. Ava mõni, siis ilmub see siia.",
+  "Snagster is still running": "Snagster töötab edasi",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster jääb tegumiriba nurka, et sinu jäädvustamise kiirklahvid töötaksid. Väljumiseks paremklõpsa selle ikoonil ja vali {item}. Seda saab muuta seadetes.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster jääb menüüribale, et sinu jäädvustamise kiirklahvid töötaksid. Sulgemiseks klõpsa selle ikoonil ja vali {item}. Seda saab muuta seadetes.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster jääb süsteemisalve, et sinu jäädvustamise kiirklahvid töötaksid. Sulgemiseks paremklõpsa selle ikoonil ja vali {item}. Seda saab muuta seadetes.",
+  "Keep running": "Jäta tööle",
+  "Always exit": "Välju alati",
+  "Always quit": "Sulge alati",
+  "To exit, right-click the icon and choose {item}.": "Väljumiseks paremklõpsa ikoonil ja vali {item}.",
+  "To quit, click the icon and choose {item}.": "Sulgemiseks klõpsa ikoonil ja vali {item}.",
+  "To quit, right-click the icon and choose {item}.": "Sulgemiseks paremklõpsa ikoonil ja vali {item}."
  }
 }

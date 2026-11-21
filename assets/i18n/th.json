@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "กำลังบันทึกขั้นตอน: ทุกการคลิกจะถ่ายภาพที่มีหมายเลขกำกับ",
   "Removed from Recent (it was never saved).": "ลบออกจากล่าสุดแล้ว (ยังไม่เคยบันทึก)",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "โหลดรูปภาพตัวอย่างแล้ว เลือกเครื่องมือทางซ้ายแล้ววาดลงบนรูปได้เลย",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster ทำงานอยู่ที่มุมของทาสก์บาร์ คลิกขวาที่ไอคอนเพื่อออก",
   "That GIF has no frames.": "GIF นั้นไม่มีเฟรม",
   "There's no picture on the clipboard.": "ไม่มีรูปภาพในคลิปบอร์ด",
   "There's nothing to put in a guide yet.": "ยังไม่มีอะไรให้ใส่ในคู่มือ",
@@ -961,8 +960,6 @@
   "Quit": "ออก",
   "Quit Snagster": "ออกจาก Snagster",
   "Export {n} pictures": "ส่งออกรูปภาพ {n} รูป",
-  "Snagster keeps running in the menu bar.": "Snagster ทำงานอยู่ที่แถบเมนู",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster ทำงานอยู่ที่ถาดระบบ คลิกขวาที่ไอคอนเพื่อออก",
   "Menu bar icon": "ไอคอนในแถบเมนู",
   "Tray icon": "ไอคอนในถาดระบบ",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "แสดงไอคอน Snagster ในแถบเมนู (คลิก: แผงแคปเจอร์ คลิกขวา: เมนูด่วน)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "ไม่มีเสียงในฉากนี้: เพิ่มเสียงของคอมพิวเตอร์ โปรแกรม ไมโครโฟน หรือไฟล์เสียง",
   "Mute Computer sound": "ปิดเสียงของคอมพิวเตอร์",
   "Open {pane} settings": "เปิดการตั้งค่า{pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "ตอนนี้ไม่มีโปรแกรมที่มีหน้าต่างเปิดอยู่ เปิดโปรแกรมสักตัว โปรแกรมนั้นจะแสดงที่นี่"
+  "No program with a window is open right now. Open one, and it shows up here.": "ตอนนี้ไม่มีโปรแกรมที่มีหน้าต่างเปิดอยู่ เปิดโปรแกรมสักตัว โปรแกรมนั้นจะแสดงที่นี่",
+  "Snagster is still running": "Snagster ยังทำงานอยู่",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster จะอยู่ที่มุมแถบงานเพื่อให้ทางลัดจับภาพยังใช้งานได้ หากต้องการออก ให้คลิกขวาที่ไอคอนแล้วเลือก {item} เปลี่ยนได้ในการตั้งค่า",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster จะอยู่ในแถบเมนูเพื่อให้ทางลัดจับภาพยังใช้งานได้ หากต้องการปิด ให้คลิกที่ไอคอนแล้วเลือก {item} เปลี่ยนได้ในการตั้งค่า",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster จะอยู่ในถาดระบบเพื่อให้ทางลัดจับภาพยังใช้งานได้ หากต้องการปิด ให้คลิกขวาที่ไอคอนแล้วเลือก {item} เปลี่ยนได้ในการตั้งค่า",
+  "Keep running": "ให้ทำงานต่อ",
+  "Always exit": "ออกเสมอ",
+  "Always quit": "ปิดเสมอ",
+  "To exit, right-click the icon and choose {item}.": "หากต้องการออก ให้คลิกขวาที่ไอคอนแล้วเลือก {item}",
+  "To quit, click the icon and choose {item}.": "หากต้องการปิด ให้คลิกที่ไอคอนแล้วเลือก {item}",
+  "To quit, right-click the icon and choose {item}.": "หากต้องการปิด ให้คลิกขวาที่ไอคอนแล้วเลือก {item}"
  }
 }

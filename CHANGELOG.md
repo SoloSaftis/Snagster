@@ -130,6 +130,9 @@ Marking up pictures (every system):
 
 Windows:
 
+- **The first time you close the window, Snagster says it keeps running** in the corner of the
+  taskbar (the tray on Linux), how to exit, and offers Keep running or Always exit. Before, the
+  only word of it went to the status line of the window that had just closed.
 - **Snagster takes Windows' accent colour** (Settings > Personalization > Colors) for its
   buttons, selections and focus rings, as Windows 11's own apps do, and follows a change within
   a couple of seconds. A light accent is darkened until white text on it reads. Linux and macOS

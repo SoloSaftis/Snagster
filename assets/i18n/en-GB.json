@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Recording steps: every click takes a numbered picture.",
   "Removed from Recent (it was never saved).": "Removed from Recent (it was never saved).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Sample picture loaded. Pick a tool on the left and draw on it.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.",
   "That GIF has no frames.": "That GIF has no frames.",
   "There's no picture on the clipboard.": "There's no picture on the clipboard.",
   "There's nothing to put in a guide yet.": "There's nothing to put in a guide yet.",
@@ -961,8 +960,6 @@
   "Quit": "Quit",
   "Quit Snagster": "Quit Snagster",
   "Export {n} pictures": "Export {n} pictures",
-  "Snagster keeps running in the menu bar.": "Snagster keeps running in the menu bar.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster keeps running in the tray. Right-click its icon to quit.",
   "Menu bar icon": "Menu bar icon",
   "Tray icon": "Tray icon",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "No sound in this scene: add the computer sound, a program, a microphone or a sound file.",
   "Mute Computer sound": "Mute Computer sound",
   "Open {pane} settings": "Open {pane} settings",
-  "No program with a window is open right now. Open one, and it shows up here.": "No program with a window is open right now. Open one, and it shows up here."
+  "No program with a window is open right now. Open one, and it shows up here.": "No program with a window is open right now. Open one, and it shows up here.",
+  "Snagster is still running": "Snagster is still running",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.",
+  "Keep running": "Keep running",
+  "Always exit": "Always exit",
+  "Always quit": "Always quit",
+  "To exit, right-click the icon and choose {item}.": "To exit, right-click the icon and choose {item}.",
+  "To quit, click the icon and choose {item}.": "To quit, click the icon and choose {item}.",
+  "To quit, right-click the icon and choose {item}.": "To quit, right-click the icon and choose {item}."
  }
 }

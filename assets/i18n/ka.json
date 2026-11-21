@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "ნაბიჯები იწერება: ყოველი დაწკაპუნება ნომრიან სურათს იღებს.",
   "Removed from Recent (it was never saved).": "ამოღებულია „ბოლოდროინდელებიდან“ (არასდროს შენახულა).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "ნიმუშის სურათი ჩაიტვირთა. აირჩიეთ ინსტრუმენტი მარცხნივ და დახატეთ მასზე.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster განაგრძობს მუშაობას დავალებების პანელის კუთხეში. გასასვლელად დააწკაპუნეთ მის ხატულაზე მარჯვენა ღილაკით.",
   "That GIF has no frames.": "ამ GIF-ს კადრები არ აქვს.",
   "There's no picture on the clipboard.": "გაცვლის ბუფერში სურათი არ არის.",
   "There's nothing to put in a guide yet.": "გზამკვლევში ჩასადები ჯერ არაფერია.",
@@ -961,8 +960,6 @@
   "Quit": "გასვლა",
   "Quit Snagster": "Snagster-იდან გასვლა",
   "Export {n} pictures": "{n} სურათის ექსპორტი",
-  "Snagster keeps running in the menu bar.": "Snagster განაგრძობს მუშაობას მენიუს ზოლში.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster განაგრძობს მუშაობას სისტემურ უჯრაში. გასასვლელად დააწკაპუნეთ მის ხატულაზე მარჯვენა ღილაკით.",
   "Menu bar icon": "მენიუს ზოლის ხატულა",
   "Tray icon": "სისტემური უჯრის ხატულა",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Snagster-ის ხატულის ჩვენება მენიუს ზოლში (დაწკაპუნება: გადაღების პანელი, მარჯვენა დაწკაპუნება: სწრაფი მენიუ)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "ამ სცენაში ხმა არ არის: დაამატეთ კომპიუტერის ხმა, პროგრამა, მიკროფონი ან ხმოვანი ფაილი.",
   "Mute Computer sound": "კომპიუტერის ხმის დადუმება",
   "Open {pane} settings": "„{pane}“-ის პარამეტრების გახსნა",
-  "No program with a window is open right now. Open one, and it shows up here.": "ახლა ფანჯრიანი არცერთი პროგრამა არ არის გახსნილი. გახსენით რომელიმე — აქ გამოჩნდება."
+  "No program with a window is open right now. Open one, and it shows up here.": "ახლა ფანჯრიანი არცერთი პროგრამა არ არის გახსნილი. გახსენით რომელიმე — აქ გამოჩნდება.",
+  "Snagster is still running": "Snagster ჯერ კიდევ მუშაობს",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster რჩება ამოცანების ზოლის კუთხეში, რომ გადაღების მალსახმობებმა იმუშაოს. გასასვლელად მარჯვენა ღილაკით დააწკაპუნეთ მის ხატულაზე და აირჩიეთ {item}. ამის შეცვლა პარამეტრებში შეგიძლიათ.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster რჩება მენიუს ზოლში, რომ გადაღების მალსახმობებმა იმუშაოს. დასახურად დააწკაპუნეთ მის ხატულაზე და აირჩიეთ {item}. ამის შეცვლა პარამეტრებში შეგიძლიათ.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster რჩება სისტემურ უჯრაში, რომ გადაღების მალსახმობებმა იმუშაოს. დასახურად მარჯვენა ღილაკით დააწკაპუნეთ მის ხატულაზე და აირჩიეთ {item}. ამის შეცვლა პარამეტრებში შეგიძლიათ.",
+  "Keep running": "გააგრძელოს მუშაობა",
+  "Always exit": "ყოველთვის გასვლა",
+  "Always quit": "ყოველთვის დახურვა",
+  "To exit, right-click the icon and choose {item}.": "გასასვლელად მარჯვენა ღილაკით დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}.",
+  "To quit, click the icon and choose {item}.": "დასახურად დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}.",
+  "To quit, right-click the icon and choose {item}.": "დასახურად მარჯვენა ღილაკით დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}."
  }
 }

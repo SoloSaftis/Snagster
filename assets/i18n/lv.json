@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Darbību ierakstīšana: katrs klikšķis izveido numurētu attēlu.",
   "Removed from Recent (it was never saved).": "Noņemts no sadaļas Nesenie (tas nekad nebija saglabāts).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Parauga attēls ielādēts. Izvēlieties rīku kreisajā pusē un zīmējiet uz tā.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster turpina darboties uzdevumjoslas stūrī. Ar peles labo pogu noklikšķiniet uz tā ikonas, lai izietu.",
   "That GIF has no frames.": "Šim GIF nav kadru.",
   "There's no picture on the clipboard.": "Starpliktuvē nav attēla.",
   "There's nothing to put in a guide yet.": "Pagaidām nav ko likt pamācībā.",
@@ -961,8 +960,6 @@
   "Quit": "Iziet",
   "Quit Snagster": "Iziet no Snagster",
   "Export {n} pictures": "Eksportēt attēlus ({n})",
-  "Snagster keeps running in the menu bar.": "Snagster turpina darboties izvēļņu joslā.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster turpina darboties sistēmas teknē. Ar peles labo pogu noklikšķiniet uz tā ikonas, lai izietu.",
   "Menu bar icon": "Izvēļņu joslas ikona",
   "Tray icon": "Teknes ikona",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Rādīt Snagster ikonu izvēļņu joslā (klikšķis: tveršanas panelis, labais klikšķis: ātrā izvēlne)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Šajā ainā nav skaņas: pievienojiet datora skaņu, programmu, mikrofonu vai skaņas failu.",
   "Mute Computer sound": "Izslēgt datora skaņu",
   "Open {pane} settings": "Atvērt „{pane}” iestatījumus",
-  "No program with a window is open right now. Open one, and it shows up here.": "Pašlaik nav atvērta neviena programma ar logu. Atveriet kādu, un tā parādīsies šeit."
+  "No program with a window is open right now. Open one, and it shows up here.": "Pašlaik nav atvērta neviena programma ar logu. Atveriet kādu, un tā parādīsies šeit.",
+  "Snagster is still running": "Snagster joprojām darbojas",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster paliek uzdevumjoslas stūrī, lai uzņemšanas īsinājumtaustiņi turpinātu darboties. Lai izietu, ar peles labo pogu noklikšķiniet uz tā ikonas un izvēlieties “{item}”. To var mainīt iestatījumos.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster paliek izvēļņu joslā, lai uzņemšanas īsinājumtaustiņi turpinātu darboties. Lai aizvērtu, noklikšķiniet uz tā ikonas un izvēlieties “{item}”. To var mainīt iestatījumos.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster paliek sistēmas teknē, lai uzņemšanas īsinājumtaustiņi turpinātu darboties. Lai aizvērtu, ar peles labo pogu noklikšķiniet uz tā ikonas un izvēlieties “{item}”. To var mainīt iestatījumos.",
+  "Keep running": "Turpināt darbu",
+  "Always exit": "Vienmēr iziet",
+  "Always quit": "Vienmēr aizvērt",
+  "To exit, right-click the icon and choose {item}.": "Lai izietu, ar labo pogu noklikšķiniet uz ikonas un izvēlieties “{item}”.",
+  "To quit, click the icon and choose {item}.": "Lai aizvērtu, noklikšķiniet uz ikonas un izvēlieties “{item}”.",
+  "To quit, right-click the icon and choose {item}.": "Lai aizvērtu, ar labo pogu noklikšķiniet uz ikonas un izvēlieties “{item}”."
  }
 }

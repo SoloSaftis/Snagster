@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Neem stappe op: elke klik neem 'n genommerde prent.",
   "Removed from Recent (it was never saved).": "Uit Onlangs verwyder (dit is nooit gestoor nie).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Voorbeeldprent gelaai. Kies 'n hulpmiddel links en teken daarop.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster hou aan loop in die hoek van die taakbalk. Regsklik sy ikoon om te sluit.",
   "That GIF has no frames.": "Daardie GIF het geen rame nie.",
   "There's no picture on the clipboard.": "Daar is geen prent op die knipbord nie.",
   "There's nothing to put in a guide yet.": "Daar is nog niks om in 'n gids te sit nie.",
@@ -961,8 +960,6 @@
   "Quit": "Verlaat",
   "Quit Snagster": "Verlaat Snagster",
   "Export {n} pictures": "Voer {n} prente uit",
-  "Snagster keeps running in the menu bar.": "Snagster hou aan loop in die kieslysbalk.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster hou aan loop in die stelselbalk. Regsklik sy ikoon om te sluit.",
   "Menu bar icon": "Kieslysbalk-ikoon",
   "Tray icon": "Stelselbalk-ikoon",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Wys Snagster se ikoon in die kieslysbalk (klik: vasvangpaneel, regsklik: vinnige kieslys)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Geen klank in hierdie toneel nie: voeg die rekenaarklank, 'n program, 'n mikrofoon of 'n klanklêer by.",
   "Mute Computer sound": "Demp Rekenaarklank",
   "Open {pane} settings": "Maak {pane}-instellings oop",
-  "No program with a window is open right now. Open one, and it shows up here.": "Geen program met 'n venster is nou oop nie. Maak een oop, dan verskyn dit hier."
+  "No program with a window is open right now. Open one, and it shows up here.": "Geen program met 'n venster is nou oop nie. Maak een oop, dan verskyn dit hier.",
+  "Snagster is still running": "Snagster loop nog",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster bly in die hoek van die taakbalk sodat jou vasleggingskortpaaie aanhou werk. Om af te sluit, regsklik op sy ikoon en kies {item}. Jy kan dit in Instellings verander.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster bly in die kieslysbalk sodat jou vasleggingskortpaaie aanhou werk. Om af te sluit, klik op sy ikoon en kies {item}. Jy kan dit in Instellings verander.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster bly in die stelselbalk sodat jou vasleggingskortpaaie aanhou werk. Om af te sluit, regsklik op sy ikoon en kies {item}. Jy kan dit in Instellings verander.",
+  "Keep running": "Hou aan loop",
+  "Always exit": "Sluit altyd af",
+  "Always quit": "Sluit altyd af",
+  "To exit, right-click the icon and choose {item}.": "Om af te sluit, regsklik op die ikoon en kies {item}.",
+  "To quit, click the icon and choose {item}.": "Om af te sluit, klik op die ikoon en kies {item}.",
+  "To quit, right-click the icon and choose {item}.": "Om af te sluit, regsklik op die ikoon en kies {item}."
  }
 }

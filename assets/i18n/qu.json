@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Kamachikuykunata grabashan: sapa ñit'iy huk yupayuq rikch'ata hap'in.",
   "Removed from Recent (it was never saved).": "Qhipa kaqmanta anchuchisqa (manam hayk'aqpas waqaychasqachu karqan).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Ejemplo rikch'a hamusqa. Lluq'i k'uchupi huk llamk'ana akllay, chaymanta chaypi siq'iy.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster llamk'ashallanmi tareas barra k'uchupi. Paña ñit'iywan ikononta lluqsinaykipaq.",
   "That GIF has no frames.": "Chay GIF-qa mana frameyuqchu.",
   "There's no picture on the clipboard.": "Clipboardpi mana rikch'ayuqchu.",
   "There's nothing to put in a guide yet.": "Mana ima guíapi churanapaq kanchu.",
@@ -961,8 +960,6 @@
   "Quit": "Lluqsiy",
   "Quit Snagster": "Snagstermanta lluqsiy",
   "Export {n} pictures": "{n} rikch'aykunata hawaman kachay",
-  "Snagster keeps running in the menu bar.": "Snagster llamk'ashallanmi menú barrapi.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster llamk'ashallanmi sistema bandejapi. Paña ñit'iywan ikononta lluqsinaykipaq.",
   "Menu bar icon": "Menú barrapi unancha",
   "Tray icon": "Bandejapi unancha",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Snagsterpa unanchanta menú barrapi rikuchiy (ñit'iy: hap'iy panel, paña ñit'iy: utqay menú)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Kay escenapiqa manam uyarina kanchu: computadorap uyarinanta, huk programata, huk micrófonota utaq huk uyarina archivota yapay.",
   "Mute Computer sound": "Computadorapa uyarinanta upallachiy",
   "Open {pane} settings": "{pane} churanakuyninta kichay",
-  "No program with a window is open right now. Open one, and it shows up here.": "Kunanqa manam ima ventanayuq programapas kichasqachu. Hukta kichay, hinaspa kaypi rikhurinqa."
+  "No program with a window is open right now. Open one, and it shows up here.": "Kunanqa manam ima ventanayuq programapas kichasqachu. Hukta kichay, hinaspa kaypi rikhurinqa.",
+  "Snagster is still running": "Snagster kallpachkallanmi",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster llamk'ana barrapa k'uchunpi qhepakun, hapinaykipaq usqhay teclakuna llamk'anallanpaq. Lluqsinapaq, iconunpi paña ñit'iy, {item} akllay. Kayta Churanakunapi tikrayta atinki.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster menú barrapi qhepakun, hapinaykipaq usqhay teclakuna llamk'anallanpaq. Wichq'anapaq, iconunpi ñit'iy, {item} akllay. Kayta Churanakunapi tikrayta atinki.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster sistema bandejapi qhepakun, hapinaykipaq usqhay teclakuna llamk'anallanpaq. Wichq'anapaq, iconunpi paña ñit'iy, {item} akllay. Kayta Churanakunapi tikrayta atinki.",
+  "Keep running": "Kallpachkachun",
+  "Always exit": "Sapa kuti lluqsiy",
+  "Always quit": "Sapa kuti wichq'ay",
+  "To exit, right-click the icon and choose {item}.": "Lluqsinapaq, iconopi paña ñit'iy, {item} akllay.",
+  "To quit, click the icon and choose {item}.": "Wichq'anapaq, iconopi ñit'iy, {item} akllay.",
+  "To quit, right-click the icon and choose {item}.": "Wichq'anapaq, iconopi paña ñit'iy, {item} akllay."
  }
 }

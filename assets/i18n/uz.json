@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Qadamlarni yozish: har bir bosish raqamlangan rasm oladi.",
   "Removed from Recent (it was never saved).": "«Oxirgilar»dan olib tashlandi (u hech qachon saqlanmagan).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Namunaviy rasm yuklandi. Chapdan asbobni tanlang va uning ustiga chizing.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster vazifalar paneli burchagida ishlashda davom etadi. Chiqish uchun uning belgisini sichqonchaning o‘ng tugmasi bilan bosing.",
   "That GIF has no frames.": "Bu GIFda kadrlar yo‘q.",
   "There's no picture on the clipboard.": "Vaqtinchalik xotirada rasm yo‘q.",
   "There's nothing to put in a guide yet.": "Qo‘llanmaga qo‘yadigan hech narsa hali yo‘q.",
@@ -961,8 +960,6 @@
   "Quit": "Chiqish",
   "Quit Snagster": "Snagster dasturidan chiqish",
   "Export {n} pictures": "{n} ta rasmni eksport qilish",
-  "Snagster keeps running in the menu bar.": "Snagster menyu satrida ishlashda davom etadi.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster tizim tepsisida ishlashda davom etadi. Chiqish uchun uning belgisini sichqonchaning o‘ng tugmasi bilan bosing.",
   "Menu bar icon": "Menyu satridagi belgi",
   "Tray icon": "Tizim tepsisidagi belgi",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Snagster belgisini menyu satrida ko‘rsatish (bosish: olish paneli, o‘ng tugma: tezkor menyu)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Bu sahnada ovoz yo‘q: kompyuter ovozi, dastur, mikrofon yoki ovoz faylini qo‘shing.",
   "Mute Computer sound": "Kompyuter ovozini o‘chirish",
   "Open {pane} settings": "«{pane}» sozlamalarini ochish",
-  "No program with a window is open right now. Open one, and it shows up here.": "Hozir oynasi bor hech bir dastur ochiq emas. Birortasini oching, u shu yerda paydo bo‘ladi."
+  "No program with a window is open right now. Open one, and it shows up here.": "Hozir oynasi bor hech bir dastur ochiq emas. Birortasini oching, u shu yerda paydo bo‘ladi.",
+  "Snagster is still running": "Snagster hali ishlayapti",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Suratga olish tugmalari ishlashda davom etishi uchun Snagster vazifalar paneli burchagida qoladi. Chiqish uchun uning belgisiga o‘ng tugma bilan bosing va {item} ni tanlang. Buni Sozlamalarda o‘zgartirish mumkin.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Suratga olish tugmalari ishlashda davom etishi uchun Snagster menyu panelida qoladi. Yopish uchun uning belgisiga bosing va {item} ni tanlang. Buni Sozlamalarda o‘zgartirish mumkin.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Suratga olish tugmalari ishlashda davom etishi uchun Snagster tizim panelida qoladi. Yopish uchun uning belgisiga o‘ng tugma bilan bosing va {item} ni tanlang. Buni Sozlamalarda o‘zgartirish mumkin.",
+  "Keep running": "Ishlashda davom etsin",
+  "Always exit": "Doim chiqish",
+  "Always quit": "Doim yopish",
+  "To exit, right-click the icon and choose {item}.": "Chiqish uchun belgiga o‘ng tugma bilan bosing va {item} ni tanlang.",
+  "To quit, click the icon and choose {item}.": "Yopish uchun belgiga bosing va {item} ni tanlang.",
+  "To quit, right-click the icon and choose {item}.": "Yopish uchun belgiga o‘ng tugma bilan bosing va {item} ni tanlang."
  }
 }

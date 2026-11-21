@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Yn recordio camau: mae pob clic yn tynnu llun wedi'i rifo.",
   "Removed from Recent (it was never saved).": "Wedi'i dynnu o Diweddar (ni chafodd ei gadw erioed).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Llwythwyd llun sampl. Dewiswch declyn ar y chwith a thynnwch lun arno.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Mae Snagster yn parhau i redeg yng nghornel y bar tasgau. De-gliciwch ei eicon i roi'r gorau iddo.",
   "That GIF has no frames.": "Does gan y GIF hwnnw ddim fframiau.",
   "There's no picture on the clipboard.": "Does dim llun ar y clipfwrdd.",
   "There's nothing to put in a guide yet.": "Does dim byd i'w roi mewn canllaw eto.",
@@ -961,8 +960,6 @@
   "Quit": "Gadael",
   "Quit Snagster": "Gadael Snagster",
   "Export {n} pictures": "Allforio {n} llun",
-  "Snagster keeps running in the menu bar.": "Mae Snagster yn parhau i redeg yn y bar dewislenni.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Mae Snagster yn parhau i redeg yn yr hambwrdd. De-gliciwch ei eicon i roi'r gorau iddo.",
   "Menu bar icon": "Eicon y bar dewislenni",
   "Tray icon": "Eicon yr hambwrdd",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Dangos eicon Snagster yn y bar dewislenni (clic: panel dal, de-glic: dewislen gyflym)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Dim sain yn yr olygfa hon: ychwanegwch sain y cyfrifiadur, rhaglen, meicroffon neu ffeil sain.",
   "Mute Computer sound": "Tawelu Sain y cyfrifiadur",
   "Open {pane} settings": "Agor gosodiadau {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Does dim rhaglen gyda ffenestr ar agor ar hyn o bryd. Agorwch un, a bydd yn ymddangos yma."
+  "No program with a window is open right now. Open one, and it shows up here.": "Does dim rhaglen gyda ffenestr ar agor ar hyn o bryd. Agorwch un, a bydd yn ymddangos yma.",
+  "Snagster is still running": "Mae Snagster yn dal i redeg",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Mae Snagster yn aros yng nghornel y bar tasgau fel bod eich llwybrau byr cipio'n dal i weithio. I adael, de-gliciwch ei eicon a dewis {item}. Gallwch newid hyn yn y Gosodiadau.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Mae Snagster yn aros yn y bar dewislen fel bod eich llwybrau byr cipio'n dal i weithio. I roi'r gorau iddi, cliciwch ei eicon a dewis {item}. Gallwch newid hyn yn y Gosodiadau.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Mae Snagster yn aros yn yr hambwrdd fel bod eich llwybrau byr cipio'n dal i weithio. I roi'r gorau iddi, de-gliciwch ei eicon a dewis {item}. Gallwch newid hyn yn y Gosodiadau.",
+  "Keep running": "Dal i redeg",
+  "Always exit": "Gadael bob tro",
+  "Always quit": "Rhoi'r gorau iddi bob tro",
+  "To exit, right-click the icon and choose {item}.": "I adael, de-gliciwch yr eicon a dewis {item}.",
+  "To quit, click the icon and choose {item}.": "I roi'r gorau iddi, cliciwch yr eicon a dewis {item}.",
+  "To quit, right-click the icon and choose {item}.": "I roi'r gorau iddi, de-gliciwch yr eicon a dewis {item}."
  }
 }

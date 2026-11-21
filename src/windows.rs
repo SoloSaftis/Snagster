@@ -641,6 +641,14 @@ impl SnagApp {
                             )),
                         );
                         ui.add_enabled(s.tray_icon, egui::Checkbox::new(&mut s.close_to_tray, crate::i18n::t("Closing the window keeps Snagster running there")));
+                        if s.tray_icon && s.close_to_tray {
+                            let how = by_system(
+                                "To exit, right-click the icon and choose {item}.",
+                                "To quit, click the icon and choose {item}.",
+                                "To quit, right-click the icon and choose {item}.",
+                            );
+                            ui.label(RichText::new(crate::i18n::tf(how, &[("item", crate::tray::quit_item())])).color(pal().dim));
+                        }
                         if !crate::platform::has_tray() {
                             ui.label(RichText::new(crate::i18n::t("This desktop shows tray icons only with an extension, so closing the window ends Snagster.")).color(pal().dim));
                         }
@@ -1872,6 +1880,8 @@ pub(crate) enum Dialog {
     Export { pick: Vec<bool>, folder: String, format: ImageFormat },
     GettingStarted,
     WhatsNew,
+    /// The first close to the tray: Snagster keeps running there (Keep running / Always exit).
+    StillRunning,
 }
 
 impl Dialog {
@@ -1917,6 +1927,7 @@ impl SnagApp {
             Dialog::Export { .. } => crate::i18n::t("Export pictures"),
             Dialog::GettingStarted => crate::i18n::t("Getting started"),
             Dialog::WhatsNew => crate::i18n::t("What's new in Snagster"),
+            Dialog::StillRunning => crate::i18n::t("Snagster is still running"),
         };
         let mut action: Option<Box<dyn FnOnce(&mut SnagApp)>> = None;
         own_window(ctx, Win { key: "dialog", title, size: vec2(440.0, 220.0), resizable: false }, &mut open, |ui| match &mut d {
@@ -2079,7 +2090,42 @@ impl SnagApp {
                     ui.label(format!("- {line}"));
                 }
             }
+            Dialog::StillRunning => {
+                ui.set_max_width(420.0);
+                ui.label(crate::i18n::tf(
+                    crate::platform::by_system(
+                        "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.",
+                        "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.",
+                        "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.",
+                    ),
+                    &[("item", crate::tray::quit_item())],
+                ));
+                // Esc and the window's close button keep it running, as Keep running does.
+                let esc = ui.input(|i| i.key_pressed(Key::Escape));
+                let leave = crate::platform::by_system("Always exit", "Always quit", "Always quit");
+                let pick = crate::platform::dialog_buttons(ui, Some(crate::i18n::t("Keep running")), crate::i18n::t(leave), crate::platform::Kind::Normal, true);
+                let ctx = ui.ctx().clone();
+                match (esc, pick) {
+                    (false, Some(Choice::Cancel)) => {
+                        action = Some(Box::new(move |app| {
+                            app.settings.close_to_tray = false;
+                            ctx.send_viewport_cmd_to(egui::ViewportId::ROOT, egui::ViewportCommand::Close);
+                        }));
+                        done = true;
+                    }
+                    (true, _) | (_, Some(Choice::Action)) => {
+                        action = Some(Box::new(move |app| app.away_to_tray(&ctx)));
+                        done = true;
+                    }
+                    _ => {}
+                }
+            }
         });
+        // Closing the notice with the window's own close button also keeps Snagster running.
+        if !open && matches!(d, Dialog::StillRunning) && !done {
+            let ctx = ctx.clone();
+            action = Some(Box::new(move |app| app.away_to_tray(&ctx)));
+        }
         if let Some(a) = action {
             a(self);
         }

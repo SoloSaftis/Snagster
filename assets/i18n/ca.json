@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Gravant passos: cada clic fa una imatge numerada.",
   "Removed from Recent (it was never saved).": "Eliminat de Recents (mai s'havia desat).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Imatge d'exemple carregada. Tria una eina a l'esquerra i dibuixa-hi.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster continua executant-se a la cantonada de la barra de tasques. Fes clic dret a la seva icona per sortir.",
   "That GIF has no frames.": "Aquest GIF no té fotogrames.",
   "There's no picture on the clipboard.": "No hi ha cap imatge al porta-retalls.",
   "There's nothing to put in a guide yet.": "Encara no hi ha res per posar en una guia.",
@@ -961,8 +960,6 @@
   "Quit": "Surt",
   "Quit Snagster": "Surt de Snagster",
   "Export {n} pictures": "Exporta {n} imatges",
-  "Snagster keeps running in the menu bar.": "Snagster continua executant-se a la barra de menús.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster continua executant-se a la safata del sistema. Fes clic dret a la seva icona per sortir.",
   "Menu bar icon": "Icona de la barra de menús",
   "Tray icon": "Icona de la safata del sistema",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Mostra la icona de Snagster a la barra de menús (clic: plafó de captura, clic dret: menú ràpid)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "No hi ha so en aquesta escena: afegiu el so de l'ordinador, un programa, un micròfon o un fitxer de so.",
   "Mute Computer sound": "Silencia el So de l'ordinador",
   "Open {pane} settings": "Obre la configuració de {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Ara no hi ha obert cap programa amb finestra. Obriu-ne un, i apareixerà aquí."
+  "No program with a window is open right now. Open one, and it shows up here.": "Ara no hi ha obert cap programa amb finestra. Obriu-ne un, i apareixerà aquí.",
+  "Snagster is still running": "Snagster encara s'executa",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster es queda a la cantonada de la barra de tasques perquè les dreceres de captura continuïn funcionant. Per sortir, fes clic dret a la icona i tria {item}. Ho pots canviar a Configuració.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster es queda a la barra de menús perquè les dreceres de captura continuïn funcionant. Per sortir, fes clic a la icona i tria {item}. Ho pots canviar a Configuració.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster es queda a la safata perquè les dreceres de captura continuïn funcionant. Per sortir, fes clic dret a la icona i tria {item}. Ho pots canviar a Configuració.",
+  "Keep running": "Continua executant-se",
+  "Always exit": "Surt sempre",
+  "Always quit": "Surt sempre",
+  "To exit, right-click the icon and choose {item}.": "Per sortir, fes clic dret a la icona i tria {item}.",
+  "To quit, click the icon and choose {item}.": "Per sortir, fes clic a la icona i tria {item}.",
+  "To quit, right-click the icon and choose {item}.": "Per sortir, fes clic dret a la icona i tria {item}."
  }
 }

@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "దశలను రికార్డ్ చేస్తోంది: ప్రతి క్లిక్ నంబర్ ఉన్న చిత్రాన్ని తీస్తుంది.",
   "Removed from Recent (it was never saved).": "ఇటీవలివాటి నుండి తొలగించబడింది (ఇది ఎప్పుడూ సేవ్ కాలేదు).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "నమూనా చిత్రం లోడ్ అయింది. ఎడమవైపు ఒక సాధనాన్ని ఎంచుకుని దానిపై గీయండి.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster టాస్క్‌బార్ మూలలో నడుస్తూనే ఉంటుంది. నిష్క్రమించడానికి దాని ఐకాన్‌పై రైట్-క్లిక్ చేయండి.",
   "That GIF has no frames.": "ఆ GIFలో ఫ్రేమ్‌లు లేవు.",
   "There's no picture on the clipboard.": "క్లిప్‌బోర్డ్‌లో చిత్రం లేదు.",
   "There's nothing to put in a guide yet.": "గైడ్‌లో పెట్టడానికి ఇంకా ఏమీ లేదు.",
@@ -961,8 +960,6 @@
   "Quit": "నిష్క్రమించు",
   "Quit Snagster": "Snagster నుండి నిష్క్రమించు",
   "Export {n} pictures": "{n} చిత్రాలను ఎగుమతి చేయి",
-  "Snagster keeps running in the menu bar.": "Snagster మెనూ బార్‌లో నడుస్తూనే ఉంటుంది.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster సిస్టమ్ ట్రేలో నడుస్తూనే ఉంటుంది. నిష్క్రమించడానికి దాని ఐకాన్‌పై రైట్-క్లిక్ చేయండి.",
   "Menu bar icon": "మెనూ బార్ ఐకాన్",
   "Tray icon": "ట్రే ఐకాన్",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "మెనూ బార్‌లో Snagster ఐకాన్‌ను చూపు (క్లిక్: క్యాప్చర్ ప్యానెల్, రైట్-క్లిక్: త్వరిత మెనూ)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "ఈ సన్నివేశంలో ధ్వని లేదు: కంప్యూటర్ ధ్వని, ఒక ప్రోగ్రామ్, ఒక మైక్రోఫోన్ లేదా ఒక ధ్వని ఫైల్‌ను జోడించండి.",
   "Mute Computer sound": "కంప్యూటర్ ధ్వనిని మ్యూట్ చేయి",
   "Open {pane} settings": "{pane} సెట్టింగ్‌లను తెరువు",
-  "No program with a window is open right now. Open one, and it shows up here.": "ప్రస్తుతం విండో ఉన్న ఏ ప్రోగ్రామ్ తెరిచి లేదు. ఒకదాన్ని తెరవండి, అది ఇక్కడ కనిపిస్తుంది."
+  "No program with a window is open right now. Open one, and it shows up here.": "ప్రస్తుతం విండో ఉన్న ఏ ప్రోగ్రామ్ తెరిచి లేదు. ఒకదాన్ని తెరవండి, అది ఇక్కడ కనిపిస్తుంది.",
+  "Snagster is still running": "Snagster ఇంకా నడుస్తోంది",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "మీ క్యాప్చర్ షార్ట్‌కట్‌లు పని చేస్తూ ఉండేందుకు Snagster టాస్క్‌బార్ మూలలో ఉంటుంది. నిష్క్రమించడానికి, దాని చిహ్నంపై కుడి-క్లిక్ చేసి {item} ఎంచుకోండి. దీన్ని సెట్టింగ్‌లలో మార్చవచ్చు.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "మీ క్యాప్చర్ షార్ట్‌కట్‌లు పని చేస్తూ ఉండేందుకు Snagster మెనూ బార్‌లో ఉంటుంది. మూసివేయడానికి, దాని చిహ్నంపై క్లిక్ చేసి {item} ఎంచుకోండి. దీన్ని సెట్టింగ్‌లలో మార్చవచ్చు.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "మీ క్యాప్చర్ షార్ట్‌కట్‌లు పని చేస్తూ ఉండేందుకు Snagster ట్రేలో ఉంటుంది. మూసివేయడానికి, దాని చిహ్నంపై కుడి-క్లిక్ చేసి {item} ఎంచుకోండి. దీన్ని సెట్టింగ్‌లలో మార్చవచ్చు.",
+  "Keep running": "నడుస్తూ ఉండనివ్వు",
+  "Always exit": "ఎల్లప్పుడూ నిష్క్రమించు",
+  "Always quit": "ఎల్లప్పుడూ మూసివేయి",
+  "To exit, right-click the icon and choose {item}.": "నిష్క్రమించడానికి, చిహ్నంపై కుడి-క్లిక్ చేసి {item} ఎంచుకోండి.",
+  "To quit, click the icon and choose {item}.": "మూసివేయడానికి, చిహ్నంపై క్లిక్ చేసి {item} ఎంచుకోండి.",
+  "To quit, right-click the icon and choose {item}.": "మూసివేయడానికి, చిహ్నంపై కుడి-క్లిక్ చేసి {item} ఎంచుకోండి."
  }
 }

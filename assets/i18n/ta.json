@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "படிகளைப் பதிவு செய்கிறது: ஒவ்வொரு சொடுக்கும் எண்ணிடப்பட்ட படத்தை எடுக்கும்.",
   "Removed from Recent (it was never saved).": "சமீபத்தியவையிலிருந்து நீக்கப்பட்டது (இது சேமிக்கப்படவே இல்லை).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "மாதிரிப் படம் ஏற்றப்பட்டது. இடப்புறம் ஒரு கருவியைத் தேர்ந்து அதில் வரையுங்கள்.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster பணிப்பட்டையின் மூலையில் தொடர்ந்து இயங்கும். வெளியேற அதன் ஐகானை வலது சொடுக்கவும்.",
   "That GIF has no frames.": "அந்த GIF-இல் சட்டங்கள் இல்லை.",
   "There's no picture on the clipboard.": "கிளிப்போர்டில் படம் எதுவும் இல்லை.",
   "There's nothing to put in a guide yet.": "வழிகாட்டியில் சேர்க்க இன்னும் எதுவும் இல்லை.",
@@ -961,8 +960,6 @@
   "Quit": "வெளியேறு",
   "Quit Snagster": "Snagster-இலிருந்து வெளியேறு",
   "Export {n} pictures": "{n} படங்களை ஏற்றுமதி செய்",
-  "Snagster keeps running in the menu bar.": "Snagster மெனு பட்டியில் தொடர்ந்து இயங்கும்.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster கணினித் தட்டில் தொடர்ந்து இயங்கும். வெளியேற அதன் ஐகானை வலது சொடுக்கவும்.",
   "Menu bar icon": "மெனு பட்டி ஐகான்",
   "Tray icon": "கணினித் தட்டு ஐகான்",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Snagster-இன் ஐகானை மெனு பட்டியில் காட்டு (சொடுக்கு: பிடிப்புப் பலகம், வலது சொடுக்கு: விரைவு மெனு)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "இந்தக் காட்சியில் ஒலி இல்லை: கணினி ஒலி, ஒரு நிரல், ஒரு மைக்ரோஃபோன் அல்லது ஒரு ஒலிக் கோப்பைச் சேர்க்கவும்.",
   "Mute Computer sound": "கணினி ஒலியை ஒலியடக்கு",
   "Open {pane} settings": "{pane} அமைப்புகளைத் திற",
-  "No program with a window is open right now. Open one, and it shows up here.": "இப்போது சாளரம் உள்ள எந்த நிரலும் திறந்திருக்கவில்லை. ஒன்றைத் திறந்தால், அது இங்கே தோன்றும்."
+  "No program with a window is open right now. Open one, and it shows up here.": "இப்போது சாளரம் உள்ள எந்த நிரலும் திறந்திருக்கவில்லை. ஒன்றைத் திறந்தால், அது இங்கே தோன்றும்.",
+  "Snagster is still running": "Snagster இன்னும் இயங்குகிறது",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "உங்கள் பிடிப்பு குறுக்குவழிகள் வேலை செய்ய Snagster பணிப்பட்டியின் மூலையில் இருக்கும். வெளியேற, அதன் சின்னத்தில் வலது சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும். இதை அமைப்புகளில் மாற்றலாம்.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "உங்கள் பிடிப்பு குறுக்குவழிகள் வேலை செய்ய Snagster பட்டி பட்டையில் இருக்கும். மூட, அதன் சின்னத்தைச் சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும். இதை அமைப்புகளில் மாற்றலாம்.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "உங்கள் பிடிப்பு குறுக்குவழிகள் வேலை செய்ய Snagster தட்டில் இருக்கும். மூட, அதன் சின்னத்தில் வலது சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும். இதை அமைப்புகளில் மாற்றலாம்.",
+  "Keep running": "இயங்கட்டும்",
+  "Always exit": "எப்போதும் வெளியேறு",
+  "Always quit": "எப்போதும் மூடு",
+  "To exit, right-click the icon and choose {item}.": "வெளியேற, சின்னத்தில் வலது சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும்.",
+  "To quit, click the icon and choose {item}.": "மூட, சின்னத்தைச் சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும்.",
+  "To quit, right-click the icon and choose {item}.": "மூட, சின்னத்தில் வலது சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும்."
  }
 }

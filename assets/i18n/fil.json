@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Nire-record ang mga hakbang: bawat click ay kumukuha ng may-numerong larawan.",
   "Removed from Recent (it was never saved).": "Inalis sa Kamakailan (hindi pa ito nase-save).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Na-load ang sample na larawan. Pumili ng tool sa kaliwa at gumuhit dito.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Patuloy na tumatakbo ang Snagster sa sulok ng taskbar. I-right-click ang icon nito para lumabas.",
   "That GIF has no frames.": "Walang frame ang GIF na iyon.",
   "There's no picture on the clipboard.": "Walang larawan sa clipboard.",
   "There's nothing to put in a guide yet.": "Wala pang mailalagay sa gabay.",
@@ -961,8 +960,6 @@
   "Quit": "Umalis",
   "Quit Snagster": "Umalis sa Snagster",
   "Export {n} pictures": "I-export ang {n} larawan",
-  "Snagster keeps running in the menu bar.": "Patuloy na tumatakbo ang Snagster sa menu bar.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Patuloy na tumatakbo ang Snagster sa tray. I-right-click ang icon nito para umalis.",
   "Menu bar icon": "Icon sa menu bar",
   "Tray icon": "Icon sa tray",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Ipakita ang icon ng Snagster sa menu bar (click: capture panel, right-click: mabilis na menu)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Walang tunog sa eksenang ito: idagdag ang tunog ng computer, isang programa, isang mikropono o isang sound file.",
   "Mute Computer sound": "I-mute ang Tunog ng computer",
   "Open {pane} settings": "Buksan ang settings ng {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Walang programang may window na bukas ngayon. Magbukas ng isa, at lalabas ito rito."
+  "No program with a window is open right now. Open one, and it shows up here.": "Walang programang may window na bukas ngayon. Magbukas ng isa, at lalabas ito rito.",
+  "Snagster is still running": "Tumatakbo pa rin ang Snagster",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Nananatili ang Snagster sa sulok ng taskbar para gumana pa rin ang iyong mga shortcut sa pagkuha. Para lumabas, i-right-click ang icon nito at piliin ang {item}. Mababago mo ito sa Mga Setting.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Nananatili ang Snagster sa menu bar para gumana pa rin ang iyong mga shortcut sa pagkuha. Para umalis, i-click ang icon nito at piliin ang {item}. Mababago mo ito sa Mga Setting.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Nananatili ang Snagster sa tray para gumana pa rin ang iyong mga shortcut sa pagkuha. Para umalis, i-right-click ang icon nito at piliin ang {item}. Mababago mo ito sa Mga Setting.",
+  "Keep running": "Patuloy na patakbuhin",
+  "Always exit": "Laging lumabas",
+  "Always quit": "Laging umalis",
+  "To exit, right-click the icon and choose {item}.": "Para lumabas, i-right-click ang icon at piliin ang {item}.",
+  "To quit, click the icon and choose {item}.": "Para umalis, i-click ang icon at piliin ang {item}.",
+  "To quit, right-click the icon and choose {item}.": "Para umalis, i-right-click ang icon at piliin ang {item}."
  }
 }

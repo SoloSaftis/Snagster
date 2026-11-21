@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Snemanje korakov: vsak klik naredi oštevilčeno sliko.",
   "Removed from Recent (it was never saved).": "Odstranjeno iz Nedavno (nikoli ni bilo shranjeno).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Vzorčna slika naložena. Izberite orodje na levi in rišite po njej.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster še naprej deluje v kotu opravilne vrstice. Z desnim klikom na njegovo ikono ga zaprete.",
   "That GIF has no frames.": "Ta GIF nima sličic.",
   "There's no picture on the clipboard.": "Na odložišču ni slike.",
   "There's nothing to put in a guide yet.": "V vodnik še ni ničesar za vstaviti.",
@@ -961,8 +960,6 @@
   "Quit": "Končaj",
   "Quit Snagster": "Končaj Snagster",
   "Export {n} pictures": "Izvozi slike ({n})",
-  "Snagster keeps running in the menu bar.": "Snagster še naprej deluje v menijski vrstici.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster še naprej deluje v sistemski vrstici. Z desnim klikom na njegovo ikono ga zaprete.",
   "Menu bar icon": "Ikona v menijski vrstici",
   "Tray icon": "Ikona v sistemski vrstici",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Pokaži ikono programa Snagster v menijski vrstici (klik: podokno za zajem, desni klik: hitri meni)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "V tem prizoru ni zvoka: dodajte zvok računalnika, program, mikrofon ali zvočno datoteko.",
   "Mute Computer sound": "Utišaj zvok računalnika",
   "Open {pane} settings": "Odpri nastavitve »{pane}«",
-  "No program with a window is open right now. Open one, and it shows up here.": "Trenutno ni odprt noben program z oknom. Odprite katerega, pa se bo prikazal tukaj."
+  "No program with a window is open right now. Open one, and it shows up here.": "Trenutno ni odprt noben program z oknom. Odprite katerega, pa se bo prikazal tukaj.",
+  "Snagster is still running": "Snagster še vedno teče",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster ostane v kotu opravilne vrstice, da bližnjice za zajem še naprej delujejo. Za izhod z desno tipko kliknite njegovo ikono in izberite {item}. To lahko spremenite v Nastavitvah.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster ostane v menijski vrstici, da bližnjice za zajem še naprej delujejo. Za izhod kliknite njegovo ikono in izberite {item}. To lahko spremenite v Nastavitvah.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster ostane v sistemski vrstici, da bližnjice za zajem še naprej delujejo. Za izhod z desno tipko kliknite njegovo ikono in izberite {item}. To lahko spremenite v Nastavitvah.",
+  "Keep running": "Naj teče naprej",
+  "Always exit": "Vedno izhod",
+  "Always quit": "Vedno končaj",
+  "To exit, right-click the icon and choose {item}.": "Za izhod z desno tipko kliknite ikono in izberite {item}.",
+  "To quit, click the icon and choose {item}.": "Za izhod kliknite ikono in izberite {item}.",
+  "To quit, right-click the icon and choose {item}.": "Za izhod z desno tipko kliknite ikono in izberite {item}."
  }
 }

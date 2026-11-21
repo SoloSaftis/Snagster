@@ -106,6 +106,17 @@ fn parse(id: &str) -> Option<TrayCmd> {
     })
 }
 
+/// The tray menu's last item, in English: "Exit" in the Windows notification area, "Quit
+/// Snagster" elsewhere.
+fn quit_text() -> &'static str {
+    if crate::platform::recycle_bin() { "Exit" } else { "Quit Snagster" }
+}
+
+/// The tray menu's last item as it reads in the menu (the notice and Settings name it).
+pub fn quit_item() -> &'static str {
+    crate::i18n::t(quit_text())
+}
+
 /// Put the icon in the notification area. Commands go to `tx`; `wake` makes Snagster act on
 /// them even while its window is hidden.
 pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync + Clone + 'static) -> Result<Tray, String> {
@@ -157,7 +168,7 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
     add(&menu, "settings", if cfg!(target_os = "macos") { "Settings…" } else { "Settings" })?;
     menu.append(&PredefinedMenuItem::separator()).map_err(|e| e.to_string())?;
     // "Exit" in the Windows notification area, "Quit Snagster" elsewhere.
-    add(&menu, "quit", if crate::platform::recycle_bin() { "Exit" } else { "Quit Snagster" })?;
+    add(&menu, "quit", quit_text())?;
 
     // A Mac's menu bar extra is a template: black and transparency only, which macOS tints to
     // match the menu bar. Elsewhere the coloured app icon.

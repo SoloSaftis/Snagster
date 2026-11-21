@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Tallennetaan vaiheita: jokainen napsautus ottaa numeroidun kuvan.",
   "Removed from Recent (it was never saved).": "Poistettu kohdasta Viimeisimmät (sitä ei ollut koskaan tallennettu).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Esimerkkikuva ladattu. Valitse työkalu vasemmalta ja piirrä sen päälle.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster jatkaa toimintaansa tehtäväpalkin kulmassa. Lopeta napsauttamalla sen kuvaketta hiiren kakkospainikkeella.",
   "That GIF has no frames.": "Tässä GIF-kuvassa ei ole ruutuja.",
   "There's no picture on the clipboard.": "Leikepöydällä ei ole kuvaa.",
   "There's nothing to put in a guide yet.": "Oppaaseen ei ole vielä mitään lisättävää.",
@@ -961,8 +960,6 @@
   "Quit": "Lopeta",
   "Quit Snagster": "Lopeta Snagster",
   "Export {n} pictures": "Vie kuvat ({n})",
-  "Snagster keeps running in the menu bar.": "Snagster jatkaa toimintaansa valikkorivillä.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster jatkaa toimintaansa ilmoitusalueella. Lopeta napsauttamalla sen kuvaketta hiiren kakkospainikkeella.",
   "Menu bar icon": "Valikkorivin kuvake",
   "Tray icon": "Ilmoitusalueen kuvake",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Näytä Snagsterin kuvake valikkorivillä (napsautus: kaappauspaneeli, oikea napsautus: pikavalikko)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Tässä kohtauksessa ei ole ääntä: lisää tietokoneen ääni, ohjelma, mikrofoni tai äänitiedosto.",
   "Mute Computer sound": "Mykistä Tietokoneen ääni",
   "Open {pane} settings": "Avaa asetukset: {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Mitään ikkunallista ohjelmaa ei ole juuri nyt auki. Avaa jokin, niin se näkyy täällä."
+  "No program with a window is open right now. Open one, and it shows up here.": "Mitään ikkunallista ohjelmaa ei ole juuri nyt auki. Avaa jokin, niin se näkyy täällä.",
+  "Snagster is still running": "Snagster on yhä käynnissä",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster jää tehtäväpalkin kulmaan, jotta kaappausten pikanäppäimet toimivat edelleen. Lopeta napsauttamalla sen kuvaketta hiiren oikealla ja valitsemalla {item}. Voit muuttaa tämän asetuksista.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster jää valikkoriville, jotta kaappausten pikanäppäimet toimivat edelleen. Lopeta napsauttamalla sen kuvaketta ja valitsemalla {item}. Voit muuttaa tämän asetuksista.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster jää ilmoitusalueelle, jotta kaappausten pikanäppäimet toimivat edelleen. Lopeta napsauttamalla sen kuvaketta hiiren oikealla ja valitsemalla {item}. Voit muuttaa tämän asetuksista.",
+  "Keep running": "Pidä käynnissä",
+  "Always exit": "Lopeta aina",
+  "Always quit": "Lopeta aina",
+  "To exit, right-click the icon and choose {item}.": "Lopeta napsauttamalla kuvaketta hiiren oikealla ja valitsemalla {item}.",
+  "To quit, click the icon and choose {item}.": "Lopeta napsauttamalla kuvaketta ja valitsemalla {item}.",
+  "To quit, right-click the icon and choose {item}.": "Lopeta napsauttamalla kuvaketta hiiren oikealla ja valitsemalla {item}."
  }
 }

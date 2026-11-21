@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Снимање чекори: секој клик прави нумерирана слика.",
   "Removed from Recent (it was never saved).": "Отстрането од Неодамнешни (никогаш не било зачувано).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Примерна слика е вчитана. Изберете алатка лево и цртајте по неа.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster продолжува да работи во аголот на лентата со задачи. Кликнете со десното копче на иконата за да излезете.",
   "That GIF has no frames.": "Тој GIF нема кадри.",
   "There's no picture on the clipboard.": "Во клипбордот нема слика.",
   "There's nothing to put in a guide yet.": "Сè уште нема што да се стави во водич.",
@@ -961,8 +960,6 @@
   "Quit": "Излез",
   "Quit Snagster": "Излези од Snagster",
   "Export {n} pictures": "Извези {n} слики",
-  "Snagster keeps running in the menu bar.": "Snagster продолжува да работи во лентата со менија.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster продолжува да работи во системската лента. Кликнете со десното копче на иконата за да излезете.",
   "Menu bar icon": "Икона во лентата со менија",
   "Tray icon": "Икона во системската лента",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Прикажи ја иконата на Snagster во лентата со менија (клик: панел за снимање, десен клик: брзо мени)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Нема звук во оваа сцена: додајте го звукот од компјутерот, програма, микрофон или звучна датотека.",
   "Mute Computer sound": "Исклучи го звукот од компјутерот",
   "Open {pane} settings": "Отвори поставки за „{pane}“",
-  "No program with a window is open right now. Open one, and it shows up here.": "Моментално не е отворена ниедна програма со прозорец. Отворете една, и ќе се појави тука."
+  "No program with a window is open right now. Open one, and it shows up here.": "Моментално не е отворена ниедна програма со прозорец. Отворете една, и ќе се појави тука.",
+  "Snagster is still running": "Snagster сè уште работи",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster останува во аголот на лентата со задачи за кратенките за снимање да продолжат да работат. За излез, кликнете со десното копче на неговата икона и изберете „{item}“. Ова може да го промените во Поставки.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster останува во лентата со менија за кратенките за снимање да продолжат да работат. За излез, кликнете на неговата икона и изберете „{item}“. Ова може да го промените во Поставки.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster останува во системската лента за кратенките за снимање да продолжат да работат. За излез, кликнете со десното копче на неговата икона и изберете „{item}“. Ова може да го промените во Поставки.",
+  "Keep running": "Продолжи да работи",
+  "Always exit": "Секогаш излези",
+  "Always quit": "Секогаш излези",
+  "To exit, right-click the icon and choose {item}.": "За излез, кликнете со десното копче на иконата и изберете „{item}“.",
+  "To quit, click the icon and choose {item}.": "За излез, кликнете на иконата и изберете „{item}“.",
+  "To quit, right-click the icon and choose {item}.": "За излез, кликнете со десното копче на иконата и изберете „{item}“."
  }
 }

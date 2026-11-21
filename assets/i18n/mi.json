@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "E rekoata ana i ngā hāgi: ka hopu whakaahua whai tau te pāwhiri katoa.",
   "Removed from Recent (it was never saved).": "Kua tangohia i Nā Tata Nei (kāore ia i tiakina i mua).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Kua uta te whakaahua tauira. Kōwhiria he taputapu ki te taha mauī, ka tuhi ki runga.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Kei te haere tonu a Snagster i te kokonga o te pae mahi. Pāwhiri matau i tōna tohu hei puta.",
   "That GIF has no frames.": "Kāore he anga o taua GIF.",
   "There's no picture on the clipboard.": "Kāore he whakaahua i te papatopenga.",
   "There's nothing to put in a guide yet.": "Kāore anō kia whai mea hei tuku ki tētahi aratohu.",
@@ -961,8 +960,6 @@
   "Quit": "Puta",
   "Quit Snagster": "Puta i Snagster",
   "Export {n} pictures": "Kaweake whakaahua {n}",
-  "Snagster keeps running in the menu bar.": "Kei te haere tonu a Snagster i te pae tahua.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Kei te haere tonu a Snagster i te paepae pūnaha. Pāwhiri matau i tōna tohu hei puta.",
   "Menu bar icon": "Tohu pae tahua",
   "Tray icon": "Tohu paepae",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Whakaatu i te tohu o Snagster i te pae tahua (pāwhiri: papa hopu, pāwhiri matau: tahua tere)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Kāore he oro i tēnei whakaaturanga: tāpirihia te oro rorohiko, he hōtaka, he hopūoro, he kōnae oro rānei.",
   "Mute Computer sound": "Whakahāngū i te Oro rorohiko",
   "Open {pane} settings": "Whakatuwherahia ngā tautuhinga {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Kāore he hōtaka whai matapihi e tuwhera ana ināianei. Whakatuwherahia tētahi, ā, ka puta mai ki konei."
+  "No program with a window is open right now. Open one, and it shows up here.": "Kāore he hōtaka whai matapihi e tuwhera ana ināianei. Whakatuwherahia tētahi, ā, ka puta mai ki konei.",
+  "Snagster is still running": "Kei te rere tonu a Snagster",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Ka noho a Snagster ki te kokonga o te pae mahi kia mahi tonu ai ō pokatata hopu. Hei puta, pāwhiri matau i tana ata, ka kōwhiri i {item}. Ka taea e koe te huri i tēnei i ngā Tautuhinga.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Ka noho a Snagster ki te pae tahua kia mahi tonu ai ō pokatata hopu. Hei whakamutu, pāwhiri i tana ata, ka kōwhiri i {item}. Ka taea e koe te huri i tēnei i ngā Tautuhinga.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Ka noho a Snagster ki te paepae kia mahi tonu ai ō pokatata hopu. Hei whakamutu, pāwhiri matau i tana ata, ka kōwhiri i {item}. Ka taea e koe te huri i tēnei i ngā Tautuhinga.",
+  "Keep running": "Kia rere tonu",
+  "Always exit": "Puta i ngā wā katoa",
+  "Always quit": "Whakamutu i ngā wā katoa",
+  "To exit, right-click the icon and choose {item}.": "Hei puta, pāwhiri matau i te ata, ka kōwhiri i {item}.",
+  "To quit, click the icon and choose {item}.": "Hei whakamutu, pāwhiri i te ata, ka kōwhiri i {item}.",
+  "To quit, right-click the icon and choose {item}.": "Hei whakamutu, pāwhiri matau i te ata, ka kōwhiri i {item}."
  }
 }

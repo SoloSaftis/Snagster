@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Urratsak grabatzen: klik bakoitzak zenbakitutako irudi bat ateratzen du.",
   "Removed from Recent (it was never saved).": "Azkenekoak zerrendatik kendu da (inoiz ez zen gorde).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Lagin-irudia kargatu da. Aukeratu tresna bat ezkerrean eta marraztu gainean.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster martxan jarraitzen du zeregin-barraren izkinan. Egin eskuineko klik bere ikonoan irteteko.",
   "That GIF has no frames.": "GIF horrek ez du fotogramarik.",
   "There's no picture on the clipboard.": "Ez dago irudirik arbelean.",
   "There's nothing to put in a guide yet.": "Oraindik ez dago ezer gidaren barruan jartzeko.",
@@ -961,8 +960,6 @@
   "Quit": "Irten",
   "Quit Snagster": "Irten Snagster-etik",
   "Export {n} pictures": "Esportatu {n} irudi",
-  "Snagster keeps running in the menu bar.": "Snagster martxan jarraitzen du menu-barran.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster martxan jarraitzen du sistemaren erretiluan. Egin eskuineko klik bere ikonoan irteteko.",
   "Menu bar icon": "Menu-barrako ikonoa",
   "Tray icon": "Erretiluko ikonoa",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Erakutsi Snagster-en ikonoa menu-barran (klik: kaptura-panela, eskuineko klik: menu azkarra)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Ez dago soinurik eszena honetan: gehitu ordenagailuaren soinua, programa bat, mikrofono bat edo soinu-fitxategi bat.",
   "Mute Computer sound": "Isilarazi Ordenagailuaren soinua",
   "Open {pane} settings": "Ireki {pane} ezarpenak",
-  "No program with a window is open right now. Open one, and it shows up here.": "Ez dago leihoa duen programarik irekita orain. Ireki bat, eta hemen agertuko da."
+  "No program with a window is open right now. Open one, and it shows up here.": "Ez dago leihoa duen programarik irekita orain. Ireki bat, eta hemen agertuko da.",
+  "Snagster is still running": "Snagster martxan dago oraindik",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster ataza-barraren izkinan geratzen da argazkiak ateratzeko lasterbideek funtzionatzen jarrai dezaten. Irteteko, egin eskuineko klik ikonoan eta aukeratu {item}. Ezarpenetan alda dezakezu.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster menu-barran geratzen da argazkiak ateratzeko lasterbideek funtzionatzen jarrai dezaten. Ixteko, egin klik ikonoan eta aukeratu {item}. Ezarpenetan alda dezakezu.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster sistemaren erretiluan geratzen da argazkiak ateratzeko lasterbideek funtzionatzen jarrai dezaten. Ixteko, egin eskuineko klik ikonoan eta aukeratu {item}. Ezarpenetan alda dezakezu.",
+  "Keep running": "Jarraitu martxan",
+  "Always exit": "Irten beti",
+  "Always quit": "Itxi beti",
+  "To exit, right-click the icon and choose {item}.": "Irteteko, egin eskuineko klik ikonoan eta aukeratu {item}.",
+  "To quit, click the icon and choose {item}.": "Ixteko, egin klik ikonoan eta aukeratu {item}.",
+  "To quit, right-click the icon and choose {item}.": "Ixteko, egin eskuineko klik ikonoan eta aukeratu {item}."
  }
 }

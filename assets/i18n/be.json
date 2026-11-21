@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Запіс крокаў: кожны пстрык стварае пранумараваны відарыс.",
   "Removed from Recent (it was never saved).": "Выдалена з «Нядаўніх» (не было захавана).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Узор відарыса загружаны. Абярыце інструмент злева і малюйце на ім.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster працягвае працаваць у куце панэлі задач. Пстрыкніце правай кнопкай па яго значку, каб выйсці.",
   "That GIF has no frames.": "У гэтым GIF няма кадраў.",
   "There's no picture on the clipboard.": "У буферы абмену няма відарыса.",
   "There's nothing to put in a guide yet.": "У кіраўніцтва пакуль няма чаго дадаць.",
@@ -961,8 +960,6 @@
   "Quit": "Выйсці",
   "Quit Snagster": "Выйсці з Snagster",
   "Export {n} pictures": "Экспартаваць відарысы: {n}",
-  "Snagster keeps running in the menu bar.": "Snagster працягвае працаваць у радку меню.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster працягвае працаваць у сістэмным трэі. Пстрыкніце правай кнопкай па яго значку, каб выйсці.",
   "Menu bar icon": "Значок у радку меню",
   "Tray icon": "Значок у сістэмным трэі",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Паказваць значок Snagster у радку меню (пстрычка: панэль захопу, правая кнопка: хуткае меню)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "У гэтай сцэне няма гуку: дадайце гук камп'ютара, праграму, мікрафон або гукавы файл.",
   "Mute Computer sound": "Выключыць Гук камп'ютара",
   "Open {pane} settings": "Адкрыць налады «{pane}»",
-  "No program with a window is open right now. Open one, and it shows up here.": "Зараз не адкрыта ніводнай праграмы з акном. Адкрыйце праграму, і яна з'явіцца тут."
+  "No program with a window is open right now. Open one, and it shows up here.": "Зараз не адкрыта ніводнай праграмы з акном. Адкрыйце праграму, і яна з'явіцца тут.",
+  "Snagster is still running": "Snagster усё яшчэ працуе",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster застаецца ў куце панэлі задач, каб спалучэнні клавіш для здымкаў працавалі. Каб выйсці, пстрыкніце правай кнопкай па яго значку і выберыце «{item}». Гэта можна змяніць у Наладах.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster застаецца ў радку меню, каб спалучэнні клавіш для здымкаў працавалі. Каб выйсці, пстрыкніце па яго значку і выберыце «{item}». Гэта можна змяніць у Наладах.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster застаецца ў трэі, каб спалучэнні клавіш для здымкаў працавалі. Каб выйсці, пстрыкніце правай кнопкай па яго значку і выберыце «{item}». Гэта можна змяніць у Наладах.",
+  "Keep running": "Працягваць працу",
+  "Always exit": "Заўсёды выходзіць",
+  "Always quit": "Заўсёды выходзіць",
+  "To exit, right-click the icon and choose {item}.": "Каб выйсці, пстрыкніце правай кнопкай па значку і выберыце «{item}».",
+  "To quit, click the icon and choose {item}.": "Каб выйсці, пстрыкніце па значку і выберыце «{item}».",
+  "To quit, right-click the icon and choose {item}.": "Каб выйсці, пстрыкніце правай кнопкай па значку і выберыце «{item}»."
  }
 }

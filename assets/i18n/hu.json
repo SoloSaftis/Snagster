@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Lépések rögzítése: minden kattintás egy számozott képet készít.",
   "Removed from Recent (it was never saved).": "Eltávolítva a Legutóbbiak közül (soha nem lett mentve).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "A minta kép betöltve. Válasszon eszközt balra, és rajzoljon rá.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "A Snagster tovább fut a tálca sarkában. A kilépéshez kattintson jobb gombbal az ikonjára.",
   "That GIF has no frames.": "Ennek a GIF-nek nincsenek képkockái.",
   "There's no picture on the clipboard.": "Nincs kép a vágólapon.",
   "There's nothing to put in a guide yet.": "Még nincs mit betenni az útmutatóba.",
@@ -961,8 +960,6 @@
   "Quit": "Kilépés",
   "Quit Snagster": "Kilépés a Snagsterből",
   "Export {n} pictures": "{n} kép exportálása",
-  "Snagster keeps running in the menu bar.": "A Snagster tovább fut a menüsorban.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "A Snagster tovább fut az értesítési területen. A kilépéshez kattintson jobb gombbal az ikonjára.",
   "Menu bar icon": "Menüsor-ikon",
   "Tray icon": "Értesítési terület ikonja",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "A Snagster ikonjának megjelenítése a menüsorban (kattintás: rögzítés panel, jobb kattintás: gyorsmenü)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Ebben a jelenetben nincs hang: adj hozzá a számítógép hangját, egy programot, egy mikrofont vagy egy hangfájlt.",
   "Mute Computer sound": "A számítógép hangjának némítása",
   "Open {pane} settings": "{pane} beállításainak megnyitása",
-  "No program with a window is open right now. Open one, and it shows up here.": "Most egy ablakos program sincs megnyitva. Nyiss meg egyet, és itt megjelenik."
+  "No program with a window is open right now. Open one, and it shows up here.": "Most egy ablakos program sincs megnyitva. Nyiss meg egyet, és itt megjelenik.",
+  "Snagster is still running": "A Snagster továbbra is fut",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "A Snagster a tálca sarkában marad, hogy a felvételi billentyűparancsok tovább működjenek. Kilépéshez kattintson a jobb gombbal az ikonjára, és válassza a(z) {item} lehetőséget. Ezt a Beállításokban módosíthatja.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "A Snagster a menüsorban marad, hogy a felvételi billentyűparancsok tovább működjenek. Kilépéshez kattintson az ikonjára, és válassza a(z) {item} lehetőséget. Ezt a Beállításokban módosíthatja.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "A Snagster a tálcán marad, hogy a felvételi billentyűparancsok tovább működjenek. Kilépéshez kattintson a jobb gombbal az ikonjára, és válassza a(z) {item} lehetőséget. Ezt a Beállításokban módosíthatja.",
+  "Keep running": "Fusson tovább",
+  "Always exit": "Mindig kilépés",
+  "Always quit": "Mindig kilépés",
+  "To exit, right-click the icon and choose {item}.": "Kilépéshez kattintson a jobb gombbal az ikonra, és válassza a(z) {item} lehetőséget.",
+  "To quit, click the icon and choose {item}.": "Kilépéshez kattintson az ikonra, és válassza a(z) {item} lehetőséget.",
+  "To quit, right-click the icon and choose {item}.": "Kilépéshez kattintson a jobb gombbal az ikonra, és válassza a(z) {item} lehetőséget."
  }
 }

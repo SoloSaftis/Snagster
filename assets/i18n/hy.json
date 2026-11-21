@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Քայլերը գրանցվում են՝ յուրաքանչյուր սեղմում համարակալված նկար է վերցնում։",
   "Removed from Recent (it was never saved).": "Հեռացվեց «Վերջին» բաժնից (այն երբեք չի պահպանվել)։",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Նմուշային նկարը բեռնվեց։ Ձախ կողմում ընտրեք գործիք և նկարեք դրա վրա։",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster-ը շարունակում է աշխատել առաջադրանքների գոտու անկյունում։ Աջ սեղմեք դրա պատկերակին՝ դուրս գալու համար։",
   "That GIF has no frames.": "Այդ GIF-ը կադրեր չունի։",
   "There's no picture on the clipboard.": "Սեղմատախտակում նկար չկա։",
   "There's nothing to put in a guide yet.": "Ուղեցույցում դնելու ոչինչ դեռ չկա։",
@@ -961,8 +960,6 @@
   "Quit": "Ելք",
   "Quit Snagster": "Ելք Snagster-ից",
   "Export {n} pictures": "Արտահանել {n} նկար",
-  "Snagster keeps running in the menu bar.": "Snagster-ը շարունակում է աշխատել ընտրացանկի գոտում։",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster-ը շարունակում է աշխատել համակարգային սկուտեղում։ Աջ սեղմեք դրա պատկերակին՝ դուրս գալու համար։",
   "Menu bar icon": "Ընտրացանկի գոտու պատկերակ",
   "Tray icon": "Սկուտեղի պատկերակ",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Ցույց տալ Snagster-ի պատկերակը ընտրացանկի գոտում (սեղմում՝ նկարահանման վահանակ, աջ սեղմում՝ արագ ընտրացանկ)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Այս տեսարանում ձայն չկա. ավելացրեք համակարգչի ձայնը, ծրագիր, խոսափող կամ ձայնային ֆայլ։",
   "Mute Computer sound": "Անջատել Համակարգչի ձայնը",
   "Open {pane} settings": "Բացել «{pane}» կարգավորումները",
-  "No program with a window is open right now. Open one, and it shows up here.": "Այս պահին պատուհանով ոչ մի ծրագիր բաց չէ։ Բացեք որևէ մեկը, և այն կհայտնվի այստեղ։"
+  "No program with a window is open right now. Open one, and it shows up here.": "Այս պահին պատուհանով ոչ մի ծրագիր բաց չէ։ Բացեք որևէ մեկը, և այն կհայտնվի այստեղ։",
+  "Snagster is still running": "Snagster-ը դեռ աշխատում է",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster-ը մնում է առաջադրանքների վահանակի անկյունում, որպեսզի նկարման դյուրանցումները շարունակեն աշխատել։ Դուրս գալու համար աջ սեղմեք դրա պատկերակին և ընտրեք {item}։ Սա կարող եք փոխել Կարգավորումներում։",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster-ը մնում է ընտրացանկի տողում, որպեսզի նկարման դյուրանցումները շարունակեն աշխատել։ Փակելու համար սեղմեք դրա պատկերակին և ընտրեք {item}։ Սա կարող եք փոխել Կարգավորումներում։",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster-ը մնում է համակարգային սկուտեղում, որպեսզի նկարման դյուրանցումները շարունակեն աշխատել։ Փակելու համար աջ սեղմեք դրա պատկերակին և ընտրեք {item}։ Սա կարող եք փոխել Կարգավորումներում։",
+  "Keep running": "Շարունակել աշխատել",
+  "Always exit": "Միշտ դուրս գալ",
+  "Always quit": "Միշտ փակել",
+  "To exit, right-click the icon and choose {item}.": "Դուրս գալու համար աջ սեղմեք պատկերակին և ընտրեք {item}։",
+  "To quit, click the icon and choose {item}.": "Փակելու համար սեղմեք պատկերակին և ընտրեք {item}։",
+  "To quit, right-click the icon and choose {item}.": "Փակելու համար աջ սեղմեք պատկերակին և ընտրեք {item}։"
  }
 }

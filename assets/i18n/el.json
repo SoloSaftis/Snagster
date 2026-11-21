@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Εγγραφή βημάτων: κάθε κλικ παίρνει μια αριθμημένη εικόνα.",
   "Removed from Recent (it was never saved).": "Αφαιρέθηκε από τα Πρόσφατα (δεν είχε αποθηκευτεί ποτέ).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Φορτώθηκε δείγμα εικόνας. Διαλέξτε ένα εργαλείο στα αριστερά και ζωγραφίστε πάνω της.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Το Snagster συνεχίζει να εκτελείται στη γωνία της γραμμής εργασιών. Κάντε δεξί κλικ στο εικονίδιό του για έξοδο.",
   "That GIF has no frames.": "Αυτό το GIF δεν έχει καρέ.",
   "There's no picture on the clipboard.": "Δεν υπάρχει εικόνα στο πρόχειρο.",
   "There's nothing to put in a guide yet.": "Δεν υπάρχει ακόμη τίποτα για να μπει σε οδηγό.",
@@ -961,8 +960,6 @@
   "Quit": "Έξοδος",
   "Quit Snagster": "Τερματισμός Snagster",
   "Export {n} pictures": "Εξαγωγή {n} εικόνων",
-  "Snagster keeps running in the menu bar.": "Το Snagster συνεχίζει να εκτελείται στη γραμμή μενού.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Το Snagster συνεχίζει να εκτελείται στο πλαίσιο συστήματος. Κάντε δεξί κλικ στο εικονίδιό του για έξοδο.",
   "Menu bar icon": "Εικονίδιο γραμμής μενού",
   "Tray icon": "Εικονίδιο πλαισίου συστήματος",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Εμφάνιση του εικονιδίου του Snagster στη γραμμή μενού (κλικ: πίνακας λήψης, δεξί κλικ: γρήγορο μενού)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Δεν υπάρχει ήχος σε αυτή τη σκηνή: προσθέστε τον ήχο του υπολογιστή, ένα πρόγραμμα, ένα μικρόφωνο ή ένα αρχείο ήχου.",
   "Mute Computer sound": "Σίγαση Ήχου υπολογιστή",
   "Open {pane} settings": "Άνοιγμα ρυθμίσεων «{pane}»",
-  "No program with a window is open right now. Open one, and it shows up here.": "Κανένα πρόγραμμα με παράθυρο δεν είναι ανοιχτό αυτή τη στιγμή. Ανοίξτε ένα, και θα εμφανιστεί εδώ."
+  "No program with a window is open right now. Open one, and it shows up here.": "Κανένα πρόγραμμα με παράθυρο δεν είναι ανοιχτό αυτή τη στιγμή. Ανοίξτε ένα, και θα εμφανιστεί εδώ.",
+  "Snagster is still running": "Το Snagster εξακολουθεί να εκτελείται",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Το Snagster μένει στη γωνία της γραμμής εργασιών ώστε οι συντομεύσεις λήψης να συνεχίζουν να λειτουργούν. Για έξοδο, κάντε δεξί κλικ στο εικονίδιό του και επιλέξτε «{item}». Μπορείτε να το αλλάξετε στις Ρυθμίσεις.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Το Snagster μένει στη γραμμή μενού ώστε οι συντομεύσεις λήψης να συνεχίζουν να λειτουργούν. Για τερματισμό, κάντε κλικ στο εικονίδιό του και επιλέξτε «{item}». Μπορείτε να το αλλάξετε στις Ρυθμίσεις.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Το Snagster μένει στο πλαίσιο συστήματος ώστε οι συντομεύσεις λήψης να συνεχίζουν να λειτουργούν. Για τερματισμό, κάντε δεξί κλικ στο εικονίδιό του και επιλέξτε «{item}». Μπορείτε να το αλλάξετε στις Ρυθμίσεις.",
+  "Keep running": "Να συνεχίσει",
+  "Always exit": "Πάντα έξοδος",
+  "Always quit": "Πάντα τερματισμός",
+  "To exit, right-click the icon and choose {item}.": "Για έξοδο, κάντε δεξί κλικ στο εικονίδιο και επιλέξτε «{item}».",
+  "To quit, click the icon and choose {item}.": "Για τερματισμό, κάντε κλικ στο εικονίδιο και επιλέξτε «{item}».",
+  "To quit, right-click the icon and choose {item}.": "Για τερματισμό, κάντε δεξί κλικ στο εικονίδιο και επιλέξτε «{item}»."
  }
 }

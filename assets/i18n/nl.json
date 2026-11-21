@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Stappen opnemen: elke klik maakt een genummerde afbeelding.",
   "Removed from Recent (it was never saved).": "Verwijderd uit Recent (het was nooit opgeslagen).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Voorbeeldafbeelding geladen. Kies links een hulpmiddel en teken erop.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster blijft actief in de hoek van de taakbalk. Klik met de rechtermuisknop op het pictogram om af te sluiten.",
   "That GIF has no frames.": "Die GIF heeft geen frames.",
   "There's no picture on the clipboard.": "Er staat geen afbeelding op het klembord.",
   "There's nothing to put in a guide yet.": "Er is nog niets om in een handleiding te zetten.",
@@ -961,8 +960,6 @@
   "Quit": "Afsluiten",
   "Quit Snagster": "Snagster afsluiten",
   "Export {n} pictures": "{n} afbeeldingen exporteren",
-  "Snagster keeps running in the menu bar.": "Snagster blijft actief in de menubalk.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster blijft actief in het systeemvak. Klik met de rechtermuisknop op het pictogram om af te sluiten.",
   "Menu bar icon": "Menubalkpictogram",
   "Tray icon": "Systeemvakpictogram",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Het Snagster-pictogram in de menubalk tonen (klik: opnamepaneel, rechtsklik: snelmenu)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Geen geluid in deze scène: voeg het computergeluid, een programma, een microfoon of een geluidsbestand toe.",
   "Mute Computer sound": "Computergeluid dempen",
   "Open {pane} settings": "Instellingen voor {pane} openen",
-  "No program with a window is open right now. Open one, and it shows up here.": "Er is nu geen programma met een venster open. Open er een, dan verschijnt het hier."
+  "No program with a window is open right now. Open one, and it shows up here.": "Er is nu geen programma met een venster open. Open er een, dan verschijnt het hier.",
+  "Snagster is still running": "Snagster draait nog",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster blijft in de hoek van de taakbalk zodat je sneltoetsen voor opnamen blijven werken. Om af te sluiten klik je met rechts op het pictogram en kies je {item}. Je kunt dit wijzigen in Instellingen.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster blijft in de menubalk zodat je sneltoetsen voor opnamen blijven werken. Om te stoppen klik je op het pictogram en kies je {item}. Je kunt dit wijzigen in Instellingen.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster blijft in het systeemvak zodat je sneltoetsen voor opnamen blijven werken. Om te stoppen klik je met rechts op het pictogram en kies je {item}. Je kunt dit wijzigen in Instellingen.",
+  "Keep running": "Laten draaien",
+  "Always exit": "Altijd afsluiten",
+  "Always quit": "Altijd stoppen",
+  "To exit, right-click the icon and choose {item}.": "Om af te sluiten klik je met rechts op het pictogram en kies je {item}.",
+  "To quit, click the icon and choose {item}.": "Om te stoppen klik je op het pictogram en kies je {item}.",
+  "To quit, right-click the icon and choose {item}.": "Om te stoppen klik je met rechts op het pictogram en kies je {item}."
  }
 }

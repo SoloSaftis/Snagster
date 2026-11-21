@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "A' clàradh cheumannan: gabhaidh gach briogadh dealbh le àireamh.",
   "Removed from Recent (it was never saved).": "Air a thoirt à O chionn ghoirid (cha deach a shàbhaladh a-riamh).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Chaidh dealbh sampall a luchdadh. Tagh inneal air an taobh chlì agus tarraing air.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Bidh Snagster a' dol air adhart ann an oisean bàr nan gnìomhan. Briog deas air an ìomhaigheag aige gus fhàgail.",
   "That GIF has no frames.": "Chan eil frèam sam bith sa GIF sin.",
   "There's no picture on the clipboard.": "Chan eil dealbh air an stòr-bhòrd-gearraidh.",
   "There's nothing to put in a guide yet.": "Chan eil dad ri chur ann an stiùireadh fhathast.",
@@ -961,8 +960,6 @@
   "Quit": "Fàg",
   "Quit Snagster": "Fàg Snagster",
   "Export {n} pictures": "Às-phortaich dealbhan ({n})",
-  "Snagster keeps running in the menu bar.": "Bidh Snagster a' dol air adhart ann am bàr a' chlàir-thaice.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Bidh Snagster a' dol air adhart san treidhe. Briog deas air an ìomhaigheag aige gus fhàgail.",
   "Menu bar icon": "Ìomhaigheag bàr a' chlàir-thaice",
   "Tray icon": "Ìomhaigheag an treidhe",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Seall ìomhaigheag Snagster ann am bàr a' chlàir-thaice (briogadh: panail glacaidh, briogadh deas: clàr-taice luath)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Chan eil fuaim san t-sealladh seo: cuir fuaim a' choimpiutair, prògram, micreofon no faidhle fuaime ris.",
   "Mute Computer sound": "Balbhaich Fuaim a' choimpiutair",
   "Open {pane} settings": "Fosgail roghainnean {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Chan eil prògram sam bith le uinneag fosgailte an-dràsta. Fosgail fear, is nochdaidh e an-seo."
+  "No program with a window is open right now. Open one, and it shows up here.": "Chan eil prògram sam bith le uinneag fosgailte an-dràsta. Fosgail fear, is nochdaidh e an-seo.",
+  "Snagster is still running": "Tha Snagster fhathast a' ruith",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Fuirichidh Snagster ann an oisean a' bhàr-ghnìomhan airson 's gun obraich na h-ath-ghoiridean glacaidh agad fhathast. Airson fàgail, briog deas air an ìomhaigheag aige is tagh {item}. 'S urrainn dhut seo atharrachadh sna Roghainnean.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Fuirichidh Snagster air a' bhàr-chlàir airson 's gun obraich na h-ath-ghoiridean glacaidh agad fhathast. Airson fàgail, briog air an ìomhaigheag aige is tagh {item}. 'S urrainn dhut seo atharrachadh sna Roghainnean.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Fuirichidh Snagster san treidhe airson 's gun obraich na h-ath-ghoiridean glacaidh agad fhathast. Airson fàgail, briog deas air an ìomhaigheag aige is tagh {item}. 'S urrainn dhut seo atharrachadh sna Roghainnean.",
+  "Keep running": "Cùm a' ruith",
+  "Always exit": "Fàg an-còmhnaidh",
+  "Always quit": "Fàg an-còmhnaidh",
+  "To exit, right-click the icon and choose {item}.": "Airson fàgail, briog deas air an ìomhaigheag is tagh {item}.",
+  "To quit, click the icon and choose {item}.": "Airson fàgail, briog air an ìomhaigheag is tagh {item}.",
+  "To quit, right-click the icon and choose {item}.": "Airson fàgail, briog deas air an ìomhaigheag is tagh {item}."
  }
 }

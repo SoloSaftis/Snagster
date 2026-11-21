@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Nahrávanie krokov: každé kliknutie vytvorí očíslovaný obrázok.",
   "Removed from Recent (it was never saved).": "Odstránené z Nedávnych (nikdy nebolo uložené).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Ukážkový obrázok načítaný. Vyberte vľavo nástroj a kreslite naň.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster beží ďalej v rohu panela úloh. Kliknutím pravým tlačidlom na jeho ikonu ho ukončíte.",
   "That GIF has no frames.": "Tento GIF nemá žiadne snímky.",
   "There's no picture on the clipboard.": "V schránke nie je žiadny obrázok.",
   "There's nothing to put in a guide yet.": "Zatiaľ nie je čo vložiť do sprievodcu.",
@@ -961,8 +960,6 @@
   "Quit": "Ukončiť",
   "Quit Snagster": "Ukončiť Snagster",
   "Export {n} pictures": "Exportovať obrázky ({n})",
-  "Snagster keeps running in the menu bar.": "Snagster beží ďalej v lište menu.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster beží ďalej v oblasti oznámení. Kliknutím pravým tlačidlom na jeho ikonu ho ukončíte.",
   "Menu bar icon": "Ikona v lište menu",
   "Tray icon": "Ikona v oblasti oznámení",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Zobraziť ikonu aplikácie Snagster v lište menu (kliknutie: panel zachytenia, pravé tlačidlo: rýchla ponuka)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "V tejto scéne nie je žiadny zvuk: pridajte zvuk počítača, program, mikrofón alebo zvukový súbor.",
   "Mute Computer sound": "Stlmiť zvuk počítača",
   "Open {pane} settings": "Otvoriť nastavenia „{pane}“",
-  "No program with a window is open right now. Open one, and it shows up here.": "Momentálne nie je otvorený žiadny program s oknom. Nejaký otvorte, a zobrazí sa tu."
+  "No program with a window is open right now. Open one, and it shows up here.": "Momentálne nie je otvorený žiadny program s oknom. Nejaký otvorte, a zobrazí sa tu.",
+  "Snagster is still running": "Snagster stále beží",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster zostáva v rohu panela úloh, aby klávesové skratky na snímky naďalej fungovali. Ukončíte ho kliknutím pravým tlačidlom na jeho ikonu a voľbou {item}. Môžete to zmeniť v Nastaveniach.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster zostáva v lište ponúk, aby klávesové skratky na snímky naďalej fungovali. Ukončíte ho kliknutím na jeho ikonu a voľbou {item}. Môžete to zmeniť v Nastaveniach.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster zostáva v oblasti oznámení, aby klávesové skratky na snímky naďalej fungovali. Ukončíte ho kliknutím pravým tlačidlom na jeho ikonu a voľbou {item}. Môžete to zmeniť v Nastaveniach.",
+  "Keep running": "Nechať bežať",
+  "Always exit": "Vždy ukončiť",
+  "Always quit": "Vždy ukončiť",
+  "To exit, right-click the icon and choose {item}.": "Ukončíte ho kliknutím pravým tlačidlom na ikonu a voľbou {item}.",
+  "To quit, click the icon and choose {item}.": "Ukončíte ho kliknutím na ikonu a voľbou {item}.",
+  "To quit, right-click the icon and choose {item}.": "Ukončíte ho kliknutím pravým tlačidlom na ikonu a voľbou {item}."
  }
 }

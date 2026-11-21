@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Optager trin: hvert klik tager et nummereret billede.",
   "Removed from Recent (it was never saved).": "Fjernet fra Seneste (det blev aldrig gemt).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Eksempelbillede indlæst. Vælg et værktøj til venstre og tegn på det.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster kører videre i hjørnet af proceslinjen. Højreklik på ikonet for at afslutte.",
   "That GIF has no frames.": "Den GIF har ingen frames.",
   "There's no picture on the clipboard.": "Der er intet billede på udklipsholderen.",
   "There's nothing to put in a guide yet.": "Der er endnu intet at sætte i en vejledning.",
@@ -961,8 +960,6 @@
   "Quit": "Afslut",
   "Quit Snagster": "Afslut Snagster",
   "Export {n} pictures": "Eksportér {n} billeder",
-  "Snagster keeps running in the menu bar.": "Snagster kører videre i menulinjen.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster kører videre i systembakken. Højreklik på ikonet for at afslutte.",
   "Menu bar icon": "Ikon i menulinjen",
   "Tray icon": "Ikon i systembakken",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Vis Snagsters ikon i menulinjen (klik: optagelsespanel, højreklik: hurtigmenu)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Ingen lyd i denne scene: tilføj computerlyden, et program, en mikrofon eller en lydfil.",
   "Mute Computer sound": "Slå lyden fra for Computerlyd",
   "Open {pane} settings": "Åbn indstillinger for {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Intet program med et vindue er åbent lige nu. Åbn et, så dukker det op her."
+  "No program with a window is open right now. Open one, and it shows up here.": "Intet program med et vindue er åbent lige nu. Åbn et, så dukker det op her.",
+  "Snagster is still running": "Snagster kører stadig",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster bliver i hjørnet af proceslinjen, så dine genveje til optagelse bliver ved med at virke. For at afslutte skal du højreklikke på ikonet og vælge {item}. Du kan ændre dette i Indstillinger.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster bliver i menulinjen, så dine genveje til optagelse bliver ved med at virke. For at afslutte skal du klikke på ikonet og vælge {item}. Du kan ændre dette i Indstillinger.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster bliver i systembakken, så dine genveje til optagelse bliver ved med at virke. For at afslutte skal du højreklikke på ikonet og vælge {item}. Du kan ændre dette i Indstillinger.",
+  "Keep running": "Bliv ved med at køre",
+  "Always exit": "Afslut altid",
+  "Always quit": "Afslut altid",
+  "To exit, right-click the icon and choose {item}.": "For at afslutte skal du højreklikke på ikonet og vælge {item}.",
+  "To quit, click the icon and choose {item}.": "For at afslutte skal du klikke på ikonet og vælge {item}.",
+  "To quit, right-click the icon and choose {item}.": "For at afslutte skal du højreklikke på ikonet og vælge {item}."
  }
 }

@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "ধাপ রেকর্ড হচ্ছে: প্রতিটি ক্লিক একটি ক্রমিক নম্বরযুক্ত ছবি নেয়।",
   "Removed from Recent (it was never saved).": "সাম্প্রতিক থেকে সরানো হয়েছে (এটি কখনও সংরক্ষণ করা হয়নি)।",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "নমুনা ছবি লোড হয়েছে। বাঁ দিক থেকে একটি টুল বেছে নিয়ে তাতে আঁকুন।",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster টাস্কবারের কোণায় চলতে থাকে। বের হতে এর আইকনে রাইট-ক্লিক করুন।",
   "That GIF has no frames.": "ওই GIF-এ কোনো ফ্রেম নেই।",
   "There's no picture on the clipboard.": "ক্লিপবোর্ডে কোনো ছবি নেই।",
   "There's nothing to put in a guide yet.": "গাইডে রাখার মতো এখনও কিছু নেই।",
@@ -961,8 +960,6 @@
   "Quit": "প্রস্থান",
   "Quit Snagster": "Snagster থেকে প্রস্থান",
   "Export {n} pictures": "{n}টি ছবি এক্সপোর্ট করুন",
-  "Snagster keeps running in the menu bar.": "Snagster মেনু বারে চলতে থাকে।",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster ট্রেতে চলতে থাকে। বের হতে এর আইকনে রাইট-ক্লিক করুন।",
   "Menu bar icon": "মেনু বারের আইকন",
   "Tray icon": "ট্রে আইকন",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "মেনু বারে Snagster-এর আইকন দেখান (ক্লিক: ক্যাপচার প্যানেল, রাইট-ক্লিক: দ্রুত মেনু)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "এই সিনে কোনো শব্দ নেই: কম্পিউটারের শব্দ, একটি প্রোগ্রাম, একটি মাইক্রোফোন বা একটি সাউন্ড ফাইল যোগ করুন।",
   "Mute Computer sound": "কম্পিউটারের শব্দ মিউট করুন",
   "Open {pane} settings": "{pane} সেটিংস খুলুন",
-  "No program with a window is open right now. Open one, and it shows up here.": "এখন উইন্ডোসহ কোনো প্রোগ্রাম খোলা নেই। একটি খুলুন, তাহলে সেটি এখানে দেখা যাবে।"
+  "No program with a window is open right now. Open one, and it shows up here.": "এখন উইন্ডোসহ কোনো প্রোগ্রাম খোলা নেই। একটি খুলুন, তাহলে সেটি এখানে দেখা যাবে।",
+  "Snagster is still running": "Snagster এখনও চলছে",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "আপনার ক্যাপচার শর্টকাট চালু রাখতে Snagster টাস্কবারের কোণে থাকে। বের হতে, এর আইকনে রাইট-ক্লিক করে {item} বেছে নিন। আপনি এটি সেটিংসে বদলাতে পারেন।",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "আপনার ক্যাপচার শর্টকাট চালু রাখতে Snagster মেনু বারে থাকে। বন্ধ করতে, এর আইকনে ক্লিক করে {item} বেছে নিন। আপনি এটি সেটিংসে বদলাতে পারেন।",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "আপনার ক্যাপচার শর্টকাট চালু রাখতে Snagster ট্রেতে থাকে। বন্ধ করতে, এর আইকনে রাইট-ক্লিক করে {item} বেছে নিন। আপনি এটি সেটিংসে বদলাতে পারেন।",
+  "Keep running": "চালু রাখুন",
+  "Always exit": "সবসময় বের হন",
+  "Always quit": "সবসময় বন্ধ করুন",
+  "To exit, right-click the icon and choose {item}.": "বের হতে, আইকনে রাইট-ক্লিক করে {item} বেছে নিন।",
+  "To quit, click the icon and choose {item}.": "বন্ধ করতে, আইকনে ক্লিক করে {item} বেছে নিন।",
+  "To quit, right-click the icon and choose {item}.": "বন্ধ করতে, আইকনে রাইট-ক্লিক করে {item} বেছে নিন।"
  }
 }

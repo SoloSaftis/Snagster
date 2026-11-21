@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "手順を記録中: クリックするたびに番号付きの画像を撮影します。",
   "Removed from Recent (it was never saved).": "「最近」から削除しました (保存されていませんでした)。",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "サンプル画像を読み込みました。左側でツールを選んで描いてみましょう。",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster はタスクバーの隅で動作し続けます。終了するにはアイコンを右クリックしてください。",
   "That GIF has no frames.": "その GIF にはフレームがありません。",
   "There's no picture on the clipboard.": "クリップボードに画像がありません。",
   "There's nothing to put in a guide yet.": "ガイドに入れるものがまだありません。",
@@ -961,8 +960,6 @@
   "Quit": "終了",
   "Quit Snagster": "Snagster を終了",
   "Export {n} pictures": "{n} 枚の画像を書き出す",
-  "Snagster keeps running in the menu bar.": "Snagster はメニューバーで動作し続けます。",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster はトレイで動作し続けます。終了するにはアイコンを右クリックしてください。",
   "Menu bar icon": "メニューバーのアイコン",
   "Tray icon": "トレイアイコン",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "メニューバーに Snagster のアイコンを表示（クリック：キャプチャパネル、右クリック：クイックメニュー）",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "このシーンには音声がありません。コンピューターの音声、プログラム、マイク、または音声ファイルを追加してください。",
   "Mute Computer sound": "コンピューターの音声をミュート",
   "Open {pane} settings": "{pane}の設定を開く",
-  "No program with a window is open right now. Open one, and it shows up here.": "現在、ウィンドウのあるプログラムは開いていません。プログラムを開くと、ここに表示されます。"
+  "No program with a window is open right now. Open one, and it shows up here.": "現在、ウィンドウのあるプログラムは開いていません。プログラムを開くと、ここに表示されます。",
+  "Snagster is still running": "Snagster は実行中です",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "キャプチャのショートカットが使えるよう、Snagster はタスク バーの隅に残ります。終了するには、アイコンを右クリックして [{item}] を選びます。設定で変更できます。",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "キャプチャのショートカットが使えるよう、Snagster はメニューバーに残ります。終了するには、アイコンをクリックして [{item}] を選びます。設定で変更できます。",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "キャプチャのショートカットが使えるよう、Snagster はトレイに残ります。終了するには、アイコンを右クリックして [{item}] を選びます。設定で変更できます。",
+  "Keep running": "実行を続ける",
+  "Always exit": "常に終了する",
+  "Always quit": "常に終了する",
+  "To exit, right-click the icon and choose {item}.": "終了するには、アイコンを右クリックして [{item}] を選びます。",
+  "To quit, click the icon and choose {item}.": "終了するには、アイコンをクリックして [{item}] を選びます。",
+  "To quit, right-click the icon and choose {item}.": "終了するには、アイコンを右クリックして [{item}] を選びます。"
  }
 }

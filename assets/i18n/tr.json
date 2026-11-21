@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Adımlar kaydediliyor: her tıklama numaralı bir resim alır.",
   "Removed from Recent (it was never saved).": "Son Kullanılanlar'dan kaldırıldı (hiç kaydedilmemişti).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Örnek resim yüklendi. Soldan bir araç seçin ve üzerine çizin.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster görev çubuğunun köşesinde çalışmaya devam eder. Çıkmak için simgesine sağ tıklayın.",
   "That GIF has no frames.": "Bu GIF'te kare yok.",
   "There's no picture on the clipboard.": "Panoda resim yok.",
   "There's nothing to put in a guide yet.": "Kılavuza konacak bir şey henüz yok.",
@@ -961,8 +960,6 @@
   "Quit": "Çık",
   "Quit Snagster": "Snagster'dan Çık",
   "Export {n} pictures": "{n} resmi dışa aktar",
-  "Snagster keeps running in the menu bar.": "Snagster menü çubuğunda çalışmaya devam eder.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster sistem tepsisinde çalışmaya devam eder. Çıkmak için simgesine sağ tıklayın.",
   "Menu bar icon": "Menü çubuğu simgesi",
   "Tray icon": "Sistem tepsisi simgesi",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Snagster simgesini menü çubuğunda göster (tıklama: yakalama paneli, sağ tık: hızlı menü)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Bu sahnede ses yok: bilgisayar sesini, bir programı, bir mikrofonu veya bir ses dosyasını ekleyin.",
   "Mute Computer sound": "Bilgisayar sesini kapat",
   "Open {pane} settings": "{pane} ayarlarını aç",
-  "No program with a window is open right now. Open one, and it shows up here.": "Şu anda penceresi olan hiçbir program açık değil. Birini açın, burada görünür."
+  "No program with a window is open right now. Open one, and it shows up here.": "Şu anda penceresi olan hiçbir program açık değil. Birini açın, burada görünür.",
+  "Snagster is still running": "Snagster hâlâ çalışıyor",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Yakalama kısayollarınız çalışmaya devam etsin diye Snagster görev çubuğunun köşesinde kalır. Çıkmak için simgesine sağ tıklayıp {item} öğesini seçin. Bunu Ayarlar'dan değiştirebilirsiniz.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Yakalama kısayollarınız çalışmaya devam etsin diye Snagster menü çubuğunda kalır. Çıkmak için simgesine tıklayıp {item} öğesini seçin. Bunu Ayarlar'dan değiştirebilirsiniz.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Yakalama kısayollarınız çalışmaya devam etsin diye Snagster sistem tepsisinde kalır. Çıkmak için simgesine sağ tıklayıp {item} öğesini seçin. Bunu Ayarlar'dan değiştirebilirsiniz.",
+  "Keep running": "Çalışmaya devam et",
+  "Always exit": "Her zaman çık",
+  "Always quit": "Her zaman çık",
+  "To exit, right-click the icon and choose {item}.": "Çıkmak için simgeye sağ tıklayıp {item} öğesini seçin.",
+  "To quit, click the icon and choose {item}.": "Çıkmak için simgeye tıklayıp {item} öğesini seçin.",
+  "To quit, right-click the icon and choose {item}.": "Çıkmak için simgeye sağ tıklayıp {item} öğesini seçin."
  }
 }

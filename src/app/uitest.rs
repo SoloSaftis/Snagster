@@ -948,7 +948,7 @@ impl UiTest {
             a.about_open = false;
             a.grabbed_text = None;
         }));
-        for (name, which) in [("New image", 0), ("Resize", 1), ("Canvas", 2), ("Rename", 3), ("Export", 4), ("Getting started", 5), ("What's new", 6)] {
+        for (name, which) in [("New image", 0), ("Resize", 1), ("Canvas", 2), ("Rename", 3), ("Export", 4), ("Getting started", 5), ("What's new", 6), ("Still running", 7)] {
             s.push(once(format!("dialog: {name}"), move |a, _| {
                 use crate::windows::Dialog;
                 a.dialog = Some(match which {
@@ -958,7 +958,8 @@ impl UiTest {
                     3 => Dialog::Rename("Name".into()),
                     4 => Dialog::export(a.entries.len(), &a.settings),
                     5 => Dialog::GettingStarted,
-                    _ => Dialog::WhatsNew,
+                    6 => Dialog::WhatsNew,
+                    _ => Dialog::StillRunning,
                 });
             }));
         }

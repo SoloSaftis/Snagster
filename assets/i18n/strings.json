@@ -590,7 +590,6 @@
  "Snagster",
  "Snagster can't scroll other programs here, so scroll it yourself and press Stop.",
  "Snagster is an MCP server: any AI app that speaks MCP can capture the screen, mark up pictures, read text, record videos and run Studio. Apps on this computer only; nothing goes online.",
- "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.",
  "Snagster speaks 86 languages. Language names are shown in the language you pick.",
  "Snagster {new} is out. You have {old}.",
  "Snagster {v} is out.",
@@ -957,8 +956,6 @@
  "Quit",
  "Quit Snagster",
  "Export {n} pictures",
- "Snagster keeps running in the menu bar.",
- "Snagster keeps running in the tray. Right-click its icon to quit.",
  "Menu bar icon",
  "Tray icon",
  "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)",
@@ -1221,5 +1218,15 @@
  "No sound in this scene: add the computer sound, a program, a microphone or a sound file.",
  "Mute Computer sound",
  "Open {pane} settings",
- "No program with a window is open right now. Open one, and it shows up here."
+ "No program with a window is open right now. Open one, and it shows up here.",
+ "Snagster is still running",
+ "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.",
+ "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.",
+ "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.",
+ "Keep running",
+ "Always exit",
+ "Always quit",
+ "To exit, right-click the icon and choose {item}.",
+ "To quit, click the icon and choose {item}.",
+ "To quit, right-click the icon and choose {item}."
 ]

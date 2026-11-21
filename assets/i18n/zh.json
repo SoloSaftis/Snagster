@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "正在录制步骤：每次点击都会拍一张带编号的图片。",
   "Removed from Recent (it was never saved).": "已从“最近”中移除（它从未保存过）。",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "已载入示例图片。在左侧选择一个工具，在图片上绘制吧。",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster 会继续在任务栏角落运行。右键单击其图标即可退出。",
   "That GIF has no frames.": "该 GIF 没有帧。",
   "There's no picture on the clipboard.": "剪贴板中没有图片。",
   "There's nothing to put in a guide yet.": "指南中还没有可放入的内容。",
@@ -961,8 +960,6 @@
   "Quit": "退出",
   "Quit Snagster": "退出 Snagster",
   "Export {n} pictures": "导出 {n} 张图片",
-  "Snagster keeps running in the menu bar.": "Snagster 会继续在菜单栏中运行。",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster 会继续在系统托盘中运行。右键单击其图标即可退出。",
   "Menu bar icon": "菜单栏图标",
   "Tray icon": "系统托盘图标",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "在菜单栏显示 Snagster 图标（点击：截图面板，右键点击：快捷菜单）",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "此场景没有声音：请添加计算机声音、程序、麦克风或声音文件。",
   "Mute Computer sound": "将计算机声音静音",
   "Open {pane} settings": "打开{pane}设置",
-  "No program with a window is open right now. Open one, and it shows up here.": "目前没有打开任何带窗口的程序。请打开一个程序，它就会出现在这里。"
+  "No program with a window is open right now. Open one, and it shows up here.": "目前没有打开任何带窗口的程序。请打开一个程序，它就会出现在这里。",
+  "Snagster is still running": "Snagster 仍在运行",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster 会留在任务栏角落，让截图快捷键继续可用。要退出，请右键单击它的图标并选择“{item}”。可以在设置中更改。",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster 会留在菜单栏中，让截图快捷键继续可用。要退出，请单击它的图标并选择“{item}”。可以在设置中更改。",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster 会留在系统托盘中，让截图快捷键继续可用。要退出，请右键单击它的图标并选择“{item}”。可以在设置中更改。",
+  "Keep running": "继续运行",
+  "Always exit": "总是退出",
+  "Always quit": "总是退出",
+  "To exit, right-click the icon and choose {item}.": "要退出，请右键单击图标并选择“{item}”。",
+  "To quit, click the icon and choose {item}.": "要退出，请单击图标并选择“{item}”。",
+  "To quit, right-click the icon and choose {item}.": "要退出，请右键单击图标并选择“{item}”。"
  }
 }

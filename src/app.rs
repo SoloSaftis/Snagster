@@ -1016,6 +1016,16 @@ impl SnagApp {
     }
 
     /// Hide the window to the tray (it keeps running there).
+/// Out of sight, still running: hidden to the tray, or minimized on Wayland (a program can't
+    /// hide its window there).
+    pub(crate) fn away_to_tray(&mut self, ctx: &egui::Context) {
+        if capture::desktop_screenshots_only() {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+        } else {
+            self.hide_to_tray(ctx);
+        }
+    }
+
     pub(crate) fn hide_to_tray(&mut self, ctx: &egui::Context) {
         self.in_tray = true;
         ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
@@ -4771,17 +4781,15 @@ impl SnagApp {
             if self.panel_open {
                 self.leave_panel(ctx);
             }
-            if capture::desktop_screenshots_only() {
-                // Wayland doesn't let a program hide its window: it is minimized instead.
-                ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+            if close_hint_due(self.settings.close_hint_seen) {
+                // The first time: say so in the window, which is still there to read it (a line
+                // in the status bar of a hidden window was never seen), with Keep running or
+                // Always exit. It goes to the tray once answered.
+                self.settings.close_hint_seen = true;
+                self.dialog = Some(crate::windows::Dialog::StillRunning);
             } else {
-                self.hide_to_tray(ctx);
+                self.away_to_tray(ctx);
             }
-            self.status = crate::i18n::t(crate::platform::by_system(
-                "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.",
-                "Snagster keeps running in the menu bar.",
-                "Snagster keeps running in the tray. Right-click its icon to quit.",
-            )).to_string();
         }
         // Closing for good ends a stream cleanly (it is unpublished, not cut off).
         if ctx.input(|i| i.viewport().close_requested()) && !keep_running && crate::stream::live::end() {
@@ -5003,6 +5011,11 @@ fn grown_by(size: f32, per_step: f32, text_scale: f32) -> f32 {
 fn chosen_name(suggested: &str, path: &std::path::Path) -> Option<String> {
     let stem = path.file_stem()?.to_string_lossy().trim().to_string();
     (!stem.is_empty() && stem != suggested).then_some(stem)
+}
+
+/// Whether closing the window to the tray first says so (once, ever).
+fn close_hint_due(seen: bool) -> bool {
+    !seen
 }
 
 /// The main window's title: the open picture's name and Snagster ("Picture 3 – Snagster"), as
@@ -6469,6 +6482,7 @@ impl SnagApp {
             }
             "library" => self.library_open = true,
             "new-image" => self.dialog = Some(crate::windows::Dialog::new_image()),
+            "still-running" => self.dialog = Some(crate::windows::Dialog::StillRunning),
             "settings-ai" => {
                 self.settings_open = true;
                 self.settings_tab = SettingsTab::Ai;
@@ -6830,6 +6844,15 @@ mod tests {
         let (tops, total) = super::welcome_stack(&compact);
         assert_eq!(tops[6], 12.0);
         assert_eq!(total, 12.0 + 260.0 + 24.0 + 18.0 + 10.0 + 16.0);
+    }
+
+    #[test]
+    fn closing_to_the_tray_says_so_only_the_first_time() {
+        assert!(super::close_hint_due(false));
+        assert!(!super::close_hint_due(true));
+        // An older settings file has no such field: it counts as not seen yet.
+        let s: super::Settings = serde_json::from_str("{}").unwrap();
+        assert!(!s.close_hint_seen);
     }
 
     #[test]

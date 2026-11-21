@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Адымнарны язу: һәр басу номерлы рәсем ясый.",
   "Removed from Recent (it was never saved).": "«Соңгылар»дан бетерелде (ул беркайчан да сакланмаган).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Үрнәк рәсем йөкләнде. Сул яктан корал сайлагыз һәм аңа сызыгыз.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster бурычлар панеле почмагында эшләвен дәвам итә. Чыгу өчен аның билгечәсенә уң төймә белән басыгыз.",
   "That GIF has no frames.": "Бу GIF-та кадрлар юк.",
   "There's no picture on the clipboard.": "Алмашу буферында рәсем юк.",
   "There's nothing to put in a guide yet.": "Кулланмага өстәр өчен әлегә берни дә юк.",
@@ -961,8 +960,6 @@
   "Quit": "Чыгу",
   "Quit Snagster": "Snagster-дан чыгу",
   "Export {n} pictures": "{n} рәсемне экспортлау",
-  "Snagster keeps running in the menu bar.": "Snagster меню юлында эшләвен дәвам итә.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster хәбәрләр өлкәсендә эшләвен дәвам итә. Чыгу өчен аның билгечәсенә уң төймә белән басыгыз.",
   "Menu bar icon": "Меню юлындагы значок",
   "Tray icon": "Хәбәрләр өлкәсендәге значок",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Snagster значогын меню юлында күрсәтү (басу: төшерү панеле, уң төймә: тиз меню)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Бу сәхнәдә тавыш юк: компьютер тавышын, программаны, микрофонны яки тавыш файлын өстәгез.",
   "Mute Computer sound": "Компьютер тавышын сүндерү",
   "Open {pane} settings": "«{pane}» көйләүләрен ачу",
-  "No program with a window is open right now. Open one, and it shows up here.": "Хәзер тәрәзәле бер программа да ачык түгел. Берсен ачыгыз, ул монда күренер."
+  "No program with a window is open right now. Open one, and it shows up here.": "Хәзер тәрәзәле бер программа да ачык түгел. Берсен ачыгыз, ул монда күренер.",
+  "Snagster is still running": "Snagster әле эшли",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Төшерү төймә кушылмалары эшләвен дәвам итсен өчен Snagster бирем тасмасы почмагында кала. Чыгу өчен аның билгесенә уң төймә белән басып, «{item}» сайлагыз. Моны Көйләүләрдә үзгәртеп була.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Төшерү төймә кушылмалары эшләвен дәвам итсен өчен Snagster меню юлында кала. Ябу өчен аның билгесенә басып, «{item}» сайлагыз. Моны Көйләүләрдә үзгәртеп була.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Төшерү төймә кушылмалары эшләвен дәвам итсен өчен Snagster система лотогында кала. Ябу өчен аның билгесенә уң төймә белән басып, «{item}» сайлагыз. Моны Көйләүләрдә үзгәртеп була.",
+  "Keep running": "Эшләвен дәвам итсен",
+  "Always exit": "Һәрвакыт чыгу",
+  "Always quit": "Һәрвакыт ябу",
+  "To exit, right-click the icon and choose {item}.": "Чыгу өчен билгегә уң төймә белән басып, «{item}» сайлагыз.",
+  "To quit, click the icon and choose {item}.": "Ябу өчен билгегә басып, «{item}» сайлагыз.",
+  "To quit, right-click the icon and choose {item}.": "Ябу өчен билгегә уң төймә белән басып, «{item}» сайлагыз."
  }
 }

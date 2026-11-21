@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "चरणहरू रेकर्ड हुँदै छन्: हरेक क्लिकले क्रमांकित तस्बिर लिन्छ।",
   "Removed from Recent (it was never saved).": "हालैकाबाट हटाइयो (यो कहिल्यै सुरक्षित गरिएको थिएन)।",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "नमुना तस्बिर लोड भयो। बायाँतिरबाट एउटा औजार छान्नुहोस् र त्यसमा कोर्नुहोस्।",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster कार्यपट्टीको कुनामा चलिरहन्छ। बाहिर निस्कन यसको आइकनमा राइट-क्लिक गर्नुहोस्।",
   "That GIF has no frames.": "त्यो GIF मा कुनै फ्रेम छैन।",
   "There's no picture on the clipboard.": "क्लिपबोर्डमा कुनै तस्बिर छैन।",
   "There's nothing to put in a guide yet.": "गाइडमा राख्न अहिले केही छैन।",
@@ -961,8 +960,6 @@
   "Quit": "बाहिरिनुहोस्",
   "Quit Snagster": "Snagster बाट बाहिरिनुहोस्",
   "Export {n} pictures": "{n} तस्बिरहरू निर्यात गर्नुहोस्",
-  "Snagster keeps running in the menu bar.": "Snagster मेनु बारमा चलिरहन्छ।",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster सिस्टम ट्रेमा चलिरहन्छ। बाहिर निस्कन यसको आइकनमा राइट-क्लिक गर्नुहोस्।",
   "Menu bar icon": "मेनु बार आइकन",
   "Tray icon": "ट्रे आइकन",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Snagster को आइकन मेनु बारमा देखाउनुहोस् (क्लिक: क्याप्चर प्यानल, राइट-क्लिक: द्रुत मेनु)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "यो दृश्यमा कुनै आवाज छैन: कम्प्युटरको आवाज, एउटा प्रोग्राम, एउटा माइक्रोफोन वा एउटा ध्वनि फाइल थप्नुहोस्।",
   "Mute Computer sound": "कम्प्युटरको आवाज म्युट गर्नुहोस्",
   "Open {pane} settings": "{pane} सेटिङ्स खोल्नुहोस्",
-  "No program with a window is open right now. Open one, and it shows up here.": "अहिले विन्डो भएको कुनै प्रोग्राम खुला छैन। एउटा खोल्नुहोस्, अनि यो यहाँ देखिन्छ।"
+  "No program with a window is open right now. Open one, and it shows up here.": "अहिले विन्डो भएको कुनै प्रोग्राम खुला छैन। एउटा खोल्नुहोस्, अनि यो यहाँ देखिन्छ।",
+  "Snagster is still running": "Snagster अझै चलिरहेको छ",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "तपाईंका क्याप्चर सर्टकटहरू काम गरिरहून् भनेर Snagster टास्कबारको कुनामा रहन्छ। बाहिर निस्कन, यसको आइकनमा दायाँ-क्लिक गरी {item} छान्नुहोस्। तपाईं यसलाई सेटिङहरूमा बदल्न सक्नुहुन्छ।",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "तपाईंका क्याप्चर सर्टकटहरू काम गरिरहून् भनेर Snagster मेनु बारमा रहन्छ। बन्द गर्न, यसको आइकनमा क्लिक गरी {item} छान्नुहोस्। तपाईं यसलाई सेटिङहरूमा बदल्न सक्नुहुन्छ।",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "तपाईंका क्याप्चर सर्टकटहरू काम गरिरहून् भनेर Snagster ट्रेमा रहन्छ। बन्द गर्न, यसको आइकनमा दायाँ-क्लिक गरी {item} छान्नुहोस्। तपाईं यसलाई सेटिङहरूमा बदल्न सक्नुहुन्छ।",
+  "Keep running": "चलिरहन दिनुहोस्",
+  "Always exit": "सधैं बाहिर निस्कनुहोस्",
+  "Always quit": "सधैं बन्द गर्नुहोस्",
+  "To exit, right-click the icon and choose {item}.": "बाहिर निस्कन, आइकनमा दायाँ-क्लिक गरी {item} छान्नुहोस्।",
+  "To quit, click the icon and choose {item}.": "बन्द गर्न, आइकनमा क्लिक गरी {item} छान्नुहोस्।",
+  "To quit, right-click the icon and choose {item}.": "बन्द गर्न, आइकनमा दायाँ-क्लिक गरी {item} छान्नुहोस्।"
  }
 }

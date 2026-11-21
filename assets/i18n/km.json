@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "កំពុងថតជំហាន៖ រាល់ការចុចថតរូបភាពមានលេខ។",
   "Removed from Recent (it was never saved).": "បានដកចេញពី ថ្មីៗ (វាមិនដែលត្រូវបានរក្សាទុកទេ)។",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "បានផ្ទុករូបភាពគំរូ។ ជ្រើសឧបករណ៍នៅខាងឆ្វេង រួចគូរលើវា។",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster បន្តដំណើរការនៅជ្រុងរបារកិច្ចការ។ ចុចខាងស្តាំលើរូបតំណាងរបស់វាដើម្បីចាកចេញ។",
   "That GIF has no frames.": "GIF នោះមិនមានស៊ុមទេ។",
   "There's no picture on the clipboard.": "មិនមានរូបភាពនៅក្នុងក្ដារតម្បៀតខ្ទាស់ទេ។",
   "There's nothing to put in a guide yet.": "មិនទាន់មានអ្វីដាក់ក្នុងមគ្គុទ្ទេសក៍នៅឡើយទេ។",
@@ -961,8 +960,6 @@
   "Quit": "ចាកចេញ",
   "Quit Snagster": "ចាកចេញពី Snagster",
   "Export {n} pictures": "នាំចេញរូបភាព {n}",
-  "Snagster keeps running in the menu bar.": "Snagster បន្តដំណើរការនៅរបារម៉ឺនុយ។",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster បន្តដំណើរការនៅថាសប្រព័ន្ធ។ ចុចខាងស្តាំលើរូបតំណាងរបស់វាដើម្បីចាកចេញ។",
   "Menu bar icon": "រូបតំណាងរបារម៉ឺនុយ",
   "Tray icon": "រូបតំណាងថាសប្រព័ន្ធ",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "បង្ហាញរូបតំណាង Snagster នៅរបារម៉ឺនុយ (ចុច៖ ផ្ទាំងចាប់យក ចុចខាងស្តាំ៖ ម៉ឺនុយលឿន)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "គ្មានសំឡេងក្នុងឈុតនេះទេ៖ បន្ថែមសំឡេងកុំព្យូទ័រ កម្មវិធី មីក្រូហ្វូន ឬឯកសារសំឡេង។",
   "Mute Computer sound": "បិទសំឡេងកុំព្យូទ័រ",
   "Open {pane} settings": "បើកការកំណត់{pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "ឥឡូវនេះគ្មានកម្មវិធីណាដែលមានវិនដូកំពុងបើកទេ។ បើកកម្មវិធីមួយ នោះវានឹងបង្ហាញនៅទីនេះ។"
+  "No program with a window is open right now. Open one, and it shows up here.": "ឥឡូវនេះគ្មានកម្មវិធីណាដែលមានវិនដូកំពុងបើកទេ។ បើកកម្មវិធីមួយ នោះវានឹងបង្ហាញនៅទីនេះ។",
+  "Snagster is still running": "Snagster នៅតែដំណើរការ",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster នៅជ្រុងរបារភារកិច្ច ដើម្បីឲ្យផ្លូវកាត់ថតរបស់អ្នកនៅតែដំណើរការ។ ដើម្បីចេញ ចុចស្ដាំលើរូបតំណាងរបស់វា ហើយជ្រើស {item}។ អ្នកអាចប្ដូរវានៅក្នុងការកំណត់។",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Snagster នៅលើរបារម៉ឺនុយ ដើម្បីឲ្យផ្លូវកាត់ថតរបស់អ្នកនៅតែដំណើរការ។ ដើម្បីបិទ ចុចលើរូបតំណាងរបស់វា ហើយជ្រើស {item}។ អ្នកអាចប្ដូរវានៅក្នុងការកំណត់។",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Snagster នៅក្នុងថាសប្រព័ន្ធ ដើម្បីឲ្យផ្លូវកាត់ថតរបស់អ្នកនៅតែដំណើរការ។ ដើម្បីបិទ ចុចស្ដាំលើរូបតំណាងរបស់វា ហើយជ្រើស {item}។ អ្នកអាចប្ដូរវានៅក្នុងការកំណត់។",
+  "Keep running": "បន្តដំណើរការ",
+  "Always exit": "ចេញជានិច្ច",
+  "Always quit": "បិទជានិច្ច",
+  "To exit, right-click the icon and choose {item}.": "ដើម្បីចេញ ចុចស្ដាំលើរូបតំណាង ហើយជ្រើស {item}។",
+  "To quit, click the icon and choose {item}.": "ដើម្បីបិទ ចុចលើរូបតំណាង ហើយជ្រើស {item}។",
+  "To quit, right-click the icon and choose {item}.": "ដើម្បីបិទ ចុចស្ដាំលើរូបតំណាង ហើយជ្រើស {item}។"
  }
 }

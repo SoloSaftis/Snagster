@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "تسجيل الخطوات: كل نقرة تلتقط صورة مرقّمة.",
   "Removed from Recent (it was never saved).": "تمت الإزالة من الأخيرة (لم تُحفظ أبدًا).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "تم تحميل صورة نموذجية. اختر أداة من اليسار وارسم عليها.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "يستمر Snagster في العمل في زاوية شريط المهام. انقر بزر الماوس الأيمن على رمزه للإنهاء.",
   "That GIF has no frames.": "هذا الـ GIF لا يحتوي على إطارات.",
   "There's no picture on the clipboard.": "لا توجد صورة في الحافظة.",
   "There's nothing to put in a guide yet.": "لا يوجد شيء لوضعه في دليل بعد.",
@@ -961,8 +960,6 @@
   "Quit": "إنهاء",
   "Quit Snagster": "إنهاء Snagster",
   "Export {n} pictures": "تصدير {n} صور",
-  "Snagster keeps running in the menu bar.": "يستمر Snagster في العمل في شريط القائمة.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "يستمر Snagster في العمل في علبة النظام. انقر بزر الماوس الأيمن على رمزه للإنهاء.",
   "Menu bar icon": "أيقونة شريط القائمة",
   "Tray icon": "أيقونة علبة النظام",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "إظهار أيقونة Snagster في شريط القائمة (نقرة: لوحة الالتقاط، نقرة يمنى: قائمة سريعة)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "لا صوت في هذا المشهد: أضف صوت الحاسوب أو برنامجًا أو ميكروفونًا أو ملفًا صوتيًا.",
   "Mute Computer sound": "كتم صوت الحاسوب",
   "Open {pane} settings": "فتح إعدادات {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "لا يوجد برنامج له نافذة مفتوح الآن. افتح برنامجًا، وسيظهر هنا."
+  "No program with a window is open right now. Open one, and it shows up here.": "لا يوجد برنامج له نافذة مفتوح الآن. افتح برنامجًا، وسيظهر هنا.",
+  "Snagster is still running": "لا يزال Snagster يعمل",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "يبقى Snagster في زاوية شريط المهام كي تظل اختصارات الالتقاط تعمل. للخروج، انقر بزر الماوس الأيمن على أيقونته واختر {item}. يمكنك تغيير هذا في الإعدادات.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "يبقى Snagster في شريط القوائم كي تظل اختصارات الالتقاط تعمل. للإنهاء، انقر على أيقونته واختر {item}. يمكنك تغيير هذا في الإعدادات.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "يبقى Snagster في علبة النظام كي تظل اختصارات الالتقاط تعمل. للإنهاء، انقر بزر الماوس الأيمن على أيقونته واختر {item}. يمكنك تغيير هذا في الإعدادات.",
+  "Keep running": "استمر في العمل",
+  "Always exit": "اخرج دائمًا",
+  "Always quit": "أنهِ دائمًا",
+  "To exit, right-click the icon and choose {item}.": "للخروج، انقر بزر الماوس الأيمن على الأيقونة واختر {item}.",
+  "To quit, click the icon and choose {item}.": "للإنهاء، انقر على الأيقونة واختر {item}.",
+  "To quit, right-click the icon and choose {item}.": "للإنهاء، انقر بزر الماوس الأيمن على الأيقونة واختر {item}."
  }
 }

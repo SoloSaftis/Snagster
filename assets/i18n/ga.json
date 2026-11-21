@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "Céimeanna á dtaifead: tógann gach cliceáil pictiúr uimhrithe.",
   "Removed from Recent (it was never saved).": "Bainte de Le déanaí (níor sábháladh riamh é).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "Luchtaíodh pictiúr samplach. Roghnaigh uirlis ar chlé agus tarraing air.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Leanann Snagster ar siúl i gcúinne na barra tascanna. Deaschliceáil a deilbhín chun scoir.",
   "That GIF has no frames.": "Níl aon fhráma sa GIF sin.",
   "There's no picture on the clipboard.": "Níl aon phictiúr ar an ngearrthaisce.",
   "There's nothing to put in a guide yet.": "Níl aon rud le cur i dtreoir fós.",
@@ -961,8 +960,6 @@
   "Quit": "Scoir",
   "Quit Snagster": "Scoir Snagster",
   "Export {n} pictures": "Easpórtáil pictiúir ({n})",
-  "Snagster keeps running in the menu bar.": "Leanann Snagster ar siúl sa bharra roghchláir.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Leanann Snagster ar siúl sa tráidire. Deaschliceáil a deilbhín chun scoir.",
   "Menu bar icon": "Deilbhín an bharra roghchláir",
   "Tray icon": "Deilbhín an tráidire",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "Taispeáin deilbhín Snagster sa bharra roghchláir (cliceáil: painéal gabhála, deaschliceáil: roghchlár tapa)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "Níl aon fhuaim sa radharc seo: cuir fuaim an ríomhaire, clár, micreafón nó comhad fuaime leis.",
   "Mute Computer sound": "Balbhaigh Fuaim an ríomhaire",
   "Open {pane} settings": "Oscail socruithe {pane}",
-  "No program with a window is open right now. Open one, and it shows up here.": "Níl aon chlár le fuinneog oscailte faoi láthair. Oscail ceann, agus taispeánfar anseo é."
+  "No program with a window is open right now. Open one, and it shows up here.": "Níl aon chlár le fuinneog oscailte faoi láthair. Oscail ceann, agus taispeánfar anseo é.",
+  "Snagster is still running": "Tá Snagster fós ag rith",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "Fanann Snagster i gcúinne an tascbharra ionas go leanann d'aicearraí gabhála ag obair. Chun scoir, deaschliceáil a dheilbhín agus roghnaigh {item}. Is féidir é seo a athrú sna Socruithe.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "Fanann Snagster sa bharra roghchláir ionas go leanann d'aicearraí gabhála ag obair. Chun scoir, cliceáil a dheilbhín agus roghnaigh {item}. Is féidir é seo a athrú sna Socruithe.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "Fanann Snagster sa tráidire ionas go leanann d'aicearraí gabhála ag obair. Chun scoir, deaschliceáil a dheilbhín agus roghnaigh {item}. Is féidir é seo a athrú sna Socruithe.",
+  "Keep running": "Lean ar aghaidh",
+  "Always exit": "Scoir i gcónaí",
+  "Always quit": "Scoir i gcónaí",
+  "To exit, right-click the icon and choose {item}.": "Chun scoir, deaschliceáil an deilbhín agus roghnaigh {item}.",
+  "To quit, click the icon and choose {item}.": "Chun scoir, cliceáil an deilbhín agus roghnaigh {item}.",
+  "To quit, right-click the icon and choose {item}.": "Chun scoir, deaschliceáil an deilbhín agus roghnaigh {item}."
  }
 }

@@ -742,7 +742,6 @@
   "Recording steps: every click takes a numbered picture.": "단계 기록 중: 클릭할 때마다 번호가 매겨진 사진을 찍습니다.",
   "Removed from Recent (it was never saved).": "“최근”에서 제거했습니다(저장된 적이 없습니다).",
   "Sample picture loaded. Pick a tool on the left and draw on it.": "샘플 사진을 불러왔습니다. 왼쪽에서 도구를 고르고 그려 보세요.",
-  "Snagster keeps running in the corner of the taskbar. Right-click its icon to quit.": "Snagster는 작업 표시줄 모퉁이에서 계속 실행됩니다. 종료하려면 아이콘을 마우스 오른쪽 버튼으로 클릭하세요.",
   "That GIF has no frames.": "해당 GIF에는 프레임이 없습니다.",
   "There's no picture on the clipboard.": "클립보드에 사진이 없습니다.",
   "There's nothing to put in a guide yet.": "가이드에 넣을 내용이 아직 없습니다.",
@@ -961,8 +960,6 @@
   "Quit": "끝내기",
   "Quit Snagster": "Snagster 종료",
   "Export {n} pictures": "사진 {n}개 내보내기",
-  "Snagster keeps running in the menu bar.": "Snagster는 메뉴 막대에서 계속 실행됩니다.",
-  "Snagster keeps running in the tray. Right-click its icon to quit.": "Snagster는 시스템 트레이에서 계속 실행됩니다. 종료하려면 아이콘을 마우스 오른쪽 버튼으로 클릭하세요.",
   "Menu bar icon": "메뉴 막대 아이콘",
   "Tray icon": "트레이 아이콘",
   "Show Snagster's icon in the menu bar (click: capture panel, right-click: quick menu)": "메뉴 막대에 Snagster 아이콘 표시(클릭: 캡처 패널, 오른쪽 클릭: 빠른 메뉴)",
@@ -1224,6 +1221,16 @@
   "No sound in this scene: add the computer sound, a program, a microphone or a sound file.": "이 장면에 소리가 없습니다. 컴퓨터 소리, 프로그램, 마이크 또는 사운드 파일을 추가하세요.",
   "Mute Computer sound": "컴퓨터 소리 음소거",
   "Open {pane} settings": "{pane} 설정 열기",
-  "No program with a window is open right now. Open one, and it shows up here.": "지금 창이 열려 있는 프로그램이 없습니다. 프로그램을 열면 여기에 나타납니다."
+  "No program with a window is open right now. Open one, and it shows up here.": "지금 창이 열려 있는 프로그램이 없습니다. 프로그램을 열면 여기에 나타납니다.",
+  "Snagster is still running": "Snagster가 계속 실행 중입니다",
+  "Snagster stays in the corner of the taskbar so your capture shortcuts keep working. To exit, right-click its icon and choose {item}. You can change this in Settings.": "캡처 바로 가기 키가 계속 작동하도록 Snagster는 작업 표시줄 구석에 남아 있습니다. 끝내려면 아이콘을 마우스 오른쪽 단추로 클릭하고 {item}을(를) 선택하세요. 설정에서 바꿀 수 있습니다.",
+  "Snagster stays in the menu bar so your capture shortcuts keep working. To quit, click its icon and choose {item}. You can change this in Settings.": "캡처 바로 가기 키가 계속 작동하도록 Snagster는 메뉴 막대에 남아 있습니다. 종료하려면 아이콘을 클릭하고 {item}을(를) 선택하세요. 설정에서 바꿀 수 있습니다.",
+  "Snagster stays in the tray so your capture shortcuts keep working. To quit, right-click its icon and choose {item}. You can change this in Settings.": "캡처 바로 가기 키가 계속 작동하도록 Snagster는 트레이에 남아 있습니다. 종료하려면 아이콘을 마우스 오른쪽 단추로 클릭하고 {item}을(를) 선택하세요. 설정에서 바꿀 수 있습니다.",
+  "Keep running": "계속 실행",
+  "Always exit": "항상 끝내기",
+  "Always quit": "항상 종료",
+  "To exit, right-click the icon and choose {item}.": "끝내려면 아이콘을 마우스 오른쪽 단추로 클릭하고 {item}을(를) 선택하세요.",
+  "To quit, click the icon and choose {item}.": "종료하려면 아이콘을 클릭하고 {item}을(를) 선택하세요.",
+  "To quit, right-click the icon and choose {item}.": "종료하려면 아이콘을 마우스 오른쪽 단추로 클릭하고 {item}을(를) 선택하세요."
  }
 }

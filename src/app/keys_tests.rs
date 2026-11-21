@@ -573,3 +573,21 @@ fn the_window_title_names_the_open_picture() {
     k.frame(Vec::new());
     assert_eq!(k.app.title_sent, "Snagster", "no picture open");
 }
+
+/// The first close to the tray says so, once: Enter (Keep running) and Esc both keep Snagster
+/// running in the tray; neither turns the setting off.
+#[test]
+fn the_still_running_notice_keeps_snagster_in_the_tray_on_enter_and_esc() {
+    for key in [Key::Enter, Key::Escape] {
+        let mut k = Keys::new();
+        let before = k.app.settings.close_to_tray;
+        k.app.dialog = Some(crate::windows::Dialog::StillRunning);
+        k.frame(Vec::new());
+        k.frame(Vec::new());
+        k.key(key);
+        k.frame(Vec::new());
+        assert!(k.app.dialog.is_none(), "{key:?}: the notice closed");
+        assert!(k.app.in_tray || crate::capture::desktop_screenshots_only(), "{key:?}: Snagster went to the tray");
+        assert_eq!(k.app.settings.close_to_tray, before, "{key:?}: the setting is unchanged");
+    }
+}
