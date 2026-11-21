@@ -544,6 +544,8 @@ pub struct SnagApp {
     bar_shared: Arc<Mutex<BarShared>>,
     /// Snagster's window is a native Wayland window (not X11 through XWayland).
     native_wayland: bool,
+    /// The main window's title as last sent (it names the open picture).
+    title_sent: String,
     /// The connection that asks the desktop to bring the main window back (Wayland), and
     /// whether making it failed.
     #[cfg(target_os = "linux")]
@@ -759,6 +761,7 @@ impl SnagApp {
             bar: BarWindow::default(),
             bar_shared: Arc::default(),
             native_wayland: false,
+            title_sent: "Snagster".into(),
             #[cfg(target_os = "linux")]
             wl: None,
             #[cfg(target_os = "linux")]
@@ -1867,7 +1870,8 @@ impl SnagApp {
             dialog = dialog.set_directory(&folder);
         }
         if let Some(path) = dialog.set_file_name(format!("{name}.{ext}")).save_file() {
-            self.save_in_background(i, path);
+            let rename = chosen_name(&name, &path);
+            self.save_renamed(i, path, rename);
         }
     }
 
@@ -1881,7 +1885,8 @@ impl SnagApp {
             .set_file_name(format!("{name}.snag"))
             .save_file()
         {
-            self.save_in_background(i, path);
+            let rename = chosen_name(&name, &path);
+            self.save_renamed(i, path, rename);
         }
     }
 
@@ -1897,23 +1902,33 @@ impl SnagApp {
 
     /// `save_to`, on the job queue.
     pub(crate) fn save_in_background(&mut self, i: usize, path: PathBuf) {
+        self.save_renamed(i, path, None);
+    }
+
+    /// Save picture `i` to `path` on the job queue; after Save as with a name the person typed
+    /// (`rename`), the picture takes that name once the file is saved (not when it fails).
+    fn save_renamed(&mut self, i: usize, path: PathBuf, rename: Option<String>) {
         let Some(e) = self.entries.get(i) else { return };
-        let (id, doc, name, settings) = (e.id, e.doc.clone(), e.name.clone(), self.settings.clone());
+        let (id, doc, settings) = (e.id, e.doc.clone(), self.settings.clone());
+        let name = rename.clone().unwrap_or_else(|| e.name.clone());
         self.saving.insert(path.clone());
         self.status = crate::i18n::tf("Saved {path}", &[("path", &path.display().to_string())]);
         self.jobs.queue(move || {
             let r = export::save_doc(&doc, &name, &path, &settings);
-            Box::new(move |app: &mut SnagApp, _: &egui::Context| app.saved(id, path, r))
+            Box::new(move |app: &mut SnagApp, _: &egui::Context| app.saved(id, path, r, rename))
         });
     }
 
-    fn saved(&mut self, id: u64, path: PathBuf, r: Result<(), String>) {
+    fn saved(&mut self, id: u64, path: PathBuf, r: Result<(), String>, rename: Option<String>) {
         self.saving.remove(&path);
         self.earlier.expire();
         match r {
             Ok(()) => {
                 if let Some(e) = self.entries.iter_mut().find(|e| e.id == id) {
                     e.path = Some(path.clone());
+                    if let Some(name) = rename {
+                        e.name = name;
+                    }
                 }
                 self.remember_file(&path);
             }
@@ -4812,9 +4827,23 @@ impl SnagApp {
         }
     }
 
+    /// Keep the main window's title on the open picture (sent only when it changes).
+    fn name_window(&mut self, ctx: &egui::Context) {
+        let mac = crate::platform::system() == crate::platform::System::Mac;
+        // While the capture panel or a recording is up, the window is about that, not a picture.
+        let busy = self.panel_open || self.mini.is_some();
+        let picture = if busy { None } else { self.current.and_then(|i| self.entries.get(i)).map(|e| e.name.as_str()) };
+        let title = window_title(mac, picture);
+        if title != self.title_sent {
+            ctx.send_viewport_cmd_to(egui::ViewportId::ROOT, egui::ViewportCommand::Title(title.clone()));
+            self.title_sent = title;
+        }
+    }
+
     fn ui_body(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         keep_interface_size(&ctx);
+        self.name_window(&ctx);
         if self.overlay.is_some() {
             egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.handle_overlay(ui));
             return;
@@ -4962,6 +4991,24 @@ fn grown(size: f32, per_step: f32) -> f32 {
 
 fn grown_by(size: f32, per_step: f32, text_scale: f32) -> f32 {
     size + per_step * (text_scale - 1.0).max(0.0)
+}
+
+/// The name a picture takes from a Save as dialog: the file's name without its extension, when
+/// the person changed it from `suggested` (None when kept, or empty).
+fn chosen_name(suggested: &str, path: &std::path::Path) -> Option<String> {
+    let stem = path.file_stem()?.to_string_lossy().trim().to_string();
+    (!stem.is_empty() && stem != suggested).then_some(stem)
+}
+
+/// The main window's title: the open picture's name and Snagster ("Picture 3 – Snagster"), as
+/// Windows and Linux programs name the document they show; on a Mac only the picture's name, as
+/// Apple's document windows are titled. "Snagster" with no picture open.
+fn window_title(mac: bool, picture: Option<&str>) -> String {
+    match picture.map(str::trim).filter(|n| !n.is_empty()) {
+        Some(name) if mac => name.to_string(),
+        Some(name) => format!("{name} – Snagster"),
+        None => "Snagster".to_string(),
+    }
 }
 
 /// Ctrl+= / Ctrl+- / Ctrl+0 (⌘ on a Mac) zoom the picture, as in other editors (`shortcuts`).
@@ -6705,6 +6752,39 @@ mod tests {
         // The canvas beside the tools in a 500 px window: the cards shrink a little to stay two by two.
         assert_eq!(super::welcome_columns(380.0, 180.0), (2, 164.0));
         assert_eq!(super::welcome_columns(380.0, 230.0).0, 1, "one under the other with big text");
+    }
+
+    #[test]
+    fn a_save_as_name_is_taken_only_once_the_file_is_saved() {
+        let mut app = super::SnagApp::blank(super::Settings::default(), false, None);
+        app.add_entry("Area 3".into(), super::Doc::new(image::RgbaImage::new(4, 4)));
+        let id = app.entries[0].id;
+        let path = std::path::PathBuf::from("Invoice.png");
+        app.saved(id, path.clone(), Err("the disk is full".into()), Some("Invoice".into()));
+        assert_eq!(app.entries[0].name, "Area 3", "no file by the new name: the picture keeps its name");
+        app.saved(id, path.clone(), Ok(()), Some("Invoice".into()));
+        assert_eq!(app.entries[0].name, "Invoice");
+        app.saved(id, path, Ok(()), None);
+        assert_eq!(app.entries[0].name, "Invoice", "an ordinary save leaves the name");
+    }
+
+    #[test]
+    fn save_as_names_the_picture_after_the_file_only_when_the_name_was_changed() {
+        use std::path::Path;
+        assert_eq!(super::chosen_name("Area 3", Path::new("C:/Pictures/Invoice.png")), Some("Invoice".into()));
+        assert_eq!(super::chosen_name("Area 3", Path::new("/home/me/Area 3.png")), None, "the suggestion kept");
+        assert_eq!(super::chosen_name("Area 3", Path::new("/home/me/Area 3.snag")), None);
+        assert_eq!(super::chosen_name("Area 3", Path::new("/home/me/ .png")), None, "no name");
+        assert_eq!(super::chosen_name("Area 3", Path::new("/home/me/report.v2.png")), Some("report.v2".into()));
+    }
+
+    #[test]
+    fn the_title_is_the_picture_and_snagster_or_on_a_mac_the_picture() {
+        assert_eq!(super::window_title(false, Some("Area 3")), "Area 3 \u{2013} Snagster");
+        assert_eq!(super::window_title(true, Some("Area 3")), "Area 3", "Apple's document windows");
+        assert_eq!(super::window_title(false, None), "Snagster");
+        assert_eq!(super::window_title(true, None), "Snagster");
+        assert_eq!(super::window_title(false, Some("  ")), "Snagster", "a blank name is no name");
     }
 
     /// Ctrl+= anywhere egui sees it (a text box has the keys, another Snagster window) never

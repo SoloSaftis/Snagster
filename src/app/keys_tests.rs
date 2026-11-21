@@ -544,3 +544,32 @@ fn ctrl_plus_minus_and_zero_zoom_the_picture_not_the_interface() {
     k.key(Key::Num0);
     assert_eq!(k.app.zoom, None);
 }
+
+/// The window's title names the open picture, and follows when another is picked or it closes.
+#[test]
+fn the_window_title_names_the_open_picture() {
+    let mut k = Keys::new();
+    let mac = crate::platform::system() == crate::platform::System::Mac;
+    assert_eq!(k.app.title_sent, if mac { "Test".to_string() } else { "Test \u{2013} Snagster".to_string() });
+    k.app.add_entry("Picture 2".into(), Doc::new(RgbaImage::from_pixel(10, 10, image::Rgba([0, 0, 0, 255]))));
+    k.frame(Vec::new());
+    assert!(k.app.title_sent.starts_with("Picture 2"), "{}", k.app.title_sent);
+    // The capture panel: the window is about capturing, not the picture.
+    k.app.panel_open = true;
+    k.frame(Vec::new());
+    assert_eq!(k.app.title_sent, "Snagster");
+    k.app.panel_open = false;
+    k.frame(Vec::new());
+    assert!(k.app.title_sent.starts_with("Picture 2"), "back on the picture");
+    // A recording (its bar up, the window minimised): the same.
+    k.app.mini = Some(Mini::Gif);
+    k.frame(Vec::new());
+    assert_eq!(k.app.title_sent, "Snagster");
+    k.app.mini = None;
+    k.frame(Vec::new());
+    assert!(k.app.title_sent.starts_with("Picture 2"));
+    k.app.entries.clear();
+    k.app.current = None;
+    k.frame(Vec::new());
+    assert_eq!(k.app.title_sent, "Snagster", "no picture open");
+}
