@@ -248,10 +248,10 @@ pub const MENUS: &[MenuDef] = &[
     MenuDef {
         title: "View",
         entries: &[
-            item("Fit to window", None, "zoom_fit", Picture),
+            item("Fit to window", cmd('0'), "zoom_fit", Picture),
             item("Actual size", None, "zoom_actual", Picture),
-            item("Zoom in", None, "zoom_in", Picture),
-            item("Zoom out", None, "zoom_out", Picture),
+            item("Zoom in", cmd('='), "zoom_in", Picture),
+            item("Zoom out", cmd('-'), "zoom_out", Picture),
             SEP,
             item("Capture panel", None, "panel", Nothing),
             item("Studio", None, "studio", Nothing),
