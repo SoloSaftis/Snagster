@@ -618,7 +618,7 @@ impl SnagApp {
                     }
                     ui.separator();
                     for (w, h) in [(640, 480), (800, 600), (1024, 768), (1280, 720), (1920, 1080), (500, 500)] {
-                        if ui.button(format!("{w} x {h}")).clicked() {
+                        if ui.button(format!("{w} × {h}")).clicked() {
                             pick = Some(CaptureKind::Fixed(w, h));
                             ui.close();
                         }

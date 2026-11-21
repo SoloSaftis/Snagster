@@ -1546,7 +1546,7 @@ impl SnagApp {
                     let name = done.path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
                     let how = if done.hardware { crate::i18n::tf("graphics chip: {encoder}", &[("encoder", &done.encoder)]) } else { done.encoder.clone() };
                     self.status = crate::i18n::tf(
-                        "Saved {name}: {seconds} s, {frames} frames, {width}x{height} ({encoder}). Record > Play last video.",
+                        "Saved {name}: {seconds} s, {frames} frames, {width} × {height} ({encoder}). Record > Play last video.",
                         &[("name", &name), ("seconds", &format!("{:.1}", done.seconds)), ("frames", &done.frames.to_string()), ("width", &done.width.to_string()), ("height", &done.height.to_string()), ("encoder", &how)],
                     );
                     if !done.note.is_empty() {
@@ -2788,7 +2788,7 @@ impl SnagApp {
         }
         ui.menu_button(crate::i18n::t("Fixed size"), |ui| {
             for (w, h) in [(640, 480), (800, 600), (1024, 768), (1280, 720), (1920, 1080), (500, 500)] {
-                if item(ui, &format!("{w} x {h}"), "") {
+                if item(ui, &format!("{w} × {h}"), "") {
                     pick = Some(CaptureKind::Fixed(w, h));
                 }
             }
@@ -2801,7 +2801,8 @@ impl SnagApp {
                 ui.spinner();
             }
             for (n, m) in self.mon_cache.items().iter().enumerate() {
-                let label = format!("{}: {}  {} x {}{}", n + 1, m.name, m.width, m.height, if m.primary { "  (main)" } else { "" });
+                let main = if m.primary { format!("  {}", crate::i18n::t("(main)")) } else { String::new() };
+                let label = format!("{}: {}  {} × {}{}", n + 1, m.name, m.width, m.height, main);
                 if ui.button(label).clicked() {
                     pick = Some(CaptureKind::Monitor(m.id));
                     ui.close();
@@ -3322,7 +3323,7 @@ impl SnagApp {
                     if resp.clicked() {
                         chosen = Some(c);
                     }
-                    resp.on_hover_text("Click to use. Right-click puts the current color here.").context_menu(|ui| {
+                    resp.on_hover_text(crate::i18n::t("Click to use. Right-click puts the current color here.")).context_menu(|ui| {
                         if ui.button(crate::i18n::t("Put the current color here")).clicked() {
                             edit_slot = Some((i, cur));
                             ui.close();
@@ -3350,7 +3351,7 @@ impl SnagApp {
             ui.horizontal(|ui| {
                 ui.label(RichText::new(crate::i18n::t("Theme")).color(pal().dim));
                 let mut apply = None;
-                egui::ComboBox::from_id_salt("theme").width(120.0).selected_text("Choose…").show_ui(ui, |ui| {
+                egui::ComboBox::from_id_salt("theme").width(120.0).selected_text(crate::i18n::t("Choose…")).show_ui(ui, |ui| {
                     for (i, t) in self.settings.themes.iter().enumerate() {
                         if ui.button(&t.name).clicked() {
                             apply = Some(i);
@@ -3456,10 +3457,10 @@ impl SnagApp {
                 }
             });
             let ppp = ui.ctx().pixels_per_point();
-            ui.label(RichText::new(format!("Zoom {:.0}%", self.last_scale * ppp * 100.0)).color(pal().dim));
+            ui.label(RichText::new(crate::i18n::tf("Zoom {percent}%", &[("percent", &format!("{:.0}", self.last_scale * ppp * 100.0))])).color(pal().dim));
             if let Some(i) = self.current {
                 let d = &self.entries[i].doc;
-                ui.label(RichText::new(format!("{} x {} pixels, {} marks", d.image.width(), d.image.height(), d.shapes.len())).color(pal().dim));
+                ui.label(RichText::new(crate::i18n::tf("{width} × {height} pixels, {count} marks", &[("width", &d.image.width().to_string()), ("height", &d.image.height().to_string()), ("count", &d.shapes.len().to_string())])).color(pal().dim));
             }
             ui.add_space(10.0);
             ui.label(RichText::new(crate::i18n::t(self.tool.label())).strong().color(pal().strong));
@@ -3473,7 +3474,7 @@ impl SnagApp {
         let families = fonts::families();
         let mut chosen: Option<String> = None;
         egui::ComboBox::from_id_salt("font").width(180.0).selected_text(shown).show_ui(ui, |ui| {
-            ui.add(egui::TextEdit::singleline(&mut self.font_query).hint_text("Search fonts"));
+            ui.add(egui::TextEdit::singleline(&mut self.font_query).hint_text(crate::i18n::t("Search fonts")));
             if ui.selectable_label(self.settings.font.is_empty(), crate::i18n::t("Default")).clicked() {
                 chosen = Some(String::new());
             }
@@ -4256,7 +4257,7 @@ impl SnagApp {
                     }
                     dashed_rect(&painter, r, Color32::WHITE);
                     let (w, h) = ((r.width() / scale).round(), (r.height() / scale).round());
-                    painter.text(pos2(r.min.x, r.min.y - 4.0), Align2::LEFT_BOTTOM, format!("{w} x {h}"), FontId::proportional(13.0), Color32::WHITE);
+                    painter.text(pos2(r.min.x, r.min.y - 4.0), Align2::LEFT_BOTTOM, format!("{w} × {h}"), FontId::proportional(13.0), Color32::WHITE);
                 }
                 _ => {}
             }
@@ -4356,7 +4357,7 @@ impl SnagApp {
                                 .frame(egui::Frame::NONE)
                                 .desired_rows(lines)
                                 .desired_width(w)
-                                .hint_text("Type here"),
+                                .hint_text(crate::i18n::t("Type here")),
                         )
                     })
                     .inner
@@ -6207,14 +6208,14 @@ impl SnagApp {
                 if resp.clicked() {
                     apply = Some(i);
                 }
-                resp.on_hover_text("Click to use. Right-click to remove.").context_menu(|ui| {
+                resp.on_hover_text(crate::i18n::t("Click to use. Right-click to remove.")).context_menu(|ui| {
                     if ui.button(crate::i18n::t("Remove this style")).clicked() {
                         remove = Some(i);
                         ui.close();
                     }
                 });
             }
-            if ui.button(" + ").on_hover_text("Save the current color, size and switches as a style").clicked() {
+            if ui.button(" + ").on_hover_text(crate::i18n::t("Save the current color, size and switches as a style")).clicked() {
                 let s = &self.settings;
                 let q = crate::settings::QuickStyle { color: s.color, width: s.width, shadow: s.shadow, fill: s.fill, text_background: s.text_background };
                 self.settings.quick_styles.push(q);
@@ -7019,7 +7020,7 @@ mod tests {
         for k in [
             "Captured {width} × {height}.",
             "Capture failed: {error}",
-            "Saved {name}: {seconds} s, {frames} frames, {width}x{height} ({encoder}). Record > Play last video.",
+            "Saved {name}: {seconds} s, {frames} frames, {width} × {height} ({encoder}). Record > Play last video.",
             "Recorded without sound: {reason}",
             "Open the menu now: Snagster captures it in {seconds} seconds.",
             "Blurred {count} items ({kinds}). Undo brings them back.",

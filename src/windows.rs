@@ -554,7 +554,7 @@ fn combo_editor(ui: &mut egui::Ui, id: String, c: &mut Combo) -> bool {
     ui.checkbox(&mut c.win, crate::i18n::t(win));
     egui::ComboBox::from_id_salt(id)
         .width(110.0)
-        .selected_text(if c.key.is_empty() { "Not set".to_string() } else { c.key.clone() })
+        .selected_text(if c.key.is_empty() { crate::i18n::t("Not set").to_string() } else { c.key.clone() })
         .show_ui(ui, |ui| {
             egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
                 ui.selectable_value(&mut c.key, String::new(), crate::i18n::t("Not set"));
@@ -967,7 +967,7 @@ impl SnagApp {
             });
         }
         ui.horizontal(|ui| {
-            ui.add(egui::TextEdit::singleline(&mut self.new_theme_name).hint_text("Theme name").desired_width(180.0));
+            ui.add(egui::TextEdit::singleline(&mut self.new_theme_name).hint_text(crate::i18n::t("Theme name")).desired_width(180.0));
             if ui.button(crate::i18n::t("Save current as theme")).clicked() && !self.new_theme_name.trim().is_empty() {
                 s.themes.push(Theme {
                     name: self.new_theme_name.trim().to_string(),
@@ -1042,7 +1042,7 @@ impl SnagApp {
             if !taken.is_empty()
                 && ui
                     .button(format!("Give the {} taken ones free keys", taken.len()))
-                    .on_hover_text("Moves them to Ctrl + Shift + F1...F8, skipping keys Snagster already uses")
+                    .on_hover_text(crate::i18n::t("Moves them to Ctrl + Shift + F1...F8, skipping keys Snagster already uses"))
                     .clicked()
             {
                 let mut free: Vec<Combo> = (1..=8)
@@ -1835,7 +1835,7 @@ impl SnagApp {
                 if resp.double_clicked() || ui.input(|i| i.key_pressed(Key::Escape) || i.viewport().close_requested()) {
                     close = true;
                 }
-                resp.on_hover_text("Drag to move. Double-click or Esc closes. Right-click for more.").context_menu(|ui| {
+                resp.on_hover_text(crate::i18n::t("Drag to move. Double-click or Esc closes. Right-click for more.")).context_menu(|ui| {
                     if ui.button(crate::i18n::t("Copy")).clicked() {
                         let data = arboard::ImageData {
                             width: image.width() as usize,
@@ -2502,13 +2502,48 @@ mod tests {
         let rows = &rows[..rows.find("]\n").or_else(|| rows.find("]\r\n")).unwrap()];
         let quoted: Vec<&str> = rows.split('"').skip(1).step_by(2).collect();
         assert!(quoted.len() >= 20, "found {} texts; has the list changed shape?", quoted.len());
-        // Key lists ("Ctrl+C, Ctrl+V", "Delete, [ and ]") are shown as they are; key notes with
-        // words ("Ctrl+wheel, middle drag", "Shift while drawing") and descriptions are translated.
-        let key_list = |q: &str| (q.contains("Ctrl+") && !q.contains("wheel")) || q.starts_with("Delete,");
-        texts.extend(quoted.into_iter().filter(|q| q.chars().any(|c| c.is_lowercase()) && !key_list(q)));
+        // Plain key lists ("Ctrl+C, Ctrl+V") are shown as they are; anything with a word in it
+        // ("Ctrl+0 or 0", "Delete, [ and ]", "Shift while drawing") and the descriptions is translated.
+        let has_word = |q: &str| q.split([' ', ',']).any(|w| w.len() >= 2 && w.chars().all(|c| c.is_lowercase()));
+        texts.extend(quoted.into_iter().filter(|q| has_word(q)));
         texts.push("{tool} tool");
         let missing: Vec<&&str> = texts.iter().filter(|t| !keys.iter().any(|k| k == *t)).collect();
         assert!(missing.is_empty(), "not in assets/i18n/strings.json: {missing:?}");
+    }
+
+    /// No tooltip, hint or chosen-item text is English-only in the source: each goes through the
+    /// translation table (`t`, `tf`, `tr`). A literal starting with a capital letter is a sentence
+    /// someone forgot to wrap ("rtmp://..." and single letters like "X" are fine).
+    #[test]
+    fn no_tooltip_or_hint_is_left_in_english() {
+        fn files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
+            for e in std::fs::read_dir(dir).unwrap().flatten() {
+                let p = e.path();
+                if p.is_dir() {
+                    files(&p, out);
+                } else if p.extension().is_some_and(|x| x == "rs") {
+                    out.push(p);
+                }
+            }
+        }
+        let mut all = Vec::new();
+        files(&std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src"), &mut all);
+        let mut found = Vec::new();
+        for f in all {
+            let src = std::fs::read_to_string(&f).unwrap();
+            // Only the window code, not the tests below it.
+            let code = src.split("#[cfg(test)]").next().unwrap();
+            for call in ["on_hover_text(\"", "hint_text(\"", "selected_text(\""] {
+                for (at, _) in code.match_indices(call) {
+                    let rest = &code[at + call.len()..];
+                    let lit = &rest[..rest.find('"').unwrap_or(0)];
+                    if lit.chars().next().is_some_and(|c| c.is_uppercase()) && lit.chars().count() > 1 {
+                        found.push(format!("{}: {call}{lit}\"", f.file_name().unwrap().to_string_lossy()));
+                    }
+                }
+            }
+        }
+        assert!(found.is_empty(), "wrap these in t(...) and translate them: {found:#?}");
     }
 
     #[test]

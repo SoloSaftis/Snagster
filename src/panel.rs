@@ -181,7 +181,7 @@ impl SnagApp {
                         }
                     })
                     .response
-                    .on_hover_text("More choices");
+                    .on_hover_text(crate::i18n::t("More choices"));
                 });
                 ui.end_row();
 
@@ -260,7 +260,7 @@ impl SnagApp {
 
         // ---- far right: reset, close and the big button ----
         let reset_r = Rect::from_center_size(pos2(full.max.x - 46.0, full.min.y + 20.0), vec2(22.0, 22.0));
-        let rr = ui.interact(reset_r, ui.scope_id().with("reset"), Sense::click()).on_hover_text("Reset the panel's choices");
+        let rr = ui.interact(reset_r, ui.scope_id().with("reset"), Sense::click()).on_hover_text(crate::i18n::t("Reset the panel's choices"));
         let rc = if rr.hovered() { pal().strong } else { pal().dim };
         let arc: Vec<Pos2> = (0..=20)
             .map(|i| {
@@ -275,7 +275,7 @@ impl SnagApp {
             reset = true;
         }
         let close_r = Rect::from_center_size(pos2(full.max.x - 18.0, full.min.y + 20.0), vec2(22.0, 22.0));
-        let cr = ui.interact(close_r, ui.scope_id().with("close"), Sense::click()).on_hover_text("Hide the panel (Esc)");
+        let cr = ui.interact(close_r, ui.scope_id().with("close"), Sense::click()).on_hover_text(crate::i18n::t("Hide the panel (Esc)"));
         let cc = if cr.hovered() { pal().strong } else { pal().dim };
         ui.painter().line_segment([close_r.center() - vec2(5.0, 5.0), close_r.center() + vec2(5.0, 5.0)], Stroke::new(2.0, cc));
         ui.painter().line_segment([close_r.center() + vec2(-5.0, 5.0), close_r.center() + vec2(5.0, -5.0)], Stroke::new(2.0, cc));
@@ -337,7 +337,7 @@ impl SnagApp {
                         ui.close();
                     }
                 });
-                if ui.button(" + ").on_hover_text("Save these choices as a preset").clicked() {
+                if ui.button(" + ").on_hover_text(crate::i18n::t("Save these choices as a preset")).clicked() {
                     let preset = self.panel_as_preset();
                     self.status = crate::i18n::tf("Saved the preset \"{name}\".", &[("name", &preset.name)]);
                     self.settings.presets.push(preset);

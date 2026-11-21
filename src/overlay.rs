@@ -360,7 +360,7 @@ impl Overlay {
                                 let b = |ui: &mut egui::Ui, t: &str, tip: &str| ui.button(t).on_hover_text(tip).clicked();
                                 if ui
                                     .add(egui::Button::new(egui::RichText::new(crate::i18n::t("Capture")).strong().color(pal.on_accent)).fill(pal.accent))
-                                    .on_hover_text("Open it in Snagster (Enter)")
+                                    .on_hover_text(crate::i18n::t("Open it in Snagster (Enter)"))
                                     .clicked()
                                 {
                                     picked = Some(AreaAction::Capture);

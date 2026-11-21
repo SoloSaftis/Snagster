@@ -160,9 +160,9 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
             });
             let (w, h) = (app.settings.studio.width, app.settings.studio.height);
             let mut size = None;
-            look::small_menu(ui, ph::FRAME_CORNERS, &format!("{w} x {h}"), t("The size of the video"), |ui| {
+            look::small_menu(ui, ph::FRAME_CORNERS, &format!("{w} × {h}"), t("The size of the video"), |ui| {
                 for (a, b) in [(1280, 720), (1920, 1080), (2560, 1440), (3840, 2160), (1080, 1920), (1080, 1080)] {
-                    if ui.radio((w, h) == (a, b), format!("{a} x {b}")).clicked() {
+                    if ui.radio((w, h) == (a, b), format!("{a} × {b}")).clicked() {
                         size = Some((a, b));
                     }
                 }
@@ -315,7 +315,7 @@ fn add_source_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<Item> {
             ui.spinner();
         }
         for (i, m) in app.mon_cache.items().iter().enumerate() {
-            if ui.button(format!("{}: {}  {} x {}", i + 1, m.name, m.width, m.height)).clicked() {
+            if ui.button(format!("{}: {}  {} × {}", i + 1, m.name, m.width, m.height)).clicked() {
                 out = Some(full(tf("Screen {n}", &[("n", &(i + 1).to_string())]), SourceKind::Display { index: i }));
                 ui.close();
             }
@@ -689,7 +689,7 @@ impl SnagApp {
                         SourceKind::Display { index } => {
                             egui::ComboBox::from_label(t("Screen")).selected_text(monitors.get(*index).map(|m| m.name.clone()).unwrap_or_else(|| format!("{}", *index + 1))).show_ui(ui, |ui| {
                                 for (i, m) in monitors.iter().enumerate() {
-                                    ui.selectable_value(index, i, format!("{}: {} {} x {}", i + 1, m.name, m.width, m.height));
+                                    ui.selectable_value(index, i, format!("{}: {} {} × {}", i + 1, m.name, m.width, m.height));
                                 }
                             });
                         }

@@ -863,7 +863,7 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
             app.window_menu(ui);
         });
         let tip = match src {
-            Source::Area(x, y, w, h) => format!("{w} x {h} @ {x}, {y}"),
+            Source::Area(x, y, w, h) => format!("{w} × {h} @ {x}, {y}"),
             _ => t("Drag the area to stream").to_string(),
         };
         if look::big_tool(ui, ph::SELECTION, t("An area"), &tip, idle, matches!(src, Source::Area(..))).clicked() {

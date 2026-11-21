@@ -129,7 +129,9 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
         }
         #[cfg(not(target_os = "macos"))]
         {
-            let text = if combo.is_set() { format!("{}\t{}", a.label(), combo.label()) } else { a.label().to_string() };
+            // The name translated before the key is added (`add` translates the whole text, which
+            // with a key after it is never in the table).
+            let text = if combo.is_set() { format!("{}\t{}", crate::i18n::tr(a.label()), combo.label()) } else { a.label().to_string() };
             add(&menu, &format!("a:{a:?}"), &text)?;
         }
     }
