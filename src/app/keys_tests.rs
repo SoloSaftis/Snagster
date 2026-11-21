@@ -460,4 +460,28 @@ fn while_drawing_ctrl_z_takes_back_ink_not_the_picture() {
     k.press(Key::Z, Modifiers::COMMAND);
     assert_eq!(k.app.entries[ci].undo.len(), steps - 1, "not drawing: Ctrl+Z is the picture's again");
     crate::ink::with(|i| i.clear());
+
+/// Ctrl+= / Ctrl+- / Ctrl+0 (⌘ on a Mac) zoom the picture, as in other editors. They used to
+/// scale the whole interface instead (egui's own zoom keys), and the picture's zoom needed the
+/// bare keys.
+#[test]
+fn ctrl_plus_minus_and_zero_zoom_the_picture_not_the_interface() {
+    let mut k = Keys::new();
+    assert_eq!(k.app.zoom, None, "fitted at first");
+    k.press(Key::Equals, Modifiers::COMMAND);
+    let bigger = k.app.zoom.expect("Ctrl+= zooms in");
+    assert_eq!(k.ctx.zoom_factor(), 1.0, "the interface keeps its size");
+    k.press(Key::Plus, Modifiers::COMMAND);
+    assert!(k.app.zoom.unwrap() > bigger, "Ctrl++ (with Shift on most keyboards) zooms in too");
+    let now = k.app.zoom.unwrap();
+    k.press(Key::Minus, Modifiers::COMMAND);
+    assert!(k.app.zoom.unwrap() < now, "Ctrl+- zooms out");
+    k.press(Key::Num0, Modifiers::COMMAND);
+    assert_eq!(k.app.zoom, None, "Ctrl+0 fits the picture to the window again");
+    assert_eq!(k.ctx.zoom_factor(), 1.0);
+    // The bare keys still work.
+    k.key(Key::Minus);
+    assert!(k.app.zoom.is_some());
+    k.key(Key::Num0);
+    assert_eq!(k.app.zoom, None);
 }

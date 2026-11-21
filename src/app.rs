@@ -631,6 +631,7 @@ impl SnagApp {
         let check_run = screenshot.is_some() || UI_TEST.load(Ordering::Relaxed);
         let settings = Settings::load(check_run);
         setup_style(&cc.egui_ctx, settings.appearance);
+        keep_interface_size(&cc.egui_ctx);
         fonts::start_scan(cc.egui_ctx.clone());
         crate::instance::set_wake(&cc.egui_ctx);
         // Check runs (button test, README pictures) keep every box inside the one window they look at.
@@ -2578,6 +2579,16 @@ impl SnagApp {
             self.selected = None;
             self.drag = Drag::None;
         }
+        // Ctrl (⌘) with + or =, - and 0: zoom in, out, fit (Ctrl+1..9 pick Studio's scenes).
+        if consume(Modifiers::COMMAND, Key::Equals) || consume(Modifiers::COMMAND, Key::Plus) {
+            self.set_zoom(ctx, Some(1.25));
+        }
+        if consume(Modifiers::COMMAND, Key::Minus) {
+            self.set_zoom(ctx, Some(0.8));
+        }
+        if consume(Modifiers::COMMAND, Key::Num0) {
+            self.set_zoom(ctx, None);
+        }
         if ctx.input(|i| i.modifiers.any()) {
             return;
         }
@@ -3153,16 +3164,16 @@ impl SnagApp {
     }
 
     fn view_menu(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        if item(ui, "Fit to window", "0") {
+        if item(ui, "Fit to window", "Ctrl+0") {
             self.set_zoom(ctx, None);
         }
         if item(ui, "Actual size", "1") {
             self.set_zoom(ctx, Some(0.0));
         }
-        if item(ui, "Zoom in", "+") {
+        if item(ui, "Zoom in", "Ctrl+=") {
             self.set_zoom(ctx, Some(1.25));
         }
-        if item(ui, "Zoom out", "-") {
+        if item(ui, "Zoom out", "Ctrl+-") {
             self.set_zoom(ctx, Some(0.8));
         }
         ui.separator();
@@ -4790,6 +4801,7 @@ impl SnagApp {
 
     fn ui_body(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        keep_interface_size(&ctx);
         if self.overlay.is_some() {
             egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.handle_overlay(ui));
             return;
@@ -4937,6 +4949,16 @@ fn grown(size: f32, per_step: f32) -> f32 {
 
 fn grown_by(size: f32, per_step: f32, text_scale: f32) -> f32 {
     size + per_step * (text_scale - 1.0).max(0.0)
+}
+
+/// Ctrl+= / Ctrl+- / Ctrl+0 (⌘ on a Mac) zoom the picture, as in other editors (`shortcuts`).
+/// egui would otherwise scale the whole interface with them, also while a text box has the keys
+/// and in Snagster's other windows. Set at start and checked each frame (cheap), so it holds
+/// whichever window draws first.
+fn keep_interface_size(ctx: &egui::Context) {
+    if ctx.options(|o| o.zoom_with_keyboard) {
+        ctx.options_mut(|o| o.zoom_with_keyboard = false);
+    }
 }
 
 fn is_narrow(window_width: f32) -> bool {
@@ -6665,6 +6687,34 @@ mod tests {
         // The canvas beside the tools in a 500 px window: the cards shrink a little to stay two by two.
         assert_eq!(super::welcome_columns(380.0, 180.0), (2, 164.0));
         assert_eq!(super::welcome_columns(380.0, 230.0).0, 1, "one under the other with big text");
+    }
+
+    /// Ctrl+= anywhere egui sees it (a text box has the keys, another Snagster window) never
+    /// scales the whole interface: egui's own keyboard zoom is off.
+    #[test]
+    fn ctrl_plus_never_scales_the_interface() {
+        use super::egui::{Event, Key, Modifiers, RawInput};
+        let ctrl_plus = |keep: bool| {
+            let ctx = super::egui::Context::default();
+            if keep {
+                super::keep_interface_size(&ctx);
+            }
+            for pressed in [true, false] {
+                let ev = Event::Key { key: Key::Equals, physical_key: None, pressed, repeat: false, modifiers: Modifiers::COMMAND };
+                let raw = RawInput { events: vec![Event::ModifiersChanged(Modifiers::COMMAND), ev], ..Default::default() };
+                let mut out = ctx.run_ui(raw, |_| {});
+                out.textures_delta.clear();
+            }
+            ctx.zoom_factor()
+        };
+        assert!(ctrl_plus(false) > 1.0, "egui on its own scales everything (what Snagster did)");
+        assert_eq!(ctrl_plus(true), 1.0);
+        // The window turns it off itself, every frame it draws.
+        let mut app = super::SnagApp::blank(super::Settings::default(), false, None);
+        let ctx = super::egui::Context::default();
+        let mut out = ctx.run_ui(Default::default(), |ui| app.ui_body(ui));
+        out.textures_delta.clear();
+        assert!(!ctx.options(|o| o.zoom_with_keyboard));
     }
 
     #[test]
