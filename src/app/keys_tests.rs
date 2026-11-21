@@ -242,6 +242,64 @@ fn arrows_on_the_picture_move_the_picked_mark() {
     assert_eq!(k.app.entries[ci].undo.len(), 2);
 }
 
+/// Wayland: a dialog inside the window has the keys. With the picture focused and a mark
+/// picked, the arrows, Delete and F6 don't touch the picture or the panes behind it; Esc closes
+/// the dialog, and then the arrows move the mark again.
+#[test]
+fn a_dialog_inside_the_window_keeps_the_editor_keys_off_the_picture() {
+    let mut k = Keys::new();
+    k.ctx.set_embed_viewports(true);
+    let ci = k.app.current.unwrap();
+    let r = Rect::from_min_size(pos2(50.0, 50.0), vec2(40.0, 30.0));
+    k.app.entries[ci].doc.shapes.push(Shape::Rect { rect: r, color: Color32::RED, width: 3.0, fill: false, radius: 0.0, shadow: false });
+    k.app.selected = Some(0);
+    for _ in 0..3 {
+        k.key(Key::F6);
+    }
+    assert_eq!(k.pane(), Some(Pane::Canvas));
+    k.app.about_open = true;
+    k.frame(Vec::new());
+    assert_eq!(k.pane(), None, "the picture behind gave up the keyboard");
+    for key in [Key::ArrowRight, Key::Delete] {
+        k.key(key);
+    }
+    k.key(Key::F6);
+    assert_eq!(k.pane(), None, "F6 doesn't move the keyboard into the panes behind the dialog");
+    let Shape::Rect { rect, .. } = &k.app.entries[ci].doc.shapes[0] else { panic!("the mark was deleted") };
+    assert_eq!(rect.min, r.min, "the arrows didn't move the mark behind the dialog");
+    assert!(k.app.about_open, "the dialog is still open");
+    k.key(Key::Escape);
+    assert!(!k.app.about_open, "Esc closed the dialog");
+    assert_eq!(k.app.entries[ci].doc.shapes.len(), 1, "and not the mark");
+}
+
+/// Wayland: a big box beside the editor (here Keyboard shortcuts) has the keys from its
+/// opening: F6 and Delete stay off the editor until a click on the editor gives them back.
+#[test]
+fn a_big_box_inside_the_window_keeps_f6_and_delete_off_the_editor_until_a_click_on_it() {
+    let mut k = Keys::new();
+    k.ctx.set_embed_viewports(true);
+    let ci = k.app.current.unwrap();
+    let r = Rect::from_min_size(pos2(50.0, 50.0), vec2(40.0, 30.0));
+    k.app.entries[ci].doc.shapes.push(Shape::Rect { rect: r, color: Color32::RED, width: 3.0, fill: false, radius: 0.0, shadow: false });
+    k.app.selected = Some(0);
+    k.app.shortcuts_open = true;
+    k.frame(Vec::new());
+    k.key(Key::F6);
+    assert_eq!(k.pane(), None, "F6 is the box's, not the editor's panes");
+    k.key(Key::Delete);
+    assert_eq!(k.app.entries[ci].doc.shapes.len(), 1, "Delete didn't remove the mark behind");
+    assert!(k.app.shortcuts_open);
+    // A click on the editor, beside the box (the box is centred, so the left edge is clear).
+    let at = pos2(4.0, WINDOW.y / 2.0);
+    let b = |pressed| Event::PointerButton { pos: at, button: egui::PointerButton::Primary, pressed, modifiers: Modifiers::NONE };
+    k.frame(vec![Event::PointerMoved(at), b(true), b(false)]);
+    k.frame(Vec::new());
+    k.key(Key::F6);
+    assert!(k.pane().is_some(), "the editor's F6 works again");
+    assert!(k.app.shortcuts_open, "the box stays open beside the editor");
+}
+
 #[test]
 fn with_a_ribbon_button_focused_the_shortcuts_still_work() {
     let mut k = Keys::new();

@@ -457,6 +457,13 @@ impl SnagApp {
         // In F6's order, not the order they're laid out in.
         k.panes.sort_by_key(|p| p.0);
         k.canvas = k.canvas_now.take();
+        // A box inside the window (Wayland) has the keys: F6, the arrows on the picture and
+        // Alt+letter stay off the editor behind it.
+        if crate::windows::box_has_keys(ctx) {
+            k.tips = Tips::Off;
+            k.before_tips = None;
+            return;
+        }
         let style = tip_style(crate::platform::system());
         let popup = egui::Popup::is_any_open(ctx);
         let typing = ctx.text_edit_focused() || self.text_edit.is_some();
