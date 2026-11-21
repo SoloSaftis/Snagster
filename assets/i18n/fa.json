@@ -1124,7 +1124,7 @@
   "Ink": "جوهر",
   "Draw": "ترسیم",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "روی صفحه و پیش‌نمایش ترسیم کنید؛ در پخش و ویدیو دیده می‌شود (Esc برای توقف)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "روی پیش‌نمایش ترسیم کنید. این دسکتاپ اجازه نمی‌دهد برنامه‌ها روی صفحه ترسیم کنند.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "روی پیش‌نمایش ترسیم کنید؛ در پخش و ویدیو دیده می‌شود (Esc برای توقف)",
   "Ink color": "رنگ جوهر",
   "More colors…": "رنگ‌های بیشتر…",
   "Pen {width} px": "قلم {width} px",

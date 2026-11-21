@@ -1124,7 +1124,7 @@
   "Ink": "কালি",
   "Draw": "আঁকুন",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "স্ক্রিন ও প্রিভিউতে আঁকুন; এটি স্ট্রিম ও ভিডিওতে দেখা যায় (থামাতে Esc)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "প্রিভিউতে আঁকুন। এই ডেস্কটপ অ্যাপকে স্ক্রিনের ওপর আঁকতে দেয় না।",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "প্রিভিউতে আঁকুন; এটি স্ট্রিম ও ভিডিওতে দেখা যায় (থামাতে Esc)",
   "Ink color": "কালির রং",
   "More colors…": "আরও রং…",
   "Pen {width} px": "কলম {width} px",

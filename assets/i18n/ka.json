@@ -1124,7 +1124,7 @@
   "Ink": "მელანი",
   "Draw": "ხატვა",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "ხატეთ ეკრანზე და გადახედვაში; ჩანს ტრანსლაციასა და ვიდეოში (Esc აჩერებს)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "ხატეთ გადახედვაში. ეს სამუშაო მაგიდა აპებს ეკრანზე ხატვის საშუალებას არ აძლევს.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "ხატეთ გადახედვაში; ჩანს ტრანსლაციასა და ვიდეოში (Esc აჩერებს)",
   "Ink color": "მელნის ფერი",
   "More colors…": "მეტი ფერი…",
   "Pen {width} px": "კალამი {width} px",

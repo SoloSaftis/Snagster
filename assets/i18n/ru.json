@@ -1124,7 +1124,7 @@
   "Ink": "Рисование",
   "Draw": "Рисовать",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Рисуйте на экране и в предпросмотре; это видно в трансляции и на видео (Esc — выход)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Рисуйте в предпросмотре. Этот рабочий стол не позволяет приложениям рисовать поверх экрана.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Рисуйте в предпросмотре; это видно в трансляции и на видео (Esc — выход)",
   "Ink color": "Цвет пера",
   "More colors…": "Другие цвета…",
   "Pen {width} px": "Перо {width} px",

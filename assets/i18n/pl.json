@@ -1124,7 +1124,7 @@
   "Ink": "Atrament",
   "Draw": "Rysuj",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Rysuj na ekranie i w podglądzie; widać to w transmisji i na wideo (Esc kończy)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Rysuj w podglądzie. Ten pulpit nie pozwala aplikacjom rysować na ekranie.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Rysuj w podglądzie; widać to w transmisji i na wideo (Esc kończy)",
   "Ink color": "Kolor atramentu",
   "More colors…": "Więcej kolorów…",
   "Pen {width} px": "Pióro {width} px",

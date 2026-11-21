@@ -1124,7 +1124,7 @@
   "Ink": "Črnilo",
   "Draw": "Riši",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Rišite po zaslonu in predogledu; vidi se v prenosu in videoposnetku (Esc ustavi)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Rišite po predogledu. To namizje aplikacijam ne dovoli risati čez zaslon.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Rišite po predogledu; vidi se v prenosu in videoposnetku (Esc ustavi)",
   "Ink color": "Barva črnila",
   "More colors…": "Več barv…",
   "Pen {width} px": "Pero {width} px",

@@ -1124,7 +1124,7 @@
   "Ink": "Сия",
   "Draw": "Сызу",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Экранда және алдын ала қарауда сызыңыз; ол трансляция мен бейнеде көрінеді (Esc тоқтатады)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Алдын ала қарауда сызыңыз. Бұл жұмыс үстелі қолданбаларға экран үстіне сызуға рұқсат бермейді.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Алдын ала қарауда сызыңыз; ол трансляция мен бейнеде көрінеді (Esc тоқтатады)",
   "Ink color": "Сия түсі",
   "More colors…": "Басқа түстер…",
   "Pen {width} px": "Қалам {width} px",

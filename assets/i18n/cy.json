@@ -1124,7 +1124,7 @@
   "Ink": "Inc",
   "Draw": "Tynnu",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Tynnwch ar y sgrin a'r rhagolwg; mae'n dangos yn y ffrwd a'r fideo (Esc i stopio)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Tynnwch ar y rhagolwg. Dydy'r bwrdd gwaith hwn ddim yn gadael i apiau dynnu dros y sgrin.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Tynnwch ar y rhagolwg; mae'n dangos yn y ffrwd a'r fideo (Esc i stopio)",
   "Ink color": "Lliw'r inc",
   "More colors…": "Rhagor o liwiau…",
   "Pen {width} px": "Ysgrifbin {width} px",

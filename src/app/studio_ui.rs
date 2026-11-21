@@ -200,7 +200,7 @@ fn ink_group(app: &mut SnagApp, ui: &mut egui::Ui) {
     look::group(ui, t("Ink"), |ui| {
         let tip = match crate::ink_overlay::support() {
             crate::ink_overlay::Where::Screen => t("Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)"),
-            crate::ink_overlay::Where::PreviewOnly => t("Draw on the preview. This desktop doesn't let apps draw over the screen."),
+            crate::ink_overlay::Where::PreviewOnly => t("Draw on the preview; it shows in the stream and the video (Esc to stop)"),
         };
         let tip = format!("{tip}{}", super::ribbon::kbd(&app.settings, Action::DrawInk));
         if look::big_tool(ui, ph::PEN_NIB, t("Draw"), &tip, true, on).clicked() {
@@ -261,9 +261,15 @@ fn ink_group(app: &mut SnagApp, ui: &mut egui::Ui) {
 /// The Ink group's hold menu label: "Fades after 3 s" or "Stays".
 pub(crate) fn ink_hold_label(mode: crate::ink::InkMode, secs: f32) -> String {
     match mode {
-        crate::ink::InkMode::Fade => tf("Fades after {seconds} s", &[("seconds", &format!("{:.0}", secs.max(0.5)))]),
+        crate::ink::InkMode::Fade => tf("Fades after {seconds} s", &[("seconds", &seconds_text(secs.max(0.5)))]),
         crate::ink::InkMode::Stay => t("Stays").to_string(),
     }
+}
+
+/// Seconds as people write them: "3", or "2.5" when not whole.
+pub(crate) fn seconds_text(s: f32) -> String {
+    let tenths = (s * 10.0).round() / 10.0;
+    if tenths.fract() == 0.0 { format!("{tenths:.0}") } else { format!("{tenths:.1}") }
 }
 
 /// Draw on or off (the Draw button, its hotkey and the window command). Studio has to be open:
@@ -455,7 +461,9 @@ impl SnagApp {
             } else if let Some(at) = next {
                 ctx.request_repaint_after(at.saturating_duration_since(now) + crate::ink::FADE_OUT);
             }
-            super::ink_ui::overlays(ctx);
+            // Snagster's window stays usable while drawing over the screen.
+            let (rect, ppp, hidden) = ctx.input(|i| (i.viewport().outer_rect, i.pixels_per_point, i.viewport().minimized == Some(true)));
+            crate::ink_overlay::set_app_rect(rect.filter(|_| !hidden).map(|r| ((r.left() * ppp).round() as i32, (r.top() * ppp).round() as i32, (r.width() * ppp).round() as u32, (r.height() * ppp).round() as u32)));
         }
         if let Some(st) = &mut self.x.studio {
             if let Some(scene) = self.settings.studio.scene()
@@ -907,8 +915,9 @@ impl SnagApp {
         p.rect_stroke(rect, CornerRadius::ZERO, Stroke::new(2.0, accent()), egui::StrokeKind::Outside);
         let now = Instant::now();
         let to_canvas = |at: Pos2| [(at.x - rect.left()) / scale, (at.y - rect.top()) / scale];
+        // A stroke starts where the button went down, not where the drag was noticed.
         if resp.drag_started()
-            && let Some(at) = resp.interact_pointer_pos()
+            && let Some(at) = ui.input(|i| i.pointer.press_origin()).or(resp.interact_pointer_pos())
         {
             let c = to_canvas(at);
             let (space, pt) = preview_ink_start(placed, c);
@@ -940,15 +949,8 @@ impl SnagApp {
             ui.painter().circle_filled(at, (pen.width * scale / 2.0).max(2.0), c);
             ui.ctx().set_cursor_icon(egui::CursorIcon::None);
         }
-        // Esc stops drawing, Ctrl+Z takes back the last stroke.
-        let (esc, undo) = ui.input(|i| (i.key_pressed(egui::Key::Escape), i.modifiers.command && i.key_pressed(egui::Key::Z)));
-        if esc {
-            crate::ink::with(|i| i.set_on(false, now));
-        }
-        if undo {
-            crate::ink::with(|i| i.undo(now));
-        }
-        ui.painter().text(pos2(rect.left(), rect.bottom() + 4.0), Align2::LEFT_TOP, t(crate::ink_overlay::HINT), FontId::proportional(11.5), pal().dim);
+        // (Esc and Ctrl+Z / ⌘Z are the window's shortcuts while Draw is on.)
+        ui.painter().text(pos2(rect.left(), rect.bottom() + 4.0), Align2::LEFT_TOP, crate::platform::keys(t(crate::ink_overlay::HINT)), FontId::proportional(11.5), pal().dim);
     }
 }
 
@@ -1413,6 +1415,21 @@ mod tests {
         assert_eq!(sound_icon(&SoundInput::Computer, true), ph::SPEAKER_SLASH);
         assert_eq!(sound_icon(&SoundInput::Microphone { id: String::new() }, true), ph::MICROPHONE_SLASH);
         assert_eq!(sound_icon(&SoundInput::File { path: String::new() }, false), ph::WAVEFORM);
+    }
+
+    #[test]
+    fn hold_times_show_as_people_write_them() {
+        assert_eq!(seconds_text(3.0), "3");
+        assert_eq!(seconds_text(0.5), "0.5");
+        assert_eq!(seconds_text(2.54), "2.5");
+        assert!(ink_hold_label(crate::ink::InkMode::Fade, 0.5).contains("0.5"));
+    }
+
+    #[test]
+    fn preview_ink_over_a_screen_goes_to_the_desktop() {
+        let p = crate::ink::Placed { desk: (1000, 0, 200, 100), canvas: (0, 0, 100, 50) };
+        assert_eq!(preview_ink_start(&[p], [50.0, 25.0]), (crate::ink::Space::Desktop, [1100.0, 50.0]));
+        assert_eq!(preview_ink_start(&[p], [150.0, 25.0]), (crate::ink::Space::Canvas, [150.0, 25.0]));
     }
 
     #[test]

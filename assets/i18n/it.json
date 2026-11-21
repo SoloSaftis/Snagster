@@ -1124,7 +1124,7 @@
   "Ink": "Inchiostro",
   "Draw": "Disegna",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Disegna sullo schermo e sull'anteprima; si vede nella diretta e nel video (Esc per uscire)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Disegna sull'anteprima. Questo desktop non consente alle app di disegnare sopra lo schermo.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Disegna sull'anteprima; si vede nella diretta e nel video (Esc per uscire)",
   "Ink color": "Colore inchiostro",
   "More colors…": "Altri colori…",
   "Pen {width} px": "Penna {width} px",

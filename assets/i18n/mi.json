@@ -1124,7 +1124,7 @@
   "Ink": "Mangumangu",
   "Draw": "Tuhi",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Tuhia ki te mata me te arokite; ka kitea i te rerenga me te ataata (Esc hei whakamutu)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Tuhia ki te arokite. Kāore tēnei papamahi e tuku i ngā taupānga kia tuhi ki runga i te mata.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Tuhia ki te arokite; ka kitea i te rerenga me te ataata (Esc hei whakamutu)",
   "Ink color": "Tae mangumangu",
   "More colors…": "Ētahi atu tae…",
   "Pen {width} px": "Pene {width} px",

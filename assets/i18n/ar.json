@@ -1124,7 +1124,7 @@
   "Ink": "الحبر",
   "Draw": "رسم",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "ارسم على الشاشة والمعاينة؛ يظهر في البث والفيديو (Esc للإيقاف)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "ارسم على المعاينة. سطح المكتب هذا لا يسمح للتطبيقات بالرسم فوق الشاشة.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "ارسم على المعاينة؛ يظهر في البث والفيديو (Esc للإيقاف)",
   "Ink color": "لون الحبر",
   "More colors…": "مزيد من الألوان…",
   "Pen {width} px": "قلم {width} px",

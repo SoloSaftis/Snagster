@@ -431,3 +431,33 @@ fn in_a_short_window_the_arrows_reach_the_options_below_the_fold() {
 }
 
 
+
+/// Bug: while drawing, Ctrl+Z / ⌘Z undid the picture (or brought back a deleted file) instead
+/// of the last stroke, and on Wayland never reached the ink at all.
+#[test]
+fn while_drawing_ctrl_z_takes_back_ink_not_the_picture() {
+    let _one = crate::ink::TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let mut k = Keys::new();
+    let ci = k.app.current.unwrap();
+    k.app.apply_effect(crate::effects::Effect::Invert);
+    let steps = k.app.entries[ci].undo.len();
+    assert!(steps > 0, "an edit to take back");
+    let now = std::time::Instant::now();
+    crate::ink::with(|i| {
+        i.clear();
+        i.set_on(true, now);
+        for x in [1.0, 2.0] {
+            i.begin(crate::ink::Space::Canvas, [x, 1.0], now);
+            i.end(now);
+        }
+    });
+    k.press(Key::Z, Modifiers::COMMAND);
+    let left = crate::ink::with(|i| i.snapshot(std::time::Instant::now()).strokes.len());
+    assert_eq!(k.app.entries[ci].undo.len(), steps, "the picture's edit stays");
+    assert_eq!(left, 1, "one stroke taken back");
+    k.key(Key::Escape);
+    assert!(crate::ink::with(|i| !i.on), "Esc stops drawing");
+    k.press(Key::Z, Modifiers::COMMAND);
+    assert_eq!(k.app.entries[ci].undo.len(), steps - 1, "not drawing: Ctrl+Z is the picture's again");
+    crate::ink::with(|i| i.clear());
+}

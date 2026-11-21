@@ -1124,7 +1124,7 @@
   "Ink": "Tinta",
   "Draw": "Desenhar",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Desenhe na tela e na prévia; aparece na transmissão e no vídeo (Esc para parar)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Desenhe na prévia. Esta área de trabalho não deixa os apps desenharem sobre a tela.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Desenhe na prévia; aparece na transmissão e no vídeo (Esc para parar)",
   "Ink color": "Cor da tinta",
   "More colors…": "Mais cores…",
   "Pen {width} px": "Caneta {width} px",

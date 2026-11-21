@@ -1124,7 +1124,7 @@
   "Ink": "Мастило",
   "Draw": "Цртај",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Цртајте по екрану и прегледу; види се у преносу и видеу (Esc зауставља)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Цртајте по прегледу. Ова радна површина не дозвољава апликацијама да цртају преко екрана.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Цртајте по прегледу; види се у преносу и видеу (Esc зауставља)",
   "Ink color": "Боја мастила",
   "More colors…": "Још боја…",
   "Pen {width} px": "Оловка {width} px",

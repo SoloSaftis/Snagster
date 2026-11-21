@@ -203,7 +203,7 @@ pub const COMMANDS: &[Command] = &[
     c("studio_copy_scene", "Studio > Scenes", &["Copy scene"], "studio_edit", true, "", Safe),
     c("studio_delete_scene", "Studio > Scenes", &["Delete scene"], "studio_remove_scene", true, "", Destructive),
     c("studio_ink", "Studio > Ink, hotkey", &["Draw", "Draw on screen"], "", true, "", Safe),
-    c("studio_ink_clear", "Studio > Ink, hotkey", &["Clear", "Clear ink"], "ink_clear", true, "", Safe),
+    c("studio_ink_clear", "Studio > Ink, hotkey", &["Clear", "Clear ink"], "ink_clear", true, "", Destructive),
     s("studio_ink_color", "Studio > Ink", &["Color", "Ink color", "More colors…"], "studio.ink_color"),
     s("studio_ink_width", "Studio > Ink", &["Pen width"], "studio.ink_width"),
     s("studio_ink_hold", "Studio > Ink", &["How long ink stays", "Stay until cleared"], "studio.ink_mode"),

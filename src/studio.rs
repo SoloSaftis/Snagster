@@ -304,6 +304,8 @@ pub struct Compositor {
     feeds: std::collections::HashMap<(i32, i32, u32, u32), Result<crate::video::ScreenFeed, Instant>>,
     /// Where the last frame showed parts of the desktop (for live ink), bottom first.
     pub placed: Vec<crate::ink::Placed>,
+    /// Live ink, drawn once per change and kept (see `ink::Layer`).
+    ink_layers: crate::ink::Layers,
 }
 
 /// How long a screen share that couldn't start (the person said no, or the desktop has none)
@@ -430,13 +432,17 @@ impl Compositor {
                         blit_scaled(out, &img, dx, dy, dw, dh, false);
                     }
                     if let Some(p) = shown {
-                        crate::ink::paint_placed(out, ink, &p);
+                        // Where the screen copy already holds the overlay's ink, not twice.
+                        if !crate::ink_overlay::overlay_in_captures() {
+                            self.ink_layers.draw_placed(out, ink, &p);
+                        }
                         self.placed.push(p);
                     }
                 }
             }
         }
-        crate::ink::paint_canvas(out, ink);
+        self.ink_layers.draw_canvas(out, ink);
+        self.ink_layers.end_frame();
     }
 }
 
@@ -1124,6 +1130,7 @@ mod tests {
     #[test]
     fn the_engine_draws_the_programs_ink() {
         let scene = Scene { sounds: Vec::new(), name: "s".into(), items: vec![colour("c", [0, 0, 0, 255], 0.0, 0.0, 64.0, 64.0)] };
+        let _one = crate::ink::TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let engine = Engine::start(scene, 64, 64, None);
         engine.shared.ink.store(true, Ordering::Relaxed);
         // A colour no other test uses, at a spot of its own: tests share the program's ink.

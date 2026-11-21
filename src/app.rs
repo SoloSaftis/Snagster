@@ -47,7 +47,6 @@ pub(crate) mod earlier;
 pub(crate) mod work;
 pub(crate) mod ribbon;
 pub(crate) mod studio_ui;
-pub(crate) mod ink_ui;
 pub(crate) mod stream_ui;
 pub(crate) mod replay_ui;
 pub(crate) mod updates_ui;
@@ -2461,6 +2460,16 @@ impl SnagApp {
         let elsewhere = focused.is_some() && self.x.keys.pane_of(ctx, focused).is_none();
         let typing = self.text_edit.is_some() || ctx.text_edit_focused() || elsewhere;
         let consume = |m: Modifiers, k: Key| ctx.input_mut(|i| i.consume_key(m, k));
+        // While Draw is on, Ctrl+Z / ⌘Z takes back ink (never the picture or a deleted file) and
+        // Esc stops drawing.
+        if crate::ink::with(|i| i.on) {
+            if consume(Modifiers::COMMAND, Key::Z) {
+                crate::ink::with(|i| i.undo(Instant::now()));
+            }
+            if consume(Modifiers::NONE, Key::Escape) {
+                crate::ink::with(|i| i.set_on(false, Instant::now()));
+            }
+        }
         if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z) || consume(Modifiers::COMMAND, Key::Y) {
             self.redo();
         }
@@ -6143,12 +6152,6 @@ impl SnagApp {
 }
 
 impl eframe::App for SnagApp {
-    // Clear, so the live-ink windows over the screen (macOS, X11) are see-through; every other
-    // window is filled by its panels.
-    fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
-        if ink_ui::uses_app_windows() { [0.0; 4] } else { egui::Color32::from_rgba_unmultiplied(12, 12, 12, 180).to_normalized_gamma_f32() }
-    }
-
     // A mistake in one frame must not close the window and lose the person's pictures: it is
     // written to crash.log (by the panic hook) and shown in the status line, and the next frame
     // carries on.

@@ -1124,7 +1124,7 @@
   "Ink": "Ink",
   "Draw": "Teken",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Teken op die skerm en die voorskou; dit wys in die stroom en die video (Esc stop)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Teken op die voorskou. Hierdie lessenaar laat nie programme oor die skerm teken nie.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Teken op die voorskou; dit wys in die stroom en die video (Esc stop)",
   "Ink color": "Inkkleur",
   "More colors…": "Meer kleure…",
   "Pen {width} px": "Pen {width} px",

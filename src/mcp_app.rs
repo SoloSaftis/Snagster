@@ -149,6 +149,10 @@ impl Workspace {
                 let value = str_of(a, "value");
                 // Checked here first, so a typo never starts Snagster.
                 crate::app::commands_ui::parse(id, value)?;
+                // Draw takes over the person's mouse on every screen: only they turn it on.
+                if id == "studio_ink" {
+                    return Err("studio_ink (Draw) is only for the person: it turns their mouse into a pen on every screen. ink_clear removes ink.".into());
+                }
                 let c = catalog::command(id).ok_or("unknown command")?;
                 let sent = match crate::instance::send_command(id, value) {
                     Ok(()) => Ok(()),
@@ -429,6 +433,7 @@ mod tests {
         assert!(w.call("app_command", &json!({"command": "capture_fixed_size", "start": false})).unwrap_err().contains("WIDTHxHEIGHT"));
         assert!(w.call("app_command", &json!({"command": "after_copy", "start": false})).unwrap_err().contains("set_setting"));
         assert_eq!(w.call("app_command", &json!({})).unwrap_err(), "missing command");
+        assert!(w.call("app_command", &json!({"command": "studio_ink", "start": false})).unwrap_err().contains("only for the person"));
     }
 
     #[test]

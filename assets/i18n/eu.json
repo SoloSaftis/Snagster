@@ -1124,7 +1124,7 @@
   "Ink": "Tinta",
   "Draw": "Marraztu",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Marraztu pantailan eta aurrebistan; transmisioan eta bideoan ikusten da (Esc gelditzeko)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Marraztu aurrebistan. Mahaigain honek ez die aplikazioei pantailaren gainean marrazten uzten.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Marraztu aurrebistan; transmisioan eta bideoan ikusten da (Esc gelditzeko)",
   "Ink color": "Tintaren kolorea",
   "More colors…": "Kolore gehiago…",
   "Pen {width} px": "Boligrafoa {width} px",

@@ -1124,7 +1124,7 @@
   "Ink": "Cerneală",
   "Draw": "Desenează",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Desenează pe ecran și în previzualizare; apare în stream și în video (Esc oprește)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Desenează în previzualizare. Acest desktop nu lasă aplicațiile să deseneze peste ecran.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Desenează în previzualizare; apare în stream și în video (Esc oprește)",
   "Ink color": "Culoarea cernelii",
   "More colors…": "Mai multe culori…",
   "Pen {width} px": "Pix {width} px",

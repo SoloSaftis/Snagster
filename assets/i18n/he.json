@@ -1124,7 +1124,7 @@
   "Ink": "דיו",
   "Draw": "ציור",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "ציירו על המסך ועל התצוגה המקדימה; זה מופיע בשידור ובווידאו (Esc לעצירה)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "ציירו על התצוגה המקדימה. שולחן העבודה הזה לא מאפשר לאפליקציות לצייר מעל המסך.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "ציירו על התצוגה המקדימה; זה מופיע בשידור ובווידאו (Esc לעצירה)",
   "Ink color": "צבע הדיו",
   "More colors…": "צבעים נוספים…",
   "Pen {width} px": "עט {width} px",

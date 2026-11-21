@@ -1124,7 +1124,7 @@
   "Ink": "Bojë",
   "Draw": "Vizato",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Vizatoni në ekran dhe në pamjen paraprake; shfaqet në transmetim dhe në video (Esc ndalon)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Vizatoni në pamjen paraprake. Ky desktop nuk i lë aplikacionet të vizatojnë mbi ekran.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Vizatoni në pamjen paraprake; shfaqet në transmetim dhe në video (Esc ndalon)",
   "Ink color": "Ngjyra e bojës",
   "More colors…": "Më shumë ngjyra…",
   "Pen {width} px": "Stilolaps {width} px",

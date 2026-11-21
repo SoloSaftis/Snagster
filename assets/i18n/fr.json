@@ -1124,7 +1124,7 @@
   "Ink": "Encre",
   "Draw": "Dessiner",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Dessinez sur l'écran et l'aperçu ; c'est visible dans le stream et la vidéo (Échap pour arrêter)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Dessinez sur l'aperçu. Ce bureau ne laisse pas les applications dessiner par-dessus l'écran.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Dessinez sur l'aperçu ; c'est visible dans le stream et la vidéo (Échap pour arrêter)",
   "Ink color": "Couleur de l'encre",
   "More colors…": "Plus de couleurs…",
   "Pen {width} px": "Stylo {width} px",

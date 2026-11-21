@@ -1124,7 +1124,7 @@
   "Ink": "Siyoh",
   "Draw": "Chizish",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Ekranda va ko‘rinishda chizing; u translatsiya va videoda ko‘rinadi (to‘xtatish uchun Esc)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Ko‘rinishda chizing. Bu ish stoli ilovalarga ekran ustidan chizishga ruxsat bermaydi.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Ko‘rinishda chizing; u translatsiya va videoda ko‘rinadi (to‘xtatish uchun Esc)",
   "Ink color": "Siyoh rangi",
   "More colors…": "Boshqa ranglar…",
   "Pen {width} px": "Qalam {width} px",

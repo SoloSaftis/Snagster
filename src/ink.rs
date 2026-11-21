@@ -103,6 +103,7 @@ impl Ink {
         self.generation = self.generation.wrapping_add(1);
     }
 
+    #[cfg(test)]
     pub fn generation(&self) -> u64 {
         self.generation
     }
@@ -133,6 +134,8 @@ impl Ink {
     pub fn begin(&mut self, space: Space, p: [f32; 2], now: Instant) {
         self.end(now);
         self.drop_faded(now);
+        // Undo brings back what Clear removed only right after Clear, never on a later stroke.
+        self.cleared.clear();
         self.drawing = Some(Stroke { space, points: vec![p], color: self.pen.color, width: self.pen.width.clamp(1.0, 64.0) });
         self.changed();
     }
@@ -227,6 +230,7 @@ impl Ink {
     fn drop_faded(&mut self, now: Instant) {
         if !self.strokes.is_empty() && self.alpha(now) <= 0.0 {
             self.strokes.clear();
+            self.cleared.clear();
             self.lifted = None;
             self.changed();
         }
@@ -262,6 +266,10 @@ impl Snapshot {
         self.strokes.iter().filter(move |s| s.space == space)
     }
 }
+
+/// Tests that use the program's ink take turns.
+#[cfg(test)]
+pub static TEST_LOCK: Mutex<()> = Mutex::new(());
 
 static INK: LazyLock<Mutex<Ink>> = LazyLock::new(|| Mutex::new(Ink::default()));
 
@@ -332,12 +340,38 @@ impl Map {
     }
 }
 
+/// A box of picture pixels: (left, top, right, bottom), right and bottom not included.
+pub type Area = (i64, i64, i64, i64);
+
+/// Both boxes in one.
+pub fn union(a: Option<Area>, b: Option<Area>) -> Option<Area> {
+    match (a, b) {
+        (Some(a), Some(b)) => Some((a.0.min(b.0), a.1.min(b.1), a.2.max(b.2), a.3.max(b.3))),
+        (a, b) => a.or(b),
+    }
+}
+
+/// Blend colour `c`, `a` strong (0..1), "over" the straight-alpha pixel `px`.
+fn over(px: &mut [u8], c: [u8; 3], a: f32) {
+    let da = px[3] as f32 / 255.0;
+    let oa = a + da * (1.0 - a);
+    if oa <= 0.0 {
+        return;
+    }
+    for k in 0..3 {
+        let v = (c[k] as f32 * a + px[k] as f32 * da * (1.0 - a)) / oa;
+        px[k] = v.round().clamp(0.0, 255.0) as u8;
+    }
+    px[3] = (oa * 255.0).round() as u8;
+}
+
 /// Draw `stroke` into `out`, `alpha` strong, with round ends and joins and soft edges. A stroke
 /// over itself doesn't get darker where it crosses (one coverage per pixel), so a fading
-/// drawing stays even. Blends "over" what is there, a see-through picture included.
-pub fn paint(out: &mut RgbaImage, stroke: &Stroke, alpha: f32, map: &Map) {
+/// drawing stays even. Blends "over" what is there, a see-through picture included. Returns the
+/// box it drew in.
+pub fn paint(out: &mut RgbaImage, stroke: &Stroke, alpha: f32, map: &Map) -> Option<Area> {
     if stroke.points.is_empty() || alpha <= 0.0 {
-        return;
+        return None;
     }
     let pts: Vec<[f32; 2]> = stroke.points.iter().map(|p| map.apply(*p)).collect();
     let r = (stroke.width * (map.scale[0].abs() + map.scale[1].abs()) / 2.0 / 2.0).max(0.5);
@@ -345,12 +379,12 @@ pub fn paint(out: &mut RgbaImage, stroke: &Stroke, alpha: f32, map: &Map) {
     for p in &pts {
         (l, t, rr, b) = (l.min(p[0]), t.min(p[1]), rr.max(p[0]), b.max(p[1]));
     }
-    let x0 = ((l - r - 1.0).floor() as i64).max(map.clip.0);
-    let y0 = ((t - r - 1.0).floor() as i64).max(map.clip.1);
-    let x1 = ((rr + r + 2.0).ceil() as i64).min(map.clip.2);
-    let y1 = ((b + r + 2.0).ceil() as i64).min(map.clip.3);
+    let x0 = ((l - r - 1.0).floor() as i64).max(map.clip.0).max(0);
+    let y0 = ((t - r - 1.0).floor() as i64).max(map.clip.1).max(0);
+    let x1 = ((rr + r + 2.0).ceil() as i64).min(map.clip.2).min(out.width() as i64);
+    let y1 = ((b + r + 2.0).ceil() as i64).min(map.clip.3).min(out.height() as i64);
     if x0 >= x1 || y0 >= y1 {
-        return;
+        return None;
     }
     let (bw, bh) = ((x1 - x0) as usize, (y1 - y0) as usize);
     let mut cover = vec![0u8; bw * bh];
@@ -376,55 +410,176 @@ pub fn paint(out: &mut RgbaImage, stroke: &Stroke, alpha: f32, map: &Map) {
         }
     }
     let ca = stroke.color[3] as f32 / 255.0 * alpha.min(1.0);
+    let c = [stroke.color[0], stroke.color[1], stroke.color[2]];
     let ow = out.width() as usize;
     let raw: &mut [u8] = out;
     for yy in 0..bh {
         for xx in 0..bw {
             let cv = cover[yy * bw + xx];
-            if cv == 0 {
+            if cv > 0 {
+                let i = ((y0 as usize + yy) * ow + x0 as usize + xx) * 4;
+                over(&mut raw[i..i + 4], c, ca * cv as f32 / 255.0);
+            }
+        }
+    }
+    Some((x0, y0, x1, y1))
+}
+
+/// What a layer has drawn of one stroke.
+#[derive(Clone, Copy, PartialEq)]
+struct Painted {
+    points: usize,
+    first: [f32; 2],
+    color: [u8; 4],
+    width: f32,
+}
+
+/// Ink drawn once at full strength and kept, so a frame only blends it (with the fade's
+/// strength) instead of drawing every stroke again: a long show has many strokes, and a frame
+/// has a few milliseconds. While a stroke is drawn only its new piece is added.
+pub struct Layer {
+    img: RgbaImage,
+    map: Map,
+    painted: Vec<Painted>,
+    /// The box with ink in it.
+    content: Option<Area>,
+}
+
+impl Layer {
+    /// An empty layer of `w` x `h` where strokes land by `map`.
+    pub fn new(w: u32, h: u32, map: Map) -> Layer {
+        Layer { img: RgbaImage::new(w, h), map, painted: Vec::new(), content: None }
+    }
+
+    pub fn image(&self) -> &RgbaImage {
+        &self.img
+    }
+
+    /// The box with ink in it.
+    pub fn content(&self) -> Option<Area> {
+        self.content
+    }
+
+    /// Bring the layer up to `strokes`; returns the box that changed. Strokes that only grew
+    /// (or were added) are drawn piece by piece; anything else (Clear, Undo, faded away) draws
+    /// the layer again.
+    pub fn update<'a>(&mut self, strokes: impl Iterator<Item = &'a Stroke>) -> Option<Area> {
+        let list: Vec<&Stroke> = strokes.collect();
+        let grew = self.painted.len() <= list.len()
+            && self.painted.iter().zip(&list).all(|(p, s)| s.points.len() >= p.points && s.points.first() == Some(&p.first) && s.color == p.color && s.width == p.width);
+        let mut changed = None;
+        if !grew {
+            if let Some((x0, y0, x1, y1)) = self.content {
+                let w = self.img.width() as usize;
+                let raw: &mut [u8] = &mut self.img;
+                for y in y0..y1 {
+                    let row = (y as usize * w + x0 as usize) * 4;
+                    raw[row..row + (x1 - x0) as usize * 4].fill(0);
+                }
+            }
+            changed = self.content;
+            self.content = None;
+            self.painted.clear();
+        }
+        for (i, s) in list.iter().enumerate() {
+            let from = self.painted.get(i).map(|p| p.points).unwrap_or(0);
+            if from >= s.points.len() {
                 continue;
             }
-            let a = ca * cv as f32 / 255.0;
-            let i = ((y0 as usize + yy) * ow + x0 as usize + xx) * 4;
-            let da = raw[i + 3] as f32 / 255.0;
-            let oa = a + da * (1.0 - a);
-            if oa <= 0.0 {
-                continue;
+            let drawn = if from == 0 {
+                paint(&mut self.img, s, 1.0, &self.map)
+            } else {
+                // From the last point already drawn, so the new piece joins on.
+                let piece = Stroke { points: s.points[from - 1..].to_vec(), ..(*s).clone() };
+                paint(&mut self.img, &piece, 1.0, &self.map)
+            };
+            changed = union(changed, drawn);
+            self.content = union(self.content, drawn);
+            let p = Painted { points: s.points.len(), first: s.points[0], color: s.color, width: s.width };
+            match self.painted.get_mut(i) {
+                Some(old) => *old = p,
+                None => self.painted.push(p),
             }
-            for k in 0..3 {
-                let v = (stroke.color[k] as f32 * a + raw[i + k] as f32 * da * (1.0 - a)) / oa;
-                raw[i + k] = v.round().clamp(0.0, 255.0) as u8;
+        }
+        changed
+    }
+
+    /// Blend the layer onto `out` (the same size), `alpha` strong.
+    pub fn blend_onto(&self, out: &mut RgbaImage, alpha: f32) {
+        let Some((x0, y0, x1, y1)) = self.content else { return };
+        if alpha <= 0.0 || out.dimensions() != self.img.dimensions() {
+            return;
+        }
+        let w = out.width() as usize;
+        let src = self.img.as_raw();
+        let raw: &mut [u8] = out;
+        for y in y0..y1 {
+            for x in x0..x1 {
+                let i = (y as usize * w + x as usize) * 4;
+                let a = src[i + 3];
+                if a > 0 {
+                    over(&mut raw[i..i + 4], [src[i], src[i + 1], src[i + 2]], a as f32 / 255.0 * alpha.min(1.0));
+                }
             }
-            raw[i + 3] = (oa * 255.0).round() as u8;
         }
     }
 }
 
-/// Draw the snapshot's desktop ink onto the source box `p` (right after the source is drawn,
-/// so sources above it cover it as they cover the screen).
-pub fn paint_placed(out: &mut RgbaImage, ink: &Snapshot, p: &Placed) {
-    if ink.is_empty() || p.desk.2 == 0 || p.desk.3 == 0 {
-        return;
-    }
-    let map = Map::placed(p, out);
-    let (dl, dt, dr, db) = (p.desk.0 as f32, p.desk.1 as f32, p.desk.0 as f32 + p.desk.2 as f32, p.desk.1 as f32 + p.desk.3 as f32);
-    for s in ink.in_space(Space::Desktop) {
-        let b = s.bounds();
-        if b.2 < dl || b.3 < dt || b.0 > dr || b.1 > db {
-            continue;
-        }
-        paint(out, s, ink.alpha, &map);
-    }
+/// The layers of a picture that shows ink: one per source showing a part of the desktop, one
+/// for the preview's ink. Layers no frame used are dropped.
+#[derive(Default)]
+pub struct Layers {
+    /// (the source, or None for the canvas), the layer, used this frame.
+    list: Vec<(Option<Placed>, Layer, bool)>,
 }
 
-/// Draw the snapshot's preview ink on the whole canvas (on top of everything).
-pub fn paint_canvas(out: &mut RgbaImage, ink: &Snapshot) {
-    if ink.is_empty() {
-        return;
+impl Layers {
+    fn layer(&mut self, key: Option<Placed>, out: &RgbaImage) -> &mut Layer {
+        let size = out.dimensions();
+        let at = self.list.iter().position(|(k, l, _)| *k == key && l.img.dimensions() == size);
+        let i = match at {
+            Some(i) => i,
+            None => {
+                let map = match &key {
+                    Some(p) => Map::placed(p, out),
+                    None => Map::identity(out),
+                };
+                self.list.push((key, Layer::new(size.0, size.1, map), false));
+                self.list.len() - 1
+            }
+        };
+        self.list[i].2 = true;
+        &mut self.list[i].1
     }
-    let map = Map::identity(out);
-    for s in ink.in_space(Space::Canvas) {
-        paint(out, s, ink.alpha, &map);
+
+    /// Draw the desktop ink that lands in source `p`'s box onto `out` (right after the source,
+    /// so sources above it cover it as they cover the screen).
+    pub fn draw_placed(&mut self, out: &mut RgbaImage, ink: &Snapshot, p: &Placed) {
+        if p.desk.2 == 0 || p.desk.3 == 0 {
+            return;
+        }
+        let (dl, dt, dr, db) = (p.desk.0 as f32, p.desk.1 as f32, p.desk.0 as f32 + p.desk.2 as f32, p.desk.1 as f32 + p.desk.3 as f32);
+        let layer = self.layer(Some(*p), out);
+        layer.update(ink.in_space(Space::Desktop).filter(|s| {
+            let b = s.bounds();
+            !(b.2 < dl || b.3 < dt || b.0 > dr || b.1 > db)
+        }));
+        layer.blend_onto(out, ink.alpha);
+    }
+
+    /// Draw the preview's ink on the whole canvas (on top of everything).
+    pub fn draw_canvas(&mut self, out: &mut RgbaImage, ink: &Snapshot) {
+        let layer = self.layer(None, out);
+        layer.update(ink.in_space(Space::Canvas));
+        layer.blend_onto(out, ink.alpha);
+    }
+
+    /// After a frame: drop the layers it didn't use.
+    pub fn end_frame(&mut self) {
+        self.list.retain(|(_, _, used)| *used);
+        for l in &mut self.list {
+            l.2 = false;
+        }
     }
 }
 
@@ -547,6 +702,93 @@ mod tests {
         assert_eq!(ink.snapshot(later).strokes.len(), 2, "the earlier stroke (still holding) and this one");
     }
 
+    /// Bug: Undo brought back ink cleared long before, on a live stream.
+    #[test]
+    fn undo_brings_back_cleared_ink_only_right_after_clear() {
+        let t = Instant::now();
+        let mut ink = ink_with(InkMode::Fade, 3.0);
+        ink.begin(Space::Desktop, [0.0, 0.0], t);
+        ink.end(t);
+        ink.clear();
+        // A new stroke after Clear: Undo takes back that stroke, never the cleared one.
+        let later = t + Duration::from_secs(10);
+        ink.begin(Space::Desktop, [50.0, 50.0], later);
+        ink.end(later);
+        let much_later = later + Duration::from_secs(120);
+        ink.undo(much_later);
+        assert!(ink.snapshot(much_later).strokes.is_empty(), "the cleared stroke came back");
+        // Cleared, then everything that was left faded: nothing comes back either.
+        ink.begin(Space::Desktop, [1.0, 1.0], much_later);
+        ink.end(much_later);
+        ink.clear();
+        ink.begin(Space::Desktop, [2.0, 2.0], much_later);
+        ink.end(much_later);
+        let gone = much_later + Duration::from_secs(60);
+        assert!(ink.snapshot(gone).strokes.is_empty());
+        ink.undo(gone);
+        assert!(ink.snapshot(gone).strokes.is_empty());
+    }
+
+    /// The layer adds only what was drawn since last time, and draws everything again after
+    /// Clear or Undo; the result is the same as drawing the strokes afresh.
+    #[test]
+    fn a_layer_adds_new_pieces_and_redraws_after_undo() {
+        let map = Map::identity(&RgbaImage::new(40, 40));
+        let mut layer = Layer::new(40, 40, map);
+        assert_eq!(layer.update(std::iter::empty()), None);
+        let mut s = Stroke { space: Space::Canvas, points: vec![[5.0, 5.0], [15.0, 5.0]], color: [0, 0, 255, 255], width: 4.0 };
+        let first = layer.update([&s].into_iter()).expect("drawn");
+        assert!(first.0 <= 3 && first.2 >= 17 && first.3 <= 10, "{first:?}");
+        assert_eq!(layer.update([&s].into_iter()), None, "nothing new, nothing drawn");
+        s.points.push([15.0, 30.0]);
+        let piece = layer.update([&s].into_iter()).expect("the new piece");
+        assert!(piece.0 >= 10 && piece.3 >= 30, "only round the new piece: {piece:?}");
+        let mut fresh = Layer::new(40, 40, map);
+        fresh.update([&s].into_iter());
+        let same = layer.image().pixels().zip(fresh.image().pixels()).filter(|(a, b)| a.0[3].abs_diff(b.0[3]) > 40).count();
+        assert!(same <= 12, "piece by piece looks like drawn at once (only a few joint pixels differ): {same}");
+        // A second stroke, then Undo of it: drawn again without it.
+        let t = Stroke { points: vec![[30.0, 30.0], [35.0, 35.0]], ..s.clone() };
+        layer.update([&s, &t].into_iter());
+        assert!(layer.image().get_pixel(32, 32).0[3] > 0);
+        let redrawn = layer.update([&s].into_iter()).expect("drawn again");
+        assert!(redrawn.2 >= 36, "the old ink's box changes too: {redrawn:?}");
+        assert_eq!(layer.image().get_pixel(32, 32).0[3], 0, "the undone stroke is gone");
+        assert_eq!(layer.update(std::iter::empty()).map(|_| ()), Some(()), "Clear");
+        assert!(layer.image().pixels().all(|p| p.0[3] == 0) && layer.content().is_none());
+    }
+
+    #[test]
+    fn a_layer_blends_at_the_fades_strength() {
+        let map = Map::identity(&RgbaImage::new(20, 20));
+        let mut layer = Layer::new(20, 20, map);
+        layer.update([&line(Space::Canvas)].into_iter());
+        let mut out = RgbaImage::from_pixel(20, 20, image::Rgba([0, 0, 0, 255]));
+        layer.blend_onto(&mut out, 0.5);
+        assert_eq!(out.get_pixel(10, 10).0, [128, 0, 0, 255]);
+        let mut out = RgbaImage::from_pixel(20, 20, image::Rgba([0, 0, 0, 255]));
+        layer.blend_onto(&mut out, 0.0);
+        assert_eq!(out.get_pixel(10, 10).0, [0, 0, 0, 255]);
+    }
+
+    #[test]
+    fn layers_follow_their_sources_and_go_when_unused() {
+        let p = Placed { desk: (0, 0, 100, 100), canvas: (0, 0, 50, 50) };
+        let ink = Snapshot { strokes: vec![Stroke { space: Space::Desktop, points: vec![[10.0, 10.0], [90.0, 10.0]], color: [9, 9, 9, 255], width: 4.0 }], alpha: 1.0 };
+        let mut layers = Layers::default();
+        let mut out = RgbaImage::from_pixel(60, 60, image::Rgba([200, 200, 200, 255]));
+        layers.draw_placed(&mut out, &ink, &p);
+        layers.draw_canvas(&mut out, &ink);
+        layers.end_frame();
+        assert_eq!(layers.list.len(), 2);
+        assert_eq!(out.get_pixel(25, 5).0, [9, 9, 9, 255]);
+        // The source moved: a new layer, and the old one goes after the frame.
+        let moved = Placed { canvas: (10, 10, 50, 50), ..p };
+        layers.draw_placed(&mut out, &ink, &moved);
+        layers.end_frame();
+        assert_eq!(layers.list.len(), 1);
+    }
+
     #[test]
     fn long_shows_keep_a_bounded_amount_of_ink() {
         let t = Instant::now();
@@ -631,14 +873,14 @@ mod tests {
             alpha: 1.0,
         };
         let mut out = RgbaImage::from_pixel(600, 300, image::Rgba([0, 0, 0, 255]));
-        paint_placed(&mut out, &ink, &p);
+        Layers::default().draw_placed(&mut out, &ink, &p);
         // (1200, 200) on the desktop is (110, 120) on the canvas; the 8 px pen is 4 px wide here.
         assert_eq!(out.get_pixel(110, 120).0, [0, 0, 255, 255]);
         assert_eq!(out.get_pixel(110, 123).0, [0, 0, 0, 255], "scaled with the source");
         // A stroke past the box's edge is cut at the edge.
         let wide = Snapshot { strokes: vec![Stroke { points: vec![[900.0, 200.0], [1100.0, 200.0]], ..ink.strokes[0].clone() }], alpha: 1.0 };
         let mut out = RgbaImage::from_pixel(600, 300, image::Rgba([0, 0, 0, 255]));
-        paint_placed(&mut out, &wide, &p);
+        Layers::default().draw_placed(&mut out, &wide, &p);
         assert_eq!(out.get_pixel(10, 120).0, [0, 0, 255, 255]);
         assert_eq!(out.get_pixel(8, 120).0, [0, 0, 0, 255], "nothing left of the box");
         // Ink on another screen, and preview ink, don't land here.
@@ -650,7 +892,7 @@ mod tests {
             alpha: 1.0,
         };
         let mut out = RgbaImage::from_pixel(600, 300, image::Rgba([0, 0, 0, 255]));
-        paint_placed(&mut out, &other, &p);
+        Layers::default().draw_placed(&mut out, &other, &p);
         assert!(out.pixels().all(|q| q.0 == [0, 0, 0, 255]));
     }
 
@@ -658,7 +900,7 @@ mod tests {
     fn preview_ink_is_drawn_on_the_canvas_as_it_is() {
         let ink = Snapshot { strokes: vec![line(Space::Canvas), Stroke { points: vec![[2.0, 2.0], [18.0, 2.0]], ..line(Space::Desktop) }], alpha: 1.0 };
         let mut out = RgbaImage::from_pixel(20, 20, image::Rgba([0, 0, 0, 255]));
-        paint_canvas(&mut out, &ink);
+        Layers::default().draw_canvas(&mut out, &ink);
         assert_eq!(out.get_pixel(10, 10).0, [255, 0, 0, 255]);
         assert_eq!(out.get_pixel(10, 1).0, [0, 0, 0, 255], "desktop ink isn't canvas ink");
     }

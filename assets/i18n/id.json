@@ -1124,7 +1124,7 @@
   "Ink": "Tinta",
   "Draw": "Menggambar",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Gambar di layar dan pratinjau; terlihat di siaran dan video (Esc untuk berhenti)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Gambar di pratinjau. Desktop ini tidak mengizinkan aplikasi menggambar di atas layar.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Gambar di pratinjau; terlihat di siaran dan video (Esc untuk berhenti)",
   "Ink color": "Warna tinta",
   "More colors…": "Warna lainnya…",
   "Pen {width} px": "Pena {width} px",

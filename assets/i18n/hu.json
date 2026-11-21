@@ -1124,7 +1124,7 @@
   "Ink": "Tinta",
   "Draw": "Rajzolás",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Rajzolj a képernyőre és az előnézetre; látszik a közvetítésben és a videóban (Esc: leállítás)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Rajzolj az előnézetre. Ez az asztal nem engedi, hogy az alkalmazások a képernyőre rajzoljanak.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Rajzolj az előnézetre; látszik a közvetítésben és a videóban (Esc: leállítás)",
   "Ink color": "Tinta színe",
   "More colors…": "További színek…",
   "Pen {width} px": "Toll {width} px",

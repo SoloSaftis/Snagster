@@ -1124,7 +1124,7 @@
   "Ink": "Tinte",
   "Draw": "Zīmēt",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Zīmējiet uz ekrāna un priekšskatījumā; tas redzams straumē un video (Esc aptur)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Zīmējiet priekšskatījumā. Šī darbvirsma neļauj lietotnēm zīmēt pāri ekrānam.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Zīmējiet priekšskatījumā; tas redzams straumē un video (Esc aptur)",
   "Ink color": "Tintes krāsa",
   "More colors…": "Vairāk krāsu…",
   "Pen {width} px": "Pildspalva {width} px",

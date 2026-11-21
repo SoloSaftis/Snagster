@@ -1124,7 +1124,7 @@
   "Ink": "Mürekkep",
   "Draw": "Çiz",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Ekrana ve önizlemeye çizin; yayında ve videoda görünür (durdurmak için Esc)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Önizlemeye çizin. Bu masaüstü, uygulamaların ekranın üzerine çizmesine izin vermiyor.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Önizlemeye çizin; yayında ve videoda görünür (durdurmak için Esc)",
   "Ink color": "Mürekkep rengi",
   "More colors…": "Diğer renkler…",
   "Pen {width} px": "Kalem {width} px",

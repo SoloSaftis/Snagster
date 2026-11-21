@@ -1124,7 +1124,7 @@
   "Ink": "स्याही",
   "Draw": "ड्रॉ करें",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "स्क्रीन और पूर्वावलोकन पर ड्रॉ करें; यह स्ट्रीम और वीडियो में दिखता है (रोकने के लिए Esc)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "पूर्वावलोकन पर ड्रॉ करें। यह डेस्कटॉप ऐप्स को स्क्रीन के ऊपर ड्रॉ नहीं करने देता।",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "पूर्वावलोकन पर ड्रॉ करें; यह स्ट्रीम और वीडियो में दिखता है (रोकने के लिए Esc)",
   "Ink color": "स्याही का रंग",
   "More colors…": "और रंग…",
   "Pen {width} px": "पेन {width} px",

@@ -1124,7 +1124,7 @@
   "Ink": "Tinta",
   "Draw": "Gumuhit",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Gumuhit sa screen at sa preview; makikita ito sa stream at sa video (Esc para huminto)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Gumuhit sa preview. Hindi pinapayagan ng desktop na ito ang mga app na gumuhit sa ibabaw ng screen.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Gumuhit sa preview; makikita ito sa stream at sa video (Esc para huminto)",
   "Ink color": "Kulay ng tinta",
   "More colors…": "Higit pang kulay…",
   "Pen {width} px": "Panulat {width} px",

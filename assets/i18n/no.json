@@ -1124,7 +1124,7 @@
   "Ink": "Blekk",
   "Draw": "Tegn",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Tegn på skjermen og i forhåndsvisningen; det vises i strømmen og videoen (Esc stopper)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Tegn i forhåndsvisningen. Dette skrivebordet lar ikke apper tegne over skjermen.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Tegn i forhåndsvisningen; det vises i strømmen og videoen (Esc stopper)",
   "Ink color": "Blekkfarge",
   "More colors…": "Flere farger…",
   "Pen {width} px": "Penn {width} px",

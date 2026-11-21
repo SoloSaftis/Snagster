@@ -1124,7 +1124,7 @@
   "Ink": "Linka",
   "Draw": "Pinġi",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Pinġi fuq l-iskrin u l-preview; jidher fl-istream u fil-vidjo (Esc biex tieqaf)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Pinġi fuq il-preview. Dan id-desktop ma jħallix l-apps ipinġu fuq l-iskrin.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Pinġi fuq il-preview; jidher fl-istream u fil-vidjo (Esc biex tieqaf)",
   "Ink color": "Kulur tal-linka",
   "More colors…": "Aktar kuluri…",
   "Pen {width} px": "Pinna {width} px",

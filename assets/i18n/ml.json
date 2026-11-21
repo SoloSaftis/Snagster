@@ -1124,7 +1124,7 @@
   "Ink": "മഷി",
   "Draw": "വരയ്ക്കുക",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "സ്ക്രീനിലും പ്രിവ്യൂവിലും വരയ്ക്കുക; ഇത് സ്ട്രീമിലും വീഡിയോയിലും കാണും (നിർത്താൻ Esc)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "പ്രിവ്യൂവിൽ വരയ്ക്കുക. ഈ ഡെസ്ക്ടോപ്പ് ആപ്പുകളെ സ്ക്രീനിന് മുകളിൽ വരയ്ക്കാൻ അനുവദിക്കുന്നില്ല.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "പ്രിവ്യൂവിൽ വരയ്ക്കുക; ഇത് സ്ട്രീമിലും വീഡിയോയിലും കാണും (നിർത്താൻ Esc)",
   "Ink color": "മഷിയുടെ നിറം",
   "More colors…": "കൂടുതൽ നിറങ്ങൾ…",
   "Pen {width} px": "പേന {width} px",

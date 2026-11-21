@@ -1124,7 +1124,7 @@
   "Ink": "سىياھ",
   "Draw": "سىزىش",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "ئېكران ۋە ئالدىن كۆرۈشكە سىزىڭ؛ ئۇ ئېقىم ۋە ۋىدېئودا كۆرۈنىدۇ (توختىتىش ئۈچۈن Esc)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "ئالدىن كۆرۈشكە سىزىڭ. بۇ ئۈستەل يۈزى ئەپلەرنىڭ ئېكران ئۈستىگە سىزىشىغا يول قويمايدۇ.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "ئالدىن كۆرۈشكە سىزىڭ؛ ئۇ ئېقىم ۋە ۋىدېئودا كۆرۈنىدۇ (توختىتىش ئۈچۈن Esc)",
   "Ink color": "سىياھ رەڭگى",
   "More colors…": "تېخىمۇ كۆپ رەڭ…",
   "Pen {width} px": "قەلەم {width} px",

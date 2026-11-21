@@ -1124,7 +1124,7 @@
   "Ink": "墨迹",
   "Draw": "绘制",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "在屏幕和预览上绘制；会显示在直播和视频中（按 Esc 停止）",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "请在预览上绘制。此桌面不允许应用在屏幕上方绘制。",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "在预览上绘制；会显示在直播和视频中（按 Esc 停止）",
   "Ink color": "墨迹颜色",
   "More colors…": "更多颜色…",
   "Pen {width} px": "画笔 {width} px",

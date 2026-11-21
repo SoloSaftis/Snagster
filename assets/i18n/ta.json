@@ -1124,7 +1124,7 @@
   "Ink": "மை",
   "Draw": "வரை",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "திரையிலும் முன்னோட்டத்திலும் வரையவும்; இது ஒளிபரப்பிலும் வீடியோவிலும் தெரியும் (நிறுத்த Esc)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "முன்னோட்டத்தில் வரையவும். இந்த டெஸ்க்டாப் திரையின் மேல் வரைய ஆப்ஸை அனுமதிக்காது.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "முன்னோட்டத்தில் வரையவும்; இது ஒளிபரப்பிலும் வீடியோவிலும் தெரியும் (நிறுத்த Esc)",
   "Ink color": "மை நிறம்",
   "More colors…": "மேலும் நிறங்கள்…",
   "Pen {width} px": "பேனா {width} px",

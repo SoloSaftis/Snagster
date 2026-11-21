@@ -1124,7 +1124,7 @@
   "Ink": "Tinta",
   "Draw": "Dibuixa",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Dibuixeu a la pantalla i a la vista prèvia; es veu a la retransmissió i al vídeo (Esc atura)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Dibuixeu a la vista prèvia. Aquest escriptori no deixa que les aplicacions dibuixin sobre la pantalla.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Dibuixeu a la vista prèvia; es veu a la retransmissió i al vídeo (Esc atura)",
   "Ink color": "Color de la tinta",
   "More colors…": "Més colors…",
   "Pen {width} px": "Ploma {width} px",

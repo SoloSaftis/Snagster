@@ -1124,7 +1124,7 @@
   "Ink": "インク",
   "Draw": "描画",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "画面とプレビューに描きます。配信と動画に映ります（Esc で終了）",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "プレビューに描いてください。このデスクトップでは、アプリが画面の上に描くことはできません。",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "プレビューに描きます。配信と動画に映ります（Esc で終了）",
   "Ink color": "インクの色",
   "More colors…": "その他の色…",
   "Pen {width} px": "ペン {width} px",

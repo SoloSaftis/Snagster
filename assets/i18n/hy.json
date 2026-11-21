@@ -1124,7 +1124,7 @@
   "Ink": "Թանաք",
   "Draw": "Նկարել",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Նկարեք էկրանին և նախադիտման մեջ, այն երևում է հեռարձակման և տեսանյութի մեջ (Esc-ը կանգնեցնում է)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Նկարեք նախադիտման մեջ։ Այս աշխատասեղանը թույլ չի տալիս հավելվածներին նկարել էկրանի վրա։",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Նկարեք նախադիտման մեջ, այն երևում է հեռարձակման և տեսանյութի մեջ (Esc-ը կանգնեցնում է)",
   "Ink color": "Թանաքի գույն",
   "More colors…": "Այլ գույներ…",
   "Pen {width} px": "Գրիչ {width} px",

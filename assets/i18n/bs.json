@@ -1124,7 +1124,7 @@
   "Ink": "Tinta",
   "Draw": "Crtaj",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Crtajte po ekranu i pregledu; vidi se u prijenosu i videu (Esc zaustavlja)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Crtajte po pregledu. Ova radna površina ne dopušta aplikacijama da crtaju preko ekrana.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Crtajte po pregledu; vidi se u prijenosu i videu (Esc zaustavlja)",
   "Ink color": "Boja tinte",
   "More colors…": "Više boja…",
   "Pen {width} px": "Olovka {width} px",

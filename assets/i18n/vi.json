@@ -1124,7 +1124,7 @@
   "Ink": "Mực",
   "Draw": "Vẽ",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Vẽ trên màn hình và bản xem trước; nét vẽ hiện trong phát trực tiếp và video (Esc để dừng)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Vẽ trên bản xem trước. Màn hình nền này không cho ứng dụng vẽ đè lên màn hình.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Vẽ trên bản xem trước; nét vẽ hiện trong phát trực tiếp và video (Esc để dừng)",
   "Ink color": "Màu mực",
   "More colors…": "Thêm màu…",
   "Pen {width} px": "Bút {width} px",

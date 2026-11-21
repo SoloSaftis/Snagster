@@ -1124,7 +1124,7 @@
   "Ink": "Blek",
   "Draw": "Teikna",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "Teiknaðu á skjáinn og forskoðunina; það sést í streyminu og myndbandinu (Esc stöðvar)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "Teiknaðu á forskoðunina. Þetta skjáborð leyfir forritum ekki að teikna yfir skjáinn.",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "Teiknaðu á forskoðunina; það sést í streyminu og myndbandinu (Esc stöðvar)",
   "Ink color": "Litur bleks",
   "More colors…": "Fleiri litir…",
   "Pen {width} px": "Penni {width} px",

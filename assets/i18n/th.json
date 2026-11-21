@@ -1124,7 +1124,7 @@
   "Ink": "หมึก",
   "Draw": "วาด",
   "Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)": "วาดบนหน้าจอและตัวอย่าง ภาพจะแสดงในสตรีมและวิดีโอ (กด Esc เพื่อหยุด)",
-  "Draw on the preview. This desktop doesn't let apps draw over the screen.": "วาดบนตัวอย่าง เดสก์ท็อปนี้ไม่อนุญาตให้แอปวาดทับหน้าจอ",
+  "Draw on the preview; it shows in the stream and the video (Esc to stop)": "วาดบนตัวอย่าง ภาพจะแสดงในสตรีมและวิดีโอ (กด Esc เพื่อหยุด)",
   "Ink color": "สีหมึก",
   "More colors…": "สีเพิ่มเติม…",
   "Pen {width} px": "ปากกา {width} px",
