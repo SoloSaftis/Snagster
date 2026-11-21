@@ -591,3 +591,59 @@ fn the_still_running_notice_keeps_snagster_in_the_tray_on_enter_and_esc() {
         assert_eq!(k.app.settings.close_to_tray, before, "{key:?}: the setting is unchanged");
     }
 }
+
+/// The close button with Snagster kept in the tray: the first close shows the notice, a close
+/// while it is up counts as Keep running, later closes go straight to the tray, and another
+/// open dialog is never thrown away for it.
+#[test]
+fn closing_to_the_tray_shows_the_notice_once_and_keeps_other_dialogs() {
+    use crate::windows::Dialog;
+    let mut k = Keys::new();
+    let ctx = k.ctx.clone();
+    k.app.settings.close_hint_seen = false;
+    // Another dialog is open: it stays, the window goes to the tray, the notice waits.
+    k.app.dialog = Some(Dialog::new_image());
+    k.app.on_close(&ctx, true);
+    assert!(matches!(k.app.dialog, Some(Dialog::NewImage { .. })), "the half-filled dialog is kept");
+    assert!(!k.app.settings.close_hint_seen);
+    k.app.dialog = None;
+    k.app.in_tray = false;
+    // The first close: the notice, nothing hidden yet.
+    k.app.on_close(&ctx, true);
+    assert!(matches!(k.app.dialog, Some(Dialog::StillRunning)));
+    assert!(k.app.settings.close_hint_seen && !k.app.in_tray);
+    // Closed again while it is up: Keep running.
+    k.app.on_close(&ctx, true);
+    assert!(k.app.dialog.is_none());
+    assert!(k.app.in_tray || crate::capture::desktop_screenshots_only());
+    // Later closes: straight to the tray, no notice.
+    k.app.in_tray = false;
+    k.app.on_close(&ctx, true);
+    assert!(k.app.dialog.is_none());
+}
+
+/// Always exit (the notice's second choice, reached from the keyboard) turns close-to-tray off
+/// and closes the notice. Its place in the row depends on the system's button order, so each
+/// Tab position is tried in a fresh window.
+#[test]
+fn always_exit_turns_closing_to_the_tray_off() {
+    let mut found = false;
+    for tabs in 1..=3 {
+        let mut k = Keys::new();
+        k.app.settings.close_to_tray = true;
+        k.app.dialog = Some(crate::windows::Dialog::StillRunning);
+        k.frame(Vec::new());
+        k.frame(Vec::new());
+        for _ in 0..tabs {
+            k.key(Key::Tab);
+        }
+        k.key(Key::Space);
+        k.frame(Vec::new());
+        if !k.app.settings.close_to_tray {
+            assert!(k.app.dialog.is_none(), "the notice closed");
+            found = true;
+            break;
+        }
+    }
+    assert!(found, "no Tab position reached Always exit");
+}

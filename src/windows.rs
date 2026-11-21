@@ -641,7 +641,7 @@ impl SnagApp {
                             )),
                         );
                         ui.add_enabled(s.tray_icon, egui::Checkbox::new(&mut s.close_to_tray, crate::i18n::t("Closing the window keeps Snagster running there")));
-                        if s.tray_icon && s.close_to_tray {
+                        if s.tray_icon && s.close_to_tray && crate::platform::has_tray() {
                             let how = by_system(
                                 "To exit, right-click the icon and choose {item}.",
                                 "To quit, click the icon and choose {item}.",

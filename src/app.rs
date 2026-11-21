@@ -1015,8 +1015,44 @@ impl SnagApp {
         let _ = (title, path);
     }
 
-    /// Hide the window to the tray (it keeps running there).
-/// Out of sight, still running: hidden to the tray, or minimized on Wayland (a program can't
+    /// The window's close button: to the tray (the first time with a notice saying so), or
+    /// closing for good.
+    pub(crate) fn on_close(&mut self, ctx: &egui::Context, keep_running: bool) {
+        if !keep_running {
+            // Closing for good ends a stream cleanly (it is unpublished, not cut off), and keeps
+            // settings changed a moment ago (they are otherwise saved after half a second).
+            if crate::stream::live::end() {
+                crate::stream::live::wait_idle(Duration::from_secs(5));
+            }
+            if must_save(self.persist, &self.settings, &self.saved_settings) {
+                self.settings.save();
+                self.saved_settings = self.settings.clone();
+            }
+            return;
+        }
+        ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+        if self.panel_open {
+            self.leave_panel(ctx);
+        }
+        match self.dialog {
+            // Closed again while the notice is up: that is Keep running.
+            Some(crate::windows::Dialog::StillRunning) => {
+                self.dialog = None;
+                self.away_to_tray(ctx);
+            }
+            // The first time: say so in the window, which is still there to read it (a line in
+            // the status bar of a hidden window was never seen), with Keep running or Always
+            // exit. It goes to the tray once answered.
+            None if close_hint_due(self.settings.close_hint_seen) => {
+                self.settings.close_hint_seen = true;
+                self.dialog = Some(crate::windows::Dialog::StillRunning);
+            }
+            // Another dialog is open (its values are kept): the notice waits for a later close.
+            _ => self.away_to_tray(ctx),
+        }
+    }
+
+    /// Out of sight, still running: hidden to the tray, or minimized on Wayland (a program can't
     /// hide its window there).
     pub(crate) fn away_to_tray(&mut self, ctx: &egui::Context) {
         if capture::desktop_screenshots_only() {
@@ -1026,6 +1062,7 @@ impl SnagApp {
         }
     }
 
+    /// Hide the window to the tray (it keeps running there).
     pub(crate) fn hide_to_tray(&mut self, ctx: &egui::Context) {
         self.in_tray = true;
         ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
@@ -4776,24 +4813,8 @@ impl SnagApp {
         // Close keeps Snagster in the tray only where there is a tray to come back from (stock
         // GNOME has none), and only when the person chose it.
         let keep_running = !self.quitting && self.tray.is_some() && self.settings.close_to_tray && crate::platform::has_tray();
-        if ctx.input(|i| i.viewport().close_requested()) && keep_running {
-            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-            if self.panel_open {
-                self.leave_panel(ctx);
-            }
-            if close_hint_due(self.settings.close_hint_seen) {
-                // The first time: say so in the window, which is still there to read it (a line
-                // in the status bar of a hidden window was never seen), with Keep running or
-                // Always exit. It goes to the tray once answered.
-                self.settings.close_hint_seen = true;
-                self.dialog = Some(crate::windows::Dialog::StillRunning);
-            } else {
-                self.away_to_tray(ctx);
-            }
-        }
-        // Closing for good ends a stream cleanly (it is unpublished, not cut off).
-        if ctx.input(|i| i.viewport().close_requested()) && !keep_running && crate::stream::live::end() {
-            crate::stream::live::wait_idle(Duration::from_secs(5));
+        if ctx.input(|i| i.viewport().close_requested()) {
+            self.on_close(ctx, keep_running);
         }
         self.poll_stream(ctx);
         self.poll_replay(ctx);
@@ -5011,6 +5032,11 @@ fn grown_by(size: f32, per_step: f32, text_scale: f32) -> f32 {
 fn chosen_name(suggested: &str, path: &std::path::Path) -> Option<String> {
     let stem = path.file_stem()?.to_string_lossy().trim().to_string();
     (!stem.is_empty() && stem != suggested).then_some(stem)
+}
+
+/// Whether settings changed since they were last saved must be saved now (Snagster is closing).
+fn must_save(persist: bool, settings: &Settings, saved: &Settings) -> bool {
+    persist && settings != saved
 }
 
 /// Whether closing the window to the tray first says so (once, ever).
@@ -6850,6 +6876,14 @@ mod tests {
     fn closing_to_the_tray_says_so_only_the_first_time() {
         assert!(super::close_hint_due(false));
         assert!(!super::close_hint_due(true));
+        // Always exit turns close-to-tray off in the very frame Snagster closes: it is saved
+        // then, not lost to the half-second wait (it came back on at the next start).
+        let saved = super::Settings::default();
+        let mut now = saved.clone();
+        assert!(!super::must_save(true, &now, &saved));
+        now.close_to_tray = !saved.close_to_tray;
+        assert!(super::must_save(true, &now, &saved));
+        assert!(!super::must_save(false, &now, &saved), "a check run writes nothing");
         // An older settings file has no such field: it counts as not seen yet.
         let s: super::Settings = serde_json::from_str("{}").unwrap();
         assert!(!s.close_hint_seen);
