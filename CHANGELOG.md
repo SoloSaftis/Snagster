@@ -172,6 +172,8 @@ Linux:
 
 Settings, the Library and the tray (every system):
 
+- **A shorter tray menu**: All-in-one, Area, Window, Screen, Scrolling, Grab text and Record
+  video stay at the top; the other captures are under More captures.
 - **The first time you close the window, Snagster says it keeps running** in the corner of the
   taskbar (the tray on Linux, the menu bar on a Mac when you chose that), how to exit, and offers
   Keep running or Always exit. Before, the only word of it went to the status line of the window

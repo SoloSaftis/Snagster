@@ -1231,6 +1231,7 @@
   "Always quit": "Завжди виходити",
   "To exit, right-click the icon and choose {item}.": "Щоб вийти, клацніть значок правою кнопкою й виберіть «{item}».",
   "To quit, click the icon and choose {item}.": "Щоб вийти, клацніть значок і виберіть «{item}».",
-  "To quit, right-click the icon and choose {item}.": "Щоб вийти, клацніть значок правою кнопкою й виберіть «{item}»."
+  "To quit, right-click the icon and choose {item}.": "Щоб вийти, клацніть значок правою кнопкою й виберіть «{item}».",
+  "More captures": "Інші знімки"
  }
 }

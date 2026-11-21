@@ -67,22 +67,39 @@ impl Tray {
     }
 }
 
-const ACTIONS: [Action; 14] = [
-    Action::AllInOne,
-    Action::Area,
-    Action::Window,
-    Action::Screen,
-    Action::AllScreens,
-    Action::Scrolling,
-    Action::ManualScroll,
-    Action::MultiArea,
-    Action::Circle,
-    Action::Freehand,
-    Action::GrabText,
-    Action::ColorPicker,
-    Action::RecordGif,
-    Action::RecordSteps,
-];
+/// The captures at the top of the tray menu: the ones used most.
+const MAIN_ACTIONS: [Action; 7] = [Action::AllInOne, Action::Area, Action::Window, Action::Screen, Action::Scrolling, Action::GrabText, Action::RecordGif];
+
+/// The rest, under "More captures": a long flat menu is hard to scan (Windows review M7).
+const MORE_ACTIONS: [Action; 7] = [Action::AllScreens, Action::ManualScroll, Action::MultiArea, Action::Circle, Action::Freehand, Action::ColorPicker, Action::RecordSteps];
+
+/// Every capture in the tray menu, top level first.
+#[cfg(test)]
+fn all_actions() -> Vec<Action> {
+    MAIN_ACTIONS.iter().chain(MORE_ACTIONS.iter()).copied().collect()
+}
+
+/// A capture's menu item with its hotkey: a Mac shows it as the item's own shortcut,
+/// right-aligned; elsewhere it follows a tab.
+fn action_item(s: &Settings, a: Action) -> Result<MenuItem, String> {
+    let combo = s.binding(a);
+    #[cfg(target_os = "macos")]
+    {
+        let keys = if combo.is_set() { crate::menubar::hotkey_accelerator(combo.ctrl, combo.alt, combo.shift, combo.win, &combo.key) } else { None };
+        Ok(tray_icon::menu::MenuItemBuilder::new()
+            .id(tray_icon::menu::MenuId::new(format!("a:{a:?}")))
+            .text(label(a.label()))
+            .key_accelerator(keys)
+            .map_err(|e| e.to_string())?
+            .build())
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        // The name translated before the key is added (the key itself is never in the table).
+        let text = if combo.is_set() { format!("{}\t{}", label(a.label()), combo.label()) } else { label(a.label()) };
+        Ok(MenuItem::with_id(format!("a:{a:?}"), text, true, None))
+    }
+}
 
 fn parse(id: &str) -> Option<TrayCmd> {
     #[cfg(any(target_os = "macos", test))]
@@ -124,28 +141,14 @@ pub fn create(s: &Settings, tx: Sender<TrayCmd>, wake: impl Fn() + Send + Sync +
     let add = |m: &Menu, id: &str, text: &str| m.append(&MenuItem::with_id(id, label(text), true, None)).map_err(|e| e.to_string());
     add(&menu, "panel", "Capture panel…")?;
     menu.append(&PredefinedMenuItem::separator()).map_err(|e| e.to_string())?;
-    for a in ACTIONS {
-        let combo = s.binding(a);
-        // A Mac shows the hotkey as the item's own shortcut, right-aligned; elsewhere after a tab.
-        #[cfg(target_os = "macos")]
-        {
-            let keys = if combo.is_set() { crate::menubar::hotkey_accelerator(combo.ctrl, combo.alt, combo.shift, combo.win, &combo.key) } else { None };
-            let item = tray_icon::menu::MenuItemBuilder::new()
-                .id(tray_icon::menu::MenuId::new(format!("a:{a:?}")))
-                .text(label(a.label()))
-                .key_accelerator(keys)
-                .map_err(|e| e.to_string())?
-                .build();
-            menu.append(&item).map_err(|e| e.to_string())?;
-        }
-        #[cfg(not(target_os = "macos"))]
-        {
-            // The name translated before the key is added (`add` translates the whole text, which
-            // with a key after it is never in the table).
-            let text = if combo.is_set() { format!("{}\t{}", crate::i18n::tr(a.label()), combo.label()) } else { a.label().to_string() };
-            add(&menu, &format!("a:{a:?}"), &text)?;
-        }
+    for a in MAIN_ACTIONS {
+        menu.append(&action_item(s, a)?).map_err(|e| e.to_string())?;
     }
+    let more = Submenu::new(label("More captures"), true);
+    for a in MORE_ACTIONS {
+        more.append(&action_item(s, a)?).map_err(|e| e.to_string())?;
+    }
+    menu.append(&more).map_err(|e| e.to_string())?;
     // The replay buffer: on / off (ticked while on) and Save replay (only while on).
     menu.append(&PredefinedMenuItem::separator()).map_err(|e| e.to_string())?;
     let replay = CheckMenuItem::with_id(format!("a:{:?}", Action::ToggleReplay), label("Replay"), true, false, None);
@@ -347,7 +350,7 @@ mod tests {
     #[test]
     fn every_menu_action_id_reads_back() {
         // The ids `create` gives the menu items must parse to the same action.
-        for a in ACTIONS {
+        for a in all_actions() {
             assert_eq!(parse(&format!("a:{a:?}")), Some(TrayCmd::Action(a)));
         }
         for a in Action::ALL {
@@ -357,10 +360,14 @@ mod tests {
 
     #[test]
     fn menu_actions_are_real_and_listed_once() {
-        for (i, a) in ACTIONS.iter().enumerate() {
+        let all = all_actions();
+        for (i, a) in all.iter().enumerate() {
             assert!(Action::ALL.contains(a), "{a:?}");
-            assert!(!ACTIONS[i + 1..].contains(a), "{a:?} twice");
+            assert!(!all[i + 1..].contains(a), "{a:?} twice (top level and More captures?)");
         }
+        // The same 14 captures as before the submenu, the all-in-one first.
+        assert_eq!(all.len(), 14);
+        assert_eq!(MAIN_ACTIONS[0], Action::AllInOne);
     }
 
     #[test]

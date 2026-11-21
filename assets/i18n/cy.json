@@ -1231,6 +1231,7 @@
   "Always quit": "Rhoi'r gorau iddi bob tro",
   "To exit, right-click the icon and choose {item}.": "I adael, de-gliciwch yr eicon a dewis {item}.",
   "To quit, click the icon and choose {item}.": "I roi'r gorau iddi, cliciwch yr eicon a dewis {item}.",
-  "To quit, right-click the icon and choose {item}.": "I roi'r gorau iddi, de-gliciwch yr eicon a dewis {item}."
+  "To quit, right-click the icon and choose {item}.": "I roi'r gorau iddi, de-gliciwch yr eicon a dewis {item}.",
+  "More captures": "Rhagor o gipluniau"
  }
 }

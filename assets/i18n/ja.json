@@ -1231,6 +1231,7 @@
   "Always quit": "常に終了する",
   "To exit, right-click the icon and choose {item}.": "終了するには、アイコンを右クリックして [{item}] を選びます。",
   "To quit, click the icon and choose {item}.": "終了するには、アイコンをクリックして [{item}] を選びます。",
-  "To quit, right-click the icon and choose {item}.": "終了するには、アイコンを右クリックして [{item}] を選びます。"
+  "To quit, right-click the icon and choose {item}.": "終了するには、アイコンを右クリックして [{item}] を選びます。",
+  "More captures": "その他のキャプチャ"
  }
 }

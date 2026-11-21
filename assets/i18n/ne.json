@@ -1231,6 +1231,7 @@
   "Always quit": "सधैं बन्द गर्नुहोस्",
   "To exit, right-click the icon and choose {item}.": "बाहिर निस्कन, आइकनमा दायाँ-क्लिक गरी {item} छान्नुहोस्।",
   "To quit, click the icon and choose {item}.": "बन्द गर्न, आइकनमा क्लिक गरी {item} छान्नुहोस्।",
-  "To quit, right-click the icon and choose {item}.": "बन्द गर्न, आइकनमा दायाँ-क्लिक गरी {item} छान्नुहोस्।"
+  "To quit, right-click the icon and choose {item}.": "बन्द गर्न, आइकनमा दायाँ-क्लिक गरी {item} छान्नुहोस्।",
+  "More captures": "थप क्याप्चर"
  }
 }

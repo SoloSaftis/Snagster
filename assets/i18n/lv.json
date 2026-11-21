@@ -1231,6 +1231,7 @@
   "Always quit": "Vienmēr aizvērt",
   "To exit, right-click the icon and choose {item}.": "Lai izietu, ar labo pogu noklikšķiniet uz ikonas un izvēlieties “{item}”.",
   "To quit, click the icon and choose {item}.": "Lai aizvērtu, noklikšķiniet uz ikonas un izvēlieties “{item}”.",
-  "To quit, right-click the icon and choose {item}.": "Lai aizvērtu, ar labo pogu noklikšķiniet uz ikonas un izvēlieties “{item}”."
+  "To quit, right-click the icon and choose {item}.": "Lai aizvērtu, ar labo pogu noklikšķiniet uz ikonas un izvēlieties “{item}”.",
+  "More captures": "Vairāk uzņēmumu"
  }
 }

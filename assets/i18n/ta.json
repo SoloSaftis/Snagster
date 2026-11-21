@@ -1231,6 +1231,7 @@
   "Always quit": "எப்போதும் மூடு",
   "To exit, right-click the icon and choose {item}.": "வெளியேற, சின்னத்தில் வலது சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும்.",
   "To quit, click the icon and choose {item}.": "மூட, சின்னத்தைச் சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும்.",
-  "To quit, right-click the icon and choose {item}.": "மூட, சின்னத்தில் வலது சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும்."
+  "To quit, right-click the icon and choose {item}.": "மூட, சின்னத்தில் வலது சொடுக்கி {item} ஐத் தேர்ந்தெடுக்கவும்.",
+  "More captures": "மேலும் பிடிப்புகள்"
  }
 }

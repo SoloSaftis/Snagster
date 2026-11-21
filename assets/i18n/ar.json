@@ -1231,6 +1231,7 @@
   "Always quit": "أنهِ دائمًا",
   "To exit, right-click the icon and choose {item}.": "للخروج، انقر بزر الماوس الأيمن على الأيقونة واختر {item}.",
   "To quit, click the icon and choose {item}.": "للإنهاء، انقر على الأيقونة واختر {item}.",
-  "To quit, right-click the icon and choose {item}.": "للإنهاء، انقر بزر الماوس الأيمن على الأيقونة واختر {item}."
+  "To quit, right-click the icon and choose {item}.": "للإنهاء، انقر بزر الماوس الأيمن على الأيقونة واختر {item}.",
+  "More captures": "لقطات أخرى"
  }
 }

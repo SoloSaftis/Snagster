@@ -1231,6 +1231,7 @@
   "Always quit": "Toujours quitter",
   "To exit, right-click the icon and choose {item}.": "Pour quitter, faites un clic droit sur l'icône et choisissez « {item} ».",
   "To quit, click the icon and choose {item}.": "Pour quitter, cliquez sur l'icône et choisissez « {item} ».",
-  "To quit, right-click the icon and choose {item}.": "Pour quitter, faites un clic droit sur l'icône et choisissez « {item} »."
+  "To quit, right-click the icon and choose {item}.": "Pour quitter, faites un clic droit sur l'icône et choisissez « {item} ».",
+  "More captures": "Autres captures"
  }
 }

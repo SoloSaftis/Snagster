@@ -1231,6 +1231,7 @@
   "Always quit": "ሁልጊዜ አቁም",
   "To exit, right-click the icon and choose {item}.": "ለመውጣት አዶውን በቀኝ ጠቅ አድርገው {item}ን ይምረጡ።",
   "To quit, click the icon and choose {item}.": "ለማቆም አዶውን ጠቅ አድርገው {item}ን ይምረጡ።",
-  "To quit, right-click the icon and choose {item}.": "ለማቆም አዶውን በቀኝ ጠቅ አድርገው {item}ን ይምረጡ።"
+  "To quit, right-click the icon and choose {item}.": "ለማቆም አዶውን በቀኝ ጠቅ አድርገው {item}ን ይምረጡ።",
+  "More captures": "ተጨማሪ ቀረጻዎች"
  }
 }

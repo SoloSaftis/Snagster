@@ -1231,6 +1231,7 @@
   "Always quit": "一律結束",
   "To exit, right-click the icon and choose {item}.": "要結束，請以滑鼠右鍵按一下圖示並選擇「{item}」。",
   "To quit, click the icon and choose {item}.": "要結束，請按一下圖示並選擇「{item}」。",
-  "To quit, right-click the icon and choose {item}.": "要結束，請以滑鼠右鍵按一下圖示並選擇「{item}」。"
+  "To quit, right-click the icon and choose {item}.": "要結束，請以滑鼠右鍵按一下圖示並選擇「{item}」。",
+  "More captures": "更多擷取"
  }
 }

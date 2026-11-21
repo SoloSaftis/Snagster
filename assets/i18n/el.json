@@ -1231,6 +1231,7 @@
   "Always quit": "Πάντα τερματισμός",
   "To exit, right-click the icon and choose {item}.": "Για έξοδο, κάντε δεξί κλικ στο εικονίδιο και επιλέξτε «{item}».",
   "To quit, click the icon and choose {item}.": "Για τερματισμό, κάντε κλικ στο εικονίδιο και επιλέξτε «{item}».",
-  "To quit, right-click the icon and choose {item}.": "Για τερματισμό, κάντε δεξί κλικ στο εικονίδιο και επιλέξτε «{item}»."
+  "To quit, right-click the icon and choose {item}.": "Για τερματισμό, κάντε δεξί κλικ στο εικονίδιο και επιλέξτε «{item}».",
+  "More captures": "Περισσότερες λήψεις"
  }
 }

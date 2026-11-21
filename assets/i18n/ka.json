@@ -1231,6 +1231,7 @@
   "Always quit": "ყოველთვის დახურვა",
   "To exit, right-click the icon and choose {item}.": "გასასვლელად მარჯვენა ღილაკით დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}.",
   "To quit, click the icon and choose {item}.": "დასახურად დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}.",
-  "To quit, right-click the icon and choose {item}.": "დასახურად მარჯვენა ღილაკით დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}."
+  "To quit, right-click the icon and choose {item}.": "დასახურად მარჯვენა ღილაკით დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}.",
+  "More captures": "სხვა გადაღებები"
  }
 }

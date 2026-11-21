@@ -1231,6 +1231,7 @@
   "Always quit": "总是退出",
   "To exit, right-click the icon and choose {item}.": "要退出，请右键单击图标并选择“{item}”。",
   "To quit, click the icon and choose {item}.": "要退出，请单击图标并选择“{item}”。",
-  "To quit, right-click the icon and choose {item}.": "要退出，请右键单击图标并选择“{item}”。"
+  "To quit, right-click the icon and choose {item}.": "要退出，请右键单击图标并选择“{item}”。",
+  "More captures": "更多截图"
  }
 }

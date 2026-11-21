@@ -1231,6 +1231,7 @@
   "Always quit": "Her zaman çık",
   "To exit, right-click the icon and choose {item}.": "Çıkmak için simgeye sağ tıklayıp {item} öğesini seçin.",
   "To quit, click the icon and choose {item}.": "Çıkmak için simgeye tıklayıp {item} öğesini seçin.",
-  "To quit, right-click the icon and choose {item}.": "Çıkmak için simgeye sağ tıklayıp {item} öğesini seçin."
+  "To quit, right-click the icon and choose {item}.": "Çıkmak için simgeye sağ tıklayıp {item} öğesini seçin.",
+  "More captures": "Diğer yakalamalar"
  }
 }
