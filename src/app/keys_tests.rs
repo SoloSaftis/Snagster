@@ -466,6 +466,13 @@ fn the_window_title_names_the_open_picture() {
     k.app.add_entry("Picture 2".into(), Doc::new(RgbaImage::from_pixel(10, 10, image::Rgba([0, 0, 0, 255]))));
     k.frame(Vec::new());
     assert!(k.app.title_sent.starts_with("Picture 2"), "{}", k.app.title_sent);
+    // The capture panel: the window is about capturing, not the picture.
+    k.app.panel_open = true;
+    k.frame(Vec::new());
+    assert_eq!(k.app.title_sent, "Snagster");
+    k.app.panel_open = false;
+    k.frame(Vec::new());
+    assert!(k.app.title_sent.starts_with("Picture 2"), "back on the picture");
     k.app.entries.clear();
     k.app.current = None;
     k.frame(Vec::new());

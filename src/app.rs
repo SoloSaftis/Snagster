@@ -1868,7 +1868,16 @@ impl SnagApp {
             dialog = dialog.set_directory(&folder);
         }
         if let Some(path) = dialog.set_file_name(format!("{name}.{ext}")).save_file() {
+            self.rename_to_chosen(i, &name, &path);
             self.save_in_background(i, path);
+        }
+    }
+
+    /// After Save as: a name the person typed in the dialog becomes the picture's name (in Recent
+    /// and the window's title); the suggested name kept as it was leaves the picture's own.
+    fn rename_to_chosen(&mut self, i: usize, suggested: &str, path: &std::path::Path) {
+        if let Some(name) = chosen_name(suggested, path) {
+            self.entries[i].name = name;
         }
     }
 
@@ -1882,6 +1891,7 @@ impl SnagApp {
             .set_file_name(format!("{name}.snag"))
             .save_file()
         {
+            self.rename_to_chosen(i, &name, &path);
             self.save_in_background(i, path);
         }
     }
@@ -4792,7 +4802,10 @@ impl SnagApp {
     /// Keep the main window's title on the open picture (sent only when it changes).
     fn name_window(&mut self, ctx: &egui::Context) {
         let mac = crate::platform::system() == crate::platform::System::Mac;
-        let title = window_title(mac, self.current.and_then(|i| self.entries.get(i)).map(|e| e.name.as_str()));
+        // While the capture panel or a recording is up, the window is about that, not a picture.
+        let busy = self.panel_open || self.mini.is_some();
+        let picture = if busy { None } else { self.current.and_then(|i| self.entries.get(i)).map(|e| e.name.as_str()) };
+        let title = window_title(mac, picture);
         if title != self.title_sent {
             ctx.send_viewport_cmd_to(egui::ViewportId::ROOT, egui::ViewportCommand::Title(title.clone()));
             self.title_sent = title;
@@ -4950,6 +4963,13 @@ fn grown(size: f32, per_step: f32) -> f32 {
 
 fn grown_by(size: f32, per_step: f32, text_scale: f32) -> f32 {
     size + per_step * (text_scale - 1.0).max(0.0)
+}
+
+/// The name a picture takes from a Save as dialog: the file's name without its extension, when
+/// the person changed it from `suggested` (None when kept, or empty).
+fn chosen_name(suggested: &str, path: &std::path::Path) -> Option<String> {
+    let stem = path.file_stem()?.to_string_lossy().trim().to_string();
+    (!stem.is_empty() && stem != suggested).then_some(stem)
 }
 
 /// The main window's title: the open picture's name and Snagster ("Picture 3 – Snagster"), as
@@ -6699,6 +6719,16 @@ mod tests {
         // The canvas beside the tools in a 500 px window: the cards shrink a little to stay two by two.
         assert_eq!(super::welcome_columns(380.0, 180.0), (2, 164.0));
         assert_eq!(super::welcome_columns(380.0, 230.0).0, 1, "one under the other with big text");
+    }
+
+    #[test]
+    fn save_as_names_the_picture_after_the_file_only_when_the_name_was_changed() {
+        use std::path::Path;
+        assert_eq!(super::chosen_name("Area 3", Path::new("C:/Pictures/Invoice.png")), Some("Invoice".into()));
+        assert_eq!(super::chosen_name("Area 3", Path::new("/home/me/Area 3.png")), None, "the suggestion kept");
+        assert_eq!(super::chosen_name("Area 3", Path::new("/home/me/Area 3.snag")), None);
+        assert_eq!(super::chosen_name("Area 3", Path::new("/home/me/ .png")), None, "no name");
+        assert_eq!(super::chosen_name("Area 3", Path::new("/home/me/report.v2.png")), Some("report.v2".into()));
     }
 
     #[test]
