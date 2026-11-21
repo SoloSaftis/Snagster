@@ -656,7 +656,7 @@ impl SnagApp {
                         if ui.checkbox(&mut on, label).changed() {
                             match set_run_at_startup(on) {
                                 Ok(()) => self.run_at_startup = Some(on),
-                                Err(e) => self.status = format!("Couldn't change that: {e}"),
+                                Err(e) => self.status = crate::i18n::tf("Couldn't change that: {error}", &[("error", &e.to_string())]),
                             }
                         }
                         ui.checkbox(&mut self.settings.allow_many, crate::i18n::t("Allow more than one Snagster at a time"))
@@ -1007,7 +1007,7 @@ impl SnagApp {
         let statuses: Vec<Option<bool>> = self.settings.bindings.iter().map(|b| self.hotkeys.status_of(Target::Action(b.action))).collect();
         egui::Grid::new("hk").striped(true).spacing(vec2(10.0, 6.0)).show(ui, |ui| {
             for (i, b) in self.settings.bindings.iter_mut().enumerate() {
-                ui.label(b.action.label());
+                ui.label(crate::i18n::tr(b.action.label()));
                 ui.horizontal(|ui| {
                     combo_editor(ui, format!("hk{i}"), &mut b.combo);
                 });
@@ -1176,7 +1176,7 @@ impl SnagApp {
                 egui::Grid::new("gk").striped(true).spacing(vec2(16.0, 4.0)).show(ui, |ui| {
                     for b in s.bindings.iter().filter(|b| b.combo.is_set()) {
                         ui.label(RichText::new(b.combo.label()).strong());
-                        ui.label(b.action.label());
+                        ui.label(crate::i18n::tr(b.action.label()));
                         ui.end_row();
                     }
                 });
@@ -1202,12 +1202,14 @@ impl SnagApp {
                     ]
                     .iter()
                     .map(|(k, v)| (k.to_string(), v.to_string()))
-                    .chain(Tool::ALL.iter().map(|t| (t.key().to_string(), format!("{} tool", t.label()))))
+                    .chain(Tool::ALL.iter().map(|t| (t.key().to_string(), crate::i18n::tf("{tool} tool", &[("tool", &crate::i18n::tr(t.label()))]))))
                     .chain(keyboard_rows())
                     .collect();
+                    // The English rows above are translated here, their key notes too ("Shift
+                    // while drawing"); a key list or an already translated row stays as it is.
                     for (k, v) in rows {
-                        ui.label(RichText::new(crate::platform::keys(&k)).strong());
-                        ui.label(v);
+                        ui.label(RichText::new(crate::platform::keys(&crate::i18n::tr(&k))).strong());
+                        ui.label(crate::i18n::tr(&v));
                         ui.end_row();
                     }
                 });
@@ -1294,7 +1296,7 @@ impl SnagApp {
             });
             if let Some(job) = &self.interval {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(format!("{} captures left", job.left)).color(accent()));
+                    ui.label(RichText::new(crate::i18n::tf("Captures left: {count}", &[("count", &job.left.to_string())])).color(accent()));
                     if ui.button(crate::i18n::t("Stop")).clicked() {
                         stop_interval = true;
                     }
@@ -1314,7 +1316,7 @@ impl SnagApp {
             });
             if let Some((t, _)) = &self.schedule {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(format!("Capture scheduled at {}", t.format("%H:%M"))).color(accent()));
+                    ui.label(RichText::new(crate::i18n::tf("Capture scheduled at {time}", &[("time", &t.format("%H:%M").to_string())])).color(accent()));
                     if ui.button(crate::i18n::t("Cancel")).clicked() {
                         cancel_schedule = true;
                     }
@@ -1335,13 +1337,13 @@ impl SnagApp {
                 left: self.settings.interval_count.max(1),
                 next: Instant::now() + Duration::from_secs(self.settings.delay_s.max(1)),
             });
-            self.status = format!("Capturing every {} s, {} times.", self.settings.interval_s, self.settings.interval_count);
+            self.status = crate::i18n::tf("Capturing every {seconds} s, {count} times.", &[("seconds", &self.settings.interval_s.to_string()), ("count", &self.settings.interval_count.to_string())]);
         }
         if let Some(kind) = set_schedule {
             match chrono::NaiveTime::parse_from_str(self.settings.schedule_time.trim(), "%H:%M") {
                 Ok(t) => {
                     self.schedule = Some((t, kind));
-                    self.status = format!("Capture scheduled at {}.", t.format("%H:%M"));
+                    self.status = crate::i18n::tf("Capture scheduled at {time}", &[("time", &t.format("%H:%M").to_string())]);
                 }
                 Err(_) => self.status = "Write the time as hh:mm, for example 14:30.".into(),
             }
@@ -1601,7 +1603,7 @@ impl SnagApp {
             if let Some(item) = self.lib_items.get_mut(i) {
                 item.meta.tags = text.split(',').map(|t| t.trim().to_string()).filter(|t| !t.is_empty()).collect();
                 if let Err(e) = item.save_meta() {
-                    self.status = format!("Couldn't save the tags: {e}");
+                    self.status = crate::i18n::tf("Couldn't save the tags: {error}", &[("error", &e.to_string())]);
                 }
             }
             self.lib_tag_edit = None;
@@ -1755,10 +1757,10 @@ impl SnagApp {
                         if let Some((img, _)) = frames.into_iter().nth(i) {
                             let name = app.next_name("Frame");
                             app.add_entry(name, Doc::new(img));
-                            app.status = format!("Frame {} is now a picture you can mark up.", i + 1);
+                            app.status = crate::i18n::tf("Frame {number} is now a picture you can mark up.", &[("number", &(i + 1).to_string())]);
                         }
                     }
-                    Err(e) => app.status = format!("Couldn't read the frame: {e}"),
+                    Err(e) => app.status = crate::i18n::tf("Couldn't read the frame: {error}", &[("error", &e.to_string())]),
                 })
             });
         }
@@ -1782,10 +1784,10 @@ impl SnagApp {
                 let r = export::combine_gifs(&path, &other);
                 Box::new(move |app: &mut SnagApp, ctx: &egui::Context| match r {
                     Ok(out) => {
-                        app.status = format!("Combined into {}", out.display());
+                        app.status = crate::i18n::tf("Combined into {path}", &[("path", &out.display().to_string())]);
                         app.open_gif(ctx, out);
                     }
-                    Err(e) => app.status = format!("Couldn't combine: {e}"),
+                    Err(e) => app.status = crate::i18n::tf("Couldn't combine: {error}", &[("error", &e.to_string())]),
                 })
             });
         }
@@ -2134,9 +2136,9 @@ impl SnagApp {
                     pr.combo = Combo::default();
                     self.settings.presets.push(pr);
                 }
-                self.status = format!("Imported {n} presets.");
+                self.status = crate::i18n::tf("Presets imported: {count}", &[("count", &n.to_string())]);
             }
-            Err(e) => self.status = format!("Couldn't import presets: {e}"),
+            Err(e) => self.status = crate::i18n::tf("Couldn't import presets: {error}", &[("error", &e.to_string())]),
         }
     }
 
@@ -2376,7 +2378,7 @@ impl SnagApp {
                     ui.label(RichText::new(tf("Couldn't start: {e}", &[("e", e)])).color(pal().err));
                 }
                 _ => {
-                    ui.label(RichText::new(t("Off.")).color(pal().dim));
+                    ui.label(RichText::new(t("Off")).color(pal().dim));
                 }
             }
             let port = self.settings.mcp_port;
@@ -2487,6 +2489,28 @@ fn keyboard_rows() -> Vec<(String, String)> {
 
 #[cfg(test)]
 mod tests {
+    /// The Keyboard shortcuts window and Settings > Hotkeys show these through the translation
+    /// table, so each must be a text there (they were English in every language before).
+    #[test]
+    fn shortcut_and_hotkey_texts_are_all_translated() {
+        let keys: Vec<String> = serde_json::from_str(include_str!("../assets/i18n/strings.json")).unwrap();
+        let mut texts: Vec<&str> = crate::settings::Action::ALL.iter().map(|a| a.label()).collect();
+        texts.extend(crate::doc::Tool::ALL.iter().map(|t| t.label()));
+        // Every English description and key note of the shortcuts window (help_windows).
+        let src = include_str!("windows.rs");
+        let rows = &src[src.find("let rows: Vec<(String, String)> = [").unwrap()..];
+        let rows = &rows[..rows.find("]\n").or_else(|| rows.find("]\r\n")).unwrap()];
+        let quoted: Vec<&str> = rows.split('"').skip(1).step_by(2).collect();
+        assert!(quoted.len() >= 20, "found {} texts; has the list changed shape?", quoted.len());
+        // Key lists ("Ctrl+C, Ctrl+V", "Delete, [ and ]") are shown as they are; key notes with
+        // words ("Ctrl+wheel, middle drag", "Shift while drawing") and descriptions are translated.
+        let key_list = |q: &str| (q.contains("Ctrl+") && !q.contains("wheel")) || q.starts_with("Delete,");
+        texts.extend(quoted.into_iter().filter(|q| q.chars().any(|c| c.is_lowercase()) && !key_list(q)));
+        texts.push("{tool} tool");
+        let missing: Vec<&&str> = texts.iter().filter(|t| !keys.iter().any(|k| k == *t)).collect();
+        assert!(missing.is_empty(), "not in assets/i18n/strings.json: {missing:?}");
+    }
+
     #[test]
     fn library_tiles_are_the_classic_size_at_normal_text() {
         let t = super::tile_layout(1.0, [15.0, 13.0, 13.0]);

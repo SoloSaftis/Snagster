@@ -392,7 +392,7 @@ impl SnagApp {
         if then_live {
             self.go_live(ctx);
         } else {
-            self.status = tf("The stream shows the area {w} x {h}.", &[("w", &rect.2.to_string()), ("h", &rect.3.to_string())]);
+            self.status = tf("The stream shows the area {w} × {h}.", &[("w", &rect.2.to_string()), ("h", &rect.3.to_string())]);
         }
         true
     }
@@ -776,7 +776,7 @@ impl SnagApp {
             });
             match (&snap.stats, &snap.info) {
                 (Some(s), Some(i)) => {
-                    ui.label(RichText::new(tf("{w} x {h}, {fps} fps, {rate}", &[("w", &i.width.to_string()), ("h", &i.height.to_string()), ("fps", &format!("{:.0}", s.fps)), ("rate", &sent_of_set(s))])).size(11.5).color(pal().dim));
+                    ui.label(RichText::new(tf("{w} × {h}, {fps} fps, {rate}", &[("w", &i.width.to_string()), ("h", &i.height.to_string()), ("fps", &format!("{:.0}", s.fps)), ("rate", &sent_of_set(s))])).size(11.5).color(pal().dim));
                     // All is well: the frames dropped (by the network and the computer) and the
                     // encoder. Else the one warning, with its advice on hover.
                     match &line {

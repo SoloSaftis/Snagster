@@ -155,6 +155,10 @@ Linux:
 
 Settings, the Library and the tray (every system):
 
+- **More of Snagster speaks your language**: the Keyboard shortcuts window, the hotkey names in
+  Settings, messages with numbers or names in them (interval and timed captures, presets, GIF
+  frames, tags), the capture panel's status line and the arrow heads' None / End / Both. Sizes
+  read "1200 × 800", and "Couldn't make the picture" now says it would be too big.
 - **The window's title names the open picture** ("Area 3 – Snagster"; on a Mac just the
   picture's name), so the taskbar, Alt+Tab and the Dock say which one you're on. A picture
   saved with Save as under a new name takes that name, in Recent too.

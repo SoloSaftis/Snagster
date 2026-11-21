@@ -508,7 +508,7 @@ impl SnagApp {
         if let Some(done) = finished {
             match &done.result {
                 Ok(()) => {
-                    self.status = tf("Saved {file}: {secs} s, {w} x {h}, {enc}.", &[
+                    self.status = tf("Saved {file}: {secs} s, {w} × {h}, {enc}.", &[
                         ("file", &done.path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()),
                         ("secs", &format!("{:.1}", done.seconds)),
                         ("w", &done.width.to_string()),
@@ -790,7 +790,7 @@ impl SnagApp {
                 ui.label(RichText::new(t("Ready")).color(pal().dim));
             }
             ui.separator();
-            ui.label(RichText::new(tf("{w} x {h}, {fps} fps; a frame takes {ms} ms to draw", &[("w", &w.to_string()), ("h", &h.to_string()), ("fps", &fps.to_string()), ("ms", &ms.to_string())])).color(pal().dim));
+            ui.label(RichText::new(tf("{w} × {h}, {fps} fps; a frame takes {ms} ms to draw", &[("w", &w.to_string()), ("h", &h.to_string()), ("fps", &fps.to_string()), ("ms", &ms.to_string())])).color(pal().dim));
             if let Some(p) = &last {
                 ui.separator();
                 if ui.link(tf("Last: {file}", &[("file", &p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default())])).on_hover_text(t("Play it")).clicked() {

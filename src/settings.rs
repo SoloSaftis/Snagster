@@ -73,7 +73,7 @@ impl Combo {
     }
     pub fn label(&self) -> String {
         if !self.is_set() {
-            return "Not set".into();
+            return crate::i18n::t("Not set").into();
         }
         // Written the way this system writes shortcuts (Super on Linux, ⌃⌥⇧⌘ on a Mac).
         crate::platform::hotkey_label(self.ctrl, self.alt, self.shift, self.win, &self.key)

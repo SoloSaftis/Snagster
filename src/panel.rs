@@ -339,7 +339,7 @@ impl SnagApp {
                 });
                 if ui.button(" + ").on_hover_text("Save these choices as a preset").clicked() {
                     let preset = self.panel_as_preset();
-                    self.status = format!("Saved the preset \"{}\".", preset.name);
+                    self.status = crate::i18n::tf("Saved the preset \"{name}\".", &[("name", &preset.name)]);
                     self.settings.presets.push(preset);
                 }
                 if let Some(i) = run {
@@ -351,10 +351,10 @@ impl SnagApp {
                         self.settings_open = true;
                         open_editor = true;
                     }
-                    if ui.button(crate::i18n::t("Open Editor")).clicked() {
+                    if ui.button(crate::i18n::t("Open editor")).clicked() {
                         open_editor = true;
                     }
-                    ui.label(RichText::new(&self.status).color(pal().dim).size(11.5));
+                    ui.label(RichText::new(crate::i18n::tr(&self.status)).color(pal().dim).size(11.5));
                     let snap = self.x.stream.snap.clone();
                     if snap.on_air() && crate::app::stream_ui::live_badge(ui, &snap).clicked() {
                         self.settings.panel.tab = 3;

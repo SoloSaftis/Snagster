@@ -1131,7 +1131,7 @@ impl SnagApp {
             d.shapes.push(Shape::Pointer { pos: c, size: doc::pointer_size(4.0) });
         }
         self.add_entry(name, d);
-        let mut notes = vec![crate::i18n::tf("Captured {width} x {height}.", &[("width", &w.to_string()), ("height", &h.to_string())])];
+        let mut notes = vec![crate::i18n::tf("Captured {width} × {height}.", &[("width", &w.to_string()), ("height", &h.to_string())])];
         // Only Recent is filled here; the library, the clipboard and the save folder are
         // written by the job queue in this order (an error shows in the status line).
         if self.settings.after_library {
@@ -1809,7 +1809,7 @@ impl SnagApp {
                 let (w, h) = rgba.dimensions();
                 let name = app.next_name("Pasted");
                 app.add_entry(name, Doc::new(rgba));
-                app.status = crate::i18n::tf("Pasted a {width} x {height} picture.", &[("width", &w.to_string()), ("height", &h.to_string())]);
+                app.status = crate::i18n::tf("Pasted a {width} × {height} picture.", &[("width", &w.to_string()), ("height", &h.to_string())]);
             }
             None => app.status = "There's no picture on the clipboard.".into(),
         });
@@ -1831,7 +1831,7 @@ impl SnagApp {
             let data = arboard::ImageData { width: w as usize, height: h as usize, bytes: out.into_raw().into() };
             let r = arboard::Clipboard::new().and_then(|mut c| c.set_image(data)).map_err(|e| e.to_string());
             Box::new(move |app: &mut SnagApp, _: &egui::Context| match r {
-                Ok(()) if !quiet => app.status = crate::i18n::tf("Copied the {width} x {height} picture. Paste it anywhere.", &[("width", &w.to_string()), ("height", &h.to_string())]),
+                Ok(()) if !quiet => app.status = crate::i18n::tf("Copied the {width} × {height} picture. Paste it anywhere.", &[("width", &w.to_string()), ("height", &h.to_string())]),
                 Ok(()) => {}
                 Err(e) => app.status = crate::i18n::tf("Couldn't copy: {error}", &[("error", &e.to_string())]),
             })
@@ -2006,7 +2006,7 @@ impl SnagApp {
                     app.add_entry(n, Doc::new(img));
                     app.status = status;
                 }
-                None => app.status = crate::i18n::t("Couldn't make the picture.").into(),
+                None => app.status = crate::i18n::t("Couldn't make the picture: it would be too big. Try fewer or smaller pictures.").into(),
             })
         });
     }
@@ -2160,7 +2160,7 @@ impl SnagApp {
         e.doc = Doc::new(out);
         self.zoom = None;
         self.pan = Vec2::ZERO;
-        self.status = crate::i18n::tf("{effect} applied ({width} x {height}). Undo brings the marks back.", &[("effect", crate::i18n::t(eff.label())), ("width", &w.to_string()), ("height", &h.to_string())]);
+        self.status = crate::i18n::tf("{effect} applied ({width} × {height}). Undo brings the marks back.", &[("effect", crate::i18n::t(eff.label())), ("width", &w.to_string()), ("height", &h.to_string())]);
     }
 
     fn combine(&mut self, vertical: bool) {
@@ -2348,7 +2348,7 @@ impl SnagApp {
                     e.push_undo();
                     let (w, h) = d.image.dimensions();
                     e.doc = d;
-                    self.status = crate::i18n::tf("Cut out a band; the picture is now {width} x {height}.", &[("width", &w.to_string()), ("height", &h.to_string())]);
+                    self.status = crate::i18n::tf("Cut out a band; the picture is now {width} × {height}.", &[("width", &w.to_string()), ("height", &h.to_string())]);
                 }
                 None
             }
@@ -2361,7 +2361,7 @@ impl SnagApp {
                     self.zoom = None;
                     self.pan = Vec2::ZERO;
                     self.tool = Tool::Arrow;
-                    self.status = crate::i18n::tf("Cropped to {width} x {height}.", &[("width", &w.to_string()), ("height", &h.to_string())]);
+                    self.status = crate::i18n::tf("Cropped to {width} × {height}.", &[("width", &w.to_string()), ("height", &h.to_string())]);
                 }
                 None
             }
@@ -2970,7 +2970,7 @@ impl SnagApp {
                 (!e.undo.is_empty(), !e.redo.is_empty(), !e.doc.shapes.is_empty())
             })
             .unwrap_or((false, false, false));
-        if item(ui, "Editor preferences…", "Ctrl+,") {
+        if item(ui, "Editor preferences…", "") {
             self.settings_open = true;
         }
         ui.separator();
@@ -5861,7 +5861,7 @@ impl SnagApp {
             && let Some(m) = self.entries[i].doc.shapes.get(s)
         {
             self.mark_clip = Some(m.clone());
-            self.status = "Mark copied. Ctrl+V pastes it.".into();
+            self.status = crate::i18n::tf("Mark copied. {key} pastes it.", &[("key", &crate::platform::keys("Ctrl+V"))]);
         }
     }
 
@@ -6084,7 +6084,7 @@ impl SnagApp {
         e.doc = Doc::new(out);
         self.zoom = None;
         self.pan = Vec2::ZERO;
-        self.status = crate::i18n::tf("{what}: now {width} x {height}.", &[("what", &crate::i18n::tr(what)), ("width", &w.to_string()), ("height", &h.to_string())]);
+        self.status = crate::i18n::tf("{what}: now {width} × {height}.", &[("what", &crate::i18n::tr(what)), ("width", &w.to_string()), ("height", &h.to_string())]);
     }
 
     fn template_menu(&mut self, ui: &mut egui::Ui) {
@@ -6128,9 +6128,9 @@ impl SnagApp {
         if t == Tool::Arrow {
             ui.horizontal_wrapped(|ui| {
                 ui.label(RichText::new(crate::i18n::t("Heads")).color(pal().dim));
-                ui.selectable_value(&mut self.settings.arrow_heads, 0, crate::i18n::t("none"));
-                ui.selectable_value(&mut self.settings.arrow_heads, 1, crate::i18n::t("end"));
-                ui.selectable_value(&mut self.settings.arrow_heads, 2, crate::i18n::t("both"));
+                ui.selectable_value(&mut self.settings.arrow_heads, 0, crate::i18n::t("None"));
+                ui.selectable_value(&mut self.settings.arrow_heads, 1, crate::i18n::t("End"));
+                ui.selectable_value(&mut self.settings.arrow_heads, 2, crate::i18n::t("Both"));
             });
         }
         if matches!(t, Tool::Text | Tool::Callout) {
@@ -7017,7 +7017,7 @@ mod tests {
         // Every template the status line fills in is in strings.json, so every pack translates it.
         let keys: Vec<String> = serde_json::from_str(include_str!("../assets/i18n/strings.json")).unwrap();
         for k in [
-            "Captured {width} x {height}.",
+            "Captured {width} × {height}.",
             "Capture failed: {error}",
             "Saved {name}: {seconds} s, {frames} frames, {width}x{height} ({encoder}). Record > Play last video.",
             "Recorded without sound: {reason}",
@@ -7027,8 +7027,8 @@ mod tests {
         ] {
             assert!(keys.iter().any(|x| x == k), "{k} is missing from strings.json");
         }
-        let a = crate::i18n::tf("Captured {width} x {height}.", &[("width", "640"), ("height", "480")]);
-        assert_eq!(a, "Captured 640 x 480.");
+        let a = crate::i18n::tf("Captured {width} × {height}.", &[("width", "640"), ("height", "480")]);
+        assert_eq!(a, "Captured 640 × 480.");
     }
 
     /// A window state with one white 200 x 100 picture open; no screen, files or threads.
@@ -7744,7 +7744,7 @@ mod tests {
         let t = Instant::now();
         a.finish_capture(RgbaImage::from_pixel(1200, 800, image::Rgba([1, 2, 3, 255])), "Editor", "Notes", "Window", None);
         assert_eq!(a.entries.len(), 1, "Recent has it straight away");
-        assert!(a.status.starts_with("Captured 1200 x 800."), "{}", a.status);
+        assert!(a.status.starts_with("Captured 1200 × 800."), "{}", a.status);
         assert!(t.elapsed() < Duration::from_secs(2));
         settle(&mut a);
         assert_eq!(a.lib_items.len(), 1, "the open library got it without a rescan");
