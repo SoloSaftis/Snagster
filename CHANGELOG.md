@@ -130,6 +130,10 @@ Marking up pictures (every system):
 
 Windows:
 
+- **Snagster takes Windows' accent colour** (Settings > Personalization > Colors) for its
+  buttons, selections and focus rings, as Windows 11's own apps do, and follows a change within
+  a couple of seconds. A light accent is darkened until white text on it reads. Linux and macOS
+  already followed theirs.
 - **A Microsoft Store edition** is ready to submit: the Store signs it (no SmartScreen or
   "unknown publisher" warning) and keeps it up to date; a Snagster installed from the Store
   doesn't download updates itself. `PRIVACY.md` says what Snagster does and doesn't send.

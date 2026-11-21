@@ -640,6 +640,10 @@ impl SnagApp {
         if screenshot.is_some() || UI_TEST.load(Ordering::Relaxed) {
             cc.egui_ctx.set_embed_viewports(true);
         }
+        // README pictures show Snagster's own blue, whatever accent this computer has.
+        if screenshot.is_some() {
+            crate::theme::keep_own_accent();
+        }
         // Start looking for cloud folders now, so the Share tab has them when it opens.
         crate::settings::cloud_folders_now(Some(&cc.egui_ctx));
         let mut app = Self::blank(settings, !check_run, screenshot);

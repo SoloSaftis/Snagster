@@ -4,7 +4,8 @@
 //! person's choice in Settings (Follow system, Light, Dark) and what the system says: light or
 //! dark (winit on Windows and macOS, the Settings portal on Linux), high contrast (Windows'
 //! contrast themes give their own colours; Linux's portal `contrast` and macOS's Increase
-//! contrast make Snagster's own palette stronger) and the desktop's accent colour (Linux).
+//! contrast make Snagster's own palette stronger) and the desktop's accent colour (Linux, macOS,
+//! Windows).
 //!
 //! What is drawn on a picture (marks, the capture overlay's frame and labels) is content and keeps
 //! its own fixed colours, so it reads the same on any picture.
@@ -64,7 +65,7 @@ pub struct SystemLook {
     pub contrast_colors: Option<SystemColors>,
     /// More contrast is asked for, without colours of its own (Linux portal, macOS).
     pub more_contrast: bool,
-    /// The desktop's accent colour (Linux).
+    /// The desktop's accent colour (Linux's portal, macOS, Windows' Personalization > Colors).
     pub accent: Option<Color32>,
 }
 
@@ -394,9 +395,10 @@ fn set_pal(p: Palette) {
 static PORTAL: Mutex<SystemLook> = Mutex::new(SystemLook { dark: None, contrast_colors: None, more_contrast: false, accent: None });
 static CTX: OnceLock<egui::Context> = OnceLock::new();
 
-/// The desktop's accent colour, if it gives one (Linux's portal, macOS's accent colour).
+/// The desktop's accent colour, if it gives one (Linux's portal, macOS's accent colour,
+/// Windows' accent colour).
 pub fn system_accent() -> Option<Color32> {
-    PORTAL.lock().unwrap_or_else(|e| e.into_inner()).accent.or_else(mac_accent)
+    desktop_accent(PORTAL.lock().unwrap_or_else(|e| e.into_inner()).accent, OWN_ACCENT.load(std::sync::atomic::Ordering::Relaxed))
 }
 
 /// Ask the desktop for its colour scheme, contrast and accent colour before the first frame
@@ -404,6 +406,19 @@ pub fn system_accent() -> Option<Color32> {
 pub fn start() {
     #[cfg(target_os = "linux")]
     linux::start();
+}
+
+/// Screenshots for the README keep Snagster's own accent (`keep_own_accent`).
+static OWN_ACCENT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Use Snagster's own blue instead of the desktop's accent (README pictures).
+pub fn keep_own_accent() {
+    OWN_ACCENT.store(true, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// The desktop's accent, unless screenshots keep Snagster's own.
+fn desktop_accent(portal: Option<Color32>, own: bool) -> Option<Color32> {
+    if own { None } else { portal.or_else(mac_accent).or_else(windows_accent) }
 }
 
 /// What the system says right now. Cheap enough to call every frame.
@@ -415,7 +430,7 @@ fn system_look(ctx: &egui::Context) -> SystemLook {
         dark: portal.dark.or(winit),
         contrast_colors: windows_contrast(),
         more_contrast: portal.more_contrast || mac_more_contrast(),
-        accent: portal.accent.or_else(mac_accent),
+        accent: desktop_accent(portal.accent, OWN_ACCENT.load(std::sync::atomic::Ordering::Relaxed)),
     }
 }
 
@@ -514,6 +529,53 @@ fn windows_contrast() -> Option<SystemColors> {
     None
 }
 
+/// Windows: the accent colour picked in Settings > Personalization > Colors, as Windows 11's
+/// own apps use it. Read from the registry at most every two seconds (this runs every frame), so
+/// a change shows within moments, as Windows' apps follow it.
+#[cfg(target_os = "windows")]
+fn windows_accent() -> Option<Color32> {
+    use std::time::{Duration, Instant};
+    static LAST: Mutex<Option<(Instant, Option<Color32>)>> = Mutex::new(None);
+    let mut last = LAST.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some((at, c)) = *last
+        && at.elapsed() < Duration::from_secs(2)
+    {
+        return c;
+    }
+    let c = read_accent_dword().map(accent_from_abgr);
+    *last = Some((Instant::now(), c));
+    c
+}
+
+/// Where Windows keeps the accent colour (under HKEY_CURRENT_USER).
+#[cfg(any(target_os = "windows", test))]
+const ACCENT_KEY: (&str, &str) = (r"Software\Microsoft\Windows\DWM", "AccentColor");
+
+/// Windows' accent colour as the registry keeps it (DWM's `AccentColor`), None when unset.
+#[cfg(target_os = "windows")]
+fn read_accent_dword() -> Option<u32> {
+    use windows::Win32::Foundation::ERROR_SUCCESS;
+    use windows::Win32::System::Registry::{HKEY_CURRENT_USER, RRF_RT_REG_DWORD, RegGetValueW};
+    use windows::core::HSTRING;
+    let (key, name) = ACCENT_KEY;
+    let mut v = 0u32;
+    let mut bytes = 4u32;
+    // SAFETY: RegGetValueW writes at most `bytes` (4) bytes into `v`.
+    let r = unsafe { RegGetValueW(HKEY_CURRENT_USER, &HSTRING::from(key), &HSTRING::from(name), RRF_RT_REG_DWORD, None, Some((&mut v as *mut u32).cast()), Some(&mut bytes)) };
+    (r == ERROR_SUCCESS).then_some(v)
+}
+
+#[cfg(not(target_os = "windows"))]
+fn windows_accent() -> Option<Color32> {
+    None
+}
+
+/// Windows keeps colours as 0xAABBGGRR (red in the low byte); the alpha is ignored.
+#[cfg(any(target_os = "windows", test))]
+fn accent_from_abgr(v: u32) -> Color32 {
+    Color32::from_rgb((v & 0xff) as u8, (v >> 8 & 0xff) as u8, (v >> 16 & 0xff) as u8)
+}
+
 /// macOS: System Settings → Accessibility → Display → Increase contrast.
 #[cfg(target_os = "macos")]
 fn mac_more_contrast() -> bool {
@@ -607,6 +669,35 @@ mod linux {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn windows_accent_colours_are_read_red_first_from_the_low_byte() {
+        use super::*;
+        // Windows 11's default blue, 0xFFD77800 in the registry, is #0078D7.
+        assert_eq!(accent_from_abgr(0xFFD7_7800), Color32::from_rgb(0x00, 0x78, 0xD7));
+        assert_eq!(accent_from_abgr(0x0000_00FF), Color32::from_rgb(255, 0, 0), "alpha doesn't matter");
+        // Through the same path as Linux's and macOS's accent: a light accent is darkened until
+        // white text on it reads, as everywhere else.
+        let light = SystemLook { accent: Some(accent_from_abgr(0xFF8C_E5FF)), ..SystemLook::default() };
+        let p = choose(ThemeChoice::Light, &light);
+        assert!(contrast(p.accent, p.on_accent) >= 4.5, "{:?}", p.accent);
+        // README pictures keep Snagster's own blue.
+        assert_eq!(desktop_accent(Some(Color32::RED), true), None);
+        assert_eq!(desktop_accent(Some(Color32::RED), false), Some(Color32::RED));
+        // The key path, backslashes and all (a first try lost them and read nothing).
+        assert_eq!(ACCENT_KEY.0.split('\\').collect::<Vec<_>>(), ["Software", "Microsoft", "Windows", "DWM"]);
+    }
+
+    /// On Windows the accent is read from the registry; on a machine that has one set it comes
+    /// back as a colour, and reading it twice in a row is answered from the cache.
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn the_windows_accent_is_read_and_cached() {
+        use super::*;
+        let first = windows_accent();
+        assert_eq!(first, read_accent_dword().map(accent_from_abgr));
+        assert_eq!(windows_accent(), first);
+    }
+
     use super::*;
 
     fn sys(dark: Option<bool>) -> SystemLook {
