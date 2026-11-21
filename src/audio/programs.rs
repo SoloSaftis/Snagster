@@ -42,8 +42,10 @@ pub enum Unsupported {
     #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     OldMac,
     /// Linux without a PipeWire sound service.
+    #[cfg_attr(any(windows, target_os = "macos"), allow(dead_code))]
     NoPipeWire,
     /// The Flatpak sandbox doesn't let Snagster reach PipeWire.
+    #[cfg_attr(any(windows, target_os = "macos"), allow(dead_code))]
     Flatpak,
     /// macOS: Screen Recording permission not given.
     Permission,
@@ -173,7 +175,7 @@ pub fn support() -> Result<(), Unsupported> {
     return super::programs_linux::support();
     #[cfg(target_os = "macos")]
     return super::programs_mac::support();
-    #[allow(unreachable_code)]
+    #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
     Err(Unsupported::NoPipeWire)
 }
 

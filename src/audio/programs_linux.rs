@@ -24,24 +24,47 @@ fn in_flatpak() -> bool {
 /// Flatpak override may be given; the app is restarted for that, but PipeWire may not).
 const RECHECK: Duration = Duration::from_secs(30);
 
+/// What support() knows: PipeWire's last answer (None: none yet), when it came, and whether
+/// a worker is asking now.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+struct Probe {
+    reachable: Option<bool>,
+    answered: Option<Instant>,
+    asking: bool,
+}
+
+impl Probe {
+    /// Whether to start asking now (and mark it asked).
+    fn ask(&mut self, now: Instant) -> bool {
+        let due = !self.asking && self.answered.is_none_or(|t| now.saturating_duration_since(t) >= RECHECK);
+        self.asking |= due;
+        due
+    }
+
+    /// The answer: yes until PipeWire has said no.
+    fn ok(&self) -> bool {
+        self.reachable != Some(false)
+    }
+}
+
 /// Never waits: PipeWire is asked on a worker, and until its first answer this says yes (a lane
 /// started meanwhile reports its own error).
 pub fn support() -> Result<(), Unsupported> {
-    // (reachable, when it was asked, a worker is asking)
-    static STATE: Mutex<(Option<bool>, Option<Instant>, bool)> = Mutex::new((None, None, false));
+    static STATE: Mutex<Probe> = Mutex::new(Probe { reachable: None, answered: None, asking: false });
     let mut s = STATE.lock().unwrap_or_else(|e| e.into_inner());
-    if !s.2 && s.1.is_none_or(|t| t.elapsed() >= RECHECK) {
-        s.2 = true;
-        let _ = std::thread::Builder::new().name("pipewire check".into()).spawn(|| {
+    if s.ask(Instant::now()) {
+        let started = std::thread::Builder::new().name("pipewire check".into()).spawn(|| {
             let ok = nodes().is_ok();
             let mut s = STATE.lock().unwrap_or_else(|e| e.into_inner());
-            *s = (Some(ok), Some(Instant::now()), false);
+            *s = Probe { reachable: Some(ok), answered: Some(Instant::now()), asking: false };
         });
+        // No worker: asked again next time.
+        s.asking = started.is_ok();
     }
-    match s.0 {
-        Some(false) if in_flatpak() => Err(Unsupported::Flatpak),
-        Some(false) => Err(Unsupported::NoPipeWire),
-        _ => Ok(()),
+    match s.ok() {
+        false if in_flatpak() => Err(Unsupported::Flatpak),
+        false => Err(Unsupported::NoPipeWire),
+        true => Ok(()),
     }
 }
 
@@ -277,6 +300,21 @@ pub fn run(name: &str, feed: &Arc<Feed>, stop: &Arc<AtomicBool>) -> Result<(), S
 mod tests {
     use super::*;
     use std::collections::HashMap;
+
+    /// PipeWire is asked once at first, not again while asking, then every RECHECK; the answer
+    /// is yes until it says no.
+    #[test]
+    fn pipewire_is_asked_on_a_worker_and_again_later() {
+        let t0 = Instant::now();
+        let mut p = Probe::default();
+        assert!(p.ok(), "yes before the first answer");
+        assert!(p.ask(t0));
+        assert!(!p.ask(t0 + Duration::from_secs(60)), "not twice while asking");
+        p = Probe { reachable: Some(false), answered: Some(t0), asking: false };
+        assert!(!p.ok());
+        assert!(!p.ask(t0 + Duration::from_secs(29)));
+        assert!(p.ask(t0 + RECHECK), "asked again after RECHECK");
+    }
 
     fn program(props: &[(&str, &str)], own: u32) -> Option<(String, String)> {
         let m: HashMap<&str, &str> = props.iter().copied().collect();

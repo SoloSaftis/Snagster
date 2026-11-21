@@ -274,6 +274,17 @@ fn read(c: &Tap, buf: &mut Vec<i16>) {
 /// How long a copy Windows wouldn't let Snagster hear waits before it is tried again.
 const RETRY: Duration = Duration::from_secs(10);
 
+/// A copy Windows refused `since` ago is tried again.
+fn retry_due(since: Duration) -> bool {
+    since >= RETRY
+}
+
+/// The lane waits for the program ("Not running") only when no copy of it runs at all: one
+/// running but refused keeps the row on, silent.
+fn waiting(tapped: usize, refused: usize) -> bool {
+    tapped == 0 && refused == 0
+}
+
 pub fn run(name: &str, feed: &std::sync::Arc<Feed>, stop: &std::sync::Arc<AtomicBool>) -> Result<(), String> {
     unsafe {
         let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
@@ -297,7 +308,7 @@ pub fn run(name: &str, feed: &std::sync::Arc<Feed>, stop: &std::sync::Arc<Atomic
                 !gone
             });
             let now = roots(&procs, name);
-            refused.retain(|(p, at)| now.contains(p) && at.elapsed() < RETRY);
+            refused.retain(|(p, at)| now.contains(p) && !retry_due(at.elapsed()));
             for pid in now {
                 if copies.iter().any(|c| c.pid == pid) || refused.iter().any(|(p, _)| *p == pid) {
                     continue;
@@ -307,8 +318,7 @@ pub fn run(name: &str, feed: &std::sync::Arc<Feed>, stop: &std::sync::Arc<Atomic
                     Err(_) => refused.push((pid, Instant::now())),
                 }
             }
-            // Running but not (yet) heard isn't "not running": the row stays on, silent.
-            feed.waiting.store(copies.is_empty() && refused.is_empty(), Ordering::Relaxed);
+            feed.waiting.store(waiting(copies.len(), refused.len()), Ordering::Relaxed);
         }
         for c in &copies {
             read(c, &mut buf);
@@ -325,6 +335,15 @@ pub fn run(name: &str, feed: &std::sync::Arc<Feed>, stop: &std::sync::Arc<Atomic
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_refused_copy_is_tried_again_and_keeps_the_row_on() {
+        assert!(!retry_due(Duration::from_secs(9)));
+        assert!(retry_due(RETRY));
+        assert!(waiting(0, 0), "nothing running: waits");
+        assert!(!waiting(0, 1), "running but refused: not \"Not running\"");
+        assert!(!waiting(2, 0));
+    }
 
     fn p(pid: u32, parent: u32, exe: &str) -> Proc {
         (pid, parent, exe.to_string())

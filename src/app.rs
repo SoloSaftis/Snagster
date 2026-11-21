@@ -6268,7 +6268,8 @@ impl SnagApp {
         use crate::audio::SoundInput;
         use crate::studio::SceneSound;
         let st = &mut self.settings.studio;
-        st.shared_sounds = vec![SceneSound::new(SoundInput::Computer, "Computer sound"), SceneSound { volume: 1.2, ..SceneSound::new(SoundInput::Microphone { id: String::new() }, "Microphone") }];
+        // The computer sound muted: the scene has the program's own sound instead (no "heard twice").
+        st.shared_sounds = vec![SceneSound { muted: true, ..SceneSound::new(SoundInput::Computer, "Computer sound") }, SceneSound { volume: 1.2, ..SceneSound::new(SoundInput::Microphone { id: String::new() }, "Microphone") }];
         let music = std::env::temp_dir().join("intro-music.wav");
         let _ = std::fs::write(&music, crate::wav::tone(2, 330.0));
         if let Some(s) = st.scenes.first_mut() {
