@@ -66,6 +66,17 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.10.7" date="2026-11-22">
+      <description>
+        <ul>
+          <li>Studio: draw on the screen while streaming, and sound from one program in a scene</li>
+          <li>A replay buffer saves the last 30 to 120 seconds with a hotkey</li>
+          <li>Stream details and warnings when the upload or the computer can't keep up</li>
+          <li>The editor works fully from the keyboard; new marks stay picked to adjust them</li>
+          <li>Dialogs belong to Snagster's window; Wayland screen captures see every screen</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.10.6" date="2026-11-17">
       <description>
         <ul>

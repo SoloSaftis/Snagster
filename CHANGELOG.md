@@ -2,7 +2,7 @@
 
 What changed for people using Snagster, per version.
 
-## Not released yet
+## 0.10.7 — 2026-11-22
 
 Studio:
 
