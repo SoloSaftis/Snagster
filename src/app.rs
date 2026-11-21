@@ -544,6 +544,8 @@ pub struct SnagApp {
     bar_shared: Arc<Mutex<BarShared>>,
     /// Snagster's window is a native Wayland window (not X11 through XWayland).
     native_wayland: bool,
+    /// The main window's title as last sent (it names the open picture).
+    title_sent: String,
     /// The connection that asks the desktop to bring the main window back (Wayland), and
     /// whether making it failed.
     #[cfg(target_os = "linux")]
@@ -759,6 +761,7 @@ impl SnagApp {
             bar: BarWindow::default(),
             bar_shared: Arc::default(),
             native_wayland: false,
+            title_sent: "Snagster".into(),
             #[cfg(target_os = "linux")]
             wl: None,
             #[cfg(target_os = "linux")]
@@ -4786,9 +4789,20 @@ impl SnagApp {
         }
     }
 
+    /// Keep the main window's title on the open picture (sent only when it changes).
+    fn name_window(&mut self, ctx: &egui::Context) {
+        let mac = crate::platform::system() == crate::platform::System::Mac;
+        let title = window_title(mac, self.current.and_then(|i| self.entries.get(i)).map(|e| e.name.as_str()));
+        if title != self.title_sent {
+            ctx.send_viewport_cmd_to(egui::ViewportId::ROOT, egui::ViewportCommand::Title(title.clone()));
+            self.title_sent = title;
+        }
+    }
+
     fn ui_body(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         keep_interface_size(&ctx);
+        self.name_window(&ctx);
         if self.overlay.is_some() {
             egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.handle_overlay(ui));
             return;
@@ -4936,6 +4950,17 @@ fn grown(size: f32, per_step: f32) -> f32 {
 
 fn grown_by(size: f32, per_step: f32, text_scale: f32) -> f32 {
     size + per_step * (text_scale - 1.0).max(0.0)
+}
+
+/// The main window's title: the open picture's name and Snagster ("Picture 3 – Snagster"), as
+/// Windows and Linux programs name the document they show; on a Mac only the picture's name, as
+/// Apple's document windows are titled. "Snagster" with no picture open.
+fn window_title(mac: bool, picture: Option<&str>) -> String {
+    match picture.map(str::trim).filter(|n| !n.is_empty()) {
+        Some(name) if mac => name.to_string(),
+        Some(name) => format!("{name} – Snagster"),
+        None => "Snagster".to_string(),
+    }
 }
 
 /// Ctrl+= / Ctrl+- / Ctrl+0 (⌘ on a Mac) zoom the picture, as in other editors (`shortcuts`).
@@ -6674,6 +6699,15 @@ mod tests {
         // The canvas beside the tools in a 500 px window: the cards shrink a little to stay two by two.
         assert_eq!(super::welcome_columns(380.0, 180.0), (2, 164.0));
         assert_eq!(super::welcome_columns(380.0, 230.0).0, 1, "one under the other with big text");
+    }
+
+    #[test]
+    fn the_title_is_the_picture_and_snagster_or_on_a_mac_the_picture() {
+        assert_eq!(super::window_title(false, Some("Area 3")), "Area 3 \u{2013} Snagster");
+        assert_eq!(super::window_title(true, Some("Area 3")), "Area 3", "Apple's document windows");
+        assert_eq!(super::window_title(false, None), "Snagster");
+        assert_eq!(super::window_title(true, None), "Snagster");
+        assert_eq!(super::window_title(false, Some("  ")), "Snagster", "a blank name is no name");
     }
 
     /// Ctrl+= anywhere egui sees it (a text box has the keys, another Snagster window) never

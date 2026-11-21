@@ -135,6 +135,8 @@ Linux:
 
 Settings, the Library and the tray (every system):
 
+- **The window's title names the open picture** ("Area 3 – Snagster"; on a Mac just the
+  picture's name), so the taskbar, Alt+Tab and the Dock say which one you're on.
 - **Settings opens on the pane you used last**, also after Snagster restarts.
 - **The Library picks a capture with a click** (a blue ring shows it); Delete moves it to the
   Recycle Bin or Trash, with the usual Undo. In the search box Delete still edits the text.
