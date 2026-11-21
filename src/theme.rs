@@ -537,14 +537,7 @@ fn windows_accent() -> Option<Color32> {
     use std::time::{Duration, Instant};
     static LAST: Mutex<Option<(Instant, Option<Color32>)>> = Mutex::new(None);
     let mut last = LAST.lock().unwrap_or_else(|e| e.into_inner());
-    if let Some((at, c)) = *last
-        && at.elapsed() < Duration::from_secs(2)
-    {
-        return c;
-    }
-    let c = read_accent_dword().map(accent_from_abgr);
-    *last = Some((Instant::now(), c));
-    c
+    cached(&mut last, Instant::now(), Duration::from_secs(2), || read_accent_dword().map(accent_from_abgr))
 }
 
 /// Where Windows keeps the accent colour (under HKEY_CURRENT_USER).
@@ -568,6 +561,19 @@ fn read_accent_dword() -> Option<u32> {
 #[cfg(not(target_os = "windows"))]
 fn windows_accent() -> Option<Color32> {
     None
+}
+
+/// The value `read` gives, read again only when the last read is `every` old.
+#[cfg(any(target_os = "windows", test))]
+fn cached<T: Copy>(last: &mut Option<(std::time::Instant, T)>, now: std::time::Instant, every: std::time::Duration, read: impl FnOnce() -> T) -> T {
+    if let Some((at, v)) = *last
+        && now.saturating_duration_since(at) < every
+    {
+        return v;
+    }
+    let v = read();
+    *last = Some((now, v));
+    v
 }
 
 /// Windows keeps colours as 0xAABBGGRR (red in the low byte); the alpha is ignored.
@@ -687,15 +693,29 @@ mod tests {
         assert_eq!(ACCENT_KEY.0.split('\\').collect::<Vec<_>>(), ["Software", "Microsoft", "Windows", "DWM"]);
     }
 
-    /// On Windows the accent is read from the registry; on a machine that has one set it comes
-    /// back as a colour, and reading it twice in a row is answered from the cache.
+    /// The accent is read every frame: the registry is asked at most every two seconds.
+    #[test]
+    fn the_accent_is_read_again_only_after_two_seconds() {
+        use std::time::{Duration, Instant};
+        let (t0, every) = (Instant::now(), Duration::from_secs(2));
+        let mut last = None;
+        let mut reads = 0;
+        let mut read = |v: u8| {
+            reads += 1;
+            v
+        };
+        assert_eq!(super::cached(&mut last, t0, every, || read(1)), 1);
+        assert_eq!(super::cached(&mut last, t0 + Duration::from_millis(1999), every, || read(2)), 1, "still the first answer");
+        assert_eq!(super::cached(&mut last, t0 + every, every, || read(3)), 3, "asked again after two seconds");
+        assert_eq!(reads, 2);
+    }
+
+    /// On Windows the accent comes from the registry (on a CI runner there may be none).
     #[cfg(target_os = "windows")]
     #[test]
-    fn the_windows_accent_is_read_and_cached() {
+    fn the_windows_accent_reads_the_same_as_the_registry() {
         use super::*;
-        let first = windows_accent();
-        assert_eq!(first, read_accent_dword().map(accent_from_abgr));
-        assert_eq!(windows_accent(), first);
+        assert_eq!(windows_accent(), read_accent_dword().map(accent_from_abgr));
     }
 
     use super::*;

@@ -380,8 +380,9 @@ mod win {
             let mut last_shown = Instant::now();
             let mut hook: HHOOK = std::ptr::null_mut();
             let mut hint: Option<(String, image::RgbaImage)> = None;
-            let accent = crate::theme::system_accent().unwrap_or(crate::theme::BRAND).to_array();
             loop {
+                // The desktop's accent, read each turn (cached for two seconds), so a change shows.
+                let accent = crate::theme::system_accent().unwrap_or(crate::theme::BRAND).to_array();
                 // Wake for the mouse at once, else a few times a second.
                 let (on, fading) = crate::ink::with(|i| (i.on, i.fading(Instant::now())));
                 let wait = if on || fading { 16 } else if screens.iter().any(|s| s.shown) { 50 } else { 120 };
