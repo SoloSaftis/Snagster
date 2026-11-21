@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ మరియు ]",
   "Search fonts": "ఫాంట్‌లను వెతుకు",
   "Type here": "ఇక్కడ టైప్ చేయండి",
-  "Theme name": "థీమ్ పేరు"
+  "Theme name": "థీమ్ పేరు",
+  "Text size {size} px": "వచన పరిమాణం {size} px",
+  "Next: {step}": "తర్వాత: {step}",
+  "Made from the {count} pictures in Recent": "ఇటీవలి {count} చిత్రాలతో చేసింది",
+  "Eraser width {size} px": "ఎరేజర్ వెడల్పు {size} px",
+  "Example: {name}": "ఉదాహరణ: {name}",
+  "Use {name}": "{name} ఉపయోగించు",
+  "Used twice (only the first one works): {keys}": "రెండుసార్లు ఉపయోగించబడింది (మొదటిది మాత్రమే పనిచేస్తుంది): {keys}",
+  "Give the taken ones free keys: {count}": "తీసుకున్నవాటికి ఖాళీ కీలు ఇవ్వు: {count}",
+  "Version {version}": "వెర్షన్ {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, క్యాప్చర్ చేయడానికి క్లిక్ చేయండి"
  }
 }

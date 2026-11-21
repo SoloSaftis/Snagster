@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ ve ]",
   "Search fonts": "Yazı tipi ara",
   "Type here": "Buraya yazın",
-  "Theme name": "Tema adı"
+  "Theme name": "Tema adı",
+  "Text size {size} px": "Metin boyutu {size} px",
+  "Next: {step}": "Sonraki: {step}",
+  "Made from the {count} pictures in Recent": "Son kullanılanlardaki {count} resimden yapıldı",
+  "Eraser width {size} px": "Silgi genişliği {size} px",
+  "Example: {name}": "Örnek: {name}",
+  "Use {name}": "{name} kullan",
+  "Used twice (only the first one works): {keys}": "İki kez kullanılmış (yalnızca ilki çalışır): {keys}",
+  "Give the taken ones free keys: {count}": "Dolu olanlara boş tuşlar ver: {count}",
+  "Version {version}": "Sürüm {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, yakalamak için tıklayın"
  }
 }

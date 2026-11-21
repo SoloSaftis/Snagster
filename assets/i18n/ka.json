@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ და ]",
   "Search fonts": "შრიფტების ძიება",
   "Type here": "აქ აკრიფეთ",
-  "Theme name": "თემის სახელი"
+  "Theme name": "თემის სახელი",
+  "Text size {size} px": "ტექსტის ზომა {size} px",
+  "Next: {step}": "შემდეგი: {step}",
+  "Made from the {count} pictures in Recent": "შექმნილია ბოლოს გამოყენებული {count} სურათიდან",
+  "Eraser width {size} px": "საშლელის სიგანე {size} px",
+  "Example: {name}": "მაგალითი: {name}",
+  "Use {name}": "{name}-ის გამოყენება",
+  "Used twice (only the first one works): {keys}": "ორჯერ გამოყენებულია (მუშაობს მხოლოდ პირველი): {keys}",
+  "Give the taken ones free keys: {count}": "დაკავებულებს თავისუფალი კლავიშები: {count}",
+  "Version {version}": "ვერსია {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, დააწკაპუნეთ გადასაღებად"
  }
 }

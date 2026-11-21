@@ -354,7 +354,7 @@ impl Overlay {
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 ui.label(
-                                    egui::RichText::new(format!("{} x {}", rect.width().round(), rect.height().round()))
+                                    egui::RichText::new(format!("{} × {}", rect.width().round(), rect.height().round()))
                                         .color(pal.dim),
                                 );
                                 let b = |ui: &mut egui::Ui, t: &str, tip: &str| ui.button(t).on_hover_text(tip).clicked();
@@ -550,7 +550,7 @@ impl Overlay {
                     let r = fixed_frame(c, w, h, iw, ih);
                     dim_except(r);
                     p.rect_stroke(scr_rect(r), CornerRadius::ZERO, Stroke::new(2.0, accent()), StrokeKind::Outside);
-                    label = Some(format!("{w} x {h}   click to capture"));
+                    label = Some(crate::i18n::tf("{width} × {height}, click to capture", &[("width", &w.to_string()), ("height", &h.to_string())]));
                     if resp.clicked_by(PointerButton::Primary) {
                         outcome = Outcome::Area { rect: r, shape: CutShape::Rect, points: Vec::new(), action: AreaAction::Capture };
                     }
@@ -611,14 +611,14 @@ impl Overlay {
             if self.shape != CutShape::Rect {
                 p.rect_stroke(scr_rect(r), CornerRadius::ZERO, Stroke::new(1.0, Color32::from_white_alpha(90)), StrokeKind::Middle);
             }
-            label = Some(format!("{} x {}", r.width().round(), r.height().round()));
+            label = Some(format!("{} × {}", r.width().round(), r.height().round()));
         } else if let Some((r, title)) = &hovered {
             dim_except(*r);
             let sr = scr_rect(*r);
             // A bright outline that shows on dark and light programs alike, and the size.
             p.rect_stroke(sr, CornerRadius::ZERO, Stroke::new(1.0, Color32::WHITE), StrokeKind::Outside);
             p.rect_stroke(sr, CornerRadius::ZERO, Stroke::new(3.0, accent()), StrokeKind::Inside);
-            let size = format!("{} x {}", r.width().round(), r.height().round());
+            let size = format!("{} × {}", r.width().round(), r.height().round());
             let tag = size_tag(&size, level);
             let above = sr.min.y - 26.0 > area.min.y;
             let at = if above { pos2(sr.min.x, sr.min.y - 4.0) } else { pos2(sr.min.x + 4.0, sr.min.y + 4.0) };

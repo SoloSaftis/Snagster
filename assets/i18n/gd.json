@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ agus ]",
   "Search fonts": "Lorg cruthan-clò",
   "Type here": "Sgrìobh an-seo",
-  "Theme name": "Ainm an ùrlair"
+  "Theme name": "Ainm an ùrlair",
+  "Text size {size} px": "Meud an teacsa {size} px",
+  "Next: {step}": "An ath-fhear: {step}",
+  "Made from the {count} pictures in Recent": "Air a dhèanamh dhe na {count} dealbhan o chionn goirid",
+  "Eraser width {size} px": "Leud an t-suathain {size} px",
+  "Example: {name}": "Ball-eisimpleir: {name}",
+  "Use {name}": "Cleachd {name}",
+  "Used twice (only the first one works): {keys}": "Air a chleachdadh dà thuras (chan obraich ach a' chiad fhear): {keys}",
+  "Give the taken ones free keys: {count}": "Thoir iuchraichean saora dhan fheadhainn a tha gan cleachdadh: {count}",
+  "Version {version}": "Tionndadh {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, briog gus a ghlacadh"
  }
 }

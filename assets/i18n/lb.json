@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ an ]",
   "Search fonts": "Schrëften sichen",
   "Type here": "Hei tippen",
-  "Theme name": "Numm vum Design"
+  "Theme name": "Numm vum Design",
+  "Text size {size} px": "Textgréisst {size} px",
+  "Next: {step}": "Nächst: {step}",
+  "Made from the {count} pictures in Recent": "Aus den {count} Biller an Rezent gemaach",
+  "Eraser width {size} px": "Breet vum Gummi {size} px",
+  "Example: {name}": "Beispill: {name}",
+  "Use {name}": "{name} benotzen",
+  "Used twice (only the first one works): {keys}": "Zweemol benotzt (nëmmen déi éischt geet): {keys}",
+  "Give the taken ones free keys: {count}": "Den hollte fräi Tasten ginn: {count}",
+  "Version {version}": "Versioun {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, klickt fir opzehuelen"
  }
 }

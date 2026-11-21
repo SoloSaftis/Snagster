@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ மற்றும் ]",
   "Search fonts": "எழுத்துருக்களைத் தேடு",
   "Type here": "இங்கே தட்டச்சிடுக",
-  "Theme name": "தீம் பெயர்"
+  "Theme name": "தீம் பெயர்",
+  "Text size {size} px": "உரை அளவு {size} px",
+  "Next: {step}": "அடுத்தது: {step}",
+  "Made from the {count} pictures in Recent": "சமீபத்தியவற்றில் உள்ள {count} படங்களால் ஆனது",
+  "Eraser width {size} px": "அழிப்பானின் அகலம் {size} px",
+  "Example: {name}": "எடுத்துக்காட்டு: {name}",
+  "Use {name}": "{name} ஐப் பயன்படுத்து",
+  "Used twice (only the first one works): {keys}": "இருமுறை பயன்படுத்தப்பட்டது (முதலாவது மட்டும் வேலை செய்யும்): {keys}",
+  "Give the taken ones free keys: {count}": "எடுக்கப்பட்டவற்றுக்கு இலவச விசைகள் தா: {count}",
+  "Version {version}": "பதிப்பு {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, பிடிக்கச் சொடுக்கவும்"
  }
 }

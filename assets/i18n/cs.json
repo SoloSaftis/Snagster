@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ a ]",
   "Search fonts": "Hledat písma",
   "Type here": "Pište sem",
-  "Theme name": "Název motivu"
+  "Theme name": "Název motivu",
+  "Text size {size} px": "Velikost textu {size} px",
+  "Next: {step}": "Další: {step}",
+  "Made from the {count} pictures in Recent": "Vytvořeno z {count} obrázků v Nedávných",
+  "Eraser width {size} px": "Šířka gumy {size} px",
+  "Example: {name}": "Příklad: {name}",
+  "Use {name}": "Použít {name}",
+  "Used twice (only the first one works): {keys}": "Použito dvakrát (funguje jen první): {keys}",
+  "Give the taken ones free keys: {count}": "Dát obsazeným volné klávesy: {count}",
+  "Version {version}": "Verze {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, klikněte pro snímek"
  }
 }

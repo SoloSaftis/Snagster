@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ ਅਤੇ ]",
   "Search fonts": "ਫੌਂਟ ਲੱਭੋ",
   "Type here": "ਇੱਥੇ ਲਿਖੋ",
-  "Theme name": "ਥੀਮ ਦਾ ਨਾਂ"
+  "Theme name": "ਥੀਮ ਦਾ ਨਾਂ",
+  "Text size {size} px": "ਲਿਖਤ ਦਾ ਆਕਾਰ {size} px",
+  "Next: {step}": "ਅਗਲਾ: {step}",
+  "Made from the {count} pictures in Recent": "ਹਾਲੀਆ ਦੀਆਂ {count} ਤਸਵੀਰਾਂ ਤੋਂ ਬਣੀ",
+  "Eraser width {size} px": "ਇਰੇਜ਼ਰ ਦੀ ਚੌੜਾਈ {size} px",
+  "Example: {name}": "ਉਦਾਹਰਨ: {name}",
+  "Use {name}": "{name} ਵਰਤੋ",
+  "Used twice (only the first one works): {keys}": "ਦੋ ਵਾਰ ਵਰਤਿਆ (ਸਿਰਫ਼ ਪਹਿਲਾ ਕੰਮ ਕਰਦਾ ਹੈ): {keys}",
+  "Give the taken ones free keys: {count}": "ਲਈਆਂ ਗਈਆਂ ਨੂੰ ਖਾਲੀ ਕੁੰਜੀਆਂ ਦਿਓ: {count}",
+  "Version {version}": "ਵਰਜਨ {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, ਕੈਪਚਰ ਕਰਨ ਲਈ ਕਲਿੱਕ ਕਰੋ"
  }
 }

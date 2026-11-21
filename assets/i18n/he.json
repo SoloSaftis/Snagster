@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ ו־ ]",
   "Search fonts": "חיפוש גופנים",
   "Type here": "כתבו כאן",
-  "Theme name": "שם ערכת הנושא"
+  "Theme name": "שם ערכת הנושא",
+  "Text size {size} px": "גודל טקסט {size} פיקסלים",
+  "Next: {step}": "הבא: {step}",
+  "Made from the {count} pictures in Recent": "נוצרה מ-{count} התמונות באחרונים",
+  "Eraser width {size} px": "רוחב המחק {size} פיקסלים",
+  "Example: {name}": "דוגמה: {name}",
+  "Use {name}": "שימוש ב-{name}",
+  "Used twice (only the first one works): {keys}": "בשימוש פעמיים (רק הראשון עובד): {keys}",
+  "Give the taken ones free keys: {count}": "לתת לתפוסים מקשים פנויים: {count}",
+  "Version {version}": "גרסה {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, לחצו לצילום"
  }
 }

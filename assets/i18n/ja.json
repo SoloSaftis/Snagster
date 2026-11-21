@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete、[ と ]",
   "Search fonts": "フォントを検索",
   "Type here": "ここに入力",
-  "Theme name": "テーマ名"
+  "Theme name": "テーマ名",
+  "Text size {size} px": "文字サイズ {size} px",
+  "Next: {step}": "次: {step}",
+  "Made from the {count} pictures in Recent": "最近の {count} 枚の画像から作成",
+  "Eraser width {size} px": "消しゴムの幅 {size} px",
+  "Example: {name}": "例: {name}",
+  "Use {name}": "{name} を使う",
+  "Used twice (only the first one works): {keys}": "重複 (最初のものだけが有効): {keys}",
+  "Give the taken ones free keys: {count}": "使用中のものに空きキーを割り当て: {count}",
+  "Version {version}": "バージョン {version}",
+  "{width} × {height}, click to capture": "{width} × {height}、クリックでキャプチャ"
  }
 }

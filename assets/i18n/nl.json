@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ en ]",
   "Search fonts": "Lettertypen zoeken",
   "Type here": "Typ hier",
-  "Theme name": "Themanaam"
+  "Theme name": "Themanaam",
+  "Text size {size} px": "Tekstgrootte {size} px",
+  "Next: {step}": "Volgende: {step}",
+  "Made from the {count} pictures in Recent": "Gemaakt van de {count} afbeeldingen in Recent",
+  "Eraser width {size} px": "Gumbreedte {size} px",
+  "Example: {name}": "Voorbeeld: {name}",
+  "Use {name}": "{name} gebruiken",
+  "Used twice (only the first one works): {keys}": "Twee keer gebruikt (alleen de eerste werkt): {keys}",
+  "Give the taken ones free keys: {count}": "Geef de bezette vrije toetsen: {count}",
+  "Version {version}": "Versie {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, klik om vast te leggen"
  }
 }

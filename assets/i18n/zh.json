@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete、[ 和 ]",
   "Search fonts": "搜索字体",
   "Type here": "在此输入",
-  "Theme name": "主题名称"
+  "Theme name": "主题名称",
+  "Text size {size} px": "文字大小 {size} px",
+  "Next: {step}": "下一个：{step}",
+  "Made from the {count} pictures in Recent": "由最近的 {count} 张图片制成",
+  "Eraser width {size} px": "橡皮擦宽度 {size} px",
+  "Example: {name}": "示例：{name}",
+  "Use {name}": "使用 {name}",
+  "Used twice (only the first one works): {keys}": "重复使用（只有第一个有效）：{keys}",
+  "Give the taken ones free keys: {count}": "为已占用的分配空闲按键：{count}",
+  "Version {version}": "版本 {version}",
+  "{width} × {height}, click to capture": "{width} × {height}，单击截图"
  }
 }

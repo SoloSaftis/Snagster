@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ және ]",
   "Search fonts": "Қаріптерді іздеу",
   "Type here": "Осында жазыңыз",
-  "Theme name": "Тақырып атауы"
+  "Theme name": "Тақырып атауы",
+  "Text size {size} px": "Мәтін өлшемі {size} px",
+  "Next: {step}": "Келесі: {step}",
+  "Made from the {count} pictures in Recent": "Соңғылардағы {count} суреттен жасалған",
+  "Eraser width {size} px": "Өшіргіш ені {size} px",
+  "Example: {name}": "Мысал: {name}",
+  "Use {name}": "{name} пайдалану",
+  "Used twice (only the first one works): {keys}": "Екі рет қолданылған (тек біріншісі жұмыс істейді): {keys}",
+  "Give the taken ones free keys: {count}": "Бос емес пернелерге бос перне беру: {count}",
+  "Version {version}": "Нұсқа {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, түсіру үшін басыңыз"
  }
 }

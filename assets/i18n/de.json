@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ und ]",
   "Search fonts": "Schriften suchen",
   "Type here": "Hier tippen",
-  "Theme name": "Name des Designs"
+  "Theme name": "Name des Designs",
+  "Text size {size} px": "Textgröße {size} px",
+  "Next: {step}": "Nächste: {step}",
+  "Made from the {count} pictures in Recent": "Aus den {count} Bildern in Zuletzt erstellt",
+  "Eraser width {size} px": "Radierer-Breite {size} px",
+  "Example: {name}": "Beispiel: {name}",
+  "Use {name}": "{name} verwenden",
+  "Used twice (only the first one works): {keys}": "Doppelt belegt (nur die erste wirkt): {keys}",
+  "Give the taken ones free keys: {count}": "Den belegten freie Tasten geben: {count}",
+  "Version {version}": "Version {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, zum Aufnehmen klicken"
  }
 }

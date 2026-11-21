@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ आनी ]",
   "Search fonts": "फॉन्ट सोदात",
   "Type here": "हांगा टायप करात",
-  "Theme name": "थीमाचें नांव"
+  "Theme name": "थीमाचें नांव",
+  "Text size {size} px": "मजकूर आकार {size} px",
+  "Next: {step}": "फुडलें: {step}",
+  "Made from the {count} pictures in Recent": "हालींच्या {count} चित्रांतल्यान केल्लें",
+  "Eraser width {size} px": "रबराची रुंदाय {size} px",
+  "Example: {name}": "उदाहरण: {name}",
+  "Use {name}": "{name} वापरात",
+  "Used twice (only the first one works): {keys}": "दोन फावटीं वापरलें (पयलेंच काम करता): {keys}",
+  "Give the taken ones free keys: {count}": "घेतिल्ल्यांक मोकळे कळ दियात: {count}",
+  "Version {version}": "आवृत्ती {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, कॅप्चर करपाक क्लिक करात"
  }
 }

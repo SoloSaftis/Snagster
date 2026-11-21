@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ at ]",
   "Search fonts": "Maghanap ng font",
   "Type here": "Mag-type dito",
-  "Theme name": "Pangalan ng tema"
+  "Theme name": "Pangalan ng tema",
+  "Text size {size} px": "Laki ng teksto {size} px",
+  "Next: {step}": "Susunod: {step}",
+  "Made from the {count} pictures in Recent": "Ginawa mula sa {count} larawan sa Kamakailan",
+  "Eraser width {size} px": "Lapad ng pambura {size} px",
+  "Example: {name}": "Halimbawa: {name}",
+  "Use {name}": "Gamitin ang {name}",
+  "Used twice (only the first one works): {keys}": "Dalawang beses ginamit (ang una lang ang gumagana): {keys}",
+  "Give the taken ones free keys: {count}": "Bigyan ng libreng key ang mga nakuha: {count}",
+  "Version {version}": "Bersyon {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, i-click para kunan"
  }
 }

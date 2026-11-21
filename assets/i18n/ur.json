@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete، [ اور ]",
   "Search fonts": "فونٹ تلاش کریں",
   "Type here": "یہاں لکھیں",
-  "Theme name": "تھیم کا نام"
+  "Theme name": "تھیم کا نام",
+  "Text size {size} px": "متن کا سائز {size} px",
+  "Next: {step}": "اگلا: {step}",
+  "Made from the {count} pictures in Recent": "حالیہ کی {count} تصاویر سے بنی",
+  "Eraser width {size} px": "ربڑ کی چوڑائی {size} px",
+  "Example: {name}": "مثال: {name}",
+  "Use {name}": "{name} استعمال کریں",
+  "Used twice (only the first one works): {keys}": "دو بار استعمال (صرف پہلا کام کرتا ہے): {keys}",
+  "Give the taken ones free keys: {count}": "لی گئی کلیدوں کو خالی کلیدیں دیں: {count}",
+  "Version {version}": "ورژن {version}",
+  "{width} × {height}, click to capture": "{width} × {height}، کیپچر کے لیے کلک کریں"
  }
 }

@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ і ]",
   "Search fonts": "Пошук шрифтів",
   "Type here": "Пишіть тут",
-  "Theme name": "Назва теми"
+  "Theme name": "Назва теми",
+  "Text size {size} px": "Розмір тексту {size} px",
+  "Next: {step}": "Наступний: {step}",
+  "Made from the {count} pictures in Recent": "Створено з {count} зображень у Нещодавніх",
+  "Eraser width {size} px": "Ширина гумки {size} px",
+  "Example: {name}": "Приклад: {name}",
+  "Use {name}": "Використати {name}",
+  "Used twice (only the first one works): {keys}": "Використано двічі (працює лише перша): {keys}",
+  "Give the taken ones free keys: {count}": "Дати зайнятим вільні клавіші: {count}",
+  "Version {version}": "Версія {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, клацніть, щоб зняти"
  }
 }

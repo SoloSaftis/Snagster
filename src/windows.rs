@@ -871,7 +871,7 @@ impl SnagApp {
         ui.add(egui::TextEdit::singleline(&mut s.name_pattern).desired_width(380.0));
         ui.label(RichText::new(crate::i18n::t("%Y year  %m month  %d day  %H hour  %M minute  %S second  %n counter  %t title")).color(pal().dim).size(12.0));
         let mut preview = s.clone();
-        ui.label(RichText::new(format!("Example: {}.{}", preview.file_name("Capture"), s.format.ext())).color(pal().dim));
+        ui.label(RichText::new(crate::i18n::tf("Example: {name}", &[("name", &format!("{}.{}", preview.file_name("Capture"), s.format.ext()))])).color(pal().dim));
         ui.add_space(6.0);
         ui.horizontal_wrapped(|ui| {
             ui.label(crate::i18n::t("Format"));
@@ -901,7 +901,7 @@ impl SnagApp {
                 ui.label(RichText::new(crate::i18n::t("No OneDrive, Dropbox, Google Drive, Box or iCloud folder was found.")).color(pal().dim));
             }
             for (name, p) in clouds {
-                if ui.button(format!("Use {name}")).clicked() {
+                if ui.button(crate::i18n::tf("Use {name}", &[("name", &name.to_string())])).clicked() {
                     s.library_folder = p.join("Snagster Library").display().to_string();
                 }
             }
@@ -1001,7 +1001,7 @@ impl SnagApp {
         ui.label(RichText::new(self.hotkeys.summary()).color(pal().dim));
         let dups = hotkeys::duplicates(&self.settings);
         if !dups.is_empty() {
-            ui.label(RichText::new(format!("Used twice (only the first one works): {}", dups.join(", "))).color(pal().warn));
+            ui.label(RichText::new(crate::i18n::tf("Used twice (only the first one works): {keys}", &[("keys", &dups.join(", "))])).color(pal().warn));
         }
         ui.add_space(4.0);
         let statuses: Vec<Option<bool>> = self.settings.bindings.iter().map(|b| self.hotkeys.status_of(Target::Action(b.action))).collect();
@@ -1041,7 +1041,7 @@ impl SnagApp {
                 .collect();
             if !taken.is_empty()
                 && ui
-                    .button(format!("Give the {} taken ones free keys", taken.len()))
+                    .button(crate::i18n::tf("Give the taken ones free keys: {count}", &[("count", &taken.len().to_string())]))
                     .on_hover_text(crate::i18n::t("Moves them to Ctrl + Shift + F1...F8, skipping keys Snagster already uses"))
                     .clicked()
             {
@@ -1222,7 +1222,7 @@ impl SnagApp {
                 logo(ui, 40.0);
                 ui.vertical(|ui| {
                     ui.label(RichText::new(crate::i18n::t("Snagster")).size(22.0).strong());
-                    ui.label(format!("Version {}", env!("CARGO_PKG_VERSION")));
+                    ui.label(crate::i18n::tf("Version {version}", &[("version", env!("CARGO_PKG_VERSION"))]));
                 });
             });
             ui.label(crate::i18n::t("Capture your screen, mark it up, share it. Written in Rust."));
@@ -2531,13 +2531,18 @@ mod tests {
         let mut found = Vec::new();
         for f in all {
             let src = std::fs::read_to_string(&f).unwrap();
-            // Only the window code, not the tests below it.
-            let code = src.split("#[cfg(test)]").next().unwrap();
-            for call in ["on_hover_text(\"", "hint_text(\"", "selected_text(\""] {
+            // Only the window code, not the tests module at the end (a #[cfg(test)] helper higher
+            // up doesn't stop the scan).
+            let src = src.replace("\r\n", "\n");
+            let code = src.split("\n#[cfg(test)]\nmod tests").next().unwrap();
+            let calls = ["on_hover_text(\"", "hint_text(\"", "selected_text(\"", "button(format!(\"", "label(format!(\"", "RichText::new(format!(\""];
+            // A sentence: starts with a capital and has a word in it ("U+{:04X}" and "X" don't).
+            let sentence = |lit: &str| lit.chars().next().is_some_and(|c| c.is_uppercase()) && lit.split(|c: char| !c.is_alphabetic()).any(|w| w.len() >= 2 && w.chars().all(|c| c.is_lowercase()));
+            for call in calls {
                 for (at, _) in code.match_indices(call) {
                     let rest = &code[at + call.len()..];
                     let lit = &rest[..rest.find('"').unwrap_or(0)];
-                    if lit.chars().next().is_some_and(|c| c.is_uppercase()) && lit.chars().count() > 1 {
+                    if sentence(lit) {
                         found.push(format!("{}: {call}{lit}\"", f.file_name().unwrap().to_string_lossy()));
                     }
                 }

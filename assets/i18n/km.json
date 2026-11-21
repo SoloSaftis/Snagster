@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ និង ]",
   "Search fonts": "ស្វែងរកពុម្ពអក្សរ",
   "Type here": "វាយនៅទីនេះ",
-  "Theme name": "ឈ្មោះស្បែក"
+  "Theme name": "ឈ្មោះស្បែក",
+  "Text size {size} px": "ទំហំអក្សរ {size} px",
+  "Next: {step}": "បន្ទាប់៖ {step}",
+  "Made from the {count} pictures in Recent": "បង្កើតពីរូបភាព {count} ក្នុងថ្មីៗ",
+  "Eraser width {size} px": "ទទឹងជ័រលុប {size} px",
+  "Example: {name}": "ឧទាហរណ៍៖ {name}",
+  "Use {name}": "ប្រើ {name}",
+  "Used twice (only the first one works): {keys}": "ប្រើពីរដង (មានតែទីមួយដំណើរការ)៖ {keys}",
+  "Give the taken ones free keys: {count}": "ផ្ដល់គ្រាប់ចុចទំនេរដល់គ្រាប់ដែលបានយក៖ {count}",
+  "Version {version}": "កំណែ {version}",
+  "{width} × {height}, click to capture": "{width} × {height} ចុចដើម្បីថត"
  }
 }

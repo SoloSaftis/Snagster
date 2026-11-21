@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ и ]",
   "Search fonts": "Поиск шрифтов",
   "Type here": "Пишите здесь",
-  "Theme name": "Название темы"
+  "Theme name": "Название темы",
+  "Text size {size} px": "Размер текста {size} px",
+  "Next: {step}": "Следующий: {step}",
+  "Made from the {count} pictures in Recent": "Создано из {count} изображений в Недавних",
+  "Eraser width {size} px": "Ширина ластика {size} px",
+  "Example: {name}": "Пример: {name}",
+  "Use {name}": "Использовать {name}",
+  "Used twice (only the first one works): {keys}": "Используется дважды (работает только первая): {keys}",
+  "Give the taken ones free keys: {count}": "Дать занятым свободные клавиши: {count}",
+  "Version {version}": "Версия {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, щёлкните для снимка"
  }
 }

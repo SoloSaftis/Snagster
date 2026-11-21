@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ hinallataq ]",
   "Search fonts": "Qillqa rikchaykunata maskay",
   "Type here": "Kaypi qillqay",
-  "Theme name": "Temaq sutin"
+  "Theme name": "Temaq sutin",
+  "Text size {size} px": "Qillqa sayay {size} px",
+  "Next: {step}": "Qatiq: {step}",
+  "Made from the {count} pictures in Recent": "Qayllapi kaq {count} siq'ikunamanta ruwasqa",
+  "Eraser width {size} px": "Pichanapa kinran {size} px",
+  "Example: {name}": "Rikch'ay: {name}",
+  "Use {name}": "{name} llamk'achiy",
+  "Used twice (only the first one works): {keys}": "Iskay kuti llamk'achisqa (ñawpaqllan llamk'an): {keys}",
+  "Give the taken ones free keys: {count}": "Hap'isqakunaman ch'usaq teclakunata quy: {count}",
+  "Version {version}": "Version {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, hapinapaq ñit'iy"
  }
 }

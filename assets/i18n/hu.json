@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ és ]",
   "Search fonts": "Betűtípus keresése",
   "Type here": "Írjon ide",
-  "Theme name": "Téma neve"
+  "Theme name": "Téma neve",
+  "Text size {size} px": "Szövegméret {size} px",
+  "Next: {step}": "Következő: {step}",
+  "Made from the {count} pictures in Recent": "A legutóbbi {count} képből készült",
+  "Eraser width {size} px": "Radír szélessége {size} px",
+  "Example: {name}": "Példa: {name}",
+  "Use {name}": "{name} használata",
+  "Used twice (only the first one works): {keys}": "Kétszer használt (csak az első működik): {keys}",
+  "Give the taken ones free keys: {count}": "Szabad billentyűk a foglaltaknak: {count}",
+  "Version {version}": "Verzió: {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, kattintson a felvételhez"
  }
 }

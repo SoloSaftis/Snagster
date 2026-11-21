@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete، [ ۋە ]",
   "Search fonts": "خەت نۇسخىسى ئىزدەش",
   "Type here": "بۇ يەرگە يېزىڭ",
-  "Theme name": "ئۇسلۇب نامى"
+  "Theme name": "ئۇسلۇب نامى",
+  "Text size {size} px": "تېكىست چوڭلۇقى {size} px",
+  "Next: {step}": "كېيىنكى: {step}",
+  "Made from the {count} pictures in Recent": "يېقىنقىلاردىكى {count} رەسىمدىن ياسالدى",
+  "Eraser width {size} px": "ئۆچۈرگۈچ كەڭلىكى {size} px",
+  "Example: {name}": "مىسال: {name}",
+  "Use {name}": "{name} نى ئىشلىتىش",
+  "Used twice (only the first one works): {keys}": "ئىككى قېتىم ئىشلىتىلگەن (پەقەت بىرىنچىسىلا ئىشلەيدۇ): {keys}",
+  "Give the taken ones free keys: {count}": "ئېلىنغانلارغا بوش كۇنۇپكا بېرىش: {count}",
+  "Version {version}": "نەشرى {version}",
+  "{width} × {height}, click to capture": "{width} × {height}، تۇتۇش ئۈچۈن چېكىڭ"
  }
 }

@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ और ]",
   "Search fonts": "फ़ॉन्ट खोजें",
   "Type here": "यहाँ लिखें",
-  "Theme name": "थीम का नाम"
+  "Theme name": "थीम का नाम",
+  "Text size {size} px": "पाठ का आकार {size} px",
+  "Next: {step}": "अगला: {step}",
+  "Made from the {count} pictures in Recent": "हाल के {count} चित्रों से बना",
+  "Eraser width {size} px": "इरेज़र की चौड़ाई {size} px",
+  "Example: {name}": "उदाहरण: {name}",
+  "Use {name}": "{name} इस्तेमाल करें",
+  "Used twice (only the first one works): {keys}": "दो बार इस्तेमाल (केवल पहला काम करता है): {keys}",
+  "Give the taken ones free keys: {count}": "लिए गए को खाली कुंजियाँ दें: {count}",
+  "Version {version}": "संस्करण {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, कैप्चर करने के लिए क्लिक करें"
  }
 }

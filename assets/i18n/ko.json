@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ 및 ]",
   "Search fonts": "글꼴 검색",
   "Type here": "여기에 입력",
-  "Theme name": "테마 이름"
+  "Theme name": "테마 이름",
+  "Text size {size} px": "글자 크기 {size} px",
+  "Next: {step}": "다음: {step}",
+  "Made from the {count} pictures in Recent": "최근 항목의 그림 {count}개로 만듦",
+  "Eraser width {size} px": "지우개 너비 {size} px",
+  "Example: {name}": "예: {name}",
+  "Use {name}": "{name} 사용",
+  "Used twice (only the first one works): {keys}": "두 번 사용됨 (첫 번째만 작동): {keys}",
+  "Give the taken ones free keys: {count}": "사용 중인 키에 빈 키 지정: {count}",
+  "Version {version}": "버전 {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, 클릭하여 캡처"
  }
 }

@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ u ]",
   "Search fonts": "Fittex fonts",
   "Type here": "Ikteb hawn",
-  "Theme name": "Isem it-tema"
+  "Theme name": "Isem it-tema",
+  "Text size {size} px": "Daqs it-test {size} px",
+  "Next: {step}": "Li jmiss: {step}",
+  "Made from the {count} pictures in Recent": "Magħmula mill-{count} stampa f'Riċenti",
+  "Eraser width {size} px": "Wisa' tal-gomma {size} px",
+  "Example: {name}": "Eżempju: {name}",
+  "Use {name}": "Uża {name}",
+  "Used twice (only the first one works): {keys}": "Użat darbtejn (l-ewwel wieħed biss jaħdem): {keys}",
+  "Give the taken ones free keys: {count}": "Agħti tasti ħielsa lil dawk meħuda: {count}",
+  "Version {version}": "Verżjoni {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, ikklikkja biex taqbad"
  }
 }

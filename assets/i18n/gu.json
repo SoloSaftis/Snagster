@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ અને ]",
   "Search fonts": "ફોન્ટ શોધો",
   "Type here": "અહીં લખો",
-  "Theme name": "થીમનું નામ"
+  "Theme name": "થીમનું નામ",
+  "Text size {size} px": "લખાણનું કદ {size} px",
+  "Next: {step}": "આગળ: {step}",
+  "Made from the {count} pictures in Recent": "તાજેતરના {count} ચિત્રોમાંથી બનાવ્યું",
+  "Eraser width {size} px": "રબરની પહોળાઈ {size} px",
+  "Example: {name}": "ઉદાહરણ: {name}",
+  "Use {name}": "{name} વાપરો",
+  "Used twice (only the first one works): {keys}": "બે વાર વપરાયું (ફક્ત પહેલું કામ કરે છે): {keys}",
+  "Give the taken ones free keys: {count}": "વપરાયેલાને ખાલી કી આપો: {count}",
+  "Version {version}": "આવૃત્તિ {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, કેપ્ચર કરવા ક્લિક કરો"
  }
 }

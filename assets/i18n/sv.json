@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ och ]",
   "Search fonts": "Sök typsnitt",
   "Type here": "Skriv här",
-  "Theme name": "Temanamn"
+  "Theme name": "Temanamn",
+  "Text size {size} px": "Textstorlek {size} px",
+  "Next: {step}": "Nästa: {step}",
+  "Made from the {count} pictures in Recent": "Gjord av de {count} bilderna i Senaste",
+  "Eraser width {size} px": "Suddgummits bredd {size} px",
+  "Example: {name}": "Exempel: {name}",
+  "Use {name}": "Använd {name}",
+  "Used twice (only the first one works): {keys}": "Använd två gånger (bara den första fungerar): {keys}",
+  "Give the taken ones free keys: {count}": "Ge de upptagna lediga tangenter: {count}",
+  "Version {version}": "Version {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, klicka för att fånga"
  }
 }

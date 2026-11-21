@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ ja ]",
   "Search fonts": "Etsi fontteja",
   "Type here": "Kirjoita tähän",
-  "Theme name": "Teeman nimi"
+  "Theme name": "Teeman nimi",
+  "Text size {size} px": "Tekstin koko {size} px",
+  "Next: {step}": "Seuraava: {step}",
+  "Made from the {count} pictures in Recent": "Tehty viimeisimpien {count} kuvasta",
+  "Eraser width {size} px": "Pyyhekumin leveys {size} px",
+  "Example: {name}": "Esimerkki: {name}",
+  "Use {name}": "Käytä: {name}",
+  "Used twice (only the first one works): {keys}": "Käytössä kahdesti (vain ensimmäinen toimii): {keys}",
+  "Give the taken ones free keys: {count}": "Anna varatuille vapaat näppäimet: {count}",
+  "Version {version}": "Versio {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, kaappaa napsauttamalla"
  }
 }

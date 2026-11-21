@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete، [ و ]",
   "Search fonts": "ابحث عن الخطوط",
   "Type here": "اكتب هنا",
-  "Theme name": "اسم السمة"
+  "Theme name": "اسم السمة",
+  "Text size {size} px": "حجم النص {size} بكسل",
+  "Next: {step}": "التالي: {step}",
+  "Made from the {count} pictures in Recent": "مصنوعة من {count} صور في الأخيرة",
+  "Eraser width {size} px": "عرض الممحاة {size} بكسل",
+  "Example: {name}": "مثال: {name}",
+  "Use {name}": "استخدم {name}",
+  "Used twice (only the first one works): {keys}": "مستخدم مرتين (الأول فقط يعمل): {keys}",
+  "Give the taken ones free keys: {count}": "امنح المستخدمة مفاتيح حرة: {count}",
+  "Version {version}": "الإصدار {version}",
+  "{width} × {height}, click to capture": "{width} × {height}، انقر للالتقاط"
  }
 }

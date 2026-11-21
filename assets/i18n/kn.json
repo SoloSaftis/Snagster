@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ ಮತ್ತು ]",
   "Search fonts": "ಫಾಂಟ್ ಹುಡುಕಿ",
   "Type here": "ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ",
-  "Theme name": "ಥೀಮ್ ಹೆಸರು"
+  "Theme name": "ಥೀಮ್ ಹೆಸರು",
+  "Text size {size} px": "ಪಠ್ಯ ಗಾತ್ರ {size} px",
+  "Next: {step}": "ಮುಂದಿನದು: {step}",
+  "Made from the {count} pictures in Recent": "ಇತ್ತೀಚಿನ {count} ಚಿತ್ರಗಳಿಂದ ಮಾಡಲಾಗಿದೆ",
+  "Eraser width {size} px": "ಅಳಿಸುವಿಕೆಯ ಅಗಲ {size} px",
+  "Example: {name}": "ಉದಾಹರಣೆ: {name}",
+  "Use {name}": "{name} ಬಳಸಿ",
+  "Used twice (only the first one works): {keys}": "ಎರಡು ಬಾರಿ ಬಳಸಲಾಗಿದೆ (ಮೊದಲನೆಯದು ಮಾತ್ರ ಕೆಲಸ ಮಾಡುತ್ತದೆ): {keys}",
+  "Give the taken ones free keys: {count}": "ಬಳಕೆಯಲ್ಲಿರುವವಕ್ಕೆ ಉಚಿತ ಕೀಗಳನ್ನು ಕೊಡಿ: {count}",
+  "Version {version}": "ಆವೃತ್ತಿ {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, ಸೆರೆಹಿಡಿಯಲು ಕ್ಲಿಕ್ ಮಾಡಿ"
  }
 }

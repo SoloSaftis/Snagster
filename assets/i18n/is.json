@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ og ]",
   "Search fonts": "Leita að letri",
   "Type here": "Skrifaðu hér",
-  "Theme name": "Heiti þema"
+  "Theme name": "Heiti þema",
+  "Text size {size} px": "Leturstærð {size} px",
+  "Next: {step}": "Næst: {step}",
+  "Made from the {count} pictures in Recent": "Gerð úr {count} myndum í Nýlegt",
+  "Eraser width {size} px": "Breidd strokleðurs {size} px",
+  "Example: {name}": "Dæmi: {name}",
+  "Use {name}": "Nota {name}",
+  "Used twice (only the first one works): {keys}": "Notað tvisvar (aðeins það fyrsta virkar): {keys}",
+  "Give the taken ones free keys: {count}": "Gefa uppteknum lausa lykla: {count}",
+  "Version {version}": "Útgáfa {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, smelltu til að taka mynd"
  }
 }

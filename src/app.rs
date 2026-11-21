@@ -3389,7 +3389,7 @@ impl SnagApp {
                 if t == Tool::Text {
                     ui.checkbox(&mut self.settings.text_background, crate::i18n::t("Text on a colored box"));
                 }
-                ui.label(RichText::new(format!("Text size {:.0} px", doc::text_size(self.settings.width))).color(pal().dim));
+                ui.label(RichText::new(crate::i18n::tf("Text size {size} px", &[("size", &format!("{:.0}", doc::text_size(self.settings.width)))])).color(pal().dim));
             }
             if t == Tool::Blur {
                 ui.label(RichText::new(crate::i18n::t("Pixel block size")).color(pal().dim));
@@ -3414,7 +3414,7 @@ impl SnagApp {
                 });
                 if let Some(i) = self.current {
                     let n = self.entries[i].doc.next_step(self.settings.step_start);
-                    ui.label(RichText::new(format!("Next: {}", self.settings.step_style.format(n))).color(pal().dim));
+                    ui.label(RichText::new(crate::i18n::tf("Next: {step}", &[("step", &self.settings.step_style.format(n))])).color(pal().dim));
                 }
             }
             if t == Tool::Stamp {
@@ -6090,7 +6090,7 @@ impl SnagApp {
 
     fn template_menu(&mut self, ui: &mut egui::Ui) {
         let n = self.entries.len();
-        ui.label(RichText::new(format!("Made from the {n} pictures in Recent")).color(pal().dim));
+        ui.label(RichText::new(crate::i18n::tf("Made from the {count} pictures in Recent", &[("count", &n.to_string())])).color(pal().dim));
         // Nothing is drawn until one is picked (this used to draw every picture on every frame
         // while the menu was open), and then on the job queue.
         if item_on(ui, n >= 1, "Step-by-step guide (one page)", "") {
@@ -6176,7 +6176,7 @@ impl SnagApp {
             });
         }
         if t == Tool::Eraser {
-            ui.label(RichText::new(format!("Eraser width {:.0} px", self.settings.width * 3.0)).color(pal().dim));
+            ui.label(RichText::new(crate::i18n::tf("Eraser width {size} px", &[("size", &format!("{:.0}", self.settings.width * 3.0))])).color(pal().dim));
         }
         // Quick Styles: saved looks, one click away.
         ui.add_space(8.0);
@@ -6350,7 +6350,7 @@ impl SnagApp {
         let mut pick = None;
         egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
             for w in self.win_cache.items() {
-                if ui.button(window_line(w)).on_hover_text(format!("{} x {}", w.width, w.height)).clicked() {
+                if ui.button(window_line(w)).on_hover_text(format!("{} × {}", w.width, w.height)).clicked() {
                     pick = Some(CaptureKind::Window(w.id, w.label.clone()));
                     ui.close();
                 }

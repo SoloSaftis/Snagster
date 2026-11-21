@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ và ]",
   "Search fonts": "Tìm phông chữ",
   "Type here": "Nhập ở đây",
-  "Theme name": "Tên chủ đề"
+  "Theme name": "Tên chủ đề",
+  "Text size {size} px": "Cỡ chữ {size} px",
+  "Next: {step}": "Tiếp theo: {step}",
+  "Made from the {count} pictures in Recent": "Tạo từ {count} ảnh trong Gần đây",
+  "Eraser width {size} px": "Độ rộng tẩy {size} px",
+  "Example: {name}": "Ví dụ: {name}",
+  "Use {name}": "Dùng {name}",
+  "Used twice (only the first one works): {keys}": "Dùng hai lần (chỉ cái đầu hoạt động): {keys}",
+  "Give the taken ones free keys: {count}": "Cấp phím trống cho các phím đã dùng: {count}",
+  "Version {version}": "Phiên bản {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, nhấp để chụp"
  }
 }

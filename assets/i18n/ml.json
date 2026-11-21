@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ ഒപ്പം ]",
   "Search fonts": "ഫോണ്ടുകൾ തിരയുക",
   "Type here": "ഇവിടെ ടൈപ്പ് ചെയ്യുക",
-  "Theme name": "തീമിന്റെ പേര്"
+  "Theme name": "തീമിന്റെ പേര്",
+  "Text size {size} px": "എഴുത്തിന്റെ വലുപ്പം {size} px",
+  "Next: {step}": "അടുത്തത്: {step}",
+  "Made from the {count} pictures in Recent": "സമീപകാലത്തെ {count} ചിത്രങ്ങളിൽ നിന്ന് നിർമ്മിച്ചത്",
+  "Eraser width {size} px": "ഇറേസർ വീതി {size} px",
+  "Example: {name}": "ഉദാഹരണം: {name}",
+  "Use {name}": "{name} ഉപയോഗിക്കുക",
+  "Used twice (only the first one works): {keys}": "രണ്ടുതവണ ഉപയോഗിച്ചു (ആദ്യത്തേത് മാത്രം പ്രവർത്തിക്കുന്നു): {keys}",
+  "Give the taken ones free keys: {count}": "എടുത്തവയ്ക്ക് സ്വതന്ത്ര കീകൾ നൽകുക: {count}",
+  "Version {version}": "പതിപ്പ് {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, പകർത്താൻ ക്ലിക്ക് ചെയ്യുക"
  }
 }

@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ un ]",
   "Search fonts": "Meklēt fontus",
   "Type here": "Rakstiet šeit",
-  "Theme name": "Motīva nosaukums"
+  "Theme name": "Motīva nosaukums",
+  "Text size {size} px": "Teksta izmērs {size} px",
+  "Next: {step}": "Nākamais: {step}",
+  "Made from the {count} pictures in Recent": "Izveidots no {count} attēliem sadaļā Nesenie",
+  "Eraser width {size} px": "Dzēšgumijas platums {size} px",
+  "Example: {name}": "Piemērs: {name}",
+  "Use {name}": "Izmantot {name}",
+  "Used twice (only the first one works): {keys}": "Izmantots divreiz (darbojas tikai pirmais): {keys}",
+  "Give the taken ones free keys: {count}": "Dot aizņemtajiem brīvus taustiņus: {count}",
+  "Version {version}": "Versija {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, noklikšķiniet, lai uzņemtu"
  }
 }

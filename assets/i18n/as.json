@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ আৰু ]",
   "Search fonts": "ফণ্ট বিচাৰক",
   "Type here": "ইয়াত টাইপ কৰক",
-  "Theme name": "থিমৰ নাম"
+  "Theme name": "থিমৰ নাম",
+  "Text size {size} px": "পাঠৰ আকাৰ {size} px",
+  "Next: {step}": "পিছৰটো: {step}",
+  "Made from the {count} pictures in Recent": "শেহতীয়াৰ {count}খন ছবিৰে বনোৱা",
+  "Eraser width {size} px": "ইৰেজাৰৰ বহল {size} px",
+  "Example: {name}": "উদাহৰণ: {name}",
+  "Use {name}": "{name} ব্যৱহাৰ কৰক",
+  "Used twice (only the first one works): {keys}": "দুবাৰ ব্যৱহৃত (প্ৰথমটোহে কাম কৰে): {keys}",
+  "Give the taken ones free keys: {count}": "ব্যৱহৃতবোৰক মুকলি কী দিয়ক: {count}",
+  "Version {version}": "সংস্কৰণ {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, কেপচাৰ কৰিবলৈ ক্লিক কৰক"
  }
 }

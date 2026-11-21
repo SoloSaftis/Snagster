@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ ir ]",
   "Search fonts": "Ieškoti šriftų",
   "Type here": "Rašykite čia",
-  "Theme name": "Temos pavadinimas"
+  "Theme name": "Temos pavadinimas",
+  "Text size {size} px": "Teksto dydis {size} px",
+  "Next: {step}": "Kitas: {step}",
+  "Made from the {count} pictures in Recent": "Sukurta iš {count} paveikslėlių, esančių Paskutiniuose",
+  "Eraser width {size} px": "Trintuko plotis {size} px",
+  "Example: {name}": "Pavyzdys: {name}",
+  "Use {name}": "Naudoti {name}",
+  "Used twice (only the first one works): {keys}": "Naudojama dukart (veikia tik pirmas): {keys}",
+  "Give the taken ones free keys: {count}": "Užimtiems duoti laisvus klavišus: {count}",
+  "Version {version}": "Versija {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, spustelėkite, kad užfiksuotumėte"
  }
 }

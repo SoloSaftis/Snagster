@@ -1190,6 +1190,16 @@
   "Delete, [ and ]": "Delete, [ ଓ ]",
   "Search fonts": "ଫଣ୍ଟ ଖୋଜନ୍ତୁ",
   "Type here": "ଏଠାରେ ଟାଇପ କରନ୍ତୁ",
-  "Theme name": "ଥିମର ନାମ"
+  "Theme name": "ଥିମର ନାମ",
+  "Text size {size} px": "ଲେଖାର ଆକାର {size} px",
+  "Next: {step}": "ପରବର୍ତ୍ତୀ: {step}",
+  "Made from the {count} pictures in Recent": "ସାମ୍ପ୍ରତିକର {count}ଟି ଚିତ୍ରରୁ ତିଆରି",
+  "Eraser width {size} px": "ଇରେଜରର ଓସାର {size} px",
+  "Example: {name}": "ଉଦାହରଣ: {name}",
+  "Use {name}": "{name} ବ୍ୟବହାର କରନ୍ତୁ",
+  "Used twice (only the first one works): {keys}": "ଦୁଇଥର ବ୍ୟବହୃତ (କେବଳ ପ୍ରଥମଟି କାମ କରେ): {keys}",
+  "Give the taken ones free keys: {count}": "ନିଆଯାଇଥିବାକୁ ଖାଲି କି ଦିଅନ୍ତୁ: {count}",
+  "Version {version}": "ସଂସ୍କରଣ {version}",
+  "{width} × {height}, click to capture": "{width} × {height}, କ୍ୟାପଚର କରିବାକୁ କ୍ଲିକ କରନ୍ତୁ"
  }
 }
