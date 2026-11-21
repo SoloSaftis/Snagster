@@ -30,6 +30,8 @@ mod portal;
 mod wl_activate;
 #[cfg(target_os = "linux")]
 mod kwin;
+#[cfg(any(target_os = "linux", test))]
+mod x11_dialog;
 mod panel;
 mod tray;
 #[cfg(any(target_os = "macos", test))]

@@ -2460,6 +2460,10 @@ impl SnagApp {
         let focused = ctx.memory(|m| m.focused());
         let elsewhere = focused.is_some() && self.x.keys.pane_of(ctx, focused).is_none();
         let typing = self.text_edit.is_some() || ctx.text_edit_focused() || elsewhere;
+        // A box inside the window (Wayland) has the keys: nothing acts on the picture behind it.
+        if crate::windows::box_has_keys(ctx) {
+            return;
+        }
         let consume = |m: Modifiers, k: Key| ctx.input_mut(|i| i.consume_key(m, k));
         // While Draw is on, Ctrl+Z / ⌘Z takes back ink (never the picture or a deleted file) and
         // Esc stops drawing.
@@ -4509,6 +4513,15 @@ impl SnagApp {
             use raw_window_handle::{HasDisplayHandle as _, RawDisplayHandle};
             let display = frame.display_handle().map(|h| h.as_raw());
             self.native_wayland = matches!(display, Ok(RawDisplayHandle::Wayland(_)));
+            // Native Wayland: the boxes are drawn inside this window, which they can't be given
+            // as their parent (`windows::IN_WINDOW`). Not in the compact panel: its window is
+            // too small for them, so they keep windows of their own there.
+            crate::windows::IN_WINDOW.store(self.native_wayland && !self.panel_open, Ordering::Relaxed);
+            // X11: the dialogs belong to this window (`x11_dialog`).
+            crate::x11_dialog::set_main({
+                use raw_window_handle::HasWindowHandle as _;
+                frame.window_handle().ok().map(|h| h.as_raw())
+            });
             if self.bar.on && self.wl.is_none() && !self.wl_failed {
                 if let Ok(RawDisplayHandle::Wayland(d)) = display {
                     // SAFETY: winit's display lives as long as the program's windows.

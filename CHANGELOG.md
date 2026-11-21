@@ -125,6 +125,15 @@ Windows:
 
 Linux:
 
+- **X11: dialogs belong to Snagster's window**: Settings, the Library and every dialog stay
+  above Snagster and keep out of the task bar, and the fixed-size ones (New image, Resize,
+  Rename and the like) have no Minimise or Maximise button on KDE.
+- **Wayland: dialogs open inside Snagster's window**: New image, Resize, Rename and the other
+  fixed-size dialogs dim the picture behind them and close with Esc, Ctrl+W or their close button (a
+  click beside them doesn't lose what you typed). Settings, the Library and the other big
+  boxes fit inside the window. A box has the keys from when it opens until you click the
+  editor (a click on the box gives them back to it), and meanwhile the editor's shortcuts
+  leave the picture alone. Esc closes only the box on top.
 - **Every screen in a Screen capture on Wayland**: the desktop's dialog lets you pick all your
   screens once, and Screen, Area and scrolling captures then see the whole desk, each screen
   where it sits (screens with different scaling are matched to the sharpest). Recording keeps
