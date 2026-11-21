@@ -40,6 +40,7 @@ pub(crate) fn centered_on(parent: Rect, size: egui::Vec2, monitor: Option<egui::
 pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: impl FnOnce(&mut egui::Ui) -> R) -> Option<R> {
     if !*open {
         ctx.data_mut(|d| d.remove::<Pos2>(egui::Id::unique(("own-window-at", w.key))));
+        let_go(ctx, w.key);
         // (A box dropped without this call is noticed by the frame it was missing from.)
         #[cfg(target_os = "linux")]
         crate::x11_dialog::closed(w.key);
@@ -48,6 +49,8 @@ pub(crate) fn own_window<R>(ctx: &egui::Context, w: Win, open: &mut bool, add: i
     if in_window(ctx) {
         return in_window_box(ctx, &w, open, add);
     }
+    // Back from inside the window (the compact panel opened): it opens afresh there next time.
+    let_go(ctx, w.key);
     // Where it opens is worked out once, so moving Snagster's window later doesn't drag it along.
     let at_id = egui::Id::unique(("own-window-at", w.key));
     let at = ctx.data(|d| d.get_temp::<Pos2>(at_id)).unwrap_or_else(|| {
@@ -132,6 +135,18 @@ fn keys_id() -> egui::Id {
     egui::Id::unique("own-window-has-keys")
 }
 
+/// Which box inside the window has the keys (its `egui::Id`): one at a time, so Esc closes
+/// that one and not the box under it.
+fn owner_id() -> egui::Id {
+    egui::Id::unique("own-window-keys-owner")
+}
+
+/// Whether `e` is a key that closes a box: Esc, or Ctrl+W (⌘W), as GNOME, KDE and macOS expect.
+fn is_close_key(e: &egui::Event) -> bool {
+    matches!(e, egui::Event::Key { key, pressed: true, modifiers, .. }
+        if *key == Key::Escape && !modifiers.any() || *key == Key::W && modifiers.command_only())
+}
+
 /// Whether a box inside Snagster's window has the keys (a fixed dialog while it is open; a
 /// Settings or Library box from its opening until a click outside it), so the editor's
 /// shortcuts don't act on the picture behind it: Delete, Esc, Ctrl+Z belong to the box.
@@ -164,23 +179,36 @@ fn backdrop(dark: bool) -> Color32 {
 fn in_window_box<R>(ctx: &egui::Context, w: &Win, open: &mut bool, add: impl FnOnce(&mut egui::Ui) -> R) -> Option<R> {
     let room = ctx.content_rect().shrink(IN_WINDOW_MARGIN);
     let id = egui::Id::unique(("own-window", w.key));
-    // Opening: the box has the keys, until a click outside it (a dialog keeps them).
-    let first = ctx.data(|d| d.get_temp::<Pos2>(egui::Id::unique(("own-window-at", w.key))).is_none());
-    let keys_at = egui::Id::unique(("own-window-keys", w.key));
+    let shown_id = egui::Id::unique(("own-window-in", w.key));
+    let prev_id = egui::Id::unique(("own-window-prev", w.key));
+    // Opening: the box takes the keys from whichever box had them (they go back to it when this
+    // one closes), and from the control behind that had the focus.
+    let first = ctx.data(|d| d.get_temp::<bool>(shown_id).is_none());
     if first {
+        let focused = ctx.memory(|m| m.focused());
+        if let Some(f) = focused {
+            ctx.memory_mut(|m| m.surrender_focus(f));
+        }
         ctx.data_mut(|d| {
-            d.insert_temp(egui::Id::unique(("own-window-at", w.key)), room.center());
-            d.insert_temp(keys_at, true);
+            // A spot worked out for a window of its own (before a switch from the compact
+            // panel) means nothing in here.
+            d.remove::<Pos2>(egui::Id::unique(("own-window-at", w.key)));
+            d.insert_temp(shown_id, true);
+            match d.get_temp::<egui::Id>(owner_id()) {
+                Some(prev) if prev != id => {
+                    d.insert_temp(prev_id, prev);
+                }
+                _ => {
+                    d.remove::<egui::Id>(prev_id);
+                }
+            }
+            d.insert_temp(owner_id(), id);
         });
     }
     // Read from this frame's key presses, each with the modifiers held at that moment.
-    let close_keys = ctx.input(|i| {
-        i.events.iter().any(|e| {
-            matches!(e, egui::Event::Key { key, pressed: true, modifiers, .. }
-                if *key == Key::Escape && !modifiers.any() || *key == Key::W && modifiers.command_only())
-        })
-    });
-    let (out, rect, close) = if !w.resizable {
+    let close_keys = ctx.input(|i| i.events.iter().any(is_close_key));
+    let owns = |ctx: &egui::Context| ctx.data(|d| d.get_temp::<egui::Id>(owner_id())) == Some(id);
+    let (out, close) = if !w.resizable {
         let kde = crate::platform::system() == crate::platform::System::Kde;
         let style = ctx.global_style();
         let frame = egui::Frame::window(&style)
@@ -199,9 +227,10 @@ fn in_window_box<R>(ctx: &egui::Context, w: &Win, open: &mut bool, add: impl FnO
         // Esc closes an open list in the box first (egui does that), not the box.
         let esc = close_keys && r.is_top_modal && !r.any_popup_open;
         let (out, x) = r.inner;
-        (Some(out), r.response.rect, x || esc)
+        (Some(out), x || esc)
     } else {
-        let has_keys = ctx.data(|d| d.get_temp::<bool>(keys_at)).unwrap_or(false);
+        // Not while a dialog is over it (that one has the keys).
+        let has_keys = owns(ctx) && ctx.memory(|m| m.top_modal_layer()).is_none();
         let mut shown = *open;
         let r = egui::Window::new(w.title)
             .id(id)
@@ -214,43 +243,77 @@ fn in_window_box<R>(ctx: &egui::Context, w: &Win, open: &mut bool, add: impl FnO
             .pivot(egui::Align2::CENTER_CENTER)
             .default_pos(room.center())
             .show(ctx, add);
-        let rect = r.as_ref().map(|r| r.response.rect);
         let esc = has_keys && close_keys && !egui::Popup::is_any_open(ctx);
-        (r.and_then(|r| r.inner), rect.unwrap_or(Rect::NOTHING), !shown || esc)
+        (r.and_then(|r| r.inner), !shown || esc)
     };
-    // A click inside the box gives it the keys, a click anywhere else gives them back.
-    // From the events: a press and its release can come in one frame (a quick tap), and then
-    // the pointer state has no press left to look at.
+    // A click on a box gives it the keys, a click on the editor gives them back. The box on top
+    // where it lands counts (a dialog's dimmed backdrop is the dialog's), so a click into a
+    // dialog over the Library doesn't hand the Library the keys too. From the events: a press
+    // and its release can come in one frame (a quick tap), and then the pointer state has no
+    // press left to look at. Not on the frame the box opens: that click was meant for what
+    // opened it.
     let press = ctx.input(|i| {
         i.events.iter().find_map(|e| match e {
             egui::Event::PointerButton { pos, pressed: true, .. } => Some(*pos),
             _ => None,
         })
     });
-    if let Some(p) = press {
-        ctx.data_mut(|d| d.insert_temp(keys_at, !w.resizable || rect.contains(p)));
-    }
-    if !w.resizable || ctx.data(|d| d.get_temp::<bool>(keys_at)).unwrap_or(false) {
-        let pass = ctx.cumulative_pass_nr();
-        ctx.data_mut(|d| d.insert_temp(keys_id(), pass));
+    if let Some(p) = press.filter(|_| !first) {
+        let on_me = ctx.layer_id_at(p).is_some_and(|l| l.id == id);
+        if on_me {
+            ctx.data_mut(|d| d.insert_temp(owner_id(), id));
+        } else if owns(ctx) {
+            ctx.data_mut(|d| d.remove::<egui::Id>(owner_id()));
+        }
     }
     if close {
         *open = false;
-        ctx.data_mut(|d| {
-            d.remove::<bool>(keys_at);
-            d.remove::<Pos2>(egui::Id::unique(("own-window-at", w.key)));
-        });
+        // The key that closed it is used up, so a box drawn after this one doesn't close too.
+        if close_keys {
+            ctx.input_mut(|i| i.events.retain(|e| !is_close_key(e)));
+        }
+        let_go(ctx, w.key);
+    } else if !w.resizable || owns(ctx) {
+        // (Not once it closes: the editor's keys work again from the next frame.)
+        let pass = ctx.cumulative_pass_nr();
+        ctx.data_mut(|d| d.insert_temp(keys_id(), pass));
     }
     out
+}
+
+/// A box inside the window with `key` is gone (closed, or now in a window of its own): the keys
+/// go back to the box it took them from, or to the editor.
+fn let_go(ctx: &egui::Context, key: &str) {
+    let shown_id = egui::Id::unique(("own-window-in", key));
+    if ctx.data(|d| d.get_temp::<bool>(shown_id).is_none()) {
+        return;
+    }
+    let id = egui::Id::unique(("own-window", key));
+    let prev_id = egui::Id::unique(("own-window-prev", key));
+    ctx.data_mut(|d| {
+        if d.get_temp::<egui::Id>(owner_id()) == Some(id) {
+            match d.get_temp::<egui::Id>(prev_id) {
+                Some(p) => {
+                    d.insert_temp(owner_id(), p);
+                }
+                None => {
+                    d.remove::<egui::Id>(owner_id());
+                }
+            }
+        }
+        d.remove::<bool>(shown_id);
+        d.remove::<egui::Id>(prev_id);
+    });
 }
 
 /// A dialog's title row inside the window: the title in the middle and a Close button at the
 /// end (no Minimise or Maximise), a line under it on KDE. True when Close was clicked.
 fn box_header(ui: &mut egui::Ui, title: &str, line: bool) -> bool {
     let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), 28.0), Sense::hover());
-    let font = egui::FontId::proportional(15.0);
-    let text = ui.visuals().strong_text_color();
-    ui.painter().text(rect.center(), egui::Align2::CENTER_CENTER, title, font, text);
+    // A label, not painted text, so a screen reader reads the dialog's title (on Wayland it has
+    // no window title of its own).
+    let text = egui::RichText::new(title).size(15.0).strong();
+    ui.put(rect.shrink2(vec2(32.0, 0.0)), egui::Label::new(text).selectable(false).truncate());
     let at = Rect::from_center_size(pos2(rect.right() - 12.0, rect.center().y), vec2(28.0, 28.0));
     let x = ui.put(at, |ui: &mut egui::Ui| crate::look::icon_button(ui, crate::look::ph::X, crate::i18n::t("Close")));
     if line {
@@ -2709,6 +2772,104 @@ mod tests {
         box_frame(&ctx, "library", true, &mut open, click(inner.center()));
         box_frame(&ctx, "library", true, &mut open, vec![key(Key::Escape, Default::default())]);
         assert!(!open, "a click inside gives it the keys back, and Esc closes it");
+    }
+
+    /// One frame of two boxes inside an 800x600 window: a big one `a` and `b` over it (a second
+    /// big box, or a dialog), each drawn in the order given.
+    fn two_frame(ctx: &egui::Context, a: &mut bool, b: &mut bool, b_resizable: bool, b_first: bool, events: Vec<egui::Event>) {
+        let input = egui::RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(800.0, 600.0))), events, ..Default::default() };
+        let mut out = ctx.run_ui(input, |ui| {
+            let size = if b_resizable { vec2(440.0, 600.0) } else { vec2(440.0, 220.0) };
+            let draw_b = |b: &mut bool| {
+                own_window(ui.ctx(), Win { key: "b", title: "B", size, resizable: b_resizable }, b, |ui| {
+                    ui.label("b");
+                });
+            };
+            if b_first {
+                draw_b(b);
+            }
+            own_window(ui.ctx(), Win { key: "a", title: "A", size: vec2(720.0, 600.0), resizable: true }, a, |ui| {
+                ui.label("a");
+            });
+            if !b_first {
+                draw_b(b);
+            }
+        });
+        out.textures_delta.clear();
+    }
+
+    /// Settings, then Language from its General pane: Esc closes Language and leaves Settings,
+    /// which has the keys again (a second Esc closes it), whichever is drawn first.
+    #[test]
+    fn esc_in_a_second_box_closes_only_that_one_and_the_keys_go_back() {
+        for b_first in [false, true] {
+            let ctx = egui::Context::default();
+            ctx.set_embed_viewports(true);
+            let (mut a, mut b) = (true, false);
+            for _ in 0..3 {
+                two_frame(&ctx, &mut a, &mut b, true, b_first, vec![]);
+            }
+            two_frame(&ctx, &mut a, &mut b, true, b_first, click(pos2(400.0, 300.0)));
+            b = true;
+            for _ in 0..3 {
+                two_frame(&ctx, &mut a, &mut b, true, b_first, vec![]);
+            }
+            two_frame(&ctx, &mut a, &mut b, true, b_first, vec![key(Key::Escape, Default::default())]);
+            assert!(!b, "Esc closes the box on top");
+            assert!(a, "and leaves the one under it open (drawn first: {b_first})");
+            two_frame(&ctx, &mut a, &mut b, true, b_first, vec![]);
+            assert!(box_has_keys(&ctx), "the first box has the keys again");
+            two_frame(&ctx, &mut a, &mut b, true, b_first, vec![key(Key::Escape, Default::default())]);
+            assert!(!a, "so the next Esc closes it");
+        }
+    }
+
+    /// The Library, then New image over it: a click into the dialog doesn't give the Library the
+    /// keys, and Esc closes the dialog alone.
+    #[test]
+    fn esc_in_a_dialog_over_a_big_box_leaves_the_box_open() {
+        for b_first in [false, true] {
+            let ctx = egui::Context::default();
+            ctx.set_embed_viewports(true);
+            let (mut a, mut b) = (true, false);
+            for _ in 0..3 {
+                two_frame(&ctx, &mut a, &mut b, false, b_first, vec![]);
+            }
+            two_frame(&ctx, &mut a, &mut b, false, b_first, click(pos2(4.0, 4.0)));
+            b = true;
+            for _ in 0..3 {
+                two_frame(&ctx, &mut a, &mut b, false, b_first, vec![]);
+            }
+            two_frame(&ctx, &mut a, &mut b, false, b_first, click(pos2(400.0, 300.0)));
+            two_frame(&ctx, &mut a, &mut b, false, b_first, vec![key(Key::Escape, Default::default())]);
+            assert!(!b, "Esc closes the dialog");
+            assert!(a, "and leaves the box under it open (drawn first: {b_first})");
+            for _ in 0..2 {
+                two_frame(&ctx, &mut a, &mut b, false, b_first, vec![]);
+            }
+            assert!(!box_has_keys(&ctx), "the Library had given the keys back before, so the editor has them");
+        }
+    }
+
+    /// A dialog closed by its own buttons (Cancel, Create) gives the keys back too, and opens
+    /// with them again next time.
+    #[test]
+    fn a_dialog_closed_by_its_buttons_gives_the_keys_back_and_takes_them_when_reopened() {
+        let ctx = egui::Context::default();
+        ctx.set_embed_viewports(true);
+        let mut open = true;
+        box_frame(&ctx, "dialog", false, &mut open, vec![]);
+        assert!(box_has_keys(&ctx));
+        open = false;
+        for _ in 0..2 {
+            box_frame(&ctx, "dialog", false, &mut open, vec![]);
+        }
+        assert!(!box_has_keys(&ctx), "Cancel gave the keys back");
+        open = true;
+        box_frame(&ctx, "dialog", false, &mut open, vec![]);
+        assert!(box_has_keys(&ctx), "reopened, it has them again");
+        box_frame(&ctx, "dialog", false, &mut open, vec![key(Key::W, egui::Modifiers::COMMAND)]);
+        assert!(!open, "and Ctrl+W closes it");
     }
 
     #[test]

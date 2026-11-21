@@ -117,8 +117,9 @@ Linux:
 - **Wayland: dialogs open inside Snagster's window**: New image, Resize, Rename and the other
   fixed-size dialogs dim the picture behind them and close with Esc, Ctrl+W or their close button (a
   click beside them doesn't lose what you typed). Settings, the Library and the other big
-  boxes fit inside the window, and while one of them has the keys the editor's shortcuts
-  leave the picture alone.
+  boxes fit inside the window. A box has the keys from when it opens until you click the
+  editor (a click on the box gives them back to it), and meanwhile the editor's shortcuts
+  leave the picture alone. Esc closes only the box on top.
 - **Every screen in a Screen capture on Wayland**: the desktop's dialog lets you pick all your
   screens once, and Screen, Area and scrolling captures then see the whole desk, each screen
   where it sits (screens with different scaling are matched to the sharpest). Recording keeps
