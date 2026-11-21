@@ -4,6 +4,22 @@ What changed for people using Snagster, per version.
 
 ## Not released yet
 
+For AI apps (every system):
+
+- **Clearer answers when an AI app gets a tool's arguments wrong**: every call is checked
+  against the tool's description first, and a misspelt argument, a number sent as text, a name
+  that isn't one of the choices or a value out of range is refused with what was sent and what
+  the tool takes (before, some were ignored or quietly changed to the nearest allowed value).
+  Every argument now says what it is, its unit and its range.
+- Ending a live stream and turning the replay buffer off are marked as ending something, so AI
+  apps ask before they do it. The server tells AI apps its description, website and icon.
+- **A free skill for AI coding agents** (Claude Code and others):
+  [skills/snagster/SKILL.md](skills/snagster/SKILL.md) explains when and how to use Snagster's
+  tools, with setup and recipes.
+- **MCP bundles**: every release has a one-file MCP bundle (`.mcpb`) for Windows, Linux and
+  macOS, which AI apps that take bundles install with one click, and a `server.json` for the
+  official MCP Registry.
+
 Using Snagster from the keyboard (every system):
 
 - **F6 and Shift+F6 move between the ribbon, the tools, the picture, the options and Recent**;
@@ -17,6 +33,9 @@ Using Snagster from the keyboard (every system):
 
 Live streaming (every system):
 
+- **A Studio sound that can't start is always reported**: on a busy computer a missing sound
+  file or a microphone in use could be kept as a silent input without the note saying so.
+  Snagster now waits for each sound to start or fail.
 - **See trouble while you're live**: the Stream tab's Status says in a few words when the
   upload can't keep up, the computer can't encode fast enough, or a service keeps reconnecting,
   with what to do on hover (a bad one also shows in the status line and the capture panel). A

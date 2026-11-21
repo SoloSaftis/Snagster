@@ -75,7 +75,12 @@ function stdio() {
         const list = await call('tools/list', {});
         const tools = (list.result && list.result.tools) || [];
         check(tools.length >= 45, `tools/list (${tools.length} tools)`);
-        check(tools.every((t) => t.annotations && typeof t.annotations.readOnlyHint === 'boolean' && t.inputSchema), 'every tool has a schema and hints');
+        check(tools.every((t) => t.annotations && typeof t.annotations.readOnlyHint === 'boolean' && typeof t.annotations.destructiveHint === 'boolean' && t.title && t.inputSchema), 'every tool has a title, a schema and hints');
+        const undescribed = [];
+        for (const t of tools) for (const [k, p] of Object.entries(t.inputSchema.properties || {})) if (!p.description) undescribed.push(t.name + '.' + k);
+        check(undescribed.length === 0, 'every argument is described', undescribed.join(', '));
+        const si = init.result.serverInfo || {};
+        check(si.name === 'snagster' && si.title === 'Snagster' && si.version && si.websiteUrl && si.description && init.result.instructions, 'serverInfo has what a listing shows', JSON.stringify(si));
         const names = new Set(tools.map((t) => t.name));
         const added = ['update_mark', 'run_preset', 'simplify', 'quick_save', 'capture_last_area', 'studio_add_scene', 'studio_remove_scene', 'studio_set_current', 'studio_update_source', 'library_delete', 'undo_delete', 'library_tag'];
         const missing = added.filter((n) => !names.has(n));
@@ -210,7 +215,7 @@ function stdio() {
         const sp = ss.inputSchema.properties;
         check(['hevc', 'hardware', 'keyframe_s', 'reconnects', 'cursor', 'also', 'record_copy', 'audio', 'max_height', 'bitrate', 'fps'].every((k) => sp[k]), 'stream_start takes every streaming option');
         const badKey = await tool('stream_start', { keyframe_s: 9, key: 'sk_smoke_secret_42' });
-        check(badKey.isError === true && badKey.content[0].text.includes('1-4') && !JSON.stringify(badKey).includes('sk_smoke_secret_42'), 'stream_start checks keyframe_s before going live');
+        check(badKey.isError === true && badKey.content[0].text.includes('from 1 to 4') && !JSON.stringify(badKey).includes('sk_smoke_secret_42'), 'stream_start checks keyframe_s before going live');
         const bad = await tool('no_such_tool');
         check(bad.isError === true, 'unknown tool is an error, not a crash');
         const read = await call('resources/read', { uri: 'snagster://picture/current' });

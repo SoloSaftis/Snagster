@@ -41,8 +41,28 @@ set_setting checks kind and range). Everything else a person can press in the wi
 presses it in the open window (zoom, pins, Recent, dialogs, email, print, Studio and stream buttons...); editor_apply \
 (cut out, fill, erase, lift, resize or copy a mark), gif_edit, studio_edit and save_to_cloud do the rest here. Long calls send progress when the \
 request has a progressToken and stop early when cancelled. Coordinates are picture pixels from the top-left corner \
-(desktop pixels for captures and recordings). Colours are #RRGGBB or a name (red, orange, yellow, green, blue, purple, \
+(desktop pixels for captures and recordings). Arguments are checked against each tool's input schema first: an error names \
+the argument, what it got and what the tool takes. Colours are #RRGGBB or a name (red, orange, yellow, green, blue, purple, \
 black, white).";
+
+/// Where people read about Snagster (also the MCP Registry's websiteUrl).
+pub const WEBSITE: &str = "https://github.com/SoloSaftis/Snagster";
+
+/// One line about Snagster for listings (the MCP Registry takes at most 100 characters; server.json
+/// and the MCPB bundles say the same).
+pub const DESCRIPTION: &str = "Screen capture, markup, recording and live streaming on Windows, Linux and macOS.";
+
+/// Who this server is, for `initialize`: what a client or a marketplace listing shows.
+fn server_info() -> Value {
+    json!({
+        "name": "snagster",
+        "title": "Snagster",
+        "version": env!("CARGO_PKG_VERSION"),
+        "description": DESCRIPTION,
+        "websiteUrl": WEBSITE,
+        "icons": [{"src": "https://raw.githubusercontent.com/SoloSaftis/Snagster/main/assets/snagster-256.png", "mimeType": "image/png", "sizes": ["256x256"]}]
+    })
+}
 
 /// Reports how far a running call is: done so far, the total when known, and what it's doing.
 pub type Progress = Arc<dyn Fn(f64, Option<f64>, &str) + Send + Sync>;
@@ -105,11 +125,321 @@ fn effect_names() -> Vec<String> {
     effects::Effect::ALL.iter().map(|e| format!("{e:?}")).collect()
 }
 
+/// What apply_effect takes: every effect's name, and its label as the window shows it.
+fn effect_values() -> Vec<String> {
+    let mut v = effect_names();
+    for e in effects::Effect::ALL {
+        if !v.iter().any(|n| n.eq_ignore_ascii_case(e.label())) {
+            v.push(e.label().to_string());
+        }
+    }
+    v
+}
+
 fn tools() -> Vec<Tool> {
     let mut all = base_tools();
     all.extend(more::tools());
     all.extend(app_tools::tools());
+    for t in &mut all {
+        tighten(&mut t.schema);
+    }
     all
+}
+
+/// Arguments that count things in a list (marks, sources, scenes, frames, presets) or name a
+/// screen by its number: whole numbers.
+const WHOLE: [&str; 11] = ["index", "scene", "monitor_id", "number", "source", "sound", "frame", "first", "last", "limit", "max_steps"];
+
+/// The first "lo-hi" range written in a description, e.g. 1-120 or 0.05-20.
+fn range_in(d: &str) -> Option<(f64, f64)> {
+    let b = d.as_bytes();
+    let number_at = |i: usize| -> Option<(f64, usize)> {
+        let end = (i..b.len()).find(|&j| !(b[j].is_ascii_digit() || b[j] == b'.')).unwrap_or(b.len());
+        let t = d[i..end].trim_end_matches('.');
+        t.parse().ok().map(|v| (v, i + t.len()))
+    };
+    let mut i = 0;
+    while i < b.len() {
+        let starts = b[i].is_ascii_digit() && (i == 0 || !(b[i - 1].is_ascii_alphanumeric() || b[i - 1] == b'.' || b[i - 1] == b'#'));
+        match number_at(i).filter(|_| starts) {
+            Some((lo, end)) => {
+                if b.get(end) == Some(&b'-')
+                    && b.get(end + 1).is_some_and(u8::is_ascii_digit)
+                    && let Some((hi, after)) = number_at(end + 1)
+                    && lo < hi
+                    && !b.get(after).is_some_and(|c| c.is_ascii_alphabetic() && *c != b's')
+                {
+                    return Some((lo, hi));
+                }
+                i = end.max(i + 1);
+            }
+            None => i += 1,
+        }
+    }
+    None
+}
+
+/// Make a schema say in its own terms what its descriptions say: whole numbers for counts and
+/// numbers, and the range a description gives ("1-120") as minimum and maximum, so an AI app
+/// (and check_args) knows the limits.
+fn tighten(schema: &mut Value) {
+    let Some(props) = schema.get_mut("properties").and_then(Value::as_object_mut) else { return };
+    for (k, p) in props.iter_mut() {
+        if p["type"] == "number" && WHOLE.contains(&k.as_str()) {
+            p["type"] = json!("integer");
+        }
+        let numeric = p["type"] == "number" || p["type"] == "integer";
+        if numeric
+            && p.get("minimum").is_none()
+            && p.get("maximum").is_none()
+            && let Some((lo, hi)) = p["description"].as_str().and_then(range_in)
+        {
+            p["minimum"] = json!(lo);
+            p["maximum"] = json!(hi);
+        }
+        if let Some(items) = p.get_mut("items") {
+            tighten(items);
+        }
+        tighten(p);
+    }
+}
+
+/// Every tool, built once (the schemas don't change while Snagster runs).
+fn all_tools() -> &'static [Tool] {
+    static ALL: std::sync::LazyLock<Vec<Tool>> = std::sync::LazyLock::new(tools);
+    &ALL
+}
+
+/// Old tool names that still work, and the tool each one now is. Empty so far: a name only
+/// changes when it is truly wrong, and then the old one stays here.
+const ALIASES: [(&str, &str); 0] = [];
+
+/// The tool a name (or an old name) calls.
+fn find_tool(name: &str) -> Option<&'static Tool> {
+    let name = ALIASES.iter().find(|(old, _)| *old == name).map_or(name, |(_, new)| new);
+    all_tools().iter().find(|t| t.name == name)
+}
+
+/// A JSON value as an answer shows it: text in quotes, others as JSON, cut short when long.
+fn shown(v: &Value) -> String {
+    let s = v.to_string();
+    if s.chars().count() > 60 { s.chars().take(57).collect::<String>() + "..." } else { s }
+}
+
+/// What a schema's `type` asks for, in words.
+fn kind_words(t: &str) -> &'static str {
+    match t {
+        "integer" => "a whole number",
+        "number" => "a number",
+        "string" => "text",
+        "boolean" => "true or false",
+        "array" => "a list",
+        "object" => "an object",
+        _ => "a value",
+    }
+}
+
+/// The choice a tool's own parser makes of `v` for the argument `key` (the other spellings the
+/// tools have always taken: circle, centre, mic, h264, yt, web, region...), as the schema names it.
+/// check_args passes that name on, so the tool means the same and the schema stays short.
+fn parsed_choice(key: &str, v: &Value) -> Option<&'static str> {
+    use crate::stream::{services::Service, source::Source};
+    let text = v.as_str();
+    Some(match key {
+        "shape" => match cut_shape(text?)? {
+            CutShape::Rect => "rectangle",
+            CutShape::Ellipse => "ellipse",
+            CutShape::Rounded => "rounded",
+            CutShape::Triangle => "triangle",
+            CutShape::Star => "star",
+            CutShape::Heart => "heart",
+            CutShape::Polygon => "polygon",
+            CutShape::Freehand => "freehand",
+        },
+        "align" => ["left", "center", "right"][align_arg(&json!({ "align": v })).ok()?? as usize],
+        "callout_shape" => match callout_shape_arg(&json!({ "callout_shape": text? })).ok()?? {
+            crate::settings::CalloutShape::Rounded => "rounded",
+            crate::settings::CalloutShape::Rectangle => "rectangle",
+            crate::settings::CalloutShape::Oval => "oval",
+        },
+        "style" => match step_style_arg(&json!({ "style": text? })).ok()?? {
+            crate::settings::StepStyle::Numbers => "numbers",
+            crate::settings::StepStyle::Upper => "upper",
+            crate::settings::StepStyle::Lower => "lower",
+            crate::settings::StepStyle::Roman => "roman",
+        },
+        "kinds" => {
+            let k = ocr::RedactKinds::from_names(&[text?]).ok()?;
+            let on = [k.emails, k.phones, k.cards, k.addresses, k.ips, k.urls];
+            ocr::RedactKinds::NAMES[on.iter().position(|b| *b)?]
+        }
+        "format" => match crate::video::VideoFormat::parse(text?)? {
+            crate::video::VideoFormat::Mp4 => "mp4",
+            crate::video::VideoFormat::Hevc => "hevc",
+            crate::video::VideoFormat::Wmv => "wmv",
+            crate::video::VideoFormat::Gif => "gif",
+        },
+        "audio" => match crate::audio::AudioSource::parse(text?)? {
+            crate::audio::AudioSource::None => "none",
+            crate::audio::AudioSource::System => "system",
+            crate::audio::AudioSource::Microphone => "microphone",
+            crate::audio::AudioSource::Both => "both",
+        },
+        "source" => match Source::parse(text?)? {
+            Source::Screen => "screen",
+            Source::Window(_) => "window",
+            Source::Area(..) => "area",
+            Source::Studio => "studio",
+        },
+        "service" => match Service::parse(text?)? {
+            Service::Twitch => "twitch",
+            Service::YouTube => "youtube",
+            Service::Kick => "kick",
+            Service::Facebook => "facebook",
+            Service::Restream => "restream",
+            Service::Custom => "custom",
+        },
+        _ => return None,
+    })
+}
+
+/// The choice in `allowed` that `v` names: itself, the same name in another case, or what the
+/// tool's own parser makes of it for the argument `key` (see parsed_choice).
+fn choice_of(key: &str, allowed: &[Value], v: &Value) -> Option<Value> {
+    if allowed.contains(v) {
+        return Some(v.clone());
+    }
+    let find = |want: &str| allowed.iter().find(|a| a.as_str().is_some_and(|a| a.eq_ignore_ascii_case(want))).cloned();
+    parsed_choice(key, v).and_then(find).or_else(|| v.as_str().and_then(|t| find(t.trim())))
+}
+
+/// Whether an argument is a secret (a stream key, a token): its value is never shown back.
+fn secret(key: &str, schema: &Value) -> bool {
+    matches!(key, "token" | "password") || schema["description"].as_str().is_some_and(|d| d.contains("Secret"))
+}
+
+/// Check one argument against its schema and put each choice in its own spelling. `at` names
+/// it in the answer, `key` is its own name (for a list's items, the list's).
+fn check_value(tool: &str, at: &str, key: &str, schema: &Value, v: &mut Value) -> Result<(), String> {
+    if v.is_null() {
+        return Ok(());
+    }
+    // A choice the tool takes (in any spelling its parser reads, even align's 0-2) is fine as it is.
+    if let Some(allowed) = schema["enum"].as_array()
+        && let Some(c) = choice_of(key, allowed, v)
+    {
+        *v = c;
+        return Ok(());
+    }
+    let show = |v: &Value| if secret(key, schema) { "(hidden)".to_string() } else { shown(v) };
+    let types: Vec<&str> = match &schema["type"] {
+        Value::String(t) => vec![t.as_str()],
+        Value::Array(ts) => ts.iter().filter_map(Value::as_str).collect(),
+        _ => vec![],
+    };
+    let fits = |t: &str| match t {
+        "integer" => v.as_f64().is_some_and(|f| f.fract() == 0.0),
+        "number" => v.is_number(),
+        "string" => v.is_string(),
+        "boolean" => v.is_boolean(),
+        "array" => v.is_array(),
+        "object" => v.is_object(),
+        _ => true,
+    };
+    if !types.is_empty() && !types.iter().any(|t| fits(t)) {
+        let want: Vec<&str> = types.iter().filter(|t| **t != "null").map(|t| kind_words(t)).collect();
+        let hint = if v.is_string() && types.iter().any(|t| matches!(*t, "number" | "integer" | "boolean")) { " (without quotes)" } else { "" };
+        return Err(format!("\"{at}\" is {}, but {tool} takes {} there{hint}.", show(v), want.join(" or ")));
+    }
+    if let Some(allowed) = schema["enum"].as_array() {
+        match choice_of(key, allowed, v) {
+            Some(c) => *v = c,
+            None => {
+                let names: Vec<String> = allowed.iter().map(|a| a.as_str().map_or_else(|| a.to_string(), str::to_string)).collect();
+                let about = schema["description"].as_str().map(|d| format!(" ({})", d.trim_end_matches('.'))).unwrap_or_default();
+                let list = if names.len() <= 20 { format!("one of: {}{about}", names.join(", ")) } else { format!("one of {} names{about}", names.len()) };
+                return Err(format!("\"{at}\" is {}, but {tool} takes {list}.", show(v)));
+            }
+        }
+    }
+    if let Some(f) = v.as_f64() {
+        let (lo, hi) = (schema["minimum"].as_f64(), schema["maximum"].as_f64());
+        if lo.is_some_and(|lo| f < lo) || hi.is_some_and(|hi| f > hi) {
+            let range = match (lo, hi) {
+                (Some(lo), Some(hi)) => format!("from {lo} to {hi}"),
+                (Some(lo), None) => format!("{lo} or more"),
+                (None, Some(hi)) => format!("{hi} or less"),
+                _ => unreachable!(),
+            };
+            return Err(format!("\"{at}\" is {f}, but {tool} takes {range} there."));
+        }
+    }
+    if let Some(items) = v.as_array_mut() {
+        if let Some(max) = schema["maxItems"].as_u64().filter(|m| items.len() as u64 > *m) {
+            return Err(format!("\"{at}\" has {} items, but {tool} takes at most {max}.", items.len()));
+        }
+        if let Some(min) = schema["minItems"].as_u64().filter(|m| (items.len() as u64) < *m) {
+            return Err(format!("\"{at}\" has {} items, but {tool} needs at least {min}.", items.len()));
+        }
+        for (i, item) in items.iter_mut().enumerate() {
+            check_value(tool, &format!("{at}[{i}]"), key, &schema["items"], item)?;
+        }
+    }
+    if let Some(o) = v.as_object_mut() {
+        for k in schema["required"].as_array().into_iter().flatten().filter_map(Value::as_str) {
+            if o.get(k).is_none_or(Value::is_null) {
+                return Err(format!("\"{at}\" needs \"{k}\"."));
+            }
+        }
+        for (k, item) in o.iter_mut() {
+            if let Some(s) = schema["properties"].get(k) {
+                check_value(tool, &format!("{at}.{k}"), k, s, item)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Check a call's arguments against the tool's input schema before it runs, so a misspelt
+/// name, a number sent as text or a value out of range gets an answer that says what is wrong
+/// and what the tool takes, instead of being ignored. Gives the arguments the tool runs with:
+/// every choice in the schema's own spelling (any case, and what the tool's parser takes).
+fn check_args(t: &Tool, a: &Value) -> Result<Value, String> {
+    let mut args = match a {
+        Value::Null => serde_json::Map::new(),
+        Value::Object(o) => o.clone(),
+        other => return Err(format!("{}'s arguments are an object of named values, like {{\"x\": 10}}, not {}.", t.name, shown(other))),
+    };
+    let empty = serde_json::Map::new();
+    let props = t.schema["properties"].as_object().unwrap_or(&empty);
+    for k in t.schema["required"].as_array().into_iter().flatten().filter_map(Value::as_str) {
+        if args.get(k).is_none_or(Value::is_null) {
+            let help = props.get(k).and_then(|p| p["description"].as_str()).map(|d| format!(": {d}")).unwrap_or_else(|| ".".into());
+            return Err(format!("{} needs \"{k}\"{help}", t.name));
+        }
+    }
+    for (k, v) in args.iter_mut() {
+        match props.get(k) {
+            Some(s) => check_value(t.name, k, k, s, v)?,
+            None => {
+                let mut takes: Vec<&str> = props.keys().map(String::as_str).collect();
+                takes.sort_unstable();
+                let takes = if takes.is_empty() { "no arguments".to_string() } else { format!("only {}", takes.join(", ")) };
+                return Err(format!("{} has no argument \"{k}\"; it takes {takes}.", t.name));
+            }
+        }
+    }
+    Ok(Value::Object(args))
+}
+
+/// Make a tool's own "missing ..." answer say what the argument is.
+fn explain(t: &Tool, e: String) -> String {
+    let Some(rest) = e.strip_prefix("missing ") else { return e };
+    let k = rest.strip_prefix("number ").unwrap_or(rest).trim_matches('"');
+    match t.schema["properties"].get(k).and_then(|p| p["description"].as_str()) {
+        Some(d) => format!("{} needs \"{k}\" here: {d}", t.name),
+        None => format!("{} needs \"{k}\" here (tools/list describes it).", t.name),
+    }
 }
 
 /// Add `extra`'s properties to the schema properties `base`.
@@ -120,6 +450,18 @@ fn with(mut base: Value, extra: Value) -> Value {
         }
     }
     base
+}
+
+/// x, y, width and height of a rectangle, in `of`'s pixels ("desktop" or "picture").
+fn area(of: &str) -> Value {
+    let left = if of == "desktop" { "Left edge, in desktop pixels (screens left of the main one have negative x; see list_monitors)." } else { "Left edge, in picture pixels from the left." };
+    let top = if of == "desktop" { "Top edge, in desktop pixels (screens above the main one have negative y)." } else { "Top edge, in picture pixels from the top." };
+    json!({
+        "x": {"type": "number", "description": left},
+        "y": {"type": "number", "description": top},
+        "width": {"type": "number", "minimum": 1, "description": format!("Width in {of} pixels.")},
+        "height": {"type": "number", "minimum": 1, "description": format!("Height in {of} pixels.")}
+    })
 }
 
 /// The options every capture takes.
@@ -139,22 +481,21 @@ fn base_tools() -> Vec<Tool> {
     let n = |d: &str| json!({"type": "number", "description": d});
     let s = |d: &str| json!({"type": "string", "description": d});
     let b = |d: &str| json!({"type": "boolean", "description": d});
-    let rect = || json!({"x": {"type": "number"}, "y": {"type": "number"}, "width": {"type": "number"}, "height": {"type": "number"}});
     let formats = crate::video::VideoFormat::video_names();
-    let format_help = if formats.len() > 1 { "mp4 (H.264), hevc (MP4 with H.265) or wmv; default: the setting." } else { "mp4 (H.264); default mp4." };
+    let format_help = if formats.len() > 1 { "mp4 (H.264), hevc (MP4 with H.265) or wmv; default: the setting. For a GIF use record_gif." } else { "mp4 (H.264); default mp4. For a GIF use record_gif." };
     vec![
         Tool { name: "list_monitors", description: "The screens: id, name, position and size in desktop pixels.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "list_windows", description: "Visible windows: id, title, program, position and size.", schema: obj(json!({}), &[]), edits: false },
         Tool {
             name: "capture_screen",
-            description: "Capture a screen (the one under the mouse, a monitor by id, or all screens) as the current picture. Returns a preview.",
+            description: "Capture a screen (the one under the mouse, a monitor by id, or all screens) as the current picture, replacing the one in memory (undo brings it back). Returns a preview image. For part of the screen use capture_region; for one window capture_window.",
             schema: obj(with(json!({"monitor_id": n("A monitor id from list_monitors."), "all_screens": b("Every screen in one picture.")}), capture_props()), &[]),
             edits: true,
         },
         Tool {
             name: "capture_region",
             description: "Capture a desktop rectangle (desktop pixels) as the current picture. capture_last_area repeats it.",
-            schema: obj(with(rect(), capture_props()), &["x", "y", "width", "height"]),
+            schema: obj(with(area("desktop"), capture_props()), &["x", "y", "width", "height"]),
             edits: true,
         },
         Tool {
@@ -163,16 +504,18 @@ fn base_tools() -> Vec<Tool> {
             schema: obj(with(json!({"id": n("A window id from list_windows."), "title": s("Part of the window title.")}), capture_props()), &[]),
             edits: true,
         },
-        Tool { name: "open_image", description: "Open a picture file (PNG, JPEG, BMP, GIF, WebP, TIFF) or a .snag project as the current picture.", schema: obj(json!({"path": s("Full path.")}), &["path"]), edits: true },
+        Tool { name: "open_image", description: "Open a picture file (PNG, JPEG, BMP, GIF, WebP, TIFF) or a .snag project (marks stay editable) as the current picture, replacing the one in memory (undo brings that back).", schema: obj(json!({"path": s("The picture file (full path).")}), &["path"]), edits: true },
         Tool { name: "picture_info", description: "Size of the current picture and its marks.", schema: obj(json!({}), &[]), edits: false },
-        Tool { name: "view_picture", description: "The current picture with its marks, as an image (scaled to at most max_size pixels).", schema: obj(json!({"max_size": n("Longest side, default 1024.")}), &[]), edits: false },
+        Tool { name: "view_picture", description: "Look at the current picture with its marks: a PNG image, scaled down so its longest side is at most max_size pixels (the picture itself is not changed).", schema: obj(json!({"max_size": n("Longest side of the image sent back, in pixels (64-4096, default 1024).")}), &[]), edits: false },
         Tool {
             name: "add_mark",
             description: "Add a mark. kind: arrow, line, box, oval, highlight, pen, text, callout, step, stamp, pointer, spotlight, magnify, image. Arrows/lines go from (x, y) to (x2, y2); boxes, ovals, highlight and spotlight cover (x, y)-(x2, y2); a pen stroke follows points; text, callout, step, stamp, pointer and magnify are placed at (x, y) (a callout points at (x2, y2)); an image puts a picture file at (x, y), sized to (x2, y2) or its own size.",
             schema: obj(
                 json!({
-                    "kind": {"type": "string", "enum": MARK_KINDS},
-                    "x": {"type": "number"}, "y": {"type": "number"}, "x2": {"type": "number"}, "y2": {"type": "number"},
+                    "kind": {"type": "string", "enum": MARK_KINDS, "description": "What to draw (the tool's description says where each kind goes)."},
+                    "x": n("Where it starts or sits: picture pixels from the left."), "y": n("Where it starts or sits: picture pixels from the top."),
+                    "x2": n("Where it ends (arrow, line, box, oval, highlight, spotlight; an image's width) or what a callout points at, in picture pixels."),
+                    "y2": n("The end's or pointed-at spot's y, in picture pixels."),
                     "points": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}, "description": "[[x, y], ...] for a pen stroke (two or more)."},
                     "text": s("Text for text and callout; the emoji for stamp."),
                     "path": s("Picture file for kind image."),
@@ -185,11 +528,11 @@ fn base_tools() -> Vec<Tool> {
                     "radius": n("Rounded corners of a box, in pixels."),
                     "font": s("Font name for text and callouts (empty: Snagster's)."),
                     "bold": b("Bold text."), "italic": b("Italic text."),
-                    "align": {"type": "string", "enum": ["left", "center", "right"], "description": "Text alignment."},
+                    "align": {"type": "string", "enum": ["left", "center", "right"], "description": "Text alignment: left, center or right."},
                     "outline": b("An outline around text letters (text default on) or a callout bubble (default off)."),
                     "callout_shape": {"type": "string", "enum": ["rounded", "rectangle", "oval"], "description": "The callout bubble."},
                     "number": n("Number for a step; default the next one."),
-                    "style": {"type": "string", "enum": ["numbers", "upper", "lower", "roman"], "description": "How a step shows its number: 1, A, a or i."},
+                    "style": {"type": "string", "enum": ["numbers", "upper", "lower", "roman"], "description": "How a step shows its number: numbers (1, 2, 3), upper (A, B, C), lower (a, b, c) or roman (i, ii, iii)."},
                     "zoom": n("How much a magnifier enlarges, 1-8 (default 2).")
                 }),
                 &["kind"],
@@ -201,7 +544,7 @@ fn base_tools() -> Vec<Tool> {
             description: "Change a mark (by its number from list_marks): move it by dx/dy or to x/y (its top-left corner), scale it, or change its colour, width, fill, shadow, text, font, arrow heads, box corners, step number/style or magnifier zoom.",
             schema: obj(
                 json!({
-                    "index": n("Mark number."),
+                    "index": n("The mark's number from list_marks (from 0)."),
                     "dx": n("Move right by this many pixels."), "dy": n("Move down by this many pixels."),
                     "x": n("Move so its left edge is here."), "y": n("Move so its top edge is here."),
                     "scale": n("Make it this many times bigger (0.05-20)."),
@@ -209,11 +552,11 @@ fn base_tools() -> Vec<Tool> {
                     "fill": b("Fill / text background."), "shadow": b("Shadow."),
                     "text": s("New text (text, callout) or emoji (stamp)."),
                     "font": s("Font name."), "bold": b("Bold."), "italic": b("Italic."),
-                    "align": {"type": "string", "enum": ["left", "center", "right"]},
+                    "align": {"type": "string", "enum": ["left", "center", "right"], "description": "Text alignment: left, center or right."},
                     "outline": b("Outline."),
-                    "callout_shape": {"type": "string", "enum": ["rounded", "rectangle", "oval"]},
+                    "callout_shape": {"type": "string", "enum": ["rounded", "rectangle", "oval"], "description": "The callout bubble."},
                     "heads": n("Arrow heads 0, 1 or 2."), "radius": n("Box corner radius."),
-                    "number": n("Step number."), "style": {"type": "string", "enum": ["numbers", "upper", "lower", "roman"]},
+                    "number": n("Step number."), "style": {"type": "string", "enum": ["numbers", "upper", "lower", "roman"], "description": "How a step shows its number: numbers (1, 2, 3), upper (A, B, C), lower (a, b, c) or roman (i, ii, iii)."},
                     "zoom": n("Magnifier zoom 1-8.")
                 }),
                 &["index"],
@@ -221,32 +564,32 @@ fn base_tools() -> Vec<Tool> {
             edits: true,
         },
         Tool { name: "list_marks", description: "The marks on the current picture, numbered from 0, with their boxes.", schema: obj(json!({}), &[]), edits: false },
-        Tool { name: "remove_mark", description: "Remove a mark by its number from list_marks.", schema: obj(json!({"index": n("Mark number.")}), &["index"]), edits: true },
+        Tool { name: "remove_mark", description: "Remove a mark by its number from list_marks (the marks after it move up one; undo brings it back).", schema: obj(json!({"index": n("The mark's number from list_marks (from 0).")}), &["index"]), edits: true },
         Tool {
             name: "blur_area",
             description: "Hide part of the picture: pixelate, blur or a solid box (default: the blur setting), in the setting's block size.",
-            schema: obj(with(rect(), json!({"mode": {"type": "string", "enum": ["pixelate", "blur", "solid"]}, "color": s("For solid; default black.")})), &["x", "y", "width", "height"]),
+            schema: obj(with(area("picture"), json!({"mode": {"type": "string", "enum": ["pixelate", "blur", "solid"], "description": "pixelate (blocks), blur (soft) or solid (a box of colour). Default: the blur setting."}, "color": s("The box's colour for solid: #RRGGBB or a name; default black.")})), &["x", "y", "width", "height"]),
             edits: true,
         },
-        Tool { name: "crop", description: "Keep only a rectangle of the picture.", schema: obj(rect(), &["x", "y", "width", "height"]), edits: true },
-        Tool { name: "resize", description: "Resize the picture to an exact size (marks are flattened first).", schema: obj(json!({"width": {"type": "number"}, "height": {"type": "number"}}), &["width", "height"]), edits: true },
+        Tool { name: "crop", description: "Keep only a rectangle of the picture.", schema: obj(area("picture"), &["x", "y", "width", "height"]), edits: true },
+        Tool { name: "resize", description: "Resize the picture to an exact size (marks are flattened first).", schema: obj(json!({"width": {"type": "integer", "description": "New width in pixels (1-30000)."}, "height": {"type": "integer", "description": "New height in pixels (1-30000)."}}), &["width", "height"]), edits: true },
         Tool {
             name: "apply_effect",
             description: "Apply a picture effect (marks are flattened first).",
-            schema: obj(json!({"effect": {"type": "string", "enum": effect_names()}}), &["effect"]),
+            schema: obj(json!({"effect": {"type": "string", "enum": effect_values(), "description": "The effect, by name (e.g. DropShadow) or by its label in the Effects menu."}}), &["effect"]),
             edits: true,
         },
-        Tool { name: "read_text", description: "Read the text in the current picture (Windows only: Windows text recognition): every line with its box.", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "read_text", description: "Read the text in the current picture (Windows only: Windows text recognition): all of it, and every line with its box in picture pixels. For text on the screen without capturing use read_screen_text.", schema: obj(json!({}), &[]), edits: false },
         Tool {
             name: "smart_redact",
             description: "Find private details in the current picture and pixelate them (Windows only: uses Windows text recognition): emails, phone numbers, card numbers, street addresses, IP addresses and web addresses. Default: the kinds chosen in Snagster's settings (web addresses are off unless switched on).",
             schema: obj(json!({"kinds": {"type": "array", "items": {"type": "string", "enum": ocr::RedactKinds::NAMES}, "description": "Only these kinds instead of the settings'."}}), &[]),
             edits: true,
         },
-        Tool { name: "undo", description: "Undo the last change to the current picture.", schema: obj(json!({}), &[]), edits: true },
+        Tool { name: "undo", description: "Undo the last change to the current picture (a new capture or opened picture counts as a change). redo takes it back.", schema: obj(json!({}), &[]), edits: true },
         Tool {
             name: "save",
-            description: "Save the current picture (an existing file is replaced). The extension picks the format: png, jpg (the setting's quality), bmp, gif, webp, tiff, pdf, svg, docx, or snag (keeps marks editable).",
+            description: "Save the current picture to a path you choose (an existing file is replaced; to save into the usual folder with the usual name use quick_save). The extension picks the format: png, jpg (the setting's quality), bmp, gif, webp, tiff, pdf, svg, docx, or snag (keeps marks editable).",
             schema: obj(json!({"path": s("Full path with extension.")}), &["path"]),
             edits: false,
         },
@@ -256,7 +599,7 @@ fn base_tools() -> Vec<Tool> {
             description: "Record the screen under the mouse (or a desktop rectangle) as an animated GIF for some seconds. Frame rate, largest width and the pointer come from the GIF settings.",
             schema: obj(
                 with(
-                    rect(),
+                    area("desktop"),
                     json!({
                         "seconds": n("1-120, default 5."),
                         "fps": n("1-30, default: the GIF setting."),
@@ -274,7 +617,7 @@ fn base_tools() -> Vec<Tool> {
             description: "Record the screen under the mouse (or a desktop rectangle, or one monitor) to a video file for some seconds, at 1-120 frames per second, with sound on Windows. Uses the graphics chip's encoder (Intel, AMD or NVIDIA) when there is one. Everything not given comes from Snagster's video settings. Returns the file, its length, frames and the encoder used.",
             schema: obj(
                 json!({
-                    "seconds": n("1-600."),
+                    "seconds": n("How long to record, in seconds (1-600)."),
                     "fps": n("Frames per second, 1-120; default: the setting."),
                     "format": {"type": "string", "enum": formats, "description": format_help},
                     "quality": n("1 small file, 2 good, 3 high, 4 best; default: the setting."),
@@ -283,15 +626,17 @@ fn base_tools() -> Vec<Tool> {
                     "audio": {"type": "string", "enum": ["none", "system", "microphone", "both"], "description": "Sound to record (Windows, MP4 only); default: the setting."},
                     "microphone": s("Microphone id from list_audio_devices (default: the setting, or the computer's default)."),
                     "monitor_id": n("Record this monitor (from list_monitors)."),
-                    "x": {"type": "number"}, "y": {"type": "number"}, "width": {"type": "number"}, "height": {"type": "number"},
                     "path": s("Where to save it; default a new file in the recordings folder (the video_folder setting).")
-                }),
+                })
+                .as_object()
+                .map(|o| with(area("desktop"), Value::Object(o.clone())))
+                .unwrap_or_default(),
                 &["seconds"],
             ),
             edits: false,
         },
         Tool { name: "list_video_encoders", description: "The video encoders this computer has (graphics-chip and software) for H.264, HEVC and WMV. To use one for recording and streaming: set_setting video_encoder to its name (\"\" automatic: the best that works; a choice that can't start falls back by itself).", schema: obj(json!({}), &[]), edits: false },
-        Tool { name: "library_search", description: "Search Snagster's capture library by title, program, tag or date.", schema: obj(json!({"query": s("Words to find; empty lists everything."), "limit": n("Default 20.")}), &[]), edits: false },
+        Tool { name: "library_search", description: "Search Snagster's capture library by title, program, tag or date (newest first): path, title, program, kind, when it was made and tags. Use a result's path with open_image, library_tag or library_delete.", schema: obj(json!({"query": s("Words to find; empty lists everything."), "limit": n("Most results (default 20).")}), &[]), edits: false },
     ]
 }
 
@@ -307,11 +652,12 @@ const SIDE: [&str; 34] = [
 ];
 
 /// Tools that may delete or replace something (a mark, a source or scene, a library picture,
-/// a setting, or a file at a given path). app_command can exit Snagster, recycle a file or end
-/// a stream.
-const DESTRUCTIVE: [&str; 14] = [
+/// a setting, or a file at a given path) or end something that can't be picked up again (a live
+/// stream; the replay buffer's kept seconds). app_command can exit Snagster, recycle a file or
+/// end a stream.
+const DESTRUCTIVE: [&str; 16] = [
     "remove_mark", "clear_marks", "studio_remove_source", "studio_remove_scene", "library_delete", "set_setting", "save", "make_guide", "record_video", "record_gif", "studio_record",
-    "app_command", "gif_edit", "studio_edit",
+    "app_command", "gif_edit", "studio_edit", "stream_stop", "replay_stop",
 ];
 
 /// Tools that reach beyond this computer's Snagster: the network, the cloud, other programs.
@@ -399,7 +745,7 @@ pub fn tool_list() -> Value {
 }
 
 pub fn tool_names() -> Vec<(&'static str, &'static str)> {
-    tools().into_iter().map(|t| (t.name, t.description)).collect()
+    all_tools().iter().map(|t| (t.name, t.description)).collect()
 }
 
 fn text(s: impl Into<String>) -> Value {
@@ -786,7 +1132,9 @@ impl Workspace {
     /// Run one tool.
     pub fn call(&mut self, name: &str, a: &Value) -> Outcome {
         self.structured = None;
-        self.run(name, a)
+        let Some(t) = find_tool(name) else { return self.run(name, a) };
+        let a = check_args(t, a)?;
+        self.run(t.name, &a).map_err(|e| explain(t, e))
     }
 
     fn run(&mut self, name: &str, a: &Value) -> Outcome {
@@ -1658,7 +2006,7 @@ impl Session {
                             "completions": {},
                             "logging": {},
                         },
-                        "serverInfo": {"name": "snagster", "title": "Snagster", "version": env!("CARGO_PKG_VERSION")},
+                        "serverInfo": server_info(),
                         "instructions": INSTRUCTIONS,
                     }),
                 )
@@ -2406,6 +2754,271 @@ mod tests {
         }
     }
 
+    /// Every argument of every tool, with where it is ("tool.arg", "tool.arg[].key").
+    fn every_property() -> Vec<(String, Value)> {
+        fn walk(at: &str, schema: &Value, out: &mut Vec<(String, Value)>) {
+            for (k, p) in schema["properties"].as_object().into_iter().flatten() {
+                let here = format!("{at}.{k}");
+                out.push((here.clone(), p.clone()));
+                walk(&here, p, out);
+                walk(&format!("{here}[]"), &p["items"], out);
+            }
+        }
+        let mut out = vec![];
+        for t in all_tools() {
+            walk(t.name, &t.schema, &mut out);
+        }
+        out
+    }
+
+    #[test]
+    fn every_argument_says_what_it_is() {
+        let mut missing = vec![];
+        for (at, p) in every_property() {
+            if p["description"].as_str().is_none_or(|d| d.len() < 3) {
+                missing.push(at);
+            }
+        }
+        assert!(missing.is_empty(), "arguments without a description: {missing:?}");
+    }
+
+    #[test]
+    fn a_range_in_a_description_is_the_schemas_range() {
+        for (at, p) in every_property() {
+            let Some(d) = p["description"].as_str() else { continue };
+            if (p["type"] == "number" || p["type"] == "integer")
+                && let Some((lo, hi)) = range_in(d)
+            {
+                assert_eq!((p["minimum"].as_f64(), p["maximum"].as_f64()), (Some(lo), Some(hi)), "{at}: {d}");
+            }
+        }
+        assert_eq!(range_in("Wait this many seconds first (0-60), e.g. to open a menu."), Some((0.0, 60.0)));
+        assert_eq!(range_in("Make it this many times bigger (0.05-20)."), Some((0.05, 20.0)));
+        assert_eq!(range_in("1-120 frames per second"), Some((1.0, 120.0)));
+        assert_eq!(range_in("30-120 s"), Some((30.0, 120.0)));
+        assert_eq!(range_in("#RRGGBB, H.264 or 2 at both ends"), None);
+        assert_eq!(range_in("from 5-1 down"), None, "a range goes up");
+        assert_eq!(range_in("a 2-pixel line"), None, "a word after it is not a range");
+    }
+
+    #[test]
+    fn whole_numbers_and_ranges_are_in_the_schemas() {
+        let schema = |tool: &str| all_tools().iter().find(|t| t.name == tool).unwrap().schema.clone();
+        assert_eq!(schema("remove_mark")["properties"]["index"]["type"], "integer");
+        assert_eq!(schema("capture_screen")["properties"]["monitor_id"]["type"], "integer");
+        let rv = schema("record_video");
+        assert_eq!((rv["properties"]["seconds"]["minimum"].as_f64(), rv["properties"]["seconds"]["maximum"].as_f64()), (Some(1.0), Some(600.0)));
+        assert_eq!(rv["properties"]["fps"]["maximum"].as_f64(), Some(120.0));
+        assert_eq!(schema("stream_start")["properties"]["also"]["items"]["properties"]["service"]["enum"][0], "twitch", "nested items are kept");
+    }
+
+    #[test]
+    fn arguments_are_checked_before_a_tool_runs() {
+        let mut ws = Workspace::default();
+        let mut refused = |tool: &str, a: Value| ws.call(tool, &a).expect_err(&format!("{tool} {a} should be refused"));
+        // A required argument, with what it is.
+        assert_eq!(refused("remove_mark", json!({})), "remove_mark needs \"index\": The mark's number from list_marks (from 0).");
+        // A misspelt name is not quietly ignored.
+        let e = refused("capture_screen", json!({"monitor": 1}));
+        assert!(e.starts_with("capture_screen has no argument \"monitor\"; it takes only "), "{e}");
+        assert!(e.contains("monitor_id"), "{e}");
+        assert_eq!(refused("list_monitors", json!({"x": 1})), "list_monitors has no argument \"x\"; it takes no arguments.");
+        // Numbers sent as text, and other wrong kinds.
+        assert_eq!(refused("record_video", json!({"seconds": "5"})), "\"seconds\" is \"5\", but record_video takes a number there (without quotes).");
+        assert_eq!(refused("remove_mark", json!({"index": 1.5})), "\"index\" is 1.5, but remove_mark takes a whole number there.");
+        assert_eq!(refused("combine_images", json!({"paths": "a.png"})), "\"paths\" is \"a.png\", but combine_images takes a list there.");
+        // Ranges, enums (any case is fine), nested lists and objects.
+        assert_eq!(refused("record_video", json!({"seconds": 900})), "\"seconds\" is 900, but record_video takes from 1 to 600 there.");
+        assert_eq!(refused("blur_area", json!({"x": 0, "y": 0, "width": 0, "height": 5})), "\"width\" is 0, but blur_area takes 1 or more there.");
+        assert!(refused("record_video", json!({"seconds": 1, "audio": "loud"})).contains("takes one of: none, system, microphone, both (Sound to record"));
+        assert!(refused("record_video", json!({"seconds": 1, "format": "gif"})).contains("record_gif"), "the enum's description says where GIFs are made");
+        assert!(refused("record_video", json!({"seconds": 1, "audio": "SYSTEM", "fps": 0})).contains("\"fps\" is 0"), "SYSTEM passes the enum check");
+        assert_eq!(refused("make_guide", json!({"path": "g.pdf", "steps": [{"caption": "x"}]})), "\"steps[0]\" needs \"path\".");
+        assert!(refused("stream_start", json!({"also": [{"service": "x"}]})).starts_with("\"also[0].service\" is \"x\""));
+        let e = refused("stream_start", json!({"also": [{"service": "twitch"}, {"service": "kick"}, {"service": "kick"}, {"service": "kick"}, {"service": "kick"}]}));
+        assert_eq!(e, "\"also\" has 5 items, but stream_start takes at most 4.");
+        assert!(refused("app_command", json!({"command": "nope"})).contains("names (The command's id from list_commands"), "a long list is not spelt out");
+        assert_eq!(refused("set_canvas", json!({"width": 0, "height": 5})), "\"width\" is 0, but set_canvas takes from 1 to 30000 there.");
+        assert_eq!(refused("resize", json!({"width": 5, "height": 99999})), "\"height\" is 99999, but resize takes from 1 to 30000 there.");
+        assert!(refused("add_mark", json!({"kind": "magnify", "x": 9, "y": 9, "zoom": 99})).contains("from 1 to 8"), "zoom is refused, not quietly changed");
+        assert!(refused("undo", json!([1])).contains("object of named values"));
+        // Null is the same as not given.
+        assert!(ws.call("list_marks", &json!({"filter": null})).is_err_and(|e| e.contains("no argument")), "an unknown name is refused even as null");
+        assert!(ws.call("view_picture", &json!({"max_size": null})).is_err_and(|e| e.contains("no current picture")), "max_size: null passes the check");
+    }
+
+    #[test]
+    fn choices_reach_the_tool_in_its_own_spelling() {
+        // Any case: the tool gets its own name, so it does what was asked (blur_area compared
+        // "solid" exactly and quietly blurred instead).
+        let mut ws = ws_with(40, 40);
+        ws.call("blur_area", &json!({"x": 0, "y": 0, "width": 10, "height": 10, "mode": "SOLID", "color": "#FF0000"})).unwrap();
+        assert_eq!(&ws.doc.as_ref().unwrap().image.get_pixel(5, 5).0[..3], &[255, 0, 0], "a red box, not a blur");
+        ws.call("add_mark", &json!({"kind": "BOX", "x": 1, "y": 1, "x2": 9, "y2": 9})).unwrap();
+        assert!(matches!(ws.doc.as_ref().unwrap().shapes.last(), Some(Shape::Rect { .. })));
+        ws.call("add_mark", &json!({"kind": "Step", "x": 20, "y": 20, "style": "Upper"})).unwrap();
+        ws.call("editor_apply", &json!({"action": "NEW_IMAGE", "width": 8, "height": 6})).unwrap();
+        assert_eq!(ws.doc.as_ref().unwrap().image.dimensions(), (8, 6));
+        // The other spellings the tools always took become their names.
+        let t = find_tool("record_video").unwrap();
+        let a = check_args(t, &json!({"seconds": 1, "audio": "mic", "format": "H264"})).unwrap();
+        assert_eq!((a["audio"].as_str(), a["format"].as_str()), (Some("microphone"), Some("mp4")));
+        let t = find_tool("stream_start").unwrap();
+        let a = check_args(t, &json!({"service": "YT", "also": [{"service": "Facebook Live"}, {"service": "rtmps"}]})).unwrap();
+        assert_eq!(a["service"], "youtube");
+        assert_eq!((a["also"][0]["service"].as_str(), a["also"][1]["service"].as_str()), (Some("facebook"), Some("custom")));
+        let t = find_tool("smart_redact").unwrap();
+        assert_eq!(check_args(t, &json!({"kinds": ["email", "IPs"]})).unwrap()["kinds"], json!(["emails", "ips"]));
+        // A spelling of one argument doesn't count for another, and nothing else is changed.
+        let t = find_tool("studio_edit").unwrap();
+        assert!(check_args(t, &json!({"action": "add_sound", "input": "mic"})).is_err(), "mic is an audio spelling, not an input one");
+        let a = check_args(t, &json!({"action": "add_sound", "input": "computer", "path": "Mixed Case.wav"})).unwrap();
+        assert_eq!((a["input"].as_str(), a["path"].as_str()), (Some("computer"), Some("Mixed Case.wav")));
+    }
+
+    #[test]
+    fn every_spelling_a_tools_parser_takes_still_passes_the_check() {
+        // (tool, argument, what an AI app may send, the schema's name the tool then gets).
+        let cases: &[(&str, &str, Value, &str)] = &[
+            ("capture_screen", "shape", json!("circle"), "ellipse"),
+            ("capture_screen", "shape", json!("oval"), "ellipse"),
+            ("capture_screen", "shape", json!("rect"), "rectangle"),
+            ("capture_screen", "shape", json!("box"), "rectangle"),
+            ("capture_screen", "shape", json!("Rounded Rectangle"), "rounded"),
+            ("capture_screen", "shape", json!("lasso"), "freehand"),
+            ("add_mark", "align", json!("centre"), "center"),
+            ("add_mark", "align", json!("middle"), "center"),
+            ("add_mark", "align", json!(2), "right"),
+            ("add_mark", "callout_shape", json!("ellipse"), "oval"),
+            ("add_mark", "callout_shape", json!("box"), "rectangle"),
+            ("add_mark", "style", json!("A"), "upper"),
+            ("add_mark", "style", json!("a"), "lower"),
+            ("add_mark", "style", json!("i"), "roman"),
+            ("add_mark", "style", json!("1"), "numbers"),
+            ("add_mark", "style", json!("number"), "numbers"),
+            ("update_mark", "style", json!("Upper"), "upper"),
+            ("smart_redact", "kinds", json!(["web"]), "urls"),
+            ("smart_redact", "kinds", json!(["email"]), "emails"),
+            ("record_video", "format", json!("h264"), "mp4"),
+            ("record_video", "format", json!("AVC"), "mp4"),
+            ("record_video", "audio", json!("mic"), "microphone"),
+            ("record_video", "audio", json!("desktop"), "system"),
+            ("record_video", "audio", json!("off"), "none"),
+            ("record_video", "audio", json!("all"), "both"),
+            ("stream_start", "source", json!("region"), "area"),
+            ("stream_start", "source", json!("whole screen"), "screen"),
+            ("stream_start", "source", json!("monitor"), "screen"),
+            ("stream_start", "source", json!("Studio Scene"), "studio"),
+            ("stream_start", "service", json!("you-tube"), "youtube"),
+            ("stream_start", "service", json!("Re Stream"), "restream"),
+            ("stream_start", "service", json!("face_book"), "facebook"),
+            ("stream_start", "service", json!("yt"), "youtube"),
+            ("stream_start", "service", json!("rtmps"), "custom"),
+        ];
+        for (tool, arg, sent, want) in cases {
+            let t = find_tool(tool).unwrap();
+            let mut a = json!({ *arg: sent.clone() });
+            if *tool == "add_mark" || *tool == "update_mark" {
+                a[if *tool == "add_mark" { "kind" } else { "index" }] = if *tool == "add_mark" { json!("text") } else { json!(0) };
+            }
+            if *tool == "record_video" {
+                a["seconds"] = json!(1);
+            }
+            let got = check_args(t, &a).unwrap_or_else(|e| panic!("{tool} {arg}={sent}: {e}"));
+            let got = if got[*arg].is_array() { got[*arg][0].clone() } else { got[*arg].clone() };
+            assert_eq!(got, json!(want), "{tool} {arg}={sent}");
+        }
+        // Every name in every schema means itself to its parser (so the names and parsers agree).
+        for (at, p) in every_property() {
+            let key = at.rsplit('.').next().unwrap().trim_end_matches("[]");
+            let choices = p["enum"].as_array().or(p["items"]["enum"].as_array());
+            for c in choices.into_iter().flatten() {
+                if let Some(parsed) = parsed_choice(key, c) {
+                    assert_eq!(json!(parsed), *c, "{at}: the parser reads {c} as {parsed}");
+                }
+            }
+        }
+        // Still refused: what no parser takes.
+        assert!(check_args(find_tool("capture_screen").unwrap(), &json!({"shape": "blob"})).is_err());
+        assert!(check_args(find_tool("add_mark").unwrap(), &json!({"kind": "text", "align": 3})).is_err());
+    }
+
+    #[test]
+    fn a_secret_sent_wrong_is_never_shown_back() {
+        let t = find_tool("stream_start").unwrap();
+        for a in [json!({"key": 12345678}), json!({"also": [{"service": "kick", "key": 87654321}]})] {
+            let e = check_args(t, &a).unwrap_err();
+            assert!(e.contains("(hidden)") && !e.contains("12345678") && !e.contains("87654321"), "{e}");
+        }
+    }
+
+    #[test]
+    fn a_tools_own_missing_answer_says_what_is_missing() {
+        let t = all_tools().iter().find(|t| t.name == "gif_edit").unwrap();
+        assert_eq!(explain(t, "missing out".into()), "gif_edit needs \"out\" here: Where to write the new GIF (trim, slideshow); an existing file is replaced.");
+        assert_eq!(explain(t, "missing number \"first\"".into()), "gif_edit needs \"first\" here: trim: the first frame kept, from 0.");
+        assert_eq!(explain(t, "missing thing".into()), "gif_edit needs \"thing\" here (tools/list describes it).");
+        assert_eq!(explain(t, "the GIF couldn't be read".into()), "the GIF couldn't be read");
+    }
+
+    #[test]
+    fn the_agent_skill_names_only_real_tools_and_arguments() {
+        let skill = include_str!("../skills/snagster/SKILL.md").replace("\r\n", "\n");
+        let skill = skill.as_str();
+        let front = skill.strip_prefix("---\n").and_then(|s| s.split_once("\n---\n")).map(|(f, _)| f).expect("frontmatter");
+        assert!(front.lines().any(|l| l == "name: snagster"), "the name matches the folder");
+        let about = front.lines().find_map(|l| l.strip_prefix("description: ")).expect("a description");
+        assert!((20..=1024).contains(&about.len()), "Agent Skills descriptions are 1-1024 characters");
+        let mut known: Vec<String> = every_property().into_iter().map(|(at, _)| at.rsplit('.').next().unwrap().trim_end_matches("[]").to_string()).collect();
+        known.extend(all_tools().iter().map(|t| t.name.to_string()));
+        known.extend(PROMPTS.iter().map(|p| p.0.to_string()));
+        known.extend(["mcp_http", "mcp_port", "mcp_token"].map(String::from));
+        let mut unknown = vec![];
+        for code in skill.split('`').skip(1).step_by(2) {
+            let looks_like_a_name = code.contains('_') && code.chars().all(|c| c.is_ascii_lowercase() || c == '_');
+            if looks_like_a_name && !known.iter().any(|k| k == code) {
+                unknown.push(code);
+            }
+        }
+        assert!(unknown.is_empty(), "the skill names tools or arguments that don't exist: {unknown:?}");
+        for t in ["capture_window", "view_picture", "add_mark", "smart_redact", "record_video", "make_guide", "stream_start", "replay_save", "app_info"] {
+            assert!(skill.contains(&format!("`{t}`")), "the skill explains {t}");
+        }
+    }
+
+    #[test]
+    fn the_registry_listing_says_what_the_server_says() {
+        let s: Value = serde_json::from_str(include_str!("../server.json")).expect("server.json is JSON");
+        let info = server_info();
+        assert_eq!(s["version"], env!("CARGO_PKG_VERSION"), "bump server.json with Cargo.toml (the release job in build.yml fills in the hashes)");
+        assert_eq!(s["description"], DESCRIPTION);
+        assert_eq!(s["description"], info["description"]);
+        assert_eq!(s["websiteUrl"], WEBSITE);
+        assert_eq!(s["title"], info["title"]);
+        assert_eq!(s["icons"], info["icons"]);
+        assert_eq!(s["name"], "io.github.SoloSaftis/snagster", "the GitHub namespace mcp-publisher signs in to");
+        assert!(s["$schema"].as_str().unwrap().starts_with("https://static.modelcontextprotocol.io/schemas/"));
+        let packages = s["packages"].as_array().unwrap();
+        assert_eq!(packages.len(), 3, "one MCP bundle per system");
+        for p in packages {
+            let id = p["identifier"].as_str().unwrap();
+            assert_eq!(p["registryType"], "mcpb");
+            assert!(id.starts_with(&format!("{WEBSITE}/releases/download/v")) && id.contains("/Snagster-mcp-") && id.ends_with(".mcpb"), "{id} (the release job puts in the tag)");
+            assert_eq!(p["transport"]["type"], "stdio");
+        }
+    }
+
+    #[test]
+    fn old_names_still_call_their_tool() {
+        for (old, new) in ALIASES {
+            assert_eq!(find_tool(old).map(|t| t.name), Some(new), "{old}");
+            assert!(find_tool(new).is_some(), "{new} is a tool");
+            assert!(!all_tools().iter().any(|t| t.name == old), "{old} is not listed twice");
+        }
+        assert_eq!(find_tool("crop").map(|t| t.name), Some("crop"));
+        assert!(find_tool("no_such_tool").is_none());
+    }
+
     #[test]
     fn the_protocol_answers_and_refuses_politely() {
         let s = Session::default();
@@ -2494,6 +3107,11 @@ mod tests {
         assert_eq!(r["protocolVersion"], PROTOCOL_VERSIONS[0], "no version asked: the newest");
         assert_eq!(r["serverInfo"]["name"], "snagster");
         assert_eq!(r["serverInfo"]["version"], env!("CARGO_PKG_VERSION"));
+        assert_eq!(r["serverInfo"]["title"], "Snagster");
+        assert_eq!(r["serverInfo"]["websiteUrl"], WEBSITE);
+        let about = r["serverInfo"]["description"].as_str().unwrap();
+        assert!(about.len() <= 100 && about.contains("Screen capture"), "short enough for a listing: {about}");
+        assert!(r["serverInfo"]["icons"][0]["src"].as_str().unwrap().starts_with("https://"));
         assert_eq!(r["instructions"], INSTRUCTIONS);
         for cap in ["tools", "resources", "prompts", "completions", "logging"] {
             assert!(r["capabilities"][cap].is_object(), "capability {cap}");
@@ -2880,7 +3498,10 @@ mod tests {
         let s = Session::default();
         assert_eq!(ask(&s, rpc(json!(1), "tools/list", json!({})))["result"], list);
         let effect = list["tools"].as_array().unwrap().iter().find(|t| t["name"] == "apply_effect").unwrap()["inputSchema"]["properties"]["effect"]["enum"].clone();
-        assert_eq!(effect.as_array().unwrap().len(), effects::Effect::ALL.len());
+        let effect: Vec<&str> = effect.as_array().unwrap().iter().filter_map(Value::as_str).collect();
+        for e in effects::Effect::ALL {
+            assert!(effect.contains(&format!("{e:?}").as_str()) && effect.iter().any(|v| v.eq_ignore_ascii_case(e.label())), "{e:?} by name and label");
+        }
     }
 
     // ---- prompts and resources ----
@@ -3008,8 +3629,13 @@ mod tests {
         assert!(rect_arg(&json!({"x": 1, "y": 2, "width": 3, "height": -4})).is_err());
         // Tools that grab the screen check their rectangle first (no screen needed to refuse).
         let mut ws = Workspace::default();
-        for tool in ["capture_region", "read_screen_text", "capture_scrolling", "record_gif"] {
-            assert!(err_of(ws.call(tool, &json!({"x": 0, "y": 0, "width": 0, "height": 10}))).contains("above 0"), "{tool}");
+        for tool in ["capture_region", "read_screen_text", "capture_scrolling", "record_gif", "record_video", "run_preset"] {
+            let mut a = json!({"x": 0, "y": 0, "width": 0, "height": 10});
+            if tool.starts_with("record") {
+                a["seconds"] = json!(1);
+            }
+            let e = err_of(ws.call(tool, &a));
+            assert_eq!(e, format!("\"width\" is 0, but {tool} takes 1 or more there."));
         }
         assert!(err_of(ws.call("pick_color", &json!({"y": 3}))).contains("\"x\""));
     }
@@ -3017,14 +3643,14 @@ mod tests {
     #[test]
     fn record_video_checks_its_arguments_before_recording() {
         let mut ws = Workspace::default();
-        assert_eq!(err_of(ws.call("record_video", &json!({}))), "missing seconds");
+        assert!(err_of(ws.call("record_video", &json!({}))).starts_with("record_video needs \"seconds\": How long"));
         assert!(err_of(ws.call("record_video", &json!({"seconds": 1, "format": "gif"}))).contains("record_gif"));
         let e = err_of(ws.call("record_video", &json!({"seconds": 1, "format": "avi"})));
-        assert!(e.contains("format is one of mp4"), "{e}");
+        assert!(e.contains("\"format\" is \"avi\", but record_video takes one of: mp4"), "{e}");
         let area = json!({"seconds": 1, "x": 0, "y": 0, "width": 64, "height": 64, "path": "unused.mp4", "audio": "loud"});
-        assert!(err_of(ws.call("record_video", &area)).contains("audio is none"));
+        assert!(err_of(ws.call("record_video", &area)).contains("\"audio\" is \"loud\""));
         let area = json!({"seconds": 1, "x": 0, "y": 0, "width": -1, "height": 64});
-        assert!(err_of(ws.call("record_video", &area)).contains("above 0"));
+        assert!(err_of(ws.call("record_video", &area)).contains("1 or more"));
         // A GIF area is checked before recording too.
         assert!(err_of(ws.call("record_gif", &json!({"x": 0, "y": 0, "width": 10}))).contains("height"));
     }
@@ -3072,7 +3698,7 @@ mod tests {
         for tool in ["capture_screen", "capture_window", "capture_active_window", "capture_last_area"] {
             assert!(err_of(ws.call(tool, &json!({"title": "x", "shape": "blob"}))).contains("shape"), "{tool}");
         }
-        assert!(err_of(ws.call("capture_region", &json!({"x": 0, "y": 0, "width": 5, "height": 5, "delay_s": 99}))).contains("0-60"));
+        assert!(err_of(ws.call("capture_region", &json!({"x": 0, "y": 0, "width": 5, "height": 5, "delay_s": 99}))).contains("from 0 to 60"));
         assert!(err_of(ws.call("capture_last_area", &json!({}))).contains("capture_region first"));
     }
 
@@ -3142,7 +3768,7 @@ mod tests {
     #[test]
     fn smart_redact_checks_its_kinds() {
         let mut ws = ws_with(50, 50);
-        assert!(err_of(ws.call("smart_redact", &json!({"kinds": ["emails", "names"]}))).contains("unknown kind names"));
+        assert!(err_of(ws.call("smart_redact", &json!({"kinds": ["emails", "names"]}))).contains("\"kinds[1]\" is \"names\""));
         assert!(err_of(ws.call("smart_redact", &json!({"kinds": "emails"}))).contains("list"));
         let list = tool_list();
         let t = list["tools"].as_array().unwrap().iter().find(|t| t["name"] == "smart_redact").unwrap().clone();
@@ -3178,9 +3804,9 @@ mod tests {
         for k in two {
             assert_eq!(err_of(ws.call("add_mark", &json!({"kind": k, "x": 5, "y": 5}))), format!("{k} needs x2 and y2"));
         }
-        assert_eq!(err_of(ws.call("add_mark", &json!({"kind": "star", "x": 5, "y": 5}))), "unknown kind star");
-        assert_eq!(err_of(ws.call("add_mark", &json!({"x": 5, "y": 5}))), "missing kind");
-        assert_eq!(err_of(ws.call("add_mark", &json!({"kind": "box", "y": 5}))), "missing number \"x\"");
+        assert!(err_of(ws.call("add_mark", &json!({"kind": "star", "x": 5, "y": 5}))).starts_with("\"kind\" is \"star\", but add_mark takes one of: arrow, line,"));
+        assert!(err_of(ws.call("add_mark", &json!({"x": 5, "y": 5}))).starts_with("add_mark needs \"kind\": What to draw"));
+        assert_eq!(err_of(ws.call("add_mark", &json!({"kind": "box", "y": 5}))), "add_mark needs \"x\" here: Where it starts or sits: picture pixels from the left.");
         let list = text_of(ws.call("list_marks", &json!({})));
         assert!(list.starts_with("0: arrow at "), "{list}");
         assert!(list.contains("\n1: line at ") && list.contains("\n2: box at ") && list.contains("\n3: oval at "), "{list}");
@@ -3215,7 +3841,7 @@ mod tests {
         }
         assert!(matches!(add(json!({"kind": "step", "x": 9, "y": 9, "style": "roman", "number": 4})), Shape::Step { n: 4, style: crate::settings::StepStyle::Roman, .. }));
         assert!(matches!(add(json!({"kind": "magnify", "x": 9, "y": 9, "zoom": 3})), Shape::Magnify { zoom: 3.0, .. }));
-        assert!(matches!(add(json!({"kind": "magnify", "x": 9, "y": 9, "zoom": 99})), Shape::Magnify { zoom: 8.0, .. }), "zoom is kept to 1-8");
+        assert!(matches!(add(json!({"kind": "magnify", "x": 9, "y": 9, "zoom": 8})), Shape::Magnify { zoom: 8.0, .. }));
         // A picture from a file, at its own size or stretched to (x2, y2).
         let pic = dir.join("p.png");
         image::RgbaImage::from_pixel(30, 20, image::Rgba([0, 200, 0, 255])).save(&pic).unwrap();
@@ -3233,11 +3859,11 @@ mod tests {
         for (a, want) in [
             (json!({"kind": "pen", "points": [[1, 2]]}), "two or more"),
             (json!({"kind": "pen"}), "pen needs points"),
-            (json!({"kind": "pen", "points": "no"}), "pairs"),
+            (json!({"kind": "pen", "points": "no"}), "takes a list"),
             (json!({"kind": "arrow", "x": 1, "y": 1, "x2": 5, "y2": 5, "heads": 3}), "heads is 0, 1 or 2"),
-            (json!({"kind": "text", "x": 1, "y": 1, "align": "justify"}), "align is"),
-            (json!({"kind": "callout", "x": 1, "y": 1, "callout_shape": "star"}), "callout_shape is"),
-            (json!({"kind": "step", "x": 1, "y": 1, "style": "greek"}), "style is"),
+            (json!({"kind": "text", "x": 1, "y": 1, "align": "justify"}), "\"align\" is \"justify\""),
+            (json!({"kind": "callout", "x": 1, "y": 1, "callout_shape": "star"}), "\"callout_shape\" is \"star\""),
+            (json!({"kind": "step", "x": 1, "y": 1, "style": "greek"}), "\"style\" is \"greek\""),
             (json!({"kind": "image", "x": 1, "y": 1}), "needs a path"),
             (json!({"kind": "image", "x": 1, "y": 1, "path": dir.join("none.png")}), "none.png"),
         ] {
@@ -3283,7 +3909,7 @@ mod tests {
             (json!({"index": 0, "text": "x"}), "a box mark has no text"),
             (json!({"index": 1, "heads": 2}), "a text mark has no arrow heads"),
             (json!({"index": 0, "bold": true}), "a box mark has no text style"),
-            (json!({"index": 0, "scale": 100}), "scale is"),
+            (json!({"index": 0, "scale": 100}), "\"scale\" is 100, but update_mark takes from 0.05 to 20"),
             (json!({"index": 2, "zoom": 2}), "a step mark has no zoom"),
         ] {
             let before = ws.doc.as_ref().unwrap().shapes.len();
@@ -3409,7 +4035,8 @@ mod tests {
         assert_eq!(err_of(ws.call("crop", &json!({"x": 500, "y": 500, "width": 10, "height": 10}))), "that area is outside the picture");
         assert_eq!(err_of(ws.call("blur_area", &json!({"x": 500, "y": 0, "width": 10, "height": 10}))), "that area is outside the picture");
         assert_eq!(text_of(ws.call("crop", &json!({"x": 50, "y": 40, "width": 500, "height": 500}))), "Cropped to 50 x 40.");
-        for mode in ["pixelate", "blur", "solid", "other"] {
+        assert!(err_of(ws.call("blur_area", &json!({"x": 0, "y": 0, "width": 20, "height": 20, "mode": "other"}))).contains("pixelate, blur, solid"));
+        for mode in ["pixelate", "blur", "solid"] {
             assert_eq!(text_of(ws.call("blur_area", &json!({"x": 0, "y": 0, "width": 20, "height": 20, "mode": mode}))), "Hidden.");
         }
         let px = ws.doc.as_ref().unwrap().image.get_pixel(5, 5).0;
@@ -3422,9 +4049,9 @@ mod tests {
     #[test]
     fn effects_are_found_by_name_or_label() {
         let mut ws = ws_with(40, 40);
-        assert_eq!(err_of(ws.call("apply_effect", &json!({}))), "missing effect");
+        assert!(err_of(ws.call("apply_effect", &json!({}))).starts_with("apply_effect needs \"effect\": "));
         let e = err_of(ws.call("apply_effect", &json!({"effect": "sparkles"})));
-        assert!(e.starts_with("unknown effect; use one of"), "{e}");
+        assert!(e.contains("\"effect\" is \"sparkles\", but apply_effect takes one of"), "{e}");
         let first = effects::Effect::ALL[0];
         assert!(ws.call("apply_effect", &json!({"effect": format!("{first:?}").to_uppercase()})).is_ok());
         assert!(ws.call("apply_effect", &json!({"effect": first.label()})).is_ok());
@@ -3442,7 +4069,7 @@ mod tests {
         };
         assert_eq!(size(ws.call("view_picture", &json!({}))), (400, 200), "small pictures stay as they are");
         assert_eq!(size(ws.call("view_picture", &json!({"max_size": 100}))), (100, 50));
-        assert_eq!(size(ws.call("view_picture", &json!({"max_size": 1}))), (64, 32), "at least 64");
+        assert!(ws.call("view_picture", &json!({"max_size": 1})).is_err_and(|e| e.contains("from 64 to 4096")), "below 64 is refused, naming the limit");
     }
 
     #[test]
@@ -3450,7 +4077,7 @@ mod tests {
         let dir = temp_dir("save");
         let mut ws = ws_with(60, 40);
         ws.call("add_mark", &json!({"kind": "box", "x": 1, "y": 1, "x2": 20, "y2": 20})).unwrap();
-        assert_eq!(err_of(ws.call("save", &json!({}))), "missing path");
+        assert!(err_of(ws.call("save", &json!({}))).starts_with("save needs \"path\": "));
         let snag = dir.join("p.snag");
         ws.call("save", &json!({"path": snag})).unwrap();
         let mut back = Workspace::default();
@@ -3460,7 +4087,7 @@ mod tests {
         ws.call("save", &json!({"path": png})).unwrap();
         assert_eq!(image::open(&png).unwrap().width(), 60);
         assert!(back.call("open_image", &json!({"path": dir.join("missing.png")})).is_err());
-        assert_eq!(err_of(back.call("open_image", &json!({}))), "missing path");
+        assert_eq!(err_of(back.call("open_image", &json!({}))), "open_image needs \"path\": The picture file (full path).");
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -3560,7 +4187,7 @@ mod stream_tests {
         let mut w = ws();
         let e = w.call("stream_start", &json!({"service": "custom", "url": "ftp://example.com/live", "key": "sk_mcp_secret_1"})).unwrap_err();
         assert!(e.contains("rtmp") && !e.contains("sk_mcp_secret_1"), "{e}");
-        assert!(w.call("stream_start", &json!({"service": "myspace", "key": "k"})).unwrap_err().contains("service is"));
+        assert!(w.call("stream_start", &json!({"service": "myspace", "key": "k"})).unwrap_err().contains("\"service\" is \"myspace\", but stream_start takes one of: twitch"));
         assert!(w.call("stream_start", &json!({"source": "window", "key": "k"})).unwrap_err().contains("title"));
         assert!(w.call("stream_start", &json!({"source": "area", "key": "k"})).is_err());
         assert_eq!(crate::stream::live::snapshot().phase, crate::stream::live::Phase::Idle, "nothing started");

@@ -1,7 +1,7 @@
 //! The rest of Snagster's commands as MCP tools: more ways to capture, editing, guides,
 //! the library, settings, languages, updates, sound devices, Studio scenes and recordings.
 
-use super::{CaptureArgs, Grabbed, Outcome, Tool, Workspace, bool_arg, capture_props, index_arg, link, num, obj, preview, rect_arg, saved, text, with};
+use super::{CaptureArgs, Grabbed, Outcome, Tool, Workspace, area, bool_arg, capture_props, index_arg, link, num, obj, preview, rect_arg, saved, text, with};
 use crate::capture::{self, CaptureKind, CutShape};
 use crate::doc::Doc;
 use crate::settings::{Preset, PresetMode};
@@ -13,7 +13,6 @@ pub(super) fn tools() -> Vec<Tool> {
     let n = |d: &str| json!({"type": "number", "description": d});
     let s = |d: &str| json!({"type": "string", "description": d});
     let b = |d: &str| json!({"type": "boolean", "description": d});
-    let rect = || json!({"x": {"type": "number"}, "y": {"type": "number"}, "width": {"type": "number"}, "height": {"type": "number"}});
     let formats = crate::video::VideoFormat::video_names();
     let mut studio_formats = formats.clone();
     studio_formats.push("gif");
@@ -29,17 +28,17 @@ pub(super) fn tools() -> Vec<Tool> {
         Tool {
             name: "capture_scrolling",
             description: "Scroll a desktop area (a web page, a document) and stitch it into one long picture, as the current picture. Uses the scrolling settings (wheel notches, longest picture, start from the top). Keep the mouse still while it runs. Where Snagster can't scroll other programs (Wayland, a Mac without the Accessibility permission, Linux without xdotool) the person scrolls instead, for up to manual_seconds.",
-            schema: obj(with(with(rect(), json!({"horizontal": b("Scroll sideways instead (panorama)."), "max_steps": n("Most scroll steps, default: the setting (40)."), "manual_seconds": n("Where the person has to scroll: how long to keep taking pictures (5-600, default 30).")})), capture_props()), &["x", "y", "width", "height"]),
+            schema: obj(with(with(area("desktop"), json!({"horizontal": b("Scroll sideways instead (panorama)."), "max_steps": n("Most scroll steps, default: the setting (40)."), "manual_seconds": n("Where the person has to scroll: how long to keep taking pictures (5-600, default 30).")})), capture_props()), &["x", "y", "width", "height"]),
             edits: true,
         },
         Tool {
             name: "run_preset",
             description: "Capture with one of the person's presets (see list_presets): its kind of capture, delay, effects, and copy/save steps. Area, shape and scrolling presets need x, y, width and height; fixed-size presets take x and y (default: the top-left of the screen under the mouse).",
-            schema: obj(with(with(json!({"number": n("Preset number from list_presets."), "name": s("Or part of the preset's name.")}), rect()), capture_props()), &[]),
+            schema: obj(with(with(json!({"number": n("Preset number from list_presets."), "name": s("Or part of the preset's name.")}), area("desktop")), capture_props()), &[]),
             edits: true,
         },
-        Tool { name: "pick_color", description: "The colour of one desktop pixel, as #RRGGBB.", schema: obj(json!({"x": {"type": "number"}, "y": {"type": "number"}}), &["x", "y"]), edits: false },
-        Tool { name: "read_screen_text", description: "Read the text in a desktop rectangle (Windows only: Windows text recognition), without changing the current picture.", schema: obj(rect(), &["x", "y", "width", "height"]), edits: false },
+        Tool { name: "pick_color", description: "The colour of one desktop pixel, as #RRGGBB.", schema: obj(json!({"x": {"type": "number", "description": "Desktop x in pixels."}, "y": {"type": "number", "description": "Desktop y in pixels."}}), &["x", "y"]), edits: false },
+        Tool { name: "read_screen_text", description: "Read the text in a desktop rectangle (Windows only: Windows text recognition), without changing the current picture. Use read_text instead for the current picture.", schema: obj(area("desktop"), &["x", "y", "width", "height"]), edits: false },
         Tool {
             name: "simplify",
             description: "Turn every line of text in the current picture into a plain bar, so it shows the layout without the details (Windows only: uses Windows text recognition).",
@@ -58,7 +57,7 @@ pub(super) fn tools() -> Vec<Tool> {
         Tool {
             name: "set_canvas",
             description: "Change the canvas size of the current picture (the picture stays in the middle; new space gets the colour).",
-            schema: obj(json!({"width": {"type": "number"}, "height": {"type": "number"}, "color": s("#RRGGBB, default white.")}), &["width", "height"]),
+            schema: obj(json!({"width": {"type": "integer", "description": "New canvas width in pixels (1-30000)."}, "height": {"type": "integer", "description": "New canvas height in pixels (1-30000)."}, "color": s("#RRGGBB or a name for the new space; default white.")}), &["width", "height"]),
             edits: true,
         },
         Tool { name: "paste_from_clipboard", description: "Make the picture on the clipboard the current picture.", schema: obj(json!({}), &[]), edits: true },
@@ -74,7 +73,7 @@ pub(super) fn tools() -> Vec<Tool> {
             schema: obj(
                 json!({
                     "title": s("The guide's title."),
-                    "steps": {"type": "array", "items": {"type": "object", "properties": {"path": {"type": "string"}, "caption": {"type": "string"}}, "required": ["path"]}},
+                    "steps": {"type": "array", "description": "The steps in order: a picture file and the caption under it.", "items": {"type": "object", "properties": {"path": {"type": "string", "description": "The step's picture file (full path)."}, "caption": {"type": "string", "description": "The text for this step."}}, "required": ["path"]}},
                     "include_current": b("Add the current picture as the last step."),
                     "path": s("Where to save it; the extension picks the format: .pdf, .html, .docx or .png.")
                 }),
@@ -85,7 +84,7 @@ pub(super) fn tools() -> Vec<Tool> {
         Tool {
             name: "library_add",
             description: "Keep the current picture in Snagster's library (searchable later), with a title and tags.",
-            schema: obj(json!({"title": s("Default: the picture's name."), "tags": {"type": "array", "items": {"type": "string"}}}), &[]),
+            schema: obj(json!({"title": s("Default: the picture's name."), "tags": {"type": "array", "items": {"type": "string"}, "description": "Words to find it by later."}}), &[]),
             edits: false,
         },
         Tool {
@@ -115,7 +114,7 @@ pub(super) fn tools() -> Vec<Tool> {
             schema: obj(json!({}), &[]),
             edits: false,
         },
-        Tool { name: "list_recordings", description: "The videos and GIFs in Snagster's recordings folder, newest first.", schema: obj(json!({"limit": n("Default 20.")}), &[]), edits: false },
+        Tool { name: "list_recordings", description: "The videos and GIFs in Snagster's recordings folder, newest first, with their size in KB. video_info reads one back.", schema: obj(json!({"limit": n("Most results (default 20).")}), &[]), edits: false },
         Tool { name: "video_info", description: "Read a video file back: size, frames, length (MP4, WMV) or a GIF's frames and length.", schema: obj(json!({"path": s("Full path.")}), &["path"]), edits: false },
         Tool { name: "get_settings", description: "Snagster's settings as JSON (or one of them, by key; nested ones as stream.fps). list_settings explains each one. The AI-app access token is never shown.", schema: obj(json!({"key": s("One setting's key, e.g. video_fps or stream.fps.")}), &[]), edits: false },
         Tool {
@@ -125,7 +124,7 @@ pub(super) fn tools() -> Vec<Tool> {
             edits: false,
         },
         Tool { name: "list_languages", description: "The 86 languages Snagster's interface speaks: code, English name and own name.", schema: obj(json!({}), &[]), edits: false },
-        Tool { name: "set_language", description: "Set Snagster's interface language by code (from list_languages), or \"auto\" for the computer's.", schema: obj(json!({"code": s("e.g. de, ja, pt-BR, auto.")}), &["code"]), edits: false },
+        Tool { name: "set_language", description: "Set Snagster's interface language by code (from list_languages), or \"auto\" for the computer's.", schema: obj(json!({"code": s("A language code from list_languages, e.g. de, ja, pt-BR, or auto for the computer's language.")}), &["code"]), edits: false },
         Tool { name: "app_info", description: "Snagster's version, system, folders, language, video encoders, sound support and how AI apps can connect.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "check_for_update", description: "Ask GitHub whether a newer Snagster is out.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "list_audio_devices", description: "The microphones that can be recorded (ids for record_video's microphone), and whether sound recording works here.", schema: obj(json!({}), &[]), edits: false },
@@ -161,7 +160,7 @@ pub(super) fn tools() -> Vec<Tool> {
             schema: obj(
                 json!({
                     "scene": n("Scene number from studio_scenes (default: the current one)."),
-                    "kind": {"type": "string", "enum": ["screen", "window", "area", "picture", "text", "color"]},
+                    "kind": {"type": "string", "enum": ["screen", "window", "area", "picture", "text", "color"], "description": "What the source shows."},
                     "name": s("Its name in the list."),
                     "index": n("Screen number for kind screen (0 = first)."),
                     "title": s("Part of the window title for kind window."),
@@ -185,7 +184,7 @@ pub(super) fn tools() -> Vec<Tool> {
             description: "Record a Studio scene (all its sources composed together, with Studio's sound mixer) to a video file for some seconds. Format, quality, sound and encoder come from the settings unless given; Studio records video, so gif records MP4 (as the Studio window does).",
             schema: obj(
                 json!({
-                    "seconds": n("1-3600."),
+                    "seconds": n("How long to record, in seconds (1-3600)."),
                     "scene": scene(),
                     "fps": n("1-120, default Studio's setting."),
                     "format": {"type": "string", "enum": studio_formats, "description": "Default: the setting (MP4 when it is GIF)."},
@@ -229,7 +228,7 @@ pub(super) fn tools() -> Vec<Tool> {
                         "maxItems": 4,
                         "description": "Multistream: more services to send the same stream to at once (encoded once; the picture is fitted to what every service takes). Default: the extra services switched on in Settings > Streaming, with their saved keys. [] streams to the main service only.",
                         "items": {"type": "object", "properties": {
-                            "service": {"type": "string", "enum": ["twitch", "youtube", "kick", "facebook", "restream", "custom"]},
+                            "service": {"type": "string", "enum": ["twitch", "youtube", "kick", "facebook", "restream", "custom"], "description": "The extra service."},
                             "url": s("Server address; default: the service's usual one (or the one saved for this service)."),
                             "key": s("Stream key; default: the one saved for this service in the settings. Secret: never repeated.")
                         }, "required": ["service"]}
@@ -239,7 +238,7 @@ pub(super) fn tools() -> Vec<Tool> {
             ),
             edits: false,
         },
-        Tool { name: "stream_status", description: "Whether Snagster is live, and how it goes: state, time on the air, bitrate, frames sent and dropped, reconnects, encoder, and the last error (the key masked); when multistreaming, outputs lists each service with its own state, bitrate, frames and error.", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "stream_status", description: "Whether Snagster is live (use stream_stats for how well it goes: rates, dropped frames and warnings), and its numbers: state, time on the air, bitrate, frames sent and dropped, reconnects, encoder, and the last error (the key masked); when multistreaming, outputs lists each service with its own state, bitrate, frames and error.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "stream_stats", description: "How well the live stream is going, measured over the last 10 seconds: per service the bitrate really sent against the bitrate set, frames the network dropped (count since going live and share), how far its upload queue is behind (ms), how long the connection has been up and reconnects (in all and in the last 10 minutes); for the computer the frames it dropped (encoder or late) and the encoder's time per frame against the frame's budget; and warnings in plain words (upload too slow, computer too slow, connection dropping) with their level; level is the worst of them (ok, warning or bad). measuring is true for the first seconds, before the rates are known.", schema: obj(json!({}), &[]), edits: false },
         Tool { name: "stream_stop", description: "End the live stream (the last packets are sent and the stream is closed); returns its final numbers and the copy's file when one was recorded.", schema: obj(json!({}), &[]), edits: false },
         Tool {
@@ -1543,10 +1542,10 @@ mod tests {
         assert_eq!(d.image.dimensions(), (30, 20));
         assert_eq!(d.image.get_pixel(0, 0).0, [255, 0, 0, 0x80]);
         assert_eq!(d.image.get_pixel(15, 10).0, [0, 0, 0, 255], "the picture is in the middle");
-        // Sizes are kept between 1 and 30000.
-        ws.call("set_canvas", &json!({"width": -5, "height": 0})).unwrap();
-        assert_eq!(size(&ws), (1, 1));
-        ws.call("set_canvas", &json!({"width": 4, "height": 4})).unwrap();
+        // Sizes outside 1-30000 are refused, and the picture stays as it was.
+        assert!(ws.call("set_canvas", &json!({"width": -5, "height": 0})).unwrap_err().contains("from 1 to 30000"));
+        assert_eq!(size(&ws), (30, 20));
+        ws.call("set_canvas", &json!({"width": 40, "height": 30})).unwrap();
         assert_eq!(ws.doc.as_ref().unwrap().image.get_pixel(0, 0).0, [255, 255, 255, 255], "default white");
     }
 
@@ -1568,7 +1567,7 @@ mod tests {
         let a = png(&dir, "a.png", 30, 20, [255, 0, 0, 255]);
         let b = png(&dir, "b.png", 10, 40, [0, 255, 0, 255]);
         let mut ws = Workspace::default();
-        assert_eq!(ws.call("combine_images", &json!({})).unwrap_err(), "give two or more picture paths");
+        assert!(ws.call("combine_images", &json!({})).unwrap_err().starts_with("combine_images needs \"paths\""));
         assert!(ws.call("combine_images", &json!({"paths": [a]})).is_err());
         let e = ws.call("combine_images", &json!({"paths": [a, dir.join("nope.png")]})).unwrap_err();
         assert!(e.contains("nope.png"), "{e}");
@@ -1586,10 +1585,10 @@ mod tests {
         let dir = temp_dir("guide");
         let a = png(&dir, "a.png", 40, 30, [10, 20, 30, 255]);
         let mut ws = Workspace::default();
-        assert_eq!(ws.call("make_guide", &json!({})).unwrap_err(), "missing path");
+        assert!(ws.call("make_guide", &json!({})).unwrap_err().starts_with("make_guide needs \"path\": Where to save it"));
         assert_eq!(ws.call("make_guide", &json!({"path": dir.join("g.pdf")})).unwrap_err(), "give steps (or include_current)");
         assert!(ws.call("make_guide", &json!({"path": dir.join("g.pdf"), "include_current": true})).unwrap_err().contains("no current picture"));
-        assert_eq!(ws.call("make_guide", &json!({"path": dir.join("g.pdf"), "steps": [{"caption": "x"}]})).unwrap_err(), "each step needs a path");
+        assert_eq!(ws.call("make_guide", &json!({"path": dir.join("g.pdf"), "steps": [{"caption": "x"}]})).unwrap_err(), "\"steps[0]\" needs \"path\".");
         let e = ws.call("make_guide", &json!({"path": dir.join("g.txt"), "steps": [{"path": a}]})).unwrap_err();
         assert!(e.contains(".pdf, .html"), "{e}");
         let html = dir.join("sub").join("g.html");
@@ -1609,7 +1608,7 @@ mod tests {
     fn video_info_needs_a_readable_file() {
         let dir = temp_dir("video-info");
         let mut ws = Workspace::default();
-        assert_eq!(ws.call("video_info", &json!({})).unwrap_err(), "missing path");
+        assert!(ws.call("video_info", &json!({})).unwrap_err().starts_with("video_info needs \"path\""));
         assert!(ws.call("video_info", &json!({"path": dir.join("none.gif")})).is_err());
         assert!(ws.call("video_info", &json!({"path": dir.join("none.mp4")})).is_err());
         let junk = dir.join("junk.mp4");
@@ -1622,14 +1621,14 @@ mod tests {
     #[test]
     fn settings_tools_check_their_arguments() {
         let mut ws = Workspace::default();
-        assert_eq!(ws.call("set_setting", &json!({})).unwrap_err(), "missing key");
-        assert_eq!(ws.call("set_setting", &json!({"key": "video_fps"})).unwrap_err(), "missing value");
+        assert!(ws.call("set_setting", &json!({})).unwrap_err().starts_with("set_setting needs \"key\""));
+        assert!(ws.call("set_setting", &json!({"key": "video_fps"})).unwrap_err().starts_with("set_setting needs \"value\""));
         assert!(ws.call("set_setting", &json!({"key": "no_such_setting_xyz", "value": 1})).unwrap_err().contains("no setting no_such_setting_xyz"));
         assert!(ws.call("set_setting", &json!({"key": "video_fps", "value": "lots"})).unwrap_err().contains("video_fps takes a whole number 1-120"));
         assert!(ws.call("set_setting", &json!({"key": "bindings", "value": 5})).unwrap_err().contains("doesn't fit bindings"));
         assert!(ws.call("set_setting", &json!({"key": "mcp_token", "value": "x"})).unwrap_err().contains("only be changed by the person"));
         assert!(ws.call("get_settings", &json!({"key": "no_such_setting_xyz"})).unwrap_err().contains("no setting"));
-        assert_eq!(ws.call("set_language", &json!({})).unwrap_err(), "missing code");
+        assert_eq!(ws.call("set_language", &json!({})).unwrap_err(), "set_language needs \"code\": A language code from list_languages, e.g. de, ja, pt-BR, or auto for the computer's language.");
         assert!(ws.call("set_language", &json!({"code": "xx-nope"})).unwrap_err().contains("isn't one of"));
     }
 
@@ -1650,8 +1649,8 @@ mod tests {
         let mut ws = Workspace::default();
         let big = json!({"scene": 9999, "kind": "color"});
         assert!(ws.call("studio_add_source", &big).unwrap_err().contains("no scene 9999"));
-        assert!(ws.call("studio_add_source", &json!({"scene": 0, "kind": "hologram"})).unwrap_err().contains("unknown kind hologram"));
-        assert!(ws.call("studio_add_source", &json!({"scene": 0})).unwrap_err().contains("unknown kind"));
+        assert!(ws.call("studio_add_source", &json!({"scene": 0, "kind": "hologram"})).unwrap_err().contains("\"kind\" is \"hologram\", but studio_add_source takes one of: screen,"));
+        assert!(ws.call("studio_add_source", &json!({"scene": 0})).unwrap_err().contains("needs \"kind\""));
         assert_eq!(ws.call("studio_add_source", &json!({"scene": 0, "kind": "window"})).unwrap_err(), "kind window needs a title");
         assert_eq!(ws.call("studio_add_source", &json!({"scene": 0, "kind": "picture"})).unwrap_err(), "kind picture needs a path");
         assert_eq!(ws.call("studio_add_source", &json!({"scene": 0, "kind": "text"})).unwrap_err(), "kind text needs text");
@@ -1660,9 +1659,9 @@ mod tests {
         assert!(ws.call("studio_remove_source", &json!({"scene": 0, "index": 1_000_000})).unwrap_err().contains("has no source"));
         assert!(ws.call("studio_remove_source", &json!({"scene": 0, "index": -1})).unwrap_err().contains("0 or more"));
         assert!(ws.call("studio_remove_source", &json!({"scene": -1, "index": 0})).unwrap_err().contains("0 or more"));
-        assert_eq!(ws.call("studio_record", &json!({"scene": 0})).unwrap_err(), "missing seconds");
-        assert!(ws.call("studio_record", &json!({"scene": 0, "seconds": 1, "format": "avi"})).unwrap_err().contains("format is one of"));
-        assert!(ws.call("studio_record", &json!({"scene": 0, "seconds": 1, "audio": "loud"})).unwrap_err().contains("audio is none"));
+        assert_eq!(ws.call("studio_record", &json!({"scene": 0})).unwrap_err(), "studio_record needs \"seconds\": How long to record, in seconds (1-3600).");
+        assert!(ws.call("studio_record", &json!({"scene": 0, "seconds": 1, "format": "avi"})).unwrap_err().contains("\"format\" is \"avi\", but studio_record takes one of: mp4"));
+        assert!(ws.call("studio_record", &json!({"scene": 0, "seconds": 1, "audio": "loud"})).unwrap_err().contains("\"audio\" is \"loud\""));
         assert!(ws.call("studio_update_source", &json!({"scene": 0, "index": 1_000_000, "name": "x"})).unwrap_err().contains("has no source"));
         assert!(ws.call("studio_remove_scene", &json!({})).unwrap_err().contains("scene"));
         assert!(ws.call("studio_set_current", &json!({"scene": 1_000_000})).unwrap_err().contains("no scene"));
@@ -1770,7 +1769,7 @@ mod tests {
         let e = ws.call("run_preset", &json!({"name": "avatar"})).unwrap_err();
         assert!(e.contains("Round avatar") && e.contains("x, y, width and height"), "{e}");
         let e = ws.call("run_preset", &json!({"number": 0, "x": 0, "y": 0, "width": 0, "height": 5})).unwrap_err();
-        assert!(e.contains("above 0"), "{e}");
+        assert!(e.contains("1 or more"), "{e}");
         assert!(ws.call("run_preset", &json!({"number": 0, "x": 0, "y": 0, "width": 5, "height": 5, "shape": "blob"})).unwrap_err().contains("shape"));
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -1795,7 +1794,7 @@ mod tests {
         let outside = png(&dir, "outside.png", 4, 4, [0, 0, 0, 255]);
         for tool in ["library_tag", "library_delete"] {
             assert!(ws.call(tool, &json!({"path": outside})).unwrap_err().contains("isn't in Snagster's library"), "{tool}");
-            assert!(ws.call(tool, &json!({})).unwrap_err().contains("missing path"), "{tool}");
+            assert!(ws.call(tool, &json!({})).unwrap_err().contains("needs \"path\""), "{tool}");
         }
         assert!(outside.exists());
         // A folder stands in for the Recycle Bin.
