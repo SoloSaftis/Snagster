@@ -180,7 +180,7 @@ pub(crate) fn band(app: &mut SnagApp, ui: &mut egui::Ui, ctx: &egui::Context) {
     look::group(ui, t("Sound"), |ui| {
         look::column(ui, |ui| {
             let mut add = None;
-            look::small_menu(ui, ph::PLUS, t("Add sound"), t("Add the computer sound, a microphone or a sound file to this scene (up to 6)"), |ui| add = add_sound_menu(app, ui));
+            look::small_menu(ui, ph::PLUS, t("Add sound"), t("Add the computer sound, a program, a microphone or a sound file to this scene (up to 6)"), |ui| add = add_sound_menu(app, ui));
             if let Some(s) = add {
                 add_sound(app, s);
             }
@@ -976,20 +976,63 @@ pub(crate) fn sound_icon(input: &crate::audio::SoundInput, muted: bool) -> &'sta
         (Microphone { .. }, false) => ph::MICROPHONE,
         (Microphone { .. }, true) => ph::MICROPHONE_SLASH,
         (File { .. }, false) => ph::WAVEFORM,
+        (Program { .. }, false) => ph::APP_WINDOW,
         (_, true) => ph::SPEAKER_SLASH,
         (Computer, false) => ph::SPEAKER,
     }
 }
 
+/// How a mixer row's input is doing.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum RowState {
+    /// Running, this loud (0..1).
+    Live(f32),
+    /// A program that isn't running: silent until it starts (not an error).
+    Waiting,
+    /// A program this computer can't capture, and why.
+    Off(crate::audio::Unsupported),
+    /// Not running (it couldn't start, or the meters aren't on).
+    Broken,
+}
+
+/// The state of `input`'s row: `level` and `waiting` from the meters (None: no meters).
+pub(crate) fn row_state(input: &crate::audio::SoundInput, level: Option<f32>, waiting: bool, support: impl Fn() -> Result<(), crate::audio::Unsupported>) -> RowState {
+    if let crate::audio::SoundInput::Program { .. } = input
+        && let Err(why) = support()
+    {
+        return RowState::Off(why);
+    }
+    match level {
+        _ if waiting => RowState::Waiting,
+        Some(l) => RowState::Live(l),
+        None => RowState::Broken,
+    }
+}
+
 /// One sound in the mixer: mute, name, "every scene" and remove, then the meter and volume.
-fn sound_row(ui: &mut egui::Ui, s: &mut crate::studio::SceneSound, shared: bool, level: Option<f32>) -> RowAsk {
+fn sound_row(ui: &mut egui::Ui, s: &mut crate::studio::SceneSound, shared: bool, state: &RowState) -> RowAsk {
     let mut ask = RowAsk::Nothing;
+    let program = match &s.input {
+        crate::audio::SoundInput::Program { name } => Some(name.clone()),
+        _ => None,
+    };
     ui.horizontal(|ui| {
         if look::icon_button(ui, sound_icon(&s.input, s.muted), if s.muted { t("Muted; click to turn on") } else { t("Click to mute") }).clicked() {
             s.muted = !s.muted;
         }
-        let name = if s.name.trim().is_empty() { t("Sound").to_string() } else { crate::i18n::tr(&s.name) };
-        ui.label(name);
+        // A program's name is its own: never translated.
+        let name = if s.name.trim().is_empty() {
+            t("Sound").to_string()
+        } else if program.is_some() {
+            s.name.clone()
+        } else {
+            crate::i18n::tr(&s.name)
+        };
+        let dim = matches!(state, RowState::Waiting | RowState::Off(_));
+        let r = ui.label(if dim { RichText::new(name).color(pal().dim) } else { RichText::new(name) });
+        if let Some(k) = &program {
+            r.on_hover_text(k);
+        }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if look::icon_button(ui, ph::TRASH, t("Remove this sound")).clicked() {
                 ask = RowAsk::Remove;
@@ -1000,15 +1043,34 @@ fn sound_row(ui: &mut egui::Ui, s: &mut crate::studio::SceneSound, shared: bool,
             }
         });
     });
-    // The meter: green, then yellow, then red near the top; a dash when the input isn't running.
+    // A program's state in one line, when there is something to say.
+    match state {
+        RowState::Waiting => {
+            ui.label(RichText::new(t("Not running. Its sound comes in when it starts.")).small().color(pal().dim));
+        }
+        RowState::Off(crate::audio::Unsupported::Permission) => {
+            ui.horizontal(|ui| {
+                ui.label(RichText::new(t("Needs permission")).small().color(pal().warn)).on_hover_text(crate::audio::Unsupported::Permission.text());
+                if ui.link(crate::audio::program_settings_link()).clicked() {
+                    let _ = crate::capture::open_screen_settings();
+                }
+            });
+        }
+        RowState::Off(why) => {
+            ui.label(RichText::new(t("Not available on this system")).small().color(pal().warn)).on_hover_text(why.text());
+        }
+        _ => {}
+    }
+    // The meter: green, then yellow, then red near the top; a dash when the input isn't running
+    // (an empty bar while a program waits to start).
     let (r, _) = ui.allocate_exact_size(vec2(ui.available_width(), 8.0), Sense::hover());
     ui.painter().rect_filled(r, CornerRadius::same(3), pal().panel_hi);
-    match level {
-        Some(level) if !s.muted => {
-            let f = meter_fill(level, s.volume);
+    match state {
+        RowState::Live(level) if !s.muted => {
+            let f = meter_fill(*level, s.volume);
             ui.painter().rect_filled(Rect::from_min_size(r.min, vec2(r.width() * f, r.height())), CornerRadius::same(3), meter_color_on(f, pal().dark));
         }
-        None => {
+        RowState::Broken | RowState::Off(_) => {
             ui.painter().line_segment([r.left_center(), r.right_center()], Stroke::new(1.0, pal().err));
         }
         _ => {}
@@ -1031,6 +1093,8 @@ fn add_sound_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<crate::studio:
         out = Some(SceneSound::new(SoundInput::Computer, "Computer sound"));
         ui.close();
     }
+    let c = app.settings.studio.current.min(app.settings.studio.scenes.len().saturating_sub(1));
+    let have: Vec<SoundInput> = app.settings.studio.scene_sounds(c).into_iter().map(|s| s.input.clone()).collect();
     ui.add_enabled_ui(crate::audio::AudioSource::supported(), |ui| {
         ui.menu_button(format!("{}  {}", ph::MICROPHONE, t("Microphone")), |ui| {
             if ui.button(t("The computer's default microphone")).clicked() {
@@ -1046,6 +1110,14 @@ fn add_sound_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<crate::studio:
             }
         });
     });
+    ui.menu_button(format!("{}  {}", ph::APP_WINDOW, t("Program sound")), |ui| {
+        if let Some(s) = program_menu(app, ui, &have) {
+            out = Some(s);
+            ui.close();
+        }
+    })
+    .response
+    .on_hover_text(t("The sound of one program only, such as a game, a browser or a music player"));
     if ui.button(format!("{}  {}", ph::WAVEFORM, t("Sound file (WAV)…"))).on_hover_text(t("Music or a jingle, played over and over")).clicked() {
         ui.close();
         if let Some(p) = rfd::FileDialog::new().add_filter(t("WAV sound"), &["wav", "wave"]).pick_file() {
@@ -1054,6 +1126,96 @@ fn add_sound_menu(app: &mut SnagApp, ui: &mut egui::Ui) -> Option<crate::studio:
         }
     }
     out
+}
+
+/// The programs list for "Program sound", made again every second while the menu is open.
+pub(crate) struct ProgramList(pub crate::app::work::ListCache<crate::audio::Program>);
+
+impl Default for ProgramList {
+    fn default() -> Self {
+        ProgramList(crate::app::work::ListCache::new(std::time::Duration::from_secs(1)))
+    }
+}
+
+/// "Program sound": the programs with sound open (playing ones first on Windows, which can
+/// tell), or why this computer can't capture one program. `have` is the scene's sound.
+fn program_menu(app: &mut SnagApp, ui: &mut egui::Ui, have: &[crate::audio::SoundInput]) -> Option<crate::studio::SceneSound> {
+    use crate::audio::{SoundInput, Unsupported};
+    if let Err(why) = crate::audio::program_support() {
+        ui.set_max_width(320.0);
+        ui.label(RichText::new(why.text()).color(pal().dim));
+        if let Some(cmd) = why.command() {
+            ui.horizontal(|ui| {
+                let mut shown = cmd.clone();
+                ui.add(egui::TextEdit::singleline(&mut shown).code_editor().desired_width(240.0));
+                if look::icon_button(ui, ph::COPY, t("Copy")).clicked() {
+                    ui.ctx().copy_text(cmd.clone());
+                }
+            });
+        }
+        if why == Unsupported::Permission && ui.link(crate::audio::program_settings_link()).clicked() {
+            let _ = crate::capture::open_screen_settings();
+        }
+        return None;
+    }
+    let list = app.x.programs.0.get(Some(ui.ctx()), crate::audio::programs).to_vec();
+    let loaded = app.x.programs.0.loaded();
+    ui.ctx().request_repaint_after(std::time::Duration::from_secs(1));
+    if list.is_empty() {
+        ui.label(RichText::new(if loaded { empty_programs() } else { t("Looking for programs…") }).color(pal().dim));
+        return None;
+    }
+    let mut out = None;
+    // Only Windows says which programs are playing now.
+    let headings = cfg!(windows);
+    let mut last: Option<bool> = None;
+    for p in list {
+        if headings && last != Some(p.playing) {
+            ui.label(RichText::new(if p.playing { t("Playing now") } else { t("Not playing right now") }).small().color(pal().dim));
+            last = Some(p.playing);
+        }
+        let input = SoundInput::Program { name: p.name.clone() };
+        let there = have.contains(&input);
+        let text = if there { format!("{}  {}", ph::CHECK, p.label) } else { format!("{}  {}", ph::APP_WINDOW, p.label) };
+        let r = ui.add_enabled(!there, egui::Button::new(text));
+        let r = if there { r.on_disabled_hover_text(t("Already in this scene")) } else { r.on_hover_text(&p.name) };
+        if r.clicked() {
+            out = Some(crate::studio::SceneSound::new(input, &p.label));
+        }
+    }
+    out
+}
+
+/// The programs a scene hears twice: unmuted, while the computer sound (which has every
+/// program in it) is on too. `computer_heard`: this system captures the computer sound at all
+/// (a scene keeps it on everywhere, but only Windows hears it).
+pub(crate) fn heard_twice(sounds: &[&crate::studio::SceneSound], computer_heard: bool) -> Vec<String> {
+    use crate::audio::SoundInput;
+    if !computer_heard || !sounds.iter().any(|s| s.input == SoundInput::Computer && !s.muted && s.volume > 0.0) {
+        return Vec::new();
+    }
+    sounds.iter().filter(|s| matches!(s.input, SoundInput::Program { .. }) && !s.muted && s.volume > 0.0).map(|s| s.name.clone()).collect()
+}
+
+/// What the program list says when it is empty: macOS lists the programs with a window,
+/// the others the programs that have sound open.
+fn empty_programs() -> &'static str {
+    if cfg!(target_os = "macos") {
+        t("No program with a window is open right now. Open one, and it shows up here.")
+    } else {
+        t("No program is playing sound right now. Start one and play something, and it shows up here.")
+    }
+}
+
+/// The note for programs heard twice ("Spotify is heard twice: …").
+pub(crate) fn twice_note(names: &[String]) -> Option<String> {
+    let list = match names {
+        [] => return None,
+        [one] => return Some(tf("{name} is heard twice: Computer sound already has it.", &[("name", one)])),
+        [a, b] => tf("{a} and {b}", &[("a", a), ("b", b)]),
+        [a, b, rest @ ..] => tf("{a}, {b} and {n} more", &[("a", a), ("b", b), ("n", &rest.len().to_string())]),
+    };
+    Some(tf("{names} are heard twice: Computer sound already has them.", &[("names", &list)]))
 }
 
 /// Put `s` in the current scene (when there is room and it isn't there yet).
@@ -1107,20 +1269,23 @@ impl SnagApp {
                 }
             });
         });
-        let level = |input: &crate::audio::SoundInput| self.studio_level(input);
-        let shared_levels: Vec<Option<f32>> = self.settings.studio.shared_sounds.iter().map(|s| level(&s.input)).collect();
-        let own_levels: Vec<Option<f32>> = self.settings.studio.scenes.get(c).map(|sc| sc.sounds.iter().map(|s| level(&s.input)).collect()).unwrap_or_default();
+        let meters = self.x.studio.as_ref().and_then(|s| s.meters.as_ref());
+        // Asked once a frame, for every row.
+        let support = crate::audio::program_support();
+        let state = |input: &crate::audio::SoundInput| row_state(input, meters.and_then(|m| m.level_of(input)), meters.is_some_and(|m| m.waiting(input)), || support.clone());
+        let shared_levels: Vec<RowState> = self.settings.studio.shared_sounds.iter().map(|s| state(&s.input)).collect();
+        let own_levels: Vec<RowState> = self.settings.studio.scenes.get(c).map(|sc| sc.sounds.iter().map(|s| state(&s.input)).collect()).unwrap_or_default();
         let mut ask: Option<(bool, usize, RowAsk)> = None;
         let st = &mut self.settings.studio;
         for (i, s) in st.shared_sounds.iter_mut().enumerate() {
-            let a = sound_row(ui, s, true, shared_levels.get(i).copied().flatten());
+            let a = sound_row(ui, s, true, shared_levels.get(i).unwrap_or(&RowState::Broken));
             if a != RowAsk::Nothing {
                 ask = Some((true, i, a));
             }
         }
         if let Some(scene) = st.scenes.get_mut(c) {
             for (i, s) in scene.sounds.iter_mut().enumerate() {
-                let a = sound_row(ui, s, false, own_levels.get(i).copied().flatten());
+                let a = sound_row(ui, s, false, own_levels.get(i).unwrap_or(&RowState::Broken));
                 if a != RowAsk::Nothing {
                     ask = Some((false, i, a));
                 }
@@ -1132,11 +1297,29 @@ impl SnagApp {
             self.status = why;
         }
         if n == 0 {
-            ui.label(RichText::new(t("No sound in this scene: add the computer sound, a microphone or a sound file.")).color(pal().dim));
+            ui.label(RichText::new(t("No sound in this scene: add the computer sound, a program, a microphone or a sound file.")).color(pal().dim));
         }
-        let notes = self.x.studio.as_ref().and_then(|s| s.meters.as_ref()).map(|m| m.notes().to_vec()).unwrap_or_default();
-        for note in notes {
+        if let Some(note) = twice_note(&heard_twice(&st.scene_sounds(c), crate::audio::SoundInput::Computer.supported())) {
             ui.label(RichText::new(note).small().color(pal().warn));
+            if ui.small_button(t("Mute Computer sound")).clicked() {
+                mute_computer(st, c);
+            }
+        }
+        // Programs this computer can't capture say so on their row.
+        let notes = self.x.studio.as_ref().and_then(|s| s.meters.as_ref()).map(|m| m.notes().to_vec()).unwrap_or_default();
+        let programs: Vec<String> = if support.is_ok() { Vec::new() } else { st.scene_sounds(c).iter().filter(|s| matches!(s.input, crate::audio::SoundInput::Program { .. })).map(|s| format!("{}: ", crate::audio::input_label(&s.input))).collect() };
+        for note in notes.into_iter().filter(|n| !programs.iter().any(|p| n.starts_with(p.as_str()))) {
+            ui.label(RichText::new(note).small().color(pal().warn));
+        }
+    }
+}
+
+/// Mute the computer sound of scene `c` (shared or its own): "Mute Computer sound".
+pub(crate) fn mute_computer(st: &mut crate::studio::StudioSettings, c: usize) {
+    let own = st.scenes.get_mut(c).map(|sc| sc.sounds.iter_mut()).into_iter().flatten();
+    for s in st.shared_sounds.iter_mut().chain(own) {
+        if s.input == crate::audio::SoundInput::Computer {
+            s.muted = true;
         }
     }
 }
@@ -1412,6 +1595,57 @@ mod tests {
         assert_eq!(sound_icon(&SoundInput::Computer, true), ph::SPEAKER_SLASH);
         assert_eq!(sound_icon(&SoundInput::Microphone { id: String::new() }, true), ph::MICROPHONE_SLASH);
         assert_eq!(sound_icon(&SoundInput::File { path: String::new() }, false), ph::WAVEFORM);
+        assert_eq!(sound_icon(&SoundInput::Program { name: "spotify".into() }, false), ph::APP_WINDOW);
+        assert_eq!(sound_icon(&SoundInput::Program { name: "spotify".into() }, true), ph::SPEAKER_SLASH);
+    }
+
+    /// A program that isn't running waits (no red dash); one this computer can't capture says
+    /// why; the rest show their level, or a dash when not running.
+    #[test]
+    fn a_rows_state_tells_waiting_from_broken() {
+        use crate::audio::{SoundInput, Unsupported};
+        let prog = SoundInput::Program { name: "game".into() };
+        let ok = || Ok(());
+        assert_eq!(row_state(&prog, Some(0.0), true, ok), RowState::Waiting);
+        assert_eq!(row_state(&prog, Some(0.4), false, ok), RowState::Live(0.4));
+        assert_eq!(row_state(&prog, None, false, ok), RowState::Broken);
+        assert_eq!(row_state(&prog, Some(0.4), true, || Err(Unsupported::OldWindows)), RowState::Off(Unsupported::OldWindows));
+        // Other inputs never ask whether programs can be captured.
+        assert_eq!(row_state(&SoundInput::Computer, Some(0.2), false, || Err(Unsupported::Permission)), RowState::Live(0.2));
+        assert_eq!(row_state(&SoundInput::Computer, None, false, ok), RowState::Broken);
+    }
+
+    /// Computer sound already has every program: a program that is on while it is on too is
+    /// heard twice, and the note names them and goes once either side is muted.
+    #[test]
+    fn programs_heard_twice_are_noted_until_one_side_is_muted() {
+        use crate::audio::SoundInput;
+        use crate::studio::{Scene, SceneSound, StudioSettings};
+        let prog = |n: &str| SceneSound::new(SoundInput::Program { name: n.to_lowercase() }, n);
+        let mut st = StudioSettings { scenes: vec![Scene { sounds: vec![prog("Spotify"), prog("Discord")], name: "A".into(), items: Vec::new() }], current: 0, ..Default::default() };
+        assert_eq!(heard_twice(&st.scene_sounds(0), true), ["Spotify", "Discord"], "the default shared computer sound is on");
+        assert_eq!(twice_note(&heard_twice(&st.scene_sounds(0), true)).unwrap(), "Spotify and Discord are heard twice: Computer sound already has them.");
+        st.scenes[0].sounds[1].muted = true;
+        assert_eq!(twice_note(&heard_twice(&st.scene_sounds(0), true)).unwrap(), "Spotify is heard twice: Computer sound already has it.");
+        mute_computer(&mut st, 0);
+        assert!(st.shared_sounds[0].muted);
+        assert!(heard_twice(&st.scene_sounds(0), true).is_empty());
+        assert_eq!(twice_note(&[]), None);
+        let four: Vec<String> = ["A", "B", "C", "D"].iter().map(|s| s.to_string()).collect();
+        assert_eq!(twice_note(&four).unwrap(), "A, B and 2 more are heard twice: Computer sound already has them.");
+        // A program at no volume, or no computer sound at all: nothing heard twice.
+        let mut quiet = StudioSettings { shared_sounds: Vec::new(), ..st.clone() };
+        quiet.scenes[0].sounds[1].muted = false;
+        assert!(heard_twice(&quiet.scene_sounds(0), true).is_empty());
+        st.shared_sounds[0].muted = false;
+        st.scenes[0].sounds[0].volume = 0.0;
+        st.scenes[0].sounds[1].muted = true;
+        assert!(heard_twice(&st.scene_sounds(0), true).is_empty());
+        // Where the computer sound isn't captured (Linux, macOS), nothing is heard twice.
+        st.scenes[0].sounds[0].volume = 1.0;
+        st.scenes[0].sounds[1].muted = false;
+        assert_eq!(heard_twice(&st.scene_sounds(0), true).len(), 2);
+        assert!(heard_twice(&st.scene_sounds(0), false).is_empty());
     }
 
     #[test]

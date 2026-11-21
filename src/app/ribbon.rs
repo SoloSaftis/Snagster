@@ -194,6 +194,8 @@ pub(crate) struct Extra {
     /// Microphones, and this computer's video encoders: both listed on a thread of their own
     /// (asking the sound system or Media Foundation can take a while).
     pub mics: crate::app::work::ListCache<crate::audio::Device>,
+    /// The programs with sound open, for Studio's "Program sound" (every second while shown).
+    pub programs: crate::app::studio_ui::ProgramList,
     pub encoders: crate::app::work::ListCache<crate::video::EncoderInfo>,
     /// The encoders the person can choose (`encode::available`).
     pub pickable: crate::app::work::ListCache<(crate::encode::Codec, crate::encode::EncoderName)>,

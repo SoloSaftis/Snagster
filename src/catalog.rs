@@ -209,7 +209,7 @@ pub const COMMANDS: &[Command] = &[
     s("studio_ink_hold", "Studio > Ink", &["How long ink stays", "Stay until cleared"], "studio.ink_mode"),
     c("studio_add_source", "Studio > Sources", &["Add source", "Screen area", "Picture...", "Text", "Color", "Pick a window..."], "studio_add_source", false, "", Safe),
     c("studio_source", "Studio > the source's properties", &["Shown", "Show this scene (also while recording)", "Fill the video", "Fit, keep shape", "Center", "Choose another picture...", "Move up (in front)", "Move down (behind)"], "studio_update_source", false, "", Safe),
-    c("studio_sound", "Studio > Sound", &["Add sound", "Sound file (WAV)...", "The computer's default microphone"], "studio_edit", false, "", Safe),
+    c("studio_sound", "Studio > Sound", &["Add sound", "Sound file (WAV)...", "The computer's default microphone", "Mute Computer sound"], "studio_edit", false, "", Safe),
     // ---- tick boxes and choices ----
     s("after_copy", "Capture > After capture, Capture menu", &["Copy to clipboard"], "after_copy"),
     s("after_save", "Capture > After capture, Capture menu", &["Save to folder", "Save to the save folder"], "after_save"),

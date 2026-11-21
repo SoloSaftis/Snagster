@@ -644,12 +644,12 @@ fn base_tools() -> Vec<Tool> {
 const MARK_KINDS: [&str; 14] = ["arrow", "line", "box", "oval", "highlight", "pen", "text", "callout", "step", "stamp", "pointer", "spotlight", "magnify", "image"];
 
 /// Tools that change something outside the current picture (files, clipboard, settings, screen).
-const SIDE: [&str; 35] = [
+const SIDE: [&str; 36] = [
     "save", "quick_save", "copy_to_clipboard", "record_gif", "record_video", "make_guide", "library_add", "library_delete", "undo_delete", "library_tag",
     "set_setting", "set_language", "open_in_snagster", "studio_add_source", "studio_remove_source", "studio_update_source",
     "studio_add_scene", "studio_remove_scene", "studio_set_current", "studio_record", "capture_scrolling", "paste_from_clipboard",
     "capture_screen", "capture_region", "capture_window", "stream_start", "stream_stop", "app_command", "save_to_cloud", "gif_edit", "studio_edit",
-    "replay_start", "replay_save", "replay_stop", "ink_clear",
+    "replay_start", "replay_save", "replay_stop", "ink_clear", "set_program_sound",
 ];
 
 /// Tools that may delete or replace something (a mark, a source or scene, a library picture,
@@ -666,7 +666,7 @@ const OPEN_WORLD: [&str; 4] = ["check_for_update", "stream_start", "app_command"
 
 /// Tools that change something but leave the same result when called again with the same
 /// arguments.
-const IDEMPOTENT: [&str; 13] = ["stream_stop", "replay_stop", "ink_clear", "save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
+const IDEMPOTENT: [&str; 14] = ["set_program_sound", "stream_stop", "replay_stop", "ink_clear", "save", "set_setting", "set_language", "studio_set_current", "library_tag", "open_image", "clear_marks", "resize", "set_canvas", "copy_to_clipboard"];
 
 /// What a tool's structured answer looks like, for the tools that always give one.
 fn output_schema(name: &str) -> Option<Value> {
@@ -697,6 +697,7 @@ fn output_schema(name: &str) -> Option<Value> {
         "list_recordings" => json!({"type": "object", "properties": {"folder": st, "recordings": {"type": "array", "items": props(json!({"path": st, "kb": num}))}}, "required": ["folder", "recordings"]}),
         "video_info" => json!({"type": "object", "properties": {"frames": num, "seconds": num, "width": num, "height": num}, "required": ["frames", "seconds", "width", "height"]}),
         "list_audio_devices" => json!({"type": "object", "properties": {"sound_recording": bo, "microphones": {"type": "array", "items": {"type": "object"}}}, "required": ["sound_recording", "microphones"]}),
+        "list_sound_programs" => json!({"type": "object", "properties": {"supported": bo, "reason": st, "message": st, "fix": {"type": ["string", "null"]}, "programs": {"type": "array", "items": props(json!({"name": st, "label": st, "playing": bo}))}}, "required": ["supported", "programs"]}),
         "app_info" => json!({"type": "object", "properties": {"version": st, "system": st, "architecture": st, "features": {"type": "object"}, "folders": {"type": "object"}}, "required": ["version", "system"]}),
         "studio_scenes" => json!({"type": "object", "properties": {"scenes": {"type": "array", "items": {"type": "object"}}, "current": num, "width": num, "height": num, "fps": num}, "required": ["scenes", "current"]}),
         "library_tag" => json!({"type": "object", "properties": {"path": st, "title": st, "tags": strings}, "required": ["path", "title", "tags"]}),
@@ -2301,7 +2302,7 @@ pub(crate) mod fuzzing {
     /// Tools the fuzz never calls: they capture or record the screen, use the clipboard, the
     /// network, sound or graphics devices, start or message other programs, or write outside
     /// the sandbox (the cloud folders). Each has tests of its own arguments.
-    pub const OUTSIDE: [&str; 32] = [
+    pub const OUTSIDE: [&str; 33] = [
         "capture_screen",
         "capture_region",
         "capture_window",
@@ -2314,6 +2315,7 @@ pub(crate) mod fuzzing {
         "list_windows",
         "list_monitors",
         "list_audio_devices",
+        "list_sound_programs",
         "list_video_encoders",
         "record_video",
         "record_gif",
@@ -2341,7 +2343,7 @@ pub(crate) mod fuzzing {
     /// The tools the fuzz calls: only the picture in memory, the sandbox's files and fixed
     /// settings. Every tool is in this list or in OUTSIDE (a test checks), so a new one is
     /// sorted by hand instead of being fuzzed by default.
-    pub const FUZZED: [&str; 48] = [
+    pub const FUZZED: [&str; 49] = [
         "open_image",
         "picture_info",
         "view_picture",
@@ -2386,6 +2388,7 @@ pub(crate) mod fuzzing {
         "studio_update_source",
         "studio_remove_source",
         "studio_edit",
+        "set_program_sound",
         "stream_services",
         "stream_status",
         "stream_stats",

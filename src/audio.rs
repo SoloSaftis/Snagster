@@ -14,6 +14,15 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
+
+mod programs;
+#[cfg(target_os = "linux")]
+mod programs_linux;
+#[cfg(target_os = "macos")]
+mod programs_mac;
+#[cfg(windows)]
+mod programs_win;
+pub use programs::{Program, Unsupported, key as program_key, label_from_key as program_label, settings_link as program_settings_link, list as programs, support as program_support};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -71,12 +80,19 @@ pub enum SoundInput {
     Microphone { id: String },
     /// A WAV file, played over and over.
     File { path: String },
+    /// One program's sound, by its key (`programs::key`): every running copy of it, silence
+    /// while it isn't running.
+    Program { name: String },
 }
 
 impl SoundInput {
     /// Whether this computer can capture it (sound files play everywhere).
     pub fn supported(&self) -> bool {
-        matches!(self, SoundInput::File { .. }) || AudioSource::supported()
+        match self {
+            SoundInput::File { .. } => true,
+            SoundInput::Program { .. } => programs::support().is_ok(),
+            _ => AudioSource::supported(),
+        }
     }
 }
 
@@ -179,6 +195,8 @@ struct Feed {
     error: Mutex<Option<String>>,
     /// The input has started, or failed (then `error` says why).
     settled: AtomicBool,
+    /// A program's lane while the program isn't running.
+    waiting: AtomicBool,
 }
 
 impl Feed {
@@ -190,6 +208,7 @@ impl Feed {
             muted: AtomicBool::new(false),
             error: Mutex::new(None),
             settled: AtomicBool::new(false),
+            waiting: AtomicBool::new(false),
         })
     }
 
@@ -275,6 +294,7 @@ impl Capture {
             SoundInput::Computer => spawn_device(None, feed.clone(), self.stop.clone())?,
             SoundInput::Microphone { id } => spawn_device(Some(id.clone()), feed.clone(), self.stop.clone())?,
             SoundInput::File { path } => spawn_file(path.clone(), feed.clone(), self.stop.clone())?,
+            SoundInput::Program { name } => programs::spawn(name.clone(), feed.clone(), self.stop.clone())?,
         };
         self.threads.push(t);
         self.lanes.push(Lane { input, feed, mix, now: AtomicU32::new(0) });
@@ -325,6 +345,12 @@ impl Capture {
                 continue;
             }
             seen.push(input);
+            if let SoundInput::Program { .. } = input
+                && let Err(why) = programs::support()
+            {
+                cap.notes.push(format!("{}: {}", input_label(input), why.text()));
+                continue;
+            }
             if !input.supported() {
                 cap.notes.push(format!("{}: sound from devices isn't available on this system yet", input_label(input)));
                 continue;
@@ -418,6 +444,11 @@ impl Capture {
         self.lanes.iter().find(|l| l.input == *input).map(|l| f32::from_bits(l.feed.peak.load(Ordering::Relaxed)))
     }
 
+    /// Whether `input` is a program that isn't running now (its lane is silent until it starts).
+    pub fn waiting(&self, input: &SoundInput) -> bool {
+        self.lanes.iter().any(|l| l.input == *input && l.feed.waiting.load(Ordering::Relaxed))
+    }
+
     #[cfg(test)]
     pub fn has_system(&self) -> bool {
         self.lanes.iter().any(|l| l.input == SoundInput::Computer)
@@ -437,12 +468,13 @@ fn fade_step(g: f32, target: f32, step: f32) -> f32 {
 }
 
 /// What an input is called in notes.
-fn input_label(i: &SoundInput) -> String {
+pub(crate) fn input_label(i: &SoundInput) -> String {
     match i {
         SoundInput::Computer => "Computer sound".into(),
         SoundInput::Microphone { id } if id.is_empty() => "Microphone".into(),
         SoundInput::Microphone { .. } => "A microphone".into(),
         SoundInput::File { path } => std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| path.clone()),
+        SoundInput::Program { name } => programs::label_from_key(name),
     }
 }
 
@@ -728,6 +760,36 @@ mod tests {
         b.push(&vec![10_000; frames * 4]);
         c.take(frames);
         assert!(c.take(10).iter().all(|s| *s == 0));
+    }
+
+    /// A program's lane is mixed like any other scene input, and says when it waits for the
+    /// program to start.
+    #[test]
+    fn a_program_lane_follows_the_scene_mix_and_reports_waiting() {
+        let game = SoundInput::Program { name: "game".into() };
+        let f = Feed::new();
+        let (c, mix) = scene_capture(vec![(game.clone(), f.clone())]);
+        mix.set(vec![(game.clone(), 0.5, false)]);
+        let frames = FADE_FRAMES as usize;
+        f.push(&vec![8_000; frames * 4]);
+        c.take(frames);
+        assert_eq!(*c.take(1).last().unwrap(), 4_000, "at half volume after the fade");
+        assert!(!c.waiting(&game));
+        f.waiting.store(true, Ordering::Relaxed);
+        assert!(c.waiting(&game));
+        assert!(!c.waiting(&SoundInput::Program { name: "other".into() }), "not in this capture");
+        assert_eq!(input_label(&game), "Game");
+        assert!(game.supported() == program_support().is_ok());
+    }
+
+    /// Where one program's sound can't be captured, its lane is left out with the reason and
+    /// the rest still run.
+    #[test]
+    fn a_program_that_cant_be_captured_is_noted() {
+        let Err(why) = program_support() else { return };
+        let c = Capture::start_inputs(&[SoundInput::Program { name: "game".into() }]);
+        assert!(c.is_silent());
+        assert_eq!(c.notes(), [format!("Game: {}", why.text())]);
     }
 
     #[test]

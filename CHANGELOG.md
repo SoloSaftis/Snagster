@@ -4,6 +4,19 @@ What changed for people using Snagster, per version.
 
 ## Not released yet
 
+Studio:
+
+- **Sound from one program**: Add sound > Program sound lists the programs that have sound open
+  (on Windows the ones playing first) and puts one in the scene, with its own meter, volume and
+  mute next to the microphone and the computer sound. A scene remembers the program by name, so
+  its sound comes in whenever it runs and goes quiet when it closes. When the computer sound is
+  on too, a note says the program is heard twice, with a button to mute the computer sound.
+  Windows 10 version 2004 and later; Linux with PipeWire (the Flatpak needs one override, which
+  the menu shows); macOS 13 and later, with the Screen Recording permission. Elsewhere the menu
+  says why and everything else works as before. AI apps get `list_sound_programs` and
+  `set_program_sound`. The Mac app now needs macOS 12.3 or later (it was 12.0), as
+  ScreenCaptureKit, which this uses, came in 12.3.
+
 For AI apps (every system):
 
 - **Clearer answers when an AI app gets a tool's arguments wrong**: every call is checked

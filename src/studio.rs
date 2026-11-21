@@ -852,6 +852,20 @@ mod tests {
         assert!(s.scene().is_some());
     }
 
+    /// A program's sound is kept by its key, so a scene finds it again after a restart.
+    #[test]
+    fn a_program_sound_is_remembered_by_its_name() {
+        use crate::audio::SoundInput;
+        let mut s = StudioSettings::default();
+        s.scenes[0].sounds.push(SceneSound { volume: 0.7, muted: true, ..SceneSound::new(SoundInput::Program { name: "spotify".into() }, "Spotify") });
+        let j = serde_json::to_string(&s).unwrap();
+        assert!(j.contains(r#"{"Program":{"name":"spotify"}}"#), "{j}");
+        let back: StudioSettings = serde_json::from_str(&j).unwrap();
+        assert_eq!(back.scenes[0].sounds[0], s.scenes[0].sounds[0]);
+        assert!(back.sound_inputs().contains(&SoundInput::Program { name: "spotify".into() }));
+        assert!(back.mix().contains(&(SoundInput::Program { name: "spotify".into() }, 0.7, true)));
+    }
+
     fn colour(name: &str, c: [u8; 4], x: f32, y: f32, w: f32, h: f32) -> Item {
         Item { name: name.into(), kind: SourceKind::Color { color: c }, x, y, w, h, visible: true }
     }
