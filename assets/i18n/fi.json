@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Lopeta napsauttamalla kuvaketta hiiren oikealla ja valitsemalla {item}.",
   "To quit, click the icon and choose {item}.": "Lopeta napsauttamalla kuvaketta ja valitsemalla {item}.",
   "To quit, right-click the icon and choose {item}.": "Lopeta napsauttamalla kuvaketta hiiren oikealla ja valitsemalla {item}.",
-  "More captures": "Lisää kaappauksia"
+  "More captures": "Lisää kaappauksia",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Kun olet sallinut Snagsterin Järjestelmäasetuksissa, sen on käynnistyttävä uudelleen nähdäkseen näytön.",
+  "Quit and Reopen": "Lopeta ja avaa uudelleen"
  }
 }

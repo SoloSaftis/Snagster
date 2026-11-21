@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Шығу үшін белгішені оң жақ батырмамен басып, «{item}» таңдаңыз.",
   "To quit, click the icon and choose {item}.": "Жабу үшін белгішені басып, «{item}» таңдаңыз.",
   "To quit, right-click the icon and choose {item}.": "Жабу үшін белгішені оң жақ батырмамен басып, «{item}» таңдаңыз.",
-  "More captures": "Басқа түсірілімдер"
+  "More captures": "Басқа түсірілімдер",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Жүйе баптауларында Snagster-ге рұқсат бергеннен кейін экранды көру үшін ол қайта іске қосылуы керек.",
+  "Quit and Reopen": "Шығу және қайта ашу"
  }
 }

@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "പുറത്തുകടക്കാൻ, ഐക്കണിൽ വലത്-ക്ലിക്ക് ചെയ്ത് {item} തിരഞ്ഞെടുക്കുക.",
   "To quit, click the icon and choose {item}.": "അടയ്ക്കാൻ, ഐക്കണിൽ ക്ലിക്ക് ചെയ്ത് {item} തിരഞ്ഞെടുക്കുക.",
   "To quit, right-click the icon and choose {item}.": "അടയ്ക്കാൻ, ഐക്കണിൽ വലത്-ക്ലിക്ക് ചെയ്ത് {item} തിരഞ്ഞെടുക്കുക.",
-  "More captures": "കൂടുതൽ ക്യാപ്‌ചറുകൾ"
+  "More captures": "കൂടുതൽ ക്യാപ്‌ചറുകൾ",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "സിസ്റ്റം ക്രമീകരണങ്ങളിൽ Snagster-ന് അനുമതി നൽകിയ ശേഷം, സ്ക്രീൻ കാണാൻ അത് വീണ്ടും ആരംഭിക്കണം.",
+  "Quit and Reopen": "പുറത്തുകടന്ന് വീണ്ടും തുറക്കുക"
  }
 }

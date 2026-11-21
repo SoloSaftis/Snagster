@@ -1229,5 +1229,7 @@
  "To exit, right-click the icon and choose {item}.",
  "To quit, click the icon and choose {item}.",
  "To quit, right-click the icon and choose {item}.",
- "More captures"
+ "More captures",
+ "After you allow Snagster in System Settings, it has to start again to see the screen.",
+ "Quit and Reopen"
 ]

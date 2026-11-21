@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "چېكىنىش ئۈچۈن سىنبەلگىنى ئوڭ چېكىپ {item} نى تاللاڭ.",
   "To quit, click the icon and choose {item}.": "تاقاش ئۈچۈن سىنبەلگىنى چېكىپ {item} نى تاللاڭ.",
   "To quit, right-click the icon and choose {item}.": "تاقاش ئۈچۈن سىنبەلگىنى ئوڭ چېكىپ {item} نى تاللاڭ.",
-  "More captures": "تېخىمۇ كۆپ تۇتۇش"
+  "More captures": "تېخىمۇ كۆپ تۇتۇش",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "سىستېما تەڭشەكلىرىدە Snagster غا ئىجازەت بەرگەندىن كېيىن، ئېكراننى كۆرۈش ئۈچۈن ئۇ قايتا قوزغىلىشى كېرەك.",
+  "Quit and Reopen": "چېكىنىپ قايتا ئېچىش"
  }
 }

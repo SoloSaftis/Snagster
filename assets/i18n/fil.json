@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Para lumabas, i-right-click ang icon at piliin ang {item}.",
   "To quit, click the icon and choose {item}.": "Para umalis, i-click ang icon at piliin ang {item}.",
   "To quit, right-click the icon and choose {item}.": "Para umalis, i-right-click ang icon at piliin ang {item}.",
-  "More captures": "Higit pang kuha"
+  "More captures": "Higit pang kuha",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Pagkatapos mong payagan ang Snagster sa System Settings, kailangan itong magsimula muli para makita ang screen.",
+  "Quit and Reopen": "Umalis at Buksan Muli"
  }
 }

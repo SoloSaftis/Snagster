@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "ለመውጣት አዶውን በቀኝ ጠቅ አድርገው {item}ን ይምረጡ።",
   "To quit, click the icon and choose {item}.": "ለማቆም አዶውን ጠቅ አድርገው {item}ን ይምረጡ።",
   "To quit, right-click the icon and choose {item}.": "ለማቆም አዶውን በቀኝ ጠቅ አድርገው {item}ን ይምረጡ።",
-  "More captures": "ተጨማሪ ቀረጻዎች"
+  "More captures": "ተጨማሪ ቀረጻዎች",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Snagsterን በስርዓት ቅንብሮች ከፈቀዱ በኋላ ማያውን ለማየት እንደገና መጀመር አለበት።",
+  "Quit and Reopen": "አቁምና እንደገና ክፈት"
  }
 }

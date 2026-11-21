@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Чыгу өчен билгегә уң төймә белән басып, «{item}» сайлагыз.",
   "To quit, click the icon and choose {item}.": "Ябу өчен билгегә басып, «{item}» сайлагыз.",
   "To quit, right-click the icon and choose {item}.": "Ябу өчен билгегә уң төймә белән басып, «{item}» сайлагыз.",
-  "More captures": "Башка төшерүләр"
+  "More captures": "Башка төшерүләр",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Система көйләүләрендә Snagster-га рөхсәт биргәннән соң, экранны күрү өчен ул яңадан башланырга тиеш.",
+  "Quit and Reopen": "Чыгу һәм яңадан ачу"
  }
 }

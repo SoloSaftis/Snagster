@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "ওলাবলৈ, আইকনত সোঁ-ক্লিক কৰি {item} বাছক।",
   "To quit, click the icon and choose {item}.": "বন্ধ কৰিবলৈ, আইকনত ক্লিক কৰি {item} বাছক।",
   "To quit, right-click the icon and choose {item}.": "বন্ধ কৰিবলৈ, আইকনত সোঁ-ক্লিক কৰি {item} বাছক।",
-  "More captures": "অধিক কেপচাৰ"
+  "More captures": "অধিক কেপচাৰ",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "ছিষ্টেম ছেটিংছত Snagsterক অনুমতি দিয়াৰ পিছত, স্ক্ৰীণ চাবলৈ ই পুনৰ আৰম্ভ হ'ব লাগিব।",
+  "Quit and Reopen": "বন্ধ কৰি পুনৰ খোলক"
  }
 }

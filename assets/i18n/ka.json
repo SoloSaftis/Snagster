@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "გასასვლელად მარჯვენა ღილაკით დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}.",
   "To quit, click the icon and choose {item}.": "დასახურად დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}.",
   "To quit, right-click the icon and choose {item}.": "დასახურად მარჯვენა ღილაკით დააწკაპუნეთ ხატულაზე და აირჩიეთ {item}.",
-  "More captures": "სხვა გადაღებები"
+  "More captures": "სხვა გადაღებები",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "სისტემის პარამეტრებში Snagster-ის დაშვების შემდეგ, ეკრანის სანახავად ის თავიდან უნდა გაეშვას.",
+  "Quit and Reopen": "გასვლა და ხელახლა გახსნა"
  }
 }

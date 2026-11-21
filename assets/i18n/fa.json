@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "برای خروج، روی نماد راست‌کلیک کنید و {item} را انتخاب کنید.",
   "To quit, click the icon and choose {item}.": "برای بستن، روی نماد کلیک کنید و {item} را انتخاب کنید.",
   "To quit, right-click the icon and choose {item}.": "برای بستن، روی نماد راست‌کلیک کنید و {item} را انتخاب کنید.",
-  "More captures": "ثبت‌های بیشتر"
+  "More captures": "ثبت‌های بیشتر",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "پس از اجازه دادن به Snagster در تنظیمات سیستم، برای دیدن صفحه باید دوباره شروع شود.",
+  "Quit and Reopen": "بستن و باز کردن دوباره"
  }
 }

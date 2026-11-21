@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "बाहेर पडण्यासाठी, आयकॉनवर उजवे-क्लिक करून {item} निवडा.",
   "To quit, click the icon and choose {item}.": "बंद करण्यासाठी, आयकॉनवर क्लिक करून {item} निवडा.",
   "To quit, right-click the icon and choose {item}.": "बंद करण्यासाठी, आयकॉनवर उजवे-क्लिक करून {item} निवडा.",
-  "More captures": "अधिक कॅप्चर"
+  "More captures": "अधिक कॅप्चर",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "सिस्टम सेटिंग्जमध्ये Snagster ला परवानगी दिल्यानंतर, स्क्रीन पाहण्यासाठी ते पुन्हा सुरू व्हावे लागेल.",
+  "Quit and Reopen": "बंद करून पुन्हा उघडा"
  }
 }

@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Aby zakończyć, kliknij ikonę prawym przyciskiem i wybierz „{item}”.",
   "To quit, click the icon and choose {item}.": "Aby zakończyć, kliknij ikonę i wybierz „{item}”.",
   "To quit, right-click the icon and choose {item}.": "Aby zakończyć, kliknij ikonę prawym przyciskiem i wybierz „{item}”.",
-  "More captures": "Więcej zrzutów"
+  "More captures": "Więcej zrzutów",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Po zezwoleniu Snagsterowi w Ustawieniach systemowych musi on uruchomić się ponownie, aby widzieć ekran.",
+  "Quit and Reopen": "Zakończ i otwórz ponownie"
  }
 }

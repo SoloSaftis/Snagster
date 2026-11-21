@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Për të dalë, klikoni me të djathtën ikonën dhe zgjidhni {item}.",
   "To quit, click the icon and choose {item}.": "Për ta mbyllur, klikoni ikonën dhe zgjidhni {item}.",
   "To quit, right-click the icon and choose {item}.": "Për ta mbyllur, klikoni me të djathtën ikonën dhe zgjidhni {item}.",
-  "More captures": "Më shumë kapje"
+  "More captures": "Më shumë kapje",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Pasi t'i jepni leje Snagster te Cilësimet e Sistemit, duhet të nisë përsëri që të shohë ekranin.",
+  "Quit and Reopen": "Dil dhe rihape"
  }
 }

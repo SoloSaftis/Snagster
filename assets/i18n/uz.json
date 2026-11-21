@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Chiqish uchun belgiga o‘ng tugma bilan bosing va {item} ni tanlang.",
   "To quit, click the icon and choose {item}.": "Yopish uchun belgiga bosing va {item} ni tanlang.",
   "To quit, right-click the icon and choose {item}.": "Yopish uchun belgiga o‘ng tugma bilan bosing va {item} ni tanlang.",
-  "More captures": "Boshqa suratlar"
+  "More captures": "Boshqa suratlar",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Tizim sozlamalarida Snagster’ga ruxsat bergandan so‘ng, ekranni ko‘rishi uchun u qayta ishga tushishi kerak.",
+  "Quit and Reopen": "Chiqish va qayta ochish"
  }
 }

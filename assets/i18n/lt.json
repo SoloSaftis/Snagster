@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Norėdami išeiti, dešiniuoju mygtuku spustelėkite piktogramą ir pasirinkite „{item}“.",
   "To quit, click the icon and choose {item}.": "Norėdami išeiti, spustelėkite piktogramą ir pasirinkite „{item}“.",
   "To quit, right-click the icon and choose {item}.": "Norėdami išeiti, dešiniuoju mygtuku spustelėkite piktogramą ir pasirinkite „{item}“.",
-  "More captures": "Daugiau fiksavimų"
+  "More captures": "Daugiau fiksavimų",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Kai sistemos nustatymuose leisite Snagster, jis turi pasileisti iš naujo, kad matytų ekraną.",
+  "Quit and Reopen": "Išeiti ir atverti iš naujo"
  }
 }

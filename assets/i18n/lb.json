@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Fir opzehalen, mat der rietser Maustast op den Icon klicken a „{item}“ wielen.",
   "To quit, click the icon and choose {item}.": "Fir opzehalen, op den Icon klicken a „{item}“ wielen.",
   "To quit, right-click the icon and choose {item}.": "Fir opzehalen, mat der rietser Maustast op den Icon klicken a „{item}“ wielen.",
-  "More captures": "Méi Opnamen"
+  "More captures": "Méi Opnamen",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Nodeems Dir Snagster an de Systemastellungen erlaabt hutt, muss et nei starten, fir den Ecran ze gesinn.",
+  "Quit and Reopen": "Ophalen an nees opmaachen"
  }
 }

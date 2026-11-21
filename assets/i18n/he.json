@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "ליציאה, לחצו לחיצה ימנית על הסמל ובחרו {item}.",
   "To quit, click the icon and choose {item}.": "ליציאה, לחצו על הסמל ובחרו {item}.",
   "To quit, right-click the icon and choose {item}.": "ליציאה, לחצו לחיצה ימנית על הסמל ובחרו {item}.",
-  "More captures": "צילומים נוספים"
+  "More captures": "צילומים נוספים",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "אחרי שתאשרו את Snagster בהגדרות המערכת, עליו להתחיל מחדש כדי לראות את המסך.",
+  "Quit and Reopen": "יציאה ופתיחה מחדש"
  }
 }

@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Lai izietu, ar labo pogu noklikšķiniet uz ikonas un izvēlieties “{item}”.",
   "To quit, click the icon and choose {item}.": "Lai aizvērtu, noklikšķiniet uz ikonas un izvēlieties “{item}”.",
   "To quit, right-click the icon and choose {item}.": "Lai aizvērtu, ar labo pogu noklikšķiniet uz ikonas un izvēlieties “{item}”.",
-  "More captures": "Vairāk uzņēmumu"
+  "More captures": "Vairāk uzņēmumu",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Pēc tam, kad Sistēmas iestatījumos atļausiet Snagster, tam jāsāk no jauna, lai redzētu ekrānu.",
+  "Quit and Reopen": "Iziet un atvērt vēlreiz"
  }
 }

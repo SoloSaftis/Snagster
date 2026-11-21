@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Դուրս գալու համար աջ սեղմեք պատկերակին և ընտրեք {item}։",
   "To quit, click the icon and choose {item}.": "Փակելու համար սեղմեք պատկերակին և ընտրեք {item}։",
   "To quit, right-click the icon and choose {item}.": "Փակելու համար աջ սեղմեք պատկերակին և ընտրեք {item}։",
-  "More captures": "Այլ նկարումներ"
+  "More captures": "Այլ նկարումներ",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Համակարգի կարգավորումներում Snagster-ին թույլատրելուց հետո այն պետք է վերագործարկվի, որպեսզի տեսնի էկրանը։",
+  "Quit and Reopen": "Փակել և նորից բացել"
  }
 }

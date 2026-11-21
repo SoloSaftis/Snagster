@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Airson fàgail, briog deas air an ìomhaigheag is tagh {item}.",
   "To quit, click the icon and choose {item}.": "Airson fàgail, briog air an ìomhaigheag is tagh {item}.",
   "To quit, right-click the icon and choose {item}.": "Airson fàgail, briog deas air an ìomhaigheag is tagh {item}.",
-  "More captures": "Barrachd ghlacaidhean"
+  "More captures": "Barrachd ghlacaidhean",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Às dèidh dhut cead a thoirt do Snagster ann an Roghainnean an t-Siostaim, feumaidh e tòiseachadh às ùr gus an sgrìn fhaicinn.",
+  "Quit and Reopen": "Fàg is fosgail a-rithist"
  }
 }

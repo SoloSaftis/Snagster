@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Για έξοδο, κάντε δεξί κλικ στο εικονίδιο και επιλέξτε «{item}».",
   "To quit, click the icon and choose {item}.": "Για τερματισμό, κάντε κλικ στο εικονίδιο και επιλέξτε «{item}».",
   "To quit, right-click the icon and choose {item}.": "Για τερματισμό, κάντε δεξί κλικ στο εικονίδιο και επιλέξτε «{item}».",
-  "More captures": "Περισσότερες λήψεις"
+  "More captures": "Περισσότερες λήψεις",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Αφού επιτρέψετε το Snagster στις Ρυθμίσεις συστήματος, πρέπει να ξεκινήσει ξανά για να βλέπει την οθόνη.",
+  "Quit and Reopen": "Έξοδος και επανεκκίνηση"
  }
 }

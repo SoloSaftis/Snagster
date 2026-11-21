@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Ukončíte ho kliknutím pravým tlačidlom na ikonu a voľbou {item}.",
   "To quit, click the icon and choose {item}.": "Ukončíte ho kliknutím na ikonu a voľbou {item}.",
   "To quit, right-click the icon and choose {item}.": "Ukončíte ho kliknutím pravým tlačidlom na ikonu a voľbou {item}.",
-  "More captures": "Ďalšie snímky"
+  "More captures": "Ďalšie snímky",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Po povolení Snagstera v Nastaveniach systému sa musí znova spustiť, aby videl obrazovku.",
+  "Quit and Reopen": "Ukončiť a znova otvoriť"
  }
 }

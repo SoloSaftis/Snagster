@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Til að hætta skaltu hægrismella á táknið og velja {item}.",
   "To quit, click the icon and choose {item}.": "Til að hætta skaltu smella á táknið og velja {item}.",
   "To quit, right-click the icon and choose {item}.": "Til að hætta skaltu hægrismella á táknið og velja {item}.",
-  "More captures": "Fleiri skjámyndir"
+  "More captures": "Fleiri skjámyndir",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Eftir að þú leyfir Snagster í kerfisstillingum þarf það að ræsast aftur til að sjá skjáinn.",
+  "Quit and Reopen": "Hætta og opna aftur"
  }
 }

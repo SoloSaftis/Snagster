@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Za izlaz desnom tipkom kliknite ikonu i odaberite {item}.",
   "To quit, click the icon and choose {item}.": "Za izlaz kliknite ikonu i odaberite {item}.",
   "To quit, right-click the icon and choose {item}.": "Za izlaz desnom tipkom kliknite ikonu i odaberite {item}.",
-  "More captures": "Više snimki"
+  "More captures": "Više snimki",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Nakon što dopustite Snagster u Postavkama sustava, mora se ponovno pokrenuti da bi vidio zaslon.",
+  "Quit and Reopen": "Izađi i ponovno otvori"
  }
 }

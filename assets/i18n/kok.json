@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "भायर सरपाक, आयकॉनाचेर उजवें-क्लिक करून {item} वेंचात.",
   "To quit, click the icon and choose {item}.": "बंद करपाक, आयकॉनाचेर क्लिक करून {item} वेंचात.",
   "To quit, right-click the icon and choose {item}.": "बंद करपाक, आयकॉनाचेर उजवें-क्लिक करून {item} वेंचात.",
-  "More captures": "आनीक कॅप्चर"
+  "More captures": "आनीक कॅप्चर",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "सिस्टम सेटिंगांत Snagster क परवानगी दिल्या उपरांत, स्क्रीन पळोवंक तें परत सुरू जावंक जाय.",
+  "Quit and Reopen": "बंद करून परत उगडात"
  }
 }

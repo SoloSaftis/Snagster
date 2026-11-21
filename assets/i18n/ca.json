@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Per sortir, fes clic dret a la icona i tria {item}.",
   "To quit, click the icon and choose {item}.": "Per sortir, fes clic a la icona i tria {item}.",
   "To quit, right-click the icon and choose {item}.": "Per sortir, fes clic dret a la icona i tria {item}.",
-  "More captures": "Més captures"
+  "More captures": "Més captures",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Després de permetre Snagster a la Configuració del sistema, s'ha de tornar a obrir per veure la pantalla.",
+  "Quit and Reopen": "Surt i torna a obrir"
  }
 }

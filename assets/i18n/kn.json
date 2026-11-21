@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "ನಿರ್ಗಮಿಸಲು, ಐಕಾನ್ ಮೇಲೆ ಬಲ-ಕ್ಲಿಕ್ ಮಾಡಿ {item} ಆಯ್ಕೆಮಾಡಿ.",
   "To quit, click the icon and choose {item}.": "ಮುಚ್ಚಲು, ಐಕಾನ್ ಕ್ಲಿಕ್ ಮಾಡಿ {item} ಆಯ್ಕೆಮಾಡಿ.",
   "To quit, right-click the icon and choose {item}.": "ಮುಚ್ಚಲು, ಐಕಾನ್ ಮೇಲೆ ಬಲ-ಕ್ಲಿಕ್ ಮಾಡಿ {item} ಆಯ್ಕೆಮಾಡಿ.",
-  "More captures": "ಇನ್ನಷ್ಟು ಸೆರೆಗಳು"
+  "More captures": "ಇನ್ನಷ್ಟು ಸೆರೆಗಳು",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ Snagster ಗೆ ಅನುಮತಿಸಿದ ನಂತರ, ಪರದೆ ನೋಡಲು ಅದು ಮತ್ತೆ ಪ್ರಾರಂಭವಾಗಬೇಕು.",
+  "Quit and Reopen": "ನಿರ್ಗಮಿಸಿ ಮತ್ತೆ ತೆರೆಯಿರಿ"
  }
 }

@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "ដើម្បីចេញ ចុចស្ដាំលើរូបតំណាង ហើយជ្រើស {item}។",
   "To quit, click the icon and choose {item}.": "ដើម្បីបិទ ចុចលើរូបតំណាង ហើយជ្រើស {item}។",
   "To quit, right-click the icon and choose {item}.": "ដើម្បីបិទ ចុចស្ដាំលើរូបតំណាង ហើយជ្រើស {item}។",
-  "More captures": "ការថតច្រើនទៀត"
+  "More captures": "ការថតច្រើនទៀត",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "បន្ទាប់ពីអ្នកអនុញ្ញាត Snagster ក្នុងការកំណត់ប្រព័ន្ធ វាត្រូវចាប់ផ្ដើមម្ដងទៀតដើម្បីមើលអេក្រង់។",
+  "Quit and Reopen": "ចេញ ហើយបើកម្ដងទៀត"
  }
 }

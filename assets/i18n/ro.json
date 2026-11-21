@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Pentru ieșire, dă clic dreapta pe pictogramă și alege {item}.",
   "To quit, click the icon and choose {item}.": "Pentru a închide, dă clic pe pictogramă și alege {item}.",
   "To quit, right-click the icon and choose {item}.": "Pentru a închide, dă clic dreapta pe pictogramă și alege {item}.",
-  "More captures": "Mai multe capturi"
+  "More captures": "Mai multe capturi",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "După ce permiți Snagster în Setările sistemului, trebuie să repornească pentru a vedea ecranul.",
+  "Quit and Reopen": "Ieși și redeschide"
  }
 }

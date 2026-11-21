@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Väljumiseks paremklõpsa ikoonil ja vali {item}.",
   "To quit, click the icon and choose {item}.": "Sulgemiseks klõpsa ikoonil ja vali {item}.",
   "To quit, right-click the icon and choose {item}.": "Sulgemiseks paremklõpsa ikoonil ja vali {item}.",
-  "More captures": "Veel jäädvustusi"
+  "More captures": "Veel jäädvustusi",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Kui oled Snagsteri süsteemiseadetes lubanud, peab see ekraani nägemiseks uuesti käivituma.",
+  "Quit and Reopen": "Sulge ja ava uuesti"
  }
 }

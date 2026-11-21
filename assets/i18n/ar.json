@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "للخروج، انقر بزر الماوس الأيمن على الأيقونة واختر {item}.",
   "To quit, click the icon and choose {item}.": "للإنهاء، انقر على الأيقونة واختر {item}.",
   "To quit, right-click the icon and choose {item}.": "للإنهاء، انقر بزر الماوس الأيمن على الأيقونة واختر {item}.",
-  "More captures": "لقطات أخرى"
+  "More captures": "لقطات أخرى",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "بعد السماح لـ Snagster في إعدادات النظام، يجب أن يبدأ من جديد ليرى الشاشة.",
+  "Quit and Reopen": "إنهاء وإعادة الفتح"
  }
 }

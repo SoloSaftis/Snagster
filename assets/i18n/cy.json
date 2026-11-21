@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "I adael, de-gliciwch yr eicon a dewis {item}.",
   "To quit, click the icon and choose {item}.": "I roi'r gorau iddi, cliciwch yr eicon a dewis {item}.",
   "To quit, right-click the icon and choose {item}.": "I roi'r gorau iddi, de-gliciwch yr eicon a dewis {item}.",
-  "More captures": "Rhagor o gipluniau"
+  "More captures": "Rhagor o gipluniau",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Ar ôl i chi ganiatáu Snagster yng Ngosodiadau'r System, rhaid iddo ddechrau eto i weld y sgrin.",
+  "Quit and Reopen": "Gadael ac Ailagor"
  }
 }

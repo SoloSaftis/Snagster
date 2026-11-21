@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "За изход щракнете с десния бутон върху иконата и изберете „{item}“.",
   "To quit, click the icon and choose {item}.": "За изход щракнете върху иконата и изберете „{item}“.",
   "To quit, right-click the icon and choose {item}.": "За изход щракнете с десния бутон върху иконата и изберете „{item}“.",
-  "More captures": "Още снимки"
+  "More captures": "Още снимки",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "След като разрешите Snagster в Системни настройки, той трябва да се стартира отново, за да вижда екрана.",
+  "Quit and Reopen": "Изход и повторно отваряне"
  }
 }

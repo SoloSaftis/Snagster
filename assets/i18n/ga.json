@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Chun scoir, deaschliceáil an deilbhín agus roghnaigh {item}.",
   "To quit, click the icon and choose {item}.": "Chun scoir, cliceáil an deilbhín agus roghnaigh {item}.",
   "To quit, right-click the icon and choose {item}.": "Chun scoir, deaschliceáil an deilbhín agus roghnaigh {item}.",
-  "More captures": "Tuilleadh gabhálacha"
+  "More captures": "Tuilleadh gabhálacha",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Tar éis duit Snagster a cheadú i Socruithe an Chórais, caithfidh sé tosú arís chun an scáileán a fheiceáil.",
+  "Quit and Reopen": "Scoir agus Athoscail"
  }
 }

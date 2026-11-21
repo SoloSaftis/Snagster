@@ -1232,6 +1232,8 @@
   "To exit, right-click the icon and choose {item}.": "Lluqsinapaq, iconopi paña ñit'iy, {item} akllay.",
   "To quit, click the icon and choose {item}.": "Wichq'anapaq, iconopi ñit'iy, {item} akllay.",
   "To quit, right-click the icon and choose {item}.": "Wichq'anapaq, iconopi paña ñit'iy, {item} akllay.",
-  "More captures": "Astawan hapiykuna"
+  "More captures": "Astawan hapiykuna",
+  "After you allow Snagster in System Settings, it has to start again to see the screen.": "Snagsterta Sistemapa Churanakunanpi saqiyta qhepaman, pantallata rikunanpaq wakmanta qallarinan.",
+  "Quit and Reopen": "Lluqsiy, wakmanta kichay"
  }
 }
