@@ -2565,6 +2565,16 @@ impl SnagApp {
             self.selected = None;
             self.drag = Drag::None;
         }
+        // Ctrl (⌘) with + or =, - and 0: zoom in, out, fit (Ctrl+1..9 pick Studio's scenes).
+        if consume(Modifiers::COMMAND, Key::Equals) || consume(Modifiers::COMMAND, Key::Plus) {
+            self.set_zoom(ctx, Some(1.25));
+        }
+        if consume(Modifiers::COMMAND, Key::Minus) {
+            self.set_zoom(ctx, Some(0.8));
+        }
+        if consume(Modifiers::COMMAND, Key::Num0) {
+            self.set_zoom(ctx, None);
+        }
         if ctx.input(|i| i.modifiers.any()) {
             return;
         }
@@ -3140,16 +3150,16 @@ impl SnagApp {
     }
 
     fn view_menu(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        if item(ui, "Fit to window", "0") {
+        if item(ui, "Fit to window", "Ctrl+0") {
             self.set_zoom(ctx, None);
         }
         if item(ui, "Actual size", "1") {
             self.set_zoom(ctx, Some(0.0));
         }
-        if item(ui, "Zoom in", "+") {
+        if item(ui, "Zoom in", "Ctrl+=") {
             self.set_zoom(ctx, Some(1.25));
         }
-        if item(ui, "Zoom out", "-") {
+        if item(ui, "Zoom out", "Ctrl+-") {
             self.set_zoom(ctx, Some(0.8));
         }
         ui.separator();
@@ -4777,6 +4787,12 @@ impl SnagApp {
 
     fn ui_body(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        // Ctrl+= / Ctrl+- / Ctrl+0 (⌘ on a Mac) zoom the picture, as in other editors (`shortcuts`).
+        // egui would otherwise scale the whole interface with them; Windows' Text size and the
+        // desktop's scale already do that.
+        if ctx.options(|o| o.zoom_with_keyboard) {
+            ctx.options_mut(|o| o.zoom_with_keyboard = false);
+        }
         if self.overlay.is_some() {
             egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| self.handle_overlay(ui));
             return;
