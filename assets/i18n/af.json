@@ -1235,6 +1235,8 @@
   "More captures": "Meer vasleggings",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Nadat jy Snagster in Stelselinstellings toegelaat het, moet dit weer begin om die skerm te sien.",
   "Quit & Reopen": "Sluit af en maak weer oop",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster kon nie self weer begin nie. Sluit dit af en maak dit weer oop."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster kon nie self weer begin nie. Sluit dit af en maak dit weer oop.",
+  "The screen couldn't be copied.": "Die skerm kon nie gekopieer word nie.",
+  "Ink isn't in replays or in videos from the Record tab.": "Ink is nie in herhalings of in video's van die Neem op-oortjie nie."
  }
 }

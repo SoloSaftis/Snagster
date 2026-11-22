@@ -1235,6 +1235,8 @@
   "More captures": "Boshqa suratlar",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Tizim sozlamalarida Snagster’ga ruxsat bergandan so‘ng, ekranni ko‘rishi uchun u qayta ishga tushishi kerak.",
   "Quit & Reopen": "Chiqish va qayta ochish",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster o‘zini qayta ishga tushira olmadi. Undan chiqib, qayta oching."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster o‘zini qayta ishga tushira olmadi. Undan chiqib, qayta oching.",
+  "The screen couldn't be copied.": "Ekranni nusxalab bo'lmadi.",
+  "Ink isn't in replays or in videos from the Record tab.": "Siyoh takrorlarda va Yozib olish bo'limidagi videolarda bo'lmaydi."
  }
 }

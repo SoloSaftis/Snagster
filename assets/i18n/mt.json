@@ -1235,6 +1235,8 @@
   "More captures": "Aktar qabdiet",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Wara li tippermetti lil Snagster fis-Settings tas-Sistema, irid jerġa' jibda biex jara l-iskrin.",
   "Quit & Reopen": "Oħroġ u Erġa' Iftaħ",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ma setax jerġa' jibda waħdu. Agħlqu u erġa' iftħu."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ma setax jerġa' jibda waħdu. Agħlqu u erġa' iftħu.",
+  "The screen couldn't be copied.": "Ma setgħetx tinkopja l-iskrin.",
+  "Ink isn't in replays or in videos from the Record tab.": "Il-Linka mhijiex fir-replays jew fil-vidjows mit-tab Irrekordja."
  }
 }

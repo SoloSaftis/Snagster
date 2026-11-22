@@ -1235,6 +1235,8 @@
   "More captures": "Más capturas",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Después de permitir Snagster en Configuración del Sistema, tiene que volver a abrirse para ver la pantalla.",
   "Quit & Reopen": "Salir y volver a abrir",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster no pudo reiniciarse. Ciérralo y vuelve a abrirlo."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster no pudo reiniciarse. Ciérralo y vuelve a abrirlo.",
+  "The screen couldn't be copied.": "No se pudo copiar la pantalla.",
+  "Ink isn't in replays or in videos from the Record tab.": "La tinta no aparece en las repeticiones ni en los videos de la pestaña Grabar."
  }
 }

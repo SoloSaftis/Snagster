@@ -1235,6 +1235,8 @@
   "More captures": "Tangkapan lain",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Setelah Anda mengizinkan Snagster di Pengaturan Sistem, aplikasi harus dimulai ulang untuk melihat layar.",
   "Quit & Reopen": "Keluar dan Buka Lagi",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster tidak dapat memulai ulang sendiri. Keluar lalu buka lagi."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster tidak dapat memulai ulang sendiri. Keluar lalu buka lagi.",
+  "The screen couldn't be copied.": "Layar tidak dapat disalin.",
+  "Ink isn't in replays or in videos from the Record tab.": "Tinta tidak ada di replay atau di video dari tab Rekam."
  }
 }

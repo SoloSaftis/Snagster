@@ -1235,6 +1235,8 @@
   "More captures": "Më shumë kapje",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Pasi t'i jepni leje Snagster te Cilësimet e Sistemit, duhet të nisë përsëri që të shohë ekranin.",
   "Quit & Reopen": "Dil dhe rihape",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nuk mundi të rinisej vetë. Mbylleni dhe hapeni përsëri."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nuk mundi të rinisej vetë. Mbylleni dhe hapeni përsëri.",
+  "The screen couldn't be copied.": "Ekrani nuk mund të kopjohej.",
+  "Ink isn't in replays or in videos from the Record tab.": "Boja nuk është në përsëritje ose në video nga skeda Regjistro."
  }
 }

@@ -1235,6 +1235,8 @@
   "More captures": "Več zajemov",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Ko Snagsterju dovolite dostop v sistemskih nastavitvah, se mora znova zagnati, da vidi zaslon.",
   "Quit & Reopen": "Končaj in znova odpri",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster se ni mogel sam znova zagnati. Zaprite ga in ga znova odprite."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster se ni mogel sam znova zagnati. Zaprite ga in ga znova odprite.",
+  "The screen couldn't be copied.": "Zaslona ni bilo mogoče kopirati.",
+  "Ink isn't in replays or in videos from the Record tab.": "Črnila ni v ponovitvah ali v videoposnetkih z zavihka Posnemi."
  }
 }

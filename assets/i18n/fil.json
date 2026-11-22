@@ -1235,6 +1235,8 @@
   "More captures": "Higit pang kuha",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Pagkatapos mong payagan ang Snagster sa System Settings, kailangan itong magsimula muli para makita ang screen.",
   "Quit & Reopen": "Umalis at Buksan Muli",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Hindi na-restart ng Snagster ang sarili nito. Isara ito at buksan muli."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Hindi na-restart ng Snagster ang sarili nito. Isara ito at buksan muli.",
+  "The screen couldn't be copied.": "Hindi makopya ang screen.",
+  "Ink isn't in replays or in videos from the Record tab.": "Wala ang Tinta sa mga replay o sa mga video mula sa tab na I-record."
  }
 }

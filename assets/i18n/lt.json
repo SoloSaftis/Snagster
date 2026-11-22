@@ -1235,6 +1235,8 @@
   "More captures": "Daugiau fiksavimų",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Kai sistemos nustatymuose leisite Snagster, jis turi pasileisti iš naujo, kad matytų ekraną.",
   "Quit & Reopen": "Išeiti ir atverti iš naujo",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nepavyko pačiam iš naujo pasileisti. Išjunkite jį ir atidarykite dar kartą."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nepavyko pačiam iš naujo pasileisti. Išjunkite jį ir atidarykite dar kartą.",
+  "The screen couldn't be copied.": "Nepavyko nukopijuoti ekrano.",
+  "Ink isn't in replays or in videos from the Record tab.": "Rašalo nėra pakartojimuose ir vaizdo įrašuose iš skirtuko Įrašyti."
  }
 }

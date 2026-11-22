@@ -38,9 +38,10 @@ pub const MIN_SAVE_US: i64 = 2_000_000;
 /// The encoder's keyframe interval.
 const KEYFRAME_S: u32 = 2;
 
-/// A length brought within 30-120 s.
+/// A length brought to the nearest one a person can pick (30, 60, 90 or 120 s; halfway goes up),
+/// so a settings file or an AI app's 45 s shows as a chosen length in the window.
 pub fn clamp_seconds(s: u32) -> u32 {
-    s.clamp(LENGTHS[0], LENGTHS[LENGTHS.len() - 1])
+    LENGTHS.iter().copied().min_by_key(|&l| (l.abs_diff(s), u32::MAX - l)).unwrap_or(DEFAULT_S)
 }
 
 /// The bitrate for a replay: the recording's own for this size, rate and quality, but never so
@@ -434,7 +435,7 @@ impl Replay {
             std::thread::sleep(Duration::from_millis(20));
         }
         if !grabber.ready() {
-            return Err(grabber.error().unwrap_or_else(|| "The screen couldn't be copied.".into()));
+            return Err(grabber.error().unwrap_or_else(|| crate::i18n::t("The screen couldn't be copied.").to_string()));
         }
         let (sound, sound_note) = match crate::audio::Capture::start(o.audio, &o.mic) {
             Ok(c) if o.audio == crate::audio::AudioSource::None || c.is_silent() => (SoundSource::None, None),
@@ -984,6 +985,18 @@ mod tests {
         let o = ReplayOptions::from_settings(&s);
         assert_eq!((o.fps, o.seconds), (60, 30));
         assert_eq!(o.folder, s.video_folder);
+    }
+
+    /// A length from a settings file or an AI app is one of the four the window offers, so its
+    /// radio shows as chosen (45 s showed "45 s" with none picked).
+    #[test]
+    fn a_length_snaps_to_one_the_window_offers() {
+        for (asked, kept) in [(0, 30), (10, 30), (30, 30), (44, 30), (45, 60), (60, 60), (75, 90), (100, 90), (105, 120), (120, 120), (500, 120)] {
+            assert_eq!(clamp_seconds(asked), kept, "{asked}");
+        }
+        assert!(crate::catalog::check_setting("replay_s", &serde_json::json!(45)).unwrap_err().contains("one of 30, 60, 90, 120"));
+        assert!(crate::catalog::check_setting("replay_s", &serde_json::json!(90)).is_ok());
+        assert!(crate::catalog::check_setting("replay_s", &serde_json::json!(90.5)).is_err());
     }
 
     /// The moving test picture (`encode::test_picture`, the one `--video-test` records), 64 × 64.

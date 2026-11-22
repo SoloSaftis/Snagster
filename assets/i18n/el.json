@@ -1235,6 +1235,8 @@
   "More captures": "Περισσότερες λήψεις",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Αφού επιτρέψετε το Snagster στις Ρυθμίσεις συστήματος, πρέπει να ξεκινήσει ξανά για να βλέπει την οθόνη.",
   "Quit & Reopen": "Έξοδος και επανεκκίνηση",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Το Snagster δεν μπόρεσε να επανεκκινηθεί. Τερματίστε το και ανοίξτε το ξανά."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Το Snagster δεν μπόρεσε να επανεκκινηθεί. Τερματίστε το και ανοίξτε το ξανά.",
+  "The screen couldn't be copied.": "Δεν ήταν δυνατή η αντιγραφή της οθόνης.",
+  "Ink isn't in replays or in videos from the Record tab.": "Το Μελάνι δεν περιλαμβάνεται στις επαναλήψεις ούτε στα βίντεο από την καρτέλα Εγγραφή."
  }
 }

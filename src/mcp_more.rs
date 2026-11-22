@@ -243,24 +243,24 @@ pub(super) fn tools() -> Vec<Tool> {
         Tool { name: "stream_stop", description: "End the live stream (the last packets are sent and the stream is closed); returns its final numbers and the copy's file when one was recorded.", schema: obj(json!({}), &[]), edits: false },
         Tool {
             name: "replay_start",
-            description: "Turn the replay buffer on: Snagster keeps encoding the screen the mouse is on (on the graphics chip when it can) and keeps the last 30-120 seconds in memory, so replay_save can save a moment after it happened. It runs in the background until replay_stop. Off by default. On Wayland the desktop may ask the person to choose a screen. Frame rate, quality, encoder and pointer come from the Recording settings; sound from replay_audio.",
+            description: "Turn the replay buffer on: Snagster keeps encoding the screen the mouse is on (on the graphics chip when it can) and keeps the last 30-120 seconds in memory, so replay_save can save a moment after it happened. It runs in the background until replay_stop. Off by default. On Wayland the desktop may ask the person to choose a screen. Frame rate, quality, encoder and pointer come from the Recording settings; sound from replay_audio. When the Snagster window is open apart from this server (as with the MCP bundles), the window's buffer is used: it is turned on there, or reported as already on, and keeps the window's own length.",
             schema: obj(json!({"seconds": {"type": "integer", "minimum": 30, "maximum": 120, "description": "How much to keep, 30-120 s (default: the replay_s setting)."}}), &[]),
             edits: false,
         },
         Tool {
             name: "replay_save",
-            description: "Save the last seconds the replay buffer kept as an MP4 in the recordings folder, at once (the buffer keeps going). The clip starts at a keyframe, so it can be up to 2 s longer than asked. When this server's replay buffer is off but the Snagster window has one on, the window saves its own.",
+            description: "Save the last seconds the replay buffer kept as an MP4 in the recordings folder, at once (the buffer keeps going). The clip starts at a keyframe, so it can be up to 2 s longer than asked. When the Snagster window has the buffer on (it runs apart from this server, as with the MCP bundles), the window saves everything it keeps (seconds can't be given then).",
             schema: obj(json!({"seconds": {"type": "integer", "minimum": 2, "maximum": 120, "description": "Save only the last this many seconds (default: everything kept)."}}), &[]),
             edits: false,
         },
-        Tool { name: "replay_stop", description: "Turn the replay buffer off; what it kept is thrown away (nothing is saved).", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "replay_stop", description: "Turn the replay buffer off; what it kept is thrown away (nothing is saved). Turns off the Snagster window's buffer when that is the one on.", schema: obj(json!({}), &[]), edits: false },
         Tool {
             name: "ink_clear",
             description: "Remove all live ink: what the person drew on the screen or the Studio preview with Studio's Draw (it shows in the stream and Studio's video). Undo in the window brings it back. How long ink stays is the setting studio.ink_mode (Fade or Stay) with studio.ink_fade_s; colour and width are studio.ink_color and studio.ink_width (set_setting). Drawing itself is only for the person: it takes over their mouse.",
             schema: obj(json!({}), &[]),
             edits: false,
         },
-        Tool { name: "replay_status", description: "Whether the replay buffer is on: its phase (off, starting, on), the seconds it keeps and holds now, the picture size, frame rate, encoder, whether sound is kept, and the last error.", schema: obj(json!({}), &[]), edits: false },
+        Tool { name: "replay_status", description: "Whether the replay buffer is on: its phase (off, starting, on), the seconds it keeps and holds now, the picture size, frame rate, encoder, whether sound is kept, and the last error. where says whose buffer it is: the Snagster window's (it runs apart from this server, as with the MCP bundles) or this server's own.", schema: obj(json!({}), &[]), edits: false },
     ]
 }
 
@@ -283,6 +283,73 @@ pub(super) fn replay_json(s: &crate::replay::Status) -> Value {
     if let Some(e) = &s.error {
         v["error"] = json!(e);
     }
+    v
+}
+
+/// What the window answers an AI app's own server (`instance::query`).
+pub(super) fn window_answer(id: &str) -> Option<String> {
+    (id == "replay_status").then(|| replay_json(&crate::replay::status()).to_string())
+}
+
+/// Whose replay buffer the replay tools act on. The MCP bundles run Snagster apart from the
+/// window, so a buffer the person turned on there is the window's, not this server's: the tools
+/// use it rather than start a second one.
+#[derive(Debug, PartialEq)]
+enum ReplayHolder {
+    /// This server's own buffer is on (also when the server runs inside the window).
+    Here,
+    /// The window answered with its replay_status.
+    Window(Value),
+    /// No window to ask: this server's own buffer, which is off.
+    Nobody,
+}
+
+fn replay_holder(here_on: bool, window: Option<Value>) -> ReplayHolder {
+    match (here_on, window) {
+        (true, _) => ReplayHolder::Here,
+        (false, Some(v)) => ReplayHolder::Window(v),
+        (false, None) => ReplayHolder::Nobody,
+    }
+}
+
+/// The window's replay_status, when a window is open (and isn't this process).
+#[cfg(not(test))]
+fn window_replay() -> Option<Value> {
+    crate::instance::query("replay_status").ok().and_then(|a| serde_json::from_str(&a).ok())
+}
+
+#[cfg(not(test))]
+fn window_command(id: &str) -> Result<(), String> {
+    crate::instance::send_command(id, None)
+}
+
+/// Tests stand in for the window: its replay state, and the commands it was sent (a toggle
+/// turns the fake buffer on or off, as the real window does).
+#[cfg(test)]
+pub(super) static FAKE_WINDOW: std::sync::Mutex<Option<Value>> = std::sync::Mutex::new(None);
+#[cfg(test)]
+pub(super) static FAKE_SENT: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+
+#[cfg(test)]
+fn window_replay() -> Option<Value> {
+    FAKE_WINDOW.lock().unwrap().clone()
+}
+
+#[cfg(test)]
+fn window_command(id: &str) -> Result<(), String> {
+    let mut w = FAKE_WINDOW.lock().unwrap();
+    let Some(v) = w.as_mut() else { return Err("Snagster's window isn't open".into()) };
+    FAKE_SENT.lock().unwrap().push(id.to_string());
+    if id == "replay_toggle" {
+        let on = !v["on"].as_bool().unwrap_or(false);
+        v["on"] = json!(on);
+        v["phase"] = json!(if on { "on" } else { "off" });
+    }
+    Ok(())
+}
+
+fn where_(mut v: Value, place: &str) -> Value {
+    v["where"] = json!(place);
     v
 }
 
@@ -320,6 +387,9 @@ impl Workspace {
         use crate::replay::{self, Phase};
         let seconds = int_in(a, "seconds", 30, 120)?;
         let s = replay::status();
+        if let ReplayHolder::Window(w) = replay_holder(s.on(), if s.on() { None } else { window_replay() }) {
+            return self.replay_start_in_window(w, seconds);
+        }
         if s.on() {
             if let Some(n) = seconds {
                 replay::set_seconds(n);
@@ -343,16 +413,72 @@ impl Workspace {
         }
     }
 
+    /// The window has a replay buffer to use: say it is on there, or turn the window's on (one
+    /// buffer and one screen share, not a second of this server's own).
+    fn replay_start_in_window(&mut self, w: Value, seconds: Option<u32>) -> Outcome {
+        let keeps = |v: &Value| v["seconds"].as_u64().unwrap_or(0);
+        let length_note = match seconds {
+            Some(n) if n as u64 != keeps(&w) => format!(" It keeps its own length ({} s, the replay_s setting), not the {n} s asked for.", keeps(&w)),
+            _ => String::new(),
+        };
+        if w["on"].as_bool() == Some(true) {
+            return Ok(vec![text(format!("Replay is already on in the Snagster window, keeping the last {} s.{length_note} Save it with replay_save.", keeps(&w)))]);
+        }
+        window_command("replay_toggle")?;
+        let t0 = std::time::Instant::now();
+        let now = self.ticking(Some(120.0), "Turning replay on in the Snagster window", || loop {
+            let v = window_replay();
+            let phase = v.as_ref().and_then(|v| v["phase"].as_str().map(str::to_string)).unwrap_or_default();
+            if phase == "on" || (phase == "off" && v.as_ref().is_some_and(|v| v.get("error").is_some())) || t0.elapsed() > std::time::Duration::from_secs(130) {
+                return v;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(250));
+        });
+        match now {
+            Some(v) if v["phase"] == "on" => Ok(vec![text(format!("Turned replay on in the Snagster window: it keeps the last {} s of the screen.{length_note} Save it with replay_save.", keeps(&v)))]),
+            Some(v) if v["phase"] == "off" => Err(v["error"].as_str().unwrap_or("Replay couldn't start in the Snagster window.").to_string()),
+            _ => Ok(vec![text("Asked the Snagster window to turn replay on; it is still starting (the desktop may be asking which screen to share). Check with replay_status.")]),
+        }
+    }
+
+    fn replay_stop(&mut self) -> Outcome {
+        if crate::replay::end() {
+            return Ok(vec![text("Replay off.")]);
+        }
+        match window_replay() {
+            Some(w) if w["on"].as_bool() == Some(true) => {
+                window_command("replay_toggle")?;
+                Ok(vec![text("Turned the Snagster window's replay off; what it kept is thrown away.")])
+            }
+            _ => Ok(vec![text("Replay was already off.")]),
+        }
+    }
+
+    fn replay_status(&mut self) -> Outcome {
+        let s = crate::replay::status();
+        let v = match replay_holder(s.on(), if s.on() { None } else { window_replay() }) {
+            ReplayHolder::Window(w) => where_(w, "window"),
+            ReplayHolder::Here | ReplayHolder::Nobody => where_(replay_json(&s), "server"),
+        };
+        self.structured = Some(v.clone());
+        Ok(vec![json_text(&v)])
+    }
+
     fn replay_save(&mut self, a: &Value) -> Outcome {
         use crate::replay;
         let seconds = int_in(a, "seconds", 2, 120)?;
         if !replay::status().on() {
             // The window's own buffer (this server runs apart from it over stdio).
-            #[cfg(not(test))]
-            if seconds.is_none() && crate::instance::send_command("replay_save", None).is_ok() {
-                return Ok(vec![text("Asked the Snagster window to save its replay: when it is on there, the video goes to the recordings folder (list_recordings shows it).")]);
-            }
-            return Err("Replay is off; call replay_start first.".into());
+            return match window_replay() {
+                Some(w) if w["on"].as_bool() == Some(true) => {
+                    if seconds.is_some() {
+                        return Err("The replay buffer is the Snagster window's, which saves everything it keeps: call replay_save without seconds.".into());
+                    }
+                    window_command("replay_save")?;
+                    Ok(vec![text("Asked the Snagster window to save its replay: the video goes to the recordings folder (list_recordings shows it).")])
+                }
+                _ => Err("Replay is off; call replay_start first.".into()),
+            };
         }
         let v = replay::save(seconds)?;
         let msg = format!("Saved {}: the last {:.1} s ({} frames{}).", v.path.display(), v.seconds, v.frames, if v.audio { ", with sound" } else { "" });
@@ -1299,13 +1425,9 @@ impl Workspace {
             "stream_start" => self.stream_start(a),
             "replay_start" => self.replay_start(a),
             "replay_save" => self.replay_save(a),
-            "replay_stop" => Ok(vec![text(if crate::replay::end() { "Replay off." } else { "Replay was already off." })]),
+            "replay_stop" => self.replay_stop(),
             "ink_clear" => ink_clear(),
-            "replay_status" => {
-                let v = replay_json(&crate::replay::status());
-                self.structured = Some(v.clone());
-                Ok(vec![json_text(&v)])
-            }
+            "replay_status" => self.replay_status(),
             other => self.call_app(other, a),
         }
     }

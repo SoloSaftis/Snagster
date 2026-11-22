@@ -99,6 +99,12 @@ pub type Outcome = Result<Vec<Value>, String>;
 #[path = "mcp_more.rs"]
 mod more;
 
+/// What the window answers when an AI app's own Snagster server (the MCP bundles run one apart
+/// from the window) asks about it: the window's replay buffer, as replay_status gives it.
+pub fn window_answer(id: &str) -> Option<String> {
+    more::window_answer(id)
+}
+
 #[path = "mcp_app.rs"]
 mod app_tools;
 
@@ -708,7 +714,7 @@ fn output_schema(name: &str) -> Option<Value> {
             "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "state": st, "measuring": bo, "sent_kbps": num, "network_dropped_frames": num, "network_dropped_share": num, "queue_ms": num, "connected_s": num, "reconnects": num, "reconnects_last_10_min": num}}},
             "warnings": {"type": "array", "items": {"type": "object", "properties": {"problem": {"type": "string", "enum": ["upload", "computer", "connection"]}, "level": {"type": "string", "enum": ["warning", "bad"]}, "service": {"type": ["string", "null"]}, "message": st}}}
         }, "required": ["live"]}),
-        "replay_status" => json!({"type": "object", "properties": {"phase": st, "on": bo, "seconds": num, "held_s": num, "width": num, "height": num, "fps": num, "encoder": st, "hardware": bo, "sound": bo, "error": st}, "required": ["phase", "on", "seconds", "held_s"]}),
+        "replay_status" => json!({"type": "object", "properties": {"phase": st, "on": bo, "seconds": num, "held_s": num, "width": num, "height": num, "fps": num, "encoder": st, "hardware": bo, "sound": bo, "error": st, "where": json!({"type": "string", "enum": ["window", "server"]})}, "required": ["phase", "on", "seconds", "held_s", "where"]}),
         "stream_status" => json!({"type": "object", "properties": {"phase": st, "live": bo, "state": st, "uptime_s": num, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num, "service": st, "address": st, "source": st, "width": num, "height": num, "fps": num, "also": {"type": "array", "items": st}, "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "address": st, "state": st, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num}}}}, "required": ["phase", "live"]}),
         _ => return None,
     })
@@ -4184,6 +4190,57 @@ mod stream_tests {
         }
         assert!(SIDE.contains(&"replay_save") && !SIDE.contains(&"replay_status"));
         assert!(output_schema("replay_status").is_some());
+    }
+
+    /// The MCP bundles run Snagster apart from the window: a replay buffer the person turned on
+    /// there is the one the tools see, start, save and stop, never a second buffer of the
+    /// server's own (another half gigabyte and, on Wayland, another share dialog).
+    #[test]
+    fn replay_tools_use_the_windows_buffer_when_the_window_has_one() {
+        let _g = crate::replay::TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        crate::replay::end();
+        struct Reset;
+        impl Drop for Reset {
+            fn drop(&mut self) {
+                *more::FAKE_WINDOW.lock().unwrap() = None;
+                more::FAKE_SENT.lock().unwrap().clear();
+            }
+        }
+        let _r = Reset;
+        let mut w = ws();
+        // On in the window: status says so and where.
+        *more::FAKE_WINDOW.lock().unwrap() = Some(json!({"phase": "on", "on": true, "seconds": 60, "held_s": 12.5}));
+        w.call("replay_status", &json!({})).unwrap();
+        let st = w.structured.take().unwrap();
+        assert_eq!((st["on"].as_bool(), st["where"].as_str(), st["seconds"].as_u64()), (Some(true), Some("window"), Some(60)));
+        // Start doesn't start a second one, and says the window keeps its own length.
+        let t = text_of(w.call("replay_start", &json!({"seconds": 90})));
+        assert!(t.contains("already on in the Snagster window") && t.contains("60 s") && t.contains("not the 90 s"), "{t}");
+        assert!(!crate::replay::status().on(), "no buffer of the server's own");
+        // Save goes to the window, which saves everything (a length can't be asked for).
+        assert!(w.call("replay_save", &json!({"seconds": 10})).unwrap_err().contains("without seconds"));
+        assert!(text_of(w.call("replay_save", &json!({}))).contains("Asked the Snagster window to save"));
+        // Stop turns the window's off; a second stop finds it off.
+        assert!(text_of(w.call("replay_stop", &json!({}))).contains("window's replay off"));
+        assert_eq!(text_of(w.call("replay_stop", &json!({}))), "Replay was already off.");
+        // Off in the window: start turns the window's on (not this server's).
+        assert!(text_of(w.call("replay_start", &json!({}))).contains("Turned replay on in the Snagster window"));
+        assert_eq!(*more::FAKE_SENT.lock().unwrap(), vec!["replay_save", "replay_toggle", "replay_toggle"]);
+        assert!(!crate::replay::status().on());
+        // No window: the server's own buffer, as before.
+        *more::FAKE_WINDOW.lock().unwrap() = None;
+        w.call("replay_status", &json!({})).unwrap();
+        assert_eq!(w.structured.take().unwrap()["where"], "server");
+        assert_eq!(w.call("replay_save", &json!({})).unwrap_err(), "Replay is off; call replay_start first.");
+    }
+
+    #[test]
+    fn the_window_answers_replay_status_as_the_tool_does() {
+        let _g = crate::replay::TEST_LOCK.lock().unwrap_or_else(|p| p.into_inner());
+        crate::replay::end();
+        let a: Value = serde_json::from_str(&window_answer("replay_status").unwrap()).unwrap();
+        assert_eq!((a["phase"].as_str(), a["on"].as_bool()), (Some("off"), Some(false)));
+        assert!(window_answer("anything_else").is_none());
     }
 
     #[test]

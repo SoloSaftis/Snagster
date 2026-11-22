@@ -1235,6 +1235,8 @@
   "More captures": "캡처 더 보기",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "시스템 설정에서 Snagster를 허용한 후에는 화면을 보려면 다시 시작해야 합니다.",
   "Quit & Reopen": "종료 후 다시 열기",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster가 스스로 다시 시작하지 못했습니다. 종료한 다음 다시 여세요."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster가 스스로 다시 시작하지 못했습니다. 종료한 다음 다시 여세요.",
+  "The screen couldn't be copied.": "화면을 복사할 수 없습니다.",
+  "Ink isn't in replays or in videos from the Record tab.": "잉크는 리플레이나 녹화 탭의 동영상에 포함되지 않습니다."
  }
 }

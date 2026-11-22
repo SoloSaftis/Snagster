@@ -1235,6 +1235,8 @@
   "More captures": "ଅଧିକ କ୍ୟାପଚର",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "ସିଷ୍ଟମ ସେଟିଂସରେ Snagsterକୁ ଅନୁମତି ଦେବା ପରେ, ସ୍କ୍ରିନ ଦେଖିବାକୁ ଏହାକୁ ପୁଣି ଆରମ୍ଭ ହେବାକୁ ପଡ଼ିବ।",
   "Quit & Reopen": "ବନ୍ଦ କରି ପୁଣି ଖୋଲନ୍ତୁ",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ନିଜକୁ ପୁଣି ଆରମ୍ଭ କରିପାରିଲା ନାହିଁ। ଏହାକୁ ବନ୍ଦ କରି ପୁଣି ଖୋଲନ୍ତୁ।"
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ନିଜକୁ ପୁଣି ଆରମ୍ଭ କରିପାରିଲା ନାହିଁ। ଏହାକୁ ବନ୍ଦ କରି ପୁଣି ଖୋଲନ୍ତୁ।",
+  "The screen couldn't be copied.": "ସ୍କ୍ରୀନ୍ କପି କରାଯାଇପାରିଲା ନାହିଁ।",
+  "Ink isn't in replays or in videos from the Record tab.": "କାଳି ରିପ୍ଲେ କିମ୍ବା ରେକର୍ଡ ଟ୍ୟାବ୍‌ର ଭିଡିଓରେ ନଥାଏ।"
  }
 }

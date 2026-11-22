@@ -1235,6 +1235,8 @@
   "More captures": "Barrachd ghlacaidhean",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Às dèidh dhut cead a thoirt do Snagster ann an Roghainnean an t-Siostaim, feumaidh e tòiseachadh às ùr gus an sgrìn fhaicinn.",
   "Quit & Reopen": "Fàg is fosgail a-rithist",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Cha b' urrainn do Snagster tòiseachadh às ùr. Fàg e is fosgail a-rithist e."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Cha b' urrainn do Snagster tòiseachadh às ùr. Fàg e is fosgail a-rithist e.",
+  "The screen couldn't be copied.": "Cha b' urrainn an sgrìn a lethbhreacadh.",
+  "Ink isn't in replays or in videos from the Record tab.": "Chan eil Inc ann an ath-chluichidhean no ann am videothan on taba Clàraich."
  }
 }

@@ -636,6 +636,7 @@ impl SnagApp {
         keep_interface_size(&cc.egui_ctx);
         fonts::start_scan(cc.egui_ctx.clone());
         crate::instance::set_wake(&cc.egui_ctx);
+        crate::instance::set_answer(crate::mcp::window_answer);
         // Check runs (button test, README pictures) keep every box inside the one window they look at.
         if screenshot.is_some() || UI_TEST.load(Ordering::Relaxed) {
             cc.egui_ctx.set_embed_viewports(true);

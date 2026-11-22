@@ -1235,6 +1235,8 @@
   "More captures": "More captures",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "After you allow Snagster in System Settings, it has to start again to see the screen.",
   "Quit & Reopen": "Quit & Reopen",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster couldn't restart itself. Quit it and open it again."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster couldn't restart itself. Quit it and open it again.",
+  "The screen couldn't be copied.": "The screen couldn't be copied.",
+  "Ink isn't in replays or in videos from the Record tab.": "Ink isn't in replays or in videos from the Record tab."
  }
 }

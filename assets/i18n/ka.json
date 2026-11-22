@@ -1235,6 +1235,8 @@
   "More captures": "სხვა გადაღებები",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "სისტემის პარამეტრებში Snagster-ის დაშვების შემდეგ, ეკრანის სანახავად ის თავიდან უნდა გაეშვას.",
   "Quit & Reopen": "გასვლა და ხელახლა გახსნა",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-მა ვერ შეძლო თავისით გადატვირთვა. დახურეთ და ხელახლა გახსენით."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-მა ვერ შეძლო თავისით გადატვირთვა. დახურეთ და ხელახლა გახსენით.",
+  "The screen couldn't be copied.": "ეკრანის კოპირება ვერ მოხერხდა.",
+  "Ink isn't in replays or in videos from the Record tab.": "მელანი არ ჩანს გამეორებებში და ჩაწერა ჩანართიდან გადაღებულ ვიდეოებში."
  }
 }

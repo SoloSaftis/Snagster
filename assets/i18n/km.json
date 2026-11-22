@@ -1235,6 +1235,8 @@
   "More captures": "ការថតច្រើនទៀត",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "បន្ទាប់ពីអ្នកអនុញ្ញាត Snagster ក្នុងការកំណត់ប្រព័ន្ធ វាត្រូវចាប់ផ្ដើមម្ដងទៀតដើម្បីមើលអេក្រង់។",
   "Quit & Reopen": "ចេញ ហើយបើកម្ដងទៀត",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster មិនអាចចាប់ផ្ដើមខ្លួនឯងឡើងវិញបានទេ។ សូមបិទវា ហើយបើកវាម្ដងទៀត។"
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster មិនអាចចាប់ផ្ដើមខ្លួនឯងឡើងវិញបានទេ។ សូមបិទវា ហើយបើកវាម្ដងទៀត។",
+  "The screen couldn't be copied.": "មិនអាចចម្លងអេក្រង់បានទេ។",
+  "Ink isn't in replays or in videos from the Record tab.": "ទឹកខ្មៅមិនមាននៅក្នុងការចាក់ឡើងវិញ ឬវីដេអូពីផ្ទាំងថតទេ។"
  }
 }

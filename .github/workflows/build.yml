@@ -518,4 +518,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           sed "s/__TAG__/${GITHUB_REF_NAME}/g" .github/release-notes.md > notes.md
-          gh release create "${GITHUB_REF_NAME}" artifacts/* server-json/server.json --title "Snagster ${GITHUB_REF_NAME#v}" --notes-file notes.md --generate-notes --latest
+          gh release create "${GITHUB_REF_NAME}" artifacts/* server-json/server.json --title "Snagster ${GITHUB_REF_NAME#v}" --notes-file notes.md --latest

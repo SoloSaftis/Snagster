@@ -1235,6 +1235,8 @@
   "More captures": "Mai multe capturi",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "După ce permiți Snagster în Setările sistemului, trebuie să repornească pentru a vedea ecranul.",
   "Quit & Reopen": "Ieși și redeschide",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nu a putut reporni singur. Închide-l și deschide-l din nou."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nu a putut reporni singur. Închide-l și deschide-l din nou.",
+  "The screen couldn't be copied.": "Ecranul nu a putut fi copiat.",
+  "Ink isn't in replays or in videos from the Record tab.": "Cerneala nu apare în reluări și nici în videoclipurile din fila Înregistrează."
  }
 }

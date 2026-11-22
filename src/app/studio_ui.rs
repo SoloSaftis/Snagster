@@ -202,7 +202,8 @@ fn ink_group(app: &mut SnagApp, ui: &mut egui::Ui) {
             crate::ink_overlay::Where::Screen => t("Draw on the screen and the preview; it shows in the stream and the video (Esc to stop)"),
             crate::ink_overlay::Where::PreviewOnly => t("Draw on the preview; it shows in the stream and the video (Esc to stop)"),
         };
-        let tip = format!("{tip}{}", super::ribbon::kbd(&app.settings, Action::DrawInk));
+        // The replay buffer and the Record tab take the screen itself, without Studio's ink.
+        let tip = format!("{tip}\n{}{}", t("Ink isn't in replays or in videos from the Record tab."), super::ribbon::kbd(&app.settings, Action::DrawInk));
         if look::big_tool(ui, ph::PEN_NIB, t("Draw"), &tip, true, on).clicked() {
             toggle_ink(app);
         }

@@ -1235,6 +1235,8 @@
   "More captures": "Tuilleadh gabhálacha",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Tar éis duit Snagster a cheadú i Socruithe an Chórais, caithfidh sé tosú arís chun an scáileán a fheiceáil.",
   "Quit & Reopen": "Scoir agus Athoscail",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Níorbh fhéidir le Snagster é féin a atosú. Scoir de agus oscail arís é."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Níorbh fhéidir le Snagster é féin a atosú. Scoir de agus oscail arís é.",
+  "The screen couldn't be copied.": "Níorbh fhéidir an scáileán a chóipeáil.",
+  "Ink isn't in replays or in videos from the Record tab.": "Níl Dúch sna hathsheinmeanna ná sna físeáin ón táb Taifead."
  }
 }

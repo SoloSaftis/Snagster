@@ -1235,6 +1235,8 @@
   "More captures": "Այլ նկարումներ",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Համակարգի կարգավորումներում Snagster-ին թույլատրելուց հետո այն պետք է վերագործարկվի, որպեսզի տեսնի էկրանը։",
   "Quit & Reopen": "Փակել և նորից բացել",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-ը չկարողացավ ինքն իրեն վերագործարկել։ Փակեք այն և նորից բացեք։"
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-ը չկարողացավ ինքն իրեն վերագործարկել։ Փակեք այն և նորից բացեք։",
+  "The screen couldn't be copied.": "Չհաջողվեց պատճենել էկրանը։",
+  "Ink isn't in replays or in videos from the Record tab.": "Թանաքը չկա կրկնություններում և Ձայնագրել ներդիրի տեսանյութերում։"
  }
 }

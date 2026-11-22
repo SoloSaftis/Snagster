@@ -145,6 +145,15 @@ recognition, sound recording, encoders) and its folders.
 
 - `replay_start` `{"seconds": 60}` keeps the last minute of the screen in memory;
   `replay_save` `{"seconds": 20}` writes the last 20 s as an MP4; `replay_stop` ends it.
+  When the person has replay on in the Snagster window, these act on the window's buffer
+  (`replay_status` says `where`), and the window saves everything it keeps.
+
+**Studio sound and live ink**
+
+- `list_sound_programs` lists the programs playing sound; `set_program_sound`
+  `{"name": "spotify.exe", "volume": 0.8}` puts one in the current scene with its own volume or mute.
+- `ink_clear` removes what the person drew with Studio's Draw (only the person draws; how long ink
+  stays is the setting `studio.ink_mode`). Ink is in Studio's stream and video, not in replays.
 
 **Live streaming (ask the person first)**
 

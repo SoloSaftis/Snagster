@@ -1235,6 +1235,8 @@
   "More captures": "تېخىمۇ كۆپ تۇتۇش",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "سىستېما تەڭشەكلىرىدە Snagster غا ئىجازەت بەرگەندىن كېيىن، ئېكراننى كۆرۈش ئۈچۈن ئۇ قايتا قوزغىلىشى كېرەك.",
   "Quit & Reopen": "چېكىنىپ قايتا ئېچىش",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ئۆزىنى قايتا قوزغىتالمىدى. ئۇنى يېپىپ قايتا ئېچىڭ."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ئۆزىنى قايتا قوزغىتالمىدى. ئۇنى يېپىپ قايتا ئېچىڭ.",
+  "The screen couldn't be copied.": "ئېكراننى كۆچۈرەلمىدى.",
+  "Ink isn't in replays or in videos from the Record tab.": "سىياھ قايتا ئويناتمىلاردا ۋە خاتىرىلەش بەتكۈچىدىكى سىنلاردا بولمايدۇ."
  }
 }

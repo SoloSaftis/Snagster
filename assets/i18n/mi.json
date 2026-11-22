@@ -1235,6 +1235,8 @@
   "More captures": "Ētahi atu hopukanga",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Ina whakaaetia e koe a Snagster i ngā Tautuhinga Pūnaha, me tīmata anō kia kite ai i te mata.",
   "Quit & Reopen": "Whakamutu, Whakatuwhera Anō",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Kāore i taea e Snagster te tīmata anō i a ia anō. Whakamutua, ka whakatuwhera anō."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Kāore i taea e Snagster te tīmata anō i a ia anō. Whakamutua, ka whakatuwhera anō.",
+  "The screen couldn't be copied.": "Kāore i taea te kape i te mata.",
+  "Ink isn't in replays or in videos from the Record tab.": "Kāore te Mangumangu i roto i ngā whakahoki, i ngā ataata rānei mai i te ripa Rekoata."
  }
 }

@@ -1235,6 +1235,8 @@
   "More captures": "మరిన్ని క్యాప్చర్‌లు",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "సిస్టమ్ సెట్టింగ్‌లలో Snagster ను అనుమతించిన తర్వాత, స్క్రీన్ చూడటానికి అది మళ్లీ ప్రారంభం కావాలి.",
   "Quit & Reopen": "నిష్క్రమించి మళ్లీ తెరువు",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster తనను తాను పునఃప్రారంభించుకోలేకపోయింది. దాన్ని మూసివేసి మళ్లీ తెరవండి."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster తనను తాను పునఃప్రారంభించుకోలేకపోయింది. దాన్ని మూసివేసి మళ్లీ తెరవండి.",
+  "The screen couldn't be copied.": "స్క్రీన్‌ను కాపీ చేయలేకపోయాం.",
+  "Ink isn't in replays or in videos from the Record tab.": "సిరా రీప్లేలలో లేదా రికార్డ్ ట్యాబ్ వీడియోలలో ఉండదు."
  }
 }

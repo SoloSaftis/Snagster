@@ -1235,6 +1235,8 @@
   "More captures": "Więcej zrzutów",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Po zezwoleniu Snagsterowi w Ustawieniach systemowych musi on uruchomić się ponownie, aby widzieć ekran.",
   "Quit & Reopen": "Zakończ i otwórz ponownie",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nie mógł sam się uruchomić ponownie. Zamknij go i otwórz jeszcze raz."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nie mógł sam się uruchomić ponownie. Zamknij go i otwórz jeszcze raz.",
+  "The screen couldn't be copied.": "Nie udało się skopiować ekranu.",
+  "Ink isn't in replays or in videos from the Record tab.": "Atrament nie jest w powtórkach ani w filmach z karty Nagraj."
  }
 }

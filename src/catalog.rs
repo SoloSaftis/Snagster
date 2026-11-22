@@ -136,7 +136,7 @@ pub const COMMANDS: &[Command] = &[
     c("show_last_video", "Record menu", &["Show last video in its folder"], "list_recordings", true, "", Outside),
     c("recordings_folder", "Record > Recordings, Studio", &["Recordings folder"], "list_recordings", true, "", Outside),
     c("gif_editor", "Record > Recordings, Record menu", &["GIF editor", "GIF recordings: trim, frames, combine..."], "gif_edit", true, "", Safe),
-    c("replay_toggle", "Record > Replay, tray menu, hotkey", &["Replay", "Stop replay", "Turn replay on / off"], "replay_start", true, "", Safe),
+    c("replay_toggle", "Record > Replay, tray menu, hotkey", &["Replay", "Stop replay", "Turn replay on / off"], "replay_start", true, "", Destructive),
     c("replay_save", "Record > Replay, tray menu, hotkey", &["Save replay"], "replay_save", true, "", Safe),
     c("gif_slideshow", "Record > Recordings, Record menu, GIF editor", &["GIF slideshow", "Make a GIF slideshow from Recent", "Slideshow from Recent"], "gif_edit", true, "", Safe),
     c("microphones_refresh", "Record > Video > sound", &["Look for microphones again"], "list_audio_devices", false, "", Safe),
@@ -336,6 +336,8 @@ pub enum Kind {
     Bool,
     /// A whole number from..to.
     Int(i64, i64),
+    /// One of these whole numbers (the steps the window offers).
+    Steps(&'static [i64]),
     /// A number from..to.
     Num(f64, f64),
     Text,
@@ -352,6 +354,7 @@ impl Kind {
         match self {
             Kind::Bool => "true or false".into(),
             Kind::Int(a, b) => format!("a whole number {a}-{b}"),
+            Kind::Steps(v) => format!("one of {}", v.iter().map(|n| n.to_string()).collect::<Vec<_>>().join(", ")),
             Kind::Num(a, b) => format!("a number {a}-{b}"),
             Kind::Text => "text".into(),
             Kind::Choice(v) => format!("one of {}", v.join(", ")),
@@ -439,7 +442,7 @@ pub const SETTINGS: &[SettingKey] = &[
     ko("video_folder", Kind::Text, "Where videos are saved."),
     k("audio_source", Kind::Choice(AUDIO), "Sound recorded with videos."),
     k("audio_mic", Kind::Text, "The microphone's id from list_audio_devices (\"\" the default)."),
-    k("replay_s", Kind::Int(30, 120), "Replay buffer: how many seconds it keeps (30, 60, 90 or 120)."),
+    k("replay_s", Kind::Steps(&[30, 60, 90, 120]), "Replay buffer: how many seconds it keeps (30, 60, 90 or 120)."),
     k("replay_audio", Kind::Choice(AUDIO), "Sound kept with replays."),
     k("replay_at_start", Kind::Bool, "Turn the replay buffer on when Snagster starts (on Wayland only when the shared screen is remembered)."),
     k("language", Kind::Text, "The interface language code (\"\" the computer's); set_language checks it."),
@@ -575,6 +578,12 @@ pub fn check_setting(key: &str, v: &serde_json::Value) -> Result<&'static Settin
         Kind::Num(a, b) => {
             let n = v.as_f64().ok_or_else(bad)?;
             if !(a..=b).contains(&n) {
+                return Err(bad());
+            }
+        }
+        Kind::Steps(steps) => {
+            let n = v.as_f64().ok_or_else(bad)?;
+            if n.fract() != 0.0 || !steps.contains(&(n as i64)) {
                 return Err(bad());
             }
         }

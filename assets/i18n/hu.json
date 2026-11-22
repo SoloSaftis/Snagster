@@ -1235,6 +1235,8 @@
   "More captures": "További felvételek",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Miután engedélyezte a Snagstert a Rendszerbeállításokban, újra kell indulnia, hogy lássa a képernyőt.",
   "Quit & Reopen": "Kilépés és újbóli megnyitás",
-  "Snagster couldn't restart itself. Quit it and open it again.": "A Snagster nem tudta újraindítani magát. Lépjen ki belőle, és nyissa meg újra."
+  "Snagster couldn't restart itself. Quit it and open it again.": "A Snagster nem tudta újraindítani magát. Lépjen ki belőle, és nyissa meg újra.",
+  "The screen couldn't be copied.": "A képernyőt nem sikerült másolni.",
+  "Ink isn't in replays or in videos from the Record tab.": "A tinta nem szerepel a visszajátszásokban és a Felvétel lap videóiban."
  }
 }

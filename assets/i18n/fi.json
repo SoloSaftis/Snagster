@@ -1235,6 +1235,8 @@
   "More captures": "Lisää kaappauksia",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Kun olet sallinut Snagsterin Järjestelmäasetuksissa, sen on käynnistyttävä uudelleen nähdäkseen näytön.",
   "Quit & Reopen": "Lopeta ja avaa uudelleen",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ei voinut käynnistää itseään uudelleen. Lopeta se ja avaa se uudelleen."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ei voinut käynnistää itseään uudelleen. Lopeta se ja avaa se uudelleen.",
+  "The screen couldn't be copied.": "Näyttöä ei voitu kopioida.",
+  "Ink isn't in replays or in videos from the Record tab.": "Muste ei ole toistoissa eikä Nauhoita-välilehden videoissa."
  }
 }

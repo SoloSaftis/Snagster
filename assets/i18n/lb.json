@@ -1235,6 +1235,8 @@
   "More captures": "Méi Opnamen",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Nodeems Dir Snagster an de Systemastellungen erlaabt hutt, muss et nei starten, fir den Ecran ze gesinn.",
   "Quit & Reopen": "Ophalen an nees opmaachen",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster konnt sech net selwer nei starten. Maacht et zou a maacht et nees op."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster konnt sech net selwer nei starten. Maacht et zou a maacht et nees op.",
+  "The screen couldn't be copied.": "De Bildschierm konnt net kopéiert ginn.",
+  "Ink isn't in replays or in videos from the Record tab.": "Tënt ass net an de Replayen oder a Videoe vum Tab Opnehmen."
  }
 }

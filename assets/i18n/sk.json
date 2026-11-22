@@ -1235,6 +1235,8 @@
   "More captures": "Ďalšie snímky",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Po povolení Snagstera v Nastaveniach systému sa musí znova spustiť, aby videl obrazovku.",
   "Quit & Reopen": "Ukončiť a znova otvoriť",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster sa nemohol sám znova spustiť. Ukončite ho a otvorte znova."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster sa nemohol sám znova spustiť. Ukončite ho a otvorte znova.",
+  "The screen couldn't be copied.": "Obrazovku sa nepodarilo skopírovať.",
+  "Ink isn't in replays or in videos from the Record tab.": "Atrament nie je v záznamoch späť ani vo videách z karty Nahrať."
  }
 }

@@ -1235,6 +1235,8 @@
   "More captures": "ثبت‌های بیشتر",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "پس از اجازه دادن به Snagster در تنظیمات سیستم، برای دیدن صفحه باید دوباره شروع شود.",
   "Quit & Reopen": "بستن و باز کردن دوباره",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster نتوانست خودش را دوباره راه‌اندازی کند. آن را ببندید و دوباره باز کنید."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster نتوانست خودش را دوباره راه‌اندازی کند. آن را ببندید و دوباره باز کنید.",
+  "The screen couldn't be copied.": "کپی صفحه‌نمایش انجام نشد.",
+  "Ink isn't in replays or in videos from the Record tab.": "جوهر در بازپخش‌ها و ویدیوهای زبانه ضبط ویدیو نیست."
  }
 }

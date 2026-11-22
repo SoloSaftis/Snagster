@@ -66,6 +66,14 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.10.8" date="2026-11-22">
+      <description>
+        <ul>
+          <li>AI apps with the MCP bundles use the replay buffer that is on in the window</li>
+          <li>The replay pill is readable in dark mode and in contrast themes</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.10.7" date="2026-11-22">
       <description>
         <ul>

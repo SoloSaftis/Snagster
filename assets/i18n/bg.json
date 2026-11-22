@@ -1235,6 +1235,8 @@
   "More captures": "Още снимки",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "След като разрешите Snagster в Системни настройки, той трябва да се стартира отново, за да вижда екрана.",
   "Quit & Reopen": "Изход и повторно отваряне",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster не успя да се рестартира сам. Затворете го и го отворете отново."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster не успя да се рестартира сам. Затворете го и го отворете отново.",
+  "The screen couldn't be copied.": "Екранът не можа да бъде копиран.",
+  "Ink isn't in replays or in videos from the Record tab.": "Мастилото не е в повторенията и във видеата от раздела Запис."
  }
 }

@@ -1235,6 +1235,8 @@
   "More captures": "Veel jäädvustusi",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Kui oled Snagsteri süsteemiseadetes lubanud, peab see ekraani nägemiseks uuesti käivituma.",
   "Quit & Reopen": "Sulge ja ava uuesti",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ei saanud ennast taaskäivitada. Sulgege see ja avage uuesti."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ei saanud ennast taaskäivitada. Sulgege see ja avage uuesti.",
+  "The screen couldn't be copied.": "Ekraani ei õnnestunud kopeerida.",
+  "Ink isn't in replays or in videos from the Record tab.": "Tint ei ole kordustes ega vahekaardi Lindista videotes."
  }
 }

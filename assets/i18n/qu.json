@@ -1235,6 +1235,8 @@
   "More captures": "Astawan hapiykuna",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Snagsterta Sistemapa Churanakunanpi saqiyta qhepaman, pantallata rikunanpaq wakmanta qallarinan.",
   "Quit & Reopen": "Lluqsiy, wakmanta kichay",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster manam kikillanmanta yapamanta qallariyta atirqanchu. Wichqay hinaspa yapamanta kichay."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster manam kikillanmanta yapamanta qallariyta atirqanchu. Wichqay hinaspa yapamanta kichay.",
+  "The screen couldn't be copied.": "Pantallata copiayta mana atikurqanchu.",
+  "Ink isn't in replays or in videos from the Record tab.": "Tinta mana kachkanchu kutichiykunapi nitaq Grabay pestañamanta videokunapi."
  }
 }

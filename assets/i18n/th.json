@@ -1235,6 +1235,8 @@
   "More captures": "การจับภาพเพิ่มเติม",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "หลังจากอนุญาต Snagster ในการตั้งค่าระบบแล้ว ต้องเปิดใหม่จึงจะเห็นหน้าจอ",
   "Quit & Reopen": "ปิดแล้วเปิดใหม่",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster เริ่มใหม่เองไม่ได้ ให้ปิดแล้วเปิดอีกครั้ง"
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster เริ่มใหม่เองไม่ได้ ให้ปิดแล้วเปิดอีกครั้ง",
+  "The screen couldn't be copied.": "คัดลอกหน้าจอไม่ได้",
+  "Ink isn't in replays or in videos from the Record tab.": "หมึกจะไม่อยู่ในรีเพลย์หรือวิดีโอจากแท็บบันทึก"
  }
 }

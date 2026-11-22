@@ -46,13 +46,20 @@ pub(crate) fn pill_text(s: &replay::Status) -> String {
     }
 }
 
-/// The pill next to the tab row while replay is on (accent coloured: red means recording).
+/// The pill's fill and the colour of its text and dot: the accent as a fill with the text the
+/// theme puts on it (readable at 4.5:1 in every theme, contrast themes too; red means recording).
+pub(crate) fn pill_colors(p: &crate::theme::Palette) -> (Color32, Color32) {
+    (p.accent, p.on_accent)
+}
+
+/// The pill next to the tab row while replay is on.
 fn pill(ui: &mut egui::Ui, s: &replay::Status) -> egui::Response {
-    let galley = ui.painter().layout_no_wrap(pill_text(s), egui::FontId::proportional(12.0), Color32::WHITE);
+    let (fill, fg) = pill_colors(&look::pal());
+    let galley = ui.painter().layout_no_wrap(pill_text(s), egui::FontId::proportional(12.0), fg);
     let (rect, resp) = ui.allocate_exact_size(vec2(galley.size().x + 26.0, 20.0), Sense::click());
-    ui.painter().rect_filled(rect, CornerRadius::same(10), look::accent());
-    ui.painter().circle_filled(pos2(rect.left() + 10.0, rect.center().y), 4.0, Color32::WHITE);
-    ui.painter().galley(pos2(rect.left() + 18.0, rect.center().y - galley.size().y / 2.0), galley, Color32::WHITE);
+    ui.painter().rect_filled(rect, CornerRadius::same(10), fill);
+    ui.painter().circle_filled(pos2(rect.left() + 10.0, rect.center().y), 4.0, fg);
+    ui.painter().galley(pos2(rect.left() + 18.0, rect.center().y - galley.size().y / 2.0), galley, fg);
     let tip = tf("Keeping the last {seconds} s of the screen ({held} s so far). Click for Record > Replay.", &[("seconds", &s.seconds.to_string()), ("held", &format!("{:.0}", s.held_s))]);
     resp.on_hover_text(tip)
 }
@@ -253,5 +260,25 @@ mod tests {
         assert_eq!(pill_text(&s), "Replay 90 s");
         s.phase = Phase::Starting;
         assert_eq!(pill_text(&s), "Replay…");
+    }
+
+    /// The pill's 12 pt text reads at 4.5:1 in dark and light mode with Windows' own accents and
+    /// in a contrast theme like Aquatic (white on the old link colour was 3.4:1 in dark mode
+    /// and 1.4:1 in Aquatic).
+    #[test]
+    fn the_pill_reads_with_any_accent_and_in_contrast_themes() {
+        use crate::theme::{SystemColors, SystemLook, ThemeChoice, choose, contrast};
+        let rgb = |v: u32| Color32::from_rgb((v >> 16) as u8, (v >> 8) as u8, v as u8);
+        let aquatic = SystemColors { window: rgb(0x202020), window_text: rgb(0xFFFFFF), highlight: rgb(0x8EE3F0), highlight_text: rgb(0x263B50), button: rgb(0x202020), button_text: rgb(0xFFFFFF), gray_text: rgb(0xA6A6A6), link: rgb(0x75E9FC) };
+        let mut looks = vec![SystemLook { dark: Some(true), contrast_colors: Some(aquatic), ..Default::default() }];
+        for accent in [None, Some(0x0078D4), Some(0x881798), Some(0xE81123), Some(0x107C10), Some(0x4C4A48), Some(0xFFB900)] {
+            for dark in [true, false] {
+                looks.push(SystemLook { dark: Some(dark), accent: accent.map(rgb), ..Default::default() });
+            }
+        }
+        for l in looks {
+            let (fill, fg) = pill_colors(&choose(ThemeChoice::System, &l));
+            assert!(contrast(fg, fill) >= 4.5, "{fg:?} on {fill:?} for {l:?}");
+        }
     }
 }

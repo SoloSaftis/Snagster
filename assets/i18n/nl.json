@@ -1235,6 +1235,8 @@
   "More captures": "Meer opnamen",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Nadat je Snagster in Systeeminstellingen hebt toegestaan, moet het opnieuw starten om het scherm te zien.",
   "Quit & Reopen": "Stop en open opnieuw",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster kon zichzelf niet opnieuw starten. Stop Snagster en open het opnieuw."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster kon zichzelf niet opnieuw starten. Stop Snagster en open het opnieuw.",
+  "The screen couldn't be copied.": "Het scherm kon niet worden gekopieerd.",
+  "Ink isn't in replays or in videos from the Record tab.": "Inkt zit niet in replays of in video's van het tabblad Opnemen."
  }
 }

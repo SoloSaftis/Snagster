@@ -1235,6 +1235,8 @@
   "More captures": "更多擷取",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "在「系統設定」中允許 Snagster 後，它需要重新啟動才能看到螢幕。",
   "Quit & Reopen": "結束並重新開啟",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster 無法自行重新啟動。請結束後再重新開啟。"
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster 無法自行重新啟動。請結束後再重新開啟。",
+  "The screen couldn't be copied.": "無法複製螢幕。",
+  "Ink isn't in replays or in videos from the Record tab.": "墨跡不會出現在重播或錄製分頁的影片中。"
  }
 }

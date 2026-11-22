@@ -58,6 +58,59 @@ pub(crate) fn send_command_at(lock: &Path, id: &str, value: Option<&str>) -> Res
     send(port, &command_message(&secret, id, value)).map_err(|_| "Snagster's window isn't open (or doesn't answer)".to_string())
 }
 
+/// What the running window answers to a question (`query`): set once by the window, called on
+/// the listening thread, so it must not wait on the window's frame. None: not a question it
+/// knows.
+pub type Answer = fn(&str) -> Option<String>;
+
+static ANSWER: OnceLock<Answer> = OnceLock::new();
+
+/// The window says how it answers questions from other Snagsters (an AI app's own server).
+pub fn set_answer(f: Answer) {
+    let _ = ANSWER.set(f);
+}
+
+/// Ask the running Snagster window a question (e.g. "replay_status") and get its one-line
+/// answer. Fails when no window listens or it doesn't know the question. (Tests use
+/// `query_at` with a lock file of their own.)
+#[cfg(not(test))]
+pub fn query(id: &str) -> Result<String, String> {
+    let lock = lock_path().ok_or("Snagster has no settings folder here")?;
+    query_at(&lock, id)
+}
+
+pub(crate) fn query_at(lock: &Path, id: &str) -> Result<String, String> {
+    let (port, secret) = std::fs::read_to_string(lock).ok().as_deref().and_then(parse_lock).ok_or("Snagster's window isn't open")?;
+    let reply = exchange(port, &query_message(&secret, id)).map_err(|_| "Snagster's window isn't open (or doesn't answer)".to_string())?;
+    match reply.strip_prefix("ok ") {
+        Some(a) => Ok(a.to_string()),
+        None => Err(format!("The Snagster window doesn't answer {id}")),
+    }
+}
+
+/// The secret, then QUERY and the question's id.
+pub(crate) fn query_message(secret: &str, id: &str) -> String {
+    format!("{secret}\nQUERY {}\n", id.replace(['\r', '\n', '\t'], " "))
+}
+
+/// The question in a message, if it carries the secret.
+pub(crate) fn parse_query(text: &str, secret: &str) -> Option<String> {
+    let mut lines = text.lines();
+    if lines.next()? != secret {
+        return None;
+    }
+    let id = lines.next()?.strip_prefix("QUERY ")?.trim();
+    (!id.is_empty() && id.len() <= 40).then(|| id.to_string())
+}
+
+/// The line sent back for a question: "ok " and the answer on one line, or "unknown".
+pub(crate) fn query_reply(answer: Option<String>) -> String {
+    match answer {
+        Some(a) => format!("ok {}\n", a.replace(['\r', '\n'], " ")),
+        None => "unknown\n".to_string(),
+    }
+}
+
 /// The secret, then COMMAND, the id and the value on one line (tab between; no new lines).
 pub(crate) fn command_message(secret: &str, id: &str, value: Option<&str>) -> String {
     let clean = |s: &str| s.replace(['\r', '\n', '\t'], " ");
@@ -178,13 +231,19 @@ fn hand_over(port: u16, secret: &str, ask: &Ask) -> Result<(), String> {
 
 /// Sends one message and waits for "ok".
 fn send(port: u16, msg: &str) -> Result<(), String> {
+    let reply = exchange(port, msg)?;
+    if reply == "ok" { Ok(()) } else { Err(format!("unexpected answer {reply:?}")) }
+}
+
+/// Sends one message and returns the one line that comes back (trimmed).
+fn exchange(port: u16, msg: &str) -> Result<String, String> {
     let addr = SocketAddr::from((Ipv4Addr::LOCALHOST, port));
     let mut s = TcpStream::connect_timeout(&addr, Duration::from_millis(500)).map_err(|e| e.to_string())?;
     s.set_read_timeout(Some(Duration::from_secs(2))).map_err(|e| e.to_string())?;
     s.write_all(msg.as_bytes()).map_err(|e| e.to_string())?;
     let mut reply = String::new();
     BufReader::new(s).read_line(&mut reply).map_err(|e| e.to_string())?;
-    if reply.trim() == "ok" { Ok(()) } else { Err(format!("unexpected answer {reply:?}")) }
+    Ok(reply.trim().to_string())
 }
 
 /// A secret nobody else can guess: two random 64-bit numbers from the standard library's
@@ -228,7 +287,10 @@ fn listen(lock: &Path, inbox: Inbox) -> Result<(), String> {
                         }
                     }
                 }
-                if let Some(ask) = parse_message(&text, &secret) {
+                if let Some(id) = parse_query(&text, &secret) {
+                    let answer = ANSWER.get().and_then(|f| f(&id));
+                    let _ = s.write_all(query_reply(answer).as_bytes());
+                } else if let Some(ask) = parse_message(&text, &secret) {
                     if let Ok(mut g) = inbox.lock() {
                         g.push(ask);
                     }
@@ -384,6 +446,26 @@ mod tests {
         send_command_at(&lock, "effect", Some("Border")).unwrap();
         assert_eq!(*first.lock().unwrap(), vec![Ask::Command("zoom_in".into(), None), Ask::Command("effect".into(), Some("Border".into()))]);
         assert!(send_command_at(&dir.join("none.lock"), "zoom_in", None).unwrap_err().contains("isn't open"));
+        // A question is answered at once on the listening thread (the window's replay state for
+        // an AI app's own server), never put in the inbox; one it doesn't know says so.
+        set_answer(|id| (id == "replay_status").then(|| "{\"phase\": \"on\",\n\"seconds\": 60}".to_string()));
+        assert_eq!(query_at(&lock, "replay_status").unwrap(), "{\"phase\": \"on\", \"seconds\": 60}", "one line");
+        assert!(query_at(&lock, "what_time").unwrap_err().contains("doesn't answer what_time"));
+        assert!(query_at(&dir.join("none.lock"), "replay_status").unwrap_err().contains("isn't open"));
+        assert!(first.lock().unwrap().len() == 2, "questions aren't commands");
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn questions_need_the_secret_and_a_short_id() {
+        let secret = new_secret();
+        assert_eq!(parse_query(&query_message(&secret, "replay_status"), &secret).as_deref(), Some("replay_status"));
+        assert_eq!(parse_query(&query_message("wrong-secret-0000", "replay_status"), &secret), None);
+        assert_eq!(parse_query(&format!("{secret}\nQUERY \n"), &secret), None);
+        assert_eq!(parse_query(&format!("{secret}\nQUERY {}\n", "x".repeat(41)), &secret), None);
+        assert_eq!(parse_query(&command_message(&secret, "zoom_in", None), &secret), None, "a command isn't a question");
+        assert_eq!(parse_message(&query_message(&secret, "replay_status"), &secret), None, "a question isn't a command");
+        assert_eq!(query_reply(Some("a\nb".into())), "ok a b\n");
+        assert_eq!(query_reply(None), "unknown\n");
     }
 }

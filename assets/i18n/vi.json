@@ -1235,6 +1235,8 @@
   "More captures": "Chụp khác",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Sau khi bạn cho phép Snagster trong Cài đặt hệ thống, ứng dụng phải khởi động lại để thấy màn hình.",
   "Quit & Reopen": "Thoát và mở lại",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster không tự khởi động lại được. Hãy thoát rồi mở lại."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster không tự khởi động lại được. Hãy thoát rồi mở lại.",
+  "The screen couldn't be copied.": "Không thể sao chép màn hình.",
+  "Ink isn't in replays or in videos from the Record tab.": "Mực không có trong bản phát lại hay video từ tab Quay."
  }
 }

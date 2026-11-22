@@ -1235,6 +1235,8 @@
   "More captures": "צילומים נוספים",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "אחרי שתאשרו את Snagster בהגדרות המערכת, עליו להתחיל מחדש כדי לראות את המסך.",
   "Quit & Reopen": "יציאה ופתיחה מחדש",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster לא הצליח להפעיל את עצמו מחדש. צאו ממנו ופתחו אותו שוב."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster לא הצליח להפעיל את עצמו מחדש. צאו ממנו ופתחו אותו שוב.",
+  "The screen couldn't be copied.": "לא ניתן היה להעתיק את המסך.",
+  "Ink isn't in replays or in videos from the Record tab.": "דיו לא נכלל בהילוכים חוזרים או בסרטונים מלשונית הקלטה."
  }
 }

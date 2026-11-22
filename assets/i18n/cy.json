@@ -1235,6 +1235,8 @@
   "More captures": "Rhagor o gipluniau",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Ar ôl i chi ganiatáu Snagster yng Ngosodiadau'r System, rhaid iddo ddechrau eto i weld y sgrin.",
   "Quit & Reopen": "Gadael ac Ailagor",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Doedd Snagster ddim yn gallu ailgychwyn ei hun. Gadewch ef a'i agor eto."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Doedd Snagster ddim yn gallu ailgychwyn ei hun. Gadewch ef a'i agor eto.",
+  "The screen couldn't be copied.": "Doedd dim modd copïo'r sgrin.",
+  "Ink isn't in replays or in videos from the Record tab.": "Nid yw Inc mewn ailchwaraeon nac mewn fideos o'r tab Recordio."
  }
 }

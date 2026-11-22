@@ -2,6 +2,22 @@
 
 What changed for people using Snagster, per version.
 
+## 0.10.8 — 2026-11-22
+
+- **AI apps with the MCP bundles see the window's replay buffer**: the bundles run Snagster
+  apart from the window, so replay_status said off while the window's replay ran, replay_start
+  started a second buffer (more memory and, on Wayland, another share dialog) and replay_stop
+  said it was already off. They now ask the window and act on its buffer; replay_status says
+  whose it is.
+- **The "Replay 60 s" pill reads in every theme**: its white text was faint in dark mode and
+  nearly invisible in some Windows contrast themes; it now uses the theme's own colours for
+  text on the accent.
+- **Live ink isn't in replays or Record-tab videos**, only in Studio's stream and video; the
+  Draw button's tooltip now says so.
+- The replay length is always 30, 60, 90 or 120 s (a settings file's 45 s showed no length
+  picked), turning replay off from an AI app is marked as ending something, and the message
+  when the screen couldn't be copied for a replay is translated.
+
 ## 0.10.7 — 2026-11-22
 
 Studio:
@@ -16,6 +32,17 @@ Studio:
   says why and everything else works as before. AI apps get `list_sound_programs` and
   `set_program_sound`. The Mac app now needs macOS 12.3 or later (it was 12.0), as
   ScreenCaptureKit, which this uses, came in 12.3.
+- **Draw while you're live (Studio > Ink > Draw, Ctrl+Shift+F7; ⌥⇧⌘D on a Mac)**: the ink is
+  in the stream and in Studio's video, on every source that shows that part of the screen. It
+  fades a few seconds after the pen lifts (1 to 10 s, 3 s at first) or stays until **Clear**
+  (Ctrl+Shift+F6; ⌥⇧⌘X). Pick the colour and pen width in the Ink group; Esc stops drawing,
+  Ctrl+Z (⌘Z) takes back the last stroke, or right after Clear what it removed. On Windows you
+  draw over every monitor (a thin border and a hint show, never captured; Snagster's own window
+  stays usable); other programs' screen shares don't see the ink, only Studio's stream and video
+  do. On macOS and Linux you draw on the Studio preview for now (Wayland doesn't let apps cover
+  the screen; drawing over the screen on macOS and X11 is still to come). For AI apps:
+  **ink_clear**, and the settings studio.ink_mode, studio.ink_fade_s, studio.ink_color and
+  studio.ink_width.
 
 For AI apps (every system):
 
@@ -61,17 +88,6 @@ Live streaming (every system):
 - Frames thrown away when a reconnect starts fresh, or to make room in a full queue, now count
   as dropped too.
 - For AI apps: **stream_stats** gives the same numbers and warnings.
-- **Draw while you're live (Studio > Ink > Draw, Ctrl+Shift+F7; ⌥⇧⌘D on a Mac)**: the ink is
-  in the stream and in Studio's video, on every source that shows that part of the screen. It
-  fades a few seconds after the pen lifts (1 to 10 s, 3 s at first) or stays until **Clear**
-  (Ctrl+Shift+F6; ⌥⇧⌘X). Pick the colour and pen width in the Ink group; Esc stops drawing,
-  Ctrl+Z (⌘Z) takes back the last stroke, or right after Clear what it removed. On Windows you
-  draw over every monitor (a thin border and a hint show, never captured; Snagster's own window
-  stays usable); other programs' screen shares don't see the ink, only Studio's stream and video
-  do. On macOS and Linux you draw on the Studio preview for now (Wayland doesn't let apps cover
-  the screen; drawing over the screen on macOS and X11 is still to come). For AI apps:
-  **ink_clear**, and the settings studio.ink_mode, studio.ink_fade_s, studio.ink_color and
-  studio.ink_width.
 
 Recording (every system):
 
@@ -108,25 +124,8 @@ Marking up pictures (every system):
   capture shows its library copy). On Linux and macOS, Show in folder for videos and Library
   items opened the file itself; it now opens its folder with the file selected (on Linux
   through the desktop's portal, so also in the Flatpak).
-- **KDE Plasma:** Snagster's dialogs, pins and recording bar show Snagster's icon and sit
-  with Snagster in the taskbar (they showed another program's icon before).
-- **Dialogs fit what they hold**: New image, Resize, Rename and the other small dialogs no
-  longer keep empty space below their buttons (on every system), and on KDE Plasma they no
-  longer offer Maximise.
 - **Black and white colours show on every panel**: a colour swatch or quick style that would
   melt into the panel (black in dark mode, white or yellow in light mode) gets a thin edge.
-- **The desktop is called "Desktop"** when you point at it in the Area overlay on Linux (Plasma
-  showed "Desktop @ QRect(...)"), and it is no longer offered as a window to capture (nor is
-  Windows' Program Manager).
-- **Cancelling the desktop's screenshot dialog** says so plainly, and the screenshot portal's
-  other answers are translated.
-- **Cancelling screen sharing** in the desktop's dialog now says so (on KDE, where Cancel looks
-  the same as a stop without a reason, the message names both).
-- **A cancelled recording on Wayland no longer saves a black video**: it fell back to XWayland,
-  which sees only a black screen, and said "Saved". It now stops and says it was cancelled, and
-  a recording that never got a picture leaves no empty file behind.
-- `snagster record`, `snagster capture` and AI apps over MCP tell the desktop they are
-  Snagster, so KDE remembers one screen-share answer for all of Snagster.
 
 Windows:
 
@@ -167,11 +166,27 @@ Linux:
   editor also comes back after a hotkey Stop. The desktop's own "stop sharing" (GNOME's top
   bar, KDE's tray) now stops and saves the recording too. The bar's red dot no longer blinks,
   its clock shows hours, and its texts are translated.
-- Cancelling the desktop's share dialog now says plainly that nothing was shared, and
+- **Cancelling the desktop's share dialog** says plainly that nothing was shared (on KDE, where
+  Cancel looks the same as a stop without a reason, the message names both), and
   `snagster record` works in the Flatpak on Wayland.
+- **KDE Plasma:** Snagster's dialogs, pins and recording bar show Snagster's icon and sit
+  with Snagster in the taskbar (they showed another program's icon before).
+- **The desktop is called "Desktop"** when you point at it in the Area overlay on Linux (Plasma
+  showed "Desktop @ QRect(...)"), and it is no longer offered as a window to capture (nor is
+  Windows' Program Manager).
+- **Cancelling the desktop's screenshot dialog** says so plainly, and the screenshot portal's
+  other answers are translated.
+- **A cancelled recording on Wayland no longer saves a black video**: it fell back to XWayland,
+  which sees only a black screen, and said "Saved". It now stops and says it was cancelled, and
+  a recording that never got a picture leaves no empty file behind.
+- `snagster record`, `snagster capture` and AI apps over MCP tell the desktop they are
+  Snagster, so KDE remembers one screen-share answer for all of Snagster.
 
 Settings, the Library and the tray (every system):
 
+- **Dialogs fit what they hold**: New image, Resize, Rename and the other small dialogs no
+  longer keep empty space below their buttons (on every system), and on KDE Plasma they no
+  longer offer Maximise.
 - **A shorter tray menu**: All-in-one, Area, Window, Screen, Scrolling, Grab text and Record
   video stay at the top; the other captures are under More captures.
 - **The first time you close the window, Snagster says it keeps running** in the corner of the
@@ -258,7 +273,6 @@ AI apps:
 
 - **Every option in Snagster can be reached over MCP**: every button, menu item and setting has a
   tool or a typed setting (73 tools), and `stream_start` sets up a whole stream in one call.
-
 
 Snagster follows each system's own design rules more closely (Windows 11, GNOME, KDE Plasma,
 macOS):

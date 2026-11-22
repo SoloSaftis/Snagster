@@ -1235,6 +1235,8 @@
   "More captures": "Flere opptak",
   "After you allow Snagster in System Settings, it has to start again to see the screen.": "Etter at du har tillatt Snagster i Systeminnstillinger, må det starte på nytt for å se skjermen.",
   "Quit & Reopen": "Avslutt og åpne på nytt",
-  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster klarte ikke å starte seg selv på nytt. Avslutt og åpne det igjen."
+  "Snagster couldn't restart itself. Quit it and open it again.": "Snagster klarte ikke å starte seg selv på nytt. Avslutt og åpne det igjen.",
+  "The screen couldn't be copied.": "Skjermen kunne ikke kopieres.",
+  "Ink isn't in replays or in videos from the Record tab.": "Blekk er ikke med i reprisene eller i videoer fra fanen Ta opp."
  }
 }
