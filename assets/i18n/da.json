@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Afslut og åbn igen",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster kunne ikke genstarte sig selv. Afslut programmet, og åbn det igen.",
   "The screen couldn't be copied.": "Skærmen kunne ikke kopieres.",
-  "Ink isn't in replays or in videos from the Record tab.": "Blæk er ikke med i genafspilninger eller i videoer fra fanen Optag."
+  "Ink isn't in replays or in videos from the Record tab.": "Blæk er ikke med i genafspilninger eller i videoer fra fanen Optag.",
+  "1. Capture": "1. Optag",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Tryk på Print Screen (eller knappen Optag). Træk et område, eller klik på et vindue, en knap eller en menu. Derefter kan du på en værktøjslinje optage, rulle, optage en GIF eller hente teksten.",
+  "2. Mark it up": "2. Tilføj markeringer",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Vælg et værktøj til venstre: pile, tekst, talebobler, trin, stempler, slør, spotlys, forstørrelse... Indstillingerne for hvert værktøj er til højre.",
+  "3. Share it": "3. Del",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopiér (Ctrl+C), gem (Ctrl+S), fastgør på skærmen, send med e-mail, eller saml flere i en guide (Filer > Eksportér guide).",
+  "Everything is kept": "Alt bliver gemt",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Hver optagelse havner i Bibliotek (Ctrl+L), hvor du kan søge efter dato, program og tags.",
+  "From anywhere": "Fra hvor som helst",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Snagsters ikon i meddelelsesområdet åbner optagelsespanelet; højreklik på det for at få hurtigmenuen.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Genvejstaster kan overtage taster, som et andet program bruger (Indstillinger > Genvejstaster).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Nye værktøjer: Markering (løft en del af billedet, og flyt den), Fyld og Viskelæder.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Pile med spidser i begge ender, tekstjustering og -kontur, talebobleformer, slørtyper.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Hurtige typografier, en værktøjslinje, du kan tilpasse, klip / kopiér / sæt ind af markeringer.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Optag flere områder på én gang, menuer med deres undermenuer og rulning, du selv foretager.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Nyt billede, skabeloner, åbn seneste, omdøb, papirkurv, eksport af flere ad gangen, udskriv, e-mail, Word-dokumenter.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Forudindstillinger kan importeres, eksporteres og duplikeres; Snagster kan starte sammen med Windows."
  }
 }

@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "বন্ধ কৰি পুনৰ খোলক",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-এ নিজকে পুনৰ আৰম্ভ কৰিব নোৱাৰিলে। ইয়াক বন্ধ কৰি পুনৰ খোলক।",
   "The screen couldn't be copied.": "স্ক্ৰীনখন কপি কৰিব পৰা নগ'ল।",
-  "Ink isn't in replays or in videos from the Record tab.": "চিয়াঁহী ৰিপ্লেত বা ৰেকৰ্ড টেবৰ ভিডিঅ'ত নাথাকে।"
+  "Ink isn't in replays or in videos from the Record tab.": "চিয়াঁহী ৰিপ্লেত বা ৰেকৰ্ড টেবৰ ভিডিঅ'ত নাথাকে।",
+  "1. Capture": "1. কেপচাৰ",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen টিপক (বা কেপচাৰ বুটাম)। এটা ক্ষেত্ৰ টানক, বা ৱিণ্ড’, বুটাম বা মেনুত ক্লিক কৰক। তাৰ পিছত এটা টুলবাৰে আপোনাক কেপচাৰ, স্ক্ৰ’ল, GIF ৰেকৰ্ড বা টেক্সট গ্ৰেব কৰিবলৈ দিয়ে।",
+  "2. Mark it up": "2. চিহ্নিত কৰক",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "বাওঁফালে এটা টুল বাছক: কাঁড়, টেক্সট, কলআউট, পদক্ষেপ, মোহৰ, জাপসা, স্পটলাইট, ডাঙৰ কৰা... প্ৰতিটো টুলৰ বিকল্প সোঁফালে আছে।",
+  "3. Share it": "3. শ্বেয়াৰ কৰক",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "ইয়াক কপি কৰক (Ctrl+C), ছেভ কৰক (Ctrl+S), স্ক্ৰীণত পিন কৰক, ইমেইল কৰক, বা কেইবাটাও এটা গাইডত ৰাখক (ফাইল > গাইড এক্সপৰ্ট কৰক)।",
+  "Everything is kept": "সকলো ৰখা হয়",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "প্ৰতিটো কেপচাৰ লাইব্ৰেৰীলৈ যায় (Ctrl+L), তাৰিখ, প্ৰগ্ৰাম আৰু টেগ অনুসৰি সন্ধান কৰিব পাৰি।",
+  "From anywhere": "যিকোনো ঠাইৰ পৰা",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "টাস্কবাৰৰ চুকত থকা Snagster ৰ আইকনে কেপচাৰ পেনেল খোলে; দ্ৰুত মেনুৰ বাবে ইয়াত ৰাইট-ক্লিক কৰক।",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "হটকীয়ে আন প্ৰগ্ৰামে ব্যৱহাৰ কৰা কীবোৰ নিজৰ অধীনলৈ ল’ব পাৰে (ছেটিংছ > হটকী)।",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "নতুন টুল: বাছনি (ছবিৰ এটা অংশ তুলি লৈ লৰাওক), ভৰাওক আৰু ৰবৰ।",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "দুয়োটা মূৰত মূৰ থকা কাঁড়, টেক্সটৰ শাৰী আৰু ৰূপৰেখা, কলআউটৰ আকৃতি, জাপসাৰ প্ৰকাৰ।",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "দ্ৰুত শৈলী, কাষ্টমাইজ কৰিব পৰা টুলবাৰ, চিহ্নৰ কাট / কপি / পেষ্ট।",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "একেলগে কেইবাটাও ক্ষেত্ৰ, উপ-মেনুসহ মেনু, আৰু নিজে কৰা স্ক্ৰ’লিং কেপচাৰ কৰক।",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "নতুন ছবি, টেমপ্লেট, শেহতীয়া খোলক, নাম সলনি, ৰিছাইকেল বিন, একেলগে এক্সপৰ্ট, প্ৰিণ্ট, ইমেইল, Word ডকুমেণ্ট।",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "প্ৰিছেট আমদানি, এক্সপৰ্ট আৰু ডুপ্লিকেট কৰিব পাৰি; Snagster Windows ৰ সৈতে আৰম্ভ হ’ব পাৰে।"
  }
 }

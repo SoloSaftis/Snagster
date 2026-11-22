@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "إنهاء وإعادة الفتح",
   "Snagster couldn't restart itself. Quit it and open it again.": "تعذّر على Snagster إعادة تشغيل نفسه. أغلقه وافتحه مرة أخرى.",
   "The screen couldn't be copied.": "تعذّر نسخ الشاشة.",
-  "Ink isn't in replays or in videos from the Record tab.": "الحبر غير موجود في عمليات إعادة التشغيل ولا في مقاطع الفيديو من علامة التبويب تسجيل."
+  "Ink isn't in replays or in videos from the Record tab.": "الحبر غير موجود في عمليات إعادة التشغيل ولا في مقاطع الفيديو من علامة التبويب تسجيل.",
+  "1. Capture": "1. التقاط",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "اضغط Print Screen (أو زر «التقاط»). اسحب منطقة، أو انقر على نافذة أو زر أو قائمة. بعد ذلك يتيح لك شريط أدوات الالتقاط أو التمرير أو تسجيل GIF أو التقاط النص.",
+  "2. Mark it up": "2. أضف العلامات",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "اختر أداة من اليسار: أسهم، نص، فقاعات توضيح، خطوات، أختام، تمويه، تسليط الضوء، تكبير... خيارات كل أداة على اليمين.",
+  "3. Share it": "3. شاركه",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "انسخه (Ctrl+C)، احفظه (Ctrl+S)، ثبّته على الشاشة، أرسله بالبريد الإلكتروني، أو اجمع عدة لقطات في دليل (ملف > تصدير الدليل).",
+  "Everything is kept": "كل شيء محفوظ",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "تذهب كل لقطة إلى المكتبة (Ctrl+L)، ويمكن البحث فيها حسب التاريخ والبرنامج والوسوم.",
+  "From anywhere": "من أي مكان",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "تفتح أيقونة Snagster في ركن شريط المهام لوحة الالتقاط؛ انقر عليها بزر الفأرة الأيمن لفتح القائمة السريعة.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "يمكن لمفاتيح الاختصار الاستحواذ على مفاتيح يستخدمها برنامج آخر (الإعدادات > مفاتيح الاختصار).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "أدوات جديدة: التحديد (لرفع جزء من الصورة وتحريكه) وتعبئة وممحاة.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "أسهم برؤوس في كلا الطرفين، ومحاذاة النص وإطاره، وأشكال فقاعات التوضيح، وأنواع التمويه.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "أنماط سريعة، وشريط أدوات قابل للتخصيص، وقصّ / نسخ / لصق العلامات.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "التقاط عدة مناطق في وقت واحد، والقوائم مع قوائمها الفرعية، والتمرير الذي تقوم به بنفسك.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "صورة جديدة، وقوالب، وفتح الأخيرة، وإعادة تسمية، وسلة المحذوفات، وتصدير دفعة واحدة، وطباعة، وبريد إلكتروني، ومستندات Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "يمكن استيراد الإعدادات المسبقة وتصديرها وتكرارها؛ ويمكن تشغيل Snagster مع بدء Windows."
  }
 }

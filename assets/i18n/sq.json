@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Dil dhe rihape",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nuk mundi të rinisej vetë. Mbylleni dhe hapeni përsëri.",
   "The screen couldn't be copied.": "Ekrani nuk mund të kopjohej.",
-  "Ink isn't in replays or in videos from the Record tab.": "Boja nuk është në përsëritje ose në video nga skeda Regjistro."
+  "Ink isn't in replays or in videos from the Record tab.": "Boja nuk është në përsëritje ose në video nga skeda Regjistro.",
+  "1. Capture": "1. Kapni",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Shtypni Print Screen (ose butonin Kap). Tërhiqni mbi një zonë ose klikoni një dritare, buton ose meny. Më pas një shirit veglash ju lejon të kapni, të rrëshqitni, të regjistroni një GIF ose të merrni tekstin.",
+  "2. Mark it up": "2. Shënojeni",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Zgjidhni një vegël majtas: shigjeta, tekst, balona, hapa, vula, turbullim, reflektor, zmadhim... Opsionet e secilës vegël janë djathtas.",
+  "3. Share it": "3. Ndajeni",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopjojeni (Ctrl+C), ruajeni (Ctrl+S), gozhdojeni në ekran, dërgojeni me email ose bashkoni disa në një udhëzues (Skedar > Eksporto udhëzuesin).",
+  "Everything is kept": "Gjithçka ruhet",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Çdo kapje shkon në Bibliotekë (Ctrl+L), ku mund ta kërkoni sipas datës, programit dhe etiketave.",
+  "From anywhere": "Nga kudo",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Ikona e Snagster në cepin e shiritit të detyrave hap panelin e kapjes; klikojeni me të djathtën për menynë e shpejtë.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Tastet e shpejta mund të marrin tastet që përdor një program tjetër (Cilësimet > Tastet e shpejta).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Vegla të reja: Përzgjedhja (ngrini një pjesë të figurës dhe zhvendoseni), Mbushje dhe Gomë.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Shigjeta me maja në të dy skajet, rreshtim dhe kontur teksti, forma balonash, lloje turbullimi.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Stile të shpejta, shirit veglash i personalizueshëm, prerje / kopjim / ngjitje e shënimeve.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Kapje e disa zonave njëherësh, e menyve me nënmenytë e tyre dhe e rrëshqitjes që e bëni vetë.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Figurë e re, modele, hapje të fundit, riemërtim, Koshi i riciklimit, eksport në grup, printim, email, dokumente Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Paravendosjet mund të importohen, eksportohen dhe dyfishohen; Snagster mund të niset me Windows."
  }
 }

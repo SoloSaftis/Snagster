@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "יציאה ופתיחה מחדש",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster לא הצליח להפעיל את עצמו מחדש. צאו ממנו ופתחו אותו שוב.",
   "The screen couldn't be copied.": "לא ניתן היה להעתיק את המסך.",
-  "Ink isn't in replays or in videos from the Record tab.": "דיו לא נכלל בהילוכים חוזרים או בסרטונים מלשונית הקלטה."
+  "Ink isn't in replays or in videos from the Record tab.": "דיו לא נכלל בהילוכים חוזרים או בסרטונים מלשונית הקלטה.",
+  "1. Capture": "1. צילום",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "לחצו על Print Screen (או על הכפתור צילום). גררו לסימון אזור, או לחצו על חלון, כפתור או תפריט. לאחר מכן סרגל כלים מאפשר לצלם, לגלול, להקליט GIF או ללכוד את הטקסט.",
+  "2. Mark it up": "2. סימון",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "בחרו כלי בסרגל הכלים: חצים, טקסט, בועות הסבר, שלבים, חותמות, טשטוש, זרקור, הגדלה... האפשרויות של כל כלי מופיעות בצד.",
+  "3. Share it": "3. שיתוף",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "העתיקו (Ctrl+C), שמרו (Ctrl+S), הצמידו למסך, שלחו באימייל, או אספו כמה צילומים למדריך (קובץ > ייצוא מדריך).",
+  "Everything is kept": "הכול נשמר",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "כל צילום נכנס לספרייה (Ctrl+L), ואפשר לחפש בה לפי תאריך, תוכנה ותגיות.",
+  "From anywhere": "מכל מקום",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "סמל Snagster בפינת שורת המשימות פותח את חלונית הצילום; לחיצה ימנית עליו פותחת את התפריט המהיר.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "מקשי קיצור יכולים להשתלט על מקשים שתוכנה אחרת משתמשת בהם (הגדרות > מקשי קיצור).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "כלים חדשים: בחירה (הרמת חלק מהתמונה והזזתו), מילוי ומחק.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "חצים עם ראש בקצה אחד או בשני הקצוות, יישור ומתאר של טקסט, צורות של בועות הסבר, סוגי טשטוש.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "סגנונות מהירים, סרגל כלים שניתן להתאים אישית, גזירה / העתקה / הדבקה של סימונים.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "צילום של כמה אזורים בבת אחת, תפריטים עם תפריטי המשנה שלהם, וגלילה שאתם מבצעים בעצמכם.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "תמונה חדשה, תבניות, פתיחה אחרונה, שינוי שם, סל המיחזור, ייצוא קבוצתי, הדפסה, אימייל, מסמכי Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "אפשר לייבא, לייצא ולשכפל תבניות; Snagster יכול לעלות יחד עם Windows."
  }
 }

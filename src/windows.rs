@@ -2064,8 +2064,9 @@ impl SnagApp {
                     ("Everything is kept", "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags."),
                     ("From anywhere", "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu."),
                 ] {
-                    ui.label(RichText::new(head).strong());
-                    ui.label(body);
+                    ui.label(RichText::new(crate::i18n::t(head)).strong());
+                    // Ctrl+C and the like in the form this system writes them (⌘C on a Mac).
+                    ui.label(crate::platform::keys(crate::i18n::t(body)));
                     ui.add_space(6.0);
                 }
                 if ui.button(crate::i18n::t("Try it on the sample picture")).clicked() {
@@ -2087,7 +2088,7 @@ impl SnagApp {
                     "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.",
                     "Presets can be imported, exported and duplicated; Snagster can start with Windows.",
                 ] {
-                    ui.label(format!("- {line}"));
+                    ui.label(format!("- {}", crate::i18n::t(line)));
                 }
             }
             Dialog::StillRunning => {
@@ -2594,8 +2595,102 @@ mod tests {
                     }
                 }
             }
+            // A list of sentences shown one by one (`for (head, body) in ["..", ..] { ui.label(body) }`):
+            // the loop hands each text straight to the window without the translation table.
+            for (name, var) in untranslated_list_items(code, &sentence) {
+                found.push(format!("{}: {name} shows `{var}` from a list of texts as it is", f.file_name().unwrap().to_string_lossy()));
+            }
         }
         assert!(found.is_empty(), "wrap these in t(...) and translate them: {found:#?}");
+    }
+
+    /// Each `for <names> in [ ... ]` loop over a list holding a sentence whose body shows one of
+    /// the names as it is: `label(name)`, `RichText::new(name)` or `{name}` in a `format!`.
+    /// Gives the loop's first line and the name.
+    fn untranslated_list_items(code: &str, sentence: &dyn Fn(&str) -> bool) -> Vec<(String, String)> {
+        /// The index just past the bracket that closes the one at `open`, skipping string literals.
+        fn closing(s: &str, open: usize) -> Option<usize> {
+            let b = s.as_bytes();
+            let (o, c) = (b[open], if b[open] == b'[' { b']' } else { b'}' });
+            let (mut depth, mut i, mut in_str) = (0usize, open, false);
+            while i < b.len() {
+                match b[i] {
+                    b'\\' if in_str => i += 1,
+                    b'"' => in_str = !in_str,
+                    x if !in_str && x == o => depth += 1,
+                    x if !in_str && x == c => {
+                        depth -= 1;
+                        if depth == 0 {
+                            return Some(i + 1);
+                        }
+                    }
+                    _ => {}
+                }
+                i += 1;
+            }
+            None
+        }
+        let mut out = Vec::new();
+        for (at, _) in code.match_indices("for ") {
+            // `for` as a word, with the pattern and ` in [` on the same line.
+            if at > 0 && code.as_bytes()[at - 1].is_ascii_alphanumeric() {
+                continue;
+            }
+            let line = &code[at..code[at..].find('\n').map_or(code.len(), |n| at + n)];
+            let Some(inn) = line.find(" in [") else { continue };
+            let names: Vec<&str> = line[4..inn].split(|c: char| !(c.is_alphanumeric() || c == '_')).filter(|w| !w.is_empty() && *w != "mut" && *w != "_").collect();
+            let open = at + inn + 4;
+            let Some(end) = closing(code, open) else { continue };
+            let list = &code[open..end];
+            if !list.split('"').skip(1).step_by(2).any(sentence) {
+                continue;
+            }
+            let Some(brace) = code[end..].find('{').map(|n| end + n) else { continue };
+            let Some(stop) = closing(code, brace) else { continue };
+            let body = code[brace..stop].replace(' ', "");
+            let body = body.as_str();
+            // The text of each `format!` that goes into the window (one for a log line doesn't).
+            let formats: Vec<&str> = ["label(format!(\"", "RichText::new(format!(\"", "button(format!(\""]
+                .iter()
+                .flat_map(|call| body.match_indices(call).map(move |(i, _)| &body[i + call.len()..]))
+                .map(|rest| &rest[..rest.find('"').unwrap_or(0)])
+                .collect();
+            for n in names {
+                let shown = [format!("label({n})"), format!("label(&{n})"), format!("RichText::new({n})"), format!("RichText::new(&{n})")];
+                let in_format = formats.iter().any(|f| f.contains(&format!("{{{n}}}")));
+                if in_format || shown.iter().any(|s| body.contains(s.as_str())) {
+                    out.push((line.trim().to_string(), n.to_string()));
+                }
+            }
+        }
+        out
+    }
+
+    /// Help > Getting started and What's new show their paragraphs through the translation
+    /// table, so each is a text there (they were English in every language before).
+    #[test]
+    fn getting_started_and_whats_new_are_translated() {
+        let keys: Vec<String> = serde_json::from_str(include_str!("../assets/i18n/strings.json")).unwrap();
+        let src = include_str!("windows.rs").replace("\r\n", "\n");
+        let mut texts = Vec::new();
+        for start in ["Dialog::GettingStarted => {\n", "Dialog::WhatsNew => {\n"] {
+            let list = &src[src.find(start).unwrap()..];
+            let list = &list[list.find(" in [").unwrap()..list.find("] {\n").unwrap()];
+            texts.extend(list.split('"').skip(1).step_by(2).map(str::to_string));
+        }
+        assert_eq!(texts.len(), 17, "{texts:?}");
+        let missing: Vec<&String> = texts.iter().filter(|t| !keys.contains(t)).collect();
+        assert!(missing.is_empty(), "not in assets/i18n/strings.json: {missing:?}");
+    }
+
+    #[test]
+    fn a_list_of_texts_shown_as_it_is_is_found() {
+        let sentence = |l: &str| l.chars().next().is_some_and(|c| c.is_uppercase()) && l.contains(' ');
+        let bad = "for (head, body) in [\n(\"1. Go\", \"Press the key.\"),\n] {\n ui.label(RichText::new(head).strong());\n ui.label(body);\n}\nfor line in [\"A new thing.\"] {\n ui.label(format!(\"- {line}\"));\n}";
+        let names: Vec<String> = untranslated_list_items(bad, &sentence).into_iter().map(|(_, n)| n).collect();
+        assert_eq!(names, ["head", "body", "line"]);
+        let good = "for (head, body) in [(\"1. Go\", \"Press the key.\")] {\n ui.label(RichText::new(t(head)).strong());\n ui.label(t(body));\n}\nfor line in [\"A new thing.\"] {\n ui.label(format!(\"- {}\", t(line)));\n}\nfor k in [\"ctrl\", \"x\"] {\n ui.label(k);\n}\nfor (title, n) in [(\"Video test\", 1)] {\n say(&format!(\"== {title}\"));\n}";
+        assert!(untranslated_list_items(good, &sentence).is_empty());
     }
 
     #[test]

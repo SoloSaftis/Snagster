@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Шығу және қайта ашу",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster өзін қайта іске қоса алмады. Одан шығып, қайта ашыңыз.",
   "The screen couldn't be copied.": "Экранды көшіру мүмкін болмады.",
-  "Ink isn't in replays or in videos from the Record tab.": "Сия қайталауларда және Жазу қойындысынан жасалған бейнелерде болмайды."
+  "Ink isn't in replays or in videos from the Record tab.": "Сия қайталауларда және Жазу қойындысынан жасалған бейнелерде болмайды.",
+  "1. Capture": "1. Түсіру",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen пернесін (немесе Түсіру түймесін) басыңыз. Аймақты сүйреп белгілеңіз немесе терезені, түймені не мәзірді басыңыз. Содан кейін құралдар тақтасы арқылы түсіруге, айналдыруға, GIF жазуға немесе мәтінді алуға болады.",
+  "2. Mark it up": "2. Белгілер қойыңыз",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Сол жақтан құрал таңдаңыз: көрсеткілер, мәтін, түсініктемелер, қадамдар, мөрлер, бұлдырату, прожектор, үлкейту… Әр құралдың параметрлері оң жақта.",
+  "3. Share it": "3. Бөлісіңіз",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Көшіріңіз (Ctrl+C), сақтаңыз (Ctrl+S), экранға бекітіңіз, эл. поштамен жіберіңіз немесе бірнешеуін нұсқаулыққа жинаңыз (Файл > Нұсқаулықты экспорттау).",
+  "Everything is kept": "Бәрі сақталады",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Әр түсірілім Кітапханаға (Ctrl+L) түседі, оны күн, бағдарлама және тегтер бойынша іздеуге болады.",
+  "From anywhere": "Кез келген жерден",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Тапсырмалар тақтасының бұрышындағы Snagster белгішесі түсіру тақтасын ашады; жылдам мәзір үшін оны оң жақ батырмамен басыңыз.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Жылдам пернелер басқа бағдарлама пайдаланатын пернелерді басып ала алады (Параметрлер > Жылдам пернелер).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Жаңа құралдар: Таңдау (суреттің бір бөлігін көтеріп, жылжытыңыз), Толтыру және Өшіргіш.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Бір немесе екі ұшында да ұштары бар көрсеткілер, мәтінді туралау және контуры, түсініктеме пішіндері, бұлдырату түрлері.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Жылдам стильдер, бапталатын құралдар тақтасы, белгілерді қиып алу / көшіру / қою.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Бірнеше аймақты бірден түсіру, ішкі мәзірлері бар мәзірлер және өзіңіз айналдыратын түсіру.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Жаңа сурет, үлгілер, соңғыларды ашу, атын өзгерту, Себет, топтап экспорттау, басып шығару, эл. пошта, Word құжаттары.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Пресеттерді импорттауға, экспорттауға және көшірмесін жасауға болады; Snagster Windows-пен бірге іске қосыла алады."
  }
 }

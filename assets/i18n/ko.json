@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "종료 후 다시 열기",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster가 스스로 다시 시작하지 못했습니다. 종료한 다음 다시 여세요.",
   "The screen couldn't be copied.": "화면을 복사할 수 없습니다.",
-  "Ink isn't in replays or in videos from the Record tab.": "잉크는 리플레이나 녹화 탭의 동영상에 포함되지 않습니다."
+  "Ink isn't in replays or in videos from the Record tab.": "잉크는 리플레이나 녹화 탭의 동영상에 포함되지 않습니다.",
+  "1. Capture": "1. 캡처",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen(또는 캡처 단추)을 누르세요. 영역을 끌거나 창, 단추, 메뉴를 클릭하세요. 그러면 나타나는 도구 모음에서 캡처, 스크롤, GIF 녹화, 텍스트 추출을 할 수 있습니다.",
+  "2. Mark it up": "2. 주석 달기",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "왼쪽에서 도구를 고르세요: 화살표, 텍스트, 말풍선, 단계, 스탬프, 흐리게, 스포트라이트, 확대… 각 도구의 옵션은 오른쪽에 있습니다.",
+  "3. Share it": "3. 공유하기",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "복사(Ctrl+C), 저장(Ctrl+S), 화면에 고정, 이메일 보내기를 하거나 여러 장을 가이드로 묶으세요(파일 > 가이드 내보내기).",
+  "Everything is kept": "모든 것이 보관됩니다",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "모든 캡처는 라이브러리(Ctrl+L)에 저장되며 날짜, 프로그램, 태그로 검색할 수 있습니다.",
+  "From anywhere": "어디서나",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "작업 표시줄 모서리의 Snagster 아이콘을 클릭하면 캡처 패널이 열리고, 마우스 오른쪽 단추로 클릭하면 빠른 메뉴가 나타납니다.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "단축키가 다른 프로그램이 사용하는 키를 가져올 수 있습니다(설정 > 단축키).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "새 도구: 선택 영역(그림의 일부를 떼어 내어 이동), 채우기, 지우개.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "한쪽 또는 양쪽 끝에 화살촉을 달 수 있는 화살표, 텍스트 정렬과 윤곽선, 말풍선 모양, 흐리기 종류.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "빠른 스타일, 사용자 지정 가능한 도구 모음, 주석 오려두기 / 복사 / 붙여넣기.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "여러 영역 한 번에 캡처, 하위 메뉴가 있는 메뉴 캡처, 직접 스크롤하며 캡처.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "새 이미지, 템플릿, 최근에 연 항목, 이름 바꾸기, 휴지통, 일괄 내보내기, 인쇄, 이메일, Word 문서.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "프리셋을 가져오고 내보내고 복제할 수 있으며, Windows 시작 시 Snagster를 실행할 수 있습니다."
  }
 }

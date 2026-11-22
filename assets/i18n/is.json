@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Hætta og opna aftur",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster gat ekki endurræst sig sjálft. Hættu í því og opnaðu það aftur.",
   "The screen couldn't be copied.": "Ekki tókst að afrita skjáinn.",
-  "Ink isn't in replays or in videos from the Record tab.": "Blek er ekki í endurspilunum eða í myndskeiðum úr flipanum Taka upp."
+  "Ink isn't in replays or in videos from the Record tab.": "Blek er ekki í endurspilunum eða í myndskeiðum úr flipanum Taka upp.",
+  "1. Capture": "1. Myndataka",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Ýttu á Print Screen (eða myndatökuhnappinn). Dragðu yfir svæði eða smelltu á glugga, hnapp eða valmynd. Þá birtist tækjastika þar sem þú getur tekið mynd, skrunað, tekið upp GIF eða náð í textann.",
+  "2. Mark it up": "2. Merktu inn á",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Veldu verkfæri vinstra megin: örvar, texta, skýringarbólur, skref, stimpla, móðu, kastljós, stækkun… Valkostir hvers verkfæris eru hægra megin.",
+  "3. Share it": "3. Deildu",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Afritaðu (Ctrl+C), vistaðu (Ctrl+S), festu á skjáinn, sendu í tölvupósti eða settu nokkrar saman í leiðbeiningar (Skrá > Flytja út leiðbeiningar).",
+  "Everything is kept": "Allt er geymt",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Hver myndataka fer í Safnið (Ctrl+L) og þar má leita eftir dagsetningu, forriti og merkjum.",
+  "From anywhere": "Hvaðan sem er",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Tákn Snagster í horni verkstikunnar opnar myndatökuspjaldið; hægrismelltu á það til að fá flýtivalmyndina.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Flýtilyklar geta tekið yfir lykla sem annað forrit notar (Stillingar > Flýtilyklar).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Ný verkfæri: Val (lyftu hluta myndarinnar og færðu hann), Fylling og Strokleður.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Örvar með odda á öðrum eða báðum endum, jöfnun og útlína texta, form skýringarbóla, gerðir móðu.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Fljótir stílar, sérsníðanleg tækjastika, klippa / afrita / líma merkingar.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Taka nokkur svæði í einu, valmyndir með undirvalmyndum og skrun sem þú sérð um sjálf(ur).",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Ný mynd, sniðmát, opna nýlegt, endurnefna, ruslafatan, útflutningur margra í einu, prentun, tölvupóstur, Word-skjöl.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Hægt er að flytja inn, flytja út og tvöfalda forstillingar; Snagster getur ræst með Windows."
  }
 }

@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Ieși și redeschide",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nu a putut reporni singur. Închide-l și deschide-l din nou.",
   "The screen couldn't be copied.": "Ecranul nu a putut fi copiat.",
-  "Ink isn't in replays or in videos from the Record tab.": "Cerneala nu apare în reluări și nici în videoclipurile din fila Înregistrează."
+  "Ink isn't in replays or in videos from the Record tab.": "Cerneala nu apare în reluări și nici în videoclipurile din fila Înregistrează.",
+  "1. Capture": "1. Capturează",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Apasă Print Screen (sau butonul Captură). Trage o zonă sau dă clic pe o fereastră, un buton sau un meniu. Apoi o bară de instrumente îți permite să capturezi, să derulezi, să înregistrezi un GIF sau să extragi textul.",
+  "2. Mark it up": "2. Adnotează",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Alege un instrument din stânga: săgeți, text, baloane, pași, ștampile, estompare, spot de lumină, mărire... Opțiunile fiecărui instrument sunt în dreapta.",
+  "3. Share it": "3. Partajează",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Copiaz-o (Ctrl+C), salveaz-o (Ctrl+S), fixeaz-o pe ecran, trimite-o prin e-mail sau pune mai multe într-un ghid (Fișier > Exportă ghidul).",
+  "Everything is kept": "Totul se păstrează",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Fiecare captură ajunge în Bibliotecă (Ctrl+L), unde o poți căuta după dată, program și etichete.",
+  "From anywhere": "De oriunde",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Pictograma Snagster din colțul barei de activități deschide panoul de captură; dă clic dreapta pe ea pentru meniul rapid.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Tastele rapide pot prelua taste folosite de alt program (Setări > Taste rapide).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Instrumente noi: Selecție (ridică o parte din imagine și mut-o), Umplere și Radieră.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Săgeți cu vârfuri la ambele capete, alinierea și conturul textului, forme de balon, tipuri de estompare.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Stiluri rapide, o bară de instrumente personalizabilă, decupare / copiere / lipire a marcajelor.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Capturarea mai multor zone deodată, a meniurilor cu submeniurile lor și cu derulare făcută de tine.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Imagine nouă, șabloane, deschide recente, redenumește, Coșul de reciclare, export în lot, imprimare, e-mail, documente Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Presetările pot fi importate, exportate și duplicate; Snagster poate porni odată cu Windows."
  }
 }

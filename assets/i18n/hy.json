@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Փակել և նորից բացել",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-ը չկարողացավ ինքն իրեն վերագործարկել։ Փակեք այն և նորից բացեք։",
   "The screen couldn't be copied.": "Չհաջողվեց պատճենել էկրանը։",
-  "Ink isn't in replays or in videos from the Record tab.": "Թանաքը չկա կրկնություններում և Ձայնագրել ներդիրի տեսանյութերում։"
+  "Ink isn't in replays or in videos from the Record tab.": "Թանաքը չկա կրկնություններում և Ձայնագրել ներդիրի տեսանյութերում։",
+  "1. Capture": "1. Նկարահանել",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Սեղմեք Print Screen (կամ Նկարահանել կոճակը)։ Քաշեք տարածք կամ սեղմեք պատուհանի, կոճակի կամ ընտրացանկի վրա։ Այնուհետև գործիքագոտին թույլ է տալիս նկարահանել, ոլորել, ձայնագրել GIF կամ վերցնել տեքստը։",
+  "2. Mark it up": "2. Ավելացրեք նշումներ",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Ընտրեք գործիք ձախ կողմում՝ սլաքներ, տեքստ, բացատրագրեր, քայլեր, դրոշմներ, լղոզում, լուսարձակ, խոշորացում… Յուրաքանչյուր գործիքի ընտրանքները աջ կողմում են։",
+  "3. Share it": "3. Կիսվեք",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Պատճենեք (Ctrl+C), պահպանեք (Ctrl+S), ամրացրեք էկրանին, ուղարկեք էլ. փոստով կամ մի քանիսը միավորեք ուղեցույցում (Ֆայլ > Արտահանել ուղեցույցը)։",
+  "Everything is kept": "Ամեն ինչ պահվում է",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Յուրաքանչյուր նկարահանում ընկնում է Գրադարան (Ctrl+L), որտեղ կարելի է որոնել ըստ ամսաթվի, ծրագրի և պիտակների։",
+  "From anywhere": "Ցանկացած տեղից",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Snagster-ի պատկերակը առաջադրանքների գոտու անկյունում բացում է նկարահանման վահանակը, իսկ դրա վրա աջ սեղմումը՝ արագ ընտրացանկը։",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Թեժ ստեղները կարող են վերցնել այլ ծրագրի օգտագործած ստեղները (Կարգավորումներ > Թեժ ստեղներ)։",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Նոր գործիքներ՝ Ընտրություն (բարձրացրեք պատկերի մի մասը և տեղափոխեք այն), Լցում և Ռետին։",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Սլաքներ՝ գլուխներով ցանկացած ծայրում, տեքստի հավասարեցում և ուրվագիծ, բացատրագրերի ձևեր, լղոզման տեսակներ։",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Արագ ոճեր, հարմարեցվող գործիքագոտի, նշումների կտրում / պատճենում / տեղադրում։",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Միանգամից մի քանի տարածքի նկարահանում, ընտրացանկեր իրենց ենթաընտրացանկերով և ձեր իսկ կատարած ոլորում։",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Նոր պատկեր, ձևանմուշներ, վերջին բացվածներ, վերանվանում, Աղբարկղ, խմբային արտահանում, տպում, էլ. փոստ, Word փաստաթղթեր։",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Նախադրյալները կարելի է ներմուծել, արտահանել և կրկնօրինակել, իսկ Snagster-ը կարող է գործարկվել Windows-ի հետ։"
  }
 }

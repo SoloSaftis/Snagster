@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "बंद करके फिर खोलें",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ख़ुद को फिर से शुरू नहीं कर सका। इसे बंद करके फिर से खोलें।",
   "The screen couldn't be copied.": "स्क्रीन कॉपी नहीं हो सकी।",
-  "Ink isn't in replays or in videos from the Record tab.": "स्याही रीप्ले या रिकॉर्ड टैब के वीडियो में नहीं होती।"
+  "Ink isn't in replays or in videos from the Record tab.": "स्याही रीप्ले या रिकॉर्ड टैब के वीडियो में नहीं होती।",
+  "1. Capture": "1. कैप्चर",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen दबाएँ (या कैप्चर बटन)। कोई क्षेत्र खींचें, या किसी विंडो, बटन या मेन्यू पर क्लिक करें। फिर एक टूलबार से आप कैप्चर, स्क्रॉल, GIF रिकॉर्ड या टेक्स्ट ग्रैब कर सकते हैं।",
+  "2. Mark it up": "2. चिह्नित करें",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "बाईं ओर से कोई टूल चुनें: तीर, टेक्स्ट, कॉलआउट, चरण, स्टैंप, धुंधलापन, स्पॉटलाइट, बड़ा करें... हर टूल के विकल्प दाईं ओर हैं।",
+  "3. Share it": "3. साझा करें",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "इसे कॉपी करें (Ctrl+C), सहेजें (Ctrl+S), स्क्रीन पर पिन करें, ईमेल करें, या कई कैप्चर को एक गाइड में रखें (फ़ाइल > गाइड निर्यात करें)।",
+  "Everything is kept": "सब कुछ सहेजा रहता है",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "हर कैप्चर लाइब्रेरी (Ctrl+L) में जाता है, जहाँ उसे तारीख, प्रोग्राम और टैग से खोजा जा सकता है।",
+  "From anywhere": "कहीं से भी",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "टास्कबार के कोने में Snagster का आइकन कैप्चर पैनल खोलता है; त्वरित मेन्यू के लिए उस पर राइट-क्लिक करें।",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "हॉटकी उन कुंजियों को ले सकती हैं जिन्हें कोई दूसरा प्रोग्राम उपयोग करता है (सेटिंग्स > हॉटकी)।",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "नए टूल: चयन (तस्वीर का एक हिस्सा उठाकर उसे खिसकाएँ), भरें और रबर।",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "एक या दोनों सिरों पर नोक वाले तीर, टेक्स्ट का संरेखण और आउटलाइन, कॉलआउट के आकार, धुंधलेपन के प्रकार।",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "त्वरित शैलियाँ, अनुकूलित किया जा सकने वाला टूलबार, निशानों को कट / कॉपी / पेस्ट करना।",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "एक साथ कई क्षेत्रों का कैप्चर, सब-मेन्यू सहित मेन्यू, और आपके द्वारा ख़ुद की गई स्क्रॉलिंग।",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "नई छवि, टेम्पलेट, हाल के खोलें, नाम बदलें, रीसायकल बिन, बैच निर्यात, प्रिंट, ईमेल, Word दस्तावेज़।",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "प्रीसेट आयात, निर्यात और डुप्लिकेट किए जा सकते हैं; Snagster Windows के साथ शुरू हो सकता है।"
  }
 }

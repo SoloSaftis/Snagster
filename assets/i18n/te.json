@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "నిష్క్రమించి మళ్లీ తెరువు",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster తనను తాను పునఃప్రారంభించుకోలేకపోయింది. దాన్ని మూసివేసి మళ్లీ తెరవండి.",
   "The screen couldn't be copied.": "స్క్రీన్‌ను కాపీ చేయలేకపోయాం.",
-  "Ink isn't in replays or in videos from the Record tab.": "సిరా రీప్లేలలో లేదా రికార్డ్ ట్యాబ్ వీడియోలలో ఉండదు."
+  "Ink isn't in replays or in videos from the Record tab.": "సిరా రీప్లేలలో లేదా రికార్డ్ ట్యాబ్ వీడియోలలో ఉండదు.",
+  "1. Capture": "1. క్యాప్చర్ చేయండి",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen (లేదా క్యాప్చర్ బటన్) నొక్కండి. ఒక ప్రాంతాన్ని లాగండి, లేదా ఒక విండో, బటన్ లేదా మెనూపై క్లిక్ చేయండి. ఆ తర్వాత టూల్‌బార్ ద్వారా క్యాప్చర్ చేయవచ్చు, స్క్రోల్ చేయవచ్చు, GIF రికార్డ్ చేయవచ్చు లేదా టెక్స్ట్ తీసుకోవచ్చు.",
+  "2. Mark it up": "2. గుర్తులు వేయండి",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "ఎడమవైపు ఒక సాధనాన్ని ఎంచుకోండి: బాణాలు, టెక్స్ట్, కాల్‌అవుట్‌లు, దశలు, స్టాంప్‌లు, బ్లర్, స్పాట్‌లైట్, పెద్దది చేయడం... ప్రతి సాధనం ఎంపికలు కుడివైపు ఉంటాయి.",
+  "3. Share it": "3. షేర్ చేయండి",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "కాపీ చేయండి (Ctrl+C), సేవ్ చేయండి (Ctrl+S), స్క్రీన్‌పై పిన్ చేయండి, ఇమెయిల్ చేయండి, లేదా చాలావాటిని ఒక గైడ్‌లో చేర్చండి (ఫైల్ > గైడ్‌ను ఎగుమతి చేయి).",
+  "Everything is kept": "అన్నీ భద్రంగా ఉంటాయి",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "ప్రతి క్యాప్చర్ లైబ్రరీలోకి (Ctrl+L) వెళ్తుంది; తేదీ, ప్రోగ్రామ్, ట్యాగ్‌ల ద్వారా వెతకవచ్చు.",
+  "From anywhere": "ఎక్కడినుండైనా",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "టాస్క్‌బార్ మూలలోని Snagster ఐకాన్ క్యాప్చర్ ప్యానెల్‌ను తెరుస్తుంది; త్వరిత మెనూ కోసం దానిపై రైట్-క్లిక్ చేయండి.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "మరో ప్రోగ్రామ్ ఉపయోగించే కీలను హాట్‌కీలు తీసుకోగలవు (సెట్టింగ్‌లు > హాట్‌కీలు).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "కొత్త సాధనాలు: ఎంపిక (చిత్రంలో కొంత భాగాన్ని ఎత్తి జరపండి), నింపు మరియు ఎరేజర్.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "రెండు చివరలా తలలు ఉన్న బాణాలు, టెక్స్ట్ అమరిక మరియు అవుట్‌లైన్, కాల్‌అవుట్ ఆకారాలు, బ్లర్ రకాలు.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "త్వరిత శైలులు, అనుకూలీకరించగల టూల్‌బార్, గుర్తులను కట్ / కాపీ / పేస్ట్ చేయడం.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "ఒకేసారి అనేక ప్రాంతాలు, సబ్-మెనూలతో మెనూలు, మీరే చేసే స్క్రోలింగ్‌ను క్యాప్చర్ చేయడం.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "కొత్త చిత్రం, టెంప్లేట్‌లు, ఇటీవలివాటిని తెరువు, పేరు మార్చు, రీసైకిల్ బిన్, బ్యాచ్ ఎగుమతి, ప్రింట్, ఇమెయిల్, Word డాక్యుమెంట్‌లు.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "ప్రీసెట్‌లను దిగుమతి, ఎగుమతి మరియు నకలు చేయవచ్చు; Snagster Windows తో పాటు ప్రారంభం కావచ్చు."
  }
 }

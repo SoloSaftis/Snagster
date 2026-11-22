@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Sair e reabrir",
   "Snagster couldn't restart itself. Quit it and open it again.": "O Snagster não conseguiu reiniciar-se. Saia e volte a abri-lo.",
   "The screen couldn't be copied.": "Não foi possível copiar o ecrã.",
-  "Ink isn't in replays or in videos from the Record tab.": "A tinta não aparece nas repetições nem nos vídeos do separador Gravar."
+  "Ink isn't in replays or in videos from the Record tab.": "A tinta não aparece nas repetições nem nos vídeos do separador Gravar.",
+  "1. Capture": "1. Capturar",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Prima Print Screen (ou o botão Capturar). Arraste uma área ou clique numa janela, botão ou menu. Depois, uma barra de ferramentas permite capturar, deslocar, gravar um GIF ou obter o texto.",
+  "2. Mark it up": "2. Anotar",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Escolha uma ferramenta à esquerda: setas, texto, balões, passos, carimbos, desfocar, foco, ampliar... As opções de cada ferramenta estão à direita.",
+  "3. Share it": "3. Partilhar",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Copie (Ctrl+C), guarde (Ctrl+S), afixe no ecrã, envie por e-mail ou junte várias num guia (Ficheiro > Exportar guia).",
+  "Everything is kept": "Tudo fica guardado",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Cada captura vai para a Biblioteca (Ctrl+L), pesquisável por data, programa e etiquetas.",
+  "From anywhere": "De qualquer lugar",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "O ícone do Snagster no canto da barra de tarefas abre o painel de captura; clique nele com o botão direito para abrir o menu rápido.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Os atalhos podem assumir teclas que outro programa usa (Definições > Atalhos).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Novas ferramentas: Seleção (levante parte da imagem e mova-a), Preenchimento e Borracha.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Setas com pontas nas duas extremidades, alinhamento e contorno do texto, formas de balão, tipos de desfocagem.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Estilos rápidos, barra de ferramentas personalizável, cortar / copiar / colar marcas.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Captura de várias áreas de uma vez, de menus com os respetivos submenus e com deslocamento feito por si.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Nova imagem, modelos, abrir recentes, renomear, Lixo, exportação em lote, imprimir, e-mail, documentos do Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "As predefinições podem ser importadas, exportadas e duplicadas; o Snagster pode iniciar com o Windows."
  }
 }

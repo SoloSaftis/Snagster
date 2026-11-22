@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "പുറത്തുകടന്ന് വീണ്ടും തുറക്കുക",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-ന് സ്വയം പുനരാരംഭിക്കാനായില്ല. അത് അടച്ച് വീണ്ടും തുറക്കുക.",
   "The screen couldn't be copied.": "സ്ക്രീൻ പകർത്താൻ കഴിഞ്ഞില്ല.",
-  "Ink isn't in replays or in videos from the Record tab.": "മഷി റീപ്ലേകളിലോ റെക്കോർഡ് ടാബിലെ വീഡിയോകളിലോ ഉണ്ടാകില്ല."
+  "Ink isn't in replays or in videos from the Record tab.": "മഷി റീപ്ലേകളിലോ റെക്കോർഡ് ടാബിലെ വീഡിയോകളിലോ ഉണ്ടാകില്ല.",
+  "1. Capture": "1. ക്യാപ്ചർ",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen (അല്ലെങ്കിൽ ക്യാപ്ചർ ബട്ടൺ) അമർത്തുക. ഒരു ഭാഗം വലിച്ച് തിരഞ്ഞെടുക്കുക, അല്ലെങ്കിൽ ഒരു വിൻഡോ, ബട്ടൺ അല്ലെങ്കിൽ മെനുവിൽ ക്ലിക്ക് ചെയ്യുക. തുടർന്ന് ഒരു ടൂൾബാർ വഴി ക്യാപ്ചർ ചെയ്യാനും സ്ക്രോൾ ചെയ്യാനും GIF റെക്കോർഡ് ചെയ്യാനും ടെക്സ്റ്റ് എടുക്കാനും കഴിയും.",
+  "2. Mark it up": "2. അടയാളപ്പെടുത്തുക",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "ഇടതുവശത്ത് ഒരു ടൂൾ തിരഞ്ഞെടുക്കുക: അമ്പടയാളങ്ങൾ, ടെക്സ്റ്റ്, കോൾഔട്ടുകൾ, ഘട്ടങ്ങൾ, സ്റ്റാമ്പുകൾ, മങ്ങിക്കൽ, സ്പോട്ട്ലൈറ്റ്, വലുതാക്കൽ… ഓരോ ടൂളിന്റെയും ഓപ്ഷനുകൾ വലതുവശത്താണ്.",
+  "3. Share it": "3. പങ്കിടുക",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "പകർത്തുക (Ctrl+C), സേവ് ചെയ്യുക (Ctrl+S), സ്ക്രീനിൽ പിൻ ചെയ്യുക, ഇമെയിൽ ചെയ്യുക, അല്ലെങ്കിൽ പലതും ഒരു ഗൈഡിൽ ചേർക്കുക (ഫയൽ > ഗൈഡ് എക്സ്പോർട്ട് ചെയ്യുക).",
+  "Everything is kept": "എല്ലാം സൂക്ഷിക്കുന്നു",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "ഓരോ ക്യാപ്ചറും ലൈബ്രറിയിലേക്ക് (Ctrl+L) പോകുന്നു; തീയതി, പ്രോഗ്രാം, ടാഗുകൾ എന്നിവ ഉപയോഗിച്ച് തിരയാം.",
+  "From anywhere": "എവിടെ നിന്നും",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "ടാസ്ക്ബാർ മൂലയിലെ Snagster ഐക്കൺ ക്യാപ്ചർ പാനൽ തുറക്കുന്നു; ക്വിക്ക് മെനുവിനായി അതിൽ റൈറ്റ് ക്ലിക്ക് ചെയ്യുക.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "മറ്റൊരു പ്രോഗ്രാം ഉപയോഗിക്കുന്ന കീകൾ ഹോട്ട്കീകൾക്ക് ഏറ്റെടുക്കാം (ക്രമീകരണങ്ങൾ > ഹോട്ട്കീകൾ).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "പുതിയ ടൂളുകൾ: തിരഞ്ഞെടുപ്പ് (ചിത്രത്തിന്റെ ഒരു ഭാഗം ഉയർത്തി നീക്കുക), നിറയ്ക്കുക, ഇറേസർ.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "ഒരറ്റത്തോ ഇരുവശത്തോ മുനയുള്ള അമ്പടയാളങ്ങൾ, ടെക്സ്റ്റ് വിന്യാസവും ബാഹ്യരേഖയും, കോൾഔട്ട് ആകൃതികൾ, മങ്ങിക്കൽ തരങ്ങൾ.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "പെട്ടെന്നുള്ള ശൈലികൾ, ഇഷ്ടാനുസൃതമാക്കാവുന്ന ടൂൾബാർ, അടയാളങ്ങൾ മുറിക്കൽ / പകർത്തൽ / ഒട്ടിക്കൽ.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "ഒന്നിലധികം ഭാഗങ്ങൾ ഒരുമിച്ച് ക്യാപ്ചർ ചെയ്യൽ, ഉപമെനുകളുള്ള മെനുകൾ, നിങ്ങൾ സ്വയം ചെയ്യുന്ന സ്ക്രോളിംഗ്.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "പുതിയ ചിത്രം, ടെംപ്ലേറ്റുകൾ, സമീപകാലം തുറക്കുക, പേര് മാറ്റുക, റീസൈക്കിൾ ബിൻ, ബാച്ച് എക്സ്പോർട്ട്, പ്രിന്റ്, ഇമെയിൽ, Word ഡോക്യുമെന്റുകൾ.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "പ്രീസെറ്റുകൾ ഇമ്പോർട്ട് ചെയ്യാനും എക്സ്പോർട്ട് ചെയ്യാനും ഡ്യൂപ്ലിക്കേറ്റ് ചെയ്യാനും കഴിയും; Snagster-ന് Windows-നൊപ്പം ആരംഭിക്കാം."
  }
 }

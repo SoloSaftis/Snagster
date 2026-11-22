@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Lluqsiy, wakmanta kichay",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster manam kikillanmanta yapamanta qallariyta atirqanchu. Wichqay hinaspa yapamanta kichay.",
   "The screen couldn't be copied.": "Pantallata copiayta mana atikurqanchu.",
-  "Ink isn't in replays or in videos from the Record tab.": "Tinta mana kachkanchu kutichiykunapi nitaq Grabay pestañamanta videokunapi."
+  "Ink isn't in replays or in videos from the Record tab.": "Tinta mana kachkanchu kutichiykunapi nitaq Grabay pestañamanta videokunapi.",
+  "1. Capture": "1. Hap'iy",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen ñit'iy (utaq Hap'iy botónta). Huk suyuta aysay, utaq huk ventanata, botónta utaq menúta ñit'iy. Chaymanta huk llamk'ana barra hap'inaykipaq, muyuchinaykipaq, GIF grabanaykipaq utaq qillqata hap'inaykipaq yanapasunki.",
+  "2. Mark it up": "2. Unanchay",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Lluq'i ladopi huk llamk'anata akllay: flechakuna, qillqa, rimay phuyukuna, pasokuna, sellokuna, phuyuyachiy, spotlight, hatunyachiy... Sapa llamk'anapa akllanankuna paña ladopi kachkan.",
+  "3. Share it": "3. Rakinakuy",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kikinchay (Ctrl+C), waqaychay (Ctrl+S), pantallapi tatichiy, correowan apachiy, utaq achkata huk yachachiqman huñuy (Archivo > Yachachiqta hawaman kachay).",
+  "Everything is kept": "Llapan waqaychasqa kachkan",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Sapa hap'iy Bibliotecaman (Ctrl+L) rin; chaypi p'unchawman, programaman, etiquetakunaman hina maskayta atinki.",
+  "From anywhere": "Maymantapas",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Barra de tareas k'uchupi Snagsterpa unanchan hap'iy panelta kicharin; utqay menúpaq paña ñit'iy.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Utqay ñit'inakuna huk programa llamk'achisqan llavekunata hap'iyta atinku (Churaykuna > Utqay ñit'inakuna).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Mosoq llamk'anakuna: Akllasqa (rikch'aypa huk partinta hoqarispa kuyuchiy), Hunt'achiy, Pichana ima.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Iskaynin puntanpi umayuq flechakuna, qillqa tinkichiy, qillqapa muyuriq siq'in, rimay phuyu rikch'aykuna, phuyuyachiy laykuna.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Utqay estilokuna, allichanalla llamk'ana barra, unanchakunata kuchuy / kikinchay / k'askachiy.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Achka suyukunata kuskalla hap'iy, menúkunata uchuy menúkunantinwan, kikiyki muyuchisqaykitapas.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Musuq llimp'i, plantillakuna, qhipata kicharay, mosoq suti churay, papelera, achkata hawaman kachay, imprimiy, correo, Word documentokuna.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Ñawpaqmanta allichasqakunata importayta, hawaman kachayta, iskayyachiytapas atikun; Snagster Windowswan kuska qallariyta atin."
  }
 }

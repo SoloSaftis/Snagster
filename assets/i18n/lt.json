@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Išeiti ir atverti iš naujo",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nepavyko pačiam iš naujo pasileisti. Išjunkite jį ir atidarykite dar kartą.",
   "The screen couldn't be copied.": "Nepavyko nukopijuoti ekrano.",
-  "Ink isn't in replays or in videos from the Record tab.": "Rašalo nėra pakartojimuose ir vaizdo įrašuose iš skirtuko Įrašyti."
+  "Ink isn't in replays or in videos from the Record tab.": "Rašalo nėra pakartojimuose ir vaizdo įrašuose iš skirtuko Įrašyti.",
+  "1. Capture": "1. Fiksuokite",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Paspauskite Print Screen (arba mygtuką „Fiksuoti“). Vilkite sritį arba spustelėkite langą, mygtuką ar meniu. Tada įrankių juostoje galėsite fiksuoti, slinkti, įrašyti GIF arba paimti tekstą.",
+  "2. Mark it up": "2. Pažymėkite",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Kairėje pasirinkite įrankį: rodyklės, tekstas, debesėliai, žingsniai, antspaudai, suliejimas, prožektorius, didinimas… Kiekvieno įrankio parinktys yra dešinėje.",
+  "3. Share it": "3. Pasidalykite",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Nukopijuokite (Ctrl+C), įrašykite (Ctrl+S), prisekite ekrane, išsiųskite el. paštu arba sudėkite kelis į vadovą (Failas > Eksportuoti vadovą).",
+  "Everything is kept": "Viskas išsaugoma",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Kiekvienas fiksavimas patenka į biblioteką (Ctrl+L), kurioje galima ieškoti pagal datą, programą ir žymas.",
+  "From anywhere": "Iš bet kur",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Snagster piktograma užduočių juostos kampe atveria fiksavimo skydelį; spustelėkite ją dešiniuoju pelės mygtuku, kad atvertumėte greitąjį meniu.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Spartieji klavišai gali perimti klavišus, kuriuos naudoja kita programa (Nustatymai > Spartieji klavišai).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Nauji įrankiai: Pasirinkimas (pakelkite paveikslėlio dalį ir perkelkite ją), Užpildas ir Trintukas.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Rodyklės su antgaliais viename arba abiejuose galuose, teksto lygiavimas ir kontūras, debesėlių formos, suliejimo tipai.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Greiti stiliai, tinkinama įrankių juosta, žymėjimų iškirpimas / kopijavimas / įklijavimas.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Kelių sričių fiksavimas vienu metu, meniu su submeniu ir slinkimas, kurį atliekate patys.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Naujas paveikslėlis, šablonai, naujausių atidarymas, pervadinimas, šiukšlinė, paketinis eksportas, spausdinimas, el. paštas, Word dokumentai.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Išankstinius nustatymus galima importuoti, eksportuoti ir dubliuoti; Snagster gali pasileisti kartu su Windows."
  }
 }

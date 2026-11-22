@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Izađi i ponovno otvori",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster se nije mogao sam ponovno pokrenuti. Zatvorite ga i ponovno otvorite.",
   "The screen couldn't be copied.": "Zaslon nije bilo moguće kopirati.",
-  "Ink isn't in replays or in videos from the Record tab.": "Tinta nije u ponovcima niti u videozapisima s kartice Snimaj."
+  "Ink isn't in replays or in videos from the Record tab.": "Tinta nije u ponovcima niti u videozapisima s kartice Snimaj.",
+  "1. Capture": "1. Snimite",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Pritisnite Print Screen (ili gumb Snimi). Povucite preko područja ili kliknite prozor, gumb ili izbornik. Zatim na alatnoj traci možete snimiti, pomicati, snimiti GIF ili uzeti tekst.",
+  "2. Mark it up": "2. Označite",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Odaberite alat lijevo: strelice, tekst, oblačići, koraci, pečati, zamućenje, reflektor, povećanje... Mogućnosti svakog alata nalaze se desno.",
+  "3. Share it": "3. Podijelite",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopirajte (Ctrl+C), spremite (Ctrl+S), prikvačite na zaslon, pošaljite e-poštom ili složite više snimki u vodič (Datoteka > Izvezi vodič).",
+  "Everything is kept": "Sve se čuva",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Svaka snimka ide u Knjižnicu (Ctrl+L), gdje je možete pretraživati po datumu, programu i oznakama.",
+  "From anywhere": "Odasvud",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Ikona programa Snagster u kutu programske trake otvara ploču za snimanje; desnom tipkom kliknite je za brzi izbornik.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Prečaci mogu preuzeti tipke koje koristi drugi program (Postavke > Prečaci).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Novi alati: Odabir (podignite dio slike i premjestite ga), Ispuna i Gumica.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Strelice s vrhom na jednom ili oba kraja, poravnanje i obrub teksta, oblici oblačića, vrste zamućenja.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Brzi stilovi, prilagodljiva alatna traka, izrezivanje / kopiranje / lijepljenje oznaka.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Snimanje više područja odjednom, izbornika s podizbornicima i pomicanja koje sami izvodite.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Nova slika, predlošci, otvaranje nedavnih, preimenovanje, koš za smeće, skupni izvoz, ispis, e-pošta, Word dokumenti.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Profili se mogu uvoziti, izvoziti i duplicirati; Snagster se može pokretati sa sustavom Windows."
  }
 }

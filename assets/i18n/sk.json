@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Ukončiť a znova otvoriť",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster sa nemohol sám znova spustiť. Ukončite ho a otvorte znova.",
   "The screen couldn't be copied.": "Obrazovku sa nepodarilo skopírovať.",
-  "Ink isn't in replays or in videos from the Record tab.": "Atrament nie je v záznamoch späť ani vo videách z karty Nahrať."
+  "Ink isn't in replays or in videos from the Record tab.": "Atrament nie je v záznamoch späť ani vo videách z karty Nahrať.",
+  "1. Capture": "1. Zachyťte",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Stlačte Print Screen (alebo tlačidlo Zachytiť). Potiahnutím označte oblasť alebo kliknite na okno, tlačidlo či ponuku. Potom môžete na paneli nástrojov zachytiť, posúvať, nahrať GIF alebo získať text.",
+  "2. Mark it up": "2. Pridajte značky",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Vyberte nástroj vľavo: šípky, text, bubliny, kroky, pečiatky, rozmazanie, reflektor, zväčšenie... Možnosti každého nástroja sú vpravo.",
+  "3. Share it": "3. Zdieľajte",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Skopírujte (Ctrl+C), uložte (Ctrl+S), pripnite na obrazovku, pošlite e-mailom alebo spojte viacero do návodu (Súbor > Exportovať návod).",
+  "Everything is kept": "Všetko sa uchováva",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Každé zachytenie sa uloží do Knižnice (Ctrl+L), kde ho nájdete podľa dátumu, programu a štítkov.",
+  "From anywhere": "Odkiaľkoľvek",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Ikona aplikácie Snagster v oblasti oznámení otvorí panel zachytenia; kliknutím pravým tlačidlom zobrazíte rýchlu ponuku.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Klávesové skratky môžu prevziať klávesy, ktoré používa iný program (Nastavenia > Klávesové skratky).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Nové nástroje: Výber (zdvihnite časť obrázka a presuňte ju), Výplň a Guma.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Šípky s hrotmi na oboch koncoch, zarovnanie a obrys textu, tvary bublín, typy rozmazania.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Rýchle štýly, prispôsobiteľný panel nástrojov, vystrihnutie / kopírovanie / prilepenie značiek.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Zachytenie viacerých oblastí naraz, ponúk s podponukami a s ručným posúvaním.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Nový obrázok, šablóny, otvorenie posledných, premenovanie, kôš, hromadný export, tlač, e-mail, dokumenty Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Predvoľby môžete importovať, exportovať a duplikovať; Snagster sa môže spúšťať spolu s Windows."
  }
 }

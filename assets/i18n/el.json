@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Έξοδος και επανεκκίνηση",
   "Snagster couldn't restart itself. Quit it and open it again.": "Το Snagster δεν μπόρεσε να επανεκκινηθεί. Τερματίστε το και ανοίξτε το ξανά.",
   "The screen couldn't be copied.": "Δεν ήταν δυνατή η αντιγραφή της οθόνης.",
-  "Ink isn't in replays or in videos from the Record tab.": "Το Μελάνι δεν περιλαμβάνεται στις επαναλήψεις ούτε στα βίντεο από την καρτέλα Εγγραφή."
+  "Ink isn't in replays or in videos from the Record tab.": "Το Μελάνι δεν περιλαμβάνεται στις επαναλήψεις ούτε στα βίντεο από την καρτέλα Εγγραφή.",
+  "1. Capture": "1. Λήψη",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Πατήστε Print Screen (ή το κουμπί Λήψη). Σύρετε μια περιοχή ή κάντε κλικ σε ένα παράθυρο, κουμπί ή μενού. Στη συνέχεια, μια γραμμή εργαλείων σάς επιτρέπει λήψη, κύλιση, εγγραφή GIF ή αντιγραφή του κειμένου.",
+  "2. Mark it up": "2. Προσθέστε σημάνσεις",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Επιλέξτε ένα εργαλείο αριστερά: βέλη, κείμενο, συννεφάκια, βήματα, σφραγίδες, θόλωμα, προβολέας, μεγέθυνση... Οι επιλογές κάθε εργαλείου βρίσκονται δεξιά.",
+  "3. Share it": "3. Μοιραστείτε το",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Αντιγράψτε το (Ctrl+C), αποθηκεύστε το (Ctrl+S), καρφιτσώστε το στην οθόνη, στείλτε το με email ή βάλτε πολλά σε έναν οδηγό (Αρχείο > Εξαγωγή οδηγού).",
+  "Everything is kept": "Όλα διατηρούνται",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Κάθε λήψη πηγαίνει στη Βιβλιοθήκη (Ctrl+L), με αναζήτηση κατά ημερομηνία, πρόγραμμα και ετικέτες.",
+  "From anywhere": "Από οπουδήποτε",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Το εικονίδιο του Snagster στη γωνία της γραμμής εργασιών ανοίγει τον πίνακα λήψης· κάντε δεξί κλικ πάνω του για το γρήγορο μενού.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Οι συντομεύσεις μπορούν να αναλάβουν πλήκτρα που χρησιμοποιεί άλλο πρόγραμμα (Ρυθμίσεις > Συντομεύσεις).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Νέα εργαλεία: Επιλογή (σηκώστε ένα μέρος της εικόνας και μετακινήστε το), Γέμισμα και Γόμα.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Βέλη με αιχμές και στα δύο άκρα, στοίχιση και περίγραμμα κειμένου, σχήματα για συννεφάκια, τύποι θολώματος.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Γρήγορα στυλ, προσαρμόσιμη γραμμή εργαλείων, αποκοπή / αντιγραφή / επικόλληση σημάνσεων.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Λήψη πολλών περιοχών μαζί, μενού με τα υπομενού τους και κύλιση που κάνετε εσείς.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Νέα εικόνα, πρότυπα, άνοιγμα πρόσφατων, μετονομασία, Κάδος Ανακύκλωσης, μαζική εξαγωγή, εκτύπωση, email, έγγραφα Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Οι προεπιλογές μπορούν να εισαχθούν, να εξαχθούν και να αντιγραφούν· το Snagster μπορεί να ξεκινά με τα Windows."
  }
 }

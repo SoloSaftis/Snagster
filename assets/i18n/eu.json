@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Itxi eta ireki berriro",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-ek ezin izan du bere burua berrabiarazi. Itxi eta ireki berriro.",
   "The screen couldn't be copied.": "Ezin izan da pantaila kopiatu.",
-  "Ink isn't in replays or in videos from the Record tab.": "Tinta ez dago errepikapenetan, ezta Grabatu fitxako bideoetan ere."
+  "Ink isn't in replays or in videos from the Record tab.": "Tinta ez dago errepikapenetan, ezta Grabatu fitxako bideoetan ere.",
+  "1. Capture": "1. Kapturatu",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Sakatu Print Screen (edo Kapturatu botoia). Arrastatu eremu bat, edo egin klik leiho, botoi edo menu batean. Ondoren, tresna-barra batek kapturatzeko, korritzeko, GIF bat grabatzeko edo testua hartzeko aukera ematen dizu.",
+  "2. Mark it up": "2. Markatu",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Aukeratu tresna bat ezkerrean: geziak, testua, testu-globoak, urratsak, zigiluak, lausotzea, fokua, handitzea... Tresna bakoitzaren aukerak eskuinean daude.",
+  "3. Share it": "3. Partekatu",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopiatu (Ctrl+C), gorde (Ctrl+S), finkatu pantailan, bidali posta elektronikoz edo bildu zenbait gida batean (Fitxategia > Esportatu gida).",
+  "Everything is kept": "Dena gordetzen da",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Kaptura guztiak Liburutegira doaz (Ctrl+L), eta data, programa eta etiketen arabera bila daitezke.",
+  "From anywhere": "Edonondik",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Jakinarazpen-eremuko Snagster-en ikonoak kaptura-panela irekitzen du; egin eskuineko klik gainean menu azkarra irekitzeko.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Laster-teklek beste programa batek erabiltzen dituen teklak har ditzakete (Ezarpenak > Laster-teklak).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Tresna berriak: Hautapena (altxatu irudiaren zati bat eta mugitu), Bete eta Borragoma.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Mutur batean edo bietan punta duten geziak, testuaren lerrokatzea eta ingerada, testu-globoen formak, lausotze motak.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Estilo azkarrak, tresna-barra pertsonalizagarria, markak ebaki / kopiatu / itsatsi.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Hainbat eremu aldi berean kapturatzea, menuak beren azpimenuekin, eta zuk zeuk egindako korritzea.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Irudi berria, txantiloiak, ireki azkenak, aldatu izena, zakarrontzia, sortakako esportazioa, inprimatu, posta elektronikoa, Word dokumentuak.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Aurrezarpenak inportatu, esportatu eta bikoiztu daitezke; Snagster Windows-ekin batera abiarazi daiteke."
  }
 }

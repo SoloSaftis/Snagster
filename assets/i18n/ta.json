@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "வெளியேறி மீண்டும் திற",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster தானாக மீண்டும் தொடங்க முடியவில்லை. அதை மூடிவிட்டு மீண்டும் திறக்கவும்.",
   "The screen couldn't be copied.": "திரையை நகலெடுக்க முடியவில்லை.",
-  "Ink isn't in replays or in videos from the Record tab.": "மை ரீப்ளேக்களிலும் பதிவு தாவலின் வீடியோக்களிலும் இருக்காது."
+  "Ink isn't in replays or in videos from the Record tab.": "மை ரீப்ளேக்களிலும் பதிவு தாவலின் வீடியோக்களிலும் இருக்காது.",
+  "1. Capture": "1. பிடிக்கவும்",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen-ஐ (அல்லது பிடிப்பு பொத்தானை) அழுத்தவும். ஒரு பகுதியை இழுக்கவும், அல்லது ஒரு சாளரம், பொத்தான் அல்லது மெனுவைச் சொடுக்கவும். பின்னர் ஒரு கருவிப்பட்டியின் மூலம் பிடிக்கலாம், உருட்டலாம், GIF பதிவு செய்யலாம் அல்லது உரையை எடுக்கலாம்.",
+  "2. Mark it up": "2. குறியிடவும்",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "இடதுபுறம் ஒரு கருவியைத் தேர்ந்தெடுக்கவும்: அம்புகள், உரை, குறிப்புக்குமிழ்கள், படிகள், முத்திரைகள், மங்கலாக்கல், ஸ்பாட்லைட், பெரிதாக்கல்... ஒவ்வொரு கருவியின் விருப்பங்களும் வலதுபுறம் உள்ளன.",
+  "3. Share it": "3. பகிரவும்",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "நகலெடுக்கவும் (Ctrl+C), சேமிக்கவும் (Ctrl+S), திரையில் பின் செய்யவும், மின்னஞ்சல் அனுப்பவும், அல்லது பலவற்றை ஒரு வழிகாட்டியில் சேர்க்கவும் (கோப்பு > வழிகாட்டியை ஏற்றுமதி செய்).",
+  "Everything is kept": "அனைத்தும் வைக்கப்படும்",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "ஒவ்வொரு பிடிப்பும் நூலகத்துக்குச் செல்லும் (Ctrl+L); தேதி, நிரல், குறிச்சொற்கள் மூலம் தேடலாம்.",
+  "From anywhere": "எங்கிருந்தும்",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "பணிப்பட்டை மூலையில் உள்ள Snagster ஐகான் பிடிப்புப் பலகத்தைத் திறக்கும்; விரைவு மெனுவுக்கு அதில் வலது சொடுக்கவும்.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "வேறொரு நிரல் பயன்படுத்தும் விசைகளை ஹாட்கீகள் எடுத்துக்கொள்ளலாம் (அமைப்புகள் > ஹாட்கீகள்).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "புதிய கருவிகள்: தேர்வு (படத்தின் ஒரு பகுதியைத் தூக்கி நகர்த்தலாம்), நிரப்பு மற்றும் அழிப்பான்.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "இரு பக்கமும் தலைகொண்ட அம்புகள், உரை சீரமைப்பு மற்றும் வெளிக்கோடு, குறிப்புக்குமிழ் வடிவங்கள், மங்கலாக்கல் வகைகள்.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "விரைவுப் பாணிகள், தனிப்பயனாக்கக்கூடிய கருவிப்பட்டி, குறிகளை வெட்டுதல் / நகலெடுத்தல் / ஒட்டுதல்.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "ஒரே நேரத்தில் பல பகுதிகள், துணை மெனுக்களுடன் மெனுக்கள், நீங்களே செய்யும் உருட்டல் ஆகியவற்றைப் பிடித்தல்.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "புதிய படம், வார்ப்புருக்கள், சமீபத்தியதைத் திற, மறுபெயரிடு, மறுசுழற்சித் தொட்டி, தொகுப்பு ஏற்றுமதி, அச்சிடு, மின்னஞ்சல், Word ஆவணங்கள்.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "முன்னமைவுகளை இறக்குமதி, ஏற்றுமதி மற்றும் நகலாக்கம் செய்யலாம்; Snagster Windows உடன் தொடங்கலாம்."
  }
 }

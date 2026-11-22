@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Oħroġ u Erġa' Iftaħ",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ma setax jerġa' jibda waħdu. Agħlqu u erġa' iftħu.",
   "The screen couldn't be copied.": "Ma setgħetx tinkopja l-iskrin.",
-  "Ink isn't in replays or in videos from the Record tab.": "Il-Linka mhijiex fir-replays jew fil-vidjows mit-tab Irrekordja."
+  "Ink isn't in replays or in videos from the Record tab.": "Il-Linka mhijiex fir-replays jew fil-vidjows mit-tab Irrekordja.",
+  "1. Capture": "1. Aqbad",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Agħfas Print Screen (jew il-buttuna Qbid). Iġbed żona, jew ikklikkja fuq tieqa, buttuna jew menu. Imbagħad toolbar iħallik taqbad, tiskrollja, tirrekordja GIF jew tieħu t-test.",
+  "2. Mark it up": "2. Immarkah",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Agħżel għodda fuq ix-xellug: vleġeġ, test, blalen tat-test, passi, timbri, ċajpar, spotlight, kabbar... L-għażliet għal kull għodda jinsabu fuq il-lemin.",
+  "3. Share it": "3. Aqsmu",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Ikkopjah (Ctrl+C), issejvjah (Ctrl+S), ippinnjah fuq l-iskrin, ibagħtu bl-email, jew għaqqad diversi f'gwida (Fajl > Esporta l-gwida).",
+  "Everything is kept": "Kollox jinżamm",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Kull qbid imur fil-Librerija (Ctrl+L), u tista' tfittxu skont id-data, il-programm u t-tikketti.",
+  "From anywhere": "Minn kullimkien",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "L-ikona ta' Snagster fil-kantuniera tat-taskbar tiftaħ il-pannell tal-qbid; ikklikkja bil-lemin fuqha għall-menu mgħaġġel.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "It-tasti shortcut jistgħu jieħdu t-tasti li juża programm ieħor (Issettjar > Tasti shortcut).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Għodod ġodda: Għażla (erfa' parti mill-istampa u ċċaqlaqha), Mili u Għomma.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Vleġeġ b'ras fiż-żewġ truf, allinjament u kontorn tat-test, forom tal-blalen tat-test, tipi ta' ċajpar.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Stili mgħaġġlin, toolbar li tista' tippersonalizza, aqta' / ikkopja / waħħal il-marki.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Qbid ta' diversi żoni f'daqqa, menus bis-sottomenus tagħhom, u skrolljar li tagħmlu int.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Immaġni ġdida, mudelli, iftaħ reċenti, biddel l-isem, Recycle Bin, esportazzjoni f'daqqa, ipprintja, email, dokumenti Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Il-presets jistgħu jiġu importati, esportati u duplikati; Snagster jista' jibda ma' Windows."
  }
 }

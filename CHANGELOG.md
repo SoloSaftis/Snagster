@@ -2,6 +2,12 @@
 
 What changed for people using Snagster, per version.
 
+## Not released yet
+
+- **Help > Getting started and What's new are in your language**: their paragraphs were English
+  in every language; they are now translated into all 85, and the shortcuts in them are written
+  the way your system writes them (⌘C on a Mac).
+
 ## 0.10.9 — 2026-11-22
 
 - **Microsoft Store edition**: the Store package no longer asks for the restricted

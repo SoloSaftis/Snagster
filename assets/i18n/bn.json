@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "বন্ধ করে আবার খুলুন",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster নিজে আবার চালু হতে পারেনি। এটি বন্ধ করে আবার খুলুন।",
   "The screen couldn't be copied.": "স্ক্রিন কপি করা যায়নি।",
-  "Ink isn't in replays or in videos from the Record tab.": "কালি রিপ্লেতে বা রেকর্ড ট্যাবের ভিডিওতে থাকে না।"
+  "Ink isn't in replays or in videos from the Record tab.": "কালি রিপ্লেতে বা রেকর্ড ট্যাবের ভিডিওতে থাকে না।",
+  "1. Capture": "1. ক্যাপচার",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen চাপুন (বা ক্যাপচার বোতাম)। একটি এলাকা টানুন, বা উইন্ডো, বোতাম বা মেনুতে ক্লিক করুন। তারপর একটি টুলবার দিয়ে ক্যাপচার, স্ক্রল, GIF রেকর্ড বা টেক্সট নিতে পারবেন।",
+  "2. Mark it up": "2. চিহ্ন দিন",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "বাঁ দিক থেকে একটি টুল বেছে নিন: তীর, টেক্সট, কলআউট, ধাপ, স্ট্যাম্প, ঝাপসা, স্পটলাইট, বড় করা... প্রতিটি টুলের বিকল্প ডান দিকে আছে।",
+  "3. Share it": "3. শেয়ার করুন",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "কপি করুন (Ctrl+C), সংরক্ষণ করুন (Ctrl+S), স্ক্রিনে পিন করুন, ইমেইল করুন, বা কয়েকটি একটি গাইডে রাখুন (ফাইল > গাইড এক্সপোর্ট করুন)।",
+  "Everything is kept": "সবকিছু রাখা থাকে",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "প্রতিটি ক্যাপচার লাইব্রেরিতে যায় (Ctrl+L), তারিখ, প্রোগ্রাম ও ট্যাগ দিয়ে খোঁজা যায়।",
+  "From anywhere": "যেকোনো জায়গা থেকে",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "টাস্কবারের কোণে Snagster-এর আইকন ক্যাপচার প্যানেল খোলে; দ্রুত মেনুর জন্য এতে রাইট-ক্লিক করুন।",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "হটকি অন্য প্রোগ্রামের ব্যবহৃত কী দখল করতে পারে (সেটিংস > হটকি)।",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "নতুন টুল: নির্বাচন (ছবির একটি অংশ তুলে সরান), ভরাট ও ইরেজার।",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "দুই প্রান্তেই মাথাওয়ালা তীর, টেক্সটের সারিবদ্ধতা ও আউটলাইন, কলআউটের আকার, ঝাপসার ধরন।",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "দ্রুত স্টাইল, কাস্টমাইজযোগ্য টুলবার, চিহ্নের কাট / কপি / পেস্ট।",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "একসাথে কয়েকটি এলাকা, সাব-মেনুসহ মেনু, এবং নিজে করা স্ক্রলিং ক্যাপচার করুন।",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "নতুন ছবি, টেমপ্লেট, সাম্প্রতিক খুলুন, নাম বদলান, রিসাইকেল বিন, একসাথে এক্সপোর্ট, প্রিন্ট, ইমেইল, Word ডকুমেন্ট।",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "প্রিসেট ইম্পোর্ট, এক্সপোর্ট ও ডুপ্লিকেট করা যায়; Snagster Windows-এর সাথে চালু হতে পারে।"
  }
 }

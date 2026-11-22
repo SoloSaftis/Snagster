@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Thoát và mở lại",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster không tự khởi động lại được. Hãy thoát rồi mở lại.",
   "The screen couldn't be copied.": "Không thể sao chép màn hình.",
-  "Ink isn't in replays or in videos from the Record tab.": "Mực không có trong bản phát lại hay video từ tab Quay."
+  "Ink isn't in replays or in videos from the Record tab.": "Mực không có trong bản phát lại hay video từ tab Quay.",
+  "1. Capture": "1. Chụp",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Nhấn Print Screen (hoặc nút Chụp). Kéo chọn một vùng, hoặc nhấp vào cửa sổ, nút hay menu. Sau đó, thanh công cụ cho phép bạn chụp, cuộn, quay GIF hoặc lấy văn bản.",
+  "2. Mark it up": "2. Đánh dấu",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Chọn một công cụ ở bên trái: mũi tên, văn bản, chú thích bong bóng, bước, dấu, làm mờ, tiêu điểm, phóng to... Tùy chọn của từng công cụ nằm ở bên phải.",
+  "3. Share it": "3. Chia sẻ",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Sao chép (Ctrl+C), lưu (Ctrl+S), ghim lên màn hình, gửi email hoặc gộp nhiều ảnh vào một hướng dẫn (Tệp > Xuất hướng dẫn).",
+  "Everything is kept": "Mọi thứ đều được giữ lại",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Mọi ảnh chụp đều vào Thư viện (Ctrl+L), có thể tìm theo ngày, chương trình và thẻ.",
+  "From anywhere": "Từ bất cứ đâu",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Biểu tượng Snagster ở góc thanh tác vụ mở bảng chụp; nhấp chuột phải vào đó để mở menu nhanh.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Phím tắt có thể chiếm các phím mà chương trình khác đang dùng (Cài đặt > Phím tắt).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Công cụ mới: Vùng chọn (nhấc một phần ảnh lên và di chuyển), Tô màu và Tẩy.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Mũi tên có đầu ở cả hai phía, căn chỉnh và viền chữ, hình dạng chú thích bong bóng, kiểu làm mờ.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Kiểu nhanh, thanh công cụ tùy chỉnh được, cắt / sao chép / dán các nét đánh dấu.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Chụp nhiều vùng cùng lúc, menu kèm menu con, và cuộn do bạn tự thực hiện.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Hình ảnh mới, mẫu, mở gần đây, đổi tên, Thùng rác, xuất hàng loạt, in, email, tài liệu Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Bộ cài sẵn có thể nhập, xuất và nhân bản; Snagster có thể khởi động cùng Windows."
  }
 }

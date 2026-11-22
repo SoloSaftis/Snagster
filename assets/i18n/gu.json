@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "બંધ કરી ફરી ખોલો",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster પોતાને ફરી શરૂ કરી શક્યું નહીં. તેને બંધ કરો અને ફરી ખોલો.",
   "The screen couldn't be copied.": "સ્ક્રીન કૉપિ થઈ શકી નથી.",
-  "Ink isn't in replays or in videos from the Record tab.": "શાહી રીપ્લે અથવા રેકોર્ડ ટૅબના વિડિઓમાં નથી."
+  "Ink isn't in replays or in videos from the Record tab.": "શાહી રીપ્લે અથવા રેકોર્ડ ટૅબના વિડિઓમાં નથી.",
+  "1. Capture": "1. કૅપ્ચર",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen દબાવો (અથવા કૅપ્ચર બટન). કોઈ વિસ્તાર ખેંચો, અથવા કોઈ વિન્ડો, બટન કે મેનૂ પર ક્લિક કરો. પછી ટૂલબાર વડે તમે કૅપ્ચર કરી શકો, સ્ક્રોલ કરી શકો, GIF રેકોર્ડ કરી શકો અથવા ટેક્સ્ટ ગ્રૅબ કરી શકો.",
+  "2. Mark it up": "2. નિશાન કરો",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "ડાબી બાજુથી ટૂલ પસંદ કરો: તીર, ટેક્સ્ટ, કૉલઆઉટ, પગલાં, સિક્કા, ઝાંખું, સ્પૉટલાઇટ, મોટું કરો... દરેક ટૂલના વિકલ્પો જમણી બાજુ છે.",
+  "3. Share it": "3. શેર કરો",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "તેને કૉપિ કરો (Ctrl+C), સેવ કરો (Ctrl+S), સ્ક્રીન પર પિન કરો, ઇમેઇલ કરો, અથવા ઘણાંને એક માર્ગદર્શિકામાં મૂકો (ફાઇલ > માર્ગદર્શિકા નિકાસ કરો).",
+  "Everything is kept": "બધું સચવાય છે",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "દરેક કૅપ્ચર લાઇબ્રેરીમાં જાય છે (Ctrl+L), જ્યાં તેને તારીખ, પ્રોગ્રામ અને ટૅગથી શોધી શકાય છે.",
+  "From anywhere": "ગમે ત્યાંથી",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "ટાસ્કબારના ખૂણામાં Snagster નું આઇકન કૅપ્ચર પેનલ ખોલે છે; ઝડપી મેનૂ માટે તેના પર રાઇટ-ક્લિક કરો.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "હોટકી બીજો પ્રોગ્રામ વાપરતો હોય તે કી પણ લઈ શકે છે (સેટિંગ્સ > હોટકી).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "નવાં ટૂલ: પસંદગી (ચિત્રનો ભાગ ઉપાડીને ખસેડો), ભરો અને રબર.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "એક અથવા બંને છેડે અણીવાળાં તીર, ટેક્સ્ટનું સંરેખણ અને આઉટલાઇન, કૉલઆઉટના આકાર, ઝાંખું કરવાના પ્રકાર.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "ઝડપી શૈલીઓ, કસ્ટમાઇઝ કરી શકાય તેવો ટૂલબાર, નિશાનો માટે કાપો / કૉપિ / પેસ્ટ.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "એકસાથે ઘણા વિસ્તારોનું કૅપ્ચર, સબ-મેનૂ સાથે મેનૂ, અને તમે જાતે કરો તે સ્ક્રોલિંગ.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "નવું ચિત્ર, ટેમ્પ્લેટ, તાજેતરનાં ખોલો, નામ બદલો, રિસાયકલ બિન, બૅચ નિકાસ, પ્રિન્ટ, ઇમેઇલ, Word દસ્તાવેજો.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "પ્રીસેટ આયાત, નિકાસ અને ડુપ્લિકેટ કરી શકાય છે; Snagster Windows સાથે શરૂ થઈ શકે છે."
  }
 }

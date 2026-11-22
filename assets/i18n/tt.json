@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Чыгу һәм яңадан ачу",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster үзен яңадан башлый алмады. Аны ябып, яңадан ачыгыз.",
   "The screen couldn't be copied.": "Экранны күчереп булмады.",
-  "Ink isn't in replays or in videos from the Record tab.": "Кара кабатлауларда һәм Язу салынмасындагы видеоларда юк."
+  "Ink isn't in replays or in videos from the Record tab.": "Кара кабатлауларда һәм Язу салынмасындагы видеоларда юк.",
+  "1. Capture": "1. Төшерегез",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen төймәсенә (яки «Төшерү» төймәсенә) басыгыз. Тартып мәйдан сайлагыз яки тәрәзәгә, төймәгә яки менюга басыгыз. Аннары кораллар панеле ярдәмендә төшерергә, әйләндерергә, GIF язарга яки текстны алырга мөмкин.",
+  "2. Mark it up": "2. Билгеләгез",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Сулдагы коралны сайлагыз: уклар, текст, аңлатмалар, адымнар, мөһерләр, томалау, прожектор, зурайту... Һәр коралның көйләүләре уң якта.",
+  "3. Share it": "3. Уртаклашыгыз",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Күчереп алыгыз (Ctrl+C), саклагыз (Ctrl+S), экранга беркетегез, эл. почта белән җибәрегез яки берничәсен бер кулланмага җыегыз (Файл > Кулланманы экспортлау).",
+  "Everything is kept": "Барысы да саклана",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Һәр төшерү Китапханәгә керә (Ctrl+L), аны көн, программа һәм тамгалар буенча эзләп була.",
+  "From anywhere": "Теләсә кайдан",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Эш тактасы почмагындагы Snagster значогы төшерү панелен ача; тиз меню өчен аңа уң төймә белән басыгыз.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Кайнар төймәләр башка программа кулланган төймәләрне үз кулына ала ала (Көйләүләр > Кайнар төймәләр).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Яңа кораллар: Сайланма (рәсемнең бер өлешен күтәреп күчерегез), Тутыру һәм Резин.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Ике очында да башлы уклар, текстны тигезләү һәм контур, аңлатма формалары, томалау төрләре.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Тиз стильләр, көйләнә торган кораллар панеле, билгеләрне кисү / күчереп алу / кую.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Берьюлы берничә мәйданны, эчке менюлары белән менюларны һәм үзегез әйләндергәнне төшерү.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Яңа рәсем, үрнәкләр, соңгыларны ачу, исемен үзгәртү, себер, төркемләп экспортлау, басып чыгару, эл. почта, Word документлары.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Пресетларны импортларга, экспортларга һәм күчермәсен ясарга була; Snagster Windows белән бергә җибәрелә ала."
  }
 }

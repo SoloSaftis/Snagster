@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Gadael ac Ailagor",
   "Snagster couldn't restart itself. Quit it and open it again.": "Doedd Snagster ddim yn gallu ailgychwyn ei hun. Gadewch ef a'i agor eto.",
   "The screen couldn't be copied.": "Doedd dim modd copïo'r sgrin.",
-  "Ink isn't in replays or in videos from the Record tab.": "Nid yw Inc mewn ailchwaraeon nac mewn fideos o'r tab Recordio."
+  "Ink isn't in replays or in videos from the Record tab.": "Nid yw Inc mewn ailchwaraeon nac mewn fideos o'r tab Recordio.",
+  "1. Capture": "1. Dal",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Pwyswch Print Screen (neu'r botwm Dal). Llusgwch ardal, neu cliciwch ffenestr, botwm neu ddewislen. Yna mae bar offer yn gadael i chi ddal, sgrolio, recordio GIF neu gipio'r testun.",
+  "2. Mark it up": "2. Marciwch hi",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Dewiswch offeryn ar y chwith: saethau, testun, galwadau allan, camau, stampiau, pylu, chwilolau, mwyhau... Mae'r opsiynau ar gyfer pob offeryn ar y dde.",
+  "3. Share it": "3. Rhannwch hi",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Copïwch hi (Ctrl+C), cadwch hi (Ctrl+S), piniwch hi ar y sgrin, e-bostiwch hi, neu rhowch sawl un mewn canllaw (Ffeil > Allforio'r canllaw).",
+  "Everything is kept": "Mae popeth yn cael ei gadw",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Mae pob daliad yn mynd i'r Llyfrgell (Ctrl+L), a gallwch chwilio yn ôl dyddiad, rhaglen a thagiau.",
+  "From anywhere": "O unrhyw le",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Mae eicon Snagster yng nghornel y bar tasgau yn agor y panel dal; de-gliciwch arno i gael y ddewislen gyflym.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Gall bysellau poeth gymryd drosodd fysellau y mae rhaglen arall yn eu defnyddio (Gosodiadau > Bysellau poeth).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Offer newydd: Dewisiad (codwch ran o'r llun a'i symud), Llenwi a Rhwbiwr.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Saethau â phennau ar y ddau ben, alinio ac amlinell testun, siapiau galwadau allan, mathau o bylu.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Arddulliau cyflym, bar offer y gellir ei addasu, torri / copïo / gludo marciau.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Dal sawl ardal ar unwaith, dewislenni gyda'u his-ddewislenni, a sgrolio rydych chi'n ei wneud eich hun.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Delwedd newydd, templedi, agor diweddar, ailenwi, y Bin Ailgylchu, allforio mewn swp, argraffu, e-bost, dogfennau Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Gellir mewnforio, allforio a dyblygu rhagosodiadau; gall Snagster gychwyn gyda Windows."
  }
 }

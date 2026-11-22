@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Scoir agus Athoscail",
   "Snagster couldn't restart itself. Quit it and open it again.": "Níorbh fhéidir le Snagster é féin a atosú. Scoir de agus oscail arís é.",
   "The screen couldn't be copied.": "Níorbh fhéidir an scáileán a chóipeáil.",
-  "Ink isn't in replays or in videos from the Record tab.": "Níl Dúch sna hathsheinmeanna ná sna físeáin ón táb Taifead."
+  "Ink isn't in replays or in videos from the Record tab.": "Níl Dúch sna hathsheinmeanna ná sna físeáin ón táb Taifead.",
+  "1. Capture": "1. Gabh",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Brúigh Print Screen (nó an cnaipe Gabh). Tarraing thar limistéar, nó cliceáil fuinneog, cnaipe nó roghchlár. Ansin ligeann barra uirlisí duit gabháil, scrollú, GIF a thaifeadadh nó an téacs a thógáil.",
+  "2. Mark it up": "2. Cuir marcanna air",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Roghnaigh uirlis ar chlé: saighde, téacs, bolgáin chainte, céimeanna, stampaí, doiléiriú, spotsolas, formhéadú... Tá na roghanna do gach uirlis ar dheis.",
+  "3. Share it": "3. Roinn é",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Cóipeáil é (Ctrl+C), sábháil é (Ctrl+S), pionnáil ar an scáileán é, seol i ríomhphost é, nó cuir roinnt acu le chéile i dtreoir (Comhad > Easpórtáil an treoir).",
+  "Everything is kept": "Coinnítear gach rud",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Téann gach gabháil isteach sa Leabharlann (Ctrl+L), agus is féidir iad a chuardach de réir dáta, cláir agus clibeanna.",
+  "From anywhere": "Ó áit ar bith",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Osclaíonn deilbhín Snagster i gcúinne an tascbharra an painéal gabhála; deaschliceáil é don roghchlár tapa.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Is féidir le heochracha te seilbh a ghlacadh ar eochracha a úsáideann clár eile (Socruithe > Eochracha the).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Uirlisí nua: Roghnúchán (tóg cuid den phictiúr agus bog é), Líon agus Scriosán.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Saighde le rinn ar cheann amháin nó ar an dá cheann, ailíniú agus imlíne téacs, cruthanna bolgán cainte, cineálacha doiléirithe.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Stíleanna tapa, barra uirlisí is féidir a shaincheapadh, gearradh / cóipeáil / greamú marcanna.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Roinnt limistéar a ghabháil ag an am céanna, roghchláir lena bhfo-roghchláir, agus scrollú a dhéanann tú féin.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Íomhá nua, teimpléid, oscail le déanaí, athainmnigh, Bosca Athchúrsála, easpórtáil i mbaisc, priontáil, ríomhphost, doiciméid Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Is féidir réamhshocruithe a iompórtáil, a easpórtáil agus a dhúbláil; is féidir le Snagster tosú le Windows."
  }
 }

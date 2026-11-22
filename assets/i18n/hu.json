@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Kilépés és újbóli megnyitás",
   "Snagster couldn't restart itself. Quit it and open it again.": "A Snagster nem tudta újraindítani magát. Lépjen ki belőle, és nyissa meg újra.",
   "The screen couldn't be copied.": "A képernyőt nem sikerült másolni.",
-  "Ink isn't in replays or in videos from the Record tab.": "A tinta nem szerepel a visszajátszásokban és a Felvétel lap videóiban."
+  "Ink isn't in replays or in videos from the Record tab.": "A tinta nem szerepel a visszajátszásokban és a Felvétel lap videóiban.",
+  "1. Capture": "1. Felvétel",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Nyomja meg a Print Screen billentyűt (vagy a Felvétel gombot). Jelöljön ki egy területet húzással, vagy kattintson egy ablakra, gombra vagy menüre. Ezután egy eszköztárral rögzíthet, görgethet, GIF-et vehet fel, vagy kinyerheti a szöveget.",
+  "2. Mark it up": "2. Jelölje meg",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Válasszon eszközt bal oldalt: nyilak, szöveg, szövegbuborékok, lépések, bélyegzők, elmosás, reflektorfény, nagyítás... Az egyes eszközök beállításai jobb oldalt találhatók.",
+  "3. Share it": "3. Ossza meg",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Másolja (Ctrl+C), mentse (Ctrl+S), tűzze ki a képernyőre, küldje el e-mailben, vagy tegyen többet egy útmutatóba (Fájl > Útmutató exportálása).",
+  "Everything is kept": "Minden megmarad",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Minden felvétel a Könyvtárba kerül (Ctrl+L), ahol dátum, program és címkék szerint kereshet.",
+  "From anywhere": "Bárhonnan",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "A tálca sarkában lévő Snagster-ikon megnyitja a rögzítés panelt; a gyorsmenühöz kattintson rá a jobb gombbal.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "A gyorsbillentyűk átvehetik a más program által használt billentyűket (Beállítások > Gyorsbillentyűk).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Új eszközök: Kijelölés (a kép egy részének kiemelése és áthelyezése), Kitöltés és Radír.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Nyilak az egyik vagy mindkét végükön heggyel, szövegigazítás és körvonal, szövegbuborék-alakzatok, elmosástípusok.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Gyorsstílusok, testreszabható eszköztár, jelölések kivágása / másolása / beillesztése.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Több terület rögzítése egyszerre, menük az almenüikkel együtt, valamint kézi görgetés.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Új kép, sablonok, legutóbbi megnyitása, átnevezés, Lomtár, kötegelt exportálás, nyomtatás, e-mail, Word-dokumentumok.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Az előbeállítások importálhatók, exportálhatók és duplikálhatók; a Snagster indulhat a Windowsszal együtt."
  }
 }

@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "ปิดแล้วเปิดใหม่",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster เริ่มใหม่เองไม่ได้ ให้ปิดแล้วเปิดอีกครั้ง",
   "The screen couldn't be copied.": "คัดลอกหน้าจอไม่ได้",
-  "Ink isn't in replays or in videos from the Record tab.": "หมึกจะไม่อยู่ในรีเพลย์หรือวิดีโอจากแท็บบันทึก"
+  "Ink isn't in replays or in videos from the Record tab.": "หมึกจะไม่อยู่ในรีเพลย์หรือวิดีโอจากแท็บบันทึก",
+  "1. Capture": "1. แคปเจอร์",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "กด Print Screen (หรือปุ่มแคปเจอร์) ลากเลือกพื้นที่ หรือคลิกหน้าต่าง ปุ่ม หรือเมนู จากนั้นแถบเครื่องมือจะให้คุณแคปเจอร์ เลื่อน บันทึก GIF หรือดึงข้อความ",
+  "2. Mark it up": "2. ทำเครื่องหมาย",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "เลือกเครื่องมือทางซ้าย: ลูกศร ข้อความ คำบรรยายภาพ ขั้นตอน ตราประทับ เบลอ สปอตไลต์ ขยาย... ตัวเลือกของแต่ละเครื่องมืออยู่ทางขวา",
+  "3. Share it": "3. แชร์",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "คัดลอก (Ctrl+C) บันทึก (Ctrl+S) ปักหมุดไว้บนหน้าจอ ส่งทางอีเมล หรือรวมหลายภาพไว้ในคู่มือ (ไฟล์ > ส่งออกคู่มือ)",
+  "Everything is kept": "เก็บไว้ทุกอย่าง",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "ทุกการแคปเจอร์จะเข้าไปอยู่ในคลังภาพ (Ctrl+L) ค้นหาได้ตามวันที่ โปรแกรม และแท็ก",
+  "From anywhere": "จากทุกที่",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "ไอคอน Snagster ที่มุมแถบงานจะเปิดแผงแคปเจอร์ คลิกขวาที่ไอคอนเพื่อเปิดเมนูด่วน",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "ปุ่มลัดสามารถใช้ปุ่มที่โปรแกรมอื่นใช้อยู่ได้ (การตั้งค่า > ปุ่มลัด)",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "เครื่องมือใหม่: ส่วนที่เลือก (ยกบางส่วนของภาพขึ้นแล้วย้าย) เติมสี และยางลบ",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "ลูกศรที่มีหัวได้ทั้งสองปลาย การจัดแนวและเส้นขอบข้อความ รูปทรงคำบรรยายภาพ ประเภทการเบลอ",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "สไตล์ด่วน แถบเครื่องมือที่ปรับแต่งได้ ตัด / คัดลอก / วางเครื่องหมาย",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "แคปเจอร์หลายพื้นที่พร้อมกัน เมนูพร้อมเมนูย่อย และการเลื่อนที่คุณทำเอง",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "รูปภาพใหม่ เทมเพลต เปิดรายการล่าสุด เปลี่ยนชื่อ ถังขยะ ส่งออกเป็นชุด พิมพ์ อีเมล เอกสาร Word",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "ค่าที่ตั้งไว้ล่วงหน้านำเข้า ส่งออก และทำซ้ำได้ Snagster เริ่มทำงานพร้อม Windows ได้"
  }
 }

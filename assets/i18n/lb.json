@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Ophalen an nees opmaachen",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster konnt sech net selwer nei starten. Maacht et zou a maacht et nees op.",
   "The screen couldn't be copied.": "De Bildschierm konnt net kopéiert ginn.",
-  "Ink isn't in replays or in videos from the Record tab.": "Tënt ass net an de Replayen oder a Videoe vum Tab Opnehmen."
+  "Ink isn't in replays or in videos from the Record tab.": "Tënt ass net an de Replayen oder a Videoe vum Tab Opnehmen.",
+  "1. Capture": "1. Erfaassen",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Dréck op Print Screen (oder op de Knäppchen Erfaassen). Zitt e Beräich op, oder klick op eng Fënster, e Knäppchen oder e Menü. Duerno kanns de mat enger Symbolleist erfaassen, scrollen, e GIF opnehmen oder den Text ofgräifen.",
+  "2. Mark it up": "2. Beschrëften",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Wiel lénks e Geschir: Feiler, Text, Sproochblosen, Schrëtt, Stempelen, Verwëschen, Spotlight, Vergréisseren… D'Optioune fir all Geschir sinn op der rietser Säit.",
+  "3. Share it": "3. Deelen",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopéier et (Ctrl+C), späicher et (Ctrl+S), pin et um Schierm, schéck et per E-Mail oder setz e puer an eng Anleedung (Datei > Anleedung exportéieren).",
+  "Everything is kept": "Alles gëtt behalen",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "All Erfaassung kënnt an d'Bibliothéik (Ctrl+L), wou s de no Datum, Programm an Tags siche kanns.",
+  "From anywhere": "Vun iwwerall",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "D'Snagster-Symbol an der Taskbar-Ecke mécht den Erfaassungspanel op; maach e Rietsklick drop fir de séiere Menü.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Tastekombinatioune kënnen Tasten iwwerhuelen, déi en anere Programm benotzt (Astellungen > Tastekombinatiounen).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Nei Geschirer: Auswiel (en Deel vum Bild ophiewen a verréckelen), Fëllen a Radéierer.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Feiler mat Käpp un engem oder béiden Enden, Ausriichtung a Kontur vum Text, Forme fir Sproochblosen, Verwëschungsarten.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Séier Stiler, eng upassbar Symbolleist, Ausschneiden / Kopéieren / Afüge vu Markéierungen.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Verschidde Beräicher op eemol erfaassen, Menüe mat hiren Ënnermenüen, a Scrollen, dat s de selwer méchs.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Neit Bild, Virlagen, Rezent opmaachen, Ëmbenennen, Pabeierkuerf, Export a Serie, Drécken, E-Mail, Word-Dokumenter.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Virastellunge kënnen importéiert, exportéiert an duplizéiert ginn; Snagster kann mat Windows starten."
  }
 }

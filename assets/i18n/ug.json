@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "چېكىنىپ قايتا ئېچىش",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ئۆزىنى قايتا قوزغىتالمىدى. ئۇنى يېپىپ قايتا ئېچىڭ.",
   "The screen couldn't be copied.": "ئېكراننى كۆچۈرەلمىدى.",
-  "Ink isn't in replays or in videos from the Record tab.": "سىياھ قايتا ئويناتمىلاردا ۋە خاتىرىلەش بەتكۈچىدىكى سىنلاردا بولمايدۇ."
+  "Ink isn't in replays or in videos from the Record tab.": "سىياھ قايتا ئويناتمىلاردا ۋە خاتىرىلەش بەتكۈچىدىكى سىنلاردا بولمايدۇ.",
+  "1. Capture": "1. سۈرەتكە ئېلىڭ",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen نى (ياكى سۈرەتكە ئېلىش كۇنۇپكىسىنى) بېسىڭ. بىر رايوننى سۆرەپ تاللاڭ ياكى بىر كۆزنەك، كۇنۇپكا ياكى تىزىملىكنى چېكىڭ. ئاندىن قورال ستونى ئارقىلىق سۈرەتكە ئالالايسىز، سىيرىيالايسىز، GIF خاتىرىلىيەلەيسىز ياكى تېكىستنى ئالالايسىز.",
+  "2. Mark it up": "2. بەلگە قويۇڭ",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "سول تەرەپتىن بىر قورال تاللاڭ: يا ئوقلار، تېكىست، چۈشەندۈرۈش رامكىلىرى، باسقۇچلار، تامغىلار، غۇۋالاشتۇرۇش، دىققەت نۇرى، چوڭايتىش... ھەر بىر قورالنىڭ تاللانمىلىرى ئوڭ تەرەپتە.",
+  "3. Share it": "3. ھەمبەھىرلەڭ",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "كۆچۈرۈڭ (Ctrl+C)، ساقلاڭ (Ctrl+S)، ئېكرانغا مىخلاڭ، ئېلخەت بىلەن ئەۋەتىڭ ياكى بىر قانچىسىنى بىر قوللانمىغا يىغىڭ (ھۆججەت > قوللانمىنى چىقىرىش).",
+  "Everything is kept": "ھەممىسى ساقلىنىدۇ",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "ھەر بىر سۈرەت ئامبارغا كىرىدۇ (Ctrl+L)، ئۇنى چېسلا، پروگرامما ۋە بەلگىلەر بويىچە ئىزدىگىلى بولىدۇ.",
+  "From anywhere": "ھەر قانداق يەردىن",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "ۋەزىپە ستونى بۇلۇڭىدىكى Snagster سىنبەلگىسى سۈرەتكە ئېلىش تاختىسىنى ئاچىدۇ؛ تېز تىزىملىك ئۈچۈن ئۇنى ئوڭ چېكىڭ.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "تېز كۇنۇپكىلار باشقا پروگرامما ئىشلىتىۋاتقان كۇنۇپكىلارنى ئىگىلىيەلەيدۇ (تەڭشەك > تېز كۇنۇپكىلار).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "يېڭى قوراللار: تاللاش (رەسىمنىڭ بىر قىسمىنى كۆتۈرۈپ يۆتكەڭ)، تولدۇرۇش ۋە ئۆچۈرگۈ.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "ئىككى ئۇچىدا بېشى بار يا ئوقلار، تېكىست توغرىلاش ۋە گىرۋەك سىزىقى، چۈشەندۈرۈش رامكىسى شەكىللىرى، غۇۋالاشتۇرۇش تۈرلىرى.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "تېز ئۇسلۇبلار، ئىختىيارىلاشتۇرغىلى بولىدىغان قورال ستونى، بەلگىلەرنى كېسىش / كۆچۈرۈش / چاپلاش.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "بىراقلا بىر قانچە رايوننى، تارماق تىزىملىكلىرى بىلەن تىزىملىكلەرنى ۋە ئۆزىڭىز سىيرىغاننى سۈرەتكە ئېلىش.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "يېڭى رەسىم، قېلىپلار، يېقىنقىنى ئېچىش، ئىسىم ئۆزگەرتىش، ئەخلەت ساندۇقى، تۈركۈملەپ چىقىرىش، بېسىش، ئېلخەت، Word ھۆججەتلىرى.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "ئالدىن تەڭشەكلەرنى ئەكىرىش، چىقىرىش ۋە كۆپەيتىشكە بولىدۇ؛ Snagster نى Windows بىلەن بىللە قوزغىتىشقا بولىدۇ."
  }
 }

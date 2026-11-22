@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "بند کر کے دوبارہ کھولیں",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster خود کو دوبارہ شروع نہیں کر سکا۔ اسے بند کر کے دوبارہ کھولیں۔",
   "The screen couldn't be copied.": "اسکرین کاپی نہیں ہو سکی۔",
-  "Ink isn't in replays or in videos from the Record tab.": "سیاہی ری پلے یا ریکارڈ ٹیب کی ویڈیوز میں شامل نہیں ہوتی۔"
+  "Ink isn't in replays or in videos from the Record tab.": "سیاہی ری پلے یا ریکارڈ ٹیب کی ویڈیوز میں شامل نہیں ہوتی۔",
+  "1. Capture": "1. کیپچر کریں",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen دبائیں (یا کیپچر بٹن)۔ کسی حصے کو ڈریگ کریں، یا کسی ونڈو، بٹن یا مینو پر کلک کریں۔ پھر ایک ٹول بار سے آپ کیپچر، اسکرول، GIF ریکارڈ یا متن حاصل کر سکتے ہیں۔",
+  "2. Mark it up": "2. نشان زد کریں",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "بائیں جانب ایک ٹول چنیں: تیر، متن، کال آؤٹ، مراحل، اسٹیمپ، دھندلاہٹ، اسپاٹ لائٹ، بڑا کرنا... ہر ٹول کے اختیارات دائیں جانب ہیں۔",
+  "3. Share it": "3. شیئر کریں",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "کاپی کریں (Ctrl+C)، محفوظ کریں (Ctrl+S)، اسکرین پر پن کریں، ای میل کریں، یا کئی کو ایک گائیڈ میں جمع کریں (فائل > گائیڈ برآمد کریں)۔",
+  "Everything is kept": "سب کچھ محفوظ رہتا ہے",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "ہر کیپچر لائبریری (Ctrl+L) میں جاتا ہے، جہاں اسے تاریخ، پروگرام اور ٹیگز سے تلاش کیا جا سکتا ہے۔",
+  "From anywhere": "کہیں سے بھی",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "ٹاسک بار کے کونے میں Snagster کا آئیکن کیپچر پینل کھولتا ہے؛ فوری مینو کے لیے اس پر دائیں کلک کریں۔",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "ہاٹ کیز وہ کیز اپنے قبضے میں لے سکتی ہیں جو کوئی اور پروگرام استعمال کرتا ہے (ترتیبات > ہاٹ کیز)۔",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "نئے ٹولز: انتخاب (تصویر کا کچھ حصہ اٹھا کر منتقل کریں)، بھریں اور مٹانے والا۔",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "دونوں سروں پر نوک والے تیر، متن کی سیدھ اور آؤٹ لائن، کال آؤٹ کی شکلیں، دھندلاہٹ کی اقسام۔",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "فوری انداز، حسب ضرورت ٹول بار، نشانات کو کاٹنا / کاپی کرنا / چسپاں کرنا۔",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "ایک ساتھ کئی حصوں کا کیپچر، ذیلی مینو کے ساتھ مینو، اور خود کی جانے والی اسکرولنگ۔",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "نئی تصویر، ٹیمپلیٹس، حالیہ کھولیں، نام تبدیل کریں، ری سائیکل بن، بیچ برآمد، پرنٹ، ای میل، Word دستاویزات۔",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "پری سیٹس کو درآمد اور برآمد کیا جا سکتا ہے اور ان کی نقل بنائی جا سکتی ہے؛ Snagster، Windows کے ساتھ شروع ہو سکتا ہے۔"
  }
 }

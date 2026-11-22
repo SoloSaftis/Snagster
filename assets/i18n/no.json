@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Avslutt og åpne på nytt",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster klarte ikke å starte seg selv på nytt. Avslutt og åpne det igjen.",
   "The screen couldn't be copied.": "Skjermen kunne ikke kopieres.",
-  "Ink isn't in replays or in videos from the Record tab.": "Blekk er ikke med i reprisene eller i videoer fra fanen Ta opp."
+  "Ink isn't in replays or in videos from the Record tab.": "Blekk er ikke med i reprisene eller i videoer fra fanen Ta opp.",
+  "1. Capture": "1. Ta opp",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Trykk på Print Screen (eller Ta opp-knappen). Dra over et område, eller klikk på et vindu, en knapp eller en meny. Deretter lar en verktøylinje deg ta opp, rulle, spille inn en GIF eller hente teksten.",
+  "2. Mark it up": "2. Merk opp",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Velg et verktøy til venstre: piler, tekst, snakkebobler, trinn, stempler, uskarphet, søkelys, forstørring... Innstillingene for hvert verktøy er til høyre.",
+  "3. Share it": "3. Del det",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopier det (Ctrl+C), lagre det (Ctrl+S), fest det på skjermen, send det på e-post, eller samle flere i en veiledning (Fil > Eksporter veiledning).",
+  "Everything is kept": "Alt blir tatt vare på",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Hvert opptak havner i Bibliotek (Ctrl+L), og du kan søke etter dato, program og etiketter.",
+  "From anywhere": "Fra hvor som helst",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Snagsters ikon i systemstatusfeltet åpner opptakspanelet; høyreklikk på det for hurtigmenyen.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Hurtigtaster kan overta taster som et annet program bruker (Innstillinger > Hurtigtaster).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Nye verktøy: Markering (løft ut en del av bildet og flytt den), Fyll og Viskelær.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Piler med spiss i begge ender, justering og omriss for tekst, former for snakkebobler, typer uskarphet.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Hurtigstiler, en tilpassbar verktøylinje, klipp ut / kopier / lim inn merker.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Opptak av flere områder samtidig, menyer med undermenyene sine, og rulling du gjør selv.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Nytt bilde, maler, åpne nylige, gi nytt navn, papirkurv, masseeksport, utskrift, e-post, Word-dokumenter.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Forhåndsinnstillinger kan importeres, eksporteres og dupliseres; Snagster kan starte med Windows."
  }
 }

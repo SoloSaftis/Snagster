@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "አቁምና እንደገና ክፈት",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ራሱን እንደገና ማስጀመር አልቻለም። ዝጉትና እንደገና ይክፈቱት።",
   "The screen couldn't be copied.": "ማያ ገጹ መቅዳት አልተቻለም።",
-  "Ink isn't in replays or in videos from the Record tab.": "ስዕል በድጋሚ ማጫወቻዎች ወይም ከመዝግብ ትር በተቀረጹ ቪዲዮዎች ውስጥ አይካተትም።"
+  "Ink isn't in replays or in videos from the Record tab.": "ስዕል በድጋሚ ማጫወቻዎች ወይም ከመዝግብ ትር በተቀረጹ ቪዲዮዎች ውስጥ አይካተትም።",
+  "1. Capture": "1. ቅረጽ",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screenን (ወይም የቅረጽ አዝራሩን) ይጫኑ። አካባቢ ይጎትቱ፣ ወይም መስኮት፣ አዝራር ወይም ምናሌ ጠቅ ያድርጉ። ከዚያ የመሣሪያ አሞሌ እንዲቀርጹ፣ እንዲያሸብልሉ፣ GIF እንዲመዘግቡ ወይም ጽሑፉን እንዲወስዱ ያስችልዎታል።",
+  "2. Mark it up": "2. ምልክት ያድርጉበት",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "በግራ በኩል መሣሪያ ይምረጡ፦ ቀስቶች፣ ጽሑፍ፣ የንግግር አረፋዎች፣ ደረጃዎች፣ ማህተሞች፣ ማደብዘዝ፣ ትኩረት ብርሃን፣ ማጉላት... የእያንዳንዱ መሣሪያ አማራጮች በቀኝ በኩል ናቸው።",
+  "3. Share it": "3. ያጋሩት",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "ይቅዱት (Ctrl+C)፣ ያስቀምጡት (Ctrl+S)፣ በማያ ገጹ ላይ ይሰኩት፣ በኢሜይል ይላኩት፣ ወይም ብዙዎቹን በአንድ መመሪያ ውስጥ ያድርጉ (ፋይል > መመሪያውን ወደ ውጭ ላክ)።",
+  "Everything is kept": "ሁሉም ነገር ይቀመጣል",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "እያንዳንዱ ቀረጻ ወደ ቤተ-መጽሐፍት (Ctrl+L) ይገባል፤ በቀን፣ በፕሮግራም እና በመለያዎች መፈለግ ይቻላል።",
+  "From anywhere": "ከየትኛውም ቦታ",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "በተግባር አሞሌ ጥግ ላይ ያለው የSnagster አዶ የቀረጻ ፓነሉን ይከፍታል፤ ለፈጣን ምናሌ በቀኝ ጠቅ ያድርጉት።",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "ፈጣን ቁልፎች ሌላ ፕሮግራም የሚጠቀምባቸውን ቁልፎች ሊረከቡ ይችላሉ (ቅንብሮች > ፈጣን ቁልፎች)።",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "አዲስ መሣሪያዎች፦ ምርጫ (የሥዕሉን ክፍል አንስተው ያንቀሳቅሱት)፣ ሙላ እና ማጥፊያ።",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "በሁለቱም ጫፎች ራስ ያላቸው ቀስቶች፣ የጽሑፍ አሰላለፍ እና ዝርዝር ድንበር፣ የንግግር አረፋ ቅርጾች፣ የማደብዘዝ ዓይነቶች።",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "ፈጣን ቅጦች፣ ሊበጅ የሚችል የመሣሪያ አሞሌ፣ የምልክቶች መቁረጥ / መቅዳት / መለጠፍ።",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "ብዙ አካባቢዎችን በአንድ ጊዜ፣ ምናሌዎችን ከንዑስ ምናሌዎቻቸው ጋር፣ እና ራስዎ የሚያሸብልሉትን ይቅረጹ።",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "አዲስ ምስል፣ አብነቶች፣ የቅርብ ጊዜ ክፈት፣ ዳግም ሰይም፣ መጣያ፣ በጅምላ ወደ ውጭ መላክ፣ ማተም፣ ኢሜይል፣ የWord ሰነዶች።",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "ቅድመ-ቅንብሮች ሊገቡ፣ ወደ ውጭ ሊላኩ እና ሊባዙ ይችላሉ፤ Snagster ከWindows ጋር አብሮ ሊጀምር ይችላል።"
  }
 }

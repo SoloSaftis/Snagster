@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Saír e volver abrir",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster non puido reiniciarse. Péchao e volve abrilo.",
   "The screen couldn't be copied.": "Non se puido copiar a pantalla.",
-  "Ink isn't in replays or in videos from the Record tab.": "A tinta non aparece nas repeticións nin nos vídeos da lapela Gravar."
+  "Ink isn't in replays or in videos from the Record tab.": "A tinta non aparece nas repeticións nin nos vídeos da lapela Gravar.",
+  "1. Capture": "1. Captura",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Preme Print Screen (ou o botón Capturar). Arrastra sobre unha área ou fai clic nunha xanela, un botón ou un menú. Despois, unha barra de ferramentas permíteche capturar, facer unha captura con desprazamento, gravar un GIF ou extraer o texto.",
+  "2. Mark it up": "2. Anótao",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Escolle unha ferramenta á esquerda: frechas, texto, bocadillos, pasos, selos, desenfocado, foco, ampliación... As opcións de cada ferramenta están á dereita.",
+  "3. Share it": "3. Compárteo",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Cópiaa (Ctrl+C), gárdaa (Ctrl+S), fíxaa na pantalla, envíaa por correo electrónico ou xunta varias nunha guía (Ficheiro > Exportar guía).",
+  "Everything is kept": "Todo se garda",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Cada captura vai á Biblioteca (Ctrl+L), onde podes buscala por data, programa e etiquetas.",
+  "From anywhere": "Desde calquera lugar",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "A icona de Snagster na esquina da barra de tarefas abre o panel de captura; preme nela co botón dereito para ver o menú rápido.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Os atallos poden tomar teclas que usa outro programa (Configuración > Atallos).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Novas ferramentas: Selección (levanta parte da imaxe e móvea), Recheo e Goma.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Frechas con punta nun ou nos dous extremos, aliñación e contorno do texto, formas de bocadillo, tipos de desenfocado.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Estilos rápidos, barra de ferramentas personalizable, cortar / copiar / pegar marcas.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Captura de varias áreas á vez, de menús cos seus submenús e con desprazamento manual.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Imaxe nova, modelos, abrir recente, cambiar o nome, lixo, exportación por lotes, imprimir, correo electrónico, documentos de Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Os predefinidos pódense importar, exportar e duplicar; Snagster pode iniciarse con Windows."
  }
 }

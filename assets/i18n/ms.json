@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Keluar dan Buka Semula",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster tidak dapat memulakan semula dirinya. Keluar daripadanya dan buka semula.",
   "The screen couldn't be copied.": "Skrin tidak dapat disalin.",
-  "Ink isn't in replays or in videos from the Record tab.": "Dakwat tiada dalam ulang tayang atau dalam video dari tab Rakam."
+  "Ink isn't in replays or in videos from the Record tab.": "Dakwat tiada dalam ulang tayang atau dalam video dari tab Rakam.",
+  "1. Capture": "1. Tangkap",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Tekan Print Screen (atau butang Tangkap). Seret satu kawasan, atau klik tetingkap, butang atau menu. Kemudian bar alat membolehkan anda menangkap, menatal, merakam GIF atau mengambil teks.",
+  "2. Mark it up": "2. Tandakan",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Pilih alat di sebelah kiri: anak panah, teks, belon teks, langkah, setem, kaburkan, sorotan, besarkan... Pilihan untuk setiap alat ada di sebelah kanan.",
+  "3. Share it": "3. Kongsi",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Salin (Ctrl+C), simpan (Ctrl+S), semat pada skrin, hantar melalui e-mel, atau gabungkan beberapa tangkapan menjadi panduan (Fail > Eksport panduan).",
+  "Everything is kept": "Semuanya disimpan",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Setiap tangkapan masuk ke Pustaka (Ctrl+L), dan boleh dicari mengikut tarikh, program dan teg.",
+  "From anywhere": "Dari mana-mana",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Ikon Snagster di sudut bar tugas membuka panel tangkapan; klik kanan padanya untuk menu pantas.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Kekunci pintas boleh mengambil alih kekunci yang digunakan program lain (Tetapan > Kekunci pintas).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Alat baharu: Pemilihan (angkat sebahagian gambar dan alihkannya), Isi dan Pemadam.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Anak panah dengan kepala di kedua-dua hujung, penjajaran dan garis luar teks, bentuk belon teks, jenis kabur.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Gaya pantas, bar alat yang boleh disesuaikan, potong / salin / tampal tanda.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Tangkap beberapa kawasan serentak, menu bersama submenunya, dan penatalan yang anda lakukan sendiri.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Imej baharu, templat, buka terkini, namakan semula, Tong Kitar Semula, eksport kelompok, cetak, e-mel, dokumen Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Pratetap boleh diimport, dieksport dan diduplikasi; Snagster boleh bermula bersama Windows."
  }
 }

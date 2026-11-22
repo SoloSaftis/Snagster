@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Whakamutu, Whakatuwhera Anō",
   "Snagster couldn't restart itself. Quit it and open it again.": "Kāore i taea e Snagster te tīmata anō i a ia anō. Whakamutua, ka whakatuwhera anō.",
   "The screen couldn't be copied.": "Kāore i taea te kape i te mata.",
-  "Ink isn't in replays or in videos from the Record tab.": "Kāore te Mangumangu i roto i ngā whakahoki, i ngā ataata rānei mai i te ripa Rekoata."
+  "Ink isn't in replays or in videos from the Record tab.": "Kāore te Mangumangu i roto i ngā whakahoki, i ngā ataata rānei mai i te ripa Rekoata.",
+  "1. Capture": "1. Hopu",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Pēhia te Print Screen (te pātene Hopu rānei). Tōia tētahi wāhi, pāwhiri rānei i tētahi matapihi, pātene, tahua rānei. Kātahi ka taea e koe mā te kaupae taputapu te hopu, te kōrori, te rekoata i tētahi GIF, te tango rānei i ngā kupu.",
+  "2. Mark it up": "2. Tohua",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Kōwhiria tētahi taputapu i te taha mauī: ngā pere, kupu, pupuhi kōrero, takahanga, hiri, whakaraerae, rama aronui, whakawhānui… Kei te taha matau ngā kōwhiringa mō ia taputapu.",
+  "3. Share it": "3. Tiria",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kapia (Ctrl+C), penapenatia (Ctrl+S), titia ki te mata, īmēratia, kohia rānei ētahi ki tētahi kaiārahi (Kōnae > Kaweake i te kaiārahi).",
+  "Everything is kept": "Ka puritia ngā mea katoa",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Ka haere ia hopu ki te Whare pukapuka (Ctrl+L), ā, ka taea te rapu mā te rā, te papatono me ngā tūtohu.",
+  "From anywhere": "Mai i ngā wāhi katoa",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Mā te tohu o Snagster i te kokonga o te pae mahi e huaki te papa hopu; pāwhiri matau ki runga hei whakaatu i te tahua tere.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Ka taea e ngā ara poto te tango i ngā pātuhi e whakamahia ana e tētahi atu hōtaka (Ngā tautuhinga > Ngā ara poto).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Ngā taputapu hou: Kōwhiringa (hikitia tētahi wāhanga o te whakaahua, ka neke ai), Whakakī me Whakamuku.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Ngā pere me ngā upoko ki tētahi pito, ki ngā pito e rua rānei, te whakahāngai me te tapa o ngā kupu, ngā hanga pupuhi kōrero, ngā momo whakaraerae.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Ngā āhua tere, he kaupae taputapu ka taea te whakarite, te tuaina / kapi / whakapiri i ngā tohu.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Te hopu i ētahi wāhi maha i te wā kotahi, ngā tahua me ō rātou tahua-iti, me te kōrori ā-ringa.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Whakaahua hou, ngā tauira, huaki i ngā mea tata nei, whakaingoa anō, ipu para, kaweake huinga, tā, īmēra, ngā tuhinga Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Ka taea te kawemai, te kaweake me te tāruarua i ngā tautuhinga ā-mua; ka taea e Snagster te tīmata ina tīmata a Windows."
  }
 }

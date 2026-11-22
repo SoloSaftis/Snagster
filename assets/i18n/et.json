@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Sulge ja ava uuesti",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ei saanud ennast taaskäivitada. Sulgege see ja avage uuesti.",
   "The screen couldn't be copied.": "Ekraani ei õnnestunud kopeerida.",
-  "Ink isn't in replays or in videos from the Record tab.": "Tint ei ole kordustes ega vahekaardi Lindista videotes."
+  "Ink isn't in replays or in videos from the Record tab.": "Tint ei ole kordustes ega vahekaardi Lindista videotes.",
+  "1. Capture": "1. Jäädvusta",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Vajuta Print Screen (või nuppu Jäädvusta). Lohista ala või klõpsa aknal, nupul või menüül. Seejärel saad tööriistaribalt jäädvustada, kerida, salvestada GIF-i või võtta teksti.",
+  "2. Mark it up": "2. Märgi see üles",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Vali vasakult tööriist: nooled, tekst, jutumullid, sammud, templid, hägustus, prožektor, suurendus... Iga tööriista valikud on paremal.",
+  "3. Share it": "3. Jaga",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopeeri (Ctrl+C), salvesta (Ctrl+S), kinnita ekraanile, saada e-postiga või pane mitu jäädvustust juhendisse (Fail > Ekspordi juhend).",
+  "Everything is kept": "Kõik jääb alles",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Iga jäädvustus läheb kogusse (Ctrl+L), kus saab otsida kuupäeva, programmi ja siltide järgi.",
+  "From anywhere": "Igalt poolt",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Snagsteri ikoon tegumiriba nurgas avab jäädvustuspaneeli; kiirmenüü avamiseks paremklõpsa seda.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Kiirklahvid saavad üle võtta klahve, mida kasutab mõni teine programm (Sätted > Kiirklahvid).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Uued tööriistad: Valik (tõsta osa pildist üles ja liiguta seda), Täide ja Kustutuskumm.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Nooled, mille teravik on ühes või mõlemas otsas, teksti joondus ja kontuur, jutumullide kujud, hägustuse tüübid.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Kiirstiilid, kohandatav tööriistariba, märgete lõikamine / kopeerimine / kleepimine.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Mitme ala korraga jäädvustamine, menüüd koos alammenüüdega ja käsitsi kerimine.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Uus pilt, mallid, hiljutiste avamine, ümbernimetamine, prügikast, pakkeksport, printimine, e-post, Wordi dokumendid.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Eelseadistusi saab importida, eksportida ja dubleerida; Snagster võib käivituda koos Windowsiga."
  }
 }

@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "ចេញ ហើយបើកម្ដងទៀត",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster មិនអាចចាប់ផ្ដើមខ្លួនឯងឡើងវិញបានទេ។ សូមបិទវា ហើយបើកវាម្ដងទៀត។",
   "The screen couldn't be copied.": "មិនអាចចម្លងអេក្រង់បានទេ។",
-  "Ink isn't in replays or in videos from the Record tab.": "ទឹកខ្មៅមិនមាននៅក្នុងការចាក់ឡើងវិញ ឬវីដេអូពីផ្ទាំងថតទេ។"
+  "Ink isn't in replays or in videos from the Record tab.": "ទឹកខ្មៅមិនមាននៅក្នុងការចាក់ឡើងវិញ ឬវីដេអូពីផ្ទាំងថតទេ។",
+  "1. Capture": "1. ចាប់យក",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "ចុច Print Screen (ឬប៊ូតុងចាប់យក)។ អូសលើតំបន់មួយ ឬចុចលើវិនដូ ប៊ូតុង ឬម៉ឺនុយ។ បន្ទាប់មក បារឧបករណ៍អនុញ្ញាតឱ្យអ្នកចាប់យក រមូរ ថត GIF ឬចាប់យកអត្ថបទ។",
+  "2. Mark it up": "2. ដាក់សម្គាល់",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "ជ្រើសរើសឧបករណ៍នៅខាងឆ្វេង៖ ព្រួញ អត្ថបទ ប្រអប់ពន្យល់ ជំហាន ត្រា ធ្វើឱ្យព្រាល ពន្លឺផ្តោត ពង្រីក… ជម្រើសសម្រាប់ឧបករណ៍នីមួយៗនៅខាងស្តាំ។",
+  "3. Share it": "3. ចែករំលែក",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "ចម្លងវា (Ctrl+C) រក្សាទុកវា (Ctrl+S) ខ្ទាស់វានៅលើអេក្រង់ ផ្ញើតាមអ៊ីមែល ឬដាក់ច្រើនចូលក្នុងមគ្គុទ្ទេសក៍ (ឯកសារ > នាំចេញមគ្គុទ្ទេសក៍)។",
+  "Everything is kept": "អ្វីៗទាំងអស់ត្រូវបានរក្សាទុក",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "ការចាប់យកនីមួយៗចូលទៅក្នុងបណ្ណាល័យ (Ctrl+L) ដែលអាចស្វែងរកតាមកាលបរិច្ឆេទ កម្មវិធី និងស្លាក។",
+  "From anywhere": "ពីគ្រប់ទីកន្លែង",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "រូបតំណាង Snagster នៅជ្រុងរបារកិច្ចការបើកផ្ទាំងចាប់យក។ ចុចខាងស្តាំលើវាសម្រាប់ម៉ឺនុយលឿន។",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "គ្រាប់ចុចលឿនអាចដណ្តើមគ្រាប់ចុចដែលកម្មវិធីផ្សេងប្រើ (ការកំណត់ > គ្រាប់ចុចលឿន)។",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "ឧបករណ៍ថ្មី៖ ការជ្រើសរើស (លើកផ្នែកមួយនៃរូបភាព ហើយផ្លាស់ទីវា) បំពេញ និងជ័រលុប។",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "ព្រួញដែលមានក្បាលនៅចុងម្ខាង ឬទាំងសងខាង ការតម្រឹម និងគ្រោងអត្ថបទ រូបរាងប្រអប់ពន្យល់ ប្រភេទនៃការធ្វើឱ្យព្រាល។",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "រចនាប័ទ្មលឿន បារឧបករណ៍ដែលអាចប្តូរតាមបំណង កាត់ / ចម្លង / បិទភ្ជាប់សញ្ញាសម្គាល់។",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "ចាប់យកតំបន់ច្រើនក្នុងពេលតែមួយ ម៉ឺនុយជាមួយម៉ឺនុយរងរបស់វា និងការរមូរដោយខ្លួនឯង។",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "រូបភាពថ្មី គំរូ បើកថ្មីៗ ប្តូរឈ្មោះ ធុងសំរាម នាំចេញជាបាច់ បោះពុម្ព អ៊ីមែល ឯកសារ Word។",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "ការកំណត់ជាមុនអាចនាំចូល នាំចេញ និងចម្លងស្ទួនបាន។ Snagster អាចចាប់ផ្តើមជាមួយ Windows។"
  }
 }

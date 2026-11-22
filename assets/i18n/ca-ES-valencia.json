@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Ix i torna a obrir",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster no s'ha pogut reiniciar. Tanqueu-lo i torneu-lo a obrir.",
   "The screen couldn't be copied.": "No s'ha pogut copiar la pantalla.",
-  "Ink isn't in replays or in videos from the Record tab.": "La tinta no és a les repeticions ni als vídeos de la pestanya Grava."
+  "Ink isn't in replays or in videos from the Record tab.": "La tinta no és a les repeticions ni als vídeos de la pestanya Grava.",
+  "1. Capture": "1. Captura",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Premeu Print Screen (o el botó Captura). Arrossegueu una àrea o feu clic en una finestra, un botó o un menú. Després, una barra d'eines vos permet capturar, desplaçar, gravar un GIF o extraure'n el text.",
+  "2. Mark it up": "2. Afegiu-hi marques",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Trieu una eina a l'esquerra: fletxes, text, crides, passos, segells, desenfocament, focus, ampliació... Les opcions de cada eina són a la dreta.",
+  "3. Share it": "3. Compartiu-la",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Copieu-la (Ctrl+C), guardeu-la (Ctrl+S), fixeu-la en la pantalla, envieu-la per correu electrònic o poseu-ne diverses en una guia (Fitxer > Exporta la guia).",
+  "Everything is kept": "Es conserva tot",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Cada captura va a la Biblioteca (Ctrl+L), on podeu cercar per data, programa i etiquetes.",
+  "From anywhere": "Des de qualsevol lloc",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "La icona de Snagster en l'extrem de la barra de tasques obri el plafó de captura; feu-hi clic dret per a obrir el menú ràpid.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Les dreceres poden prendre tecles que usa un altre programa (Configuració > Dreceres).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Eines noves: Selecció (alceu una part de la imatge i moveu-la), Farciment i Goma.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Fletxes amb puntes en els dos extrems, alineació i contorn del text, formes de crida, tipus de desenfocament.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Estils ràpids, una barra d'eines personalitzable, retallar / copiar / enganxar marques.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Captura de diverses àrees alhora, de menús amb els seus submenús i del desplaçament que feu vosaltres mateixos.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Imatge nova, plantilles, obri recent, canvia el nom, paperera, exportació per lots, impressió, correu electrònic, documents Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Els predefinits es poden importar, exportar i duplicar; Snagster es pot iniciar amb Windows."
  }
 }

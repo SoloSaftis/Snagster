@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Avsluta och öppna igen",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster kunde inte starta om sig själv. Avsluta och öppna det igen.",
   "The screen couldn't be copied.": "Skärmen kunde inte kopieras.",
-  "Ink isn't in replays or in videos from the Record tab.": "Bläck finns inte med i repriser eller i videor från fliken Spela in."
+  "Ink isn't in replays or in videos from the Record tab.": "Bläck finns inte med i repriser eller i videor från fliken Spela in.",
+  "1. Capture": "1. Fånga",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Tryck på Print Screen (eller knappen Fånga). Dra över ett område, eller klicka på ett fönster, en knapp eller en meny. Ett verktygsfält låter dig sedan fånga, rulla, spela in en GIF eller hämta texten.",
+  "2. Mark it up": "2. Markera",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Välj ett verktyg till vänster: pilar, text, pratbubblor, steg, stämplar, oskärpa, strålkastare, förstoring... Inställningarna för varje verktyg finns till höger.",
+  "3. Share it": "3. Dela",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopiera (Ctrl+C), spara (Ctrl+S), fäst på skärmen, skicka med e-post eller samla flera i en guide (Arkiv > Exportera guide).",
+  "Everything is kept": "Allt sparas",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Varje fångst hamnar i Biblioteket (Ctrl+L) och går att söka efter datum, program och taggar.",
+  "From anywhere": "Från var som helst",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Snagsters ikon i meddelandefältet öppnar fångstpanelen; högerklicka på den för snabbmenyn.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Snabbtangenter kan ta över tangenter som ett annat program använder (Inställningar > Snabbtangenter).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Nya verktyg: Markering (lyft en del av bilden och flytta den), Fyllning och Suddgummi.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Pilar med spetsar i båda ändar, textjustering och textkontur, pratbubbleformer, typer av oskärpa.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Snabbstilar, ett anpassningsbart verktygsfält, klipp ut / kopiera / klistra in markeringar.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Fånga flera områden på en gång, menyer med sina undermenyer och rullning som du gör själv.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Ny bild, mallar, öppna senaste, byt namn, papperskorgen, batchexport, utskrift, e-post, Word-dokument.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Förinställningar kan importeras, exporteras och dupliceras; Snagster kan starta med Windows."
  }
 }

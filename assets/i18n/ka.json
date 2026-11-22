@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "გასვლა და ხელახლა გახსნა",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster-მა ვერ შეძლო თავისით გადატვირთვა. დახურეთ და ხელახლა გახსენით.",
   "The screen couldn't be copied.": "ეკრანის კოპირება ვერ მოხერხდა.",
-  "Ink isn't in replays or in videos from the Record tab.": "მელანი არ ჩანს გამეორებებში და ჩაწერა ჩანართიდან გადაღებულ ვიდეოებში."
+  "Ink isn't in replays or in videos from the Record tab.": "მელანი არ ჩანს გამეორებებში და ჩაწერა ჩანართიდან გადაღებულ ვიდეოებში.",
+  "1. Capture": "1. გადაღება",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "დააჭირეთ Print Screen-ს (ან გადაღების ღილაკს). გადაათრიეთ არე ან დააწკაპუნეთ ფანჯარაზე, ღილაკზე ან მენიუზე. შემდეგ ხელსაწყოთა ზოლით შეგიძლიათ გადაიღოთ, გადაახვიოთ, ჩაწეროთ GIF ან აიღოთ ტექსტი.",
+  "2. Mark it up": "2. დაამატეთ შენიშვნები",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "აირჩიეთ ხელსაწყო მარცხნივ: ისრები, ტექსტი, გამოკვეთები, ნაბიჯები, შტამპები, გაბუნდოვანება, პროჟექტორი, გადიდება… თითოეული ხელსაწყოს პარამეტრები მარჯვნივაა.",
+  "3. Share it": "3. გააზიარეთ",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "დააკოპირეთ (Ctrl+C), შეინახეთ (Ctrl+S), ჩაამაგრეთ ეკრანზე, გაგზავნეთ ელფოსტით ან რამდენიმე გააერთიანეთ გზამკვლევში (ფაილი > გზამკვლევის ექსპორტი).",
+  "Everything is kept": "ყველაფერი ინახება",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "ყოველი გადაღება ბიბლიოთეკაში (Ctrl+L) ხვდება და მისი მოძებნა შეიძლება თარიღით, პროგრამით და ჭდეებით.",
+  "From anywhere": "ნებისმიერი ადგილიდან",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Snagster-ის ხატულა ამოცანების ზოლის კუთხეში ხსნის გადაღების პანელს; სწრაფი მენიუსთვის დააწკაპუნეთ მასზე მარჯვენა ღილაკით.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "ცხელ კლავიშებს შეუძლიათ დაიკავონ სხვა პროგრამის მიერ გამოყენებული კლავიშები (პარამეტრები > ცხელი კლავიშები).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "ახალი ხელსაწყოები: მონიშვნა (აიღეთ სურათის ნაწილი და გადაიტანეთ), შევსება და საშლელი.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "ისრები თავებით ერთ ან ორივე ბოლოზე, ტექსტის გასწორება და კონტური, გამოკვეთის ფორმები, გაბუნდოვანების ტიპები.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "სწრაფი სტილები, მორგებადი ხელსაწყოთა ზოლი, ნიშნების ამოჭრა / კოპირება / ჩასმა.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "რამდენიმე არის ერთდროულად გადაღება, მენიუები ქვემენიუებით და ხელით გადახვევა.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "ახალი სურათი, შაბლონები, ბოლოს გახსნილები, გადარქმევა, ნაგვის ყუთი, ჯგუფური ექსპორტი, ბეჭდვა, ელფოსტა, Word დოკუმენტები.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "პრესეტების იმპორტი, ექსპორტი და დუბლირება შესაძლებელია; Snagster შეიძლება გაეშვას Windows-თან ერთად."
  }
 }

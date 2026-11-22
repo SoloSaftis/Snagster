@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "ବନ୍ଦ କରି ପୁଣି ଖୋଲନ୍ତୁ",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ନିଜକୁ ପୁଣି ଆରମ୍ଭ କରିପାରିଲା ନାହିଁ। ଏହାକୁ ବନ୍ଦ କରି ପୁଣି ଖୋଲନ୍ତୁ।",
   "The screen couldn't be copied.": "ସ୍କ୍ରୀନ୍ କପି କରାଯାଇପାରିଲା ନାହିଁ।",
-  "Ink isn't in replays or in videos from the Record tab.": "କାଳି ରିପ୍ଲେ କିମ୍ବା ରେକର୍ଡ ଟ୍ୟାବ୍‌ର ଭିଡିଓରେ ନଥାଏ।"
+  "Ink isn't in replays or in videos from the Record tab.": "କାଳି ରିପ୍ଲେ କିମ୍ବା ରେକର୍ଡ ଟ୍ୟାବ୍‌ର ଭିଡିଓରେ ନଥାଏ।",
+  "1. Capture": "1. କ୍ୟାପଚର୍ କରନ୍ତୁ",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen ଦବାନ୍ତୁ (କିମ୍ବା କ୍ୟାପଚର୍ ବଟନ୍)। ଏକ କ୍ଷେତ୍ର ଡ୍ରାଗ୍ କରନ୍ତୁ, କିମ୍ବା ଏକ ୱିଣ୍ଡୋ, ବଟନ୍ କିମ୍ବା ମେନୁରେ କ୍ଲିକ୍ କରନ୍ତୁ। ତାପରେ ଏକ ଟୁଲବାର୍ ଆପଣଙ୍କୁ କ୍ୟାପଚର୍, ସ୍କ୍ରୋଲ୍, GIF ରେକର୍ଡ କିମ୍ବା ଟେକ୍ସଟ୍ ଗ୍ରାବ୍ କରିବାକୁ ଦିଏ।",
+  "2. Mark it up": "2. ଚିହ୍ନିତ କରନ୍ତୁ",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "ବାମପଟେ ଏକ ଟୁଲ୍ ବାଛନ୍ତୁ: ତୀର, ଟେକ୍ସଟ୍, କଲଆଉଟ୍, ପଦକ୍ଷେପ, ମୋହର, ଝାପସା, ସ୍ପଟଲାଇଟ୍, ବଡ଼ କରିବା... ପ୍ରତ୍ୟେକ ଟୁଲ୍‌ର ବିକଳ୍ପ ଡାହାଣପଟେ ଅଛି।",
+  "3. Share it": "3. ସେୟାର୍ କରନ୍ତୁ",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "ଏହାକୁ କପି କରନ୍ତୁ (Ctrl+C), ସେଭ୍ କରନ୍ତୁ (Ctrl+S), ସ୍କ୍ରିନରେ ପିନ୍ କରନ୍ତୁ, ଇମେଲ୍ କରନ୍ତୁ, କିମ୍ବା ଅନେକଙ୍କୁ ଏକ ଗାଇଡ୍‌ରେ ରଖନ୍ତୁ (ଫାଇଲ୍ > ଗାଇଡ୍ ଏକ୍ସପୋର୍ଟ କରନ୍ତୁ)।",
+  "Everything is kept": "ସବୁକିଛି ରଖାଯାଏ",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "ପ୍ରତ୍ୟେକ କ୍ୟାପଚର୍ ଲାଇବ୍ରେରୀ (Ctrl+L)କୁ ଯାଏ, ଯେଉଁଠି ତାରିଖ, ପ୍ରୋଗ୍ରାମ୍ ଓ ଟ୍ୟାଗ୍ ଅନୁସାରେ ଖୋଜିହେବ।",
+  "From anywhere": "ଯେକୌଣସି ସ୍ଥାନରୁ",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "ଟାସ୍କବାର୍ କୋଣରେ ଥିବା Snagster ର ଆଇକନ୍ କ୍ୟାପଚର୍ ପ୍ୟାନେଲ୍ ଖୋଲେ; ଶୀଘ୍ର ମେନୁ ପାଇଁ ଏଥିରେ ରାଇଟ୍-କ୍ଲିକ୍ କରନ୍ତୁ।",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "ହଟ୍‌କି ଅନ୍ୟ ପ୍ରୋଗ୍ରାମ୍ ବ୍ୟବହାର କରୁଥିବା କୀ'ଗୁଡ଼ିକୁ ନିଜ ଅଧୀନକୁ ନେଇପାରେ (ସେଟିଂସ୍ > ହଟ୍‌କି)।",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "ନୂଆ ଟୁଲ୍: ଚୟନ (ଚିତ୍ରର ଏକ ଅଂଶ ଉଠାଇ ଘୁଞ୍ଚାନ୍ତୁ), ଭରନ୍ତୁ ଓ ଇରେଜର୍।",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "ଉଭୟ ମୁଣ୍ଡରେ ଅଗ୍ରଭାଗ ଥିବା ତୀର, ଟେକ୍ସଟ୍‌ର ସଜ୍ଜା ଓ ଆଉଟଲାଇନ୍, କଲଆଉଟ୍ ଆକୃତି, ଝାପସାର ପ୍ରକାର।",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "ଶୀଘ୍ର ଶୈଳୀ, କଷ୍ଟମାଇଜ୍ କରିହେଉଥିବା ଟୁଲବାର୍, ଚିହ୍ନଗୁଡ଼ିକର କଟ୍ / କପି / ପେଷ୍ଟ।",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "ଏକାସାଙ୍ଗରେ ଏକାଧିକ କ୍ଷେତ୍ରର କ୍ୟାପଚର୍, ଉପ-ମେନୁ ସହିତ ମେନୁ, ଏବଂ ଆପଣ ନିଜେ କରୁଥିବା ସ୍କ୍ରୋଲିଂ।",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "ନୂଆ ଚିତ୍ର, ଟେମ୍ପଲେଟ୍, ସାମ୍ପ୍ରତିକ ଖୋଲନ୍ତୁ, ନାମ ବଦଳାନ୍ତୁ, ରିସାଇକଲ୍ ବିନ୍, ବ୍ୟାଚ୍ ଏକ୍ସପୋର୍ଟ, ପ୍ରିଣ୍ଟ, ଇମେଲ୍, Word ଡକ୍ୟୁମେଣ୍ଟ।",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "ପ୍ରିସେଟ୍ ଇମ୍ପୋର୍ଟ, ଏକ୍ସପୋର୍ଟ ଓ ଡୁପ୍ଲିକେଟ୍ କରିହେବ; Snagster Windows ସହିତ ଆରମ୍ଭ ହୋଇପାରେ।"
  }
 }

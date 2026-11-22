@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "बंद करून परत उगडात",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster स्वताक परत सुरू करूंक शकलें ना. तें बंद करात आनी परत उगडात.",
   "The screen couldn't be copied.": "स्क्रीन कॉपी करूंक जालें ना.",
-  "Ink isn't in replays or in videos from the Record tab.": "शाय रिप्ले वा रेकॉर्ड टॅबातल्या व्हिडिओंनी आसना."
+  "Ink isn't in replays or in videos from the Record tab.": "शाय रिप्ले वा रेकॉर्ड टॅबातल्या व्हिडिओंनी आसना.",
+  "1. Capture": "1. कॅप्चर",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen (वा कॅप्चर बटण) दामात. एक वाठार ओडात, वा विंडो, बटण वा मेनूचेर क्लिक करात. उपरांत टूलबार वरवीं तुमी कॅप्चर, स्क्रोल, GIF रेकॉर्ड वा मजकूर ग्रॅब करूंक शकतात.",
+  "2. Mark it up": "2. खुणो करात",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "दाव्या वटेन एक साधन निवडात: बाण, मजकूर, कॉलआउट, पावलां, शिक्के, धुसर, स्पॉटलाइट, व्हड करप… दर एका साधनाचे पर्याय उजव्या वटेन आसात.",
+  "3. Share it": "3. वांटून घेयात",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "कॉपी करात (Ctrl+C), सेव्ह करात (Ctrl+S), स्क्रीनाचेर पिन करात, ईमेल करात, वा जायते एका मार्गदर्शकांत घालात (फायल > मार्गदर्शक एक्स्पोर्ट करात).",
+  "Everything is kept": "सगळें सांबाळून दवरता",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "दर एक कॅप्चर लायब्ररींत (Ctrl+L) वता; तारीख, प्रोग्राम आनी टॅग प्रमाण सोदूंक मेळटा.",
+  "From anywhere": "खंयच्यानूय",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "टास्कबार कोंपऱ्यांतलो Snagster चो आयकॉन कॅप्चर पॅनेल उगडटा; बेगीन मेनू खातीर ताचेर उजवें-क्लिक करात.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "दुसरो प्रोग्राम वापरता ते कीज हॉटकी घेवंक शकतात (सेटिंग्ज > हॉटकी).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "नवीं साधनां: निवड (चित्राचो एक भाग उखलून हालयात), भरात आनी रबर.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "एका वा दोनूय तोंकांक टोंक आशिल्ले बाण, मजकुराचें संरेखण आनी रूपरेषा, कॉलआउटाचे आकार, धुसराचे प्रकार.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "बेगीन शैली, आपल्या पद्दतीन करूंक मेळपी टूलबार, खुणांचें कट / कॉपी / पेस्ट.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "एकूच वेळार जायते वाठार कॅप्चर, सब-मेनू आशिल्ले मेनू, आनी तुमी स्वता करतात तें स्क्रोलिंग.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "नवी प्रतिमा, टेंप्लेट, अलीकडलें उगडात, नांव बदलात, रिसायकल बिन, बॅच एक्स्पोर्ट, प्रिंट, ईमेल, Word दस्तावेज.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "प्रीसेट इंपोर्ट, एक्स्पोर्ट आनी नक्कल करूंक मेळटात; Snagster Windows वांगडा सुरू जावंक शकता."
  }
 }

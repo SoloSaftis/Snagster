@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Lopeta ja avaa uudelleen",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster ei voinut käynnistää itseään uudelleen. Lopeta se ja avaa se uudelleen.",
   "The screen couldn't be copied.": "Näyttöä ei voitu kopioida.",
-  "Ink isn't in replays or in videos from the Record tab.": "Muste ei ole toistoissa eikä Nauhoita-välilehden videoissa."
+  "Ink isn't in replays or in videos from the Record tab.": "Muste ei ole toistoissa eikä Nauhoita-välilehden videoissa.",
+  "1. Capture": "1. Kaappaa",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Paina Print Screen -näppäintä (tai Kaappaa-painiketta). Vedä alue tai napsauta ikkunaa, painiketta tai valikkoa. Työkalupalkista voit sitten kaapata, vierittää, tallentaa GIFin tai poimia tekstin.",
+  "2. Mark it up": "2. Merkitse",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Valitse työkalu vasemmalta: nuolet, teksti, huomiotekstiruudut, vaiheet, leimat, sumennus, valokeila, suurennus... Kunkin työkalun asetukset ovat oikealla.",
+  "3. Share it": "3. Jaa",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopioi (Ctrl+C), tallenna (Ctrl+S), kiinnitä näytölle, lähetä sähköpostilla tai kokoa useita oppaaksi (Tiedosto > Vie opas).",
+  "Everything is kept": "Kaikki säilyy",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Jokainen kaappaus tallentuu Kirjastoon (Ctrl+L), josta sitä voi hakea päivämäärän, ohjelman ja tunnisteiden mukaan.",
+  "From anywhere": "Mistä tahansa",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Snagsterin kuvake tehtäväpalkin kulmassa avaa kaappauspaneelin; napsauta sitä hiiren oikealla, niin saat pikavalikon.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Pikanäppäimet voivat ottaa haltuun näppäimiä, joita jokin toinen ohjelma käyttää (Asetukset > Pikanäppäimet).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Uudet työkalut: Valinta (nosta osa kuvasta ja siirrä sitä), Täyttö ja Pyyhekumi.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Nuolet, joissa on kärki jommassakummassa tai kummassakin päässä, tekstin tasaus ja ääriviiva, huomiotekstiruutujen muodot, sumennustyypit.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Pikatyylit, mukautettava työkalupalkki, merkintöjen leikkaaminen / kopioiminen / liittäminen.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Useiden alueiden kaappaus kerralla, valikot alavalikkoineen ja itse tehtävä vieritys.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Uusi kuva, mallit, viimeisimpien avaaminen, uudelleennimeäminen, roskakori, erävienti, tulostus, sähköposti, Word-asiakirjat.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Esiasetuksia voi tuoda, viedä ja monistaa; Snagster voi käynnistyä Windowsin mukana."
  }
 }

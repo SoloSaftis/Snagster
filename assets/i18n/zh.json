@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "退出并重新打开",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster 无法自行重新启动。请退出后重新打开。",
   "The screen couldn't be copied.": "无法复制屏幕。",
-  "Ink isn't in replays or in videos from the Record tab.": "墨迹不会出现在回放或录制选项卡的视频中。"
+  "Ink isn't in replays or in videos from the Record tab.": "墨迹不会出现在回放或录制选项卡的视频中。",
+  "1. Capture": "1. 截图",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "按 Print Screen（或截图按钮）。拖动选择区域，或单击窗口、按钮或菜单。随后可以在工具栏中截图、滚动、录制 GIF 或抓取文字。",
+  "2. Mark it up": "2. 添加标注",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "在左侧选择工具：箭头、文字、标注、步骤、图章、模糊、聚光灯、放大……每个工具的选项都在右侧。",
+  "3. Share it": "3. 分享",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "复制（Ctrl+C）、保存（Ctrl+S）、固定在屏幕上、通过电子邮件发送，或把多张截图合成一份指南（文件 > 导出指南）。",
+  "Everything is kept": "一切都会保留",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "每张截图都会进入库（Ctrl+L），可按日期、程序和标签搜索。",
+  "From anywhere": "随处可用",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "单击任务栏通知区域中的 Snagster 图标可打开截图面板；右键单击它可打开快捷菜单。",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "热键可以接管其他程序使用的按键（设置 > 热键）。",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "新工具：选区（提起图片的一部分并移动）、填充和橡皮擦。",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "双向箭头、文字对齐与描边、标注形状、模糊类型。",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "快速样式、可自定义的工具栏、标注的剪切 / 复制 / 粘贴。",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "一次截取多个区域、截取菜单及其子菜单，以及手动滚动截图。",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "新建图片、模板、打开最近的文件、重命名、回收站、批量导出、打印、电子邮件、Word 文档。",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "预设可以导入、导出和复制；Snagster 可以随 Windows 启动。"
  }
 }

@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Umalis at Buksan Muli",
   "Snagster couldn't restart itself. Quit it and open it again.": "Hindi na-restart ng Snagster ang sarili nito. Isara ito at buksan muli.",
   "The screen couldn't be copied.": "Hindi makopya ang screen.",
-  "Ink isn't in replays or in videos from the Record tab.": "Wala ang Tinta sa mga replay o sa mga video mula sa tab na I-record."
+  "Ink isn't in replays or in videos from the Record tab.": "Wala ang Tinta sa mga replay o sa mga video mula sa tab na I-record.",
+  "1. Capture": "1. Mag-capture",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Pindutin ang Print Screen (o ang Capture button). Mag-drag ng area, o i-click ang isang window, button o menu. Pagkatapos, may toolbar kung saan puwede kang mag-capture, mag-scroll, mag-record ng GIF o kunin ang text.",
+  "2. Mark it up": "2. Lagyan ng marka",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Pumili ng tool sa kaliwa: palaso, text, callout, hakbang, stamp, blur, spotlight, palakihin... Nasa kanan ang mga opsyon ng bawat tool.",
+  "3. Share it": "3. Ibahagi",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopyahin ito (Ctrl+C), i-save (Ctrl+S), i-pin sa screen, i-email, o pagsamahin ang ilan sa isang gabay (File > I-export ang gabay).",
+  "Everything is kept": "Naitatago ang lahat",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Napupunta sa Library (Ctrl+L) ang bawat capture, at mahahanap ito ayon sa petsa, programa at mga tag.",
+  "From anywhere": "Mula kahit saan",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Binubuksan ng icon ng Snagster sa sulok ng taskbar ang capture panel; i-right-click ito para sa mabilis na menu.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Puwedeng agawin ng mga hotkey ang mga key na ginagamit ng ibang programa (Mga Setting > Mga Hotkey).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Mga bagong tool: Pinili (iangat ang bahagi ng larawan at ilipat ito), Punan at Pambura.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Mga palaso na may ulo sa isa o magkabilang dulo, alignment at outline ng text, mga hugis ng callout, mga uri ng blur.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Mabilis na mga istilo, toolbar na nako-customize, pag-cut / kopya / paste ng mga marka.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Pag-capture ng ilang area nang sabay, mga menu kasama ang mga sub-menu nito, at scrolling na ikaw mismo ang gumagawa.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Bagong larawan, mga template, buksan ang kamakailan, palitan ang pangalan, Recycle Bin, batch export, pag-print, email, mga Word document.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Puwedeng i-import, i-export at i-duplicate ang mga preset; puwedeng magsimula ang Snagster kasabay ng Windows."
  }
 }

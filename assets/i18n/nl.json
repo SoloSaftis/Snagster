@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Stop en open opnieuw",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster kon zichzelf niet opnieuw starten. Stop Snagster en open het opnieuw.",
   "The screen couldn't be copied.": "Het scherm kon niet worden gekopieerd.",
-  "Ink isn't in replays or in videos from the Record tab.": "Inkt zit niet in replays of in video's van het tabblad Opnemen."
+  "Ink isn't in replays or in videos from the Record tab.": "Inkt zit niet in replays of in video's van het tabblad Opnemen.",
+  "1. Capture": "1. Vastleggen",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Druk op Print Screen (of de knop Vastleggen). Sleep een gebied, of klik op een venster, knop of menu. Daarna kun je via een werkbalk vastleggen, scrollen, een GIF opnemen of de tekst pakken.",
+  "2. Mark it up": "2. Aantekeningen maken",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Kies links een gereedschap: pijlen, tekst, tekstballonnen, stappen, stempels, vervagen, spotlight, vergroten... De opties voor elk gereedschap staan rechts.",
+  "3. Share it": "3. Delen",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopieer het (Ctrl+C), sla het op (Ctrl+S), zet het vast op het scherm, mail het, of bundel er meerdere in een handleiding (Bestand > Handleiding exporteren).",
+  "Everything is kept": "Alles wordt bewaard",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Elke opname komt in de Bibliotheek (Ctrl+L), doorzoekbaar op datum, programma en tags.",
+  "From anywhere": "Overal vandaan",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Het Snagster-pictogram in de taakbalkhoek opent het opnamepaneel; klik er met rechts op voor het snelmenu.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Sneltoetsen kunnen toetsen overnemen die een ander programma gebruikt (Instellingen > Sneltoetsen).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Nieuw gereedschap: Selectie (til een deel van de afbeelding op en verplaats het), Vulling en Gum.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Pijlen met punten aan beide uiteinden, uitlijning en omlijning van tekst, vormen voor tekstballonnen, soorten vervaging.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Snelle stijlen, een aanpasbare werkbalk, knippen / kopiëren / plakken van markeringen.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Meerdere gebieden tegelijk vastleggen, menu's met hun submenu's, en zelf scrollen.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Nieuwe afbeelding, sjablonen, recent openen, hernoemen, Prullenbak, batchexport, afdrukken, e-mail, Word-documenten.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Voorinstellingen kunnen worden geïmporteerd, geëxporteerd en gedupliceerd; Snagster kan met Windows starten."
  }
 }

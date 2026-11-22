@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Излези и отвори повторно",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster не можеше сам да се рестартира. Затворете го и отворете го повторно.",
   "The screen couldn't be copied.": "Екранот не можеше да се копира.",
-  "Ink isn't in replays or in videos from the Record tab.": "Мастилото не е во повторувањата ниту во видеата од картичката Снимај."
+  "Ink isn't in replays or in videos from the Record tab.": "Мастилото не е во повторувањата ниту во видеата од картичката Снимај.",
+  "1. Capture": "1. Снимете",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Притиснете Print Screen (или копчето Сними). Повлечете преку област или кликнете на прозорец, копче или мени. Потоа од лентата со алатки можете да направите снимка, да лизгате, да снимите GIF или да го земете текстот.",
+  "2. Mark it up": "2. Обележете",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Изберете алатка лево: стрелки, текст, балончиња, чекори, печати, заматување, рефлектор, зголемување… Опциите за секоја алатка се десно.",
+  "3. Share it": "3. Споделете",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Копирајте (Ctrl+C), зачувајте (Ctrl+S), закачете на екранот, испратете по е-пошта или ставете повеќе во водич (Датотека > Извези водич).",
+  "Everything is kept": "Сè се чува",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Секоја снимка оди во Библиотеката (Ctrl+L), каде што може да се пребарува по датум, програма и ознаки.",
+  "From anywhere": "Од секаде",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Иконата на Snagster во аголот на лентата со задачи го отвора панелот за снимање; кликнете на неа со десното копче за брзото мени.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Кратенките можат да ги преземат копчињата што ги користи друга програма (Поставки > Кратенки).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Нови алатки: Избор (подигнете дел од сликата и преместете го), Пополнување и Гума.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Стрелки со врвови на едниот или на двата краја, порамнување и контура на текстот, облици на балончиња, видови заматување.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Брзи стилови, прилагодлива лента со алатки, сечење / копирање / лепење на обележувања.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Снимање повеќе области одеднаш, менија со нивните подменија и лизгање што го правите сами.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Нова слика, шаблони, отворање неодамнешни, преименување, Корпа за отпадоци, групен извоз, печатење, е-пошта, Word документи.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Профилите може да се увезуваат, извезуваат и дуплираат; Snagster може да стартува со Windows."
  }
 }

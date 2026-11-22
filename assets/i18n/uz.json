@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Chiqish va qayta ochish",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster o‘zini qayta ishga tushira olmadi. Undan chiqib, qayta oching.",
   "The screen couldn't be copied.": "Ekranni nusxalab bo'lmadi.",
-  "Ink isn't in replays or in videos from the Record tab.": "Siyoh takrorlarda va Yozib olish bo'limidagi videolarda bo'lmaydi."
+  "Ink isn't in replays or in videos from the Record tab.": "Siyoh takrorlarda va Yozib olish bo'limidagi videolarda bo'lmaydi.",
+  "1. Capture": "1. Suratga oling",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen tugmasini (yoki Olish tugmasini) bosing. Sohani sichqoncha bilan belgilang yoki oyna, tugma yoki menyuni bosing. So‘ng asboblar paneli orqali suratga olish, aylantirish, GIF yozib olish yoki matnni olish mumkin.",
+  "2. Mark it up": "2. Belgilang",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Chapdan asbob tanlang: strelkalar, matn, izoh bulutchalari, qadamlar, muhrlar, xiralashtirish, diqqat markazi, kattalashtirish... Har bir asbobning sozlamalari o‘ngda.",
+  "3. Share it": "3. Ulashing",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Nusxa oling (Ctrl+C), saqlang (Ctrl+S), ekranga mahkamlang, email orqali yuboring yoki bir nechtasini qo‘llanmaga jamlang (Fayl > Qo‘llanmani eksport qilish).",
+  "Everything is kept": "Hammasi saqlanadi",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Har bir surat Kutubxonaga tushadi (Ctrl+L), uni sana, dastur va teglar bo‘yicha qidirish mumkin.",
+  "From anywhere": "Istalgan joydan",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Vazifalar paneli burchagidagi Snagster belgisi olish panelini ochadi; tezkor menyu uchun unga o‘ng tugma bilan bosing.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Tezkor tugmalar boshqa dastur ishlatayotgan tugmalarni egallashi mumkin (Sozlamalar > Tezkor tugmalar).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Yangi asboblar: Tanlov (rasmning bir qismini ko‘tarib, ko‘chiring), To‘ldirish va O‘chirg‘ich.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Ikki uchida ham uchli strelkalar, matnni tekislash va kontur, izoh bulutchasi shakllari, xiralashtirish turlari.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Tezkor uslublar, sozlanadigan asboblar paneli, belgilarni kesish / nusxa olish / qo‘yish.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Bir vaqtda bir nechta sohani, ichki menyulari bilan menyularni va o‘zingiz aylantirgan joyni suratga olish.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Yangi rasm, shablonlar, so‘nggilarni ochish, qayta nomlash, Savat, ommaviy eksport, chop etish, email, Word hujjatlari.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Andozalarni import, eksport qilish va ikkilantirish mumkin; Snagster Windows bilan birga ishga tushishi mumkin."
  }
 }

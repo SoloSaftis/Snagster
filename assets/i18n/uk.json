@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Вийти й відкрити знову",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster не зміг перезапуститися сам. Закрийте його й відкрийте знову.",
   "The screen couldn't be copied.": "Не вдалося скопіювати екран.",
-  "Ink isn't in replays or in videos from the Record tab.": "Малювання не потрапляє в повтори та у відео з вкладки «Запис»."
+  "Ink isn't in replays or in videos from the Record tab.": "Малювання не потрапляє в повтори та у відео з вкладки «Запис».",
+  "1. Capture": "1. Захопіть",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Натисніть Print Screen (або кнопку «Захоплення»). Виділіть ділянку перетягуванням або клацніть вікно, кнопку чи меню. Далі панель інструментів дає змогу захопити, прокрутити, записати GIF або взяти текст.",
+  "2. Mark it up": "2. Позначте",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Виберіть інструмент ліворуч: стрілки, текст, виноски, кроки, штампи, розмиття, прожектор, збільшення... Параметри кожного інструмента — праворуч.",
+  "3. Share it": "3. Поділіться",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Скопіюйте (Ctrl+C), збережіть (Ctrl+S), закріпіть на екрані, надішліть ел. поштою або зберіть кілька знімків у посібник (Файл > Експортувати посібник).",
+  "Everything is kept": "Усе зберігається",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Кожен знімок потрапляє до Бібліотеки (Ctrl+L), де його можна знайти за датою, програмою й тегами.",
+  "From anywhere": "Звідусіль",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Значок Snagster у куті панелі завдань відкриває панель захоплення; клацніть його правою кнопкою, щоб відкрити швидке меню.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Гарячі клавіші можуть перехоплювати клавіші, які використовує інша програма (Налаштування > Гарячі клавіші).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Нові інструменти: Виділення (підніміть частину зображення й перемістіть її), Заливка та Гумка.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Стрілки з наконечниками на обох кінцях, вирівнювання й контур тексту, форми виносок, типи розмиття.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Швидкі стилі, налаштовувана панель інструментів, вирізання / копіювання / вставлення позначок.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Захоплення кількох ділянок одночасно, меню з підменю та прокручування, яке ви робите самі.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Нове зображення, шаблони, відкриття нещодавніх, перейменування, кошик, пакетний експорт, друк, ел. пошта, документи Word.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Пресети можна імпортувати, експортувати й дублювати; Snagster може запускатися разом із Windows."
  }
 }

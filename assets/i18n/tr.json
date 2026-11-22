@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Çık ve yeniden aç",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster kendini yeniden başlatamadı. Uygulamadan çıkıp yeniden açın.",
   "The screen couldn't be copied.": "Ekran kopyalanamadı.",
-  "Ink isn't in replays or in videos from the Record tab.": "Mürekkep, tekrarlarda ve Kayıt sekmesinden alınan videolarda yer almaz."
+  "Ink isn't in replays or in videos from the Record tab.": "Mürekkep, tekrarlarda ve Kayıt sekmesinden alınan videolarda yer almaz.",
+  "1. Capture": "1. Yakalayın",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Print Screen tuşuna (veya Yakala düğmesine) basın. Bir alan sürükleyin ya da bir pencereye, düğmeye veya menüye tıklayın. Ardından bir araç çubuğuyla yakalayabilir, kaydırabilir, GIF kaydedebilir veya metni alabilirsiniz.",
+  "2. Mark it up": "2. İşaretleyin",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Soldan bir araç seçin: oklar, metin, konuşma balonları, adımlar, damgalar, bulanıklaştırma, spot ışığı, büyütme... Her aracın seçenekleri sağdadır.",
+  "3. Share it": "3. Paylaşın",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopyalayın (Ctrl+C), kaydedin (Ctrl+S), ekrana sabitleyin, e-postayla gönderin ya da birkaçını bir kılavuzda toplayın (Dosya > Kılavuzu dışa aktar).",
+  "Everything is kept": "Her şey saklanır",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Her yakalama Kitaplık'a gider (Ctrl+L); tarihe, programa ve etiketlere göre aranabilir.",
+  "From anywhere": "Her yerden",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Görev çubuğu köşesindeki Snagster simgesi yakalama panelini açar; hızlı menü için simgeye sağ tıklayın.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Kısayol tuşları başka bir programın kullandığı tuşları devralabilir (Ayarlar > Kısayol tuşları).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Yeni araçlar: Seçim (resmin bir bölümünü kaldırıp taşıyın), Dolgu ve Silgi.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "İki ucu da başlı oklar, metin hizalama ve dış çizgi, konuşma balonu şekilleri, bulanıklık türleri.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Hızlı stiller, özelleştirilebilir araç çubuğu, işaretlerde kes / kopyala / yapıştır.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Aynı anda birkaç alanı, alt menüleriyle birlikte menüleri ve kendi yaptığınız kaydırmayı yakalama.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Yeni resim, şablonlar, son kullanılanları aç, yeniden adlandır, Geri Dönüşüm Kutusu, toplu dışa aktarma, yazdırma, e-posta, Word belgeleri.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Ön ayarlar içe aktarılabilir, dışa aktarılabilir ve çoğaltılabilir; Snagster Windows ile başlayabilir."
  }
 }

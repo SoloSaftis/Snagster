@@ -1237,6 +1237,23 @@
   "Quit & Reopen": "Iziet un atvērt vēlreiz",
   "Snagster couldn't restart itself. Quit it and open it again.": "Snagster nevarēja pats sevi restartēt. Aizveriet to un atveriet vēlreiz.",
   "The screen couldn't be copied.": "Ekrānu neizdevās nokopēt.",
-  "Ink isn't in replays or in videos from the Record tab.": "Tintes nav atkārtojumos un videoklipos no cilnes Ierakstīt."
+  "Ink isn't in replays or in videos from the Record tab.": "Tintes nav atkārtojumos un videoklipos no cilnes Ierakstīt.",
+  "1. Capture": "1. Tveriet",
+  "Press Print Screen (or the Capture button). Drag an area, or click a window, button or menu. A toolbar then lets you capture, scroll, record a GIF or grab the text.": "Nospiediet Print Screen (vai pogu “Tvert”). Velciet apgabalu vai noklikšķiniet uz loga, pogas vai izvēlnes. Pēc tam rīkjoslā varat tvert, ritināt, ierakstīt GIF vai paņemt tekstu.",
+  "2. Mark it up": "2. Anotējiet",
+  "Pick a tool on the left: arrows, text, callouts, steps, stamps, blur, spotlight, magnify... The options for each tool are on the right.": "Kreisajā pusē izvēlieties rīku: bultas, teksts, teksta baloni, soļi, zīmogi, izpludināšana, prožektors, palielināšana… Katra rīka opcijas ir labajā pusē.",
+  "3. Share it": "3. Kopīgojiet",
+  "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).": "Kopējiet (Ctrl+C), saglabājiet (Ctrl+S), piespraudiet ekrānā, nosūtiet pa e-pastu vai apvienojiet vairākus ceļvedī (Fails > Eksportēt ceļvedi).",
+  "Everything is kept": "Viss tiek saglabāts",
+  "Every capture goes into the Library (Ctrl+L), searchable by date, program and tags.": "Katrs tvērums nonāk bibliotēkā (Ctrl+L), kur to var meklēt pēc datuma, programmas un tagiem.",
+  "From anywhere": "No jebkuras vietas",
+  "Snagster's icon in the taskbar corner opens the capture panel; right-click it for the quick menu.": "Snagster ikona uzdevumjoslas stūrī atver tveršanas paneli; noklikšķiniet uz tās ar peles labo pogu, lai atvērtu ātro izvēlni.",
+  "Hotkeys can take over keys another program uses (Settings > Hotkeys).": "Karstie taustiņi var pārņemt taustiņus, ko izmanto cita programma (Iestatījumi > Karstie taustiņi).",
+  "New tools: Selection (lift part of the picture and move it), Fill and Eraser.": "Jauni rīki: Atlase (paceliet attēla daļu un pārvietojiet to), Aizpildījums un Dzēšgumija.",
+  "Arrows with heads at either end, text alignment and outline, callout shapes, blur types.": "Bultas ar uzgaļiem vienā vai abos galos, teksta līdzinājums un kontūra, teksta balonu formas, izpludināšanas veidi.",
+  "Quick styles, a customizable toolbar, cut / copy / paste of marks.": "Ātrie stili, pielāgojama rīkjosla, atzīmju izgriešana / kopēšana / ielīmēšana.",
+  "Capture several areas at once, menus with their sub-menus, and scrolling you do yourself.": "Vairāku apgabalu tveršana vienlaikus, izvēlnes ar apakšizvēlnēm un ritināšana, ko veicat paši.",
+  "New image, templates, open recent, rename, Recycle Bin, batch export, print, email, Word documents.": "Jauns attēls, veidnes, neseno atvēršana, pārdēvēšana, atkritne, pakešeksports, drukāšana, e-pasts, Word dokumenti.",
+  "Presets can be imported, exported and duplicated; Snagster can start with Windows.": "Sagataves var importēt, eksportēt un dublēt; Snagster var startēt kopā ar Windows."
  }
 }
