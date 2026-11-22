@@ -98,8 +98,8 @@ not change). For a new version, change `ReleaseNotes` in every language, rebuild
 - Certification failed: "10.6.3 Capabilities": the request to use `unvirtualizedResources` was
   denied, with the advice to remove it and resubmit (read in Partner Center on 2026-11-22).
 - 2026-11-22: the capability and the two virtualization lines removed from the Store package
-  only (`make-msix.ps1 -Store`); Help > Problem reports opens the package's real folder. To be
-  resubmitted by hand with version 0.10.8.0 or higher (Packages: replace
+  only (`make-msix.ps1 -Store`); Help > Problem reports opens the package's real folder.
+  Released as 0.10.9; to be resubmitted by hand with the v0.10.9 run's 0.10.9.0 package (Packages: replace
   `Snagster-windows-x64-store.msix`, then **Resubmit for certification**).
 
 Store page: https://apps.microsoft.com/detail/9MVZGNTS547Z

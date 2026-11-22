@@ -2,7 +2,7 @@
 
 What changed for people using Snagster, per version.
 
-## Not released yet
+## 0.10.9 — 2026-11-22
 
 - **Microsoft Store edition**: the Store package no longer asks for the restricted
   `unvirtualizedResources` capability, which Store certification refused. The settings and

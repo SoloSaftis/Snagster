@@ -66,6 +66,11 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.10.9" date="2026-11-22">
+      <description>
+        <p>The Microsoft Store edition for Windows keeps its settings in its own folder. Nothing changes on Linux.</p>
+      </description>
+    </release>
     <release version="0.10.8" date="2026-11-22">
       <description>
         <ul>
