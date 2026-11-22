@@ -714,7 +714,7 @@ fn output_schema(name: &str) -> Option<Value> {
             "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "state": st, "measuring": bo, "sent_kbps": num, "network_dropped_frames": num, "network_dropped_share": num, "queue_ms": num, "connected_s": num, "reconnects": num, "reconnects_last_10_min": num}}},
             "warnings": {"type": "array", "items": {"type": "object", "properties": {"problem": {"type": "string", "enum": ["upload", "computer", "connection"]}, "level": {"type": "string", "enum": ["warning", "bad"]}, "service": {"type": ["string", "null"]}, "message": st}}}
         }, "required": ["live"]}),
-        "replay_status" => json!({"type": "object", "properties": {"phase": st, "on": bo, "seconds": num, "held_s": num, "width": num, "height": num, "fps": num, "encoder": st, "hardware": bo, "sound": bo, "error": st, "where": json!({"type": "string", "enum": ["window", "server"]})}, "required": ["phase", "on", "seconds", "held_s", "where"]}),
+        "replay_status" => json!({"type": "object", "properties": {"phase": st, "on": bo, "seconds": num, "held_s": num, "width": num, "height": num, "fps": num, "encoder": st, "hardware": bo, "sound": bo, "error": st, "starts": num, "where": json!({"type": "string", "enum": ["window", "server"]})}, "required": ["phase", "on", "seconds", "held_s", "where"]}),
         "stream_status" => json!({"type": "object", "properties": {"phase": st, "live": bo, "state": st, "uptime_s": num, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num, "service": st, "address": st, "source": st, "width": num, "height": num, "fps": num, "also": {"type": "array", "items": st}, "outputs": {"type": "array", "items": {"type": "object", "properties": {"service": st, "address": st, "state": st, "bitrate_bps": num, "frames_sent": num, "frames_dropped": num, "reconnects": num}}}}, "required": ["phase", "live"]}),
         _ => return None,
     })
@@ -4203,13 +4203,21 @@ mod stream_tests {
         impl Drop for Reset {
             fn drop(&mut self) {
                 *more::FAKE_WINDOW.lock().unwrap() = None;
+                *more::FAKE_PENDING.lock().unwrap() = None;
+                *more::FAKE_FAIL.lock().unwrap() = None;
+                *more::FAKE_CLOSE_ON_TOGGLE.lock().unwrap() = false;
                 more::FAKE_SENT.lock().unwrap().clear();
             }
         }
         let _r = Reset;
+        // The fake window runs a toggle a frame later, at its second look; let it.
+        let settle = || {
+            let _ = more::fake_window_look();
+            let _ = more::fake_window_look();
+        };
         let mut w = ws();
         // On in the window: status says so and where.
-        *more::FAKE_WINDOW.lock().unwrap() = Some(json!({"phase": "on", "on": true, "seconds": 60, "held_s": 12.5}));
+        *more::FAKE_WINDOW.lock().unwrap() = Some(json!({"phase": "on", "on": true, "seconds": 60, "held_s": 12.5, "starts": 1}));
         w.call("replay_status", &json!({})).unwrap();
         let st = w.structured.take().unwrap();
         assert_eq!((st["on"].as_bool(), st["where"].as_str(), st["seconds"].as_u64()), (Some(true), Some("window"), Some(60)));
@@ -4222,16 +4230,48 @@ mod stream_tests {
         assert!(text_of(w.call("replay_save", &json!({}))).contains("Asked the Snagster window to save"));
         // Stop turns the window's off; a second stop finds it off.
         assert!(text_of(w.call("replay_stop", &json!({}))).contains("window's replay off"));
+        settle();
         assert_eq!(text_of(w.call("replay_stop", &json!({}))), "Replay was already off.");
-        // Off in the window: start turns the window's on (not this server's).
+        // Off in the window: start turns the window's on (not this server's), and waits for
+        // the window's frame rather than reading its state from before.
         assert!(text_of(w.call("replay_start", &json!({}))).contains("Turned replay on in the Snagster window"));
         assert_eq!(*more::FAKE_SENT.lock().unwrap(), vec!["replay_save", "replay_toggle", "replay_toggle"]);
         assert!(!crate::replay::status().on());
+        // An error the window kept from an earlier start isn't this start's: the start goes on
+        // and turns on.
+        *more::FAKE_WINDOW.lock().unwrap() = Some(json!({"phase": "off", "on": false, "seconds": 60, "held_s": 0, "starts": 3, "error": "The person cancelled the screen share."}));
+        let t = text_of(w.call("replay_start", &json!({})));
+        assert!(t.contains("Turned replay on"), "{t}");
+        // A start that fails says why, with the same words as an old failure.
+        *more::FAKE_WINDOW.lock().unwrap() = Some(json!({"phase": "off", "on": false, "seconds": 60, "held_s": 0, "starts": 4, "error": "The person cancelled the screen share."}));
+        *more::FAKE_FAIL.lock().unwrap() = Some("The person cancelled the screen share.".into());
+        assert_eq!(w.call("replay_start", &json!({})).unwrap_err(), "The person cancelled the screen share.");
+        // A window that closes before replay starts is said to have closed (not "still starting").
+        *more::FAKE_WINDOW.lock().unwrap() = Some(json!({"phase": "off", "on": false, "seconds": 60, "held_s": 0, "starts": 5}));
+        *more::FAKE_CLOSE_ON_TOGGLE.lock().unwrap() = true;
+        assert_eq!(w.call("replay_start", &json!({})).unwrap_err(), "The Snagster window closed before replay started.");
         // No window: the server's own buffer, as before.
         *more::FAKE_WINDOW.lock().unwrap() = None;
         w.call("replay_status", &json!({})).unwrap();
         assert_eq!(w.structured.take().unwrap()["where"], "server");
         assert_eq!(w.call("replay_save", &json!({})).unwrap_err(), "Replay is off; call replay_start first.");
+    }
+
+    /// A window that knew of a start only by its error (0.10.7 has no start count): an error
+    /// counts once "starting" was seen or it changed.
+    #[test]
+    fn a_windows_old_error_never_passes_for_a_new_start() {
+        use more::{WindowStart, window_start_step};
+        let before = json!({"phase": "off", "error": "old"});
+        let (mut seen, mut misses) = (false, 0);
+        assert_eq!(window_start_step(&before, Some(&before), &mut seen, &mut misses), WindowStart::Wait);
+        assert_eq!(window_start_step(&before, Some(&json!({"phase": "starting"})), &mut seen, &mut misses), WindowStart::Wait);
+        assert_eq!(window_start_step(&before, Some(&before), &mut seen, &mut misses), WindowStart::Failed("old".into()), "after starting, the same words are new");
+        let (mut seen, mut misses) = (false, 0);
+        assert_eq!(window_start_step(&before, Some(&json!({"phase": "off", "error": "new"})), &mut seen, &mut misses), WindowStart::Failed("new".into()));
+        assert_eq!(window_start_step(&before, None, &mut seen, &mut misses), WindowStart::Wait);
+        assert_eq!(window_start_step(&before, None, &mut seen, &mut misses), WindowStart::Wait);
+        assert_eq!(window_start_step(&before, None, &mut seen, &mut misses), WindowStart::Gone, "three looks without a window");
     }
 
     #[test]

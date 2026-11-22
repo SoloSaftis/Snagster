@@ -569,9 +569,11 @@ struct Global {
     /// Counts saves that ended, with the last one's result.
     saved_no: u64,
     saved: Option<Result<Saved, String>>,
+    /// Counts starts (begin), so an error can be told apart from one left by an earlier start.
+    starts: u64,
 }
 
-static GLOBAL: Mutex<Global> = Mutex::new(Global { slot: Slot::Off, seconds: DEFAULT_S, error: None, saving: false, saved_no: 0, saved: None });
+static GLOBAL: Mutex<Global> = Mutex::new(Global { slot: Slot::Off, seconds: DEFAULT_S, error: None, saving: false, saved_no: 0, saved: None, starts: 0 });
 
 fn global() -> MutexGuard<'static, Global> {
     GLOBAL.lock().unwrap_or_else(|p| p.into_inner())
@@ -591,6 +593,8 @@ pub struct Status {
     pub saving: bool,
     pub saved_no: u64,
     pub saved: Option<Result<Saved, String>>,
+    /// How many starts there have been (an error with a higher count than before is new).
+    pub starts: u64,
 }
 
 impl Status {
@@ -606,7 +610,7 @@ pub fn status() -> Status {
         Slot::Starting(_) => (Phase::Starting, 0.0, None, None),
         Slot::On(r) => (Phase::On, r.held_s(), Some(r.info.clone()), r.error()),
     };
-    Status { phase, seconds: g.seconds, held_s, info, error: run_error.or_else(|| g.error.clone()), saving: g.saving, saved_no: g.saved_no, saved: g.saved.clone() }
+    Status { phase, seconds: g.seconds, held_s, info, error: run_error.or_else(|| g.error.clone()), saving: g.saving, saved_no: g.saved_no, saved: g.saved.clone(), starts: g.starts }
 }
 
 /// Turn the replay buffer on in the background. Errors only when it is on already; what goes
@@ -625,6 +629,7 @@ fn begin_with(o: ReplayOptions, start: impl FnOnce(&ReplayOptions, &AtomicBool) 
         g.slot = Slot::Starting(cancel.clone());
         g.seconds = clamp_seconds(o.seconds);
         g.error = None;
+        g.starts += 1;
     }
     let c = cancel.clone();
     let spawned = std::thread::Builder::new().name("snagster-replay-start".into()).spawn(move || {

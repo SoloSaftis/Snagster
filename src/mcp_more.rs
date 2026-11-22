@@ -244,7 +244,7 @@ pub(super) fn tools() -> Vec<Tool> {
         Tool {
             name: "replay_start",
             description: "Turn the replay buffer on: Snagster keeps encoding the screen the mouse is on (on the graphics chip when it can) and keeps the last 30-120 seconds in memory, so replay_save can save a moment after it happened. It runs in the background until replay_stop. Off by default. On Wayland the desktop may ask the person to choose a screen. Frame rate, quality, encoder and pointer come from the Recording settings; sound from replay_audio. When the Snagster window is open apart from this server (as with the MCP bundles), the window's buffer is used: it is turned on there, or reported as already on, and keeps the window's own length.",
-            schema: obj(json!({"seconds": {"type": "integer", "minimum": 30, "maximum": 120, "description": "How much to keep, 30-120 s (default: the replay_s setting)."}}), &[]),
+            schema: obj(json!({"seconds": {"type": "integer", "minimum": 30, "maximum": 120, "description": "How much to keep: 30, 60, 90 or 120 s (other values go to the nearest; default: the replay_s setting)."}}), &[]),
             edits: false,
         },
         Tool {
@@ -271,7 +271,7 @@ pub(super) fn replay_json(s: &crate::replay::Status) -> Value {
         crate::replay::Phase::Starting => "starting",
         crate::replay::Phase::On => "on",
     };
-    let mut v = json!({"phase": phase, "on": s.on(), "seconds": s.seconds, "held_s": (s.held_s * 10.0).round() / 10.0});
+    let mut v = json!({"phase": phase, "on": s.on(), "seconds": s.seconds, "held_s": (s.held_s * 10.0).round() / 10.0, "starts": s.starts});
     if let Some(i) = &s.info {
         v["width"] = json!(i.width);
         v["height"] = json!(i.height);
@@ -293,10 +293,11 @@ pub(super) fn window_answer(id: &str) -> Option<String> {
 
 /// Whose replay buffer the replay tools act on. The MCP bundles run Snagster apart from the
 /// window, so a buffer the person turned on there is the window's, not this server's: the tools
-/// use it rather than start a second one.
+/// use it rather than start a second one. (The window's own HTTP server asks its window the same
+/// way, through the local port: its answer and its toggle are this process's own buffer.)
 #[derive(Debug, PartialEq)]
 enum ReplayHolder {
-    /// This server's own buffer is on (also when the server runs inside the window).
+    /// This server's own buffer is on.
     Here,
     /// The window answered with its replay_status.
     Window(Value),
@@ -312,7 +313,8 @@ fn replay_holder(here_on: bool, window: Option<Value>) -> ReplayHolder {
     }
 }
 
-/// The window's replay_status, when a window is open (and isn't this process).
+/// The window's replay_status, when a window is open (None also for a 0.10.7 window, which
+/// doesn't answer questions).
 #[cfg(not(test))]
 fn window_replay() -> Option<Value> {
     crate::instance::query("replay_status").ok().and_then(|a| serde_json::from_str(&a).ok())
@@ -329,23 +331,105 @@ fn window_command(id: &str) -> Result<(), String> {
 pub(super) static FAKE_WINDOW: std::sync::Mutex<Option<Value>> = std::sync::Mutex::new(None);
 #[cfg(test)]
 pub(super) static FAKE_SENT: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+/// A toggle the fake window hasn't run yet (it runs at the second look, like a frame later).
+#[cfg(test)]
+pub(super) static FAKE_PENDING: std::sync::Mutex<Option<u8>> = std::sync::Mutex::new(None);
+/// When set, the fake window's next start fails with this.
+#[cfg(test)]
+pub(super) static FAKE_FAIL: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+/// When set, the fake window quits instead of running the next toggle.
+#[cfg(test)]
+pub(super) static FAKE_CLOSE_ON_TOGGLE: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
+
+/// One look at the fake window, as the tools take it (it runs a pending toggle).
+#[cfg(test)]
+pub(super) fn fake_window_look() -> Option<Value> {
+    window_replay()
+}
 
 #[cfg(test)]
 fn window_replay() -> Option<Value> {
-    FAKE_WINDOW.lock().unwrap().clone()
+    let mut w = FAKE_WINDOW.lock().unwrap();
+    let mut pending = FAKE_PENDING.lock().unwrap();
+    match *pending {
+        Some(0) => *pending = Some(1),
+        Some(_) if std::mem::take(&mut *FAKE_CLOSE_ON_TOGGLE.lock().unwrap()) => {
+            *pending = None;
+            *w = None;
+        }
+        Some(_) => {
+            *pending = None;
+            if let Some(v) = w.as_mut() {
+                let on = !v["on"].as_bool().unwrap_or(false);
+                if on {
+                    v["starts"] = json!(v["starts"].as_u64().unwrap_or(0) + 1);
+                }
+                match FAKE_FAIL.lock().unwrap().take() {
+                    Some(e) if on => {
+                        v["on"] = json!(false);
+                        v["phase"] = json!("off");
+                        v["error"] = json!(e);
+                    }
+                    _ => {
+                        v["on"] = json!(on);
+                        v["phase"] = json!(if on { "on" } else { "off" });
+                    }
+                }
+            }
+        }
+        None => {}
+    }
+    w.clone()
 }
 
 #[cfg(test)]
 fn window_command(id: &str) -> Result<(), String> {
-    let mut w = FAKE_WINDOW.lock().unwrap();
-    let Some(v) = w.as_mut() else { return Err("Snagster's window isn't open".into()) };
+    let w = FAKE_WINDOW.lock().unwrap();
+    if w.is_none() {
+        return Err("Snagster's window isn't open".into());
+    }
     FAKE_SENT.lock().unwrap().push(id.to_string());
     if id == "replay_toggle" {
-        let on = !v["on"].as_bool().unwrap_or(false);
-        v["on"] = json!(on);
-        v["phase"] = json!(if on { "on" } else { "off" });
+        *FAKE_PENDING.lock().unwrap() = Some(0);
     }
     Ok(())
+}
+
+/// What replay_start makes of the window's state after asking it to turn replay on.
+#[derive(Debug, PartialEq)]
+pub(super) enum WindowStart {
+    On(Value),
+    Failed(String),
+    Gone,
+    /// Not decided yet: look again.
+    Wait,
+}
+
+/// One look at the window after the toggle. `before` is its state when asked: an error it
+/// already had counts only once a newer start is seen (`starts` went up, or "starting" was seen).
+pub(super) fn window_start_step(before: &Value, now: Option<&Value>, seen_starting: &mut bool, misses: &mut u32) -> WindowStart {
+    let Some(v) = now else {
+        *misses += 1;
+        return if *misses >= 3 { WindowStart::Gone } else { WindowStart::Wait };
+    };
+    *misses = 0;
+    match v["phase"].as_str() {
+        Some("on") => WindowStart::On(v.clone()),
+        Some("starting") => {
+            *seen_starting = true;
+            WindowStart::Wait
+        }
+        _ => {
+            let newer = match (v["starts"].as_u64(), before["starts"].as_u64()) {
+                (Some(a), Some(b)) => a > b,
+                _ => *seen_starting || v.get("error") != before.get("error"),
+            };
+            match v["error"].as_str() {
+                Some(e) if newer => WindowStart::Failed(e.to_string()),
+                _ => WindowStart::Wait,
+            }
+        }
+    }
 }
 
 fn where_(mut v: Value, place: &str) -> Value {
@@ -394,7 +478,7 @@ impl Workspace {
             if let Some(n) = seconds {
                 replay::set_seconds(n);
             }
-            return Ok(vec![text(format!("Replay on: keeping the last {} s (already on). Save it with replay_save.", seconds.unwrap_or(s.seconds)))]);
+            return Ok(vec![text(format!("Replay on: keeping the last {} s (already on). Save it with replay_save.", replay::status().seconds))]);
         }
         let mut o = replay::ReplayOptions::from_settings(&self.settings());
         if let Some(n) = seconds {
@@ -426,18 +510,20 @@ impl Workspace {
         }
         window_command("replay_toggle")?;
         let t0 = std::time::Instant::now();
-        let now = self.ticking(Some(120.0), "Turning replay on in the Snagster window", || loop {
-            let v = window_replay();
-            let phase = v.as_ref().and_then(|v| v["phase"].as_str().map(str::to_string)).unwrap_or_default();
-            if phase == "on" || (phase == "off" && v.as_ref().is_some_and(|v| v.get("error").is_some())) || t0.elapsed() > std::time::Duration::from_secs(130) {
-                return v;
+        let (mut seen_starting, mut misses) = (false, 0);
+        let step = self.ticking(Some(120.0), "Turning replay on in the Snagster window", || loop {
+            match window_start_step(&w, window_replay().as_ref(), &mut seen_starting, &mut misses) {
+                WindowStart::Wait if t0.elapsed() <= std::time::Duration::from_secs(130) => {}
+                done => return done,
             }
+            #[cfg(not(test))]
             std::thread::sleep(std::time::Duration::from_millis(250));
         });
-        match now {
-            Some(v) if v["phase"] == "on" => Ok(vec![text(format!("Turned replay on in the Snagster window: it keeps the last {} s of the screen.{length_note} Save it with replay_save.", keeps(&v)))]),
-            Some(v) if v["phase"] == "off" => Err(v["error"].as_str().unwrap_or("Replay couldn't start in the Snagster window.").to_string()),
-            _ => Ok(vec![text("Asked the Snagster window to turn replay on; it is still starting (the desktop may be asking which screen to share). Check with replay_status.")]),
+        match step {
+            WindowStart::On(v) => Ok(vec![text(format!("Turned replay on in the Snagster window: it keeps the last {} s of the screen.{length_note} Save it with replay_save.", keeps(&v)))]),
+            WindowStart::Failed(e) => Err(e),
+            WindowStart::Gone => Err("The Snagster window closed before replay started.".into()),
+            WindowStart::Wait => Ok(vec![text("Asked the Snagster window to turn replay on; it is still starting (the desktop may be asking which screen to share). Check with replay_status.")]),
         }
     }
 
@@ -477,6 +563,9 @@ impl Workspace {
                     window_command("replay_save")?;
                     Ok(vec![text("Asked the Snagster window to save its replay: the video goes to the recordings folder (list_recordings shows it).")])
                 }
+                // A window that doesn't answer questions (0.10.7) may still have replay on: ask
+                // it to save, as 0.10.7's own server did.
+                None if seconds.is_none() && window_command("replay_save").is_ok() => Ok(vec![text("Asked the Snagster window to save its replay: when it is on there, the video goes to the recordings folder (list_recordings shows it).")]),
                 _ => Err("Replay is off; call replay_start first.".into()),
             };
         }
