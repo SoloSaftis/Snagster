@@ -52,7 +52,7 @@ pub fn keys(text: &str) -> String {
 
 fn keys_for(sys: System, text: &str) -> String {
     static SHORTCUT: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-    let re = SHORTCUT.get_or_init(|| regex::Regex::new(r"\b(?:(?:Ctrl|Alt|Shift|Win) ?\+ ?)+(?:[^\s,;)/]+|[,;/.])").expect("shortcut pattern"));
+    let re = SHORTCUT.get_or_init(|| regex::Regex::new(r"\b(?:(?:Ctrl|Alt|Shift|Win) ?\+ ?)+(?:[^\s,;)/、。，；：（）「」]+|[,;/.])").expect("shortcut pattern"));
     re.replace_all(text, |c: &regex::Captures| one_shortcut(sys, &c[0])).into_owned()
 }
 
@@ -353,6 +353,21 @@ mod tests {
         assert_eq!(keys_for(System::Mac, "F2"), "F2", "a key alone stays");
         assert_eq!(keys_for(System::Kde, "Ctrl + Shift + F9"), "Ctrl+Shift+F9");
         assert_eq!(keys_for(System::Mac, "Ctrl+Shift+A / W / F"), "⇧⌘A / W / F");
+        // Chinese and Japanese text has no spaces and uses full-width punctuation.
+        assert_eq!(keys_for(System::Mac, "コピー（Ctrl+C）、保存（Ctrl+S）"), "コピー（⌘C）、保存（⌘S）");
+        assert_eq!(keys_for(System::Mac, "复制（Ctrl+C），保存（Ctrl+S）。"), "复制（⌘C），保存（⌘S）。");
+    }
+
+    /// Every pack's Getting started paragraph with Ctrl+C and Ctrl+S turns both into ⌘ on a Mac.
+    #[test]
+    fn every_language_writes_the_getting_started_shortcuts_the_mac_way() {
+        let en = "Copy it (Ctrl+C), save it (Ctrl+S), pin it on screen, email it, or put several into a guide (File > Export guide).";
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/i18n");
+        for code in crate::i18n::CODES.iter().filter(|c| **c != "en") {
+            let pack: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(dir.join(format!("{code}.json"))).unwrap()).unwrap();
+            let mac = keys_for(System::Mac, pack["strings"][en].as_str().unwrap());
+            assert!(mac.contains("⌘C") && mac.contains("⌘S") && !mac.contains("Ctrl"), "{code}: {mac}");
+        }
     }
 
     #[test]

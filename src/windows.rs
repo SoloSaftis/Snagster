@@ -735,10 +735,10 @@ impl SnagApp {
                             }
                         });
                         egui::ComboBox::from_label(crate::i18n::t("Picture quality"))
-                            .selected_text(["", "Small file", "Good", "High", "Best"][s.video_quality.clamp(1, 4) as usize])
+                            .selected_text(crate::i18n::t(["", "Small file", "Good", "High", "Best"][s.video_quality.clamp(1, 4) as usize]))
                             .show_ui(ui, |ui| {
                                 for (q, name) in [(1u8, "Small file"), (2, "Good"), (3, "High"), (4, "Best")] {
-                                    ui.selectable_value(&mut s.video_quality, q, name);
+                                    ui.selectable_value(&mut s.video_quality, q, crate::i18n::t(name));
                                 }
                             });
                         ui.checkbox(&mut s.video_hardware, crate::i18n::t("Use the graphics chip to encode (Intel, AMD or NVIDIA)"));
@@ -2583,13 +2583,19 @@ mod tests {
             // up doesn't stop the scan).
             let src = src.replace("\r\n", "\n");
             let code = src.split("\n#[cfg(test)]\nmod tests").next().unwrap();
-            let calls = ["on_hover_text(\"", "hint_text(\"", "selected_text(\"", "button(format!(\"", "label(format!(\"", "RichText::new(format!(\""];
+            let calls = ["on_hover_text(\"", "hint_text(\"", "selected_text(\"", "selected_text([", "button(format!(\"", "label(format!(\"", "RichText::new(format!(\""];
             // A sentence: starts with a capital and has a word in it ("U+{:04X}" and "X" don't).
             let sentence = |lit: &str| lit.chars().next().is_some_and(|c| c.is_uppercase()) && lit.split(|c: char| !c.is_alphabetic()).any(|w| w.len() >= 2 && w.chars().all(|c| c.is_lowercase()));
             for call in calls {
                 for (at, _) in code.match_indices(call) {
                     let rest = &code[at + call.len()..];
-                    let lit = &rest[..rest.find('"').unwrap_or(0)];
+                    let lit = if call.ends_with('[') {
+                        // A list of texts picked by index: any sentence in it.
+                        let list = &rest[..rest.find(']').unwrap_or(0)];
+                        list.split('"').skip(1).step_by(2).find(|l| sentence(l)).unwrap_or("")
+                    } else {
+                        &rest[..rest.find('"').unwrap_or(0)]
+                    };
                     if sentence(lit) {
                         found.push(format!("{}: {call}{lit}\"", f.file_name().unwrap().to_string_lossy()));
                     }
@@ -2645,9 +2651,18 @@ mod tests {
             if !list.split('"').skip(1).step_by(2).any(sentence) {
                 continue;
             }
+            // Of a tuple, only the names whose place in the first item holds a text.
+            let first = list[1..].trim_start();
+            let names: Vec<&str> = if names.len() > 1 && first.starts_with('(') {
+                let item = &first[1..first.find(')').unwrap_or(first.len())];
+                let parts: Vec<&str> = item.split(',').map(str::trim).collect();
+                names.into_iter().enumerate().filter(|(i, _)| parts.get(*i).is_some_and(|p| p.starts_with('"'))).map(|(_, n)| n).collect()
+            } else {
+                names
+            };
             let Some(brace) = code[end..].find('{').map(|n| end + n) else { continue };
             let Some(stop) = closing(code, brace) else { continue };
-            let body = code[brace..stop].replace(' ', "");
+            let body = code[brace..stop].replace(", ", ",").replace("( ", "(").replace(" )", ")");
             let body = body.as_str();
             // The text of each `format!` that goes into the window (one for a log line doesn't).
             let formats: Vec<&str> = ["label(format!(\"", "RichText::new(format!(\"", "button(format!(\""]
@@ -2656,14 +2671,52 @@ mod tests {
                 .map(|rest| &rest[..rest.find('"').unwrap_or(0)])
                 .collect();
             for n in names {
-                let shown = [format!("label({n})"), format!("label(&{n})"), format!("RichText::new({n})"), format!("RichText::new(&{n})")];
                 let in_format = formats.iter().any(|f| f.contains(&format!("{{{n}}}")));
-                if in_format || shown.iter().any(|s| body.contains(s.as_str())) {
+                if in_format || shown_as_an_argument(body, n) {
                     out.push((line.trim().to_string(), n.to_string()));
                 }
             }
         }
         out
+    }
+
+    /// Whether `body` (no spaces after commas) hands `name` as it is to a call that isn't the
+    /// translation table: `label(name)`, `selectable_value(&mut x, q, name)`, `button(&name)`.
+    /// `t(name)`, `tr(name)` and `tf(name, ..)` don't count, nor do a log line's `format!` and
+    /// the like.
+    fn shown_as_an_argument(body: &str, name: &str) -> bool {
+        let ident = |c: char| c.is_alphanumeric() || c == '_';
+        for (at, _) in body.match_indices(name) {
+            let (before, after) = (&body[..at], &body[at + name.len()..]);
+            // The whole name, as the whole argument: `(name)`, `(&name,`, `,name)`.
+            if before.ends_with(ident) || !(after.starts_with(')') || after.starts_with(',')) {
+                continue;
+            }
+            let before = before.strip_suffix('&').unwrap_or(before);
+            if !(before.ends_with('(') || before.ends_with(',')) {
+                continue;
+            }
+            // The call this argument belongs to: back to its unmatched `(`.
+            let mut depth = 0i32;
+            let mut open = None;
+            for (i, c) in before.char_indices().rev() {
+                match c {
+                    ')' => depth += 1,
+                    '(' if depth == 0 => {
+                        open = Some(i);
+                        break;
+                    }
+                    '(' => depth -= 1,
+                    _ => {}
+                }
+            }
+            let Some(open) = open else { continue };
+            let call = before[..open].rsplit(|c: char| !ident(c) && c != '!').next().unwrap_or("");
+            if !matches!(call, "t" | "tr" | "tf" | "format!" | "push" | "insert" | "Some" | "say" | "once" | "item_on" | "") {
+                return true;
+            }
+        }
+        false
     }
 
     /// Help > Getting started and What's new show their paragraphs through the translation
@@ -2689,6 +2742,11 @@ mod tests {
         let bad = "for (head, body) in [\n(\"1. Go\", \"Press the key.\"),\n] {\n ui.label(RichText::new(head).strong());\n ui.label(body);\n}\nfor line in [\"A new thing.\"] {\n ui.label(format!(\"- {line}\"));\n}";
         let names: Vec<String> = untranslated_list_items(bad, &sentence).into_iter().map(|(_, n)| n).collect();
         assert_eq!(names, ["head", "body", "line"]);
+        let picker = "for (q, name) in [(1u8, \"Small file\"), (2, \"Good\")] {\n ui.selectable_value(&mut s.quality, q, name);\n}";
+        let names: Vec<String> = untranslated_list_items(picker, &sentence).into_iter().map(|(_, n)| n).collect();
+        assert_eq!(names, ["name"], "q is a number, name is shown");
+        let fixed = "for (q, name) in [(1u8, \"Small file\"), (2, \"Good\")] {\n ui.selectable_value(&mut s.quality, q, crate::i18n::t(name));\n}";
+        assert!(untranslated_list_items(fixed, &sentence).is_empty());
         let good = "for (head, body) in [(\"1. Go\", \"Press the key.\")] {\n ui.label(RichText::new(t(head)).strong());\n ui.label(t(body));\n}\nfor line in [\"A new thing.\"] {\n ui.label(format!(\"- {}\", t(line)));\n}\nfor k in [\"ctrl\", \"x\"] {\n ui.label(k);\n}\nfor (title, n) in [(\"Video test\", 1)] {\n say(&format!(\"== {title}\"));\n}";
         assert!(untranslated_list_items(good, &sentence).is_empty());
     }
