@@ -4272,6 +4272,11 @@ mod stream_tests {
         assert_eq!(window_start_step(&before, None, &mut seen, &mut misses), WindowStart::Wait);
         assert_eq!(window_start_step(&before, None, &mut seen, &mut misses), WindowStart::Wait);
         assert_eq!(window_start_step(&before, None, &mut seen, &mut misses), WindowStart::Gone, "three looks without a window");
+        // Turned off in the window while starting: a newer start, off, no error.
+        let counted = json!({"phase": "off", "starts": 2});
+        let (mut seen, mut misses) = (false, 0);
+        assert_eq!(window_start_step(&counted, Some(&counted), &mut seen, &mut misses), WindowStart::Wait, "the same start: not yet");
+        assert_eq!(window_start_step(&counted, Some(&json!({"phase": "off", "starts": 3})), &mut seen, &mut misses), WindowStart::Cancelled);
     }
 
     #[test]

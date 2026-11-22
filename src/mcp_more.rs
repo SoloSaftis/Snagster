@@ -400,6 +400,8 @@ fn window_command(id: &str) -> Result<(), String> {
 pub(super) enum WindowStart {
     On(Value),
     Failed(String),
+    /// A newer start ended off without an error: turned off in the window while starting.
+    Cancelled,
     Gone,
     /// Not decided yet: look again.
     Wait,
@@ -426,6 +428,7 @@ pub(super) fn window_start_step(before: &Value, now: Option<&Value>, seen_starti
             };
             match v["error"].as_str() {
                 Some(e) if newer => WindowStart::Failed(e.to_string()),
+                None if newer && v["starts"].as_u64().is_some() => WindowStart::Cancelled,
                 _ => WindowStart::Wait,
             }
         }
@@ -523,6 +526,7 @@ impl Workspace {
             WindowStart::On(v) => Ok(vec![text(format!("Turned replay on in the Snagster window: it keeps the last {} s of the screen.{length_note} Save it with replay_save.", keeps(&v)))]),
             WindowStart::Failed(e) => Err(e),
             WindowStart::Gone => Err("The Snagster window closed before replay started.".into()),
+            WindowStart::Cancelled => Err("Replay was turned off in the Snagster window before it started.".into()),
             WindowStart::Wait => Ok(vec![text("Asked the Snagster window to turn replay on; it is still starting (the desktop may be asking which screen to share). Check with replay_status.")]),
         }
     }
