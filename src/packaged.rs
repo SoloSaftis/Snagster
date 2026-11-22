@@ -129,7 +129,9 @@ pub(crate) fn visible_path_for(path: &Path, family: Option<&str>, roaming: Optio
     let private_path = private_root.join(rel);
     // The nearest of the file and the folders above it that exists says which side it is on:
     // a crash.log not written yet goes beside the settings.json Windows put in the package's
-    // folder. Nothing at all yet: the package's folder, where Windows puts every new file.
+    // folder. Nothing at all yet: the package's folder, where Windows puts every new file in
+    // the Store edition. (The GitHub MSIX writes to the real folder; it only gets this answer
+    // before anything exists, since the window makes the folder at start: `instance.rs`.)
     for part in rel.ancestors().filter(|a| !a.as_os_str().is_empty()) {
         if exists(&private_root.join(part)) {
             return private_path;
@@ -448,7 +450,7 @@ mod tests {
         let p = Path::new("/some/where/crash.log");
         assert_eq!(visible_path(p), p);
         assert_eq!(shown_crash_log(), crate::crash_log_path());
-        assert_eq!(shown_crash_log(), crate::crash_log_path(), "the second call is the remembered one");
+        assert_eq!(shown_crash_log(), crate::crash_log_path(), "asking again within two seconds gives the same answer");
         assert!(!mcp_command().is_empty());
     }
 

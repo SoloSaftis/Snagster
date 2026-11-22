@@ -8,8 +8,8 @@ What changed for people using Snagster, per version.
   `unvirtualizedResources` capability, which Store certification refused. The settings and
   crash.log it creates are kept in the package's own folder (a portable copy's settings already
   in `%APPDATA%\Snagster` are still used and updated there), and Help > Problem reports and the
-  crash.log line in Settings point at the real folder. The GitHub MSIX and the portable copy are unchanged; captures still go to Pictures
-  and Videos.
+  crash.log line in Settings point at the real folder. The GitHub MSIX and the portable copy
+  are unchanged; captures still go to Pictures and Videos.
 
 ## 0.10.8 — 2026-11-22
 
