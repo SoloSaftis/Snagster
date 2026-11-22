@@ -2,6 +2,16 @@
 
 What changed for people using Snagster, per version.
 
+## Unreleased
+
+- **Live ink over the screen on macOS and Linux (X11)**: Studio > Ink > Draw now draws over every
+  screen on a Mac and on an X11 desktop with a compositor (GNOME, Plasma, Xfce with compositing
+  on, picom), not only on the preview. Clicks go through while Draw is off; while it is on,
+  Snagster's window stays usable when it is in front, and Esc and ⌘Z / Ctrl+Z stop and undo. On
+  a Mac the ink stays out of other programs' screen shares, as on Windows. On X11 the screen
+  itself holds the ink, so it is in replays and Record-tab videos too, and the overlay shows no
+  border or hint. Wayland, and X11 without a compositor, still draw on the preview.
+
 ## 0.10.9 — 2026-11-22
 
 - **Microsoft Store edition**: the Store package no longer asks for the restricted

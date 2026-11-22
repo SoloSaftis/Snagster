@@ -92,10 +92,11 @@ libloading = "0.8"
 wayland-client = "0.31"
 wayland-backend = { version = "0.3", features = ["client_system"] }
 wayland-protocols = { version = "0.32", features = ["client", "staging"] }
-# Live-stream screen copies on X11: one connection kept open and MIT-SHM shared memory
-# (MIT/Apache-2.0; already in the tree for the window and the clipboard). libc for the System V
-# shared-memory segment (MIT/Apache-2.0).
-x11rb = { version = "0.13", features = ["shm"] }
+# Live-stream screen copies on X11: one connection kept open and MIT-SHM shared memory; the
+# SHAPE extension for the live-ink overlay's click-through input shape (MIT/Apache-2.0; already
+# in the tree for the window and the clipboard; no new crates). libc for the System V
+# shared-memory segment and waiting on the X connection (MIT/Apache-2.0).
+x11rb = { version = "0.13", features = ["shm", "shape"] }
 libc = "0.2"
 # The desktop's portals (Screenshot, ScreenCast, Trash in the Flatpak) and PipeWire for the screen share: how Snagster
 # sees the screen on Wayland and inside a Flatpak. The same versions and features xcap already
@@ -116,14 +117,15 @@ winit = { version = "0.30", default-features = false, features = ["wayland-csd-a
 winit = "0.30"
 # The live-stream key in the login Keychain (MIT/Apache-2.0).
 security-framework = "3"
-# Increase contrast and the accent colour (MIT; already in the tree through winit, tray-icon).
-objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSAccessibility", "NSWorkspace", "NSColor", "NSColorSpace", "objc2-core-foundation"] }
+# Increase contrast and the accent colour, and the live-ink overlay (a see-through panel per
+# screen, its image tiles, the mouse on it) (MIT; already in the tree through winit, tray-icon).
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSAccessibility", "NSWorkspace", "NSColor", "NSColorSpace", "objc2-core-foundation", "block2", "NSApplication", "NSBitmapImageRep", "NSCell", "NSControl", "NSEvent", "NSGraphics", "NSImage", "NSImageRep", "NSImageView", "NSPanel", "NSResponder", "NSScreen", "NSView", "NSWindow"] }
 # One program's sound (Studio): ScreenCaptureKit's stream, its completion blocks and sample
 # queue, and the sample buffers (all Zlib OR Apache-2.0 OR MIT; objc2, block2, objc2-foundation
 # and objc2-core-media are already in the tree through winit and tray-icon).
 objc2 = "0.6"
 block2 = "0.6"
-objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSArray", "NSEnumerator", "NSError", "NSObject", "NSProcessInfo", "NSString"] }
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSArray", "NSEnumerator", "NSError", "NSGeometry", "NSObject", "NSProcessInfo", "NSString"] }
 objc2-core-media = { version = "0.3", default-features = false, features = ["std", "CMBase", "CMBlockBuffer", "CMFormatDescription", "CMSampleBuffer", "CMTime"] }
 dispatch2 = { version = "0.3", default-features = false, features = ["std", "alloc", "objc2"] }
 objc2-screen-capture-kit = { version = "0.3", default-features = false, features = ["std", "SCShareableContent", "SCStream", "block2", "dispatch2", "objc2-core-media", "libc"] }

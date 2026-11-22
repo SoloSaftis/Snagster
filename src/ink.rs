@@ -211,7 +211,6 @@ impl Ink {
     }
 
     /// Whether the ink is fading right now (the overlay redraws every frame meanwhile).
-    #[cfg(any(windows, test))]
     pub fn fading(&self, now: Instant) -> bool {
         let a = self.alpha(now);
         a > 0.0 && a < 1.0 && !self.strokes.is_empty()
@@ -259,7 +258,6 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
-    #[cfg(any(windows, test))]
     pub fn is_empty(&self) -> bool {
         self.strokes.is_empty() || self.alpha <= 0.0
     }
@@ -453,13 +451,11 @@ impl Layer {
         Layer { img: RgbaImage::new(w, h), map, painted: Vec::new(), content: None }
     }
 
-    #[cfg(any(windows, test))]
     pub fn image(&self) -> &RgbaImage {
         &self.img
     }
 
     /// The box with ink in it.
-    #[cfg(any(windows, test))]
     pub fn content(&self) -> Option<Area> {
         self.content
     }
