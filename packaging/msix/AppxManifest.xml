@@ -22,10 +22,12 @@
     <PublisherDisplayName>__PUBLISHER_DISPLAY_NAME__</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
     <Description>Capture your screen, mark it up, record and share it.</Description>
-    <!-- Settings, crash.log and captures go to the real %APPDATA%\Snagster, Pictures and Videos
-         (shared with the portable copy, visible to Explorer), not a private copy per package. -->
-    <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
-    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
+    <!-- The GitHub package keeps settings and crash.log in the real %APPDATA%\Snagster (shared
+         with the portable copy, visible to Explorer), not a private copy per package. Lines
+         marked "github-only" are left out of the Microsoft Store package (make-msix.ps1 -Store),
+         whose certification refused unvirtualizedResources (packaging/msix/STORE.md). -->
+    <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization><!-- github-only -->
+    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization><!-- github-only -->
   </Properties>
 
   <Dependencies>
@@ -75,7 +77,7 @@ __RESOURCES__
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
-    <rescap:Capability Name="unvirtualizedResources" />
+    <rescap:Capability Name="unvirtualizedResources" /><!-- github-only -->
     <!-- Recording with the microphone. -->
     <DeviceCapability Name="microphone" />
   </Capabilities>

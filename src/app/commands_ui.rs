@@ -165,12 +165,7 @@ pub(crate) const SIMPLE: &[(&str, Run)] = &[
     }),
     ("about", |a, _| a.about_open = true),
     ("problem_reports", |a, _| {
-        if let Some(p) = crate::crash_log_path()
-            && let Some(dir) = p.parent()
-        {
-            let _ = std::fs::create_dir_all(dir);
-            a.open_folder(dir);
-        }
+        a.open_problem_reports();
     }),
     ("go_live", |a, ctx| a.go_live(ctx)),
     ("stream_stop", |a, _| a.stop_stream()),

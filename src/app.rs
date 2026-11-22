@@ -1988,6 +1988,19 @@ impl SnagApp {
         }
     }
 
+    /// Help > Problem reports: the folder that holds crash.log, where Explorer really finds it
+    /// (the Store edition's AppData is the package's own folder, `packaged::visible_path`).
+    pub(crate) fn open_problem_reports(&mut self) {
+        if let Some(log) = crate::crash_log_path()
+            && let Some(dir) = log.parent()
+        {
+            let _ = std::fs::create_dir_all(dir);
+            if let Some(shown) = crate::packaged::problem_reports_folder(&log) {
+                self.open_folder(&shown);
+            }
+        }
+    }
+
     /// Open a folder in the file manager; given a file, its folder with the file selected
     /// (`xdg-open` and `open` would open the file itself).
     pub(crate) fn open_folder(&mut self, target: &std::path::Path) {

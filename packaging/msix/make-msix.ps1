@@ -1,10 +1,14 @@
 # Make Snagster's MSIX package from a built Snagster.exe (see README.md beside this file).
 #
 #   pwsh packaging/msix/make-msix.ps1 -Exe target/release/snagster.exe -Out dist/Snagster-windows-x64.msix `
-#        [-Publisher "CN=..."] [-TestCert dist/test.cer] [-IdentityName X -PublisherDisplayName Y]
+#        [-Publisher "CN=..."] [-TestCert dist/test.cer] [-IdentityName X -PublisherDisplayName Y] [-Store]
 #
 # The Microsoft Store package takes the Identity Name, Publisher and Publisher display name
 # Partner Center shows under Product identity, and is uploaded unsigned (the Store signs it).
+# It is made with -Store, which leaves out the manifest lines marked "github-only" (the
+# unvirtualizedResources capability and the two desktop6:...Virtualization lines, which Store
+# certification refused): the Store edition's AppData is the package's own folder
+# (src/packaged.rs visible_path).
 #
 # -Publisher is the signing certificate's subject, exactly (Windows refuses a package whose
 # publisher differs from its signature). Signing:
@@ -20,7 +24,8 @@ param(
     [string] $Publisher = "CN=Snagster Test Signing",
     [string] $IdentityName = "SoloSaftis.Snagster",
     [string] $PublisherDisplayName = "SoloSaftis",
-    [string] $TestCert = ""
+    [string] $TestCert = "",
+    [switch] $Store
 )
 $ErrorActionPreference = "Stop"
 $here = $PSScriptRoot
@@ -48,7 +53,17 @@ $langs = (Get-Content "$here/store-languages.json" -Raw | ConvertFrom-Json).PSOb
     Where-Object { $_.Name -ne "_comment" } | ForEach-Object { $_.Value }
 $langs = @("en-us") + @($langs | Where-Object { $_ -ne "en-us" })
 $resources = ($langs | ForEach-Object { "    <Resource Language=`"$_`" />" }) -join "`r`n"
-(Get-Content "$here/AppxManifest.xml" -Raw).Replace("__RESOURCES__", $resources).Replace("__VERSION__", $version).Replace("__IDENTITY_NAME__", (& $esc $IdentityName)).Replace("__PUBLISHER_DISPLAY_NAME__", (& $esc $PublisherDisplayName)).Replace("__PUBLISHER__", (& $esc $Publisher)) |
+$manifest = Get-Content "$here/AppxManifest.xml" -Raw
+if ($Store) {
+    # Leave out what Store certification refused (src/packaged.rs tests the same filter).
+    $lines = $manifest -split "`r?`n"
+    $kept = @($lines | Where-Object { -not $_.Contains("<!-- github-only -->") })
+    if ($lines.Count - $kept.Count -ne 3) { throw "expected three github-only lines in AppxManifest.xml, found $($lines.Count - $kept.Count)" }
+    $manifest = $kept -join "`r`n"
+    if ($manifest -match 'Name="unvirtualizedResources"') { throw "the Store package must not declare unvirtualizedResources" }
+    if ($manifest -match 'WriteVirtualization>') { throw "the Store package must not turn off virtualization" }
+}
+$manifest.Replace("__RESOURCES__", $resources).Replace("__VERSION__", $version).Replace("__IDENTITY_NAME__", (& $esc $IdentityName)).Replace("__PUBLISHER_DISPLAY_NAME__", (& $esc $PublisherDisplayName)).Replace("__PUBLISHER__", (& $esc $Publisher)) |
     Set-Content "$stage/AppxManifest.xml" -Encoding utf8
 
 # The logos, drawn by Snagster itself (the same icon as the window and the portable exe).

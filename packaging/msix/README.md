@@ -6,7 +6,7 @@ IT departments can hand out (Intune, Configuration Manager) and what endpoint se
 more readily than a loose, unsigned `.exe` in the Downloads folder.
 
 - `AppxManifest.xml`: the package. `make-msix.ps1` fills in the version (from `Cargo.toml`) and
-  the publisher.
+  the publisher, and with `-Store` leaves out the `github-only` lines.
 - `make-msix.ps1`: builds the package with `makeappx` from the Windows SDK and signs it with
   `signtool`. The logos are drawn by `snagster --icon-png <file> <size>`.
 - CI (`.github/workflows/build.yml`, Windows job) makes it on every push, installs it on the
@@ -18,7 +18,7 @@ more readily than a loose, unsigned `.exe` in the Downloads folder.
 | | Portable zip | MSIX |
 |---|---|---|
 | Program folder | wherever you unpack it (writable) | `C:\Program Files\WindowsApps\…` (read-only, new folder per version) |
-| Settings, crash.log | `%APPDATA%\Snagster` | the same folder (the manifest turns off AppData virtualisation, so both share it and Explorer sees it) |
+| Settings, crash.log | `%APPDATA%\Snagster` | the same folder (the manifest turns off AppData virtualisation, so both share it and Explorer sees it); the Store edition keeps them in its own package folder instead (`STORE.md`) |
 | Updates | Snagster replaces its own `.exe` | Snagster downloads the new `.msix`, checks its SHA-256 against `SHA256SUMS`, and opens it in App Installer |
 | Start with Windows | registry `Run` entry | the package's startup task `SnagsterStartup` (Settings > Apps > Startup) |
 | AI apps (MCP) | the `.exe` path | `%LOCALAPPDATA%\Microsoft\WindowsApps\snagster.exe` (always the installed version) |
@@ -80,6 +80,9 @@ have to uninstall the old one), so it is chosen once.
 ### The Microsoft Store edition
 
 A separate Store edition is set up in `STORE.md`: the Store signs that package itself; many
-company laptops allow Store apps where they block other installers. The
-`unvirtualizedResources` capability needs a short justification in the submission (the text is
-in `STORE.md`), and a Store install leaves updates to the Store.
+company laptops allow Store apps where they block other installers. It is made with
+`make-msix.ps1 -Store`, which leaves out the manifest lines marked `github-only` (the
+`unvirtualizedResources` capability and the two `desktop6:...Virtualization` lines): Store
+certification refused that capability, so the Store edition's settings and crash.log live in the
+package's own AppData folder, and Help > Problem reports opens that folder
+(`src/packaged.rs` `visible_path`). A Store install leaves updates to the Store.

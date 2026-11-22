@@ -1044,12 +1044,8 @@ impl SnagApp {
                 self.about_open = true;
             }
             look::column(ui, |ui| {
-                if look::small_tool(ui, ph::WARNING, t("Problem reports"), t("Open the folder with Snagster's crash log, to send it with a bug report"), true).clicked()
-                    && let Some(p) = crate::crash_log_path()
-                    && let Some(dir) = p.parent()
-                {
-                    let _ = std::fs::create_dir_all(dir);
-                    self.open_folder(dir);
+                if look::small_tool(ui, ph::WARNING, t("Problem reports"), t("Open the folder with Snagster's crash log, to send it with a bug report"), true).clicked() {
+                    self.open_problem_reports();
                 }
             });
         });

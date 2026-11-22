@@ -216,6 +216,36 @@ jobs:
           node tests/mcp-smoke.js $alias
           if ($LASTEXITCODE -ne 0) { exit 1 }
           Remove-AppxPackage -Package $pkg.PackageFullName
+      - name: Install a Store-shaped MSIX and check where its files go
+        timeout-minutes: 15
+        shell: pwsh
+        run: |
+          # The Store package's manifest (-Store: no unvirtualizedResources), test-signed so the
+          # runner can install it. Windows then keeps the files Snagster makes under AppData in
+          # the package's own folder; --paths must name that real place (packaging/msix/STORE.md).
+          pwsh packaging/msix/make-msix.ps1 -Exe dist/Snagster/Snagster.exe -Out dist/msix-store-test/Snagster-store-test.msix -TestCert dist/msix-store-test/test.cer -Store
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Import-Certificate -FilePath dist/msix-store-test/test.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+          # A fresh computer: no %APPDATA%\Snagster from the steps before.
+          Remove-Item -Recurse -Force (Join-Path $env:APPDATA "Snagster") -ErrorAction SilentlyContinue
+          Add-AppxPackage -Path dist/msix-store-test/Snagster-store-test.msix
+          $pkg = Get-AppxPackage -Name SoloSaftis.Snagster
+          $alias = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\snagster.exe"
+          # Captured, so PowerShell waits for the (windowed) program to finish.
+          $set = & $alias call set_setting '{"key":"stream.fps","value":30}'
+          $set
+          $paths = @(& $alias --paths)
+          $paths
+          $settings = ($paths | Where-Object { $_ -like "Settings: *" }).Substring(10)
+          $private = Join-Path $env:LOCALAPPDATA "Packages\$($pkg.PackageFamilyName)\LocalCache\Roaming\Snagster\settings.json"
+          if ($settings -ne $private) { throw "--paths should name the package's own settings.json ($private), not $settings" }
+          if (-not (Test-Path $private)) { throw "settings.json isn't in the package's folder" }
+          if (Test-Path (Join-Path $env:APPDATA "Snagster\settings.json")) { throw "settings.json went to the real AppData: is virtualization still off?" }
+          if (-not ($paths | Where-Object { $_ -eq "Problem reports folder: $(Split-Path $private)" })) { throw "Problem reports should open $(Split-Path $private)" }
+          Start-Process $alias -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test-store.txt
+          Get-Content ui-test-store.txt | Select-Object -Last 3
+          if (-not (Select-String -Path ui-test-store.txt -Pattern '^(\d+) of \1 button actions worked' -Quiet)) { exit 1 }
+          Remove-AppxPackage -Package $pkg.PackageFullName
       - name: Package (Microsoft Store upload, unsigned)
         shell: pwsh
         env:
@@ -228,8 +258,9 @@ jobs:
           $name = if ($env:STORE_IDENTITY_NAME) { $env:STORE_IDENTITY_NAME } else { "00000Example.Snagster" }
           $pub = if ($env:STORE_PUBLISHER) { $env:STORE_PUBLISHER } else { "CN=00000000-0000-0000-0000-000000000000" }
           $shown = if ($env:STORE_PUBLISHER_DISPLAY_NAME) { $env:STORE_PUBLISHER_DISPLAY_NAME } else { "Example" }
-          # The Store signs what it publishes, so this one is uploaded unsigned.
-          pwsh packaging/msix/make-msix.ps1 -Exe dist/Snagster/Snagster.exe -Out dist/store/Snagster-windows-x64-store.msix -IdentityName $name -Publisher $pub -PublisherDisplayName $shown
+          # The Store signs what it publishes, so this one is uploaded unsigned. -Store leaves out
+          # the unvirtualizedResources capability Store certification refused.
+          pwsh packaging/msix/make-msix.ps1 -Exe dist/Snagster/Snagster.exe -Out dist/store/Snagster-windows-x64-store.msix -IdentityName $name -Publisher $pub -PublisherDisplayName $shown -Store
           if ($LASTEXITCODE -ne 0) { exit 1 }
       - uses: actions/upload-artifact@v4
         with:

@@ -11,9 +11,15 @@
 //!   at a folder the next update removes.
 //! - **AI apps** start Snagster through the `snagster.exe` alias Windows puts in
 //!   `%LOCALAPPDATA%\Microsoft\WindowsApps`, which always runs the installed version.
-//! - **Settings** stay in `%APPDATA%\Snagster`, shared with the portable copy: the manifest turns
-//!   off the package's private copy of AppData (`unvirtualizedResources`), so crash.log and the
-//!   settings folder are where Snagster says they are, for Explorer and Notepad too.
+//! - **Settings** are in `%APPDATA%\Snagster`. The GitHub package turns off the package's private
+//!   copy of AppData (`unvirtualizedResources`), so it shares the folder with the portable copy.
+//!   The Microsoft Store refused that capability, so the Store package leaves it out
+//!   (`make-msix.ps1 -Store`): Windows then puts the files Snagster creates under AppData in the
+//!   package's own folder, `%LOCALAPPDATA%\Packages\<family name>\LocalCache\Roaming\...`, which
+//!   other programs don't see at the usual path (files that were already there, from the
+//!   portable copy, are changed in place). [`visible_path`] says where such a file really is, so
+//!   Explorer opens the right folder (Help > Problem reports) and Settings names the real
+//!   crash.log. Pictures and Videos are outside AppData and never redirected.
 
 use std::path::{Path, PathBuf};
 
@@ -60,6 +66,81 @@ pub fn from_store() -> bool {
     {
         false
     }
+}
+
+/// The installed package's family name (`Name_publisherhash`), the name of its private folder
+/// under `%LOCALAPPDATA%\Packages`. None for the portable copy.
+pub fn family_name() -> Option<String> {
+    #[cfg(windows)]
+    {
+        use std::sync::OnceLock;
+        static FAMILY: OnceLock<Option<String>> = OnceLock::new();
+        FAMILY
+            .get_or_init(|| {
+                use windows_sys::Win32::Foundation::{ERROR_INSUFFICIENT_BUFFER, ERROR_SUCCESS};
+                use windows_sys::Win32::Storage::Packaging::Appx::GetCurrentPackageFamilyName;
+                let mut len = 0u32;
+                // Without a package: APPMODEL_ERROR_NO_PACKAGE. With one: the buffer is too small.
+                if unsafe { GetCurrentPackageFamilyName(&mut len, std::ptr::null_mut()) } != ERROR_INSUFFICIENT_BUFFER {
+                    return None;
+                }
+                let mut buf = vec![0u16; len as usize];
+                if unsafe { GetCurrentPackageFamilyName(&mut len, buf.as_mut_ptr()) } != ERROR_SUCCESS {
+                    return None;
+                }
+                let end = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
+                Some(String::from_utf16_lossy(&buf[..end])).filter(|f| !f.is_empty())
+            })
+            .clone()
+    }
+    #[cfg(not(windows))]
+    {
+        None
+    }
+}
+
+/// Where `path` (a file or folder Snagster made under AppData) is for other programs such as
+/// Explorer and Notepad. In a package whose AppData is private (the Store edition) that is the
+/// package's own copy when Windows put it there; otherwise, and for the portable copy, `path`.
+pub fn visible_path(path: &Path) -> PathBuf {
+    let Some(family) = family_name() else {
+        return path.to_path_buf();
+    };
+    visible_path_for(path, Some(&family), crate::userdirs::config_dir().as_deref(), crate::userdirs::local_app_data().as_deref(), &|p| p.exists())
+}
+
+/// [`visible_path`] with what it depends on passed in, for the tests: the package family name,
+/// `%APPDATA%` (Roaming), `%LOCALAPPDATA%` (Local) and whether a path exists.
+pub(crate) fn visible_path_for(path: &Path, family: Option<&str>, roaming: Option<&Path>, local: Option<&Path>, exists: &dyn Fn(&Path) -> bool) -> PathBuf {
+    let (Some(family), Some(local)) = (family, local) else {
+        return path.to_path_buf();
+    };
+    // Already in a package's own folder: nothing to translate.
+    if path.starts_with(local.join("Packages")) {
+        return path.to_path_buf();
+    }
+    let private = local.join("Packages").join(family).join("LocalCache");
+    let redirected = [(roaming, "Roaming"), (Some(local), "Local")]
+        .into_iter()
+        .find_map(|(root, sub)| Some(private.join(sub).join(path.strip_prefix(root?).ok()?)));
+    match redirected {
+        Some(p) if exists(&p) => p,
+        _ => path.to_path_buf(),
+    }
+}
+
+/// The folder Help > Problem reports opens: the one that really holds `log` (crash.log), else
+/// Snagster's folder as other programs see it.
+pub fn problem_reports_folder(log: &Path) -> Option<PathBuf> {
+    problem_reports_folder_with(log, &visible_path)
+}
+
+pub(crate) fn problem_reports_folder_with(log: &Path, visible: &dyn Fn(&Path) -> PathBuf) -> Option<PathBuf> {
+    let shown = visible(log);
+    if shown != log {
+        return shown.parent().map(Path::to_path_buf);
+    }
+    log.parent().map(visible)
 }
 
 /// The program AI apps should start: the package's alias when installed, else this program.
@@ -169,6 +250,49 @@ mod tests {
         assert_eq!(mcp_command_for(portable, false, Some(local)), portable.display().to_string());
     }
 
+    /// The Store edition's AppData is private: a file Snagster made there is shown at the
+    /// package's own copy, a file that was already in the real folder (from the portable copy)
+    /// stays where it is, and the portable copy's paths never change.
+    #[test]
+    fn files_in_private_appdata_are_shown_where_they_really_are() {
+        let roaming = Path::new(r"C:\Users\pat\AppData\Roaming");
+        let local = Path::new(r"C:\Users\pat\AppData\Local");
+        let family = Some("SoloSaftis.Snagster_abc123");
+        let log = roaming.join("Snagster").join("crash.log");
+        let private_log = local.join("Packages").join("SoloSaftis.Snagster_abc123").join("LocalCache").join("Roaming").join("Snagster").join("crash.log");
+        let is_private = |p: &Path| p == private_log;
+        // Made by the Store edition: in the package's folder.
+        assert_eq!(visible_path_for(&log, family, Some(roaming), Some(local), &is_private), private_log);
+        // Already in the real AppData (made by the portable copy): Windows changes it in place.
+        assert_eq!(visible_path_for(&log, family, Some(roaming), Some(local), &|_| false), log);
+        // The portable copy (no package): never translated, whatever exists.
+        assert_eq!(visible_path_for(&log, None, Some(roaming), Some(local), &|_| true), log);
+        // Local AppData is redirected too, to LocalCache\Local.
+        let cache = local.join("Snagster").join("x.json");
+        assert_eq!(visible_path_for(&cache, family, Some(roaming), Some(local), &|_| true), local.join("Packages").join("SoloSaftis.Snagster_abc123").join("LocalCache").join("Local").join("Snagster").join("x.json"));
+        // Outside AppData (Pictures, Videos, SNAGSTER_HOME) and the package's folder itself: as is.
+        let pictures = &Path::new(r"C:\Users\pat").join("Pictures").join("Snagster").join("a.png");
+        assert_eq!(visible_path_for(pictures, family, Some(roaming), Some(local), &|_| true), *pictures);
+        assert_eq!(visible_path_for(&private_log, family, Some(roaming), Some(local), &|_| true), private_log);
+        // No %LOCALAPPDATA%: nothing to translate to.
+        assert_eq!(visible_path_for(&log, family, Some(roaming), None, &|_| true), log);
+    }
+
+    #[test]
+    fn problem_reports_open_the_folder_that_holds_crash_log() {
+        let log = &Path::new(r"C:\Users\pat\AppData\Roaming").join("Snagster").join("crash.log");
+        let dir = log.parent().unwrap();
+        let private = &Path::new(r"C:\P").join("LocalCache").join("Roaming").join("Snagster");
+        // crash.log is in the package's folder: open that one.
+        let moved = |p: &Path| if p == log { private.join("crash.log") } else { p.to_path_buf() };
+        assert_eq!(problem_reports_folder_with(log, &moved).unwrap(), *private);
+        // No crash.log yet, but the package's folder exists: open it.
+        let folder = |p: &Path| if p == dir { private.to_path_buf() } else { p.to_path_buf() };
+        assert_eq!(problem_reports_folder_with(log, &folder).unwrap(), *private);
+        // The portable copy and the GitHub package: the usual folder.
+        assert_eq!(problem_reports_folder_with(log, &|p: &Path| p.to_path_buf()).unwrap(), dir);
+    }
+
     #[test]
     fn a_refused_startup_task_says_where_to_turn_it_on() {
         assert!(startup_refusal(Startup::OffByPerson).unwrap().contains("Startup"));
@@ -199,6 +323,30 @@ mod tests {
         // CI makes the package under the name the updater looks for.
         let ci = include_str!("../.github/workflows/build.yml");
         assert!(ci.contains(crate::update::MSIX_NAME), "build.yml makes {}", crate::update::MSIX_NAME);
+    }
+
+    /// The Store package (`make-msix.ps1 -Store`, which CI uses for it) leaves out exactly what
+    /// certification refused and keeps everything else; the GitHub package keeps it all.
+    #[test]
+    fn the_store_package_leaves_out_unvirtualized_resources() {
+        const MANIFEST: &str = include_str!("../packaging/msix/AppxManifest.xml");
+        const MARK: &str = "<!-- github-only -->";
+        let script = include_str!("../packaging/msix/make-msix.ps1");
+        assert!(script.contains(&format!("Contains(\"{MARK}\")")), "make-msix.ps1 -Store drops the lines marked {MARK}");
+        let ci = include_str!("../.github/workflows/build.yml");
+        let store_line = ci.lines().find(|l| l.contains("Snagster-windows-x64-store.msix") && l.contains("make-msix.ps1")).expect("CI makes the Store package");
+        assert!(store_line.trim_end().ends_with("-Store"), "CI makes the Store package with -Store: {store_line}");
+        let github_line = ci.lines().find(|l| l.contains("Snagster-windows-x64.msix") && l.contains("make-msix.ps1")).unwrap();
+        assert!(!github_line.contains("-Store"), "the GitHub package keeps its AppData shared with the portable copy");
+
+        let marked: Vec<&str> = MANIFEST.lines().filter(|l| l.contains(MARK)).collect();
+        assert_eq!(marked.len(), 3, "the capability and the two virtualization lines: {marked:?}");
+        let store: String = MANIFEST.lines().filter(|l| !l.contains(MARK)).collect::<Vec<_>>().join("\n");
+        assert!(!store.contains("Name=\"unvirtualizedResources\""));
+        assert!(!store.contains("WriteVirtualization>"));
+        assert!(store.contains("<rescap:Capability Name=\"runFullTrust\" />"));
+        assert!(store.contains("<DeviceCapability Name=\"microphone\" />"));
+        assert!(store.contains("</Properties>") && store.contains("</Capabilities>") && store.trim_end().ends_with("</Package>"));
     }
 
     /// The package (and so the Store) lists every language Snagster speaks, each as a language
@@ -254,6 +402,9 @@ mod tests {
         // `cargo test` runs a plain program, never an installed package.
         assert!(!is_packaged());
         assert!(!from_store());
+        assert_eq!(family_name(), None);
+        let p = Path::new("/some/where/crash.log");
+        assert_eq!(visible_path(p), p);
         assert!(!mcp_command().is_empty());
     }
 

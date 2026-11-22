@@ -228,6 +228,13 @@ fn main() -> eframe::Result {
             // Record short videos in every format and rate, read each back and report.
             video_test(args.next().as_deref() == Some("quick"));
             return Ok(());
+        } else if a == "--paths" {
+            // Where the settings and crash.log are for Explorer and Notepad (the Store
+            // edition's AppData is the package's own folder); CI checks it on an installed package.
+            for line in paths_report() {
+                println!("{line}");
+            }
+            return Ok(());
         } else if a == "--hw-report" {
             // Everything about graphics-chip encoding here, in one file (see hwreport.rs).
             let ok = hwreport::run(args.next().map(PathBuf::from));
@@ -739,6 +746,18 @@ fn replay_check() -> bool {
     ok
 }
 
+/// `snagster --paths`: Snagster's settings folder and crash.log where other programs find them.
+fn paths_report() -> Vec<String> {
+    let shown = |p: Option<PathBuf>| p.map(|p| packaged::visible_path(&p).display().to_string()).unwrap_or_else(|| "(none)".into());
+    let folder = crash_log_path().and_then(|log| packaged::problem_reports_folder(&log));
+    vec![
+        format!("Package: {}", packaged::family_name().unwrap_or_else(|| "none (portable)".into())),
+        format!("Settings: {}", shown(settings::settings_path())),
+        format!("crash.log: {}", shown(crash_log_path())),
+        format!("Problem reports folder: {}", folder.map(|f| f.display().to_string()).unwrap_or_else(|| "(none)".into())),
+    ]
+}
+
 /// Where crash reports go: Snagster's settings folder (crash.log, newest last, kept small).
 pub fn crash_log_path() -> Option<PathBuf> {
     settings::settings_path().and_then(|p| p.parent().map(|d| d.join("crash.log")))
@@ -928,6 +947,19 @@ mod main_tests {
             let i = ((y * 64 + x) * 4) as usize;
             let j = (((y * 4 + 1) * 256 + x * 4 + 1) * 4) as usize;
             assert_eq!(small.rgba[i..i + 3], big.rgba[j..j + 3], "at {x},{y}");
+        }
+    }
+
+    #[test]
+    fn the_paths_report_names_the_real_files() {
+        // Tests never run from a package, so the paths are the usual ones.
+        let lines = paths_report();
+        assert_eq!(lines.len(), 4);
+        assert_eq!(lines[0], "Package: none (portable)");
+        if let (Some(s), Some(log)) = (settings::settings_path(), crash_log_path()) {
+            assert_eq!(lines[1], format!("Settings: {}", s.display()));
+            assert_eq!(lines[2], format!("crash.log: {}", log.display()));
+            assert_eq!(lines[3], format!("Problem reports folder: {}", log.parent().unwrap().display()));
         }
     }
 

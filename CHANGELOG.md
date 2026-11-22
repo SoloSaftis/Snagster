@@ -2,6 +2,15 @@
 
 What changed for people using Snagster, per version.
 
+## Not released yet
+
+- **Microsoft Store edition**: the Store package no longer asks for the restricted
+  `unvirtualizedResources` capability, which Store certification refused. Its settings and
+  crash.log are kept in the package's own folder (so it doesn't share settings with a portable
+  copy), and Help > Problem reports and the crash.log line in Settings point at that real
+  folder. The GitHub MSIX and the portable copy are unchanged; captures still go to Pictures
+  and Videos.
+
 ## 0.10.8 — 2026-11-22
 
 - **AI apps with the MCP bundles see the window's replay buffer**: the bundles run Snagster

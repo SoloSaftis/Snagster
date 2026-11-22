@@ -4,11 +4,33 @@ A separate Store edition, next to the GitHub downloads. The Store signs the pack
 people who install Snagster from the Store get no SmartScreen or "unknown publisher" warning,
 and company laptops that allow Store apps (but block other installers) can have it. The Store
 keeps it up to date: a Store-installed Snagster doesn't download updates itself
-(`src/packaged.rs` `from_store`, `src/update.rs` `managed_by`). Settings, crash.log and captures
-are in the same places as with the GitHub copies.
+(`src/packaged.rs` `from_store`, `src/update.rs` `managed_by`). Captures go to Pictures and
+Videos as with the GitHub copies; settings and crash.log are in the package's own folder (below).
 
-It is the same package as the GitHub MSIX (`AppxManifest.xml`), with the identity Partner Center
-gives Snagster instead of `SoloSaftis.Snagster`, and it is uploaded unsigned.
+It is built from the same manifest as the GitHub MSIX (`AppxManifest.xml`), with the identity
+Partner Center gives Snagster instead of `SoloSaftis.Snagster`, and it is uploaded unsigned.
+`make-msix.ps1 -Store` (what CI uses for it) leaves out the manifest lines marked
+`github-only`: the `unvirtualizedResources` capability and the two
+`desktop6:...Virtualization` lines, which certification refused (Status, below).
+
+### Where the Store edition keeps its files
+
+Without `unvirtualizedResources`, Windows redirects the files a packaged program *creates* under
+AppData to the package's own folder:
+`%LOCALAPPDATA%\Packages\<package family name>\LocalCache\Roaming\Snagster` (settings.json,
+crash.log, the stream key, the font cache). Snagster itself still sees them at
+`%APPDATA%\Snagster`; Explorer and Notepad don't. So Help > Problem reports and the crash.log
+line in Settings use `packaged::visible_path`, which finds the package's folder from
+`GetCurrentPackageFamilyName`. Files that were already in the real `%APPDATA%\Snagster` (made by
+a portable copy) are read and changed in place, so the Store edition starts with the portable
+copy's settings but its own new files stay private. Pictures, Videos and any folder outside
+AppData are never redirected. Uninstalling the Store edition removes its folder.
+
+`snagster --paths` prints the package, settings.json, crash.log and the Problem reports folder
+as other programs find them. CI installs a test-signed package with the Store's manifest
+(`-Store`) on the Windows runner, saves a setting through it and checks that settings.json is in
+the package's folder and that `--paths` and Problem reports name that folder, then runs the
+button test from it.
 
 ## Once: the account and the name (done 2026-11-17: Store ID 9MVZGNTS547Z)
 
@@ -39,29 +61,25 @@ package with stand-in values, so the step stays tested, but doesn't keep it.)
      video* or *Productivity*; privacy policy URL below), **Age ratings** (the questionnaire),
      and **Store listing** (description, at least one screenshot: the README pictures in
      `assets/` work; the 300 x 300 logo from `snagster --icon-png logo.png 300`).
-   - **Submission options > restricted capabilities**: explain the two the package declares
-     (text below).
+   - **Submission options > restricted capabilities**: explain the one the package declares,
+     `runFullTrust` (text below).
 4. Submit. Certification usually takes one to three business days.
 
 ### Privacy policy URL
 
 `https://github.com/SoloSaftis/Snagster/blob/main/PRIVACY.md`
 
-### Why the package needs its restricted capabilities (for the submission form)
+### Why the package needs its restricted capability (for the submission form)
 
 - **runFullTrust**: Snagster is a desktop program (Rust, Win32). It captures the screen with
   Desktop Duplication and GDI, records video with Media Foundation, registers global hotkeys and
   a notification-area icon, and runs an MCP server for AI apps on 127.0.0.1.
-- **unvirtualizedResources**: Snagster is also offered as a portable program. Turning off
-  AppData virtualisation keeps its settings, crash report and captures in
-  `%APPDATA%\Snagster`, Pictures and Videos for both editions, and lets the person open
-  crash.log and the settings folder in Explorer and Notepad from Help > Problem reports. Without
-  it the files would be in a private per-package folder that other programs can't see.
 
-If certification refuses `unvirtualizedResources`, the Store edition can leave out the two
-`desktop6:...Virtualization` lines and that capability; Snagster then keeps its files in the
-package's private AppData, and Help > Problem reports (which opens the folder in Explorer) would
-need to open the package's real folder instead.
+The Store package declares no other restricted capability (the microphone is an ordinary
+device capability, for recording with sound). It used to ask for `unvirtualizedResources` too,
+to share `%APPDATA%\Snagster` with the portable copy; certification refused it (Status), so the
+Store package leaves it out and keeps its files in the package's own folder (above). The GitHub
+MSIX, which is never certified, keeps it.
 
 ## The listing in every language
 
@@ -75,8 +93,19 @@ not change). For a new version, change `ReleaseNotes` in every language, rebuild
 
 ## Status
 
-Submitted for certification on 2026-11-18 (version 0.10.6.0, listing in all 86 languages,
-built from `main` after PR #2). Store page: https://apps.microsoft.com/detail/9MVZGNTS547Z
+- 2026-11-18: submitted for certification (version 0.10.6.0, listing in all 86 languages,
+  built from `main` after PR #2), with `runFullTrust` and `unvirtualizedResources`.
+- Certification failed: "10.6.3 Capabilities": the request to use `unvirtualizedResources` was
+  denied, with the advice to remove it and resubmit (read in Partner Center on 2026-11-22).
+- 2026-11-22: the capability and the two virtualization lines removed from the Store package
+  only (`make-msix.ps1 -Store`); Help > Problem reports opens the package's real folder. To be
+  resubmitted by hand with version 0.10.8.0 or higher (Packages: replace
+  `Snagster-windows-x64-store.msix`, then **Resubmit for certification**).
+
+Store page: https://apps.microsoft.com/detail/9MVZGNTS547Z
+
+The package's version comes from `Cargo.toml` (`X.Y.Z` becomes `X.Y.Z.0`), so a resubmission
+needs no bump while `Cargo.toml` is ahead of the refused 0.10.6.0.
 
 ## Later (not done)
 
