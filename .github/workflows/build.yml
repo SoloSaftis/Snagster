@@ -242,6 +242,11 @@ jobs:
           if (-not (Test-Path $private)) { throw "settings.json isn't in the package's folder" }
           if (Test-Path (Join-Path $env:APPDATA "Snagster\settings.json")) { throw "settings.json went to the real AppData: is virtualization still off?" }
           if (-not ($paths | Where-Object { $_ -eq "Problem reports folder: $(Split-Path $private)" })) { throw "Problem reports should open $(Split-Path $private)" }
+          # No crash yet: crash.log is named where Windows will write it, beside settings.json.
+          $log = Join-Path (Split-Path $private) "crash.log"
+          if (-not ($paths | Where-Object { $_ -eq "crash.log: $log" })) { throw "--paths should name $log for crash.log" }
+          Get-ChildItem (Split-Path $private) | Format-Table Name, Length
+          if (Test-Path (Join-Path $env:APPDATA "Snagster")) { Get-ChildItem (Join-Path $env:APPDATA "Snagster"); throw "the Store-shaped package wrote into the real %APPDATA%\Snagster" }
           Start-Process $alias -ArgumentList '--ui-test' -Wait -NoNewWindow -RedirectStandardOutput ui-test-store.txt
           Get-Content ui-test-store.txt | Select-Object -Last 3
           if (-not (Select-String -Path ui-test-store.txt -Pattern '^(\d+) of \1 button actions worked' -Quiet)) { exit 1 }

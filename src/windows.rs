@@ -2504,9 +2504,8 @@ impl SnagApp {
         }
         ui.add_space(10.0);
         ui.label(RichText::new(t("Problems")).strong());
-        if let Some(p) = crate::crash_log_path() {
-            // Where Explorer and Notepad find it (the Store edition's AppData is private).
-            let p = crate::packaged::visible_path(&p);
+        // Where Explorer and Notepad find it (the Store edition's AppData is private).
+        if let Some(p) = crate::packaged::shown_crash_log() {
             ui.label(RichText::new(tf("If Snagster ever stops unexpectedly, what happened is written to {file}.", &[("file", &p.display().to_string())])).color(pal().dim));
         }
     }

@@ -14,7 +14,9 @@ nobody your pictures, recordings, text or settings.
 - Your captures, recordings and projects, in the folders you choose (by default Pictures and
   Videos).
 - Settings and a crash report (`crash.log`), in Snagster's settings folder (on Windows
-  `%APPDATA%\Snagster`). The crash report never leaves your computer unless you send it to
+  `%APPDATA%\Snagster`; the Microsoft Store edition keeps the files it creates in its own
+  package folder, `%LOCALAPPDATA%\Packages\<package>\LocalCache\Roaming\Snagster`, which Windows
+  removes when you uninstall it). The crash report never leaves your computer unless you send it to
   someone yourself.
 - Live-streaming keys, encrypted for your user account (Windows), in your Keychain (macOS) or in
   a file only your user can read (Linux).

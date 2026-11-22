@@ -120,13 +120,46 @@ pub(crate) fn visible_path_for(path: &Path, family: Option<&str>, roaming: Optio
         return path.to_path_buf();
     }
     let private = local.join("Packages").join(family).join("LocalCache");
-    let redirected = [(roaming, "Roaming"), (Some(local), "Local")]
-        .into_iter()
-        .find_map(|(root, sub)| Some(private.join(sub).join(path.strip_prefix(root?).ok()?)));
-    match redirected {
-        Some(p) if exists(&p) => p,
-        _ => path.to_path_buf(),
+    let Some((real_root, private_root, rel)) = [(roaming, "Roaming"), (Some(local), "Local")].into_iter().find_map(|(root, sub)| {
+        let root = root?;
+        Some((root, private.join(sub), path.strip_prefix(root).ok()?))
+    }) else {
+        return path.to_path_buf();
+    };
+    let private_path = private_root.join(rel);
+    // The nearest of the file and the folders above it that exists says which side it is on:
+    // a crash.log not written yet goes beside the settings.json Windows put in the package's
+    // folder. Nothing at all yet: the package's folder, where Windows puts every new file.
+    for part in rel.ancestors().filter(|a| !a.as_os_str().is_empty()) {
+        if exists(&private_root.join(part)) {
+            return private_path;
+        }
+        if exists(&real_root.join(part)) {
+            return path.to_path_buf();
+        }
     }
+    private_path
+}
+
+/// crash.log where other programs find it, for the Settings window: worked out at most every
+/// two seconds, not on every frame (in a package it asks Windows for folders and looks at the disk).
+pub fn shown_crash_log() -> Option<PathBuf> {
+    use std::cell::RefCell;
+    use std::time::{Duration, Instant};
+    thread_local! {
+        static SHOWN: RefCell<Option<(Instant, Option<PathBuf>)>> = const { RefCell::new(None) };
+    }
+    SHOWN.with(|s| {
+        let mut s = s.borrow_mut();
+        match &*s {
+            Some((at, p)) if at.elapsed() < Duration::from_secs(2) => p.clone(),
+            _ => {
+                let p = crate::crash_log_path().map(|p| visible_path(&p));
+                *s = Some((Instant::now(), p.clone()));
+                p
+            }
+        }
+    })
 }
 
 /// The folder Help > Problem reports opens: the one that really holds `log` (crash.log), else
@@ -264,7 +297,16 @@ mod tests {
         // Made by the Store edition: in the package's folder.
         assert_eq!(visible_path_for(&log, family, Some(roaming), Some(local), &is_private), private_log);
         // Already in the real AppData (made by the portable copy): Windows changes it in place.
-        assert_eq!(visible_path_for(&log, family, Some(roaming), Some(local), &|_| false), log);
+        let real_log = log.clone();
+        assert_eq!(visible_path_for(&log, family, Some(roaming), Some(local), &|p: &Path| p == real_log), log);
+        // Not written yet: beside the settings Windows put in the package's folder...
+        let private_dir = private_log.parent().unwrap().to_path_buf();
+        assert_eq!(visible_path_for(&log, family, Some(roaming), Some(local), &|p: &Path| p == private_dir), private_log);
+        // ...or beside the portable copy's settings in the real folder...
+        let real_dir = log.parent().unwrap().to_path_buf();
+        assert_eq!(visible_path_for(&log, family, Some(roaming), Some(local), &|p: &Path| p == real_dir), log);
+        // ...and on a fresh computer where Windows will put the first file: the package's folder.
+        assert_eq!(visible_path_for(&log, family, Some(roaming), Some(local), &|_| false), private_log);
         // The portable copy (no package): never translated, whatever exists.
         assert_eq!(visible_path_for(&log, None, Some(roaming), Some(local), &|_| true), log);
         // Local AppData is redirected too, to LocalCache\Local.
@@ -405,6 +447,8 @@ mod tests {
         assert_eq!(family_name(), None);
         let p = Path::new("/some/where/crash.log");
         assert_eq!(visible_path(p), p);
+        assert_eq!(shown_crash_log(), crate::crash_log_path());
+        assert_eq!(shown_crash_log(), crate::crash_log_path(), "the second call is the remembered one");
         assert!(!mcp_command().is_empty());
     }
 
